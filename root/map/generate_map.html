@@ -4,7 +4,9 @@
     <tr>
     [% FOREACH position = line %]
         [% IF position %]            
-        <td><a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> ([% position.x %], [% position.y %])</td>
+        <td [% IF position.id == current_position %]class="map_current_pos"[% END %] style="width: 200px">
+        	<a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> ([% position.x %], [% position.y %])
+        </td>
         [% END %]
     [% END %]
     </tr>

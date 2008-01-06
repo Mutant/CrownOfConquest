@@ -30,6 +30,8 @@ __PACKAGE__->config->{session} = {
     cookie_name => 'session', 
 };
 
+$ENV{DBIC_TRACE} = 1;
+
 our $VERSION = '0.01';
 
 #

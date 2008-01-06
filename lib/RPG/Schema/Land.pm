@@ -61,7 +61,7 @@ sub next_to {
    
     my ($current_x, $current_y) = ($self->x,       $self->y);
     my ($new_x,     $new_y)     = ($compare_to->x, $compare_to->y);
-    
+
     my $x_diff = abs $current_x - $new_x;
     my $y_diff = abs $current_y - $new_y;
     

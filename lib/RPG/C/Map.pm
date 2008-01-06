@@ -9,7 +9,12 @@ use Data::Dumper;
 sub auto : Private {
     my ($self, $c) = @_;
 
-    $c->stash->{party} = $c->model('Party')->find( $c->session->{party_id} );
+    $c->stash->{party} = $c->model('Party')->find( 
+    	$c->session->{party_id},
+    	{
+    		prefetch => 'location',
+    	},
+	);
     
     return 1;
 }
@@ -18,8 +23,6 @@ sub view : Local {
     my ($self, $c) = @_;
     
     my $party_location = $c->stash->{party}->location;
-    
-    my $map = $c->forward('/map/generate_map');
     
     # See if party is in same location as a creature
     my @creatures = $c->model('DBIC::CreatureGroup')->search(
@@ -53,13 +56,14 @@ sub view : Local {
     }    
         
     # Display normal sector menu
+    $c->forward('/map/generate_map');
 }
 
 sub generate_map : Private {
     my ($self, $c) = @_;
     
     my $party_location = $c->stash->{party}->location;
-warn $c->stash->{party};    
+
     my ($start_point, $end_point) = RPG::Map->surrounds(
                                         $party_location->x,
                                         $party_location->y,
@@ -71,7 +75,10 @@ warn $c->stash->{party};
         {
             'x' => {'>=', $start_point->{x},'<=', $end_point->{x}},
             'y' => {'>=', $start_point->{y},'<=', $end_point->{y}},
-        }
+        },
+        {
+        	prefetch => 'terrain',
+        },
     );
     
     my @grid;
@@ -85,18 +92,28 @@ warn $c->stash->{party};
             template => 'map/view.html',
             params => {
                 grid => \@grid,
+                current_position => $party_location->id,
             },
             #return_output => 1,
         }]
     );
 }
 
+=head2 move_to
+
+Move the party to a new location
+
+=cut
+
 sub move_to : Local {
     my ($self, $c) = @_;
     
-#     my $party = $c->model('Party')->find( $c->session->{party_id} );
-    
-    my $new_land = $c->model('Land')->find( $c->req->param('land_id') );
+    my $new_land = $c->model('Land')->find( 
+    	$c->req->param('land_id'),
+    	{
+    		prefetch => 'terrain',
+    	},
+    );
     
     unless ($new_land) {
         $c->stash->{error} = 'Land does not exist!';
@@ -114,12 +131,12 @@ sub move_to : Local {
         $c->stash->{error} = 'You do not have enough movement points to move there';
         $c->detach('/map/view');  
     }
-    
+        
     $c->stash->{party}->land_id($c->req->param('land_id'));
     $c->stash->{party}->movement_points($c->stash->{party}->movement_points - ($new_land->terrain->modifier + 1));
     $c->stash->{party}->update;
     
-    $c->forward('/map/view');    
+    $c->res->redirect('/map/view');    
 }
 
 1;

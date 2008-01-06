@@ -1,0 +1,71 @@
+[Dir db]
+Dirs=
+Files=gen_cdbi_classes.pl/load.sql/reload.sh/schema.sql/make_land.pl
+
+[Dir lib]
+Dirs=RPG
+Files=RPG.pm
+
+[Dir lib/RPG]
+Dirs=C/M/Schema/V
+Files=Schema.pm/Map.pm
+
+[Dir lib/RPG/C]
+Dirs=
+Files=Party.pm/Root.pm/Character.pm/Shop.pm/Map.pm
+
+[Dir lib/RPG/M]
+Dirs=
+Files=DBIC.pm
+
+[Dir lib/RPG/M/CDBI]
+Dirs=
+Files=Class.pm/Party_Character.pm/Party.pm/P_Character.pm/Player.pm/Race.pm
+
+[Dir lib/RPG/Schema]
+Dirs=
+Files=Class.pm/Dimension.pm/Item_Category.pm/Items.pm/Land.pm/Party.pm/Player.pm/Race.pm/Terrain.pm/Character.pm/Items_In_Shop.pm/Shop.pm/Item_Type.pm/CreatureGroup.pm/Creature.pm/CreatureType.pm/Trait.pm
+
+[Dir lib/RPG/V]
+Dirs=
+Files=TT.pm
+
+[Dir root]
+Dirs=party/static/character/shop/map
+Files=bottom.html/top.html
+
+[Dir root/character]
+Dirs=
+Files=view.html
+
+[Dir root/map]
+Dirs=
+Files=view.html/generate_map.html
+
+[Dir root/party]
+Dirs=
+Files=create.html/new_character.html/list_characters.html
+
+[Dir root/shop]
+Dirs=
+Files=purchase.html
+
+[Dir root/static]
+Dirs=js
+Files=
+
+[Dir root/static/js]
+Dirs=
+Files=builder.js/controls.js/dragdrop.js/effects.js/prototype.js/scriptaculous.js/slider.js/unittest.js
+
+[Dir t]
+Dirs=
+Files=schama.pl/shop.pl
+
+[Project Dir]
+Dirs=lib/root/db/t
+Files=rpg.yml
+
+[Project File]
+Name=RPG
+Type=Default

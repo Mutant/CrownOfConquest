@@ -1,0 +1,56 @@
+<project version="Crimson Editor 3.60">
+	<category name="lib" expanded="yes">
+		<category name="C" expanded="yes">
+			<localfile path="Z:\RPG\lib\RPG\C\Party.pm" />
+			<localfile path="Z:\RPG\lib\RPG\C\Root.pm" />
+		</category>
+		<category name="M" expanded="yes">
+			<category name="CDBI" expanded="yes">
+				<localfile path="Z:\RPG\lib\RPG\M\CDBI\Class.pm" />
+				<localfile path="Z:\RPG\lib\RPG\M\CDBI\P_Character.pm" />
+				<localfile path="Z:\RPG\lib\RPG\M\CDBI\Party_Character.pm" />
+				<localfile path="Z:\RPG\lib\RPG\M\CDBI\Player.pm" />
+				<localfile path="Z:\RPG\lib\RPG\M\CDBI\Race.pm" />
+			</category>
+			<localfile path="Z:\RPG\lib\RPG\M\CDBI.pm" />
+			<localfile path="Z:\RPG\lib\RPG\M\CDBITables.pm" />
+		</category>
+		<category name="V" expanded="no">
+			<localfile path="Z:\RPG\lib\RPG\V\TT.pm" />
+		</category>
+		<localfile path="Z:\RPG\lib\RPG.pm" />
+	</category>
+	<category name="root" expanded="yes">
+		<category name="party" expanded="yes">
+			<localfile path="Z:\RPG\root\party\generate.html" />
+			<localfile path="Z:\RPG\root\party\new_character.html" />
+		</category>
+		<localfile path="Z:\RPG\root\bottom.html" />
+		<localfile path="Z:\RPG\root\top.html" />
+	</category>
+	<category name="db" expanded="yes">
+		<localfile path="Z:\RPG\db\gen_cdbi_classes.pl" />
+		<localfile path="Z:\RPG\db\load.sql" />
+		<localfile path="Z:\RPG\db\reload.sh" />
+		<localfile path="Z:\RPG\db\schema.sql" />
+	</category>
+	<localfile path="Z:\RPG\rpg.yml" />
+</project>
+
+<workspace version="Crimson Editor 3.60">
+	<localfile path="Z:\RPG\lib\RPG.pm" linenum="7" placement="0:1:-1:-1:-4:-30:66:87:781:505" />
+	<localfile path="Z:\RPG\lib\RPG\C\Party.pm" linenum="85" placement="0:1:-1:-1:-4:-30:88:116:803:534" />
+	<localfile path="Z:\RPG\lib\RPG\M\CDBI\Race.pm" linenum="1" placement="0:1:-1:-1:-4:-30:132:174:847:592" />
+	<localfile path="Z:\RPG\lib\RPG\M\CDBI\P_Character.pm" linenum="27" placement="0:1:-1:-1:-4:-30:154:203:869:621" />
+	<localfile path="Z:\RPG\rpg.yml" linenum="15" placement="0:1:-1:-1:-4:-30:0:0:715:418" />
+	<localfile path="Z:\RPG\root\party\new_character.html" linenum="112" placement="0:1:-1:-1:-4:-30:110:145:1015:732" />
+	<localfile path="Z:\RPG\db\schema.sql" linenum="223" placement="0:1:-1:-1:-4:-30:0:0:905:587" />
+	<localfile path="Z:\RPG\lib\RPG\C\Root.pm" linenum="18" placement="0:1:-1:-1:-4:-30:66:87:971:674" />
+	<localfile path="Z:\RPG\db\load.sql" linenum="1" placement="0:1:-1:-1:-4:-30:110:145:1015:732" />
+	<localfile path="Z:\RPG\root\party\generate.html" linenum="1" placement="0:1:-1:-1:-4:-30:132:174:1037:761" />
+	<localfile path="Z:\RPG\root\party\create.html" linenum="7" placement="0:1:-1:-1:-4:-30:154:203:1059:790" />
+	<localfile path="Z:\RPG\root\top.html" linenum="1" placement="0:1:-1:-1:-4:-30:176:232:1081:819" />
+	<localfile path="Z:\RPG\lib\RPG\M\CDBI\Player.pm" linenum="1" placement="0:1:-1:-1:-4:-30:44:58:949:645" />
+	<localfile path="Z:\RPG\lib\RPG\M\CDBI\Party.pm" linenum="10" placement="2:3:-1:-1:-4:-30:66:87:971:674" />
+</workspace>
+

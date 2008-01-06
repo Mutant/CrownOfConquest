@@ -1,0 +1,128 @@
+package RPG::C::Party;
+
+use strict;
+use warnings;
+use base 'Catalyst::Controller';
+
+use Data::Dumper;
+use Data::JavaScript;
+
+sub create : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/create.html',
+        }]
+    );
+    
+}
+ 
+sub list_characters : Local {   
+    my ($self, $c) = @_;
+    
+    my $party = $c->model('Party')->find( $c->session->{party_id} );
+
+    my @characters = $party->characters;
+        
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/list_characters.html',
+            params => {
+                characters => \@characters,
+                new_char_allowed => $c->config->{new_party_characters} > scalar @characters,
+            },
+        }]
+    );
+}
+
+sub new_character : Local {
+    my ($self, $c) = @_;
+    
+    if ($c->config->{new_party_characters} <= $c->model('Character')->count( {party_id => $c->session->{party_id}})) {
+        $c->forward('RPG::V::TT',
+            [{
+                template => 'party/max_characters.html',
+                params => {
+                    max_allowed => $c->config->{new_party_characters}
+                },
+            }]
+        )    
+    }
+    else {    
+        $c->forward('RPG::V::TT',
+            [{
+                template => 'party/new_character.html',
+                params => {
+                    races => [ $c->model('Race')->all ],
+                    classes => [ $c->model('Class')->all ],
+                    stats_pool => $c->config->{stats_pool},
+                },
+                fill_in_form => 1,
+            }]
+        );    
+    }
+}
+
+sub create_character : Local {
+    my ($self, $c) = @_;
+
+    unless ($c->req->param('name') && $c->req->param('race') && $c->req->param('class')) {
+        $c->stash->{error} = 'Please choose a name, race and class';
+        $c->detach('/party/new_character');
+    }
+
+    my $total_mod_points = 0;
+    foreach my $stat (@RPG::M::Character::STATS) {
+        $total_mod_points += $c->req->param('mod_' . $stat);
+    }
+
+    if ($total_mod_points > $c->config->{stats_pool}) {
+        $c->stash->{error} = "You've used more than the total stats pool!";
+        $c->detach('/party/new_character');
+    }
+
+    my $race = $c->model('Race')->find( $c->req->param('race') );
+    
+    my $class = $c->model('Class')->find({class_name => $c->req->param('class')});
+    
+    my $character = $c->model('Character')->create({
+        character_name => $c->req->param('name'),
+        class_id => $class->id,
+        race_id => $c->req->param('race'),
+        strength => $race->base_str + $c->req->param('mod_str'),
+        intelligence => $race->base_int + $c->req->param('mod_int'),
+        agility => $race->base_agl + $c->req->param('mod_agl'),
+        divinity => $race->base_div + $c->req->param('mod_div'),
+        constitution => $race->base_con + $c->req->param('mod_con'),
+        party_id => $c->session->{party_id},
+    });
+    
+    $character->roll_all;
+
+    $c->forward('/party/list_characters');
+}
+
+sub calculate_values : Local {
+    my ($self, $c) = @_;
+
+    return unless $c->req->param('class');
+    
+    my $class = $c->model('Class')->find({class_name => $c->req->param('class')});
+    
+    my %points = (
+        hit_points => RPG::Schema::Character->roll_hit_points($c->req->param('class'), 1, $c->req->param('total_con'))
+    );
+    
+    $points{magic_points} = RPG::Schema::Character->roll_magic_points(1, $c->req->param('total_int'))
+        if $class->class_name eq 'Mage';
+    
+    $points{faith_points} = RPG::Schema::Character->roll_faith_points(1, $c->req->param('total_div'))
+        if $class->class_name eq 'Priest';
+                
+    my $return = jsdump('points', \%points);
+    
+    $c->res->body($return);
+}
+
+1;

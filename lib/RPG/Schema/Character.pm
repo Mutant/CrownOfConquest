@@ -1,0 +1,317 @@
+use strict;
+use warnings;
+
+package RPG::Schema::Character;
+
+use base 'DBIx::Class';
+
+use Carp;
+
+__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->table('`Character`');
+
+__PACKAGE__->add_columns(
+    'character_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 1,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'character_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'character_name' => {
+      'data_type' => 'char',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'character_name',
+      'is_nullable' => 0,
+      'size' => '255'
+    },
+    'xp' => {
+      'data_type' => 'bigint',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'xp',
+      'is_nullable' => 0,
+      'size' => '20'
+    },
+    'class_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'class_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'race_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'race_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'strength' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'strength',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'intelligence' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'intelligence',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'agility' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'agility',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'divinity' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'divinity',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'constitution' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'constitution',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'hit_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'hit_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'level' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '1',
+      'is_foreign_key' => 0,
+      'name' => 'level',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'magic_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'magic_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'faith_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'faith_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'max_hit_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'max_hit_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'max_magic_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'max_magic_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'max_faith_points' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'max_faith_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'party_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'max_faith_points',
+      'is_nullable' => 1,
+      'size' => '11'
+    },
+
+);
+__PACKAGE__->set_primary_key('character_id');
+
+__PACKAGE__->belongs_to(
+    'class',
+    'RPG::Schema::Class',
+    { 'foreign.class_id' => 'self.class_id' }
+);
+
+__PACKAGE__->belongs_to(
+    'race',
+    'RPG::Schema::Race',
+    { 'foreign.race_id' => 'self.race_id' }
+);
+
+__PACKAGE__->has_many(
+    'items',
+    'RPG::Schema::Items',
+    { 'foreign.character_id' => 'self.character_id' }
+);
+
+our @STATS = qw(str con int div agl);
+
+sub roll_all {
+    my $self = shift;
+    my $c = shift;
+    
+    $self->roll_hit_points($c);
+    $self->roll_magic_points($c);
+    $self->roll_faith_points($c);
+}
+
+# Calcuates the point bonus for a stat (e.g. hit points, magic points).
+# If called as a class method, takes the value of the stat as first parameter
+# If called as instance method, takes the name of the stat
+sub point_bonus {
+    my $self = shift;
+    
+    my $stat_value = shift || $self->get_column(shift);
+    
+    return int $stat_value / RPG->config->{'point_dividend'};
+}
+
+# Rolls hit points for the next level.
+# If called as a class method, first parameter is level, second is class, third is value of con
+sub roll_hit_points {
+    my $self = shift;
+    
+    my $class;
+    if (ref $self) {
+        warn $self->class_id;
+        $class = $self->class->class_name;
+    }
+    else {
+        $class = shift;
+    }
+       
+    my $point_max = RPG->config->{level_hit_points_max}{$class};
+    
+    if (ref $self) {
+        my $points = $self->_roll_points('constitution', $point_max);
+        $self->max_hit_points($self->max_hit_points + $points);
+        $self->update;
+        
+        return $points;
+    }        
+    else {
+        my $level = shift || croak 'Level not supplied';
+        my $con = shift || croak 'Consitution not supplied';
+        return $self->_roll_points($level, $con, $point_max);
+    }
+}
+
+sub roll_magic_points {
+    my $self = shift;
+    
+    my $point_max = RPG->config->{level_magic_points_max};
+    
+    if (ref $self) {
+        return unless $self->class->class_name eq 'Mage';
+        my $points = $self->_roll_points('intelligence',$point_max);
+        $self->max_magic_points($self->max_magic_points + $points);
+        $self->update;
+        
+        return $points;
+    }
+    else {
+        my $level = shift || croak 'Level not supplied';
+        my $int = shift || croak 'Intelligence not supplied';
+        return $self->_roll_points($level, $int, $point_max);
+    }
+}
+
+sub roll_faith_points {
+    my $self = shift;
+    
+    my $point_max = RPG->config->{level_faith_points_max};
+    
+    if (ref $self) {
+        return unless $self->class->class_name eq 'Priest';
+        my $points = $self->_roll_points('divinity',$point_max);
+        
+        $self->max_faith_points($self->max_faith_points + $points);
+        $self->update;
+        
+        return $points;
+    }
+    
+    else {
+        my $level = shift || croak 'Level not supplied';
+        my $div = shift || croak 'Divinity not supplied';
+        return $self->_roll_points($level, $div, $point_max);
+    }
+}
+
+sub _roll_points {
+    my $self = shift;
+
+    my ($level, $stat);
+       
+    if (ref $self) {
+        $level = $self->level;
+        $stat = $self->get_column(shift);
+    }    
+    else {
+        $level = shift || croak 'Level not supplied';    
+        $stat = shift || croak 'Stat not supplied';
+    }        
+    
+    my $point_max = shift || croak 'point_max not supplied';
+    
+    my $points = $level == 1 ? $point_max : int rand $point_max;
+    
+    $points += $self->point_bonus($stat);
+    
+    return $points;
+    
+    # XXX: instance should update values here.
+}
+
+1;

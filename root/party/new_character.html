@@ -1,0 +1,182 @@
+[% INCLUDE top.html %]
+
+<h1>New Character</h1>
+
+<script src="[% base %]static/js/prototype.js" type="text/javascript">
+
+</script>
+
+<div style="visibility: hidden; position: absolute; top: 0px; z-index: -100" id="points-div"></div>
+
+<style>
+#stats-set {
+	display: block;
+	float: left;
+}
+
+.stat {
+	width: 70px;
+}
+
+.stat-header {
+	width: 70px;
+	min-width: 70px;
+}
+</style>
+
+<script>
+var points = Object();
+function calcPoints() {
+	var myAjax = new Ajax.Updater(
+		'points-div',
+		'[% base %]/party/calculate_values', 
+		{
+			method: 'get', 
+			parameters: Form.serialize(document.form), 
+			onComplete: populatePoints,
+		}
+	);
+}
+
+function populatePoints() {
+    eval($('points-div').innerHTML);
+
+    document.form.hit_points.value = points['hit_points'] || '';
+    document.form.magic_points.value = points['magic_points'] || '';
+    document.form.faith_points.value = points['faith_points'] || '';    
+}
+
+var raceStats = new Object;
+[% FOREACH race = races %]
+	var base = new Object;
+	base.str = '[% race.base_str %]';
+	base.int = '[% race.base_int %]';
+	base.div = '[% race.base_div %]';
+	base.con = '[% race.base_con %]';
+	base.agl = '[% race.base_agl %]';
+
+	raceStats['[% race.race_id %]'] = base;
+[% END %]
+
+var Stats = Array('str','int','div','con','agl');
+
+function processOnLoad() {
+	setBaseStats(document.getElementById('race-sel'));
+}
+
+function setBaseStats(raceSel) {
+	if (raceSel.value) {
+		document.form.base_str.value = raceStats[raceSel.value].str;
+		document.form.base_int.value = raceStats[raceSel.value].int;
+		document.form.base_div.value = raceStats[raceSel.value].div;
+		document.form.base_con.value = raceStats[raceSel.value].con;
+		document.form.base_agl.value = raceStats[raceSel.value].agl;
+	}
+	else {
+		document.form.base_str.value = null;
+		document.form.base_int.value = null;
+		document.form.base_div.value = null;
+		document.form.base_con.value = null;
+		document.form.base_agl.value = null;
+	}
+
+	for (var i=0; i<Stats.length; i++) {
+		calculateTotal(Stats[i]);
+	}
+	
+	calcPoints();
+}
+
+function calculateTotal(stat) {
+	input = Number(String(document.getElementsByName('mod_' + stat)[0].value));
+
+	base  = document.getElementsByName('base_' + stat)[0];
+    total = document.getElementsByName('total_' + stat)[0];
+    total.value = input + Number(String(base.value));
+
+	if (total.value == 'NaN') {
+		total.value = base.value;
+	}
+
+	var pool = [% stats_pool %];
+	for (var i=0; i<Stats.length; i++) {
+		stats_mod = Number(String(document.getElementsByName('mod_' + Stats[i])[0].value));
+		pool -= stats_mod;
+	}
+	document.getElementsByName('remaining')[0].value = pool;	
+}
+</script>
+
+<form name="form" method="post" action="[% base %]/party/create_character">
+
+<fieldset id="basic">
+<legend>Basic Information</legend>
+<label for="character_name">Character Name:</label>
+<input type="text" size="50" name="name" id="character_name"><br>
+
+<label for="race">Race:</label>
+<select name="race" id="race-sel" onChange="setBaseStats(this)">
+	<option></option>
+[% FOREACH race = races %]
+	<option value="[% race.id %]">[% race.race_name %]</option>
+[% END %]
+</select><br>
+
+<label for="class">Class:</label>
+<select name="class" onChange="calcPoints()">
+	<option></option>
+[% FOREACH class = classes %]
+	<option value="[% class.class_name %]">[% class.class_name %]</option>
+[% END %]
+</select><br>
+</fieldset>
+
+<fieldset id="stats-set">
+<legend>Stats</legend>
+
+<label></label>
+<span class="stat-header">Base</span>
+<span class="stat-header">Modifier</span>
+<span class="stat-header">Total</span><br>
+	
+<label for="stength">Strength:</label>
+<input type="text" size="3" name="base_str"  class="stat" disabled="disabled">
+<input type="text" size="3" name="mod_str"   class="stat" onkeyup="calculateTotal('str')" onChange="calcPoints()">
+<input type="text" size="3" name="total_str" class="stat" disabled="disabled"><br>
+
+<label for="stength">Agility:</label>
+<input type="text" size="3" name="base_agl"  class="stat" disabled="disabled">
+<input type="text" size="3" name="mod_agl"   class="stat" onkeyup="calculateTotal('agl')" onChange="calcPoints()">
+<input type="text" size="3" name="total_agl" class="stat" disabled="disabled"><br>
+
+<label for="stength">Intelligence:</label>
+<input type="text" size="3" name="base_int"  class="stat" disabled="disabled">
+<input type="text" size="3" name="mod_int"   class="stat" onkeyup="calculateTotal('int')" onChange="calcPoints()">
+<input type="text" size="3" name="total_int" class="stat" disabled="disabled"><br>
+
+<label for="stength">Divinity:</label>
+<input type="text" size="3" name="base_div"  class="stat" disabled="disabled">
+<input type="text" size="3" name="mod_div"   class="stat" onkeyup="calculateTotal('div')" onChange="calcPoints()">
+<input type="text" size="3" name="total_div" class="stat" disabled="disabled"><br>
+
+<label for="stength">Constitution:</label>
+<input type="text" size="3" name="base_con"  class="stat" disabled="disabled">
+<input type="text" size="3" name="mod_con"   class="stat" onkeyup="calculateTotal('con')" onChange="calcPoints()">
+<input type="text" size="3" name="total_con" class="stat" disabled="disabled"><br>
+<br>
+<label for="remaining">Points Remaining:</label>
+<input type="text" size="3" name="remaining" disabled="disabled" class="stat" value="[% stat_pool %]">
+</fieldset>
+<br>
+<label for="remaining">Hit Points:</label>
+<input type="text" size="3" name="hit_points" disabled="disabled" class="stat">
+<br>
+<label for="remaining">Magic Points:</label>
+<input type="text" size="3" name="magic_points" disabled="disabled" class="stat">
+<br>
+<label for="remaining">Faith Points:</label>
+<input type="text" size="3" name="faith_points" disabled="disabled" class="stat">
+<br>
+<input type="submit" value="Create Character">
+</form>
+[% INCLUDE bottom.html %]

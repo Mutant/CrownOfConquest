@@ -1,0 +1,49 @@
+<head>
+<style>
+label,input,select {
+	display: block;
+	width: 200px;
+	float: left;
+	margin-bottom: 5px;
+}
+
+label {
+	text-align: right;
+	width: 130px;
+	padding-right: 20px;
+	white-space: nowrap;
+}
+
+br {
+	clear: left;
+}
+
+.dojoDialog {
+        background : #eee;
+        border : 1px solid #999;
+        -moz-border-radius : 5px;
+        padding : 4px;
+}
+
+</style>
+
+<script>
+function processOnLoad() {
+	return;
+}
+</script>
+
+<script type="text/javascript">
+        var djConfig = {isDebug: true,debugContainerId: "dojoDebug" };
+        //djConfig.debugAtAllCosts = true;
+</script>
+
+<script type="text/javascript" src="[% base %]/dojo/dojo.js"></script>
+<script type="text/javascript" src="[% base %]/static/common.js"></script>
+
+</head>
+<body>
+[% IF error %]
+<div class="error">[% error %]</div>
+[% END %]
+<div id="dojoDebug"></div>

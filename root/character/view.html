@@ -1,0 +1,24 @@
+[% INCLUDE top.html %]
+
+<h1>[% character.character_name %]</h1>
+
+<div class="aligned" id="character">
+
+<div class="aligned-line">
+    <span class="aligned-label">Race:</span>
+    <span class="aligned-value">[% character.race.race_name %]</span>
+</div>
+
+<div class="aligned-line">
+    <span class="aligned-label">Class:</span>
+    <span class="aligned-value">[% character.class.class_name %]</span>
+</div>
+
+<div class="aligned-line">
+    <span class="aligned-label">Experience:</span>
+    <span class="aligned-value">[% character.xp %]</span>
+</div>
+
+</div>
+
+[% INCLUDE bottom.html %]

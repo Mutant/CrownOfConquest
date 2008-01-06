@@ -1,0 +1,13 @@
+<table border="1">
+[% FOREACH line = grid %]
+    [% IF line %]
+    <tr>
+    [% FOREACH position = line %]
+        [% IF position %]            
+        <td><a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> ([% position.x %], [% position.y %])</td>
+        [% END %]
+    [% END %]
+    </tr>
+    [% END %]
+[% END %]
+</table>

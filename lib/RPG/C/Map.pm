@@ -95,7 +95,8 @@ sub view : Local {
             template => 'map/generate_map.html',
             params => {
                 grid => \@grid,
-                current_position => $party_location->id,
+                current_position => $party_location,
+                party_movement_factor => $c->stash->{party}->movement_factor,
             },
             return_output => 1,
         }]
@@ -131,13 +132,13 @@ sub move_to : Local {
     
     # Check that the party has enough movement points
     my $movement_factor = $c->stash->{party}->movement_factor;
-    unless ($c->stash->{party}->turns >= $new_land->terrain->modifier + $movement_factor) {
+    unless ($c->stash->{party}->turns >= $new_land->movement_cost($movement_factor)) {
         $c->stash->{error} = 'You do not have enough movement points to move there';
         $c->detach($c->action);  
     }
         
     $c->stash->{party}->land_id($c->req->param('land_id'));
-    $c->stash->{party}->turns($c->stash->{party}->turns - ($new_land->terrain->modifier + $movement_factor));
+    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
     $c->stash->{party}->update;
     
     $c->res->redirect($c->action);    

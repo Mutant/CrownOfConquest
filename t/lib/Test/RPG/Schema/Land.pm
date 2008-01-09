@@ -70,4 +70,27 @@ sub test_next_to : Tests(5) {
 	}
 }
 
+sub test_movement_cost : Tests(1) {
+	my $self = shift;
+	
+	my @tests = (
+		{
+			modifier => 5,
+			movement_cost => 10,
+			result => 15,
+			desc => 'basic test',
+		},
+	);
+	
+	foreach my $test (@tests) {
+		my $mock_terrain = Test::MockObject->new;
+		$mock_terrain->set_always('modifier', $test->{modifier});
+	
+		my $mock_sector = Test::MockObject->new;
+		$mock_sector->set_always('terrain', $mock_terrain);
+		
+		is(RPG::Schema::Land::movement_cost($mock_sector, $test->{movement_cost}), $test->{result}, "movement_cost: " . $test->{desc});
+	}
+}
+
 1;

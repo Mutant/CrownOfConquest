@@ -4,8 +4,14 @@
     <tr>
     [% FOREACH position = line %]
         [% IF position %]            
-        <td [% IF position.id == current_position %]class="map_current_pos"[% END %] style="width: 200px">
-        	<a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> ([% position.x %], [% position.y %])
+        <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %] style="width: 200px">
+        	[% IF position.next_to(current_position) %]
+        		<a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> 
+        		([% position.movement_cost(party_movement_factor) %])
+        	[% ELSE %]        	
+				[% position.terrain.terrain_name %]
+        	[% END %]
+        	 ([% position.x %], [% position.y %])
         </td>
         [% END %]
     [% END %]

@@ -26,7 +26,7 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '255'
     },
-    'land_id' => {
+    'town_id' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,
       'default_value' => '',

@@ -5,22 +5,22 @@ package Test::RPG::Schema::Shop;
 
 use base qw(Test::RPG::DB);
 
-use Test::Exception;
+use Test::More;
 
 use RPG::Schema::Shop;
 
-sub test_schema_setup : Tests {
+sub test_schema_setup : Tests(7) {
 	my $self = shift;
 	
 	my $shop;
-	ok($shop = $self->{c}{schema}->resultset('Shop')->find(1), "finds a shop");
+	ok($shop = $self->{schema}->resultset('Shop')->find(1), "finds a shop");
 	
 	is($shop->id, 1);
 	
 	my @items;
 	ok(@items = $shop->items_in_shop, "gets list of items in the shop");
 	
-	ok($shop = $self->{c}{schema}->resultset('Shop')->search(
+	ok($shop = $self->{schema}->resultset('Shop')->search(
 	    {
 	        shop_id => 1,
 	    },
@@ -29,7 +29,7 @@ sub test_schema_setup : Tests {
 	is($shop->first->id, 1);
 	
 	my $item;
-	ok($item = $self->{c}{schema}->resultset('Item_Type')->search(
+	ok($item = $self->{schema}->resultset('Item_Type')->search(
 	    {
 	        'shop.shop_id' => 1,
 	    },
@@ -40,3 +40,5 @@ sub test_schema_setup : Tests {
 	
 	is($item->first->id, 1);
 }
+
+1;

@@ -71,8 +71,14 @@ sub next_to {
     }
     else {
         return 1;
-    }   
-    
+    }    
+}
+
+sub movement_cost {
+	my $self = shift;
+	my $movement_factor = shift || croak 'movement factor not supplied';
+	
+	return $self->terrain->modifier + $movement_factor;
 }
 
 1;

@@ -3,6 +3,8 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Party');
 
@@ -76,9 +78,10 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
-sub movement_factor : ResultSet {
+sub movement_factor {
 	my $self = shift;
-	
+
+	# TODO: cache this value so we don't have to query multiple times
 	my ($rec) = $self->result_source->schema->resultset('Character')->search(
 		{
 			party_id => $self->id,

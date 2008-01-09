@@ -52,7 +52,7 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => 0
     },
-    'movement_points' => {
+    'turns' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,
       'default_value' => '',
@@ -67,7 +67,7 @@ __PACKAGE__->set_primary_key('party_id');
 __PACKAGE__->has_many(
     'characters',
     'RPG::Schema::Character',
-    { 'foreign.party_id' => 'self.party_id' }
+    'party_id',
 );
 
 __PACKAGE__->belongs_to(
@@ -75,5 +75,21 @@ __PACKAGE__->belongs_to(
     'RPG::Schema::Land',
     { 'foreign.land_id' => 'self.land_id' }
 );
+
+sub movement_factor : ResultSet {
+	my $self = shift;
+	
+	my ($rec) = $self->result_source->schema->resultset('Character')->search(
+		{
+			party_id => $self->id,
+		},
+		{
+			select => { avg => 'constitution' },
+			as => 'avg_con',
+		}
+	);
+	
+	return int $rec->get_column('avg_con') / 3;
+}
 
 1;

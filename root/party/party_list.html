@@ -1,0 +1,29 @@
+<table>
+<tr>
+    <th>Name</th>
+    <th>Race</th>
+    <th>Class</th>
+    <th>HP</th>
+    <th>XP</th>
+    <th>S</th>
+    <th>I</th>
+    <th>A</th>        
+    <th>D</th>
+    <th>C</th>        
+</tr>
+    
+[% FOREACH char = characters %]
+<tr>
+    <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
+    <td>[% char.race.race_name %]</td>
+    <td>[% char.class.class_name %]</td>
+    <td>[% char.hit_points %] / [% char.max_hit_points %]</td>
+    <td>[% char.xp %]</td>
+    <td>[% char.strength %]</td>
+    <td>[% char.intelligence %]</td>
+    <td>[% char.agility %]</td>
+    <td>[% char.divinity %]</td>
+    <td>[% char.constitution %]</td>
+</tr>
+[% END %]
+</table>

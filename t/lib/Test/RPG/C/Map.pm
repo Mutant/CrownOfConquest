@@ -1,34 +1,31 @@
 use strict;
 use warnings;
 
-package Test::RPG::M::Map;
+package Test::RPG::C::Map;
 
-use base qw(Test::Class);
+use base qw(Test::RPG::DB);
 
 use Test::MockObject;
+use Test::More;
+
 use RPG::C::Map;
 
-sub setup_context : Test(setup) {
-	my $self = shift;
-	
-	my $mock_context = Test::MockObject->new;
-	
-	$self->{c} = $mock_context;
-	
-	#$mock_context->mock('stash');
-}
+use Data::Dumper;
 
-sub test_begin : Tests {
+sub test_auto : Tests(3) {
 	my $self = shift;
 	
-	$self->{c}->mock('session_id', {party_id => 1});
+	$self->{c}->set_always('session', {party_id => 1});
 	
-	RPG::C::Map->begin($self->{c});
+	my %stash;
+	$self->{c}->set_always('stash',\%stash);
 	
-	my ($method, $args) = $self->{c}->next_call;
+	is(RPG::C::Map->auto($self->{c}), 1, "Auto returned 1");
+	
+	my ($method, $args) = $self->{c}->next_call(3);
 	
 	is($method, 'stash', "Stash method called");
-	isa_ok($args->[0], '');	
+	isa_ok($stash{party}, "RPG::Schema::Party");	
 }
 
 1;

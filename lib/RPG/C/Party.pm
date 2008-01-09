@@ -7,6 +7,39 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use Data::JavaScript;
 
+sub main : Local {
+	my ($self, $c) = @_;
+
+	# TODO: refactor so it can be used by list_characters
+    my $party = $c->model('Party')->find( 
+    	{
+    		party_id => $c->session->{party_id},
+    	},
+    );
+
+    my @characters = $c->model('Character')->search(
+    	{
+    		party_id => $c->session->{party_id},
+    	},
+    	{
+    		prefetch => [qw/class race/],
+    	},
+	);
+	
+	my $map = $c->forward('/map/view');
+	
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/main.html',
+			params => {
+                party => $party,
+                map => $map,
+                characters => \@characters,
+			},
+        }]
+    );
+}
+
 sub create : Local {
     my ($self, $c) = @_;
     
@@ -14,21 +47,27 @@ sub create : Local {
         [{
             template => 'party/create.html',
         }]
-    );
-    
+    );    
 }
  
 sub list_characters : Local {   
     my ($self, $c) = @_;
     
-    my $party = $c->model('Party')->find( $c->session->{party_id} );
+    my $party = $c->model('Party')->find( 
+        {
+    		party_id => $c->session->{party_id},
+    	},
+    	{
+    		prefetch => {characters => 'class'},
+    	}, 
+	);
 
     my @characters = $party->characters;
         
     $c->forward('RPG::V::TT',
         [{
-            template => 'party/list_characters.html',
-            params => {
+            template => 'party/add_characters.html',
+            params => {            	
                 characters => \@characters,
                 new_char_allowed => $c->config->{new_party_characters} > scalar @characters,
             },

@@ -19,6 +19,7 @@ sub auto : Private {
     return 1;
 }
 
+=comment
 sub view : Local {
     my ($self, $c) = @_;
     
@@ -58,10 +59,12 @@ sub view : Local {
     # Display normal sector menu
     $c->forward('/map/generate_map');
 }
+=cut
 
-sub generate_map : Private {
+sub view : Local {
     my ($self, $c) = @_;
     
+    $c->forward('auto') unless $c->stash->{party};
     my $party_location = $c->stash->{party}->location;
 
     my ($start_point, $end_point) = RPG::Map->surrounds(
@@ -89,12 +92,12 @@ sub generate_map : Private {
     
     return $c->forward('RPG::V::TT',
         [{
-            template => 'map/view.html',
+            template => 'map/generate_map.html',
             params => {
                 grid => \@grid,
                 current_position => $party_location->id,
             },
-            #return_output => 1,
+            return_output => 1,
         }]
     );
 }
@@ -117,26 +120,27 @@ sub move_to : Local {
     
     unless ($new_land) {
         $c->stash->{error} = 'Land does not exist!';
-        $c->detach('/map/view');    
+        $c->detach($c->action);    
     }
     
     # Check that the new location is actually next to current position.
     unless ($c->stash->{party}->location->next_to($new_land)) {
         $c->stash->{error} = 'You can only move to a location next to your current one';
-        $c->detach('/map/view');
+        $c->detach($c->action);
     }    
     
     # Check that the party has enough movement points
-    unless ($c->stash->{party}->movement_points >= $new_land->terrain->modifier + 1) {
+    my $movement_factor = $c->stash->{party}->movement_factor;
+    unless ($c->stash->{party}->turns >= $new_land->terrain->modifier + $movement_factor) {
         $c->stash->{error} = 'You do not have enough movement points to move there';
-        $c->detach('/map/view');  
+        $c->detach($c->action);  
     }
         
     $c->stash->{party}->land_id($c->req->param('land_id'));
-    $c->stash->{party}->movement_points($c->stash->{party}->movement_points - ($new_land->terrain->modifier + 1));
+    $c->stash->{party}->turns($c->stash->{party}->turns - ($new_land->terrain->modifier + $movement_factor));
     $c->stash->{party}->update;
     
-    $c->res->redirect('/map/view');    
+    $c->res->redirect($c->action);    
 }
 
 1;

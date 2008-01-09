@@ -46,7 +46,15 @@ function processOnLoad() {
 
 </head>
 <body>
+
 [% IF error %]
 <div class="error">[% error %]</div>
 [% END %]
 <div id="dojoDebug"></div>
+
+<!-- needs to be replaced with divs soon! -->
+<table height="100%" width="100%" cellpadding="5">
+	<tr>
+		<td style="border-right: 1px solid black" width="100" valign="top">[% INCLUDE layout/left_hand_nav.html %]</td>
+		<td valign="top">
+		

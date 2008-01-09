@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::Schema::Land;
 
-use base qw(Test::Class);
+use base qw(Test::RPG);
 
 use Test::More;
 use Test::MockObject;
@@ -69,7 +69,5 @@ sub test_next_to : Tests(5) {
 		is(RPG::Schema::Land::next_to(@sectors), $test->{result}, $test->{desc});
 	}
 }
-
-__PACKAGE__->runtests();
 
 1;

@@ -21,8 +21,20 @@ sub auto : Private {
 
 sub default : Private {
     my ( $self, $c ) = @_;
+    
+    if ($c->session->{player_id}) {
+    	if ($c->session->{party_id}) {
+    		$c->forward('/party/main');
+    	}
+    	else {
+    		$c->forward('/party/create');
+    	}
+    }
+    else {
+    	# Login
+    }
 
-    $c->forward('/party/create');        
+    
 }
 
 

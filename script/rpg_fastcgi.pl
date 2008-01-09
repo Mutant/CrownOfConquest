@@ -3,6 +3,7 @@
 BEGIN { $ENV{CATALYST_ENGINE} ||= 'FastCGI' }
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use FindBin;
@@ -10,7 +11,7 @@ use lib "$FindBin::Bin/../lib";
 use RPG;
 
 my $help = 0;
-my ( $listen, $nproc, $pidfile, $manager, $detach );
+my ( $listen, $nproc, $pidfile, $manager, $detach, $keep_stderr );
  
 GetOptions(
     'help|?'      => \$help,
@@ -19,6 +20,7 @@ GetOptions(
     'pidfile|p=s' => \$pidfile,
     'manager|M=s' => \$manager,
     'daemon|d'    => \$detach,
+    'keeperr|e'   => \$keep_stderr,
 );
 
 pod2usage(1) if $help;
@@ -29,6 +31,7 @@ RPG->run(
         pidfile => $pidfile, 
         manager => $manager,
         detach  => $detach,
+	keep_stderr => $keep_stderr,
     }
 );
 
@@ -57,6 +60,8 @@ rpg_fastcgi.pl [options]
    -M -manager   specify alternate process manager
                  (FCGI::ProcManager sub-class)
                  or empty string to disable
+   -e -keeperr   send error messages to STDOUT, not
+                 to the webserver
 
 =head1 DESCRIPTION
 
@@ -65,10 +70,9 @@ Run a Catalyst application as fastcgi.
 =head1 AUTHOR
 
 Sebastian Riedel, C<sri@oook.de>
+Maintained by the Catalyst Core Team.
 
 =head1 COPYRIGHT
-
-Copyright 2004 Sebastian Riedel. All rights reserved.
 
 This library is free software, you can redistribute it and/or modify
 it under the same terms as Perl itself.

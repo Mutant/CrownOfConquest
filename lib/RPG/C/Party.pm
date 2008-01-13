@@ -28,12 +28,47 @@ sub main : Local {
 	
 	my $map = $c->forward('/map/view');
 	
+	# See if party is in same location as a creature
+    my @creatures = $c->model('DBIC::CreatureGroup')->search(
+        {
+            'x' => $party->location->x,
+            'y' => $party->location->y,
+        },
+        {
+            join => 'location',
+        },
+    );
+
+    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
+    #  the same square as another group. May pay to check this here and alert if there are more than one.
+    #  At any rate, we'll just look at the first group.        
+    my $creature_group = shift @creatures;
+   
+	my $bottom_panel;
+	    
+    # If there are creatures here, check to see if we go straight into an encounter
+    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
+        $c->stash->{creature_group} = $creature_group;
+		$bottom_panel = $c->forward('/combat/start',
+			[{
+				creature_group      => $creature_group,
+				creatures_initiated => 1,
+			}],
+		);
+    }
+    
+    # Get sector menu
+    else {
+    	
+    }	
+	
     $c->forward('RPG::V::TT',
         [{
             template => 'party/main.html',
 			params => {
                 party => $party,
                 map => $map,
+                bottom_panel => $bottom_panel,
                 characters => \@characters,
 			},
         }]

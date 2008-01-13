@@ -19,48 +19,6 @@ sub auto : Private {
     return 1;
 }
 
-=comment
-sub view : Local {
-    my ($self, $c) = @_;
-    
-    my $party_location = $c->stash->{party}->location;
-    
-    # See if party is in same location as a creature
-    my @creatures = $c->model('DBIC::CreatureGroup')->search(
-        {
-            'x' => $party_location->x,
-            'y' => $party_location->y,
-        },
-        {
-            join => 'location',
-        },
-    );
-
-    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
-    #  the same square as another group. May pay to check this here and alert if there are more than one.
-    #  At any rate, we'll just look at the first group.        
-    my $creature_group = shift @creatures;
-   
-    
-    # If there are creatures here, check to see if we go straight into an encounter
-    if ($creature_group) {
-        # Do they notice the party?
-        my $party_noticed = $c->config->{creature_notice_chance} <= int rand 100;
-        
-        # Do they decide to attack the party?
-        my $decide_to_attack = $c->config->{creature_attack_chance} <= int rand 100;
-        
-        if ($party_noticed && $decide_to_attack) {
-            # XXX: Combat starts
-            return;
-        }
-    }    
-        
-    # Display normal sector menu
-    $c->forward('/map/generate_map');
-}
-=cut
-
 sub view : Local {
     my ($self, $c) = @_;
     

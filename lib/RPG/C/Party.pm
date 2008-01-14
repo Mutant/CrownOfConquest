@@ -177,6 +177,12 @@ sub create_character : Local {
     $c->forward('/party/list_characters');
 }
 
+=head2 calculate_values
+
+Calculate hit point, magic point, and faith points (where appropriate) for a particular class
+
+=cut
+
 sub calculate_values : Local {
     my ($self, $c) = @_;
 

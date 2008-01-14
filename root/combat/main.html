@@ -1,0 +1,20 @@
+[% IF creatures_initiated %]
+	You have been attacked by a group of 
+	[% FOREACH summary IN creature_group.creature_summary %]
+		[% summary.value %] [% summary.key %][% IF summary.value > 1 %]s[% END %]
+		[% IF loop.size > 1 %]
+			[% UNLESS loop.size == loop.count + 1 %],
+			[% ELSE %]and
+			[% END %]
+		[% END %]
+	[% END %]
+[% END %]
+
+<table>
+[% FOREACH creature IN creature_group.creatures %]
+	<tr>
+		<td>[% creature.type.creature_type %]</td>
+		<td>[% creature.health %]</td>
+	</tr>
+[% END %]
+</table>

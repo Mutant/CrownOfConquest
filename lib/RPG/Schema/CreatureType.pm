@@ -12,4 +12,6 @@ __PACKAGE__->table('Creature_Type');
 
 __PACKAGE__->add_columns(qw/creature_type_id creature_type level/);
 
+__PACKAGE__->set_primary_key('creature_type_id');
+
 1;

@@ -224,7 +224,7 @@ sub roll_hit_points {
     
     my $class;
     if (ref $self) {
-        warn $self->class_id;
+        #warn $self->class_id;
         $class = $self->class->class_name;
     }
     else {

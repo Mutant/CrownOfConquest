@@ -9,18 +9,39 @@ use Data::Dumper;
 sub start : Local {
 	my ($self, $c, $params) = @_;
 	
-	warn Dumper {$params->{creature_group}->creature_summary};
+	$c->stash->{party}->in_combat_with($params->{creature_group}->id);
+	$c->stash->{party}->update;
+	
+	$c->forward('/combat/main', $params);
+		
+}
+
+sub default : Private {
+	my ($self, $c) = @_;
+	
+	$c->forward('/combat/main');
+}
+
+sub main : Local {
+	my ($self, $c, $params) = @_;
+	
+	my $creature_group = $params->{creature_group};
+	unless ($creature_group) {
+		$creature_group = $c->model('CreatureGroup')->find(
+			creature_group_id => $c->stash->{party}->in_combat_with,
+		);
+	}	
 	
 	return $c->forward('RPG::V::TT',
         [{
             template => 'combat/main.html',
 			params => {
-				creature_group => $params->{creature_group},
-				creatures_initiated => 1,
+				creature_group => $creature_group,
+				creatures_initiated => $params->{creatures_initiated},				
 			},
 			return_output => 1,
         }]
-    );		
+    );	
 }
 
 1;

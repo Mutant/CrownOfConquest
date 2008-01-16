@@ -11,15 +11,11 @@ sub main : Local {
 	my ($self, $c) = @_;
 
 	# TODO: refactor so it can be used by list_characters
-    my $party = $c->model('Party')->find( 
-    	{
-    		party_id => $c->session->{party_id},
-    	},
-    );
+    my $party = $c->stash->{party};
 
     my @characters = $c->model('Character')->search(
     	{
-    		party_id => $c->session->{party_id},
+    		party_id => $party->id,
     	},
     	{
     		prefetch => [qw/class race/],
@@ -27,40 +23,49 @@ sub main : Local {
 	);
 	
 	my $map = $c->forward('/map/view');
-	
-	# See if party is in same location as a creature
-    my @creatures = $c->model('DBIC::CreatureGroup')->search(
-        {
-            'x' => $party->location->x,
-            'y' => $party->location->y,
-        },
-        {
-            join => 'location',
-        },
-    );
 
-    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
-    #  the same square as another group. May pay to check this here and alert if there are more than one.
-    #  At any rate, we'll just look at the first group.        
-    my $creature_group = shift @creatures;
-   
 	my $bottom_panel;
+	
+	if ($party->in_combat_with) {
+		$bottom_panel = $c->forward('/combat'); 
+	}
+	else {	
+		# See if party is in same location as a creature
+	    my @creatures = $c->model('DBIC::CreatureGroup')->search(
+	        {
+	            'x' => $party->location->x,
+	            'y' => $party->location->y,
+	        },
+	        {
+	            join => 'location',
+	        },
+	    );
+	
+	    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
+	    #  the same square as another group. May pay to check this here and alert if there are more than one.
+	    #  At any rate, we'll just look at the first group.        
+	    my $creature_group = shift @creatures;
+	   
+		    
+	    # If there are creatures here, check to see if we go straight into an encounter
+	    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
+	        $c->stash->{creature_group} = $creature_group;
+			$bottom_panel = $c->forward('/combat/start',
+				[{
+					creature_group      => $creature_group,
+					creatures_initiated => 1,
+				}],
+			);
+	    }
 	    
-    # If there are creatures here, check to see if we go straight into an encounter
-    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
-        $c->stash->{creature_group} = $creature_group;
-		$bottom_panel = $c->forward('/combat/start',
-			[{
-				creature_group      => $creature_group,
-				creatures_initiated => 1,
-			}],
-		);
-    }
-    
-    # Get sector menu
-    else {
-    	
-    }	
+	    # Get sector menu
+	    # TODO: would be nice to have a way of figuring out if the party just moved here, so we don't have to go
+	    #   thru the above check for combat if they've been in this sector a while (altho still need to check
+	    #   in case creatures have moved into the sector while the party was doing something
+	    else {
+	    	
+	    }
+	}
 	
     $c->forward('RPG::V::TT',
         [{
@@ -88,14 +93,7 @@ sub create : Local {
 sub list_characters : Local {   
     my ($self, $c) = @_;
     
-    my $party = $c->model('Party')->find( 
-        {
-    		party_id => $c->session->{party_id},
-    	},
-    	{
-    		prefetch => {characters => 'class'},
-    	}, 
-	);
+    my $party = $c->stash->{party};
 
     my @characters = $party->characters;
         

@@ -6,19 +6,6 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 
-sub auto : Private {
-    my ($self, $c) = @_;
-
-    $c->stash->{party} = $c->model('Party')->find( 
-    	$c->session->{party_id},
-    	{
-    		prefetch => 'location',
-    	},
-	);
-    
-    return 1;
-}
-
 sub view : Local {
     my ($self, $c) = @_;
     

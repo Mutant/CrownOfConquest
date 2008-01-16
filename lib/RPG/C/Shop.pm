@@ -22,7 +22,7 @@ sub purchase : Local {
         }
     );
     
-    my $party = $c->model('Party')->find( $c->session->{party_id} );
+    my $party = $c->stash->{party};
 
     my @characters = $party->characters;
         
@@ -72,7 +72,7 @@ sub buy : Local {
     my ($self, $c) = @_;
     
     my $item_type = $c->model('Item_Type')->find( $c->req->param('item_type_id') );
-    my $party = $c->model('Party')->find( $c->session->{party_id} );
+    my $party = $c->stash->{party};
     
     if ($party->gold < $item_type->base_cost) {
         $c->res->body(jsdump(error => "Your party doesn't have enough gold to buy this item"));

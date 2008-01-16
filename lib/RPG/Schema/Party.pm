@@ -59,10 +59,19 @@ __PACKAGE__->add_columns(
       'is_auto_increment' => 0,
       'default_value' => '',
       'is_foreign_key' => 0,
-      'name' => 'gold',
+      'name' => 'turns',
       'is_nullable' => 0,
       'size' => 0
     },
+    'in_combat_with' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'in_combat_with',
+      'is_nullable' => 1,
+      'size' => 0
+    },    
 );
 __PACKAGE__->set_primary_key('party_id');
 

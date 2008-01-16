@@ -24,6 +24,11 @@
     <td>[% char.agility %]</td>
     <td>[% char.divinity %]</td>
     <td>[% char.constitution %]</td>
+    
+    [% IF party.in_combat_with %]
+    	<td><a href="/combat/select_action?action=Attack&character_id=[% char.id %]">Attack</a></td>
+    	<td><a href="/combat/select_action?action=Defend&character_id=[% char.id %]">Defend</a></td>    	
+    [% END %]
 </tr>
 [% END %]
 </table>

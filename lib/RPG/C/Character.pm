@@ -12,7 +12,7 @@ sub view : Local {
     
     my $character = $c->model('Character')->find({ 
         character_id => $c->req->param('character_id'),
-        party_id => $c->session->{party_id},
+        party_id => $c->stash->{party}->id,
     });
     
     $c->forward('RPG::V::TT',
@@ -30,7 +30,7 @@ sub item_list : Local {
     
     my $character = $c->model('Character')->find({ 
         character_id => $c->req->param('character_id'),
-        party_id => $c->session->{party_id},
+        party_id => $c->stash->{party}->id,
     });
     
     my @items = $character->items;

@@ -1,3 +1,26 @@
+<script>
+function selectAction(action, char_id) {
+	dojo.xhrGet( { //
+	        // The following URL must match that used to test the server.
+	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id, 
+	        handleAs: "text",
+	
+	        timeout: 5000, // Time in milliseconds
+	
+	        });
+	        
+	document.getElementById(action.toLowerCase() + '-' + char_id).class = "highlighted";
+	        
+	return false;
+}
+</script>
+
+<style>
+	.highlighted: {
+		background: #222222;
+	}
+</style>
+
 <table>
 <tr>
     <th>Name</th>
@@ -26,8 +49,8 @@
     <td>[% char.constitution %]</td>
     
     [% IF party.in_combat_with %]
-    	<td><a href="/combat/select_action?action=Attack&character_id=[% char.id %]">Attack</a></td>
-    	<td><a href="/combat/select_action?action=Defend&character_id=[% char.id %]">Defend</a></td>    	
+    	<td><a href="#" id="attack-[% char.id %]" onClick="selectAction('Attack','[% char.id %]')">Attack</a></td>
+    	<td><a href="#" id="defend-[% char.id %]" onClick="selectAction('Defend','[% char.id %]')">Defend</a></td>
     [% END %]
 </tr>
 [% END %]

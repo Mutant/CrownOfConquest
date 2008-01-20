@@ -27,7 +27,7 @@ sub main : Local {
 	my $bottom_panel;
 	
 	if ($party->in_combat_with) {
-		$bottom_panel = $c->forward('/combat'); 
+		$bottom_panel = $c->forward('/combat/main'); 
 	}
 	else {	
 		# See if party is in same location as a creature

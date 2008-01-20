@@ -44,4 +44,10 @@ sub main : Local {
     );	
 }
 
+sub select_action : Local {
+	my ($self, $c) = @_;
+	
+	$c->session->{combat_action}{$c->req->param('character_id')} = $c->req->param('action'); 
+}
+
 1;

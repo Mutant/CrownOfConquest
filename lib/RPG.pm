@@ -38,7 +38,9 @@ our $VERSION = '0.01';
 # Start the application
 #
 
-__PACKAGE__->config->{static}->{ignore_extensions} = []; 
+__PACKAGE__->config->{static}->{debug} = 1;
+
+#__PACKAGE__->config->{static}->{ignore_extensions} = []; 
 
 __PACKAGE__->setup;
 

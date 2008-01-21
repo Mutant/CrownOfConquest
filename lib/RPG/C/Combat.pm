@@ -47,6 +47,9 @@ sub main : Local {
 sub select_action : Local {
 	my ($self, $c) = @_;
 	
+	warn $c->req->param('character_id');
+	warn $c->req->param('action');
+	
 	$c->session->{combat_action}{$c->req->param('character_id')} = $c->req->param('action'); 
 }
 

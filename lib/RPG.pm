@@ -16,7 +16,7 @@ use RPG::Map;
 # Static::Simple: will serve static files from the application's root 
 #                 directory
 #
-use Catalyst qw/-Debug ConfigLoader Static::Simple Session::Flex/;
+use Catalyst;
 
 __PACKAGE__->config->{session} = { 
     Store => 'MySQL',
@@ -30,7 +30,7 @@ __PACKAGE__->config->{session} = {
     cookie_name => 'session', 
 };
 
-$ENV{DBIC_TRACE} = 1;
+#$ENV{DBIC_TRACE} = 1;
 
 our $VERSION = '0.01';
 
@@ -38,13 +38,16 @@ our $VERSION = '0.01';
 # Start the application
 #
 
+__PACKAGE__->setup( qw/-Debug ConfigLoader Static::Simple Session::Flex/ );
+
 __PACKAGE__->config->{static}->{debug} = 1;
+    
+__PACKAGE__->config->{static}->{dirs} = [
+	'static',
+];
 
-#__PACKAGE__->config->{static}->{ignore_extensions} = []; 
 
-__PACKAGE__->setup;
 
-# __PACKAGE__->model('DBIC')->storage->debug(1);
 
 
 1;

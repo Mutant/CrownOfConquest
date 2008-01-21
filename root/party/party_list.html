@@ -8,8 +8,12 @@ function selectAction(action, char_id) {
 	        timeout: 5000, // Time in milliseconds
 	
 	        });
+
+    // Ugly, but effective :|
+	document.getElementById('attack-' + char_id).style.border = "solid white 1px";
+	document.getElementById('defend-' + char_id).style.border = "solid white 1px";
 	        
-	document.getElementById(action.toLowerCase() + '-' + char_id).class = "highlighted";
+	document.getElementById(action.toLowerCase() + '-' + char_id).style.border = "solid black 1px";
 	        
 	return false;
 }
@@ -49,8 +53,8 @@ function selectAction(action, char_id) {
     <td>[% char.constitution %]</td>
     
     [% IF party.in_combat_with %]
-    	<td><a href="#" id="attack-[% char.id %]" onClick="selectAction('Attack','[% char.id %]')">Attack</a></td>
-    	<td><a href="#" id="defend-[% char.id %]" onClick="selectAction('Defend','[% char.id %]')">Defend</a></td>
+    	<td id="attack-[% char.id %]"><a href="#" onClick="selectAction('Attack','[% char.id %]')">Attack</a></td>
+    	<td id="defend-[% char.id %]"><a href="#" onClick="selectAction('Defend','[% char.id %]')">Defend</a></td>
     [% END %]
 </tr>
 [% END %]

@@ -22,3 +22,12 @@
 	</tr>
 [% END %]
 </table>
+
+[% IF combat_messages %]
+<b>Last Round</b>:
+<ul>
+	[% FOREACH message = combat_messages %]
+	<li>[% message %]</li>
+	[% END %]
+</ul>
+[% END %]

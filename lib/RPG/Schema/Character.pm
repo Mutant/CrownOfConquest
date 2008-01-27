@@ -314,4 +314,71 @@ sub _roll_points {
     # XXX: instance should update values here.
 }
 
+sub attack_factor {
+	my $self = shift;
+	
+	return $self->strength + $self->_calculate_equipped_modifier('Weapon'); 
+}
+
+sub defence_factor {
+	my $self = shift;
+		
+	return $self->dexterity + $self->_calculate_equipped_modifier('Armour');
+	
+}
+
+=head2 _calculate_equipped_modifier($equipment_cateogry)
+
+Calculate the modifier of all equipment of a particular category (e.g. "Weapon") equipped by this character.
+Will return '0' if no equipment of that type is worn.
+
+=cut
+
+sub _calculate_equipped_modifier {
+	my $self = shift;
+	my $category = shift || croak 'Category not supplied';
+	
+	my $eq_rs = $self->result_source->schema->resultset('Items')->search(
+		{
+			'character_id' => $self->id,
+			'category.item_category' => $category,
+		},
+		{
+			'join' => {'item_type' => 'category'},
+			'prefetch' => 'item_type',
+			'cache' => 1,
+		},
+	);
+	
+	my $modifier = 0;
+	while (my $item = $eq_rs->next) {
+		next unless $item;
+		$modifier += $item->item_type->basic_modifier + $item->magic_modifier;
+	}
+	
+	return $modifier;
+}
+
+sub hit {
+	my $self = shift;
+	my $damage = shift;
+	
+	my $new_hp_total = $self->hit_points - $damage;
+	$new_hp_total = 0 if $new_hp_total < 0;
+	
+	$self->hit_points($new_hp_total);
+	$self->update;
+}
+
+sub name {
+	my $self = shift;
+	return $self->character_name;	
+}
+
+sub is_dead {
+	my $self = shift;
+	
+	return $self->hit_points <= 0 ? 1 : 0;		
+}
+
 1;

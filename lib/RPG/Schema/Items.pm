@@ -43,7 +43,7 @@ __PACKAGE__->add_columns(
       'name' => 'name',
       'is_nullable' => 1,
       'size' => '255'
-    },
+    },    
     'character_id' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,

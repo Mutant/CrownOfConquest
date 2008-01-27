@@ -46,4 +46,39 @@ sub health {
 	}
 }
 
+sub hit {
+	my $self = shift;
+	my $damage = shift;
+	
+	my $new_hp_total = $self->hit_points_current - $damage;
+	$new_hp_total = 0 if $new_hp_total < 0;
+	
+	$self->hit_points_current($new_hp_total);
+	$self->update;
+}
+
+sub attack_factor {
+	my $self = shift;
+	
+	return $self->type->level * RPG->config->{creature_attack_ratio};	
+}
+
+sub defence_factor {
+	my $self = shift;
+	
+	return $self->type->level * RPG->config->{creature_defence_ratio};
+}
+
+sub name {
+	my $self = shift;
+	
+	return $self->type->creature_type; 
+}
+
+sub is_dead {
+	my $self = shift;
+	
+	return $self->hit_points_current <= 0 ? 1 : 0;		
+}
+
 1;

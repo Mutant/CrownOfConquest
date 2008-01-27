@@ -87,6 +87,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
+__PACKAGE__->might_have(
+    'cg_opponent',
+    'RPG::Schema::CreatureGroup',
+    { 'foreign.creature_group_id' => 'self.in_combat_with' }
+);
+
 sub movement_factor {
 	my $self = shift;
 

@@ -13,14 +13,7 @@ sub main : Local {
 	# TODO: refactor so it can be used by list_characters
     my $party = $c->stash->{party};
 
-    my @characters = $c->model('Character')->search(
-    	{
-    		party_id => $party->id,
-    	},
-    	{
-    		prefetch => [qw/class race/],
-    	},
-	);
+    my @characters = $c->stash->{party}->characters;
 	
 	my $map = $c->forward('/map/view');
 
@@ -37,7 +30,7 @@ sub main : Local {
 	            'y' => $party->location->y,
 	        },
 	        {
-	            join => 'location',
+	            join => [('location', {'creatures' => 'creature_type'})],
 	        },
 	    );
 	

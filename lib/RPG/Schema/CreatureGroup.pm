@@ -50,4 +50,13 @@ sub creature_summary {
 	return \%summary;
 }
 
+sub number_alive {
+	my $self = shift;
+
+	return $self->result_source->schema->resultset('Creature')->count({
+		hit_points_current => {'>',0},
+		creature_group_id => $self->id,	
+	});	
+}
+
 1;

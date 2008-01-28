@@ -35,7 +35,11 @@ sub main : Local {
 				prefetch => {'creatures' => 'type'},
 			},
 		);
-	}	
+	}
+	
+	if ($c->stash->{combat_complete}) {
+		$c->forward('/combat/finish');
+	}
 		
 	return $c->forward('RPG::V::TT',
         [{
@@ -66,18 +70,21 @@ sub fight : Local {
 	my $creature_group = $c->model('CreatureGroup')->find(
 		{
 			creature_group_id => $c->stash->{party}->in_combat_with,
-			#'creatures.hit_points_current' => {'>',0},
 		},
 		{
 			prefetch => {'creatures' => 'type'},
 		},
 	);	
 	
+	# Later actions might need this
+	$c->stash->{creature_group} = $creature_group;
+	
 	my @creatures = $creature_group->creatures;
+	my @characters = $c->stash->{party}->characters;
 	
 	my @party_messages;
 	
-	foreach my $character ($c->stash->{party}->characters) {
+	foreach my $character (@characters) {
 		next if $character->is_dead;
 		
 		if ($c->session->{combat_action}{$character->id} eq 'Attack') {
@@ -90,6 +97,7 @@ sub fight : Local {
 			
 			my $damage = $c->forward('attack', [$character, $creature]);
 
+			# TODO: might be better as a TT function
 			push @party_messages, $c->forward('RPG::V::TT',
 		        [{
 		            template => 'combat/message.html',
@@ -100,31 +108,72 @@ sub fight : Local {
 					},
 					return_output => 1,
 		        }]
-		    );			
+		    );
+		    
+		    # If creature is now dead, see if any other creatures are left alive.
+		    #  If not, combat is over.
+		    if ($creature->is_dead && $creature_group->number_alive == 0) {
+		    	push @party_messages, "The creatures have been killed!"; # TODO: placeholder
+		    	
+		    	# We don't actually do any of the stuff to complete the combat here, so a
+		    	#  later action can still display monsters, messages, etc.
+		    	$c->stash->{combat_complete} = 1;
+		    			    	
+		    	last;
+		    }
+		}
+	}
+	
+	unless ($c->stash->{combat_complete}) {	
+		foreach my $creature (@creatures) {
+			next if $creature->is_dead;
+	
+			my $character;
+			do {
+				$character = @characters[int rand($#characters)];
+			} while ($character->is_dead);
+			
+			my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
+				
+			my $damage = $c->forward('attack', [$creature, $character, $defending]);
+	
+			push @party_messages, $c->forward('RPG::V::TT',
+		        [{
+		            template => 'combat/message.html',
+					params => {
+						attacker => $creature,
+						defender => $character,
+						damage => $damage,
+					},
+					return_output => 1,
+		        }]
+		    );
+		    
+		    # TODO: check for dead party
 		}
 	}
 		
 	$c->stash->{combat_messages} = \@party_messages;
-	
-	$c->stash->{creature_group} = $creature_group;
 	
 	$c->forward('/party/main');
 	
 }
 
 sub attack : Private {
-	my ($self, $c, $attacker, $defender) = @_;
+	my ($self, $c, $attacker, $defender, $defending) = @_;
 		
 	my $a_roll = int rand RPG->config->{attack_dice_roll}; 
 	my $d_roll = int rand RPG->config->{defence_dice_roll};
+	
+	my $defence_bonus = $defending ? RPG->config->{defend_bonus} : 0; 
 
 	my $aq = $attacker->attack_factor  - $a_roll;	
-	my $dq = $defender->defence_factor - $d_roll;
+	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
 	
 	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
 	$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Roll: $d_roll Quotient: $dq"); 
+	$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
 	
 	my $damage = $aq - $dq;
 	
@@ -136,6 +185,17 @@ sub attack : Private {
 	$c->log->debug("Damage: $damage");
 	
 	return $damage;
+}
+
+sub finish : Private {
+	my ($self, $c) = @_;
+	
+	$c->stash->{party}->in_combat_with(undef);
+	$c->stash->{party}->update;
+	
+	$c->stash->{creature_group}->delete;
+	
+	# TODO: award xp
 }
 
 1;

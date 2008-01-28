@@ -30,7 +30,7 @@ sub main : Local {
 	            'y' => $party->location->y,
 	        },
 	        {
-	            join => [('location', {'creatures' => 'creature_type'})],
+	            join => [('location', {'creatures' => 'type'})],
 	        },
 	    );
 	

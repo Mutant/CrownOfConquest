@@ -323,7 +323,7 @@ sub attack_factor {
 sub defence_factor {
 	my $self = shift;
 		
-	return $self->dexterity + $self->_calculate_equipped_modifier('Armour');
+	return $self->agility + $self->_calculate_equipped_modifier('Armour');
 	
 }
 

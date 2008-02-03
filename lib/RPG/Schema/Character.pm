@@ -338,6 +338,8 @@ sub _calculate_equipped_modifier {
 	my $self = shift;
 	my $category = shift || croak 'Category not supplied';
 	
+	return $self->{_equip_modifier}{$category} if defined $self->{_equip_modifier}{$category};
+	
 	my $eq_rs = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
@@ -355,6 +357,8 @@ sub _calculate_equipped_modifier {
 		next unless $item;
 		$modifier += $item->item_type->basic_modifier + $item->magic_modifier;
 	}
+	
+	$self->{_equip_modifier}{$category} = $modifier;
 	
 	return $modifier;
 }

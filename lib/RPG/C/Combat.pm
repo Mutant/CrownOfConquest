@@ -40,7 +40,7 @@ sub main : Local {
 	if ($c->stash->{combat_complete}) {
 		$c->forward('/combat/finish');
 	}
-		
+
 	return $c->forward('RPG::V::TT',
         [{
             template => 'combat/main.html',
@@ -92,7 +92,7 @@ sub fight : Local {
 			# TODO: maybe this should be player selected?
 			my $creature;
 			do {
-				$creature = $creatures[int rand($#creatures)];
+				$creature = $creatures[int rand($#creatures + 1)];
 			} while ($creature->is_dead);
 			
 			my $damage = $c->forward('attack', [$character, $creature]);
@@ -129,9 +129,11 @@ sub fight : Local {
 			next if $creature->is_dead;
 	
 			my $character;
+			my $count; # XXX
 			do {
-				$character = @characters[int rand($#characters)];
-			} while ($character->is_dead);
+				my $rand = int rand($#characters + 1);
+				$character = $characters[$rand];
+			} while ($character->is_dead && $count++ < 20);
 			
 			my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
 				
@@ -153,7 +155,7 @@ sub fight : Local {
 		}
 	}
 		
-	$c->stash->{combat_messages} = \@party_messages;
+	push @{ $c->stash->{combat_messages} }, @party_messages;
 	
 	$c->forward('/party/main');
 	
@@ -170,10 +172,10 @@ sub attack : Private {
 	my $aq = $attacker->attack_factor  - $a_roll;	
 	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
 	
-	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
+	#$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
-	$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
+	#$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
+	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
 	
 	my $damage = $aq - $dq;
 	
@@ -185,6 +187,55 @@ sub attack : Private {
 	$c->log->debug("Damage: $damage");
 	
 	return $damage;
+}
+
+sub flee : Local {
+	my ($self, $c) = @_;
+	
+	my $rand = int rand 100;
+	$c->log->debug("Flee roll: $rand");
+	$c->log->debug("Flee chance: " . RPG->config->{flee_chance});
+	if ($rand < RPG->config->{flee_chance}) {
+	    my $party_location = $c->stash->{party}->location;
+
+		# Get adjacent squares
+    	my ($start_point, $end_point) = RPG::Map->surrounds(
+			$party_location->x,
+			$party_location->y,
+			3,
+			3,
+		);
+		
+		$c->log->debug(Dumper $start_point, Dumper $end_point);
+		
+		# Randomly choose a square to flee to
+		my ($new_x, $new_y);
+		do {
+			$new_x = $start_point->{x} + int rand($end_point->{x} - $start_point->{x} + 1);
+			$new_y = $start_point->{y} + int rand($end_point->{y} - $start_point->{y} + 1);
+		} while ($new_x == $party_location->x && $new_y == $party_location->y);
+		
+		$c->log->debug("Fleeing to: $new_x, $new_y");
+		
+		my $land = $c->model('Land')->find({
+			x => $new_x,
+			y => $new_y,
+		});
+		
+		$c->error("Couldn't find sector: $new_y, $new_y") unless $land;
+		
+		$c->stash->{party}->land_id($land->id);
+		$c->stash->{party}->in_combat_with(undef);
+    	# TODO: do we make them use up turns?
+    	$c->stash->{party}->update;
+    	$c->stash->{party}->discard_changes;
+    	
+    	$c->forward('/party/main');
+	}
+	else {
+		push @{ $c->stash->{combat_messages} }, 'You were unable to flee.';
+		$c->forward('/combat/fight');
+	}
 }
 
 sub finish : Private {

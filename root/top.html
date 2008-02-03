@@ -47,7 +47,7 @@ function processOnLoad() {
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body>
+<body onLoad="processOnLoad()">
 
 [% IF error %]
 <div class="error">[% error %]</div>

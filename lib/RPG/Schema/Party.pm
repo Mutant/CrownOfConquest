@@ -95,8 +95,9 @@ __PACKAGE__->might_have(
 
 sub movement_factor {
 	my $self = shift;
+	
+	return $self->{_movement_factor} if defined $self->{_movement_factor};
 
-	# TODO: cache this value so we don't have to query multiple times
 	my ($rec) = $self->result_source->schema->resultset('Character')->search(
 		{
 			party_id => $self->id,
@@ -107,7 +108,9 @@ sub movement_factor {
 		}
 	);
 	
-	return int $rec->get_column('avg_con') / 3;
+	$self->{_movement_factor} = int $rec->get_column('avg_con') / 3;
+	
+	return $self->{_movement_factor};
 }
 
 1;

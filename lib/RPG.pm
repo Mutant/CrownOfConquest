@@ -26,8 +26,9 @@ __PACKAGE__->config->{session} = {
     Lock => 'Null', 
     Generate => 'MD5', 
     Serialize => 'Storable', 
-    expires => '+10H', 
+    expires => '+1d', 
     cookie_name => 'session', 
+    domain => 'linux:3000',
 };
 
 $ENV{DBIC_TRACE} = 1;
@@ -38,7 +39,7 @@ our $VERSION = '0.01';
 # Start the application
 #
 
-__PACKAGE__->setup( qw/-Debug ConfigLoader Static::Simple Session::Flex/ );
+__PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex/ );
 
 __PACKAGE__->config->{static}->{debug} = 1;
     

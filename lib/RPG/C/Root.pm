@@ -13,9 +13,15 @@ __PACKAGE__->config->{namespace} = '';
 sub auto : Private {
     my ( $self, $c ) = @_;
     
+    $c->stats->profile(begin => 'auto');
+    
     # XXX: player id hard coded for now (need to implement login)
     $c->session->{player_id} = 1;
     $c->session->{party_id}  = 1;
+    
+    $c->log->debug($c->req->headers->as_string);
+    
+    $c->stats->profile("Running party query");
     
     $c->stash->{party} = $c->model('Party')->find(
     	{
@@ -27,12 +33,16 @@ sub auto : Private {
     	},
     );
     
+    $c->stats->profile("Finished party query");
+    
     # If the party is currently in combat, they must stay on the combat screen
     if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat/|) {
     	$c->stash->{error} = "You must flee before trying to move away!";
     	$c->forward('/party/main');
     	return 0;
     }
+    
+    $c->stats->profile(end => 'auto');
     
     return 1;
     

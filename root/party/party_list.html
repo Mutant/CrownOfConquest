@@ -17,6 +17,21 @@ function selectAction(action, char_id) {
 	        
 	return false;
 }
+
+function loadActions() {
+	[% FOREACH action IN combat_actions %]
+	var action = document.getElementById("[% action.value %]".toLowerCase() + '-' + "[% action.key %]");
+	
+	if (action) {
+		action.style.border = "solid black 1px";
+	}
+	[% END %]
+}
+
+function processOnLoad() {
+	loadActions();
+}
+
 </script>
 
 <style>
@@ -52,7 +67,7 @@ function selectAction(action, char_id) {
     <td>[% char.divinity %]</td>
     <td>[% char.constitution %]</td>
     
-    [% IF party.in_combat_with %]
+    [% IF party.in_combat_with && ! char.is_dead %]
     	<td id="attack-[% char.id %]"><a href="#" onClick="selectAction('Attack','[% char.id %]')">Attack</a></td>
     	<td id="defend-[% char.id %]"><a href="#" onClick="selectAction('Defend','[% char.id %]')">Defend</a></td>
     [% END %]

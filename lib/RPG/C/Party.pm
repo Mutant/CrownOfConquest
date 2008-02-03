@@ -68,6 +68,7 @@ sub main : Local {
                 map => $map,
                 bottom_panel => $bottom_panel,
                 characters => \@characters,
+                combat_actions => $c->session->{combat_action},
 			},
         }]
     );

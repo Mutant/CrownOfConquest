@@ -34,7 +34,7 @@ sub initiate_combat {
 	
 	my $roll = int rand 100;
 	
-	return 1; #$roll >= $chance;
+	return 0; #$roll >= $chance;
 }
 
 sub creature_summary {

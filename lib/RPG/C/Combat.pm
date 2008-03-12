@@ -8,11 +8,30 @@ use Data::Dumper;
 
 sub start : Local {
 	my ($self, $c, $params) = @_;
-	
+		
 	$c->stash->{party}->in_combat_with($params->{creature_group}->id);
 	$c->stash->{party}->update;
 	
 	$c->forward('/combat/main', $params);
+		
+}
+
+sub party_attacks : Local {
+	my ($self, $c) = @_;
+	
+	my $creature_group = $c->model('DBIC::CreatureGroup')->search(
+		creature_group_id => $c->req->param('creature_group_id'),
+		land_id => $c->stash->{party}->land_id,
+	)->first;
+	
+	if ($creature_group) {
+		$c->stash->{party}->in_combat_with($creature_group->id);
+		$c->stash->{party}->update;
+		$c->forward('/party/main');
+	}
+	else {
+		$c->error("Couldn't find creature group in party's location.");
+	}
 		
 }
 
@@ -86,6 +105,8 @@ sub fight : Local {
 	
 	foreach my $character (@characters) {
 		next if $character->is_dead;
+		
+		#$c->log->debug(Dumper $c->session->{combat_action});
 		
 		if ($c->session->{combat_action}{$character->id} eq 'Attack') {
 			# Choose creature to attack

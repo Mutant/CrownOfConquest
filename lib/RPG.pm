@@ -28,7 +28,7 @@ __PACKAGE__->config->{session} = {
     Serialize => 'Storable', 
     expires => '+1d', 
     cookie_name => 'session', 
-    domain => 'linux:3000',
+    domain => '',
 };
 
 $ENV{DBIC_TRACE} = 1;

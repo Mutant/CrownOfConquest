@@ -14,14 +14,7 @@
 	[% END %]
 [% END %]
 
-<table>
-[% FOREACH creature IN creature_group.creatures %]
-	<tr>
-		<td>[% creature.type.creature_type %]</td>
-		<td>[% creature.health %]</td>
-	</tr>
-[% END %]
-</table>
+[% INCLUDE combat/creature_group.html %]
 
 [% IF combat_messages %]
 <b>Last Round</b>:

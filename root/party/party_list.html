@@ -34,13 +34,18 @@ function processOnLoad() {
 
 </script>
 
+<script type="text/javascript"> 
+        dojo.require("dojo.dnd.Source");
+        dojo.require("dojo.parser");   
+</script
+
 <style>
 	.highlighted: {
 		background: #222222;
 	}
 </style>
 
-<table>
+<table dojoType="dojo.dnd.Source" jsId="c1" accept="character">
 <tr>
     <th>Name</th>
     <th>Race</th>
@@ -55,7 +60,7 @@ function processOnLoad() {
 </tr>
     
 [% FOREACH char = characters %]
-<tr>
+<tr class="dojoDndItem" dndType="character">
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
     <td>[% char.class.class_name %]</td>

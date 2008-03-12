@@ -18,6 +18,7 @@ sub main : Local {
 	my $map = $c->forward('/map/view');
 
 	my $bottom_panel;
+	my $creature_group;
 	
 	if ($party->in_combat_with) {
 		$bottom_panel = $c->forward('/combat/main'); 
@@ -30,15 +31,14 @@ sub main : Local {
 	            'y' => $party->location->y,
 	        },
 	        {
-	            join => [('location', {'creatures' => 'type'})],
+	            prefetch => [('location', {'creatures' => 'type'})],
 	        },
 	    );
 	
 	    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
-	    #  the same square as another group. May pay to check this here and alert if there are more than one.
+	    #  the same square as another group. May pay to check this here and fatal if there are more than one.
 	    #  At any rate, we'll just look at the first group.        
-	    my $creature_group = shift @creatures;
-	   
+	    $creature_group = shift @creatures;	   
 		    
 	    # If there are creatures here, check to see if we go straight into an encounter
 	    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
@@ -49,7 +49,7 @@ sub main : Local {
 					creatures_initiated => 1,
 				}],
 			);
-	    }
+	    }		   
 	    
 	    # Get sector menu
 	    # TODO: would be nice to have a way of figuring out if the party just moved here, so we don't have to go
@@ -69,6 +69,7 @@ sub main : Local {
                 bottom_panel => $bottom_panel,
                 characters => \@characters,
                 combat_actions => $c->session->{combat_action},
+                creature_group => $creature_group
 			},
         }]
     );

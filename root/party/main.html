@@ -11,8 +11,21 @@ Gold: [% party.gold %] Turns: [% party.turns %] Movement Factor: [% party.moveme
 
 [% INCLUDE party/party_list.html %]
 
+[% UNLESS party.in_combat_with %]
+<br>
+[ 
+	<a href="/party/camp">Camp</a> 
+	| <a href="/party/forage">Forage</a> 
+	[% IF creature_group %] | <a href="/combat/party_attacks?creature_group_id=[% creature_group.id %]">Attack Creatures</a>[% END %] 
+]
+<br>
+[% END %]
+
 <br>
 
 [% bottom_panel %]
+[% IF ! bottom_panel && creature_group %]
+	[% INCLUDE combat/creature_group.html %]
+[% END %]
 
 [% INCLUDE bottom.html %]

@@ -9,8 +9,10 @@ use Data::Dumper;
 sub view : Local {
     my ($self, $c) = @_;
     
+    #$c->stats->profile("Entered /map/view");
     $c->forward('auto') unless $c->stash->{party};
     my $party_location = $c->stash->{party}->location;
+	#$c->stats->profile("Got party's location");
 
     my ($start_point, $end_point) = RPG::Map->surrounds(
                                         $party_location->x,
@@ -18,6 +20,8 @@ sub view : Local {
                                         $c->config->{map_x_size},
                                         $c->config->{map_y_size},
                                     );
+                                    
+	#$c->stats->profile("Got start and end point");                                    
     
     my @area = $c->model('Land')->search(
         {
@@ -29,11 +33,15 @@ sub view : Local {
         },
     );
     
+    #$c->stats->profile("Queried db for sectors");
+    
     my @grid;
     
     foreach my $location (@area) {
         $grid[$location->x][$location->y] = $location;
     }
+    
+    #$c->stats->profile("Built grid");
     
     return $c->forward('RPG::V::TT',
         [{

@@ -68,6 +68,12 @@ __PACKAGE__->has_many(
     { 'foreign.item_type_id' => 'self.item_type_id' }
 );
 
+__PACKAGE__->has_many(
+    'item_attributes',
+    'RPG::Schema::Item_Attributes',
+    { 'foreign.item_type_id' => 'self.item_type_id' }
+);
+
 __PACKAGE__->many_to_many(
     'shops',
     'RPG::Schema::Shops',

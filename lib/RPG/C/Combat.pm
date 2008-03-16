@@ -193,19 +193,21 @@ sub attack : Private {
 	my $aq = $attacker->attack_factor  - $a_roll;	
 	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
 	
-	#$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
+	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
-	#$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
+	$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
+	$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
 	
-	my $damage = $aq - $dq;
+	my $damage = 0;
 	
-	if ($damage > 0) {
+	if ($aq > $dq) {
 		# Attack hits
+		$damage = (int rand $attacker->damage)+1;
+		
 		$defender->hit($damage);
-	}
-	
-	$c->log->debug("Damage: $damage");
+		
+		$c->log->debug("Damage: $damage");
+	}	
 	
 	return $damage;
 }

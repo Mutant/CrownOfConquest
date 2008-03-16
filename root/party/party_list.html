@@ -37,13 +37,46 @@ function processOnLoad() {
 <script type="text/javascript"> 
         dojo.require("dojo.dnd.Source");
         dojo.require("dojo.parser");   
-</script
+        dojo.subscribe("/dnd/drop/after", function(source,nodes,iscopy, target){
+	    	nodes = target.getAllNodes();
+	    	var order = '';
+	    	for(count = 0; count < nodes.length; count++) {
+	    		order_val = nodes[count].id.split(/-/);
+	    		order += "order=" + order_val[1];
+	    		order += '&';
+	    	}
+	    		    	
+	    	dojo.xhrGet( {
+		        url: "[% base %]/party/set_order?" + order, 
+		        handleAs: "text",
+	
+	    	    timeout: 5000, // Time in milliseconds	
+	        });
+		});
+        
+</script>
 
-<style>
-	.highlighted: {
-		background: #222222;
-	}
-</style>
+<style type="text/css">
+		.highlighted: {
+			background: #222222;
+		}
+
+        .target {border: 1px dotted gray; width: 300px; height: 300px;padding: 5px;
+              -moz-border-radius:8pt 8pt;radius:8pt;}
+        .source {border: 1px dotted skyblue;height: 200px; width: 300px;
+               -moz-border-radius:8pt 8pt;radius:8pt;}
+        .dojoDndItemOver {background: #feb;border: 1px dotted gray; }
+        .dojoDndItemBefore {border-left: 2px dotted gray; }
+        .dojoDndItemAfter {border-right: 2px dotted gray; }
+        .target .dojoDndItemAnchor {border:1px solid gray;}
+        .dojoDndAvatar {font-size: 75%; color: black;}
+        .dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px}
+        .dojoDndAvatarHeader {background: #ccc; background-repeat: no-repeat;}
+        .dojoDndAvatarItem {background: #eee;}
+        .dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
+        .dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
+                url(images/dndMove.png);}
+</style>	
 
 <table dojoType="dojo.dnd.Source" jsId="c1" accept="character">
 <tr>
@@ -60,7 +93,7 @@ function processOnLoad() {
 </tr>
     
 [% FOREACH char = characters %]
-<tr class="dojoDndItem" dndType="character">
+<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]">
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
     <td>[% char.class.class_name %]</td>

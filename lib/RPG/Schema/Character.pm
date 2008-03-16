@@ -173,6 +173,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 1,
       'size' => '11'
     },
+    'party_order' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'max_faith_points',
+      'is_nullable' => 0,
+      'size' => '11'
+    },    
 
 );
 __PACKAGE__->set_primary_key('character_id');
@@ -327,6 +336,26 @@ sub defence_factor {
 	
 }
 
+=head1 damage
+
+Max damage the character can do with the weapon they currently have equipped
+
+=cut
+
+sub damage {
+	my $self = shift;
+	
+	my $eq_rs = $self->_get_equipped_items('Weapon');
+	
+	my $weapon = $eq_rs->first;
+	
+	return 2 unless $weapon; # nothing equipped, assume bare hands
+	
+	my $attribute = $weapon->item_type->search_related('item_attributes', { 'item_attribute_id' => 'Damage' })->first;
+	
+	return $attribute->item_attribute_value;
+}
+
 =head2 _calculate_equipped_modifier($equipment_cateogry)
 
 Calculate the modifier of all equipment of a particular category (e.g. "Weapon") equipped by this character.
@@ -340,6 +369,29 @@ sub _calculate_equipped_modifier {
 	
 	return $self->{_equip_modifier}{$category} if defined $self->{_equip_modifier}{$category};
 	
+	my $eq_rs = $self->_get_equipped_items($category);
+	
+	my $modifier = 0;
+	while (my $item = $eq_rs->next) {
+		next unless $item;
+		$modifier += $item->item_type->basic_modifier + $item->magic_modifier;
+	}
+	
+	$self->{_equip_modifier}{$category} = $modifier;
+	
+	return $modifier;
+}
+
+=head2 _get_equipped_items($category)
+
+Return a record set of equipped items for a given category
+
+=cut
+
+sub _get_equipped_items {
+	my $self = shift;
+	my $category = shift || croak 'Category not supplied';
+
 	my $eq_rs = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
@@ -352,15 +404,7 @@ sub _calculate_equipped_modifier {
 		},
 	);
 	
-	my $modifier = 0;
-	while (my $item = $eq_rs->next) {
-		next unless $item;
-		$modifier += $item->item_type->basic_modifier + $item->magic_modifier;
-	}
-	
-	$self->{_equip_modifier}{$category} = $modifier;
-	
-	return $modifier;
+	return $eq_rs;
 }
 
 sub hit {

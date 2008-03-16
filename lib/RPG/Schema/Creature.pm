@@ -81,4 +81,10 @@ sub is_dead {
 	return $self->hit_points_current <= 0 ? 1 : 0;		
 }
 
+sub damage {
+	my $self = shift;
+	
+	return $self->type->level * 2;	
+}
+
 1;

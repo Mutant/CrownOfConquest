@@ -198,4 +198,20 @@ sub calculate_values : Local {
     $c->res->body($return);
 }
 
+sub set_order : Local {
+	my ($self, $c) = @_;
+	
+	my $count = 1;
+	
+	foreach my $char_id ($c->req->param('order')) {
+		my $char = $c->model('DBIC::Character')->find({character_id => $char_id});
+		next if $char->party_id != $c->session->{party_id};
+	
+		$char->party_order($count);
+		$char->update;
+		$count++;
+	}
+	
+}
+
 1;

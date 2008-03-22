@@ -6,6 +6,8 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 
+use Games::Dice::Advanced;
+
 sub start : Local {
 	my ($self, $c, $params) = @_;
 		
@@ -117,6 +119,9 @@ sub fight : Local {
 			} while ($creature->is_dead);
 			
 			my $damage = $c->forward('attack', [$character, $creature]);
+			
+			# Store damage done for XP purposes
+			$c->session->{damage_done}{$character->id}+=$damage;
 
 			# TODO: might be better as a TT function
 			push @party_messages, $c->forward('RPG::V::TT',
@@ -145,6 +150,9 @@ sub fight : Local {
 		}
 	}
 	
+	warn "Damage done:\n";
+	warn Dumper $c->session->{damage_done};
+	
 	unless ($c->stash->{combat_complete}) {	
 		foreach my $creature (@creatures) {
 			next if $creature->is_dead;
@@ -157,6 +165,9 @@ sub fight : Local {
 			} while ($character->is_dead && $count++ < 20);
 			
 			my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
+			
+			# Count number of times attacked for XP purposes
+			$c->session->{attack_count}{$character->id}++;
 				
 			my $damage = $c->forward('attack', [$creature, $character, $defending]);
 	
@@ -264,12 +275,97 @@ sub flee : Local {
 sub finish : Private {
 	my ($self, $c) = @_;
 	
+	
+	my @creatures = $c->stash->{creature_group}->creatures;
+	
+	my $xp;
+	
+	my $level_aggr = 0;
+	foreach my $creature (@creatures) {
+		# Generate random modifier between 0.6 and 1.5
+		my $rand = (Games::Dice::Advanced->roll('1d10') / 10) + 0.5;
+		$xp += int ($creature->type->level * $rand * RPG->config->{xp_multiplier});
+		
+		$level_aggr += $creature->type->level; 
+	}
+	my $avg_creature_level = $level_aggr / scalar @creatures;
+		
+	#my %chars = map { $_->id => $_ } $c->stash->{party}->characters;
+	my @characters = $c->stash->{party}->characters;
+	
+	my $awarded_xp = $c->forward('/combat/distribute_xp', [ $xp, [map { $_->id } @characters] ] );
+	
+	warn "awarded xp:";
+	warn Dumper $awarded_xp;
+	
+	foreach my $character (@characters) {
+		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
+		
+		$character->xp($character->xp + $awarded_xp->{$character->id});
+		$character->update;
+	}
+		
+	my $gold = scalar @creatures * $avg_creature_level * Games::Dice::Advanced->roll('1d10');
+	
+	push @{$c->stash->{combat_messages}}, "You find $gold gold";
 	$c->stash->{party}->in_combat_with(undef);
-	$c->stash->{party}->update;
+	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
+	$c->stash->{party}->update;	
 	
 	$c->stash->{creature_group}->delete;
+}
+
+sub distribute_xp : Private {
+	my ($self, $c, $xp, $char_ids) = @_;
 	
-	# TODO: award xp
+	#warn Dumper [$xp, $char_ids];
+	
+	my %awarded_xp;
+	
+	# Everyone gets 5% to start with
+	my $min_xp = int $xp * 0.05; 
+	@awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
+	$xp-=$min_xp * scalar @$char_ids;
+		
+	# Work out total damage, and total attacks made
+	my ($total_damage, $total_attacks);
+	map { $total_damage+=$_  } values %{$c->session->{damage_done}};
+	map { $total_attacks+=$_ } values %{$c->session->{attack_count}}; 
+
+	# Assign each character XP points, up to a max of 30% of the pool
+	# (note, they can actually get up to 35%, but we've already given them 5% above)
+	# Damage done vs attacks recieved is weighted at 60/40
+	my $total_awarded = 0;
+	foreach my $char_id (@$char_ids) {
+		my ($damage_percent, $attacked_percent) = (0,0);
+		
+		$damage_percent   = ($c->session->{damage_done}{$char_id} / $total_damage)  * 0.6
+			if $total_damage > 0;
+		$attacked_percent = ($c->session->{attack_count}{$char_id}/ $total_attacks) * 0.4
+			if $total_attacks > 0;
+			
+				my $total_percent = $damage_percent + $attacked_percent;
+		$total_percent = 0.35 if $total_percent > 0.35;
+		
+		my $xp_awarded = int $xp * $total_percent;
+				
+		$awarded_xp{$char_id}+=$xp_awarded;
+		$total_awarded+=$xp_awarded;
+	}
+	
+	# Figure out how much is left, if any
+	$xp -= $total_awarded;
+	
+	# If there's any XP left, divide it up amongst the party. We round down, so some could be lost
+	if ($xp > 0) {
+		my $spare_xp = int ($xp / scalar @$char_ids);
+		map { $awarded_xp{$_}+=$spare_xp } keys %awarded_xp; 
+	}
+	
+	undef $c->session->{damage_done};
+	undef $c->session->{attack_count};
+	
+	return \%awarded_xp;
 }
 
 1;

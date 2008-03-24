@@ -18,13 +18,18 @@ sub main : Local {
 	my $map = $c->forward('/map/view');
 
 	my $bottom_panel;
-	my $creature_group;
 	
-	if ($party->in_combat_with) {
+	if ($party->location->town) {
+		$bottom_panel = $c->forward('/town/main');
+	}
+	elsif ($party->in_combat_with) {
 		$bottom_panel = $c->forward('/combat/main'); 
 	}
 	else {	
 		# See if party is in same location as a creature
+	    # TODO: would be nice to have a way of figuring out if the party just moved here, so we don't have to go
+	    #   thru this check for combat if they've been in this sector a while (altho still need to check
+	    #   in case creatures have moved into the sector while the party was doing something		
 	    my @creatures = $c->model('DBIC::CreatureGroup')->search(
 	        {
 	            'x' => $party->location->x,
@@ -38,9 +43,9 @@ sub main : Local {
 	    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
 	    #  the same square as another group. May pay to check this here and fatal if there are more than one.
 	    #  At any rate, we'll just look at the first group.        
-	    $creature_group = shift @creatures;	   
+	    my $creature_group = shift @creatures;	   
 		    
-	    # If there are creatures here, check to see if we go straight into an encounter
+	    # If there are creatures here, check to see if we go straight into a combat
 	    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
 	        $c->stash->{creature_group} = $creature_group;
 			$bottom_panel = $c->forward('/combat/start',
@@ -49,14 +54,19 @@ sub main : Local {
 					creatures_initiated => 1,
 				}],
 			);
-	    }		   
+    	}		   
 	    
-	    # Get sector menu
-	    # TODO: would be nice to have a way of figuring out if the party just moved here, so we don't have to go
-	    #   thru the above check for combat if they've been in this sector a while (altho still need to check
-	    #   in case creatures have moved into the sector while the party was doing something
+	    # Get standard sector menu, plus display create group if present (and combat hasn't yet started)
 	    else {
-	    	
+			$bottom_panel = $c->forward('RPG::V::TT',
+		        [{
+		            template => 'party/sector_menu.html',
+					params => {
+		                creature_group => $creature_group
+					},
+					return_output => 1,
+		        }]
+		    );		    	    	
 	    }
 	}
 	
@@ -69,7 +79,6 @@ sub main : Local {
                 bottom_panel => $bottom_panel,
                 characters => \@characters,
                 combat_actions => $c->session->{combat_action},
-                creature_group => $creature_group
 			},
         }]
     );

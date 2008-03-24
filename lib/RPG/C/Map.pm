@@ -94,7 +94,7 @@ sub move_to : Local {
     $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
     $c->stash->{party}->update;
     
-    $c->res->redirect('/');    
+    $c->res->redirect('/');
 }
 
 1;

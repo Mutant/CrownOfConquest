@@ -55,6 +55,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.terrain_id' => 'self.terrain_id' }
 );
 
+__PACKAGE__->might_have(
+    'town',
+    'RPG::Schema::Town',
+    { 'foreign.land_id' => 'self.land_id' }
+);
+
 sub next_to {
     my $self = shift;
     my $compare_to = shift || croak 'sector to compare to not supplied';

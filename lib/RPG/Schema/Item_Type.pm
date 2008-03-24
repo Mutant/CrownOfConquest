@@ -53,6 +53,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
+    'prevalence' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'prevalence',
+      'is_nullable' => 0,
+      'size' => '11'
+    },    
 );
 __PACKAGE__->set_primary_key('item_type_id');
 
@@ -64,7 +73,7 @@ __PACKAGE__->belongs_to(
 
 __PACKAGE__->has_many(
     'shops_with_item',
-    'RPG::Schema::Items_In_Shop',
+    'RPG::Schema::Items_Made',
     { 'foreign.item_type_id' => 'self.item_type_id' }
 );
 

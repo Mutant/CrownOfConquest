@@ -44,19 +44,43 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
+    'status' => {
+      'data_type' => 'varchar',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'status',
+      'is_nullable' => 0,
+      'size' => '20'
+    },    
+    'shop_size' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'shop_size',
+      'is_nullable' => 0,
+      'size' => '11'
+    },    
 );
 __PACKAGE__->set_primary_key('shop_id');
 
 __PACKAGE__->has_many(
-    'items_in_shop',
-    'RPG::Schema::Items_In_Shop',
+    'items_made',
+    'RPG::Schema::Items_Made',
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
 __PACKAGE__->many_to_many(
     'item_types',
     'RPG::Schema::Items_Type',
+    'items_made',
+);
+
+__PACKAGE__->has_many(
     'items_in_shop',
+    'RPG::Schema::Items',
+    { 'foreign.shop_id' => 'self.shop_id' }
 );
 
 1;

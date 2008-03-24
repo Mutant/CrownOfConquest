@@ -12,4 +12,6 @@ __PACKAGE__->table('Trait');
 
 __PACKAGE__->add_columns(qw/trait_id trait last_used/);
 
+__PACKAGE__->set_primary_key('trait_id');
+
 1;

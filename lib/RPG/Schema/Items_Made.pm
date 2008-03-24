@@ -1,10 +1,10 @@
-package RPG::Schema::Items_In_Shop;
+package RPG::Schema::Items_Made;
 use base 'DBIx::Class';
 use strict;
 use warnings;
 
 __PACKAGE__->load_components(qw/ Core/);
-__PACKAGE__->table('Items_In_Shop');
+__PACKAGE__->table('Items_Made');
 
 
 __PACKAGE__->add_columns(

@@ -20,9 +20,9 @@ use Catalyst;
 
 __PACKAGE__->config->{session} = { 
     Store => 'MySQL',
-    DataSource => 'dbi:mysql:game',
-    UserName   => 'root',
-    Password   => '',    
+    DataSource => __PACKAGE__->config->{datasource},
+    UserName   => __PACKAGE__->config->{username},
+    Password   => __PACKAGE__->config->{password},    
     Lock => 'Null', 
     Generate => 'MD5', 
     Serialize => 'Storable', 
@@ -41,7 +41,7 @@ our $VERSION = '0.01';
 
 __PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex/ );
 
-__PACKAGE__->config->{static}->{debug} = 1;
+__PACKAGE__->config->{static}->{debug} = 0;
     
 __PACKAGE__->config->{static}->{dirs} = [
 	'static',

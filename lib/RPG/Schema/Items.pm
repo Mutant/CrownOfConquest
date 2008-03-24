@@ -53,6 +53,16 @@ __PACKAGE__->add_columns(
       'is_nullable' => 1,
       'size' => '11'
     },
+    'shop_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'shop_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },    
+    
 );
 __PACKAGE__->set_primary_key('item_id');
 
@@ -61,5 +71,26 @@ __PACKAGE__->belongs_to(
     'RPG::Schema::Item_Type',
     { 'foreign.item_type_id' => 'self.item_type_id' }
 );
+
+__PACKAGE__->belongs_to(
+    'in_shop',
+    'RPG::Schema::Shop',
+    { 'foreign.shop_id' => 'self.shop_id' }
+);
+
+
+sub modified_cost {
+	my $self = shift;
+	my $type = shift;
+	my $shop = shift;
+	
+	$type ||= $self->item_type;
+	
+	return $type->base_cost unless $self->shop_id;
+	
+	$shop ||= $self->in_shop;
+	
+	return int ($type->base_cost / (100 / (100 + $shop->cost_modifier)));	
+}
 
 1;

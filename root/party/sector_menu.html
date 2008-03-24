@@ -1,0 +1,11 @@
+<br>
+[ 
+	<a href="/party/camp">Camp</a> 
+	| <a href="/party/forage">Forage</a> 
+	[% IF creature_group %] | <a href="/combat/party_attacks?creature_group_id=[% creature_group.id %]">Attack Creatures</a>[% END %] 
+]
+<br>
+
+[% IF creature_group %]
+	[% INCLUDE combat/creature_group.html %]
+[% END %]

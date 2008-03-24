@@ -20,9 +20,9 @@ use Catalyst;
 
 __PACKAGE__->config->{session} = { 
     Store => 'MySQL',
-    DataSource => __PACKAGE__->config->{datasource},
-    UserName   => __PACKAGE__->config->{username},
-    Password   => __PACKAGE__->config->{password},    
+    DataSource => 'dbi:mysql:game',
+    UserName   => 'root',
+    Password   => '',    
     Lock => 'Null', 
     Generate => 'MD5', 
     Serialize => 'Storable', 

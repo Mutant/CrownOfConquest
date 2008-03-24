@@ -31,6 +31,8 @@ sub shop_list : Local {
         }]
     );
     
+    #warn $c->stash->{bottom_panel};
+    
     $c->forward('/party/main');
 }
 

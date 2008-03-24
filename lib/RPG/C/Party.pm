@@ -19,7 +19,10 @@ sub main : Local {
 
 	my $bottom_panel;
 	
-	if ($party->location->town) {
+	if ($c->stash->{bottom_panel}) {
+		$bottom_panel = $c->stash->{bottom_panel};
+	}	
+	elsif ($party->location->town) {
 		$bottom_panel = $c->forward('/town/main');
 	}
 	elsif ($party->in_combat_with) {

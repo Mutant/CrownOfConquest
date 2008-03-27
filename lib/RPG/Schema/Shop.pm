@@ -83,4 +83,33 @@ __PACKAGE__->has_many(
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
+sub categories_sold {
+	my $self = shift;
+	
+	return $self->result_source->schema->resultset('ShopCategoryList')->search(
+		{},
+		{
+			bind => [ $self->id, $self->id ],
+			order_by => 'item_category',
+		}
+	);
+}
+
+sub grouped_items_in_shop {
+	my $self = shift;
+	
+	return $self->result_source->schema->resultset('Items')->search(
+		{
+			shop_id => $self->id,
+		},
+		{
+			prefetch => {'item_type' => 'category'},
+			+select => [ {'count' => '*'} ],
+			+as => [ 'number_of_items' ],
+			group_by => 'item_type',
+			order_by => 'item_category',
+		},
+	);
+}
+
 1;

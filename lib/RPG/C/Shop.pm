@@ -12,19 +12,14 @@ sub purchase : Local {
     
     my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
 
-    my @categories = $c->model('Item_Category')->search(
-        {
-            'shops_with_item.shop_id' => $c->req->param('shop_id'),
-        },
-        {
-            join => {'item_types' => 'shops_with_item'},
-            distinct => 1,
-        }
-    );
+    my @categories; # = $shop->categories_sold;
     
     my $party = $c->stash->{party};
 
     my @characters = $party->characters;
+    
+    my @items = $shop->grouped_items_in_shop;
+    #warn Dumper $itmems[0];
         
     $c->forward('RPG::V::TT',
         [{
@@ -33,6 +28,7 @@ sub purchase : Local {
                 shop => $shop,
                 categories => \@categories,
                 characters => \@characters,
+                items => \@items,
                 gold => $party->gold,
             }
         }]

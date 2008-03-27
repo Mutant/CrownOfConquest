@@ -1,181 +1,7 @@
 [% INCLUDE top.html %]
 
-<script>
-dojo.require("dojo.io.bind");
-dojo.require("dojo.dnd.HtmlDragMove");
-dojo.require("dojo.event.*");
-dojo.require("dojo.widget.Dialog");
-
-dojo.provide("dojo.dnd.MyHtmlDropTarget");
-dojo.require("dojo.dnd.HtmlDropTarget"); 
-
-dojo.dnd.MyHtmlDropTarget = function(node, types){
-    this.domNode = dojo.byId(node);
-
-    dojo.dnd.DropTarget.call(this);
-
-    this.acceptedTypes = types||[];
-
-} 
-
-dojo.inherits(dojo.dnd.MyHtmlDropTarget,  dojo.dnd.HtmlDropTarget);
-
-dojo.lang.extend(dojo.dnd.MyHtmlDropTarget, {
-    onDragOver: function(e){
-        if(!this.accepts(e.dragObjects)){ return false; }
-    
-        // cache the positions of the child nodes
-        this.childBoxes = [];
-        for (var i = 0, child; i < this.domNode.childNodes.length; i++) {
-                child = this.domNode.childNodes[i];
-                if (child.nodeType != dojo.dom.ELEMENT_NODE) { continue; }
-                var pos = dojo.style.getAbsolutePosition(child, true);
-                var height = dojo.style.getInnerHeight(child);
-                var width = dojo.style.getInnerWidth(child);
-                this.childBoxes.push({top: pos.y, bottom: pos.y+height,
-                        left: pos.x, right: pos.x+width, node: child});
-        }
-        
-        var char = this.domNode;
-        char.style.backgroundColor = 'lightblue';
-        char.style.border = '1px dashed black';
-    
-        return true;        
-    }, 
-
-    onDragOut: function(e) {
-        if(this.dropIndicator) {
-                dojo.dom.removeNode(this.dropIndicator);
-                delete this.dropIndicator;
-        }       
-        
-        var char = this.domNode;
-        char.style.backgroundColor = 'white';
-        char.style.border = '';
-    }
-
-});
-
-function init(){
-    [%  FOREACH char = characters %]
-    var charDrop = byId('char' + "_" + '[% char.character_id %]');
-    var cdt = new dojo.dnd.MyHtmlDropTarget(charDrop, ['*']);
-    cdt.onDrop = buyItem;
-    //cdt.onDragOver = highlightChar;
-    [% END %]
-}
-
-dojo.event.connect(dojo, "loaded", "init");
-
-var items = Array();
-function getItems(category) {
-    dojo.io.bind({
-        url: "[% base %]/shop/get_items?shop_id=[% shop_id %]&category_id=" + category,
-        load: getItemsPopulate,
-        mimetype: "text/javascript"
-    });
-}
-
-var item_properties = Array('item_type', 'basic_modifier', 'cost');
-function getItemsPopulate(type, data, evt) {
-    clearTable('items-table');
-
-    for (count = 0; count < items.length; count++) {
-        row = document.getElementById('items-table').insertRow(count);
-        //row.id = 'item' + count+1;
-    
-        for (pcount = 0; pcount < item_properties.length; pcount++) {    
-            cell = row.insertCell(pcount);            
-            cell.innerHTML = items[count][item_properties[pcount]];
-            
-            if (pcount == 0) {
-                cell.id = 'item' + "_" + items[count]['item_type_id'];
-            }
-        }
-        
-        var ds = new dojo.dnd.HtmlDragSource(byId(row.cells[0].id));
-        ds.placeIndicator = '';
-        ds.createIndicator = '';
-    }
-}
-
-function buyItem(evt) {    
-     var item = evt.dragObject.domNode.id.split('_');
-     var char = evt.dropTarget.parentNode.id.split('_');
-    
-    
-     dojo.io.bind({
-        url: "[% base %]/shop/buy?shop_id=[% shop_id %]&character_id=" + char[1] + '&item_type_id=' + item[1],
-        load: boughtItem,
-        mimetype: "text/javascript"
-     });
-     
-     evt.dropTarget.parentNode.style.backgroundColor = 'white';
-     evt.dropTarget.parentNode.style.border = '';
-     
-     return true;
-}
-
-var error;
-var character_id;
-function boughtItem() {
-    if (error) {
-        byId('appErrorMsg').innerHTML = error;
-        dojo.widget.manager.getWidgetById('appError').show();
-    }
-    else {
-        byId('current_gold').innerHTML = gold;
-        showCharItems(character_id);
-    }
-}
-
-var charShown;
-function showCharItems(characterId) {
-    if (charShown) {
-        var charDiv = byId('char_items_' + charShown);
-        charDiv.style.visibility = 'hidden';
-        charDiv.innerHTML = '';
-        
-        if (charShown == characterId) {
-            charShown = null;
-            return;
-        }
-    }
-    
-    charShown = characterId;
-
-    dojo.io.bind({
-        url: "[% base %]/character/item_list?&character_id=" + characterId,
-        load: updateCharItemList,
-        mimetype: "text/javascript"
-     });
-}
-
-function updateCharItemList() {
-    var charDiv = byId('char_items_' + charShown);
-           
-    if (characterItems.length > 0) {
-        for (count = 0; count < characterItems.length; count++) {
-            charDiv.innerHTML += characterItems[count]['item_type'] + '<br>';
-        }
-    }
-    else {
-        charDiv.innerHTML = '[No Items]';
-    }
-
-    charDiv.style.visibility = 'visible';
-}
-</script>
-
-<div dojoType="dialog" id="appError" bgColor="lightslategrey" bgOpacity="0.4" effect="fade" effectDuration="200" class="dojoDialog">
-<div id="appErrorMsg"></div>
-<br>
-<a href="javascript:dojo.widget.manager.getWidgetById('appError').hide()">Hide Dialog</a>
-</div>
 
 <h1>[% shop.shop_name %]</h1>
-
-
 
 [%  FOREACH char = characters %]
 <div id="char_[% char.character_id %]">[% char.character_name %]
@@ -208,7 +34,17 @@ Current Gold: <span id="current_gold">[% gold %]</span>
 <br><br>
 
 <table id="items-table" border="1">
-
+[% last_category = '' %]
+[% FOREACH item IN items %]
+	[% IF last_category != item.item_type.category.item_category %]
+		<tr><td><b>[% item.item_type.category.item_category %]</b></td></tr>
+		[% last_category = item.item_type.category.item_category %]
+	[% END %]
+	<tr>
+		<td>[% item.get_column('number_of_items') %]</td>
+		<td>[% item.item_type.item_type %]</td>
+	</tr>
+[% END %]	
 </table>
 
 </div>

@@ -1,12 +1,44 @@
 [% INCLUDE top.html %]
 
+<script type="text/javascript">
+    dojo.require("dojo.parser");
+    dojo.require("dijit.form.Button");
+    dojo.require("dijit.Dialog");
+    dojo.require("dijit.form.TextBox");
+	dojo.require("dojo.dnd.Source");
+	
+function init() {
+	
+	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+  		var t = dojo.dnd.manager().target;
+		var nodes = t.getAllNodes();
+		alert(t.current);
+	});
+
+
+/*	dojo.subscribe("/dnd/cancel", function(){
+  		ClearMsg();});
+*/
+}
+
+	dojo.addOnLoad( init );
+	
+</script>
 
 <h1>[% shop.shop_name %]</h1>
 
 [%  FOREACH char = characters %]
-<div id="char_[% char.character_id %]">[% char.character_name %]
+<div id="char_[% char.character_id %]">
+<span dojoType="dojo.dnd.Target" jsId="c2" id="char_target_[% char.character_id %]" class="target" accept="item">[% char.character_name %]</span>
 
-<a href="javascript:showCharItems('[% char.character_id %]')">Show Items</a>
+<span dojoType="dijit.form.DropDownButton">
+        <span>Equipment</span>
+        <div dojoType="dijit.TooltipDialog" id="equip_[% char.character_id %]" title="First Dialog"  style="display: none">
+			[% FOREACH item IN char.items %]
+				[% item.item_type.item_type %]<br>
+			[% END %]
+        </div>
+</span>
 
 <span id="char_items_[% char.character_id %]" style="visibility: hidden; border: 1px dotted black"><span>
 
@@ -15,38 +47,26 @@
 
 Current Gold: <span id="current_gold">[% gold %]</span>
 
-<div class="aligned">
-
-<div class="aligned-line">
-    <span class="aligned-label">
-        Item Type:
-    </span>
-    <span class="aligned-value">
-        <select onChange="getItems(this.value)">
-        <option></option>
-        [% FOREACH category = categories %]
-        <option value="[% category.item_category_id %]">[% category.item_category %]</option>
-        [% END  %]
-        </select>
-    </span>
-</div>
-
 <br><br>
 
 <table id="items-table" border="1">
 [% last_category = '' %]
 [% FOREACH item IN items %]
 	[% IF last_category != item.item_type.category.item_category %]
-		<tr><td><b>[% item.item_type.category.item_category %]</b></td></tr>
+		<tr><td colspan="3"><b>[% item.item_type.category.item_category %]</b></td></tr>
+		<tr><td>Number Available</td><td>Item</td><td>Cost</td></tr>
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
 	<tr>
 		<td>[% item.get_column('number_of_items') %]</td>
-		<td>[% item.item_type.item_type %]</td>
+		<td>
+			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
+				<span class="dojoDndItem" dndType="item">[% item.item_type.item_type %]</span>
+			</span>	
+		</td>
+		<td>[% item.item_type.modified_cost(shop) %]</td>
 	</tr>
 [% END %]	
 </table>
-
-</div>
 
 [% INCLUDE bottom.html %]

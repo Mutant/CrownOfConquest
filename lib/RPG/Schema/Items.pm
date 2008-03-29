@@ -78,19 +78,4 @@ __PACKAGE__->belongs_to(
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
-
-sub modified_cost {
-	my $self = shift;
-	my $type = shift;
-	my $shop = shift;
-	
-	$type ||= $self->item_type;
-	
-	return $type->base_cost unless $self->shop_id;
-	
-	$shop ||= $self->in_shop;
-	
-	return int ($type->base_cost / (100 / (100 + $shop->cost_modifier)));	
-}
-
 1;

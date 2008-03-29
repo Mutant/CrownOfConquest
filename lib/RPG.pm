@@ -41,7 +41,7 @@ our $VERSION = '0.01';
 
 __PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex/ );
 
-__PACKAGE__->config->{static}->{debug} = 0;
+__PACKAGE__->config->{static}->{debug} = 1;
     
 __PACKAGE__->config->{static}->{dirs} = [
 	'static',

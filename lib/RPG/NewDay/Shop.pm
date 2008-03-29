@@ -6,6 +6,7 @@ package RPG::NewDay::Shop;
 use Data::Dumper;
 
 use Games::Dice::Advanced;
+use Params::Validate qw(:types validate);
 
 sub run {
 	my $package = shift;
@@ -37,7 +38,11 @@ sub run {
 			my $shops_to_open = $ideal_number_of_shops - $open_shops_count;
 			
 			# Change status of existing shops
-			$shops_to_open = _alter_statuses_of_shops($shops_to_open, 'Open', %shops_by_status);
+			$shops_to_open = _alter_statuses_of_shops(
+				number_to_change => $shops_to_open, 
+				open_or_close => 'Open', 
+				shops_by_status => \%shops_by_status
+			);
 			
 			# If there's still more left to open, create some new shops			
 			for (1 .. $shops_to_open) {
@@ -53,7 +58,11 @@ sub run {
 		elsif ($ideal_number_of_shops < $open_shops_count) {
 			my $shops_to_close = $open_shops_count - $ideal_number_of_shops;
 			# Close some shops	
-			$shops_to_close = _alter_statuses_of_shops($shops_to_close, 'Close', %shops_by_status);					
+			$shops_to_close = _alter_statuses_of_shops(
+				number_to_change => $shops_to_close, 
+				open_or_close => 'Close', 
+				shops_by_status => \%shops_by_status
+			);					
 		}
 		
 		foreach my $shop (@shops) {
@@ -96,7 +105,7 @@ sub run {
 			);
 		
 			foreach my $item (@items_in_shop) {
-				$actual_items_value += $item->modified_cost;
+				$actual_items_value += $item->item_type->modified_cost($shop);
 			}
 			
 			warn "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value\n";
@@ -134,7 +143,7 @@ sub run {
 						shop_id => $shop->id,
 					});
 					
-					$item_value_to_add-=$item->modified_cost($item_type, $shop);
+					$item_value_to_add-=$item->item_type->modified_cost($shop);
 				}
 			}
 			else {
@@ -149,7 +158,7 @@ sub run {
 					warn "value_to_add: $item_value_to_add\n";
 					warn "Deleting: " . $item_to_remove->id . "\n";
 					
-					$item_value_to_add+=$item_to_remove->modified_cost;
+					$item_value_to_add+=$item_to_remove->item_type->modified_cost($shop);
 					$item_to_remove->delete;
 				}
 			}			
@@ -158,9 +167,17 @@ sub run {
 }
 
 sub _alter_statuses_of_shops {
-	my $number_to_change = shift;
-	my $open_or_close = shift;
-	my %shops_by_status = @_;
+	validate( @_, { 
+		number_to_change => 1,
+        open_or_close => { regex => qr/^Open|Close$/ },
+        shops_by_status => {type => HASHREF},
+	});
+
+	my %params = @_;
+		
+	my $number_to_change = $params{number_to_change};
+	my $open_or_close = $params{open_or_close};
+	my %shops_by_status = %{$params{shops_by_status}};
 	
 	my @order;
 	if ($open_or_close eq 'Open') {
@@ -171,22 +188,24 @@ sub _alter_statuses_of_shops {
 		
 		# For our purposes, Opening and Open shops are the same
 		#  (altho Opening shops are dealt to first)
-		$shops_by_status{Open} = [@{$shops_by_status{Opening}}, @{$shops_by_status{Open}}];  
+		$shops_by_status{Open} = [@{$shops_by_status{Opening} || []}, @{$shops_by_status{Open} || []}];  
 	}
-	
+		
 	my $order_index = 0;
-	OUTER: foreach my $status_to_change (@order) {
+	OUTER: foreach my $status_to_change (@order) {		
 		#warn "Changing status from: $status_to_change to: $order[$order_index+1]";
 		
-		foreach my $shop_to_change (@{$shops_by_status{$status_to_change}}) {
-			#warn "Changing status for: " . $shop_to_change->id . "\n";
-			
-			$shop_to_change->status($order[$order_index+1]);
-			$shop_to_change->update;
-			
-			$number_to_change--;
+		if ($shops_by_status{$status_to_change}) {
+			foreach my $shop_to_change (@{$shops_by_status{$status_to_change}}) {
+				#warn "Changing status for: " . $shop_to_change->id . "\n";
 				
-			last OUTER if $number_to_change == 0;
+				$shop_to_change->status($order[$order_index+1]);
+				$shop_to_change->update;
+				
+				$number_to_change--;
+					
+				last OUTER if $number_to_change == 0;
+			}
 		}
 		
 		# We don't change the last item in the list

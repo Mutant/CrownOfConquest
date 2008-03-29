@@ -95,4 +95,13 @@ __PACKAGE__->many_to_many(
     'shops_with_item',
 );
 
+sub modified_cost {
+	my $self = shift;
+	my $shop = shift;
+
+	return $self->base_cost unless $shop;
+		
+	return int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));	
+}
+
 1;

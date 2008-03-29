@@ -31,6 +31,28 @@ br {
 
 </style>
 
+<style type="text/css">
+		.highlighted: {
+			background: #222222;
+		}
+
+        .target {border: 1px dotted gray; width: 300px; height: 300px;padding: 5px;
+              -moz-border-radius:8pt 8pt;radius:8pt;}
+        .source {border: 1px dotted skyblue;height: 200px; width: 300px;
+               -moz-border-radius:8pt 8pt;radius:8pt;}
+        .dojoDndItemOver {background: #feb;border: 1px dotted gray; }
+        .dojoDndItemBefore {border-left: 2px dotted gray; }
+        .dojoDndItemAfter {border-right: 2px dotted gray; }
+        .target .dojoDndItemAnchor {border:1px solid gray;}
+        .dojoDndAvatar {font-size: 75%; color: black;}
+        .dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px}
+        .dojoDndAvatarHeader {background: #ccc; background-repeat: no-repeat;}
+        .dojoDndAvatarItem {background: #eee;}
+        .dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
+        .dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
+                url(images/dndMove.png);}
+</style>
+
 <script>
 function processOnLoad() {
 	return;
@@ -44,10 +66,15 @@ function processOnLoad() {
 
 <script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true"></script>
 
+<style>
+	@import "http://o.aolcdn.com/dojo/1.0/dijit/themes/tundra/tundra.css";
+	@import "http://o.aolcdn.com/dojo/1.0/dojo/resources/dojo.css"	
+</style>
+
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body onLoad="processOnLoad()">
+<body onLoad="processOnLoad()" class="tundra">
 
 [% IF error %]
 <div class="error">[% error %]</div>

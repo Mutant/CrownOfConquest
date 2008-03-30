@@ -38,7 +38,9 @@ function processOnLoad() {
         dojo.require("dojo.dnd.Source");
         dojo.require("dojo.parser");   
         dojo.subscribe("/dnd/drop/after", function(source,nodes,iscopy, target){
-	    	nodes = target.getAllNodes();
+			alert(target.current);
+	    	/*
+			nodes = target.getAllNodes();
 	    	var order = '';
 	    	for(count = 0; count < nodes.length; count++) {
 	    		order_val = nodes[count].id.split(/-/);
@@ -52,6 +54,7 @@ function processOnLoad() {
 	
 	    	    timeout: 5000, // Time in milliseconds	
 	        });
+	        */
 		});
         
 </script>

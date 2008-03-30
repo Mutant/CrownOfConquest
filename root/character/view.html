@@ -21,4 +21,36 @@
 
 </div>
 
+<br>
+
+<b>Equipped Items</b>
+
+<br>
+
+[% FOREACH equipped_item IN equipped_items %]
+	[% equipped_item.key %]
+	[% equipped_item.value.item_type.item_type || 'Nothing Equipped' %]<br>
+[% END %]
+
+<b>All Items</b>
+
+<br>
+
+<table>
+[% last_category = '' %]
+[% FOREACH item IN character.items %]
+	[% IF last_category != item.item_type.category.item_category %]
+		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
+		[% last_category = item.item_type.category.item_category %]
+	[% END %]
+	<tr>
+		<td>
+			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
+				<span class="dojoDndItem" dndType="item">[% item.item_type.item_type %]</span>
+			</span>	
+		</td>
+	</tr>
+[% END %]
+</table>
+
 [% INCLUDE bottom.html %]

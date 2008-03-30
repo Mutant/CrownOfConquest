@@ -6,6 +6,7 @@ package RPG::Schema::Character;
 use base 'DBIx::Class';
 
 use Carp;
+use Data::Dumper;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
@@ -201,7 +202,8 @@ __PACKAGE__->belongs_to(
 __PACKAGE__->has_many(
     'items',
     'RPG::Schema::Items',
-    { 'foreign.character_id' => 'self.character_id' }
+    { 'foreign.character_id' => 'self.character_id' },
+    { prefetch => 'item_type' },
 );
 
 our @STATS = qw(str con int div agl);
@@ -388,6 +390,8 @@ Return a record set of equipped items for a given category
 
 =cut
 
+# TODO: join onto Equip_Places and only get equipped items
+
 sub _get_equipped_items {
 	my $self = shift;
 	my $category = shift || croak 'Category not supplied';
@@ -427,6 +431,39 @@ sub is_dead {
 	my $self = shift;
 	
 	return $self->hit_points <= 0 ? 1 : 0;		
+}
+
+=head2 equipped_items(@items)
+
+Returns a hashref keyed by equip places, with the character's item equipped in that place as the value
+
+If the list of items isn't passed in, it will be read from the DB.
+
+=cut
+
+sub equipped_items {
+	my $self = shift;
+	my @items = @_;
+	
+	my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search;
+	
+	@items = $self->items unless @items;
+
+	my %equipped_items;
+
+	# Character has no items
+	unless (@items) {
+		%equipped_items = map {$_->equip_place_name => undef} @equip_places;
+		return \%equipped_items;
+	}	
+
+	foreach my $equip_place (@equip_places) {
+		# Should only have one item equipped in a particular place
+		my ($item) = grep { $equip_place->id == $_->id; } @items;
+		$equipped_items{$equip_place->equip_place_name} = $item; 
+	}
+	
+	return \%equipped_items;
 }
 
 1;

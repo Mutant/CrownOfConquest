@@ -210,20 +210,28 @@ sub calculate_values : Local {
     $c->res->body($return);
 }
 
-sub set_order : Local {
+sub swap_chars : Local {
 	my ($self, $c) = @_;
+		
+	my $chars = $c->model('Character')->search(
+		{
+			party_id => $c->stash->{party}->id,
+			character_id => [$c->req->param('char_1'), $c->req->param('char_2')],
+		},
+	);
 	
-	my $count = 1;
+	#return unless $chars->count == 2;
 	
-	foreach my $char_id ($c->req->param('order')) {
-		my $char = $c->model('DBIC::Character')->find({character_id => $char_id});
-		next if $char->party_id != $c->session->{party_id};
+	my ($char_1, $char_2) = $chars->all;
 	
-		$char->party_order($count);
-		$char->update;
-		$count++;
-	}
+	$c->log->debug("Swapping char_id: " . $char_1->id . " (pos: " . $char_1->party_order . ") with char_id: " .
+		$char_2->id . " (pos: " . $char_2->party_order . ")");
 	
+	my $char_1_pos = $char_1->party_order;
+	$char_1->party_order($char_2->party_order);
+	$char_2->party_order($char_1_pos);
+	$char_1->update;
+	$char_2->update;
 }
 
 1;

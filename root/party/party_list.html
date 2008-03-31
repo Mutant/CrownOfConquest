@@ -37,29 +37,26 @@ function processOnLoad() {
 <script type="text/javascript"> 
         dojo.require("dojo.dnd.Source");
         dojo.require("dojo.parser");   
-        dojo.subscribe("/dnd/drop/after", function(source,nodes,iscopy, target){
-			alert(target.current);
-	    	/*
-			nodes = target.getAllNodes();
-	    	var order = '';
-	    	for(count = 0; count < nodes.length; count++) {
-	    		order_val = nodes[count].id.split(/-/);
-	    		order += "order=" + order_val[1];
-	    		order += '&';
-	    	}
-	    		    	
+        dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+			var t = dojo.dnd.manager().target;
+
+	    	order_val = nodes[0].id.split(/-/);
+			var char_1 = order_val[1];
+			
+			order_val = t.current.id.split(/-/);
+			var char_2 = order_val[1];
+
 	    	dojo.xhrGet( {
-		        url: "[% base %]/party/set_order?" + order, 
+		        url: "[% base %]/party/swap_chars?char_1=" + char_1 + "&char_2=" + char_2, 
 		        handleAs: "text",
 	
 	    	    timeout: 5000, // Time in milliseconds	
 	        });
-	        */
 		});
         
 </script>
 
-<table dojoType="dojo.dnd.Source" jsId="c1" accept="character">
+<table dojoType="dojo.dnd.Source"jsId="c[% char.id %]" accept="character">
 <tr>
     <th>Name</th>
     <th>Race</th>
@@ -74,7 +71,7 @@ function processOnLoad() {
 </tr>
     
 [% FOREACH char = characters %]
-<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]">
+<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]">
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
     <td>[% char.class.class_name %]</td>

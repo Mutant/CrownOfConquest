@@ -28,8 +28,9 @@ sub auto : Private {
     		party_id => $c->session->{party_id},
     	},
     	{
-    		# TODO: prefetch class as well..
-    		prefetch => [{'characters' => ['race', 'class']}],    		
+    		prefetch => [{'characters' => ['race', 'class']}],
+    		cache => 1,
+    		order_by => 'party_order',
     	},
     );
     

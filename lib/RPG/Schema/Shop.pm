@@ -83,6 +83,12 @@ __PACKAGE__->has_many(
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
+__PACKAGE__->belongs_to(
+    'in_town',
+    'RPG::Schema::Town',
+    { 'foreign.town_id' => 'self.town_id' }
+);
+
 sub categories_sold {
 	my $self = shift;
 	
@@ -104,8 +110,8 @@ sub grouped_items_in_shop {
 		},
 		{
 			prefetch => {'item_type' => 'category'},
-			+select => [ {'count' => '*'} ],
-			+as => [ 'number_of_items' ],
+			+select => [ {'count' => '*'}, 'me.item_id' ],
+			+as => [ 'number_of_items', 'item_id' ],
 			group_by => 'item_type',
 			order_by => 'item_category',
 		},

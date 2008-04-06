@@ -6,30 +6,105 @@
     dojo.require("dijit.Dialog");
     dojo.require("dijit.form.TextBox");
 	dojo.require("dojo.dnd.Source");
+
+	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
+        onDndDrop: function(source, nodes, copy){
+				if(this.containerState == "Over"){ // dropping on us
+					source.delItem('dojoUnique1'); // delete the copied item
+			    }
+			    this.onDndCancel();  // cleanup the drop state
+		},
+			 
+		markupFactory: function(params, node){
+		    params._skipStartup = true;
+		    return new rpg.dnd.Target(node, params);
+		},
+		
+    });
 	
-function init() {
-	
+function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-  		var t = dojo.dnd.manager().target;
-		var nodes = t.getAllNodes();
-		alert(t.current);
-	});
+		var t = dojo.dnd.manager().target;
 
+		var purchasedItem = source.getItem(nodes[0].id).data;
 
-/*	dojo.subscribe("/dnd/cancel", function(){
-  		ClearMsg();});
-*/
+    	order_val = nodes[0].id.split(/-/);
+		var item_id = order_val[1];
+	
+		order_val = t.node.id.split(/-/);
+		var char_id = order_val[2];
+		
+		var purchashingChar = order_val[1];
+		
+		dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchashingChar;
+		dojo.byId('purchasing-char-id').value = char_id;
+		dojo.byId('purchasing-item-id').value = item_id;
+		
+		dijit.byId('confirmation').show();
+		
+		return true;
+	});	
 }
 
-	dojo.addOnLoad( init );
+function savePurchase(dialogFields) {	
+	dojo.xhrGet( {
+        url: "[% base %]/shop/buy_item?character_id=" + dialogFields.purchasing_char_id + "&item_id=" + dialogFields.purchasing_item_id, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('purchase-error').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;
+			  dojo.byId('item-count-' + responseObject.updated_stock.item_type).innerHTML = responseObject.updated_stock.count;
+  	  	      dojo.byId('equip_[% char.character_id %]').innerHTML += dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML + '<br>';
+			  
+			  if (responseObject.updated_stock.count == 0) {
+			    alert(dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML);
+			  	dojo.byId('item-source-' + responseObject.updated_stock.item_type).innerHTML = 
+			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
+			  }
+			  else {			  
+				dojo.byId('item-' + dialogFields.purchasing_item_id).id = 'item-' + responseObject.updated_stock.next_item;
+		  	  }		  	  
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000, // Time in milliseconds	
+    });
+    
+
+    	
+	return true;
+}
+
+dojo.addOnLoad( init );
 	
 </script>
+
+<div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
+    <span id="confirmation-message"></span>
+    <input id="purchasing-char-id" name="purchasing_char_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
+    <input id="purchasing-item-id" name="purchasing_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+<div dojoType="dijit.Dialog" id="error" style="display: none" title="Purchase Error">
+    <span id="purchase-error"></span>
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
 
 <h1>[% shop.shop_name %]</h1>
 
 [%  FOREACH char = characters %]
 <div id="char_[% char.character_id %]">
-<span dojoType="dojo.dnd.Target" jsId="c2" id="char_target_[% char.character_id %]" class="target" accept="item">[% char.character_name %]</span>
+<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" class="target" accept="item">
+		[% char.character_name %]
+</span>
 
 <span dojoType="dijit.form.DropDownButton">
         <span>Equipment</span>
@@ -45,7 +120,7 @@ function init() {
 </div><br>
 [% END %]
 
-Current Gold: <span id="current_gold">[% gold %]</span>
+Current Gold: <span id="current-gold">[% gold %]</span>
 
 <br><br>
 
@@ -58,10 +133,10 @@ Current Gold: <span id="current_gold">[% gold %]</span>
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
 	<tr>
-		<td>[% item.get_column('number_of_items') %]</td>
+		<td id="item-count-[% item.item_type.id %]">[% item.get_column('number_of_items') %]</td>
 		<td>
-			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
-				<span class="dojoDndItem" dndType="item">[% item.item_type.item_type %]</span>
+			<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-source-[% item.item_type.id %]">
+				<span class="dojoDndItem" dndType="item" id="item-[% item.item_id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
 			</span>	
 		</td>
 		<td>[% item.item_type.modified_cost(shop) %]</td>

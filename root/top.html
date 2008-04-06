@@ -59,13 +59,8 @@ function processOnLoad() {
 }
 </script>
 
-<script type="text/javascript">
-        var djConfig = {isDebug: false,debugContainerId: "dojoDebug" };
-        //djConfig.debugAtAllCosts = true;
-</script>
 
-<script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true"></script>
-
+<script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true"></script>
 <style>
 	@import "http://o.aolcdn.com/dojo/1.0/dijit/themes/tundra/tundra.css";
 	@import "http://o.aolcdn.com/dojo/1.0/dojo/resources/dojo.css"	
@@ -76,9 +71,23 @@ function processOnLoad() {
 </head>
 <body onLoad="processOnLoad()" class="tundra">
 
+<script>
+	dojo.require("dojo.parser");
+	dojo.require("dijit.form.Button");
+	dojo.require("dijit.Dialog");
+	dojo.require("dijit.form.TextBox");
+
 [% IF error %]
-<div class="error">[% error %]</div>
+	dojo.byId('error-message').innerHTML = '[% error %]';
+	dijit.byId('error').show();
 [% END %]
+</script>
+
+<div dojoType="dijit.Dialog" id="error" style="display: none" title="Error">
+    <span id="error-message"></span>
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
 <div id="dojoDebug"></div>
 
 <!-- needs to be replaced with divs soon! -->

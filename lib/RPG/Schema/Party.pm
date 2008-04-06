@@ -93,6 +93,12 @@ __PACKAGE__->might_have(
     { 'foreign.creature_group_id' => 'self.in_combat_with' }
 );
 
+__PACKAGE__->belongs_to(
+    'owned_by_player',
+    'RPG::Schema::Player',
+    { 'foreign.player_id' => 'self.player_id' }
+);
+
 sub movement_factor {
 	my $self = shift;
 	

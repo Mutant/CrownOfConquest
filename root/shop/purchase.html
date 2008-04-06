@@ -1,10 +1,6 @@
 [% INCLUDE top.html %]
 
 <script type="text/javascript">
-    dojo.require("dojo.parser");
-    dojo.require("dijit.form.Button");
-    dojo.require("dijit.Dialog");
-    dojo.require("dijit.form.TextBox");
 	dojo.require("dojo.dnd.Source");
 
 	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
@@ -53,7 +49,7 @@ function savePurchase(dialogFields) {
         
         load: function(responseObject, ioArgs) {
           if (responseObject.error) {
-          	dojo.byId('purchase-error').innerHTML = responseObject.error;
+          	dojo.byId('error-message').innerHTML = responseObject.error;
           	dijit.byId('error').show();
           }
           else if (responseObject.gold) {
@@ -75,8 +71,6 @@ function savePurchase(dialogFields) {
 
 	    timeout: 5000, // Time in milliseconds	
     });
-    
-
     	
 	return true;
 }
@@ -91,12 +85,6 @@ dojo.addOnLoad( init );
     <input id="purchasing-item-id" name="purchasing_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
-
-<div dojoType="dijit.Dialog" id="error" style="display: none" title="Purchase Error">
-    <span id="purchase-error"></span>
-    <button dojoType=dijit.form.Button type="submit">OK</button>
-</div>
-
 
 <h1>[% shop.shop_name %]</h1>
 

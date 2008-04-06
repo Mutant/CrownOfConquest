@@ -1,5 +1,58 @@
 [% INCLUDE top.html %]
 
+<script type="text/javascript">
+	dojo.require("dojo.dnd.Source");
+	
+	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
+        onDndDrop: function(source, nodes, copy){
+				if(this.containerState == "Over"){ // dropping on us
+					source.delItem('dojoUnique1'); // delete the copied item
+			    }
+			    this.onDndCancel();  // cleanup the drop state
+		},
+			 
+		markupFactory: function(params, node){
+		    params._skipStartup = true;
+		    return new rpg.dnd.Target(node, params);
+		},
+		
+    });
+    
+    function init() {	
+		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+			var t = dojo.dnd.manager().target;
+
+			var itemToEquip = source.getItem(nodes[0].id).data;
+			
+			tmp = t.node.id.split(/-/);
+			var equip_place = tmp[0];
+
+	   		order_val = nodes[0].id.split(/-/);
+			var item_id = order_val[1];
+			
+			dojo.xhrGet( {
+		        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
+		        handleAs: "json",
+		        load: function(responseObject, ioArgs) {
+		        	if (responseObject.error) {
+	       	          	dojo.byId('error-message').innerHTML = responseObject.error;
+    			      	dijit.byId('error').show();
+		        	}
+		        	else {
+						dojo.byId(equip_place + '-item').innerHTML = itemToEquip;
+						
+						if (responseObject.clear_equip_place) {
+							dojo.byId(responseObject.clear_equip_place + '-item').innerHTML = '';
+						}
+					}
+		        },
+		    });
+		});
+	}
+	
+	dojo.addOnLoad( init );	
+</script>
+
 <h1>[% character.character_name %]</h1>
 
 <div class="aligned" id="character">
@@ -27,10 +80,14 @@
 
 <br>
 
+<table>
 [% FOREACH equipped_item IN equipped_items %]
-	[% equipped_item.key %]
-	[% equipped_item.value.item_type.item_type || 'Nothing Equipped' %]<br>
+	<tr>
+		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-target" accept="item">[% equipped_item.key %]</td>
+		<td id="[% equipped_item.key %]-item">[% equipped_item.value.item_type.item_type %]</td>
+	</tr>
 [% END %]
+</table>
 
 <b>All Items</b>
 
@@ -46,7 +103,7 @@
 	<tr>
 		<td>
 			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
-				<span class="dojoDndItem" dndType="item">[% item.item_type.item_type %]</span>
+				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
 			</span>	
 		</td>
 	</tr>

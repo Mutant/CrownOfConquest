@@ -61,7 +61,16 @@ __PACKAGE__->add_columns(
       'name' => 'shop_id',
       'is_nullable' => 0,
       'size' => '11'
-    },    
+    },        
+    'equip_place_id' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'equip_place_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
     
 );
 __PACKAGE__->set_primary_key('item_id');
@@ -76,6 +85,12 @@ __PACKAGE__->belongs_to(
     'in_shop',
     'RPG::Schema::Shop',
     { 'foreign.shop_id' => 'self.shop_id' }
+);
+
+__PACKAGE__->belongs_to(
+    'equipped_in',
+    'RPG::Schema::Equip_Places',
+    { 'foreign.equip_place_id' => 'self.equip_place_id' }
 );
 
 1;

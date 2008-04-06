@@ -457,9 +457,9 @@ sub equipped_items {
 		return \%equipped_items;
 	}	
 
-	foreach my $equip_place (@equip_places) {
+	foreach my $equip_place (@equip_places) {		
 		# Should only have one item equipped in a particular place
-		my ($item) = grep { $equip_place->id == $_->id; } @items;
+		my ($item) = grep { $_->equip_place_id && $equip_place->id == $_->equip_place_id; } @items;
 		$equipped_items{$equip_place->equip_place_name} = $item; 
 	}
 	

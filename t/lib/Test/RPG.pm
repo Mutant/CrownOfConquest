@@ -28,6 +28,10 @@ sub setup_context : Test(setup) {
 			return $sub->($args);
 		}
 	);
+	
+	my $req = Test::MockObject->new();
+	$req->mock('param', sub { $self->{params}{$_[1]} } );
+	$self->{c}->set_always('req', $req);
 
 	$self->{stash} ||= {};
 	$self->{c}->mock( 'stash', sub { $self->{stash} } );

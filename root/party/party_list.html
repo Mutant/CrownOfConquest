@@ -32,9 +32,6 @@ function processOnLoad() {
 	loadActions();
 }
 
-</script>
-
-<script type="text/javascript"> 
         dojo.require("dojo.dnd.Source");
         dojo.require("dojo.parser");   
         dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
@@ -46,8 +43,11 @@ function processOnLoad() {
 			order_val = t.current.id.split(/-/);
 			var char_2 = order_val[1];
 
+			var drop_pos;
+			(t.before == true) ? drop_pos='before' : drop_pos='after';
+
 	    	dojo.xhrGet( {
-		        url: "[% base %]/party/swap_chars?char_1=" + char_1 + "&char_2=" + char_2, 
+		        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
 		        handleAs: "text",
 	
 	    	    timeout: 5000, // Time in milliseconds	
@@ -56,7 +56,14 @@ function processOnLoad() {
         
 </script>
 
-<table dojoType="dojo.dnd.Source"jsId="c[% char.id %]" accept="character">
+<style>
+.dojoDndItemBefore {border-left: 2px dotted gray; } 
+
+.dojoDndItemAfter {border-right: 2px dotted gray; }
+
+</style>
+
+<table dojoType="dojo.dnd.Source"jsId="c[% char.id %]" accept="character" moveOnly="true">
 <tr>
     <th>Name</th>
     <th>Race</th>

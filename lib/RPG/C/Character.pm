@@ -17,7 +17,11 @@ sub view : Local {
 	        party_id => $c->stash->{party}->id,
 	    },
 	    {
-	    	prefetch => [qw/items race class/],
+	    	prefetch => [
+	    		{'items' => {'item_type' => 'category'}},
+	    		'race',
+	    		'class',
+	    	],
 	    	distinct => 1,
 	    },
 	);
@@ -78,10 +82,7 @@ sub equip_item : Local {
     });
     
     # Make sure this category of item can be equipped here
-    warn $equip_place->item_category_id;
-    warn $item->item_type->item_category_id;
     unless ($equip_place->item_category_id == $item->item_type->item_category_id) {
-    	warn "wrong place :(";
     	$c->res->body(to_json({error => "You can't equip a " . $item->item_type->item_type . " there!"}));
     	return;
     }

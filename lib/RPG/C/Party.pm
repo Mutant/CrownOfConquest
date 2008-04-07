@@ -212,26 +212,44 @@ sub calculate_values : Local {
 
 sub swap_chars : Local {
 	my ($self, $c) = @_;
+	
+	return if $c->req->param('target') == $c->req->param('moved');
+	
+	my %characters = map { $_->id => $_ } $c->stash->{party}->characters;
+	
+	# Moved char moves to the position of the target char
+	my $moved_char_destination = $characters{ $c->req->param('target') }->party_order;
+	my $moved_char_origin      = $characters{ $c->req->param('moved') }->party_order;
+	
+	# Is the moved char moving up or down?
+	my $moving_up = $characters{ $c->req->param('moved') }->party_order > $moved_char_destination ? 1 : 0;
+	
+	# If the char was dropped after the destination and we're moving up, the destination is decremented
+	$moved_char_destination++ if $moving_up && $c->req->param('drop_pos') eq 'after';
+
+	# If the char was dropped before the destination and we're moving down, the destination is incremented
+	$moved_char_destination-- if ! $moving_up && $c->req->param('drop_pos') eq 'before';
+	
+	# Adjust all the chars' positions	
+	foreach my $character (values %characters) {
+		if ($character->id == $c->req->param('moved')) {
+			$character->party_order($moved_char_destination);	
+		}
+		elsif ($moving_up) {
+			next if $character->party_order < $moved_char_destination ||
+				$character->party_order > $moved_char_origin;
+				
+			$character->party_order($character->party_order+1);
+		}
+		else {
+			next if $character->party_order < $moved_char_origin ||
+				$character->party_order > $moved_char_destination;
+				
+			$character->party_order($character->party_order-1);
+		}
 		
-	my $chars = $c->model('Character')->search(
-		{
-			party_id => $c->stash->{party}->id,
-			character_id => [$c->req->param('char_1'), $c->req->param('char_2')],
-		},
-	);
-	
-	#return unless $chars->count == 2;
-	
-	my ($char_1, $char_2) = $chars->all;
-	
-	$c->log->debug("Swapping char_id: " . $char_1->id . " (pos: " . $char_1->party_order . ") with char_id: " .
-		$char_2->id . " (pos: " . $char_2->party_order . ")");
-	
-	my $char_1_pos = $char_1->party_order;
-	$char_1->party_order($char_2->party_order);
-	$char_2->party_order($char_1_pos);
-	$char_1->update;
-	$char_2->update;
+		$character->update;
+	}
 }
 
 1;

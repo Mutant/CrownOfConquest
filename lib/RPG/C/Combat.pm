@@ -273,8 +273,7 @@ sub flee : Local {
 }
 
 sub finish : Private {
-	my ($self, $c) = @_;
-	
+	my ($self, $c) = @_;	
 	
 	my @creatures = $c->stash->{creature_group}->creatures;
 	
@@ -294,9 +293,6 @@ sub finish : Private {
 	my @characters = $c->stash->{party}->characters;
 	
 	my $awarded_xp = $c->forward('/combat/distribute_xp', [ $xp, [map { $_->id } @characters] ] );
-	
-	warn "awarded xp:";
-	warn Dumper $awarded_xp;
 	
 	foreach my $character (@characters) {
 		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";

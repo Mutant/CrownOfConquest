@@ -5,6 +5,6 @@ use warnings;
 
 use lib '../lib','lib';
 
-use Test::Class::Load './lib/Test/RPG/Schema','./lib/Test/RPG/C', './lib/Test/RPG/NewDay';
+use Test::Class::Load './lib/';
 
 Test::Class->runtests(@ARGV);

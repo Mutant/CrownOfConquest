@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 
 use Games::Dice::Advanced;
+use List::Util qw(shuffle);
 
 sub start : Local {
 	my ($self, $c, $params) = @_;
@@ -103,94 +104,101 @@ sub fight : Local {
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
 	
-	my @party_messages;
+	my @combatants = shuffle (@creatures, @characters);
 	
-	foreach my $character (@characters) {
-		next if $character->is_dead;
+	my @combat_messages;
+	
+	foreach my $combatant (@combatants) {
+		next if $combatant->is_dead;
 		
-		#$c->log->debug(Dumper $c->session->{combat_action});
-		
-		if ($c->session->{combat_action}{$character->id} eq 'Attack') {
-			# Choose creature to attack
-			# TODO: maybe this should be player selected?
-			my $creature;
-			do {
-				$creature = $creatures[int rand($#creatures + 1)];
-			} while ($creature->is_dead);
-			
-			my $damage = $c->forward('attack', [$character, $creature]);
-			
-			# Store damage done for XP purposes
-			$c->session->{damage_done}{$character->id}+=$damage;
+		my $action_result;
+		if ($combatant->is_character) {
+			$action_result = $c->forward('character_action', [$combatant, $creature_group]);
+		}
+		else {
+			$action_result = $c->forward('creature_action', [$combatant, $c->stash->{party}]);			
+		}
 
-			# TODO: might be better as a TT function
-			push @party_messages, $c->forward('RPG::V::TT',
-		        [{
-		            template => 'combat/message.html',
-					params => {
-						attacker => $character,
-						defender => $creature,
-						damage => $damage,
-					},
-					return_output => 1,
-		        }]
-		    );
-		    
-		    # If creature is now dead, see if any other creatures are left alive.
-		    #  If not, combat is over.
-		    if ($creature->is_dead && $creature_group->number_alive == 0) {
-		    	push @party_messages, "The creatures have been killed!"; # TODO: placeholder
-		    	
-		    	# We don't actually do any of the stuff to complete the combat here, so a
-		    	#  later action can still display monsters, messages, etc.
-		    	$c->stash->{combat_complete} = 1;
-		    			    	
-		    	last;
-		    }
-		}
-	}
-	
-	warn "Damage done:\n";
-	warn Dumper $c->session->{damage_done};
-	
-	unless ($c->stash->{combat_complete}) {	
-		foreach my $creature (@creatures) {
-			next if $creature->is_dead;
-	
-			my $character;
-			my $count; # XXX
-			do {
-				my $rand = int rand($#characters + 1);
-				$character = $characters[$rand];
-			} while ($character->is_dead && $count++ < 20);
+		if ($action_result) {		
+			my ($target, $damage) = @$action_result;
 			
-			my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
-			
-			# Count number of times attacked for XP purposes
-			$c->session->{attack_count}{$character->id}++;
-				
-			my $damage = $c->forward('attack', [$creature, $character, $defending]);
-	
-			push @party_messages, $c->forward('RPG::V::TT',
-		        [{
-		            template => 'combat/message.html',
-					params => {
-						attacker => $creature,
-						defender => $character,
-						damage => $damage,
-					},
-					return_output => 1,
-		        }]
-		    );
-		    
-		    # TODO: check for dead party
+			push @combat_messages, {
+				attacker => $combatant, 
+				defender => $target, 
+				damage => $damage || 0,
+			};
 		}
+		
+		last if $c->stash->{combat_complete};
 	}
 		
-	push @{ $c->stash->{combat_messages} }, @party_messages;
+	push @{ $c->stash->{combat_messages} }, $c->forward('RPG::V::TT',
+        [{
+            template => 'combat/message.html',
+			params => {				
+				combat_messages => \@combat_messages,
+				combat_complete => $c->stash->{combat_complete},
+			},
+			return_output => 1,
+        }]
+    );	
 	
 	$c->forward('/party/main');
 	
+}
+
+sub character_action : Private {
+	my ($self, $c, $character, $creature_group) = @_;
+	
+	my @creatures = $creature_group->creatures;
+	
+	my ($creature, $damage);
+	
+	if ($c->session->{combat_action}{$character->id} eq 'Attack') {
+		# Choose creature to attack
+		# TODO: maybe this should be player selected?
+		do {
+			$creature = $creatures[int rand(scalar @creatures)];
+		} while ($creature->is_dead);
+			
+		$damage = $c->forward('attack', [$character, $creature]);
+			
+		# Store damage done for XP purposes
+		$c->session->{damage_done}{$character->id}+=$damage;
+
+		    
+	    # If creature is now dead, see if any other creatures are left alive.
+	    #  If not, combat is over.
+	    if ($creature->is_dead && $creature_group->number_alive == 0) {	    	
+	    	# We don't actually do any of the stuff to complete the combat here, so a
+	    	#  later action can still display monsters, messages, etc.
+	    	$c->stash->{combat_complete} = 1;
+	    }
+	    
+	    return [$creature, $damage];
+	}
+}
+
+sub creature_action : Private {
+	my ($self, $c, $creature, $party) = @_;
+		
+	my @characters = $party->characters;
+	
+	my $character;	
+	my $count; # XXX this is just here to stop things looping forever if the party is dead
+	do {
+		my $rand = int rand($#characters + 1);
+		$character = $characters[$rand];
+	} while ($character->is_dead && $count++ < 20);
+		
+	my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
+		
+	# Count number of times attacked for XP purposes
+	$c->session->{attack_count}{$character->id}++;
+			
+	my $damage = $c->forward('attack', [$creature, $character, $defending]);
+	    
+	return [$character, $damage];
 }
 
 sub attack : Private {
@@ -204,10 +212,10 @@ sub attack : Private {
 	my $aq = $attacker->attack_factor  - $a_roll;	
 	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
 	
-	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
+	#$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
-	$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
+	#$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
+	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
 	
 	my $damage = 0;
 	

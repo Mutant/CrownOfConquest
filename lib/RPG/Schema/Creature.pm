@@ -10,7 +10,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Creature');
 
-__PACKAGE__->add_columns(qw/creature_id creature_group_id creature_type_id hit_points_current hit_points_max/);
+__PACKAGE__->add_columns(qw/creature_id creature_group_id creature_type_id hit_points_current hit_points_max group_order/);
 
 __PACKAGE__->set_primary_key('creature_id');
 
@@ -72,7 +72,7 @@ sub defence_factor {
 sub name {
 	my $self = shift;
 	
-	return $self->type->creature_type; 
+	return $self->type->creature_type . ' #' . $self->group_order; 
 }
 
 sub is_dead {
@@ -85,6 +85,16 @@ sub damage {
 	my $self = shift;
 	
 	return $self->type->level * 2;	
+}
+
+sub weapon {
+	my $self = shift;
+	
+	return $self->type->weapon || 'Claws';
+}
+
+sub is_character {
+	return 0;	
 }
 
 1;

@@ -78,8 +78,11 @@ function processOnLoad() {
 	dojo.require("dijit.form.TextBox");
 
 [% IF error %]
+function error_init() {
 	dojo.byId('error-message').innerHTML = '[% error %]';
 	dijit.byId('error').show();
+}
+dojo.addOnLoad( error_init );
 [% END %]
 </script>
 

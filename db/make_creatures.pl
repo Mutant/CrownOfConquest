@@ -37,9 +37,16 @@ for my $count (1 .. $creature_count) {
 		warn Dumper \%cords;
 
 		($land) = $schema->resultset('Land')->search(
-			x => $cords{x},
-			y => $cords{y}				
+			{
+				x => $cords{x},
+				y => $cords{y}				
+			},
+			{
+				prefetch => 'terrain',
+			},
 		);
+		
+		undef %cords, next if $land->terrain->terrain_name eq 'town'; 
 	
 		my $already_cg = $schema->resultset('CreatureGroup')->search(
 			land_id => $land->id,
@@ -65,6 +72,7 @@ for my $count (1 .. $creature_count) {
 			creature_group_id => $cg->id,
 			hit_points_current => $hps,
 			hit_points_max => $hps,
+			group_order => $creature,
 		});
 	}
 }

@@ -93,4 +93,17 @@ __PACKAGE__->belongs_to(
     { 'foreign.equip_place_id' => 'self.equip_place_id' }
 );
 
+__PACKAGE__->has_many(
+    'item_variables',
+    'RPG::Schema::Item_Variable',
+    { 'foreign.item_id' => 'self.item_id' }
+);
+
+sub attribute {
+	my $self = shift;
+	my $attribute = shift;
+	
+	return $self->item_type->attribute($attribute); 	
+}
+
 1;

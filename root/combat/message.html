@@ -1,8 +1,12 @@
-[% attacker.name %] attacked [% defender.name %] and 
-
-[% IF damage > 0 %]
-	hit for [% damage %] points of damage.
-		[% IF defender.is_dead %][% defender.name %] was killed![% END %]
-[% ELSE %]
-	missed.
+[% FOREACH message IN combat_messages %]
+	[% message.attacker.name %] attacked [% message.defender.name %] with [% message.attacker.weapon %] and 
+	
+	[% IF message.damage > 0 %]
+		hit for [% message.damage %] points of damage.
+			[% IF message.defender.is_dead %][% message.defender.name %] was killed![% END %]
+	[% ELSE %]
+		missed.
+	[% END %]
+	<br>
 [% END %]
+[% IF combat_complete %]The creatures have been killed[% END %]

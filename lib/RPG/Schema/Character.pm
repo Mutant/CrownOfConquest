@@ -328,13 +328,23 @@ sub _roll_points {
 sub attack_factor {
 	my $self = shift;
 	
-	return $self->strength + $self->_calculate_equipped_modifier('Weapon'); 
+	# TODO: when we allow multiple weapons per char, we'll need to pass in which item we're interested in here.
+	#  If we don't have an item passed, we'll just assume it's whatever weapon we can find, since there should
+	#  only be one
+	
+	my $item = $self->get_equipped_item('Weapon');
+	
+	return $self->strength + ($item ? $item->attribute('Attack Factor') : 0);
 }
 
 sub defence_factor {
 	my $self = shift;
+	
+	my $item = $self->get_equipped_item('Armour');
+	
+	# TODO: add DF of helmet
 		
-	return $self->agility + $self->_calculate_equipped_modifier('Armour');
+	return $self->agility + ($item ? $item->attribute('Defence Factor') : 0);
 	
 }
 
@@ -347,68 +357,51 @@ Max damage the character can do with the weapon they currently have equipped
 sub damage {
 	my $self = shift;
 	
-	my $eq_rs = $self->_get_equipped_items('Weapon');
-	
-	my $weapon = $eq_rs->first;
+	my $weapon = $self->get_equipped_item('Weapon');
 	
 	return 2 unless $weapon; # nothing equipped, assume bare hands
 	
-	my $attribute = $weapon->item_type->search_related('item_attributes', { 'item_attribute_id' => 'Damage' })->first;
-	
-	return $attribute->item_attribute_value;
+	return $weapon->attribute('Damage');
 }
 
-=head2 _calculate_equipped_modifier($equipment_cateogry)
+sub weapon {
+	my $self = shift;
+	
+	my $item = $self->get_equipped_item('Weapon');
+	
+	return $item ? $item->item_type->item_type : 'Bare Hands';	
+}
 
-Calculate the modifier of all equipment of a particular category (e.g. "Weapon") equipped by this character.
-Will return '0' if no equipment of that type is worn.
+=head2 get_equipped_item($category)
+
+Returns an item record for an equipped item of the specified category, if any. We assume only one item of this category type
+will be equipped (not necessarily the case), and just return the first one
 
 =cut
 
-sub _calculate_equipped_modifier {
+sub get_equipped_item {
 	my $self = shift;
 	my $category = shift || croak 'Category not supplied';
 	
-	return $self->{_equip_modifier}{$category} if defined $self->{_equip_modifier}{$category};
-	
-	my $eq_rs = $self->_get_equipped_items($category);
-	
-	my $modifier = 0;
-	while (my $item = $eq_rs->next) {
-		next unless $item;
-		$modifier += $item->item_type->basic_modifier + $item->magic_modifier;
-	}
-	
-	$self->{_equip_modifier}{$category} = $modifier;
-	
-	return $modifier;
-}
+	return $self->{equipped_item}{$category} if $self->{equipped_item}{$category}; 
 
-=head2 _get_equipped_items($category)
-
-Return a record set of equipped items for a given category
-
-=cut
-
-# TODO: join onto Equip_Places and only get equipped items
-
-sub _get_equipped_items {
-	my $self = shift;
-	my $category = shift || croak 'Category not supplied';
-
-	my $eq_rs = $self->result_source->schema->resultset('Items')->search(
+	my $item = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
 			'category.item_category' => $category,
 		},
 		{
-			'join' => {'item_type' => 'category'},
-			'prefetch' => 'item_type',
-			'cache' => 1,
+			'join' => [
+				{'item_type' => 'category'},
+				'equipped_in',
+			],
+			'prefetch' => {item_type => {'item_attributes' => 'item_attribute_name'}},
 		},
-	);
+	)->first;
 	
-	return $eq_rs;
+	$self->{equipped_item}{$category} = $item;
+	
+	return $item;
 }
 
 sub hit {
@@ -464,6 +457,10 @@ sub equipped_items {
 	}
 	
 	return \%equipped_items;
+}
+
+sub is_character {
+	return 1;	
 }
 
 1;

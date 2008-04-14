@@ -26,15 +26,6 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '255'
     },
-    'basic_modifier' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'basic_modifier',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
     'item_category_id' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,
@@ -79,7 +70,7 @@ __PACKAGE__->has_many(
 
 __PACKAGE__->has_many(
     'item_attributes',
-    'RPG::Schema::Item_Attributes',
+    'RPG::Schema::Item_Attribute',
     { 'foreign.item_type_id' => 'self.item_type_id' }
 );
 
@@ -102,6 +93,30 @@ sub modified_cost {
 	return $self->base_cost unless $shop;
 		
 	return int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));	
+}
+
+my %attributes;
+sub attribute {
+	my $self = shift;
+	my $attribute = shift;
+	
+	return $attributes{$self->id}{$attribute} if $attributes{$self->id}{$attribute}; 
+
+	my $item_attribute = $self->result_source->schema->resultset('Item_Attribute')->search(
+		{
+			item_attribute_name => $attribute,
+			item_type_id => $self->id,
+		},
+		{
+			join => 'item_attribute_name',
+		},
+	)->first;
+	
+	my $value = $item_attribute ? $item_attribute->item_attribute_value : undef;
+	
+	$attributes{$self->id}{$attribute} = $value;
+	
+	return $value;
 }
 
 1;

@@ -78,16 +78,15 @@ sub main : Local {
 
 sub select_action : Local {
 	my ($self, $c) = @_;
-
-	$c->session->{combat_action}{$c->req->param('character_id')} = $c->req->param('action'); 
+	
+	my $character = $c->model('Character')->find($c->req->param('character_id'));
+	
+	$character->last_combat_action($c->req->param('action'));
+	$character->update; 
 }
 
 sub fight : Local {
 	my ($self, $c) = @_;
-	
-	# TODO: We should always gave something set in combat_action, because characters will have default
-	#  actions (either from the last time they attacked, or from a default for that character). These
-	#  defaults are not yet implemented tho, so it's possible combat_action may not be defined.
 	
 	my $creature_group = $c->model('CreatureGroup')->find(
 		{
@@ -154,7 +153,7 @@ sub character_action : Private {
 	
 	my ($creature, $damage);
 	
-	if ($c->session->{combat_action}{$character->id} eq 'Attack') {
+	if ($character->last_combat_action eq 'Attack') {
 		# Choose creature to attack
 		# TODO: maybe this should be player selected?
 		do {
@@ -191,7 +190,7 @@ sub creature_action : Private {
 		$character = $characters[$rand];
 	} while ($character->is_dead && $count++ < 20);
 		
-	my $defending = $c->session->{combat_action}{$character->id} eq 'Defend' ? 1 : 0;
+	my $defending = $character->last_combat_action eq 'Defend' ? 1 : 0;
 		
 	# Count number of times attacked for XP purposes
 	$c->session->{attack_count}{$character->id}++;

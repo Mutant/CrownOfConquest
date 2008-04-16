@@ -22,11 +22,12 @@ sub view : Local {
 	    		'race',
 	    		'class',
 	    	],
-	    	distinct => 1,
+	    	order_by => 'item_type',
 	    },
 	);
 	
 	my $equipped_items = $character->equipped_items;
+	my @characters = $c->stash->{party}->characters;
     
     $c->forward('RPG::V::TT',
         [{
@@ -34,6 +35,7 @@ sub view : Local {
             params => {
                 character => $character,
                 equipped_items => $equipped_items,
+                characters => \@characters,
             }
         }]
     );
@@ -71,7 +73,7 @@ sub equip_item : Local {
     
     # Make sure this item belongs to a character in the party
     my @characters = $c->stash->{party}->characters;
-    unless (scalar (grep { $_->id eq $item->character_id } @characters) > 0) {
+    if (scalar (grep { $_->id eq $item->character_id } @characters) == 0) {
     	$c->log->warn("Attempted to equip item " . $item->id . " by party " . $c->stash->{party}->id . 
     		", but item does not belong to this party (item is owned by character: " . $item->character_id . ")");
     	return;	
@@ -106,6 +108,41 @@ sub equip_item : Local {
     $item->equip_place_id($equip_place->id);
     $item->update;    
 
+}
+
+sub give_item : Local {
+    my ($self, $c) = @_;
+    
+    my $character = $c->model('Character')->find(
+    	{
+    		character_id => $c->req->param('character_id'),
+    		party_id => $c->stash->{party}->id,
+    	},
+    );
+    
+    # Make sure character being given to is in the party
+    unless ($character) {
+    	$c->log->warn("Can't find " . $c->req->param('character_id') . " in party " . $c->stash->{party}->id);
+    	return;
+    }
+    
+    my $item = $c->model('Items')->find({
+    	item_id => $c->req->param('item_id'),
+    });
+    
+    # Make sure this item belongs to a character in the party
+    my @characters = $c->stash->{party}->characters;
+    if (scalar (grep { $_->id eq $item->character_id } @characters) == 0) {
+    	$c->log->warn("Attempted to give item  " . $item->id . " within party " . $c->stash->{party}->id . 
+    		", but item does not belong to this party (item is owned by character: " . $item->character_id . ")");
+    	return;	
+    }
+    
+    $item->character_id($character->id);
+    $item->equip_place_id(undef);
+    $item->update;
+    
+    $c->res->body(to_json({message=>"A " . $item->item_type->item_type . " was given to " . $character->character_name})); 
 }
 
 1;

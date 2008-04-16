@@ -11,180 +11,10 @@ use Data::Dumper;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
-__PACKAGE__->add_columns(
-    'character_id' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 1,
-      'default_value' => undef,
-      'is_foreign_key' => 0,
-      'name' => 'character_id',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'character_name' => {
-      'data_type' => 'char',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'character_name',
-      'is_nullable' => 0,
-      'size' => '255'
-    },
-    'xp' => {
-      'data_type' => 'bigint',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'xp',
-      'is_nullable' => 0,
-      'size' => '20'
-    },
-    'class_id' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'class_id',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'race_id' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'race_id',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'strength' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'strength',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'intelligence' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'intelligence',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'agility' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'agility',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'divinity' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'divinity',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'constitution' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'constitution',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'hit_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'hit_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'level' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '1',
-      'is_foreign_key' => 0,
-      'name' => 'level',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'magic_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'magic_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'faith_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'faith_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'max_hit_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'max_hit_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'max_magic_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'max_magic_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'max_faith_points' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'max_faith_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'party_id' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => undef,
-      'is_foreign_key' => 0,
-      'name' => 'max_faith_points',
-      'is_nullable' => 1,
-      'size' => '11'
-    },
-    'party_order' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => undef,
-      'is_foreign_key' => 0,
-      'name' => 'max_faith_points',
-      'is_nullable' => 0,
-      'size' => '11'
-    },    
-
-);
+__PACKAGE__->add_columns(qw/character_id character_name xp class_id race_id strength intelligence agility divinity constitution hit_points
+ 							level magic_points faith_points max_hit_points max_magic_points max_faith_points party_id party_order 
+ 							last_combat_action/);
+ 							
 __PACKAGE__->set_primary_key('character_id');
 
 __PACKAGE__->belongs_to(
@@ -453,8 +283,11 @@ sub equipped_items {
 	foreach my $equip_place (@equip_places) {		
 		# Should only have one item equipped in a particular place
 		my ($item) = grep { $_->equip_place_id && $equip_place->id == $_->equip_place_id; } @items;
+		warn $equip_place->equip_place_name . " " . $item->item_type->item_type if $item;
 		$equipped_items{$equip_place->equip_place_name} = $item; 
 	}
+	
+	#warn Dumper \%equipped_items;
 	
 	return \%equipped_items;
 }

@@ -58,7 +58,6 @@ function savePurchase(dialogFields) {
   	  	      dojo.byId('equip_[% char.character_id %]').innerHTML += dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML + '<br>';
 			  
 			  if (responseObject.updated_stock.count == 0) {
-			    alert(dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML);
 			  	dojo.byId('item-source-' + responseObject.updated_stock.item_type).innerHTML = 
 			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
 			  }

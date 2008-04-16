@@ -1,5 +1,7 @@
 <script>
 function selectAction(action, char_id) {
+	dijit.byId('char_action_button_' + char_id).setLabel(action);
+
 	dojo.xhrGet( { //
 	        // The following URL must match that used to test the server.
 	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id, 
@@ -8,32 +10,12 @@ function selectAction(action, char_id) {
 	        timeout: 5000, // Time in milliseconds
 	
 	        });
-
-    // Ugly, but effective :|
-	document.getElementById('attack-' + char_id).style.border = "solid white 1px";
-	document.getElementById('defend-' + char_id).style.border = "solid white 1px";
-	        
-	document.getElementById(action.toLowerCase() + '-' + char_id).style.border = "solid black 1px";
 	        
 	return false;
 }
 
-function loadActions() {
-	[% FOREACH action IN combat_actions %]
-	var action = document.getElementById("[% action.value %]".toLowerCase() + '-' + "[% action.key %]");
-	
-	if (action) {
-		action.style.border = "solid black 1px";
-	}
-	[% END %]
-}
-
-function processOnLoad() {
-	loadActions();
-}
-
         dojo.require("dojo.dnd.Source");
-        dojo.require("dojo.parser");   
+        dojo.require("dijit.Menu");
         dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
 
@@ -61,6 +43,12 @@ function processOnLoad() {
 
 .dojoDndItemAfter {border-right: 2px dotted gray; }
 
+.dijitButtonText { font-size: 10pt }
+
+#char-1 {
+	border: 5px solid black;
+}
+
 </style>
 
 <table dojoType="dojo.dnd.Source"jsId="c[% char.id %]" accept="character" moveOnly="true">
@@ -76,7 +64,7 @@ function processOnLoad() {
     <th>D</th>
     <th>C</th>        
 </tr>
-    
+
 [% FOREACH char = characters %]
 <tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]">
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
@@ -91,8 +79,23 @@ function processOnLoad() {
     <td>[% char.constitution %]</td>
     
     [% IF party.in_combat_with && ! char.is_dead %]
-    	<td id="attack-[% char.id %]"><a href="#" onClick="selectAction('Attack','[% char.id %]')">Attack</a></td>
-    	<td id="defend-[% char.id %]"><a href="#" onClick="selectAction('Defend','[% char.id %]')">Defend</a></td>
+    	<td>
+        <div dojoType="dijit.form.DropDownButton" id="char_action_button_[% char.id %]">
+             <span>[% char.last_combat_action %]</span>
+    	     <div dojoType="dijit.Menu" style="display: none">
+	         <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]');">Attack</div>
+	         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
+             <!--<div dojoType="dijit.PopupMenuItem">
+	             <span>Submenu</span>
+	             <div dojoType="dijit.Menu">
+		             <div dojoType="dijit.MenuItem" onClick="alert('Submenu 1!')">Submenu Item One</div>
+		             <div dojoType="dijit.MenuItem" onClick="alert('Submenu 2!')">Submenu Item Two</div>
+	            </div>
+	         -->
+	        </div>
+            </div>
+        </div>
+		</td>
     [% END %]
 </tr>
 [% END %]

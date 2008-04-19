@@ -2,9 +2,19 @@
 
     <script type="text/javascript">
        dojo.require("dijit.form.FilteringSelect");
-       dojo.require("dojo.data.ItemFileReadStore");
    </script>
    
+<b>Create New Item In Category:</b>
+<form method="get" action="[% base %]/admin/items/new_item_type">
+<select dojoType="dijit.form.FilteringSelect" name="category_id" autocomplete="false">
+		<option></option>
+        [% FOREACH category IN categories %]        
+ 	        <option value="[% category.id %]">[% category.item_category %]</option>
+ 	    [% END %]
+</select>
+<input type="submit" value="Create">
+</form>
+
 <b>Edit Item Type</b><br>
 <form method="get" action="[% base %]/admin/items/main">
 <select dojoType="dijit.form.FilteringSelect" name="item_type_id" autocomplete="false">

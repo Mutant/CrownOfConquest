@@ -46,6 +46,8 @@ sub main : Local {
 			},
 		);
 	}
+	
+	my @categories = $c->model('Item_Category')->search;
 		
 	$c->forward('RPG::V::TT',
         [{
@@ -55,6 +57,7 @@ sub main : Local {
 				item_type_to_edit => $item_type_to_edit,
 				item_attribute_names => \@item_attribute_names,
 				item_variable_names => \@item_variable_names,
+				categories => \@categories,
 			},
         }]
     );
@@ -69,6 +72,7 @@ sub update_item_type : Local {
 		},
 	);
 	
+	$item_type->item_type($c->req->param('item_type'));
 	$item_type->base_cost($c->req->param('base_cost'));
 	$item_type->prevalence($c->req->param('prevalence'));
 	$item_type->update;
@@ -113,6 +117,18 @@ sub update_item_type : Local {
 		$item_variable_param->update;				
 	}
 	
+	$c->forward('/admin/items/main');
+}
+
+sub new_item_type : Local {
+	my ($self, $c) = @_;
+	
+	my $item_type = $c->model('Item_Type')->create({
+		'item_category_id' => $c->req->param('category_id'),
+	});
+	
+	$c->req->param('item_type_id', $item_type->id);
+
 	$c->forward('/admin/items/main');
 }
 

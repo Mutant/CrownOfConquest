@@ -50,7 +50,7 @@ sub run {
 				my $new_shop = $town->add_to_shops({
 					shop_name => 'Shop',
 					status => 'Opening',
-					size => Games::Dice::Advanced->roll('1d10'),
+					shop_size => Games::Dice::Advanced->roll('1d10'),
 				});
 				push @shops, $new_shop;
 			}			

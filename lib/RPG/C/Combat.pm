@@ -27,6 +27,8 @@ sub party_attacks : Local {
 		land_id => $c->stash->{party}->land_id,
 	)->first;
 	
+	$c->stash->{creature_group} = $creature_group;
+	
 	if ($creature_group) {
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
@@ -83,6 +85,8 @@ sub select_action : Local {
 	
 	$character->last_combat_action($c->req->param('action'));
 	$character->update; 
+	
+	$c->session->{combat_action_param}{$c->req->param('character_id')} = $c->req->param('action_param');
 }
 
 sub fight : Local {
@@ -150,15 +154,23 @@ sub character_action : Private {
 	my ($self, $c, $character, $creature_group) = @_;
 	
 	my @creatures = $creature_group->creatures;
+	my %creatures_by_id = map { $_->id => $_ } @creatures;
 	
 	my ($creature, $damage);
 	
 	if ($character->last_combat_action eq 'Attack') {
-		# Choose creature to attack
-		# TODO: maybe this should be player selected?
-		do {
-			$creature = $creatures[int rand(scalar @creatures)];
-		} while ($creature->is_dead);
+		# If they've selected a target, make sure it's still alive
+		my $targetted_creature = $c->session->{combat_action_param}{$character->id};
+		if ($targetted_creature && ! $creatures_by_id{$targetted_creature}->is_dead) {
+			$creature = $creatures_by_id{$targetted_creature};
+		}
+		
+		# If we don't have a target, choose one randomly
+		unless ($creature) {
+			do {
+				$creature = $creatures[int rand(scalar @creatures)];
+			} while ($creature->is_dead);
+		}
 			
 		$damage = $c->forward('attack', [$character, $creature]);
 			
@@ -214,7 +226,7 @@ sub attack : Private {
 	#$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
 	#$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq"); 
+	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq");
 	
 	my $damage = 0;
 	

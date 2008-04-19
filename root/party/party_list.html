@@ -1,10 +1,14 @@
 <script>
-function selectAction(action, char_id) {
-	dijit.byId('char_action_button_' + char_id).setLabel(action);
+function selectAction(action, char_id, action_param, action_label) {
+	if (! action_label) {
+		action_label = action;
+	}
+
+	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
 
 	dojo.xhrGet( { //
 	        // The following URL must match that used to test the server.
-	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id, 
+	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + action_param, 
 	        handleAs: "text",
 	
 	        timeout: 5000, // Time in milliseconds
@@ -45,24 +49,24 @@ function selectAction(action, char_id) {
 
 .dijitButtonText { font-size: 10pt }
 
-#char-1 {
-	border: 5px solid black;
+#party-table {
+	border-collapse:collapse;
+}
+
+#char-91 {
+	border: 1px solid black;
 }
 
 </style>
 
-<table dojoType="dojo.dnd.Source"jsId="c[% char.id %]" accept="character" moveOnly="true">
+<table dojoType="dojo.dnd.Source" id="party-table" accept="character" moveOnly="true">
 <tr>
     <th>Name</th>
     <th>Race</th>
     <th>Class</th>
     <th>HP</th>
     <th>XP</th>
-    <th>S</th>
-    <th>I</th>
-    <th>A</th>        
-    <th>D</th>
-    <th>C</th>        
+
 </tr>
 
 [% FOREACH char = characters %]
@@ -72,27 +76,24 @@ function selectAction(action, char_id) {
     <td>[% char.class.class_name %]</td>
     <td>[% char.hit_points %] / [% char.max_hit_points %]</td>
     <td>[% char.xp %]</td>
-    <td>[% char.strength %]</td>
-    <td>[% char.intelligence %]</td>
-    <td>[% char.agility %]</td>
-    <td>[% char.divinity %]</td>
-    <td>[% char.constitution %]</td>
     
     [% IF party.in_combat_with && ! char.is_dead %]
     	<td>
         <div dojoType="dijit.form.DropDownButton" id="char_action_button_[% char.id %]">
              <span>[% char.last_combat_action %]</span>
     	     <div dojoType="dijit.Menu" style="display: none">
-	         <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]');">Attack</div>
-	         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
-             <!--<div dojoType="dijit.PopupMenuItem">
-	             <span>Submenu</span>
-	             <div dojoType="dijit.Menu">
-		             <div dojoType="dijit.MenuItem" onClick="alert('Submenu 1!')">Submenu Item One</div>
-		             <div dojoType="dijit.MenuItem" onClick="alert('Submenu 2!')">Submenu Item Two</div>
-	            </div>
-	         -->
-	        </div>
+		         <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]');">Attack</div>
+		         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
+	             <div dojoType="dijit.PopupMenuItem">
+		             <span>Target</span>
+		             <div dojoType="dijit.Menu">
+						 [% FOREACH creature IN creatures %]
+						 	[% UNLESS creature.is_dead %]
+				            <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]', '[% creature.id %]', 'Targetting: [% creature.name %]')">[% creature.name %]</div>
+				            [% END %]
+			             [% END %]
+		            </div>
+		        </div>
             </div>
         </div>
 		</td>

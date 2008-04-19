@@ -50,6 +50,7 @@ sub view : Local {
                 grid => \@grid,
                 current_position => $party_location,
                 party_movement_factor => $c->stash->{party}->movement_factor,
+                image_path => RPG->config->{map_image_path},
             },
             return_output => 1,
         }]

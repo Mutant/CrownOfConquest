@@ -10,7 +10,6 @@ use Data::JavaScript;
 sub main : Local {
 	my ($self, $c) = @_;
 
-	# TODO: refactor so it can be used by list_characters
     my $party = $c->stash->{party};
 
     my @characters = $c->stash->{party}->characters;
@@ -73,6 +72,11 @@ sub main : Local {
 	    }
 	}
 	
+	my @creatures;	
+	if ($c->stash->{creature_group}) {
+		@creatures = $c->stash->{creature_group}->creatures;
+	}
+	
     $c->forward('RPG::V::TT',
         [{
             template => 'party/main.html',
@@ -82,6 +86,7 @@ sub main : Local {
                 bottom_panel => $bottom_panel,
                 characters => \@characters,
                 combat_actions => $c->session->{combat_action},
+                creatures => \@creatures,
 			},
         }]
     );

@@ -35,4 +35,10 @@ __PACKAGE__->has_many(
     { 'foreign.item_category_id' => 'self.item_category_id' }
 );
 
+__PACKAGE__->has_many(
+    'item_attribute_names',
+    'RPG::Schema::Item_Attribute_Name',
+    { 'foreign.item_category_id' => 'self.item_category_id' }
+);
+
 1;

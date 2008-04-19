@@ -1,0 +1,66 @@
+[% INCLUDE top.html %]
+
+    <script type="text/javascript">
+       dojo.require("dijit.form.FilteringSelect");
+       dojo.require("dojo.data.ItemFileReadStore");
+   </script>
+   
+<b>Edit Item Type</b><br>
+<form method="get" action="[% base %]/admin/items/main">
+<select dojoType="dijit.form.FilteringSelect" name="item_type_id" autocomplete="false">
+		<option></option>
+        [% FOREACH item_type IN item_types %]        
+ 	        <option value="[% item_type.id %]">[% item_type.item_type %]</option>
+ 	    [% END %]
+</select>
+<input type="submit" value="Edit">
+</form>
+
+[% IF item_type_to_edit %]
+[% item_type = item_type_to_edit %]
+<form method="post" action="[% base %]/admin/items/update_item_type">
+<input type="hidden" name="item_type_id" value="[% item_type.id %]">
+<table>
+	<tr>
+		<td>Item Type:</td>
+		<td><input type="text" name="item_type" value="[% item_type.item_type %]"></td>
+	</tr>
+	<tr>
+		<td>Category:</td>
+		<td>[% item_type.category.item_category %]</td>
+	<tr>
+		<td>Base Cost:</td>
+		<td><input type="text" name="base_cost" value="[% item_type.base_cost %]"></td>
+	</tr>
+	<tr>
+		<td>Prevalence:</td>
+		<td><input type="text" name="prevalence" value="[% item_type.prevalence %]"></td>
+	</tr>
+	
+	[% FOREACH item_attribute_name IN item_attribute_names %]
+	<tr>
+		<td>[% item_attribute_name.item_attribute_name %]:</td>
+		<td><input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_type.attribute(item_attribute_name.item_attribute_name) %]"></td>
+	</tr>	
+	[% END %]
+	
+	[% FOREACH item_variable_name IN item_variable_names %]
+	[% item_variable_param = item_type.variable_param( item_variable_name.item_variable_name ) %]
+	<tr>
+		<td>[% item_variable_name.item_variable_name %]:</td>
+		<td>
+			Min: <input type="text" size="5" name="item_variable_param_min_[% item_variable_name.id %]" value="[% item_variable_param.min_value %]">
+			Max: <input type="text" size="5" name="item_variable_param_max_[% item_variable_name.id %]" value="[% item_variable_param.max_value %]">
+			Keep Max?
+			<input type="checkbox" name="item_variable_param_keep_max_[% item_variable_name.id %]" value="1"
+				[% IF item_variable_param.keep_max %]checked=checked[% END %]>
+		</td>
+	</tr>
+	[% END %]
+		
+</table>
+<input type="submit" value="Update">
+</form>
+[% END %]
+
+[% INCLUDE bottom.html %]

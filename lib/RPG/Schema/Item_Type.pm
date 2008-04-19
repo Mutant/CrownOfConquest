@@ -3,6 +3,8 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Carp;
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Item_Type');
 
@@ -86,6 +88,12 @@ __PACKAGE__->many_to_many(
     'shops_with_item',
 );
 
+__PACKAGE__->has_many(
+    'item_variable_params',
+    'RPG::Schema::Item_Variable_Params',
+    { 'foreign.item_type_id' => 'self.item_type_id' }
+);
+
 sub modified_cost {
 	my $self = shift;
 	my $shop = shift;
@@ -95,28 +103,26 @@ sub modified_cost {
 	return int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));	
 }
 
-my %attributes;
 sub attribute {
 	my $self = shift;
 	my $attribute = shift;
 	
-	return $attributes{$self->id}{$attribute} if $attributes{$self->id}{$attribute}; 
-
-	my $item_attribute = $self->result_source->schema->resultset('Item_Attribute')->search(
-		{
-			item_attribute_name => $attribute,
-			item_type_id => $self->id,
-		},
-		{
-			join => 'item_attribute_name',
-		},
-	)->first;
-	
+	my @attributes = $self->item_attributes;
+	my ($item_attribute) = grep { $_->item_attribute_name->item_attribute_name eq $attribute } @attributes;	
+		
 	my $value = $item_attribute ? $item_attribute->item_attribute_value : undef;
 	
-	$attributes{$self->id}{$attribute} = $value;
-	
 	return $value;
+}
+
+sub variable_param {
+	my $self = shift;
+	my $variable = shift;
+	
+	my @params = $self->item_variable_params;
+	my ($param) = grep { $_->item_variable_name->item_variable_name eq $variable } @params;
+	
+	return $param;
 }
 
 1;

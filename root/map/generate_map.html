@@ -1,17 +1,19 @@
-<table border="1">
+<table border="1" align="center">
 [% FOREACH line = grid %]
     [% IF line %]
     <tr>
     [% FOREACH position = line %]
         [% IF position %]            
-        <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %] style="width: 200px">
+        <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %]>        
         	[% IF position.next_to(current_position) %]
-        		<a href="[% base %]/map/move_to?land_id=[% position.id %]">[% position.terrain.terrain_name %]</a> 
-        		([% position.movement_cost(party_movement_factor) %])
-        	[% ELSE %]        	
-				[% position.terrain.terrain_name %]
+        		<a href="[% base %]/map/move_to?land_id=[% position.id %]">
         	[% END %]
-        	 ([% position.x %], [% position.y %])
+			<img src="[% base %][% image_path %][% position.terrain.image %]" border=0
+				title="[% position.terrain.terrain_name %] ([% position.movement_cost(party_movement_factor) %]) ([% position.x %], [% position.y %])">
+        	[% IF position.next_to(current_position) %]
+				</a>
+        	[% END %]
+
         </td>
         [% END %]
     [% END %]

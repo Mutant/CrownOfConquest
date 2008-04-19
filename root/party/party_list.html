@@ -23,21 +23,31 @@ function selectAction(action, char_id, action_param, action_label) {
         dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
 
-	    	order_val = nodes[0].id.split(/-/);
-			var char_1 = order_val[1];
-			
 			order_val = t.current.id.split(/-/);
 			var char_2 = order_val[1];
 
 			var drop_pos;
 			(t.before == true) ? drop_pos='before' : drop_pos='after';
-
-	    	dojo.xhrGet( {
-		        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
-		        handleAs: "text",
-	
-	    	    timeout: 5000, // Time in milliseconds	
-	        });
+			
+			if (nodes[0].id == 'rank_separator') {
+		    	dojo.xhrGet( {
+			        url: "[% base %]/party/move_rank_separator?target=" + char_2 + "&drop_pos=" + drop_pos, 
+			        handleAs: "text",
+		
+		    	    timeout: 5000, // Time in milliseconds	
+		        });			
+			}
+			else {
+		    	order_val = nodes[0].id.split(/-/);
+				var char_1 = order_val[1];
+				
+		    	dojo.xhrGet( {
+			        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
+			        handleAs: "text",
+		
+		    	    timeout: 5000, // Time in milliseconds	
+		        });
+		    }
 		});
         
 </script>
@@ -49,12 +59,9 @@ function selectAction(action, char_id, action_param, action_label) {
 
 .dijitButtonText { font-size: 10pt }
 
-#party-table {
-	border-collapse:collapse;
-}
-
-#char-91 {
-	border: 1px solid black;
+#rank_separator {
+	background: #000;
+	height: 5px;
 }
 
 </style>
@@ -97,6 +104,13 @@ function selectAction(action, char_id, action_param, action_label) {
             </div>
         </div>
 		</td>
+    [% END %]
+    
+    [% IF party.rank_separator_position == char.party_order %]
+    	</tr>
+    	<tr>
+    		<tr class="dojoDndItem" dndType="character" id="rank_separator" jsId="rank_separator">
+    			<td colspan="10"></td>
     [% END %]
 </tr>
 [% END %]

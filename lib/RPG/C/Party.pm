@@ -228,7 +228,21 @@ sub swap_chars : Local {
 	
 	# Is the moved char moving up or down?
 	my $moving_up = $characters{ $c->req->param('moved') }->party_order > $moved_char_destination ? 1 : 0;
-	
+
+	# Move the rank separator if necessary.
+	# We need to do this before adjusting for drop_pos
+	my $sep_pos = $c->stash->{party}->rank_separator_position;
+	warn "moving_up: $moving_up, dest: $moved_char_destination, sep_pos: $sep_pos\n";
+	if ($moving_up && $moved_char_destination <= $sep_pos) {
+		warn "updating sep_pos\n";
+		$c->stash->{party}->rank_separator_position($sep_pos+1);
+		$c->stash->{party}->update;
+	}
+	elsif (! $moving_up && $moved_char_destination >= $sep_pos) {
+		$c->stash->{party}->rank_separator_position($sep_pos-1);
+		$c->stash->{party}->update;
+	}
+
 	# If the char was dropped after the destination and we're moving up, the destination is decremented
 	$moved_char_destination++ if $moving_up && $c->req->param('drop_pos') eq 'after';
 
@@ -255,6 +269,26 @@ sub swap_chars : Local {
 		
 		$character->update;
 	}
+	
+
+}
+
+sub move_rank_separator : Local {
+	my ($self, $c) = @_;
+	
+	my $target_char = $c->model('Character')->find(
+		{
+			character_id => $c->req->param('target'),
+		},
+	);
+	
+	my $new_pos = $c->req->param('drop_pos') eq 'after' ? $target_char->party_order : $target_char->party_order-1;
+	
+	# We don't do anything if it's been dragged to the top. the GUI should prevent this from happening.
+	return if $new_pos == 0; 
+	
+	$c->stash->{party}->rank_separator_position($new_pos);
+	$c->stash->{party}->update;
 }
 
 1;

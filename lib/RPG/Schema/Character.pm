@@ -157,12 +157,12 @@ sub _roll_points {
 
 sub attack_factor {
 	my $self = shift;
+		
+	my @items = $self->get_equipped_item('Weapon');
 	
-	# TODO: when we allow multiple weapons per char, we'll need to pass in which item we're interested in here.
-	#  If we don't have an item passed, we'll just assume it's whatever weapon we can find, since there should
-	#  only be one
-	
-	my $item = $self->get_equipped_item('Weapon');
+	# Assume only one weapon equipped. 
+	# TODO needs to change to support multiple weapons
+	my $item = shift @items;
 	
 	return $self->strength + ($item ? $item->attribute('Attack Factor') : 0);
 }
@@ -170,12 +170,12 @@ sub attack_factor {
 sub defence_factor {
 	my $self = shift;
 	
-	my $item = $self->get_equipped_item('Armour');
+	my @items = $self->get_equipped_item('Armour');
 	
-	# TODO: add DF of helmet
-		
-	return $self->agility + ($item ? $item->attribute('Defence Factor') : 0);
-	
+	my $armour_df = 0;
+	map { $armour_df+= $_->attribute('Defence Factor') } @items;
+			
+	return $self->agility + $armour_df;	
 }
 
 =head1 damage
@@ -187,7 +187,11 @@ Max damage the character can do with the weapon they currently have equipped
 sub damage {
 	my $self = shift;
 	
-	my $weapon = $self->get_equipped_item('Weapon');
+	my @items = $self->get_equipped_item('Weapon');
+	
+	# Assume only one weapon equipped. 
+	# TODO needs to change to support multiple weapons
+	my $weapon = shift @items;
 	
 	return 2 unless $weapon; # nothing equipped, assume bare hands
 	
@@ -197,15 +201,18 @@ sub damage {
 sub weapon {
 	my $self = shift;
 	
-	my $item = $self->get_equipped_item('Weapon');
+	my @items = $self->get_equipped_item('Weapon');
+	
+	# Assume only one weapon equipped. 
+	# TODO needs to change to support multiple weapons
+	my $item = shift @items;
 	
 	return $item ? $item->item_type->item_type : 'Bare Hands';	
 }
 
-=head2 get_equipped_item($category)
+=head2 get_equipped_item($super_category)
 
-Returns an item record for an equipped item of the specified category, if any. We assume only one item of this category type
-will be equipped (not necessarily the case), and just return the first one
+Returns an list of equipped item records specified super category, if any.
 
 =cut
 
@@ -213,9 +220,9 @@ sub get_equipped_item {
 	my $self = shift;
 	my $category = shift || croak 'Category not supplied';
 	
-	return $self->{equipped_item}{$category} if $self->{equipped_item}{$category}; 
+	return $self->{equipped_item}{$category} if @{$self->{equipped_item}{$category}}; 
 
-	my $item = $self->result_source->schema->resultset('Items')->search(
+	my @items = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
 			'category.item_category' => $category,
@@ -227,11 +234,11 @@ sub get_equipped_item {
 			],
 			'prefetch' => {item_type => {'item_attributes' => 'item_attribute_name'}},
 		},
-	)->first;
+	);
 	
-	$self->{equipped_item}{$category} = $item;
+	$self->{equipped_item}{$category} = \@items;
 	
-	return $item;
+	return @items;
 }
 
 sub hit {

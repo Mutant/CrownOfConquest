@@ -72,6 +72,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 1,
       'size' => 0
     },    
+    'rank_separator_position' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'rank_separator_position',
+      'is_nullable' => 1,
+      'size' => 0
+    }, 
 );
 __PACKAGE__->set_primary_key('party_id');
 

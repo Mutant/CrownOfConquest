@@ -89,24 +89,24 @@ __PACKAGE__->belongs_to(
     { 'foreign.town_id' => 'self.town_id' }
 );
 
-sub categories_sold {
+sub item_types_made {
 	my $self = shift;
 	
-	return $self->result_source->schema->resultset('ShopCategoryList')->search(
+	my @records = $self->search_related('items_made',
 		{},
 		{
-			bind => [ $self->id, $self->id ],
-			order_by => 'item_category',
+			prefetch => {'item_type' => 'category'},			
 		}
 	);
+	
+	return map { $_->item_type } @records;
 }
 
 sub grouped_items_in_shop {
 	my $self = shift;
 	
-	return $self->result_source->schema->resultset('Items')->search(
+	return $self->search_related('items_in_shop',
 		{
-			shop_id => $self->id,
 		},
 		{
 			prefetch => {'item_type' => 'category'},

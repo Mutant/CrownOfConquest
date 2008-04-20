@@ -18,7 +18,12 @@ sub view : Local {
 	    },
 	    {
 	    	prefetch => [
-	    		{'items' => {'item_type' => 'category'}},
+	    		{
+	    			'items' => [
+	    				{'item_type' => 'category'},
+	    				'item_variables',
+	    			],
+	    		},
 	    		'race',
 	    		'class',
 	    	],

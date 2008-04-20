@@ -110,9 +110,7 @@ sub attribute {
 	my @attributes = $self->item_attributes;
 	my ($item_attribute) = grep { $_->item_attribute_name->item_attribute_name eq $attribute } @attributes;	
 		
-	my $value = $item_attribute ? $item_attribute->item_attribute_value : undef;
-	
-	return $value;
+	return $item_attribute;
 }
 
 sub variable_param {

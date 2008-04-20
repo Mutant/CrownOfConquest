@@ -3,9 +3,10 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Games::Dice::Advanced;
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Items');
-
 
 __PACKAGE__->add_columns(
     'item_id' => {
@@ -104,6 +105,57 @@ sub attribute {
 	my $attribute = shift;
 	
 	return $self->item_type->attribute($attribute); 	
+}
+
+sub variable {
+	my $self = shift;
+	my $variable_name = shift;
+	
+	my ($variable) = $self->search_related('item_variables',
+		{
+			item_variable_name => $variable_name,
+		},
+	);
+	
+	return $variable;
+}
+
+sub display_name {
+	my $self = shift;
+	
+	my $quantity_string = '';
+	if (my $variable = $self->variable('Quantity')) {
+		$quantity_string = ' (x' . $variable->item_variable_value . ')';
+	}
+	
+	return $self->item_type->item_type . $quantity_string . ' (' . $self->id . ')';
+}
+
+# Override insert to populate item_variable data
+sub insert {
+    my ( $self, @args ) = @_;
+    
+    $self->next::method(@args);
+    
+    my @item_variable_params = $self->item_type->search_related('item_variable_params',
+    	{
+    	},
+    	{
+    		prefetch => 'item_variable_name',
+    	},
+    );
+    
+    foreach my $item_variable_param (@item_variable_params) {
+    	my $range = $item_variable_param->max_value - $item_variable_param->min_value - 1;
+    	my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
+    	$self->add_to_item_variables({
+    		item_variable_name => $item_variable_param->item_variable_name->item_variable_name,
+    		item_variable_value => $init_value,
+    		max_value => $item_variable_param->keep_max ? $init_value : undef,
+    	});
+    }
+    
+	return $self;
 }
 
 1;

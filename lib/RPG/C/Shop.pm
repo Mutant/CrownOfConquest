@@ -12,23 +12,43 @@ sub purchase : Local {
     
     my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
 
-    my @categories; # = $shop->categories_sold;
-    
     my $party = $c->stash->{party};
 
     my @characters = $party->characters;
     
     my @items = $shop->grouped_items_in_shop;
-    #warn Dumper $itmems[0];
-        
+    
+    # Get item_types 'made'
+    my @item_types_made = $shop->item_types_made;
+
+    # Get a sorted list of categories
+    my @categories = $c->model('Item_Category')->search(
+    	{},
+    	{
+    		order_by => 'item_category',
+    	},
+    );
+    
+    my %items;
+    
+    # Put everything into a hash by category
+    foreach my $item (@items) {
+    	push @{$items{$item->item_type->category->item_category}{item}}, $item;	
+    }
+    
+    foreach my $item_type (@item_types_made) {
+    	push @{$items{$item_type->category->item_category}{item_type}}, $item_type;	
+    }
+    
+    # TODO: sort %items?    
+       
     $c->forward('RPG::V::TT',
         [{
             template => 'shop/purchase.html',
             params => {
                 shop => $shop,
-                categories => \@categories,
                 characters => \@characters,
-                items => \@items,
+                items => \%items,
                 gold => $party->gold,
             }
         }]
@@ -119,6 +139,71 @@ sub buy_item : Local {
 	);
         
     $c->res->body($ret);
+}
+
+# TODO: fair bit of duplication between this and buy_item
+sub buy_quantity_item : Local {
+    my ($self, $c) = @_;
+    
+    my $item_type = $c->model('Item_Type')->find({
+    	item_type_id => $c->req->param('item_type_id'),
+    });
+
+	my $party = $c->stash->{party};
+
+	# Make sure the shop they're in checks out	
+	my $shop = $c->model('Shop')->find(
+		{
+			shop_id => $c->req->param('shop_id'),
+			'items_made.item_type_id' => $c->req->param('item_type_id'),
+		},
+		{
+			join => 'items_made',
+		},
+	);
+	
+	unless ($shop) {
+		$c->res->body(to_json({error => "Attempting to buy an item type not in this shop"}));
+		return;
+	}
+
+	# Make sure the shop they're in is in the town they're in
+    if ($shop->town_id != 0 && $shop->town_id != $party->location->town->id) {
+    	$c->res->body(to_json({error => "Attempting to buy an item in another town"}));
+    	# TODO: this does allow them to buy items from a different shop, which may or may not be OK
+   		return;	
+    }
+    
+    my $cost = $item_type->modified_cost($shop) * $c->req->param('quantity');
+    
+    if ($party->gold < $cost) {
+        $c->res->body(to_json({error => "Your party doesn't have enough gold to buy this item"}));
+        return;        
+    }
+    
+    # Create the item
+    my $item = $c->model('Items')->create({
+    	item_type_id => $c->req->param('item_type_id'),
+    });
+    
+    my $item_var = $item->variable('Quantity');
+    
+    $item_var->item_variable_value($c->req->param('quantity'));
+    $item_var->update;
+    
+    $item->character_id($c->req->param('character_id'));
+    $item->update;
+    
+    $party->gold($party->gold - $cost);
+    $party->update;    
+    
+    my $ret = to_json(
+    	{
+    		gold => $party->gold,
+    	}
+    ); 
+    
+    $c->res->body($ret);    
 }
 
 1;

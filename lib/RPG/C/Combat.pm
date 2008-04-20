@@ -22,10 +22,15 @@ sub start : Local {
 sub party_attacks : Local {
 	my ($self, $c) = @_;
 	
-	my $creature_group = $c->model('DBIC::CreatureGroup')->search(
-		creature_group_id => $c->req->param('creature_group_id'),
-		land_id => $c->stash->{party}->land_id,
-	)->first;
+	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
+		{
+			creature_group_id => $c->req->param('creature_group_id'),
+			land_id => $c->stash->{party}->land_id,
+		},
+		{
+			prefetch => {'creatures' => 'type'},
+		},
+	);
 	
 	$c->stash->{creature_group} = $creature_group;
 	
@@ -193,7 +198,21 @@ sub character_action : Private {
 sub creature_action : Private {
 	my ($self, $c, $creature, $party) = @_;
 		
-	my @characters = $party->characters;
+	my @characters = sort { $a->party_order <=> $b->party_order } $party->characters;
+	
+	# Figure out whether creature will target front or back rank
+	my $rank_pos = $c->stash->{party}->rank_separator_position;
+	unless ($rank_pos == scalar @characters) {
+		my $rank_roll = Games::Dice::Advanced->roll('1d100');
+		if ($rank_roll <= RPG->config->{front_rank_attack_chance}) {
+			# Remove everything but front rank
+			splice @characters, $rank_pos;
+		}
+		else {
+			# Remove everything but back rank
+			splice @characters, 0, $rank_pos;
+		}
+	}
 	
 	my $character;	
 	my $count; # XXX this is just here to stop things looping forever if the party is dead
@@ -295,6 +314,8 @@ sub finish : Private {
 	my ($self, $c) = @_;	
 	
 	my @creatures = $c->stash->{creature_group}->creatures;
+	
+	undef $c->session->{combat_action_param};
 	
 	my $xp;
 	

@@ -72,30 +72,36 @@ sub move_to : Local {
     		prefetch => 'terrain',
     	},
     );
+
+    my $movement_factor = $c->stash->{party}->movement_factor;
     
     unless ($new_land) {
-        $c->stash->{error} = 'Land does not exist!';
-        $c->detach($c->action);    
+        $c->error('Land does not exist!');
     }
     
     # Check that the new location is actually next to current position.
-    unless ($c->stash->{party}->location->next_to($new_land)) {
+    elsif (! $c->stash->{party}->location->next_to($new_land)) {
         $c->stash->{error} = 'You can only move to a location next to your current one';
-        $c->detach($c->action);
     }    
     
     # Check that the party has enough movement points
-    my $movement_factor = $c->stash->{party}->movement_factor;
-    unless ($c->stash->{party}->turns >= $new_land->movement_cost($movement_factor)) {
+    elsif ($c->stash->{party}->turns < $new_land->movement_cost($movement_factor)) {
         $c->stash->{error} = 'You do not have enough movement points to move there';
-        $c->detach($c->action);  
     }
-        
-    $c->stash->{party}->land_id($c->req->param('land_id'));
-    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
-    $c->stash->{party}->update;
     
-    $c->res->redirect('/');
+    else {        
+	    $c->stash->{party}->land_id($c->req->param('land_id'));
+	    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
+	    $c->stash->{party}->update;
+	    
+	    $c->res->redirect('/');
+	    return;
+    }
+    
+    # Only happens if an error occured, i.e. we didn't move
+    $c->forward('/party/main');
+    
+
 }
 
 1;

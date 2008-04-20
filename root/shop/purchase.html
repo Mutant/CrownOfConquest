@@ -2,6 +2,7 @@
 
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
+	dojo.require("dijit.form.NumberSpinner");
 
 	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
         onDndDrop: function(source, nodes, copy){
@@ -24,19 +25,34 @@ function init() {
 
 		var purchasedItem = source.getItem(nodes[0].id).data;
 
-    	order_val = nodes[0].id.split(/-/);
-		var item_id = order_val[1];
+		tmp = t.node.id.split(/-/);
+		var char_id = tmp[2];
 	
-		order_val = t.node.id.split(/-/);
-		var char_id = order_val[2];
+		var purchasingChar = tmp[1];
 		
-		var purchashingChar = order_val[1];
+    	tmp = nodes[0].id.split(/-/);
 		
-		dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchashingChar;
-		dojo.byId('purchasing-char-id').value = char_id;
-		dojo.byId('purchasing-item-id').value = item_id;
-		
-		dijit.byId('confirmation').show();
+		if (tmp[0] == 'item') {
+			var item_id = tmp[1];	
+			
+			dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar;
+			dojo.byId('purchasing-char-id').value = char_id;
+			dojo.byId('purchasing-item-id').value = item_id;
+			
+			dijit.byId('confirmation').show();
+		}
+		else if (tmp[0] == 'item_type') {
+			var item_type_id = tmp[1];
+
+			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
+			dojo.byId('quantity-char-id').value = char_id;
+			dojo.byId('quantity-item-type-id').value = item_type_id;
+			
+			dijit.byId('quantity-selection').show();
+		}
+		else {
+			alert("Invalid drag/drop");
+		}
 		
 		return true;
 	});	
@@ -74,14 +90,54 @@ function savePurchase(dialogFields) {
 	return true;
 }
 
+function saveQuantityPurchase(dialogFields) {	
+	dojo.xhrGet( {
+        url: "[% base %]/shop/buy_quantity_item?character_id=" + dialogFields.purchasing_char_id 
+        	+ "&item_type_id=" + dialogFields.purchasing_item_type_id + "&shop_id=[% shop.id %]"
+        	+ "&quantity=" + dialogFields.quantity, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('error-message').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;
+  	  	      dojo.byId('equip_[% char.character_id %]').innerHTML += dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML + '<br>';			  
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000, // Time in milliseconds	
+    });
+    	
+	return true;
+}
+
 dojo.addOnLoad( init );
 	
 </script>
 
 <div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
     <span id="confirmation-message"></span>
-    <input id="purchasing-char-id" name="purchasing_char_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
-    <input id="purchasing-item-id" name="purchasing_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
+    <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+<div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="saveQuantityPurchase(arguments[0]);">
+    <span id="quantity-selection-message"></span>
+    <input dojoType="dijit.form.NumberSpinner"
+                value="1"
+                size="5"
+                smallDelta="10"
+                constraints="{min: 1}"
+                maxlength="5"
+                id="quantity-spinner"
+                name="quantity">
+    <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="quantity-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
@@ -113,21 +169,40 @@ Current Gold: <span id="current-gold">[% gold %]</span>
 
 <table id="items-table" border="1">
 [% last_category = '' %]
-[% FOREACH item IN items %]
-	[% IF last_category != item.item_type.category.item_category %]
-		<tr><td colspan="3"><b>[% item.item_type.category.item_category %]</b></td></tr>
+[% FOREACH category IN items %]
+	[% IF last_category != category.key %]
+		<tr><td colspan="3"><b>[% category.key %]</b></td></tr>
 		<tr><td>Number Available</td><td>Item</td><td>Cost</td></tr>
-		[% last_category = item.item_type.category.item_category %]
+		[% last_category = category.key %]
 	[% END %]
-	<tr>
-		<td id="item-count-[% item.item_type.id %]">[% item.get_column('number_of_items') %]</td>
-		<td>
-			<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-source-[% item.item_type.id %]">
-				<span class="dojoDndItem" dndType="item" id="item-[% item.item_id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
-			</span>	
-		</td>
-		<td>[% item.item_type.modified_cost(shop) %]</td>
-	</tr>
+	
+	[% FOREACH item_or_type IN category.value %]
+		[% IF item_or_type.key == 'item' %]
+			[% FOREACH item IN item_or_type.value %]
+			<tr>
+				<td id="item-count-[% item.item_type.id %]">[% item.get_column('number_of_items') %]</td>
+				<td>
+					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-source-[% item.item_type.id %]">
+						<span class="dojoDndItem" dndType="item" id="item-[% item.item_id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
+					</span>	
+				</td>
+				<td>[% item.item_type.modified_cost(shop) %]</td>
+			</tr>
+			[% END %]
+		[% ELSE %]
+			[% FOREACH item_type IN item_or_type.value %]
+			<tr>
+				<td>[ N/A ]</td>
+				<td>
+					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-type-source-[% item_type.id %]">
+						<span class="dojoDndItem" dndType="item" id="item_type-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
+					</span>					
+				</td>
+				<td>[% item_type.modified_cost(shop) %]</td>
+			</tr>
+			[% END %]
+		[% END %]
+	[% END %]				
 [% END %]	
 </table>
 

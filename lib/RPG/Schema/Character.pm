@@ -164,7 +164,7 @@ sub attack_factor {
 	# TODO needs to change to support multiple weapons
 	my $item = shift @items;
 	
-	return $self->strength + ($item ? $item->attribute('Attack Factor') : 0);
+	return $self->strength + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0);
 }
 
 sub defence_factor {
@@ -173,7 +173,7 @@ sub defence_factor {
 	my @items = $self->get_equipped_item('Armour');
 	
 	my $armour_df = 0;
-	map { $armour_df+= $_->attribute('Defence Factor') } @items;
+	map { $armour_df+= $_->attribute('Defence Factor')->item_attribute_value } @items;
 			
 	return $self->agility + $armour_df;	
 }
@@ -195,7 +195,7 @@ sub damage {
 	
 	return 2 unless $weapon; # nothing equipped, assume bare hands
 	
-	return $weapon->attribute('Damage');
+	return $weapon->attribute('Damage')->item_attribute_value;
 }
 
 sub weapon {
@@ -220,16 +220,16 @@ sub get_equipped_item {
 	my $self = shift;
 	my $category = shift || croak 'Category not supplied';
 	
-	return $self->{equipped_item}{$category} if @{$self->{equipped_item}{$category}}; 
+	return @{$self->{equipped_item}{$category}} if ref $self->{equipped_item}{$category} eq 'ARRAY'; 
 
 	my @items = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
-			'category.item_category' => $category,
+			'super_category.super_category_name' => $category,
 		},
 		{
 			'join' => [
-				{'item_type' => 'category'},
+				{'item_type' => {'category' => 'super_category'}},
 				'equipped_in',
 			],
 			'prefetch' => {item_type => {'item_attributes' => 'item_attribute_name'}},

@@ -1,8 +1,17 @@
 [% INCLUDE top.html %]
 
-    <script type="text/javascript">
-       dojo.require("dijit.form.FilteringSelect");
-   </script>
+[% MACRO item_type_select(select_name, selected) BLOCK %]
+<select dojoType="dijit.form.FilteringSelect" name="[% select_name %]" autocomplete="false">
+		[% UNLESS selected %]<option></option>[% END %]
+        [% FOREACH item_type IN item_types %]        
+ 	        <option value="[% item_type.id %]" [% IF selected == item_type.id %]selected=selected[% END %]>[% item_type.item_type %]</option>
+ 	    [% END %]
+</select>
+[% END %]
+
+<script type="text/javascript">
+	dojo.require("dijit.form.FilteringSelect");
+</script>
    
 <b>Create New Item In Category:</b>
 <form method="get" action="[% base %]/admin/items/new_item_type">
@@ -17,12 +26,7 @@
 
 <b>Edit Item Type</b><br>
 <form method="get" action="[% base %]/admin/items/main">
-<select dojoType="dijit.form.FilteringSelect" name="item_type_id" autocomplete="false">
-		<option></option>
-        [% FOREACH item_type IN item_types %]        
- 	        <option value="[% item_type.id %]">[% item_type.item_type %]</option>
- 	    [% END %]
-</select>
+[% item_type_select('item_type_id') %]
 <input type="submit" value="Edit">
 </form>
 
@@ -48,9 +52,19 @@
 	</tr>
 	
 	[% FOREACH item_attribute_name IN item_attribute_names %]
+	[% item_attribute = item_type.attribute(item_attribute_name.item_attribute_name) %]
 	<tr>
 		<td>[% item_attribute_name.item_attribute_name %]:</td>
-		<td><input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_type.attribute(item_attribute_name.item_attribute_name) %]"></td>
+		<td>
+			[% IF item_attribute_name.value_type == 'numeric' %]
+				<input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_attribute.item_attribute_value %]">
+			[% ELSIF item_attribute_name.value_type == 'item_type' %]
+				[% item_type_select('attribute_' _ item_attribute_name.id, item_attribute.item_attribute_value) %]
+			[% ELSIF item_attribute_name.value_type == 'boolean' %]
+				<input type="checkbox" name="attribute_[% item_attribute_name.id %]" value="1"
+					[% IF item_attribute.item_attribute_value %]checked=checked[% END %]>
+			[% END %]
+		</td>
 	</tr>	
 	[% END %]
 	

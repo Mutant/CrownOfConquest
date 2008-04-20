@@ -16,7 +16,12 @@ sub run {
 	my $town_rs = $schema->resultset('Town')->search( {}, {prefetch=>'shops'} );
 	
 	# Get list of item types, as we only need to get it once
-	my @item_types = $schema->resultset('Item_Type')->search( {}, { cache => 1 });
+	my @item_types = $schema->resultset('Item_Type')->search( 
+		{}, 
+		{ 
+			prefetch => {'item_variable_params' => 'item_variable_name'}, 
+		},
+	);
 	my %item_types_by_prevalence;
 	map { push @{$item_types_by_prevalence{$_->prevalence}}, $_ } @item_types;
 	
@@ -138,12 +143,27 @@ sub run {
 					# We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
 					next unless $item_type;
 					
-					my $item = $schema->resultset('Items')->create({
-						item_type_id => $item_type->id,
-						shop_id => $shop->id,
-					});
-					
-					$item_value_to_add-=$item->item_type->modified_cost($shop);
+					# If the item_type has a 'quantity' variable param, add as an 'item made' rather than an 
+					#  individual item
+					if (my $variable_param = $item_type->variable_param('Quantity')) {
+						$schema->resultset('Items_Made')->create({
+							item_type_id => $item_type->id,
+							shop_id => $shop->id,
+						});
+						
+						# The value of this item is the median of the range of in the 'bundle' times the 
+						#  modified cost 
+						my $median_value = ($variable_param->max_value - $variable_param->min_value) / 2 + $variable_param->min_value;
+						$item_value_to_add-=$item_type->modified_cost($shop) * $median_value;
+					}
+					else {					
+						my $item = $schema->resultset('Items')->create({
+							item_type_id => $item_type->id,
+							shop_id => $shop->id,
+						});
+						
+						$item_value_to_add-=$item->item_type->modified_cost($shop);
+					}
 				}
 			}
 			else {

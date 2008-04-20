@@ -3,6 +3,10 @@ function selectAction(action, char_id, action_param, action_label) {
 	if (! action_label) {
 		action_label = action;
 	}
+	
+	if (! action_param) {
+		action_param = '';
+	}
 
 	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
 

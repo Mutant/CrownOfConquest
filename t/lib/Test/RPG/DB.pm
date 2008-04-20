@@ -11,7 +11,7 @@ sub db_startup : Test(startup) {
 	my $self = shift;
 
 	$self->{schema} = RPG::Schema->connect(
-		"dbi:mysql:game",
+		"dbi:mysql:game-test",
         "root",
         "",
 		{AutoCommit => 1},

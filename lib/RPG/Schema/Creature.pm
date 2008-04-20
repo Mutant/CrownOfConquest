@@ -60,7 +60,7 @@ sub hit {
 sub attack_factor {
 	my $self = shift;
 	
-	return $self->type->level * RPG->config->{creature_attack_ratio};	
+	return $self->type->level * RPG->config->{creature_attack_ratio};
 }
 
 sub defence_factor {
@@ -95,6 +95,10 @@ sub weapon {
 
 sub is_character {
 	return 0;	
+}
+
+sub execute_attack {
+	return;
 }
 
 1;

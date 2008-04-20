@@ -180,8 +180,7 @@ sub character_action : Private {
 		$damage = $c->forward('attack', [$character, $creature]);
 			
 		# Store damage done for XP purposes
-		$c->session->{damage_done}{$character->id}+=$damage;
-
+		$c->session->{damage_done}{$character->id}+=$damage unless ref $damage;
 		    
 	    # If creature is now dead, see if any other creatures are left alive.
 	    #  If not, combat is over.
@@ -233,19 +232,24 @@ sub creature_action : Private {
 
 sub attack : Private {
 	my ($self, $c, $attacker, $defender, $defending) = @_;
-		
-	my $a_roll = int rand RPG->config->{attack_dice_roll}; 
-	my $d_roll = int rand RPG->config->{defence_dice_roll};
-	
-	my $defence_bonus = $defending ? RPG->config->{defend_bonus} : 0; 
 
+	if (my $attack_error = $attacker->execute_attack) {
+		$c->log->debug("Attacker " . $attacker->name . " wasn't able to attack defender " . $defender->name . " Error:" . Dumper $attack_error);
+		return $attack_error;
+	}
+		
+	my $a_roll = Games::Dice::Advanced->roll('1d' . RPG->config->{attack_dice_roll}); 
+	my $d_roll = Games::Dice::Advanced->roll('1d' . RPG->config->{defence_dice_roll});
+	
+	my $defence_bonus = $defending ? RPG->config->{defend_bonus} : 0;
+	
 	my $aq = $attacker->attack_factor  - $a_roll;	
 	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
 	
-	#$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
+	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
-	#$c->log->debug("Attack: Factor: " .  $attacker->attack_factor  . " Roll: $a_roll Quotient: $aq");
-	#$c->log->debug("Defence: Factor: " . $defender->defence_factor . " Bonus: $defence_bonus Roll: $d_roll Quotient: $dq");
+	$c->log->debug("Attack:  Roll: $a_roll  Quotient: $aq");
+	$c->log->debug("Defence: Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
 	
 	my $damage = 0;
 	

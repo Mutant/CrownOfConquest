@@ -27,7 +27,7 @@ sub view : Local {
 	    		'race',
 	    		'class',
 	    	],
-	    	order_by => 'item_type',
+	    	order_by => 'item_category',
 	    },
 	);
 	

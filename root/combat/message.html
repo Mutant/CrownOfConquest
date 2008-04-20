@@ -1,11 +1,15 @@
 [% FOREACH message IN combat_messages %]
-	[% message.attacker.name %] attacked [% message.defender.name %] with [% message.attacker.weapon %] and 
-	
-	[% IF message.damage > 0 %]
-		hit for [% message.damage %] points of damage.
-			[% IF message.defender.is_dead %][% message.defender.name %] was killed![% END %]
+	[% IF message.damage.no_ammo %]
+		[% message.attacker.name %] couldn't attack because he had no ammo left for his [% message.attacker.weapon %]!
 	[% ELSE %]
-		missed.
+		[% message.attacker.name %] attacked [% message.defender.name %] with [% message.attacker.weapon %] and 
+		
+		[% IF message.damage > 0 %]
+			hit for [% message.damage %] points of damage.
+				[% IF message.defender.is_dead %][% message.defender.name %] was killed![% END %]
+		[% ELSE %]
+			missed.
+		[% END %]
 	[% END %]
 	<br>
 [% END %]

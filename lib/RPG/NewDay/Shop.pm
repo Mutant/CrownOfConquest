@@ -146,10 +146,18 @@ sub run {
 					# If the item_type has a 'quantity' variable param, add as an 'item made' rather than an 
 					#  individual item
 					if (my $variable_param = $item_type->variable_param('Quantity')) {
-						$schema->resultset('Items_Made')->create({
+						my $items_made = $schema->resultset('Items_Made')->find_or_new({
 							item_type_id => $item_type->id,
 							shop_id => $shop->id,
 						});
+						
+						if ($items_made->in_storage) {
+							# Already make this item, try again.
+							next;	
+						}
+						else {
+							$items_made->insert;
+						}
 						
 						# The value of this item is the median of the range of in the 'bundle' times the 
 						#  modified cost 

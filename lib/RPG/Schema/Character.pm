@@ -303,4 +303,45 @@ sub is_character {
 	return 1;	
 }
 
+# Execute an attack, mainly just make sure there is ammo for ranged weapons, and deduct one from quantity
+sub execute_attack {
+	my $self = shift;
+	
+	my @items = $self->get_equipped_item('Weapon');
+	
+	foreach my $item (@items) {
+		if ($item->item_type->category->item_category eq 'Ranged Weapon') {
+			my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
+			
+			# Get all appropriate ammunition this character has
+			my @ammo = $self->search_related('items',
+				{
+					'me.item_type_id' => $ammunition_item_type_id,
+				},
+				{
+					prefetch => 'item_variables',
+				},
+			);
+			
+			return {no_ammo => 1} unless @ammo; # Didn't find anything, so return - they can't attack!
+			
+			# Find the first ammo item and 
+			foreach my $ammo (@ammo) {
+				my $quantity_rec = $ammo->variable('Quantity');
+				$quantity_rec->item_variable_value($quantity_rec->item_variable_value-1);
+				
+				if ($quantity_rec->item_variable_value == 0) {
+					# None left, delete this item
+					$ammo->delete;	
+				}
+				else {
+					$quantity_rec->update;	
+				}	
+				
+				last;			
+			}
+		}	
+	}	
+}
+
 1;

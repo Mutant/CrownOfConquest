@@ -21,4 +21,10 @@ __PACKAGE__->belongs_to(
     { 'foreign.item_attribute_name_id' => 'self.item_attribute_name_id' }
 );
 
+sub value {
+	my $self = shift;
+	
+	return $self->item_attribute_value;	
+}
+
 1;

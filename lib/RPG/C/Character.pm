@@ -72,9 +72,14 @@ sub item_list : Local {
 sub equip_item : Local {
     my ($self, $c) = @_;
     
-    my $item = $c->model('Items')->find({
-    	item_id => $c->req->param('item_id'),
-    });
+    my $item = $c->model('Items')->find(
+    	{
+    		item_id => $c->req->param('item_id'),
+    	},
+    	{
+    		prefetch => {'item_type' =>	{'item_attributes' => 'item_attribute_name'}},
+    	},
+    );
     
     # Make sure this item belongs to a character in the party
     my @characters = $c->stash->{party}->characters;
@@ -84,12 +89,18 @@ sub equip_item : Local {
     	return;	
     } 
     
-    my ($equip_place) = $c->model('Equip_Places')->search({
-    	equip_place_name => $c->req->param('equip_place'),
-    });
+    my ($equip_place) = $c->model('DBIC::Equip_Places')->search(
+    	{
+    		equip_place_name => $c->req->param('equip_place'),
+    		'equip_place_categories.item_category_id' => $item->item_type->item_category_id,
+    	},
+    	{
+    		join => 'equip_place_categories',
+    	},
+    );
     
     # Make sure this category of item can be equipped here
-    unless ($equip_place->item_category_id == $item->item_type->item_category_id) {
+    unless ($equip_place) {
     	$c->res->body(to_json({error => "You can't equip a " . $item->item_type->item_type . " there!"}));
     	return;
     }
@@ -105,7 +116,37 @@ sub equip_item : Local {
     	$equipped_item->update;
     }
     
+    # Check to see if we're going to affect the opposite hand's equipped item
+    my $other_hand = $equip_place->opposite_hand;
+    
+    if ($other_hand) {
+    	my ($item_in_opposite_hand) = $c->model('Items')->search(
+    		{
+	    		character_id => $item->character_id,
+	    		equip_place_id => $other_hand->id,
+	    	},
+	    	{
+    			prefetch => {'item_type' =>	{'item_attributes' => 'item_attribute_name'}},
+    		},
+    	);
+
+    	# If we're equipping a two-handed weapon, or there's one already equipped also clear the other hand
+	    my $attribute = $item->attribute('Two-Handed');
+	    my $opposite_hand_attribute = $item_in_opposite_hand ? $item_in_opposite_hand->attribute('Two-Handed') : undef;
+	    if (($attribute && $attribute->value) || ($opposite_hand_attribute && $opposite_hand_attribute->value)) {    	
+	    
+		    if ($item_in_opposite_hand && $item_in_opposite_hand->id != $item->id) {
+		    	$item_in_opposite_hand->equip_place_id(undef);
+		    	$item_in_opposite_hand->update;
+		    }
+	    	
+	    	$c->res->body(to_json({clear_equip_place => $other_hand->equip_place_name}));
+	    }
+    }
+    
     # Tell client that item should be unequipped from original place
+    #  XXX: Note, we currently expect this not to occur if a two-handed weapon is being equipped, since it should have
+    #   been taken care of above (since weapons can only be equipped in the hands) 
     if ($item->equip_place_id) {
     	$c->res->body(to_json({clear_equip_place => $item->equipped_in->equip_place_name}));	
     }

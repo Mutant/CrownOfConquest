@@ -115,6 +115,34 @@ function saveQuantityPurchase(dialogFields) {
 	return true;
 }
 
+function sellItemConfirm(item_type, item_id, sell_price) {
+	//alert(item_type + " " + item_id + " " + sell_price);
+	//alert(dojo.byId('confirm-sale-message'));
+	dojo.byId('confirm-sale-message').innerHTML = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
+	dojo.byId('item-to-sell').value = item_id;
+	dijit.byId('confirm-sale').show();
+}
+
+function sellItem(dialogFields) {
+	dojo.xhrGet( {
+        url: "[% base %]/shop/sell_item?item_id=" + dialogFields.item_id + "&shop_id=[% shop.id %]", 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('error-message').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000, // Time in milliseconds	
+    });
+}
+
 dojo.addOnLoad( init );
 	
 </script>
@@ -124,6 +152,7 @@ dojo.addOnLoad( init );
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
+    <button dojoType=dijit.form.Button>Cancel</button>
 </div>
 
 <div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="saveQuantityPurchase(arguments[0]);">
@@ -141,6 +170,13 @@ dojo.addOnLoad( init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
+<div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
+    <span id="confirm-sale-message"></span>
+    <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+    <button dojoType=dijit.form.Button>Cancel</button>
+</div>
+
 <h1>[% shop.shop_name %]</h1>
 
 [%  FOREACH char = characters %]
@@ -151,10 +187,8 @@ dojo.addOnLoad( init );
 
 <span dojoType="dijit.form.DropDownButton">
         <span>Equipment</span>
-        <div dojoType="dijit.TooltipDialog" id="equip_[% char.character_id %]" title="First Dialog"  style="display: none">
-			[% FOREACH item IN char.items %]
-				[% item.item_type.item_type %]<br>
-			[% END %]
+        <div dojoType="dijit.TooltipDialog" id="equip_[% char.character_id %]" style="display: none" refreshOnShow="true"
+        	href="[% base %]/character/equipment_list?character_id=[% char.id %]&shop_id=[% shop_id %]">
         </div>
 </span>
 

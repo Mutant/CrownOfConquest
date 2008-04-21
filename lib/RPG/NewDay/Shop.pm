@@ -98,7 +98,7 @@ sub run {
 			$shop->update;
 			
 			# Calculate items in shop
-			my $ideal_items_value = $shop->shop_size * 100 + (Games::Dice::Advanced->roll('1d40') - 20);
+			my $ideal_items_value = $shop->shop_size * 50 + (Games::Dice::Advanced->roll('1d40') - 20);
 			my $actual_items_value = 0;			
 			my @items_in_shop = $schema->resultset('Items')->search(
 				{

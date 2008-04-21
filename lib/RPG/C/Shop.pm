@@ -55,35 +55,6 @@ sub purchase : Local {
     );
 }
 
-sub get_items : Local {
-    my ($self, $c) = @_;
-    
-    my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
-    
-    my @categories = $c->model('Item_Type')->search(
-        {
-            'shops_with_item.shop_id' => $c->req->param('shop_id'),
-            'item_category_id' => $c->req->param('category_id'),
-        },
-        {
-            join => ['shops_with_item'],
-        }
-    );
-    
-    my @ret_categories = map { 
-        {
-            item_type_id => $_->id, 
-            item_type => $_->item_type,
-            cost => int ($_->base_cost * $shop->cost_modifier),
-            basic_modifier => $_->basic_modifier,
-        }
-    } @categories;
-    
-    my $ret = jsdump(items => \@ret_categories);
-    
-    $c->res->body($ret);
-}
-
 sub buy_item : Local {
     my ($self, $c) = @_;
     
@@ -186,11 +157,7 @@ sub buy_quantity_item : Local {
     	item_type_id => $c->req->param('item_type_id'),
     });
     
-    my $item_var = $item->variable('Quantity');
-    
-    $item_var->item_variable_value($c->req->param('quantity'));
-    $item_var->update;
-    
+    $item->variable('Quantity', $c->req->param('quantity'));    
     $item->character_id($c->req->param('character_id'));
     $item->update;
     
@@ -203,7 +170,52 @@ sub buy_quantity_item : Local {
     	}
     ); 
     
-    $c->res->body($ret);    
+    $c->res->body($ret);
+}
+
+sub sell_item : Local {
+	my ($self, $c) = @_;
+	
+	my $item = $c->model('Items')->find({
+		item_id => $c->req->param('item_id'),
+	});
+	
+	# Make sure this item belongs to a character in the party
+    my @characters = $c->stash->{party}->characters;
+    if (scalar (grep { $_->id eq $item->character_id } @characters) == 0) {
+    	$c->log->warn("Attempted to sell item " . $item->id . " by party " . $c->stash->{party}->id . 
+    		", but item does not belong to this party (item is owned by character: " . $item->character_id . ")");
+    	return;	
+    }
+    
+    my $shop = $c->model('Shop')->find({
+    	shop_id => $c->req->param('shop_id'),
+    });
+    
+    # Make sure the shop they're in is in the town they're in
+    if ($shop->town_id != 0 && $shop->town_id != $c->stash->{party}->location->town->id) {
+    	$c->res->body(to_json({error => "Attempting to sell an item in another town"}));
+    	# TODO: this does allow them to sell items from a different shop, which may or may not be OK
+   		return;	
+    }
+    
+    $c->stash->{party}->gold($c->stash->{party}->gold + $item->sell_price($shop));
+    $c->stash->{party}->gold->update;
+    
+    $item->character_id(undef);
+    $item->equip_place_id(undef);
+    $item->shop_id($shop->id);
+    $item->update;
+ 
+    my $ret = to_json(
+    	{
+    		gold => $c->stash->{party}->gold,
+    	}
+    ); 
+    
+    $c->res->body($ret);   
+    
+     
 }
 
 1;

@@ -191,4 +191,34 @@ sub give_item : Local {
     $c->res->body(to_json({message=>"A " . $item->item_type->item_type . " was given to " . $character->character_name})); 
 }
 
+# Called by shop screen to get list of equipment.
+sub equipment_list : Local {
+	my ($self, $c) = @_;
+	
+	my ($character) = grep { $_->id eq $c->req->param('character_id') } $c->stash->{party}->characters;
+	
+	# Make sure character is in the party
+    unless ($character) {
+    	$c->log->warn("Can't find " . $c->req->param('character_id') . " in party " . $c->stash->{party}->id);
+    	return;
+    }
+    
+    my $shop = $c->model('Shop')->find({
+    	shop_id => $c->req->param('shop_id'),
+    });
+    
+    my @items = $character->items;
+        
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'character/equipment_list.html',
+            params => {
+            	items => \@items,
+            	shop => $shop,
+            }
+        }]
+    );        
+    
+}
+
 1;

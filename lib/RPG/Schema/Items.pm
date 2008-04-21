@@ -107,25 +107,32 @@ sub attribute {
 	return $self->item_type->attribute($attribute); 	
 }
 
+my %variables;
 sub variable {
 	my $self = shift;
 	my $variable_name = shift;
+	my $new_val = shift;
 	
-	my ($variable) = $self->search_related('item_variables',
-		{
-			item_variable_name => $variable_name,
-		},
-	);
+	my %variables = map { $_->item_variable_name => $_ } $self->item_variables;
 	
-	return $variable;
+	my $variable = $variables{$variable_name};
+	
+	return unless $variable;
+	
+	if ($new_val) {
+		$variable->item_variable_value($new_val);
+		$variable->update;	
+	}
+	
+	return $variable->item_variable_value;
 }
 
 sub display_name {
 	my $self = shift;
 	
 	my $quantity_string = '';
-	if (my $variable = $self->variable('Quantity')) {
-		$quantity_string = ' (x' . $variable->item_variable_value . ')';
+	if (my $quantity = $self->variable('Quantity')) {
+		$quantity_string = ' (x' . $quantity  . ')';
 	}
 	
 	return $self->item_type->item_type . $quantity_string . ' (' . $self->id . ')';
@@ -156,6 +163,15 @@ sub insert {
     }
     
 	return $self;
+}
+
+sub sell_price {
+	my $self = shift;
+	my $shop = shift;
+	
+	my $modifier = $shop ? RPG->config->{shop_sell_modifier} : 0;
+	
+	return int ($self->item_type->modified_cost($shop) / (100 / (100 + $modifier)));
 }
 
 1;

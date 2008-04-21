@@ -33,7 +33,7 @@ __PACKAGE__->has_many(
     'items',
     'RPG::Schema::Items',
     { 'foreign.character_id' => 'self.character_id' },
-    { prefetch => 'item_type' },
+    { prefetch => ['item_type', 'item_variables'], },
 );
 
 our @STATS = qw(str con int div agl);
@@ -327,15 +327,14 @@ sub execute_attack {
 			
 			# Find the first ammo item and 
 			foreach my $ammo (@ammo) {
-				my $quantity_rec = $ammo->variable('Quantity');
-				$quantity_rec->item_variable_value($quantity_rec->item_variable_value-1);
+				my $quantity = $ammo->variable('Quantity');
 				
-				if ($quantity_rec->item_variable_value == 0) {
+				if ($quantity -1 == 0) {
 					# None left, delete this item
 					$ammo->delete;	
 				}
 				else {
-					$quantity_rec->update;	
+					$ammo->variable('Quantity',$quantity-1);
 				}	
 				
 				last;			

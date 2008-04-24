@@ -71,7 +71,6 @@ function savePurchase(dialogFields) {
           else if (responseObject.gold) {
 			  dojo.byId('current-gold').innerHTML = responseObject.gold;
 			  dojo.byId('item-count-' + responseObject.updated_stock.item_type).innerHTML = responseObject.updated_stock.count;
-  	  	      dojo.byId('equip_[% char.character_id %]').innerHTML += dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML + '<br>';
 			  
 			  if (responseObject.updated_stock.count == 0) {
 			  	dojo.byId('item-source-' + responseObject.updated_stock.item_type).innerHTML = 
@@ -103,8 +102,7 @@ function saveQuantityPurchase(dialogFields) {
           	dijit.byId('error').show();
           }
           else if (responseObject.gold) {
-			  dojo.byId('current-gold').innerHTML = responseObject.gold;
-  	  	      dojo.byId('equip_[% char.character_id %]').innerHTML += dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML + '<br>';			  
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
 		  }
           return responseObject;
         },
@@ -116,8 +114,6 @@ function saveQuantityPurchase(dialogFields) {
 }
 
 function sellItemConfirm(item_type, item_id, sell_price) {
-	//alert(item_type + " " + item_id + " " + sell_price);
-	//alert(dojo.byId('confirm-sale-message'));
 	dojo.byId('confirm-sale-message').innerHTML = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
 	dojo.byId('item-to-sell').value = item_id;
 	dijit.byId('confirm-sale').show();
@@ -179,6 +175,12 @@ dojo.addOnLoad( init );
 
 <h1>[% shop.shop_name %]</h1>
 
+Shops in town: 
+[% FOREACH other_shop IN shops_in_town %]
+	[% UNLESS shop.id == other_shop.id %]<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% END %]
+		[% other_shop.shop_name %][% UNLESS shop.id == other_shop.id %]</a>[% END %]&nbsp;
+[% END %]
+<br>
 [%  FOREACH char = characters %]
 <div id="char_[% char.character_id %]">
 <span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" class="target" accept="item">

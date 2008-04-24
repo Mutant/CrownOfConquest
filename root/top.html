@@ -64,6 +64,8 @@ function processOnLoad() {
 <style>
 	@import "http://o.aolcdn.com/dojo/1.0/dijit/themes/tundra/tundra.css";
 	@import "http://o.aolcdn.com/dojo/1.0/dojo/resources/dojo.css"	
+	
+	html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
 </style>
 
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
@@ -76,7 +78,9 @@ function processOnLoad() {
 	dojo.require("dijit.form.Button");
 	dojo.require("dijit.Dialog");
 	dojo.require("dijit.form.TextBox");
-
+    dojo.require("dijit.layout.ContentPane");
+    dojo.require("dijit.layout.BorderContainer");
+    
 [% IF error %]
 function error_init() {
 	dojo.byId('error-message').innerHTML = '[% error %]';
@@ -93,9 +97,15 @@ dojo.addOnLoad( error_init );
 
 <div id="dojoDebug"></div>
 
-<!-- needs to be replaced with divs soon! -->
-<table height="100%" width="100%" cellpadding="5">
-	<tr>
-		<td style="border-right: 1px solid black" width="100" valign="top">[% INCLUDE layout/left_hand_nav.html %]</td>
-		<td valign="top">
+<div dojoType="dijit.layout.BorderContainer" design="headline">
+    <div dojoType="dijit.layout.ContentPane" region="top">
+        Game Game Game!!
+    </div>
+
+   <div dojoType="dijit.layout.ContentPane" region="left" style="background-color:red">
+		[% INCLUDE layout/left_hand_nav.html %]
+   </div>
+   
+
+    <div dojoType="dijit.layout.ContentPane" region="center" style="background-color:lightblue">
 		

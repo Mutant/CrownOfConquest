@@ -10,9 +10,11 @@ use JSON;
 sub purchase : Local {
     my ($self, $c) = @_;
     
-    my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
-
     my $party = $c->stash->{party};
+    
+    my @shops_in_town = $party->location->town->shops;
+    
+    my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
 
     my @characters = $party->characters;
     
@@ -48,6 +50,7 @@ sub purchase : Local {
             params => {
                 shop => $shop,
                 characters => \@characters,
+                shops_in_town => \@shops_in_town,
                 items => \%items,
                 gold => $party->gold,
             }
@@ -200,12 +203,22 @@ sub sell_item : Local {
     }
     
     $c->stash->{party}->gold($c->stash->{party}->gold + $item->sell_price($shop));
-    $c->stash->{party}->gold->update;
+    $c->stash->{party}->update;
     
     $item->character_id(undef);
     $item->equip_place_id(undef);
-    $item->shop_id($shop->id);
-    $item->update;
+    
+
+
+    if ($item->variable('Quantity')) {
+		# Qunatity itmes get deleted
+		$item->delete;
+    }
+    else {
+        # If it's not a quantity item, give it back to the shop
+    	$item->shop_id($shop->id);        	
+    	$item->update;
+    }
  
     my $ret = to_json(
     	{

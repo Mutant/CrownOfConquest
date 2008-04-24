@@ -286,10 +286,18 @@ sub flee : Local {
 		
 		# Randomly choose a square to flee to
 		my ($new_x, $new_y);
+		
+		my %x_y_range = $c->model('Land')->get_x_y_range();
+		
+		# Find a location to flee to that's not the current location and is in the bounds of the map
 		do {
 			$new_x = $start_point->{x} + int rand($end_point->{x} - $start_point->{x} + 1);
 			$new_y = $start_point->{y} + int rand($end_point->{y} - $start_point->{y} + 1);
-		} while ($new_x == $party_location->x && $new_y == $party_location->y);
+		} while (
+			$new_x == $party_location->x && $new_y == $party_location->y &&
+			($new_x < $x_y_range{min_x}  || $new_x > $x_y_range{max_x}  ||
+			 $new_y < $x_y_range{min_y}  || $new_y > $x_y_range{max_y})
+		);
 		
 		$c->log->debug("Fleeing to: $new_x, $new_y");
 		
@@ -298,7 +306,7 @@ sub flee : Local {
 			y => $new_y,
 		});
 		
-		$c->error("Couldn't find sector: $new_y, $new_y") unless $land;
+		$c->error("Couldn't find sector: $new_x, $new_y") unless $land;
 		
 		$c->stash->{party}->land_id($land->id);
 		$c->stash->{party}->in_combat_with(undef);

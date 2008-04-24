@@ -113,81 +113,64 @@ sub run {
 				$actual_items_value += $item->item_type->modified_cost($shop);
 			}
 			
+			# TODO: add value of quantity items
+			
 			warn "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value\n";
 			
 			my $item_value_to_add = $ideal_items_value - $actual_items_value;
 			
-			# Add items if we should
-			if ($item_value_to_add > 0) {
-				while ($item_value_to_add > 0) {
-					my $min_prevalence = 100 - ($town->prosperity + (Games::Dice::Advanced->roll('1d40') - 20));
-					$min_prevalence = 100 if $min_prevalence > 100;
-					$min_prevalence = 1   if $min_prevalence < 1;
-					
-					warn "Min_prevalance: $min_prevalence\n";
-					
-					my $actual_prevalance = Games::Dice::Advanced->roll('1d' . (100 - $min_prevalence)) + $min_prevalence;
-					
-					my $item_type;
-					while (! defined $item_type) {
-						if ($item_types_by_prevalence{$actual_prevalance}) {
-							my @items = @{$item_types_by_prevalence{$actual_prevalance}};
-							$item_type = $items[Games::Dice::Advanced->roll('1d' . scalar @items) - 1];
-						}
-						else {
-							$actual_prevalance++;
-							last if $actual_prevalance > 100;
-						}
+			while ($item_value_to_add > 0) {
+				my $min_prevalence = 100 - ($town->prosperity + (Games::Dice::Advanced->roll('1d40') - 20));
+				$min_prevalence = 100 if $min_prevalence > 100;
+				$min_prevalence = 1   if $min_prevalence < 1;
+				
+				warn "Min_prevalance: $min_prevalence\n";
+				
+				my $actual_prevalance = Games::Dice::Advanced->roll('1d' . (100 - $min_prevalence)) + $min_prevalence;
+				
+				my $item_type;
+				while (! defined $item_type) {
+					if ($item_types_by_prevalence{$actual_prevalance}) {
+						my @items = @{$item_types_by_prevalence{$actual_prevalance}};
+						$item_type = $items[Games::Dice::Advanced->roll('1d' . scalar @items) - 1];
 					}
-					
-					# We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
-					next unless $item_type;
-					
-					# If the item_type has a 'quantity' variable param, add as an 'item made' rather than an 
-					#  individual item
-					if (my $variable_param = $item_type->variable_param('Quantity')) {
-						my $items_made = $schema->resultset('Items_Made')->find_or_new({
-							item_type_id => $item_type->id,
-							shop_id => $shop->id,
-						});
-						
-						if ($items_made->in_storage) {
-							# Already make this item, try again.
-							next;	
-						}
-						else {
-							$items_made->insert;
-						}
-						
-						# The value of this item is the median of the range of in the 'bundle' times the 
-						#  modified cost 
-						my $median_value = ($variable_param->max_value - $variable_param->min_value) / 2 + $variable_param->min_value;
-						$item_value_to_add-=$item_type->modified_cost($shop) * $median_value;
-					}
-					else {					
-						my $item = $schema->resultset('Items')->create({
-							item_type_id => $item_type->id,
-							shop_id => $shop->id,
-						});
-						
-						$item_value_to_add-=$item->item_type->modified_cost($shop);
+					else {
+						$actual_prevalance++;
+						last if $actual_prevalance > 100;
 					}
 				}
-			}
-			else {
-				# Remove items if we should
-				warn "item's available for deletion:\n";
-				warn Dumper [ map { $_->id } @items_in_shop ];
-				while ($item_value_to_add < 0) {
-					my $item_to_remove = splice @items_in_shop, Games::Dice::Advanced->roll('1d' . scalar @items_in_shop) - 1, 1;
+				
+				# We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
+				next unless $item_type;
+				
+				# If the item_type has a 'quantity' variable param, add as an 'item made' rather than an 
+				#  individual item
+				if (my $variable_param = $item_type->variable_param('Quantity')) {
+					my $items_made = $schema->resultset('Items_Made')->find_or_new({
+						item_type_id => $item_type->id,
+						shop_id => $shop->id,
+					});
 					
-					next unless $item_to_remove;
+					if ($items_made->in_storage) {
+						# Already make this item, try again.
+						next;	
+					}
+					else {
+						$items_made->insert;
+					}
 					
-					warn "value_to_add: $item_value_to_add\n";
-					warn "Deleting: " . $item_to_remove->id . "\n";
+					# The value of this item is the median of the range of in the 'bundle' times the 
+					#  modified cost 
+					my $median_value = ($variable_param->max_value - $variable_param->min_value) / 2 + $variable_param->min_value;
+					$item_value_to_add-=$item_type->modified_cost($shop) * $median_value;
+				}
+				else {					
+					my $item = $schema->resultset('Items')->create({
+						item_type_id => $item_type->id,
+						shop_id => $shop->id,
+					});
 					
-					$item_value_to_add+=$item_to_remove->item_type->modified_cost($shop);
-					$item_to_remove->delete;
+					$item_value_to_add-=$item->item_type->modified_cost($shop);
 				}
 			}			
 		} 

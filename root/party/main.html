@@ -1,18 +1,20 @@
 [% INCLUDE top.html %]
 
+<div id="party-header">
 <h2>[% party.name %]</h2>
 Gold: [% party.gold %] Turns: [% party.turns %] Movement Factor: [% party.movement_factor %]
+</div>
 
-<br><br>
-
+<div id="map">
 [% map %]
+</div>
 
-<br>
-
+<div id="party-list">
 [% INCLUDE party/party_list.html %]
+</div>
 
-<br>
-
+<div id="bottom-panel">
 [% bottom_panel %]
+</div>
 
 [% INCLUDE bottom.html %]

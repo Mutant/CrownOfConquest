@@ -107,15 +107,15 @@ sub attribute {
 	return $self->item_type->attribute($attribute); 	
 }
 
-my %variables;
 sub variable {
 	my $self = shift;
 	my $variable_name = shift;
 	my $new_val = shift;
 	
-	my %variables = map { $_->item_variable_name => $_ } $self->item_variables;
+	$self->{variables} = { map { $_->item_variable_name => $_ } $self->item_variables }
+		unless $self->{variables};
 	
-	my $variable = $variables{$variable_name};
+	my $variable = $self->{variables}{$variable_name};
 	
 	return unless $variable;
 	
@@ -171,7 +171,13 @@ sub sell_price {
 	
 	my $modifier = $shop ? RPG->config->{shop_sell_modifier} : 0;
 	
-	return int ($self->item_type->modified_cost($shop) / (100 / (100 + $modifier)));
+	my $price = int ($self->item_type->modified_cost($shop) / (100 / (100 + $modifier)));
+
+	$price = 1 if $price == 0;
+		
+	$price *= $self->variable('Quantity') if $self->variable('Quantity');
+	
+	return $price;
 }
 
 1;

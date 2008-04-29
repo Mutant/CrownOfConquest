@@ -58,6 +58,8 @@
 		<td>
 			[% IF item_attribute_name.value_type == 'numeric' %]
 				<input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_attribute.item_attribute_value %]">
+			[% ELSIF item_attribute_name.value_type == 'string' %]
+				<input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_attribute.item_attribute_value %]">
 			[% ELSIF item_attribute_name.value_type == 'item_type' %]
 				[% item_type_select('attribute_' _ item_attribute_name.id, item_attribute.item_attribute_value) %]
 			[% ELSIF item_attribute_name.value_type == 'boolean' %]

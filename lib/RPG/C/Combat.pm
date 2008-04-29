@@ -112,6 +112,11 @@ sub fight : Local {
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
 	
+	# Find out if any chars are allowed a second attack
+	my $allowed_second_attack = $c->forward('characters_allowed_second_attack', \@characters);
+	#warn map { ref $_ } @allowed_second_attack;
+	push @characters, @$allowed_second_attack; 
+	
 	my @combatants = shuffle (@creatures, @characters);
 	
 	my @combat_messages;
@@ -230,6 +235,30 @@ sub creature_action : Private {
 	return [$character, $damage];
 }
 
+sub characters_allowed_second_attack : Private {
+	my ($self, $c, @characters) = @_;
+	
+	my @allowed_second_attack;
+	foreach my $character (@characters) {
+		# TODO: currently hardcoded class name and item category, but could be in the DB
+		next unless $character->class->class_name eq 'Archer';
+		
+		my @weapons = $character->get_equipped_item('Weapon');
+		
+		my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
+		
+		$c->session->{rounds_since_last_double_attack}{$character->id}++;
+		
+		# TODO: config or add to DB number of rounds for 2nd attack
+		if ($ranged_weapons >= 0 && $c->session->{rounds_since_last_double_attack}{$character->id} == 2) {
+			$c->session->{rounds_since_last_double_attack}{$character->id} = 0;
+			push @allowed_second_attack, $character;			
+		}
+	}
+	
+	return \@allowed_second_attack;		
+}
+
 sub attack : Private {
 	my ($self, $c, $attacker, $defender, $defending) = @_;
 
@@ -328,6 +357,7 @@ sub finish : Private {
 	my @creatures = $c->stash->{creature_group}->creatures;
 	
 	undef $c->session->{combat_action_param};
+	undef $c->session->{rounds_since_last_double_attack};
 	
 	my $xp;
 	
@@ -340,16 +370,26 @@ sub finish : Private {
 		$level_aggr += $creature->type->level; 
 	}
 	my $avg_creature_level = $level_aggr / scalar @creatures;
-		
-	#my %chars = map { $_->id => $_ } $c->stash->{party}->characters;
+	
 	my @characters = $c->stash->{party}->characters;
 	
 	my $awarded_xp = $c->forward('/combat/distribute_xp', [ $xp, [map { $_->id } @characters] ] );
 	
 	foreach my $character (@characters) {
+		# TODO template these combat messages?
 		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
 		
-		$character->xp($character->xp + $awarded_xp->{$character->id});
+		my %level_up_details = $character->xp($character->xp + $awarded_xp->{$character->id});
+		
+		if ($level_up_details{hit_points}) {
+			push @{$c->stash->{combat_messages}}, $character->character_name . " went up a level! (Now level " . $character->level . ")";
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{hit_points} . " hit points.";
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{magic_points} . " magic points."
+				if $level_up_details{magic_points};
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{prayer_points} . " prayer points."
+				if $level_up_details{prayer_points};
+		}
+		
 		$character->update;
 	}
 		

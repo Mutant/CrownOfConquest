@@ -11,9 +11,11 @@ use Data::Dumper;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
-__PACKAGE__->add_columns(qw/character_id character_name xp class_id race_id strength intelligence agility divinity constitution hit_points
+__PACKAGE__->add_columns(qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
  							level magic_points faith_points max_hit_points max_magic_points max_faith_points party_id party_order 
  							last_combat_action/);
+ 							
+__PACKAGE__->add_columns(xp => { accessor => '_xp' });
  							
 __PACKAGE__->set_primary_key('character_id');
 
@@ -40,11 +42,14 @@ our @STATS = qw(str con int div agl);
 
 sub roll_all {
     my $self = shift;
-    my $c = shift;
     
-    $self->roll_hit_points($c);
-    $self->roll_magic_points($c);
-    $self->roll_faith_points($c);
+    my %rolls;
+    
+    $rolls{hit_points}   = $self->roll_hit_points;
+    $rolls{magic_points} = $self->roll_magic_points;
+    $rolls{faith_points} = $self->roll_faith_points;
+    
+    return %rolls;
 }
 
 # Calcuates the point bonus for a stat (e.g. hit points, magic points).
@@ -151,8 +156,6 @@ sub _roll_points {
     $points += $self->point_bonus($stat);
     
     return $points;
-    
-    # XXX: instance should update values here.
 }
 
 sub attack_factor {
@@ -164,7 +167,10 @@ sub attack_factor {
 	# TODO needs to change to support multiple weapons
 	my $item = shift @items;
 	
-	return $self->strength + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0);
+	# TODO possibly should be in the DB
+	my $af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength';
+	
+	return $self->get_column($af_attribute) + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0);
 }
 
 sub defence_factor {
@@ -228,11 +234,13 @@ sub get_equipped_item {
 			'super_category.super_category_name' => $category,
 		},
 		{
-			'join' => [
-				{'item_type' => {'category' => 'super_category'}},
+			'join' => [				
 				'equipped_in',
 			],
-			'prefetch' => {item_type => {'item_attributes' => 'item_attribute_name'}},
+			'prefetch' => [
+				{item_type => {'item_attributes' => 'item_attribute_name'}},
+				{'item_type' => {'category' => 'super_category'}},
+			],
 		},
 	);
 	
@@ -340,7 +348,35 @@ sub execute_attack {
 				last;			
 			}
 		}	
-	}	
+	}
+}
+
+# Accessor for xp. If xp updated, also checks if the character should be leveled up. If it should, returns a hash of details
+#  of the stats/points gained
+sub xp {
+	my $self = shift;
+	my $new_xp = shift;
+	
+	return $self->_xp unless $new_xp;
+	
+	$self->_xp($new_xp);
+	
+	# Check if we should level up
+	my $level_rec = $self->result_source->schema->resultset('Levels')->find(
+		{
+			level_number => $self->level +1,
+		},
+	);
+	
+	if (ref $level_rec && $new_xp > $level_rec->xp_needed) {
+		$self->level($self->level+1);
+		
+		my %rolls = $self->roll_all;
+		
+		# TODO: Check for Stat point addition
+		
+		return %rolls; 
+	}
 }
 
 1;

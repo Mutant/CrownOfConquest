@@ -1,5 +1,7 @@
 [% INCLUDE top.html %]
 
+[% INCLUDE admin/items/subnav.html %]
+
 [% MACRO item_type_select(select_name, selected) BLOCK %]
 <select dojoType="dijit.form.FilteringSelect" name="[% select_name %]" autocomplete="false">
 		[% UNLESS selected %]<option></option>[% END %]

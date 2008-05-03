@@ -132,4 +132,26 @@ sub new_item_type : Local {
 	$c->forward('/admin/items/main');
 }
 
+sub edit_category : Local {
+	my ($self, $c) = @_;
+	
+	my @categories = $c->model('Item_Category')->search;
+	
+	my $category_to_edit;
+	if ($c->req->param('category_id')) {
+		($category_to_edit) = grep { $_->id eq $c->req->param('category_id') } @categories; 	
+	}
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'admin/items/category.html',
+			params => {
+				categories => \@categories,
+				category_to_edit => $category_to_edit,
+			},
+        }]
+    );
+		
+}
+
 1;

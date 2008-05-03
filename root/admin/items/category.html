@@ -1,0 +1,45 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE admin/items/subnav.html %]
+
+<b>Edit Category:</b>
+<form method="get" action="[% base %]/admin/items/edit_category">
+<select name="category_id">
+		<option></option>
+        [% FOREACH category IN categories %]        
+ 	        <option value="[% category.id %]">[% category.item_category %]</option>
+ 	    [% END %]
+</select>
+<input type="submit" value="Edit">
+</form>
+
+[% IF category_to_edit %]
+
+<form method="post" action="[% base %]/admin/items/update_category">
+<input type="hidden" name="item_category_id" value="[% category_to_edit.item_category_id %]">
+
+<table>
+	<tr>
+		<td>Category Name:</td>
+		<td><input type="text" name="item_category" value="[% category_to_edit.item_category %]"></td>
+	</tr>
+	
+	<tr>
+		<td>Attributes:</td>
+	</tr>
+	
+	[% FOREACH item_attribute_name IN category_to_edit.item_attribute_names %]
+	<tr>
+		<td><input type="text" name="item_attribute_name_[% item_attribute_name.id %]" value="[% item_attribute_name.item_attribute_name %]"></td>
+		<td><input type="text" name="value_type_[% item_attribute_name.id %]" value="[% item_attribute_name.value_type %]"></td>
+	</tr>
+	[% END %]
+		
+	
+</table>
+
+</form>
+
+[% END %]
+
+[% INCLUDE bottom.html %]

@@ -1,5 +1,5 @@
 <head>
-<style>
+<style type="text/css">
 label {
 	display: block;
 	width: 200px;
@@ -29,9 +29,12 @@ br {
         padding : 4px;
 }
 
-</style>
+.main {
+	font-size: 10pt;
+	font-family: verdana;
+}
 
-<style type="text/css">
+
 		.highlighted: {
 			background: #222222;
 		}
@@ -71,7 +74,7 @@ function processOnLoad() {
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body onLoad="processOnLoad()" class="tundra">
+<body onLoad="processOnLoad()">
 
 <script>
 	dojo.require("dojo.parser");
@@ -98,14 +101,14 @@ dojo.addOnLoad( error_init );
 <div id="dojoDebug"></div>
 
 <div dojoType="dijit.layout.BorderContainer" design="headline">
-    <div dojoType="dijit.layout.ContentPane" region="top">
+    <div dojoType="dijit.layout.ContentPane" region="top" class="main">
         Game Game Game!!
     </div>
 
-   <div dojoType="dijit.layout.ContentPane" region="left" style="background-color:red">
+   <div dojoType="dijit.layout.ContentPane" region="left" style="background-color:red" class="main">
 		[% INCLUDE layout/left_hand_nav.html %]
    </div>
    
 
-    <div dojoType="dijit.layout.ContentPane" region="center" style="background-color:lightblue">
+    <div dojoType="dijit.layout.ContentPane" region="center" style="background-color:lightblue" class="main">
 		

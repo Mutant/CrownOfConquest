@@ -60,13 +60,21 @@ sub hit {
 sub attack_factor {
 	my $self = shift;
 	
-	return $self->type->level * RPG->config->{creature_attack_ratio};
+	return $self->_calculate_factor($self->type->level,RPG->config->{creature_attack_ratio});
 }
 
 sub defence_factor {
 	my $self = shift;
 	
-	return $self->type->level * RPG->config->{creature_defence_ratio};
+	return $self->_calculate_factor($self->type->level,RPG->config->{creature_defence_ratio});
+}
+
+sub _calculate_factor {
+	my $self  = shift;
+	my $level = shift;
+	my $ratio = shift;
+	
+	return $ratio + ( RPG->config->{create_level_increment_factor} * ( $level-1 ) * $ratio);	
 }
 
 sub name {

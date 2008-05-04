@@ -13,7 +13,28 @@ sub main : Local {
     my $party = $c->stash->{party};
 
     my @characters = $c->stash->{party}->characters;
-	
+    
+    my %spells;
+    foreach my $character (@characters) {
+    	my %search_criteria = (
+    		memorised_today => 1,
+    		number_cast_today => \'< memorise_count',
+    		character_id => $character->id,
+		);
+		
+		
+		$party->in_combat_with ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
+    	
+    	my @spells = $c->model('Memorised_Spells')->search(
+			\%search_criteria,
+    		{
+    			prefetch => 'spell',
+    		},
+    	);
+    	
+    	$spells{$character->id} = \@spells if @spells;
+    }
+    	
 	my $map = $c->forward('/map/view');
 
 	my $bottom_panel;
@@ -42,7 +63,7 @@ sub main : Local {
 	        },
 	    );
 	
-	    # XXX: we should only ever get one creature group from above, since creatures shouldn't move into
+	    # TODO: we should only ever get one creature group from above, since creatures shouldn't move into
 	    #  the same square as another group. May pay to check this here and fatal if there are more than one.
 	    #  At any rate, we'll just look at the first group.        
 	    my $creature_group = shift @creatures;	   
@@ -87,6 +108,7 @@ sub main : Local {
                 characters => \@characters,
                 combat_actions => $c->session->{combat_action},
                 creatures => \@creatures,
+                spells => \%spells,
 			},
         }]
     );

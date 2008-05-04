@@ -91,7 +91,10 @@ sub select_action : Local {
 	$character->last_combat_action($c->req->param('action'));
 	$character->update; 
 	
-	$c->session->{combat_action_param}{$c->req->param('character_id')} = $c->req->param('action_param');
+	my @action_params = $c->req->param('action_param'); 
+	
+	$c->session->{combat_action_param}{$c->req->param('character_id')} = 
+		scalar @action_params > 1 ? \@action_params : $action_params[0];
 }
 
 sub fight : Local {

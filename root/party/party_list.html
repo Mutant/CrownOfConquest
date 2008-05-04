@@ -1,5 +1,5 @@
 <script>
-function selectAction(action, char_id, action_param, action_label) {
+function selectAction(action, char_id, action_param, action_param2, action_label) {
 	if (! action_label) {
 		action_label = action;
 	}
@@ -12,7 +12,8 @@ function selectAction(action, char_id, action_param, action_label) {
 
 	dojo.xhrGet( { //
 	        // The following URL must match that used to test the server.
-	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + action_param, 
+	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + action_param +
+		        "&action_param=" + action_param2, 
 	        handleAs: "text",
 	
 	        timeout: 5000, // Time in milliseconds
@@ -82,6 +83,7 @@ function selectAction(action, char_id, action_param, action_label) {
 </tr>
 
 [% FOREACH char = characters %]
+[% char_id = char.id %]
 <tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]" [% IF char.is_dead %]style="background: grey"[% END %]>
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
@@ -99,15 +101,56 @@ function selectAction(action, char_id, action_param, action_label) {
 		         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
 	             <div dojoType="dijit.PopupMenuItem">
 		             <span>Target</span>
-		             <div dojoType="dijit.Menu">
+		              <div dojoType="dijit.Menu">
 						 [% FOREACH creature IN creatures %]
 						 	[% UNLESS creature.is_dead %]
-				            <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]', '[% creature.id %]', 'Targetting: [% creature.name %]')">[% creature.name %]</div>
+				            <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]', '[% creature.id %]', '', 'Targetting: [% creature.name %]')">[% creature.name %]</div>
+				            [% END %]
+				         [% END %]
+				    </div>
+		        </div>
+		        [% IF spells.$char_id %]
+		        [% character_spells = spells.$char_id %]
+	             <div dojoType="dijit.PopupMenuItem">
+		             <span>Cast</span>
+		             <div dojoType="dijit.Menu">
+						 [% FOREACH memorised_spell IN character_spells %]
+						    [% spell = memorised_spell.spell %]
+						 	[% IF spell.target == 'character' || spell.target == 'creature' %]
+						    	<div dojoType="dijit.PopupMenuItem">
+  					             <span>[% spell.spell_name %]</span>
+					             <div dojoType="dijit.Menu">
+  					             [% IF spell.target == 'creature' %]
+									 [% FOREACH creature IN creatures %]
+									 	[% UNLESS creature.is_dead %]
+							            <div dojoType="dijit.MenuItem" 
+							            	onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% creature.id %]', 
+							            		'Casting [% spell.spell_name %] on: [% creature.name %]')">[% creature.name %]</div>
+							            [% END %]
+							         [% END %]
+								 [% ELSE %]
+    								 [% FOREACH character IN characters %]
+									 	[% UNLESS character.is_dead %]
+							            <div dojoType="dijit.MenuItem" 
+							            	onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% character.id %]', 
+							            		'Casting [% spell.spell_name %] on: [% character.name %]')">[% character.name %]</div>
+							            [% END %]
+							         [% END %]
+								 [% END %]
+						 	     </div>
+						 	     </div>
+  					             
+						 	[% ELSE %]
+				            <div dojoType="dijit.MenuItem" onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '', 
+							            		'Casting [% spell.spell_name %]">[% spell.spell_name %]</div>
 				            [% END %]
 			             [% END %]
 		            </div>
 		        </div>
-            </div>
+		        [% END %]
+
+            </div>            
+            
         </div>
 		</td>
     [% END %]

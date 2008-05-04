@@ -1,9 +1,9 @@
 The Healer of [% town.town_name %] welcomes you. Which services do you require today?
 
 <ul>
-	[% IF cost_to_heal != 0 %]<li><a href="[% base %]/town/heal_party">Heal Party</a> (Cost: [% cost_to_heal %] gold)</li>[% END %]
+	[% IF cost_to_heal != 0 %]<li><a href="[% base %]/town/heal_party">Heal Party</a> ([% cost_to_heal %] gold)</li>[% END %]
 	[% FOREACH dead_char IN dead_characters %]
-		<li><a href="/town/resurrect?character_id=[% dead_char.id %]">Resurrect [% dead_char.character_name %]</a></li>
+		<li><a href="/town/resurrect?character_id=[% dead_char.id %]">Resurrect [% dead_char.character_name %]</a> ([% dead_char.resurrect_cost %] gold)</li>
 	[% END %]
 	<li>Buy Healing Potions</li>
 </ul>

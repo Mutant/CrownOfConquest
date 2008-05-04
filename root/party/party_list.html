@@ -82,12 +82,12 @@ function selectAction(action, char_id, action_param, action_label) {
 </tr>
 
 [% FOREACH char = characters %]
-<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]">
+<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]" [% IF char.is_dead %]style="background: grey"[% END %]>
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
     <td>[% char.class.class_name %]</td>
     <td align="center">[% char.level %]</td>
-    <td>[% char.hit_points %] / [% char.max_hit_points %]</td>    
+    <td>[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
     <td>[% char.xp %]</td>
     
     [% IF party.in_combat_with && ! char.is_dead %]

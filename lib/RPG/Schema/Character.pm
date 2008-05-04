@@ -379,4 +379,12 @@ sub xp {
 	}
 }
 
+sub resurrect_cost {
+	my $self = shift;
+	
+	# TODO: cost should be modified by the town's prosperity
+
+	return $self->level * RPG->config->{resurrection_cost};	
+}
+
 1;

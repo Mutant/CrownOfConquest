@@ -82,9 +82,35 @@ sub heal_party : Local {
 	}
 	
 	$c->forward('/town/healer');
-	
-		
 }
+
+sub resurrect : Local {
+	my ($self, $c) = @_;
+
+	my $town = $c->stash->{party}->location->town;
+	
+	my @characters = $c->stash->{party}->characters;
+	
+	my ($cost_to_heal, @dead_chars) = _get_party_health($town, @characters);
+	
+	my ($char_to_res) = grep { $_->id eq $c->req->param('character_id') } @dead_chars;
+	
+	if ($char_to_res) {
+		if ($char_to_res->resurrect_cost > $c->stash->{party}->gold) {
+			$c->stash->{error} = "You don't have enough gold to resurrect " . $char_to_res->character_name;	
+		}
+		else {
+			$c->stash->{party}->gold($c->stash->{party}->gold - $char_to_res->resurrect_cost);
+			$c->stash->{party}->update;
+			
+			$char_to_res->hit_points(round $char_to_res->max_hit_points * 0.1);
+			$char_to_res->update;			
+		}
+	}
+	
+	$c->forward('/town/healer');		
+}
+
 
 sub _get_party_health {
 	my ($town, @characters) = @_;

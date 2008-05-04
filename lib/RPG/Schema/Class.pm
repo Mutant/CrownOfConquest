@@ -29,4 +29,10 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key('class_id');
 
+__PACKAGE__->has_many(
+    'spells',
+    'RPG::Schema::Spell',
+    { 'foreign.class_id' => 'self.class_id' },
+);
+
 1;

@@ -44,6 +44,7 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '255'
     },
+
 );
 __PACKAGE__->set_primary_key('player_id');
 

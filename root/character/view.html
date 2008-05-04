@@ -2,6 +2,7 @@
 
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
+	dojo.require("dijit.layout.TabContainer");
 	
 	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
         onDndDrop: function(source, nodes, copy){
@@ -123,69 +124,46 @@
 
 <br>
 
-<div class="aligned" id="character">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+      <div dojoType="dijit.layout.ContentPane" title="Stats">
+		<div class="aligned" id="character">
+		
+		<div class="aligned-line">
+		    <span class="aligned-label">Strength:</span>
+		    <span class="aligned-value">[% character.strength %]</span>
+		</div>
+		
+		<div class="aligned-line">
+		    <span class="aligned-label">Intelligence:</span>
+		    <span class="aligned-value">[% character.intelligence %]</span>
+		</div>
+		
+		<div class="aligned-line">
+		    <span class="aligned-label">Agility:</span>
+		    <span class="aligned-value">[% character.agility %]</span>
+		</div>
+		
+		<div class="aligned-line">
+		    <span class="aligned-label">Divinity:</span>
+		    <span class="aligned-value">[% character.divinity %]</span>
+		</div>
+		
+		<div class="aligned-line">
+		    <span class="aligned-label">Constitution:</span>
+		    <span class="aligned-value">[% character.constitution %]</span>
+		</div>
+		
+		</div>
+	</div>
+	
+    <div dojoType="dijit.layout.ContentPane" title="Equipment" href="[% based %]/character/equipment_tab?character_id=[% character.id %]">    
+    </div>
 
-<div class="aligned-line">
-    <span class="aligned-label">Strength:</span>
-    <span class="aligned-value">[% character.strength %]</span>
-</div>
+	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]
+    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% based %]/character/spells_tab?character_id=[% character.id %]">    
+    </div>
+    [% END %]
 
-<div class="aligned-line">
-    <span class="aligned-label">Intelligence:</span>
-    <span class="aligned-value">[% character.intelligence %]</span>
-</div>
 
-<div class="aligned-line">
-    <span class="aligned-label">Agility:</span>
-    <span class="aligned-value">[% character.agility %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Divinity:</span>
-    <span class="aligned-value">[% character.divinity %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Constitution:</span>
-    <span class="aligned-value">[% character.constitution %]</span>
-</div>
-
-</div>
-
-<br>
-
-<b>Equipped Items</b>
-
-<br>
-
-<table>
-[% FOREACH equipped_item IN equipped_items %]
-	<tr>
-		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-equip_place" accept="item">[% equipped_item.key %]</td>
-		<td id="[% equipped_item.key %]-equip-place-item">[% equipped_item.value.item_type.item_type %]</td>
-	</tr>
-[% END %]
-</table>
-
-<b>All Items</b>
-
-<br>
-
-<table>
-[% last_category = '' %]
-[% FOREACH item IN character.items %]
-	[% IF last_category != item.item_type.category.item_category %]
-		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
-		[% last_category = item.item_type.category.item_category %]
-	[% END %]
-	<tr>
-		<td>
-			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
-				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.display_name %]</span>
-			</span>	
-		</td>
-	</tr>
-[% END %]
-</table>
 
 [% INCLUDE bottom.html %]

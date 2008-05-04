@@ -18,20 +18,12 @@ sub view : Local {
 	    },
 	    {
 	    	prefetch => [
-	    		{
-	    			'items' => [
-	    				{'item_type' => 'category'},
-	    				'item_variables',
-	    			],
-	    		},
 	    		'race',
 	    		'class',
 	    	],
-	    	order_by => 'item_category',
 	    },
-	);
+	);	
 	
-	my $equipped_items = $character->equipped_items;
 	my @characters = $c->stash->{party}->characters;
     
     $c->forward('RPG::V::TT',
@@ -39,8 +31,41 @@ sub view : Local {
             template => 'character/view.html',
             params => {
                 character => $character,
-                equipped_items => $equipped_items,
                 characters => \@characters,
+            }
+        }]
+    );
+}
+
+sub equipment_tab : Local {
+	my ($self, $c) = @_;
+	
+    my $character = $c->model('Character')->find(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	        party_id => $c->stash->{party}->id,
+	    },
+	    {
+	    	prefetch => [
+	    		{
+	    			'items' => [
+	    				{'item_type' => 'category'},
+	    				'item_variables',
+	    			],
+	    		},
+	    	],
+	    	order_by => 'item_category',
+	    },
+	);	
+	
+	my $equipped_items = $character->equipped_items;
+	
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'character/equipment_tab.html',
+            params => {
+                character => $character,
+                equipped_items => $equipped_items,
             }
         }]
     );
@@ -219,6 +244,124 @@ sub equipment_list : Local {
         }]
     );        
     
+}
+
+sub spells_tab : Local {
+	my ($self, $c) = @_;
+	
+	my $character = $c->model('Character')->find(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	        party_id => $c->stash->{party}->id,
+	    },
+	);
+	
+	return unless $character;
+	
+    my @memorised_spells = $c->model('Memorised_Spells')->search(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	    },
+	    {
+	    	prefetch => 'spell',
+	    },
+	);
+	
+	my @available_spells = $c->model('DBIC::Spell')->search(
+		{
+			class_id => $character->class_id,
+		},
+		{
+			order_by => 'spell_name',
+		},
+	);
+	
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'character/spells_tab.html',
+            params => {
+            	character => $character,
+                memorised_spells => \@memorised_spells,
+				available_spells => \@available_spells,
+            }
+        }]
+    );
+    
+}
+
+sub memorise_spell : Local {
+	my ($self, $c) = @_;
+	
+	my $character = $c->model('Character')->find(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	        party_id => $c->stash->{party}->id,
+	    },
+	);
+	
+	return unless $character;
+	
+	my $spell = $c->model('DBIC::Spell')->find(
+		{
+			spell_id => $c->req->param('spell_id'),
+		},
+	);
+	
+	return unless $spell;
+			
+	if ($spell->points > $character->spell_points - $character->spell_points_used) {
+		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise " . $spell->spell_name;	
+	}
+	else {
+		my $memorised_spell = $c->model('Memorised_Spells')->find_or_create(
+			{
+				character_id => $character->id,
+				spell_id => $spell->id,				
+			},
+		);
+		
+		$memorised_spell->memorise_tomorrow(1);
+		$memorised_spell->memorise_count_tomorrow($memorised_spell->memorise_count_tomorrow+1);
+		$memorised_spell->update;
+	}
+	
+	$c->forward('/character/view');
+}
+
+sub unmemorise_spell : Local {
+	my ($self, $c) = @_;
+	
+	my $character = $c->model('Character')->find(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	        party_id => $c->stash->{party}->id,
+	    },
+	);
+	
+	return unless $character;
+	
+	my $spell = $c->model('DBIC::Spell')->find(
+		{
+			spell_id => $c->req->param('spell_id'),
+		},
+	);
+	
+	return unless $spell;	
+	
+	my $memorised_spell = $c->model('Memorised_Spells')->find(
+		{
+			character_id => $character->id,
+			spell_id => $spell->id,				
+		},
+	);
+	
+	$memorised_spell->memorise_count_tomorrow($memorised_spell->memorise_count_tomorrow-1)
+		if $memorised_spell->memorise_count_tomorrow != 0;
+	$memorised_spell->memorise_tomorrow(0)
+		if $memorised_spell->memorise_count_tomorrow == 0;
+	$memorised_spell->update;
+	
+	$c->forward('/character/view');
 }
 
 1;

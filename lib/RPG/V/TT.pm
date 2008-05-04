@@ -13,7 +13,7 @@ sub process {
     croak "No template supplied" unless $params->{template};
 
     $params->{params}{error} = $c->stash->{error};
-    $params->{params}{error} =~ s/'/\\\'/g;
+    $params->{params}{error} =~ s/'/\\\'/g if $params->{params}{error};
 
     my %old_stash = %{$c->stash};
 

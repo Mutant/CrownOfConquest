@@ -1,0 +1,39 @@
+<script>
+	dojo.require("dijit.form.FilteringSelect");
+</script>
+
+<h3>Currently Memorised Spells</h3>
+
+<ul>
+[% FOREACH spell IN memorised_spells %]
+	[% IF spell.memorised_today %]
+	<li>[% spell.spell.spell_name %] x[% spell.memorise_count %] (Cast [% spell.number_cast_today %] times today)</li>
+	[% END %]
+[% END %]
+</ul>
+
+<h3>Spells To Memorise Tomorrow</h3>
+
+<ul>
+[% FOREACH spell IN memorised_spells %]
+	[% IF spell.memorise_tomorrow %]
+	<li>[% spell.spell.spell_name %] x[% spell.memorise_count_tomorrow %] 
+		<a href="[% base %]/character/unmemorise_spell?character_id=[% character.id %]&spell_id=[% spell.spell_id %]">Unmemorise Spell</a></li>
+	[% END %]
+[% END %]
+</ul>
+
+[% IF character.class.class_name == 'Mage' %]Magic[% ELSE %]Faith[% END %] 
+	Points Used: [% character.spell_points_used %] / [% character.spell_points %]
+
+<form method="post" action="[% base %]/character/memorise_spell">
+<input type="hidden" name="character_id" value="[% character.id %]">
+Memorise New Spell: 
+<select name="spell_id">
+	<option></option>
+    [% FOREACH spell IN available_spells %]        
+	    <option value="[% spell.id %]">[% spell.spell_name %] ([% spell.points %] pts)</option>
+ 	[% END %]
+</select>
+<input type="submit" value="Memorise Spell">
+</form>

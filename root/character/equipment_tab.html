@@ -1,0 +1,33 @@
+<b>Equipped Items</b>
+
+<br>
+
+<table class="main">
+[% FOREACH equipped_item IN equipped_items %]
+	<tr>
+		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-equip_place" accept="item">[% equipped_item.key %]</td>
+		<td id="[% equipped_item.key %]-equip-place-item">[% equipped_item.value.item_type.item_type %]</td>
+	</tr>
+[% END %]
+</table>
+
+<b>All Items</b>
+
+<br>
+
+<table class="main">
+[% last_category = '' %]
+[% FOREACH item IN character.items %]
+	[% IF last_category != item.item_type.category.item_category %]
+		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
+		[% last_category = item.item_type.category.item_category %]
+	[% END %]
+	<tr>
+		<td>
+			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
+				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.display_name %]</span>
+			</span>	
+		</td>
+	</tr>
+[% END %]
+</table>

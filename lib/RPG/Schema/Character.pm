@@ -12,8 +12,7 @@ __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
 __PACKAGE__->add_columns(qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
- 							level magic_points faith_points max_hit_points max_magic_points max_faith_points party_id party_order 
- 							last_combat_action/);
+ 							level spell_points max_hit_points party_id party_order last_combat_action/);
  							
 __PACKAGE__->add_columns(xp => { accessor => '_xp' });
  							
@@ -37,6 +36,14 @@ __PACKAGE__->has_many(
     { 'foreign.character_id' => 'self.character_id' },
     { prefetch => ['item_type', 'item_variables'], },
 );
+
+__PACKAGE__->has_many(
+    'mem_spells_link',
+    'RPG::Schema::Memorised_Spells',
+    { 'foreign.character_id' => 'self.character_id' },
+);
+
+__PACKAGE__->many_to_many('memorised_spells' => 'mem_spells_link', 'spell');
 
 our @STATS = qw(str con int div agl);
 
@@ -101,7 +108,7 @@ sub roll_magic_points {
     if (ref $self) {
         return unless $self->class->class_name eq 'Mage';
         my $points = $self->_roll_points('intelligence',$point_max);
-        $self->max_magic_points($self->max_magic_points + $points);
+        $self->spell_points($self->spell_points + $points);
         $self->update;
         
         return $points;
@@ -122,7 +129,7 @@ sub roll_faith_points {
         return unless $self->class->class_name eq 'Priest';
         my $points = $self->_roll_points('divinity',$point_max);
         
-        $self->max_faith_points($self->max_faith_points + $points);
+        $self->spell_points($self->spell_points + $points);
         $self->update;
         
         return $points;
@@ -385,6 +392,25 @@ sub resurrect_cost {
 	# TODO: cost should be modified by the town's prosperity
 
 	return $self->level * RPG->config->{resurrection_cost};	
+}
+
+# Number of prayer or magic points used for spells memorised tomorrow
+sub spell_points_used {
+	my $self = shift;
+	
+	my $result = $self->result_source->schema->resultset('Memorised_Spells')->find(
+		{
+			character_id => $self->id,
+			memorise_tomorrow => 1,
+		},
+		{
+			join => 'spell',
+			select => [{sum=>'spell.points * memorise_count_tomorrow'}],
+			as => 'total_points',
+		},
+	);
+	
+	return $result->get_column('total_points') || 0;
 }
 
 1;

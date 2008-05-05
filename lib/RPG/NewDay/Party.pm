@@ -23,9 +23,7 @@ sub run {
 				my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;
 				$hp_increase = 1 if $hp_increase == 0; # Always a min of 0
 				
-				$character->hit_points($character->hit_points + $hp_increase);
-				$character->hit_points($character->max_hit_points)
-					if $character->hit_points > $character->max_hit_points;
+				$character->change_hit_points($hp_increase);
 			}
 				
 			# Memorise new spells for the day

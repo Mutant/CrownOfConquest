@@ -11,4 +11,16 @@ __PACKAGE__->add_columns(qw/spell_id spell_name description points class_id comb
 
 __PACKAGE__->set_primary_key('spell_id');
 
+__PACKAGE__->has_many(
+    'memorised_by_characters',
+    'RPG::Schema::Memorised_Spells',
+    { 'foreign.spell_id' => 'self.spell_id' },
+);
+
+__PACKAGE__->belongs_to(
+    'class',
+    'RPG::Schema::Class',
+    { 'foreign.class_id' => 'self.class_id' }
+);
+
 1;

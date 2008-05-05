@@ -413,4 +413,17 @@ sub spell_points_used {
 	return $result->get_column('total_points') || 0;
 }
 
+sub change_hit_points {
+	my $self = shift;
+	my $amount = shift;
+	
+	$self->hit_points($self->hit_points + $amount);
+	$self->hit_points($self->max_hit_points)
+		if $self->hit_points > $self->max_hit_points;
+		
+	$self->hit_points(0) if $self->hit_points < 0;
+	
+	return;	
+}
+
 1;

@@ -115,6 +115,10 @@ sub fight : Local {
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
 	
+	$c->stash->{characters} = { map { $_->id => $_ } @characters };
+	$c->stash->{creatures}  = { map { $_->id => $_ } @creatures  };
+	
+	
 	# Find out if any chars are allowed a second attack
 	my $allowed_second_attack = $c->forward('characters_allowed_second_attack', \@characters);
 	#warn map { ref $_ } @allowed_second_attack;
@@ -135,14 +139,19 @@ sub fight : Local {
 			$action_result = $c->forward('creature_action', [$combatant, $c->stash->{party}]);			
 		}
 
-		if ($action_result) {		
-			my ($target, $damage) = @$action_result;
-			
-			push @combat_messages, {
-				attacker => $combatant, 
-				defender => $target, 
-				damage => $damage || 0,
-			};
+		if ($action_result) {
+			if (ref $action_result) {
+				my ($target, $damage) = @$action_result;
+				
+				push @combat_messages, {
+					attacker => $combatant, 
+					defender => $target, 
+					damage => $damage || 0,
+				};
+			}
+			else {
+				push @combat_messages, $action_result;
+			}
 		}
 		
 		last if $c->stash->{combat_complete};
@@ -174,7 +183,7 @@ sub character_action : Private {
 	if ($character->last_combat_action eq 'Attack') {
 		# If they've selected a target, make sure it's still alive
 		my $targetted_creature = $c->session->{combat_action_param}{$character->id};
-		if ($targetted_creature && ! $creatures_by_id{$targetted_creature}->is_dead) {
+		if ($targetted_creature && $creatures_by_id{$targetted_creature} && ! $creatures_by_id{$targetted_creature}->is_dead) {
 			$creature = $creatures_by_id{$targetted_creature};
 		}
 		
@@ -199,6 +208,20 @@ sub character_action : Private {
 	    }
 	    
 	    return [$creature, $damage];
+	}
+	elsif ($character->last_combat_action eq 'Cast') {
+		my $message = $c->forward('/magic/cast',
+			[
+				$character,
+				$c->session->{combat_action_param}{$character->id}[0],
+				$c->session->{combat_action_param}{$character->id}[1],
+			],
+		);
+		
+		$character->last_combat_action('Defend');
+		$character->update;
+		
+		return $message;
 	}
 }
 
@@ -376,9 +399,11 @@ sub finish : Private {
 	
 	my @characters = $c->stash->{party}->characters;
 	
-	my $awarded_xp = $c->forward('/combat/distribute_xp', [ $xp, [map { $_->id } @characters] ] );
+	my $awarded_xp = $c->forward('/combat/distribute_xp', [ $xp, [map { $_->is_dead ? () : $_->id } @characters] ] );
 	
 	foreach my $character (@characters) {
+		next if $character->is_dead;
+		
 		# TODO template these combat messages?
 		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
 		
@@ -413,8 +438,8 @@ sub distribute_xp : Private {
 	
 	my %awarded_xp;
 	
-	# Everyone gets 5% to start with
-	my $min_xp = int $xp * 0.05; 
+	# Everyone gets 10% to start with
+	my $min_xp = int $xp * 0.10; 
 	@awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
 	$xp-=$min_xp * scalar @$char_ids;
 		

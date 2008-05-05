@@ -183,7 +183,11 @@ sub attack_factor {
 	# TODO possibly should be in the DB
 	my $af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength';
 	
-	return $self->get_column($af_attribute) + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0);
+	# Apply effects
+	my $effect_df = 0;
+	map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
+	
+	return $self->get_column($af_attribute) + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0) + $effect_df;
 }
 
 sub defence_factor {

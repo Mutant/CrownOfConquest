@@ -118,10 +118,10 @@ sub fight : Local {
 	$c->stash->{characters} = { map { $_->id => $_ } @characters };
 	$c->stash->{creatures}  = { map { $_->id => $_ } @creatures  };
 	
+	$c->forward('process_effects');
 	
 	# Find out if any chars are allowed a second attack
 	my $allowed_second_attack = $c->forward('characters_allowed_second_attack', \@characters);
-	#warn map { ref $_ } @allowed_second_attack;
 	push @characters, @$allowed_second_attack; 
 	
 	my @combatants = shuffle (@creatures, @characters);
@@ -168,8 +168,6 @@ sub fight : Local {
         }]
     );
     
-    $c->forward('process_effects');
-	
 	$c->forward('/party/main');
 	
 }

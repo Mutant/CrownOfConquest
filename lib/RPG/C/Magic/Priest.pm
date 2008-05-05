@@ -26,34 +26,42 @@ sub shield : Private {
 	my $shield_modifier = $character->level;
 	my $duration = 2 * (int $character->level / 5 + 1);
 	
-	my $effect = $c->model('DBIC::Effect')->find_or_new(
-		{
-			'character_effect.character_id' => $target,
+	$c->forward('/magic/create_effect',
+		[{
+			target_type => 'character',
+			target_id => $target,
 			effect_name => 'Shield',
-		},
-		{
-			join => 'character_effect',
-		}
+			duration => $duration,
+			modifier => $shield_modifier,
+			combat => 1,
+			modified_state => 'defence_factor',
+		}]
 	);
-	
-	unless ($effect->in_storage) {
-		$effect->insert;
-		$c->model('Character_Effect')->create(
-			{
-				character_id => $target,
-				effect_id => $effect->id,
-			}
-		);	
-	}
-	
-	$effect->time_left($effect->time_left + $duration);
-	$effect->modifier($shield_modifier);
-	$effect->modified_stat('defence_factor');
-	$effect->combat(1);
-	$effect->update;
 	
 	my $target_char = $c->stash->{characters}{$target};
 	return $character->character_name . " cast Shield on " . $target_char->character_name . ", protecting him for $duration rounds";
+}
+
+sub bless : Private {
+	my ($self, $c, $character, $target) = @_;
+	
+	my $modifier = $character->level;
+	my $duration = 1 + (int $character->level / 3 + 1);
+	
+	$c->forward('/magic/create_effect',
+		[{
+			target_type => 'character',
+			target_id => $target,
+			effect_name => 'Bless',
+			duration => $duration,
+			modifier => $modifier,
+			combat => 1,
+			modified_state => 'attack_factor',
+		}]
+	);
+	
+	my $target_char = $c->stash->{characters}{$target};
+	return $character->character_name . " cast Bless on " . $target_char->character_name . ", blessing him for $duration rounds";	
 }
 
 1;

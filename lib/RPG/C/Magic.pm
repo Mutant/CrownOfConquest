@@ -39,4 +39,47 @@ sub cast : Local {
    	return $message;
 }
 
+sub create_effect : Private {
+	my ($self, $c, $params) = @_;
+
+	my ($relationship_name, $search_field, $joining_table);
+	
+	if ($params->{target_type} eq 'character') {
+		$search_field = 'character_id';
+		$relationship_name = 'character_effect';
+		$joining_table = 'Character_Effect';
+	}
+	else {
+		$search_field = 'creature_id';
+		$relationship_name = 'creature_id';
+		$joining_table = 'Creature_Effect';
+	}
+	
+	my $effect = $c->model('DBIC::Effect')->find_or_new(
+		{
+			"$relationship_name.$search_field" => $params->{target_id},
+			effect_name => $params->{effect_name},
+		},
+		{
+			join => $relationship_name,
+		}
+	);
+	
+	unless ($effect->in_storage) {
+		$effect->insert;
+		$c->model($joining_table)->create(
+			{
+				$search_field => $params->{target_id},
+				effect_id => $effect->id,
+			}
+		);	
+	}
+	
+	$effect->time_left($effect->time_left + $params->{duration});
+	$effect->modifier($params->{modifier});
+	$effect->modified_stat($params->{modified_state});
+	$effect->combat($params->{combat});
+	$effect->update;
+}
+
 1;

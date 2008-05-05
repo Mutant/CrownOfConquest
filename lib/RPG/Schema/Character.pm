@@ -45,6 +45,12 @@ __PACKAGE__->has_many(
 
 __PACKAGE__->many_to_many('memorised_spells' => 'mem_spells_link', 'spell');
 
+__PACKAGE__->has_many(
+    'character_effects',
+    'RPG::Schema::Character_Effect',
+    { 'foreign.character_id' => 'self.character_id' },
+);
+
 our @STATS = qw(str con int div agl);
 
 sub roll_all {
@@ -187,8 +193,12 @@ sub defence_factor {
 	
 	my $armour_df = 0;
 	map { $armour_df+= $_->attribute('Defence Factor')->item_attribute_value } @items;
-			
-	return $self->agility + $armour_df;	
+	
+	# Apply effects
+	my $effect_df = 0;
+	map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
+
+	return $self->agility + $armour_df + $effect_df;	
 }
 
 =head1 damage

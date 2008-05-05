@@ -145,7 +145,7 @@ sub list_characters : Local {
 sub new_character : Local {
     my ($self, $c) = @_;
     
-    if ($c->config->{new_party_characters} <= $c->model('Character')->count( {party_id => $c->session->{party_id}})) {
+    if ($c->config->{new_party_characters} <= $c->model('DBIC::Character')->count( {party_id => $c->session->{party_id}})) {
         $c->forward('RPG::V::TT',
             [{
                 template => 'party/max_characters.html',
@@ -192,7 +192,7 @@ sub create_character : Local {
     
     my $class = $c->model('Class')->find({class_name => $c->req->param('class')});
     
-    my $character = $c->model('Character')->create({
+    my $character = $c->model('DBIC::Character')->create({
         character_name => $c->req->param('name'),
         class_id => $class->id,
         race_id => $c->req->param('race'),
@@ -298,7 +298,7 @@ sub swap_chars : Local {
 sub move_rank_separator : Local {
 	my ($self, $c) = @_;
 	
-	my $target_char = $c->model('Character')->find(
+	my $target_char = $c->model('DBIC::Character')->find(
 		{
 			character_id => $c->req->param('target'),
 		},

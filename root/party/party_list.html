@@ -79,6 +79,7 @@ function selectAction(action, char_id, action_param, action_param2, action_label
     <th>Level</th>
     <th>HP</th>
     <th>XP</th>
+    <th>Effects</th>
 
 </tr>
 
@@ -91,6 +92,7 @@ function selectAction(action, char_id, action_param, action_param2, action_label
     <td align="center">[% char.level %]</td>
     <td>[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
     <td>[% char.xp %]</td>
+    <td>[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %][% END %]</td>
     
     [% IF party.in_combat_with && ! char.is_dead %]
     	<td>

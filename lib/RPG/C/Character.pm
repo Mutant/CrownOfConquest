@@ -11,7 +11,7 @@ use JSON;
 sub view : Local {
     my ($self, $c) = @_;
     
-    my $character = $c->model('Character')->find(
+    my $character = $c->model('DBIC::Character')->find(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	        party_id => $c->stash->{party}->id,
@@ -40,7 +40,7 @@ sub view : Local {
 sub equipment_tab : Local {
 	my ($self, $c) = @_;
 	
-    my $character = $c->model('Character')->find(
+    my $character = $c->model('DBIC::Character')->find(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	        party_id => $c->stash->{party}->id,
@@ -74,7 +74,7 @@ sub equipment_tab : Local {
 sub item_list : Local {
     my ($self, $c) = @_;
     
-    my $character = $c->model('Character')->find({ 
+    my $character = $c->model('DBIC::Character')->find({ 
         character_id => $c->req->param('character_id'),
         party_id => $c->stash->{party}->id,
     });
@@ -184,7 +184,7 @@ sub equip_item : Local {
 sub give_item : Local {
     my ($self, $c) = @_;
     
-    my $character = $c->model('Character')->find(
+    my $character = $c->model('DBIC::Character')->find(
     	{
     		character_id => $c->req->param('character_id'),
     		party_id => $c->stash->{party}->id,
@@ -249,7 +249,7 @@ sub equipment_list : Local {
 sub spells_tab : Local {
 	my ($self, $c) = @_;
 	
-	my $character = $c->model('Character')->find(
+	my $character = $c->model('DBIC::Character')->find(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	        party_id => $c->stash->{party}->id,
@@ -292,7 +292,7 @@ sub spells_tab : Local {
 sub memorise_spell : Local {
 	my ($self, $c) = @_;
 	
-	my $character = $c->model('Character')->find(
+	my $character = $c->model('DBIC::Character')->find(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	        party_id => $c->stash->{party}->id,
@@ -331,7 +331,7 @@ sub memorise_spell : Local {
 sub unmemorise_spell : Local {
 	my ($self, $c) = @_;
 	
-	my $character = $c->model('Character')->find(
+	my $character = $c->model('DBIC::Character')->find(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	        party_id => $c->stash->{party}->id,

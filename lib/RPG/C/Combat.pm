@@ -86,7 +86,7 @@ sub main : Local {
 sub select_action : Local {
 	my ($self, $c) = @_;
 	
-	my $character = $c->model('Character')->find($c->req->param('character_id'));
+	my $character = $c->model('DBIC::Character')->find($c->req->param('character_id'));
 	
 	$character->last_combat_action($c->req->param('action'));
 	$character->update; 
@@ -166,7 +166,9 @@ sub fight : Local {
 			},
 			return_output => 1,
         }]
-    );	
+    );
+    
+    $c->forward('process_effects');
 	
 	$c->forward('/party/main');
 	
@@ -482,6 +484,34 @@ sub distribute_xp : Private {
 	undef $c->session->{attack_count};
 	
 	return \%awarded_xp;
+}
+
+# Check the effects at the end of the round, decrement the timer, and delete any that have expired
+sub process_effects : Private {
+	my ($self, $c) = @_;
+	
+	my @effects = $c->model('DBIC::Character_Effect')->search(
+		{
+			character_id => [keys %{$c->stash->{characters}}],
+			'effect.combat' => 1,
+		},
+		{
+			prefetch => 'effect',
+		},
+	);
+	
+	foreach my $effect (@effects) {
+		$effect->effect->time_left($effect->effect->time_left-1);
+		
+		if ($effect->effect->time_left == 0) {
+			$effect->effect->delete;
+			$effect->delete;	
+		}
+		else {
+			$effect->effect->update;
+		}
+	}
+	
 }
 
 1;

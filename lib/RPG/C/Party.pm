@@ -9,10 +9,54 @@ use Data::JavaScript;
 
 sub main : Local {
 	my ($self, $c) = @_;
+	
+	my $panels = $c->forward('/panel/refresh', ['messages', 'map', 'party']);
 
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/main.html',
+			params => {
+				party  => $c->stash->{party},
+				panels => $panels, 
+			},
+        }]
+    );
+}
+
+sub sector_menu : Local {
+    my ($self, $c) = @_;
+    
+	my $creature_group = $c->stash->{creature_group};
+	
+	unless ($creature_group) {
+		$creature_group = $c->model('DBIC::CreatureGroup')->find(
+	        {
+	            'location.x' => $c->stash->{party}->location->x,
+	            'location.y' => $c->stash->{party}->location->y,
+	        },
+	        {
+	            prefetch => [('location', {'creatures' => 'type'})],
+	        },
+	    );	
+	}
+    
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/sector_menu.html',
+			params => {
+				creature_group => $creature_group,
+			},
+			return_output => 1,
+        }]
+    );
+}
+
+sub list : Local {
+    my ($self, $c) = @_;	
+    
     my $party = $c->stash->{party};
 
-    my @characters = $c->stash->{party}->characters;
+    my @characters = $c->stash->{party}->characters;    
     
     my %spells;
     foreach my $character (@characters) {
@@ -20,8 +64,7 @@ sub main : Local {
     		memorised_today => 1,
     		number_cast_today => \'< memorise_count',
     		character_id => $character->id,
-		);
-		
+		);		
 		
 		$party->in_combat_with ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
     	
@@ -34,84 +77,35 @@ sub main : Local {
     	
     	$spells{$character->id} = \@spells if @spells;
     }
-    	
-	my $map = $c->forward('/map/view');
+    
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/party_list.html',
+			params => {
+                party => $party,
+                characters => \@characters,
+                combat_actions => $c->session->{combat_action},
+                spells => \%spells,
+			},
+			return_output => 1,
+        }]
+    );
+}
 
-	my $bottom_panel;
-	
-	if ($c->stash->{bottom_panel}) {
-		$bottom_panel = $c->stash->{bottom_panel};
-	}	
-	elsif ($party->location->town) {
-		$bottom_panel = $c->forward('/town/main');
-	}
-	elsif ($party->in_combat_with) {
-		$bottom_panel = $c->forward('/combat/main'); 
-	}
-	else {	
-		# See if party is in same location as a creature
-	    # TODO: would be nice to have a way of figuring out if the party just moved here, so we don't have to go
-	    #   thru this check for combat if they've been in this sector a while (altho still need to check
-	    #   in case creatures have moved into the sector while the party was doing something		
-	    my @creatures = $c->model('DBIC::CreatureGroup')->search(
-	        {
-	            'x' => $party->location->x,
-	            'y' => $party->location->y,
-	        },
-	        {
-	            prefetch => [('location', {'creatures' => 'type'})],
-	        },
-	    );
-	
-	    # TODO: we should only ever get one creature group from above, since creatures shouldn't move into
-	    #  the same square as another group. May pay to check this here and fatal if there are more than one.
-	    #  At any rate, we'll just look at the first group.        
-	    my $creature_group = shift @creatures;	   
-		    
-	    # If there are creatures here, check to see if we go straight into a combat
-	    if ($creature_group && $creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
-	        $c->stash->{creature_group} = $creature_group;
-			$bottom_panel = $c->forward('/combat/start',
-				[{
-					creature_group      => $creature_group,
-					creatures_initiated => 1,
-				}],
-			);
-    	}		   
-	    
-	    # Get standard sector menu, plus display create group if present (and combat hasn't yet started)
-	    else {
-			$bottom_panel = $c->forward('RPG::V::TT',
-		        [{
-		            template => 'party/sector_menu.html',
-					params => {
-		                creature_group => $creature_group
-					},
-					return_output => 1,
-		        }]
-		    );		    	    	
-	    }
-	}
-	
-	my @creatures;	
-	if ($c->stash->{creature_group}) {
-		@creatures = $c->stash->{creature_group}->creatures;
-	}
+sub status : Local {
+	my ($self, $c) = @_;	
+    
+    my $party = $c->stash->{party};
 	
     $c->forward('RPG::V::TT',
         [{
-            template => 'party/main.html',
+            template => 'party/status.html',
 			params => {
                 party => $party,
-                map => $map,
-                bottom_panel => $bottom_panel,
-                characters => \@characters,
-                combat_actions => $c->session->{combat_action},
-                creatures => \@creatures,
-                spells => \%spells,
 			},
+			return_output => 1,
         }]
-    );
+    );	
 }
 
 sub create : Local {

@@ -63,7 +63,7 @@ function processOnLoad() {
 </script>
 
 
-<script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true"></script>
+<script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true, isDebug: false, debugContainerId: 'dojoDebug'"></script>
 <style>
 	@import "http://o.aolcdn.com/dojo/1.0/dijit/themes/tundra/tundra.css";
 	@import "http://o.aolcdn.com/dojo/1.0/dojo/resources/dojo.css"	
@@ -75,7 +75,6 @@ function processOnLoad() {
 
 </head>
 <body onLoad="processOnLoad()" class="tundra">
-
 <script>
 	dojo.require("dojo.parser");
 	dojo.require("dijit.form.Button");
@@ -98,8 +97,6 @@ dojo.addOnLoad( error_init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<div id="dojoDebug"></div>
-
 <div dojoType="dijit.layout.BorderContainer" design="headline">
     <div dojoType="dijit.layout.ContentPane" region="top" class="main">
         Game Game Game!!
@@ -111,4 +108,5 @@ dojo.addOnLoad( error_init );
    
 
     <div dojoType="dijit.layout.ContentPane" region="center" style="background-color:lightblue" class="main">
+<div id="dojoDebug"></div>
 		

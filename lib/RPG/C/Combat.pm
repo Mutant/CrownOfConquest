@@ -37,7 +37,7 @@ sub party_attacks : Local {
 	if ($creature_group) {
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
-		$c->forward('/party/main');
+		$c->forward('/panel/refresh', ['messages']);
 	}
 	else {
 		$c->error("Couldn't find creature group in party's location.");
@@ -52,9 +52,9 @@ sub default : Private {
 }
 
 sub main : Local {
-	my ($self, $c, $params) = @_;
+	my ($self, $c) = @_;
 	
-	my $creature_group = $params->{creature_group} || $c->stash->{creature_group};
+	my $creature_group = $c->stash->{creature_group};
 	unless ($creature_group) {
 		$creature_group = $c->model('CreatureGroup')->find(
 			{
@@ -75,12 +75,12 @@ sub main : Local {
             template => 'combat/main.html',
 			params => {
 				creature_group => $creature_group,
-				creatures_initiated => $params->{creatures_initiated},
+				creatures_initiated => 0, #TODO: fixme! $params->{creatures_initiated},
 				combat_messages => $c->stash->{combat_messages},
 			},
 			return_output => 1,
         }]
-    );	
+    );
 }
 
 sub select_action : Local {
@@ -168,8 +168,7 @@ sub fight : Local {
         }]
     );
     
-	$c->forward('/party/main');
-	
+	$c->forward('/panel/refresh', ['messages', 'party']);
 }
 
 sub character_action : Private {
@@ -343,6 +342,7 @@ sub flee : Local {
 		my ($new_x, $new_y);
 		
 		my %x_y_range = $c->model('Land')->get_x_y_range();
+		warn Dumper \%x_y_range;
 		
 		# Find a location to flee to that's not the current location and is in the bounds of the map
 		do {
@@ -361,7 +361,7 @@ sub flee : Local {
 			y => $new_y,
 		});
 		
-		$c->error("Couldn't find sector: $new_x, $new_y") unless $land;
+		$c->error("Couldn't find sector: $new_x, $new_y"), return unless $land;
 		
 		$c->stash->{party}->land_id($land->id);
 		$c->stash->{party}->in_combat_with(undef);
@@ -369,7 +369,7 @@ sub flee : Local {
     	$c->stash->{party}->update;
     	$c->stash->{party}->discard_changes;
     	
-    	$c->forward('/party/main');
+    	$c->forward('/panel/refresh', ['messages', 'map']);
 	}
 	else {
 		push @{ $c->stash->{combat_messages} }, 'You were unable to flee.';
@@ -429,6 +429,8 @@ sub finish : Private {
 	$c->stash->{party}->update;	
 	
 	$c->stash->{creature_group}->delete;
+	
+	push @{ $c->stash->{refresh_panels} }, 'party_status';
 }
 
 sub distribute_xp : Private {

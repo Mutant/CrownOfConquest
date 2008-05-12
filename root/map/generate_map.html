@@ -1,4 +1,4 @@
-<table border="1" align="center">
+<table border="0" align="center">
 [% FOREACH line = grid %]
     [% IF line %]
     <tr>
@@ -6,7 +6,7 @@
         [% IF position %]            
         <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %]>        
         	[% IF position.next_to(current_position) %]
-        		<a href="[% base %]/map/move_to?land_id=[% position.id %]">
+        		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.id %]')">
         	[% END %]
 			<img src="[% base %][% image_path %][% position.terrain.image %]" border=0
 				title="[% position.terrain.terrain_name %] ([% position.movement_cost(party_movement_factor) %]) ([% position.x %], [% position.y %])">

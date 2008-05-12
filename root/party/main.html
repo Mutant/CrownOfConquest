@@ -1,20 +1,135 @@
 [% INCLUDE top.html %]
 
-<div id="party-header">
+<script>
+dojo.require('dijit.layout.SplitContainer');
+	
+function getPanels(url) {
+    dijit.byId('messages-pane').setContent('Loading...');
+	dojo.xhrGet( {
+        url: "[% base %]" + url,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {        
+        	if (responseObject.error) {
+				dojo.byId('error-message').innerHTML = responseObject.error;
+	          	dijit.byId('error').show();
+        	}
+        	else {
+        		console.log(responseObject);
+	       	    if (responseObject.refresh_panels) {
+					refreshPanels(responseObject.refresh_panels);
+		       	}
+	       	}
+        },
+
+	    timeout: 5000, // Time in milliseconds	
+    });
+}
+
+function refreshPanels(panel_hash) {
+	for (var panel in panel_hash) {
+		console.log(panel);
+		dijit.byId(panel+'-pane').setContent(panel_hash[panel]);
+	}
+}
+
+function setPanel(panel, url) {
+	dijit.byId(panel+'-pane').href = url;
+	dijit.byId(panel+'-pane').refresh();
+}
+
+var panel_init = [% panels %];
+
+function init() {
+	console.log(panel_init);
+	refreshPanels(panel_init.refresh_panels);
+}
+
+function selectAction(action, char_id, action_param, action_param2, action_label) {
+	if (! action_label) {
+		action_label = action;
+	}
+	
+	if (! action_param) {
+		action_param = '';
+	}
+
+	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
+
+	dojo.xhrGet( { //
+	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + action_param +
+		        "&action_param=" + action_param2, 
+	        handleAs: "text",
+	
+	        timeout: 5000, // Time in milliseconds
+	
+	        });
+	        
+	return false;
+}
+
+dojo.require("dojo.dnd.Source");
+dojo.require("dijit.Menu");
+dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+	var t = dojo.dnd.manager().target;
+
+	order_val = t.current.id.split(/-/);
+	var char_2 = order_val[1];
+
+	var drop_pos;
+	(t.before == true) ? drop_pos='before' : drop_pos='after';
+	
+	if (nodes[0].id == 'rank_separator') {
+    	dojo.xhrGet( {
+	        url: "[% base %]/party/move_rank_separator?target=" + char_2 + "&drop_pos=" + drop_pos, 
+	        handleAs: "text",
+
+    	    timeout: 5000, // Time in milliseconds	
+        });			
+	}
+	else {
+    	order_val = nodes[0].id.split(/-/);
+		var char_1 = order_val[1];
+		
+    	dojo.xhrGet( {
+	        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
+	        handleAs: "text",
+
+    	    timeout: 5000, // Time in milliseconds	
+        });
+    }
+});
+
+dojo.addOnLoad( init );
+
+</script>
+
 <h2>[% party.name %]</h2>
-Gold: [% party.gold %] Turns: [% party.turns %] Movement Factor: [% party.movement_factor %]
+
+<div id="party_status-pane" dojoType="dijit.layout.ContentPane">
+[% INCLUDE party/status.html %]
 </div>
 
-<div id="map">
-[% map %]
+<div dojoType="dijit.layout.SplitContainer"
+                orientation="horizontal"
+                sizerWidth="7"
+                activeSizing="true"
+                style="border: 1px solid #bfbfbf; width: 90%; height: 300px;">
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Pane 1" id="map-pane" style="width: 300px">
+
+	</div>
+
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane">
+
+	</div>
 </div>
+
 <br><br>
-<div id="party-list">
-[% INCLUDE party/party_list.html %]
+
+<div dojoType="dijit.layout.ContentPane" id="party-pane">
+
 </div>
-<br><br>
-<div id="bottom-panel">
-[% bottom_panel %]
-</div>
+
+
 
 [% INCLUDE bottom.html %]

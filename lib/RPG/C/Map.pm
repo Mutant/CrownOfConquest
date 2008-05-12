@@ -5,14 +5,15 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use JSON;
 
 sub view : Local {
     my ($self, $c) = @_;
     
-    #$c->stats->profile("Entered /map/view");
-    $c->forward('auto') unless $c->stash->{party};
+    $c->stats->profile("Entered /map/view");
+
     my $party_location = $c->stash->{party}->location;
-	#$c->stats->profile("Got party's location");
+	$c->stats->profile("Got party's location");
 
     my ($start_point, $end_point) = RPG::Map->surrounds(
                                         $party_location->x,
@@ -21,7 +22,7 @@ sub view : Local {
                                         $c->config->{map_y_size},
                                     );
                                     
-	#$c->stats->profile("Got start and end point");                                    
+	$c->stats->profile("Got start and end point");                                    
     
     my @area = $c->model('Land')->search(
         {
@@ -33,7 +34,7 @@ sub view : Local {
         },
     );
     
-    #$c->stats->profile("Queried db for sectors");
+    $c->stats->profile("Queried db for sectors");
     
     my @grid;
     
@@ -41,7 +42,7 @@ sub view : Local {
         $grid[$location->x][$location->y] = $location;
     }
     
-    #$c->stats->profile("Built grid");
+    $c->stats->profile("Built grid");
     
     return $c->forward('RPG::V::TT',
         [{
@@ -55,6 +56,8 @@ sub view : Local {
             return_output => 1,
         }]
     );
+    
+    $c->stats->profile("Rendered template");
 }
 
 =head2 move_to
@@ -66,6 +69,8 @@ Move the party to a new location
 sub move_to : Local {
     my ($self, $c) = @_;
     
+    my $party = $c->stash->{party};
+    
     my $new_land = $c->model('Land')->find( 
     	$c->req->param('land_id'),
     	{
@@ -74,7 +79,7 @@ sub move_to : Local {
     );
 
     my $movement_factor = $c->stash->{party}->movement_factor;
-    
+        
     unless ($new_land) {
         $c->error('Land does not exist!');
     }
@@ -90,18 +95,35 @@ sub move_to : Local {
     }
     
     else {        
-	    $c->stash->{party}->land_id($c->req->param('land_id'));
-	    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
-	    $c->stash->{party}->update;
+	    $party->land_id($c->req->param('land_id'));
+	    $party->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
 	    
-	    $c->res->redirect('/');
-	    return;
+		# See if party is in same location as a creature
+	    my $creature_group = $c->model('DBIC::CreatureGroup')->find(
+	        {
+	            'location.x' => $party->location->x,
+	            'location.y' => $party->location->y,
+	        },
+	        {
+	            prefetch => [('location', {'creatures' => 'type'})],
+	        },
+	    );
+		    
+	    # If there are creatures here, check to see if we go straight into a combat
+	    if ($creature_group) {
+	    	$c->stash->{creature_group} = $creature_group;
+	    		    	
+	    	if ($creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
+	        	$party->in_combat_with($creature_group->id);
+	    	}
+    	}	
+	    
+	    $party->update;
+	    
+	    $c->stash->{party}->discard_changes;
     }
     
-    # Only happens if an error occured, i.e. we didn't move
-    $c->forward('/party/main');
-    
-
+    $c->forward('/panel/refresh', ['map', 'messages', 'party_status']);
 }
 
 1;

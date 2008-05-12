@@ -1,8 +1,8 @@
 <br>
 [ 
-	<a href="/party/camp">Camp</a> 
-	| <a href="/party/forage">Forage</a> 
-	[% IF creature_group %] | <a href="/combat/party_attacks?creature_group_id=[% creature_group.id %]">Attack Creatures</a>[% END %] 
+	<a href="javascript:getPanels('/party/camp')">Camp</a> 
+	| <a href="javascript:getPanels('/party/forage')">Forage</a> 
+	[% IF creature_group %] | <a href="javascript:getPanels('/combat/party_attacks?creature_group_id=[% creature_group.id %]')">Attack Creatures</a>[% END %] 
 ]
 <br>
 

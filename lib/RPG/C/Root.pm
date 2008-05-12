@@ -35,9 +35,10 @@ sub auto : Private {
     					'class',
     					{'character_effects' => 'effect'},
     				]
-    			}
+    			},
+    			{'location' => 'town'},
     		],
-    		cache => 1,
+    		#cache => 1,
     		order_by => 'party_order',
     	},
     );

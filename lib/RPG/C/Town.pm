@@ -7,15 +7,15 @@ use base 'Catalyst::Controller';
 use Math::Round qw(round);
 
 sub main : Local {
-	my ($self, $c) = @_;
+	my ($self, $c, $return_output) = @_;
 	
-	return $c->forward('RPG::V::TT',
+	$c->forward('RPG::V::TT',
         [{
             template => 'town/main.html',
 			params => {
 				town => $c->stash->{party}->location->town,
 			},
-			return_output => 1,
+			return_output => $return_output || 0,
         }]
     );
 }
@@ -23,7 +23,7 @@ sub main : Local {
 sub shop_list : Local {
 	my ($self, $c) = @_;
 	
-	$c->stash->{bottom_panel} = $c->forward('RPG::V::TT',
+	my $panel = $c->forward('RPG::V::TT',
         [{
             template => 'town/shop_list.html',
 			params => {
@@ -33,7 +33,9 @@ sub shop_list : Local {
         }]
     );
     
-    $c->forward('/party/main');
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+    
+    $c->forward('/panel/refresh');
 }
 
 sub healer : Local {
@@ -45,7 +47,7 @@ sub healer : Local {
 	
 	my ($cost_to_heal, @dead_chars) = _get_party_health($town, @characters);
 	
-	$c->stash->{bottom_panel} = $c->forward('RPG::V::TT',
+	my $panel = $c->forward('RPG::V::TT',
         [{
             template => 'town/healer.html',
 			params => {
@@ -57,7 +59,9 @@ sub healer : Local {
         }]
     );
     
-    $c->forward('/party/main');
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+    
+    $c->forward('/panel/refresh');
 }
 
 sub heal_party : Local {
@@ -80,6 +84,8 @@ sub heal_party : Local {
 			$character->update;
 		}
 	}
+	
+	push @{ $c->stash->{refresh_panels} }, 'party';
 	
 	$c->forward('/town/healer');
 }
@@ -107,6 +113,8 @@ sub resurrect : Local {
 			$char_to_res->update;			
 		}
 	}
+	
+	push @{ $c->stash->{refresh_panels} }, 'party';
 	
 	$c->forward('/town/healer');		
 }

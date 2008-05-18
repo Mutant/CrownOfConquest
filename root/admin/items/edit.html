@@ -27,7 +27,7 @@
 </form>
 
 <b>Edit Item Type</b><br>
-<form method="get" action="[% base %]/admin/items/main">
+<form method="get" action="[% base %]/admin/items/edit_item_types">
 [% item_type_select('item_type_id') %]
 <input type="submit" value="Edit">
 </form>
@@ -89,6 +89,7 @@
 </table>
 <input type="submit" value="Update">
 </form>
+<a href="[% base %]/admin/items/edit_item_types_in_category?category_id=[% item_type.category.item_category_id %]">Category Grid</a>
 [% END %]
 
 [% INCLUDE bottom.html %]

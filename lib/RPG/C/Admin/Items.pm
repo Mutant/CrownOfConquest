@@ -7,7 +7,13 @@ use base 'Catalyst::Controller';
 use JSON;
 use Data::Dumper;
 
-sub main : Local {
+sub default : Private {
+	my ($self, $c) = @_;
+	
+	$c->forward('edit_item_type');
+}
+
+sub edit_item_type : Local {
 	my ($self, $c) = @_;
 	
 	my @item_types = $c->model('Item_Type')->search(
@@ -117,7 +123,7 @@ sub update_item_type : Local {
 		$item_variable_param->update;				
 	}
 	
-	$c->forward('/admin/items/main');
+	$c->forward('edit_item_type');
 }
 
 sub new_item_type : Local {
@@ -129,7 +135,7 @@ sub new_item_type : Local {
 	
 	$c->req->param('item_type_id', $item_type->id);
 
-	$c->forward('/admin/items/main');
+	$c->forward('edit_item_type');
 }
 
 sub edit_category : Local {
@@ -150,7 +156,50 @@ sub edit_category : Local {
 				category_to_edit => $category_to_edit,
 			},
         }]
-    );
+    );		
+}
+
+sub edit_item_types_in_category : Local {
+	my ($self, $c) = @_;
+	
+	my @categories = $c->model('Item_Category')->search(
+		{},
+		{
+			prefetch => 'item_attribute_names',
+		}
+	);
+	
+	my $category_to_edit;
+	my @item_types;
+	
+	if ($c->req->param('category_id')) {
+		@item_types = $c->model('DBIC::Item_Type')->search(
+			{
+				'me.item_category_id' =>  $c->req->param('category_id'),
+			},
+			{
+				prefetch => [
+					{'item_attributes' => 'item_attribute_name'},
+					'category',
+					{'item_variable_params' => 'item_variable_name'},
+				],
+				order_by => 'me.item_type',
+			},
+		);
+		
+		$category_to_edit = $item_types[0]->category;
+	}
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'admin/items/item_types_in_category.html',
+			params => {
+				categories => \@categories,
+				category_to_edit => $category_to_edit,
+				item_types => \@item_types,
+			},
+        }]
+    );	
 		
 }
 

@@ -1,0 +1,46 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE admin/items/subnav.html %]
+
+<b>Category of Item Types to Edit:</b>
+<form method="get" action="[% base %]/admin/items/edit_item_types_in_category">
+<select name="category_id">
+		<option></option>
+        [% FOREACH category IN categories %]        
+ 	        <option value="[% category.id %]">[% category.item_category %]</option>
+ 	    [% END %]
+</select>
+<input type="submit" value="Edit">
+</form>
+
+[% IF category_to_edit %]
+	<form method="post" action="[% base %]/admin/items/mass_update_item_types">
+	<table class="main" border=1 cellpadding=2 cellspacing=0>
+		<tr>
+			<th>ID</th>
+			<th>Item Type</th>
+			<th>Base Cost</th>
+			<th>Prevalance</th>
+			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
+				<th>[% attribute.item_attribute_name %]</th>
+			[% END %]
+		</tr>
+	
+	[% FOREACH item_type IN item_types %]
+		<tr>
+			<td>[% item_type.id %]</td>			
+			<td><a href="[% base %]/admin/items/edit_item_type?item_type_id=[% item_type.id %]">[% item_type.item_type %]</a></td>
+			<td>[% item_type.base_cost %]</td>
+			<td>[% item_type.prevalence %]</td>
+			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
+				<td>[% item_type.attribute(attribute.item_attribute_name).formatted_value %]</td>
+			[% END %]
+		</tr>
+	
+	[% END %]
+	
+	</table>	
+	</form>
+[% END %]
+
+[% INCLUDE bottom.html %]

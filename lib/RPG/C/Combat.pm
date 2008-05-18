@@ -90,7 +90,7 @@ sub select_action : Local {
 	$character->last_combat_action($c->req->param('action'));
 	$character->update; 
 	
-	my @action_params = $c->req->param('action_param'); 
+	my @action_params = grep { $_ } $c->req->param('action_param'); 
 	
 	$c->session->{combat_action_param}{$c->req->param('character_id')} = 
 		scalar @action_params > 1 ? \@action_params : $action_params[0];
@@ -171,24 +171,23 @@ sub fight : Local {
 }
 
 sub character_action : Private {
-	my ($self, $c, $character, $creature_group) = @_;
-	
-	my @creatures = $creature_group->creatures;
-	my %creatures_by_id = map { $_->id => $_ } @creatures;
+	my ($self, $c, $character, $creature_group) = @_;	
 	
 	my ($creature, $damage);
 	
 	if ($character->last_combat_action eq 'Attack') {
 		# If they've selected a target, make sure it's still alive
 		my $targetted_creature = $c->session->{combat_action_param}{$character->id};
-		if ($targetted_creature && $creatures_by_id{$targetted_creature} && ! $creatures_by_id{$targetted_creature}->is_dead) {
-			$creature = $creatures_by_id{$targetted_creature};
+		warn Dumper $targetted_creature;
+		if ($targetted_creature && $c->stash->{creatures}{$targetted_creature} && ! $c->stash->{creatures}{$targetted_creature}->is_dead) {
+			$creature = $c->stash->{creatures}{$targetted_creature};
 		}
 		
 		# If we don't have a target, choose one randomly
 		unless ($creature) {
 			do {
-				$creature = $creatures[int rand(scalar @creatures)];
+				my @ids = shuffle keys %{$c->stash->{creatures}};
+				$creature = $c->stash->{creatures}{$ids[0]};
 			} while ($creature->is_dead);
 		}
 			

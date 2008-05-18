@@ -43,6 +43,8 @@ sub auto : Private {
     	},
     );
     
+    $c->stash->{party_location} = $c->stash->{party}->location;
+    
     #$c->stats->profile("Finished party query");
     
     # If the party is currently in combat, they must stay on the combat screen

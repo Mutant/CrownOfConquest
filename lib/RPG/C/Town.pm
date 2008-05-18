@@ -13,7 +13,7 @@ sub main : Local {
         [{
             template => 'town/main.html',
 			params => {
-				town => $c->stash->{party}->location->town,
+				town => $c->stash->{party_location}->town,
 			},
 			return_output => $return_output || 0,
         }]
@@ -27,7 +27,7 @@ sub shop_list : Local {
         [{
             template => 'town/shop_list.html',
 			params => {
-				town => $c->stash->{party}->location->town,
+				town => $c->stash->{party_location}->town,
 			},
 			return_output => 1,
         }]
@@ -41,7 +41,7 @@ sub shop_list : Local {
 sub healer : Local {
 	my ($self, $c) = @_;
 	
-	my $town = $c->stash->{party}->location->town;
+	my $town = $c->stash->{party_location}->town;
 	
 	my @characters = $c->stash->{party}->characters;
 	
@@ -67,7 +67,7 @@ sub healer : Local {
 sub heal_party : Local {
 	my ($self, $c) = @_;
 	
-	my $town = $c->stash->{party}->location->town;
+	my $town = $c->stash->{party_location}->town;
 	
 	my @characters = $c->stash->{party}->characters;
 	
@@ -93,7 +93,7 @@ sub heal_party : Local {
 sub resurrect : Local {
 	my ($self, $c) = @_;
 
-	my $town = $c->stash->{party}->location->town;
+	my $town = $c->stash->{party_location}->town;
 	
 	my @characters = $c->stash->{party}->characters;
 	

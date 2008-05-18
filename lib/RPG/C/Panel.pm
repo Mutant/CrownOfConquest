@@ -48,7 +48,7 @@ sub find_panel_path : Private {
 		
 	#$party->discard_changes; # TODO: needed?
 	
-	if ($party->location->town) {
+	if ($c->stash->{party_location}->town) {
 		return '/town/main';
 	}
 	elsif ($party->in_combat_with) {

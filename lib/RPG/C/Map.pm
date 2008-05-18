@@ -11,13 +11,8 @@ sub view : Local {
     my ($self, $c) = @_;
     
     $c->stats->profile("Entered /map/view");
-
-	# Fetch from the DB, since it may have changed recently
-    my $party_location = $c->model('DBIC::Land')->find(
-    	{
-    		land_id => $c->stash->{party}->land_id,
-    	}
-    );
+	
+    my $party_location = $c->stash->{party_location};
     
 	$c->stats->profile("Got party's location");
 
@@ -124,7 +119,14 @@ sub move_to : Local {
 	    	}
     	}	
 	    
-	    $c->stash->{party}->update;	    
+	    $c->stash->{party}->update;
+	    
+	    # Fetch from the DB, since it may have changed recently
+	    $c->stash->{party_location} = $c->model('DBIC::Land')->find(
+	    	{
+	    		land_id => $c->stash->{party}->land_id,
+	    	}
+	    );	    
 	    
     }
     

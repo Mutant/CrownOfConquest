@@ -422,6 +422,37 @@ sub finish : Private {
 	my $gold = scalar @creatures * $avg_creature_level * Games::Dice::Advanced->roll('1d10');
 	
 	push @{$c->stash->{combat_messages}}, "You find $gold gold";
+	
+	# See if party find an item
+	if (Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * RPG->config->{chance_to_find_item}) {
+		my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
+		
+		# Get item_types within the prevalance roll
+		my @item_types = shuffle $c->model('DBIC::Item_Type')->search(
+			{
+				prevalence => {'>=', $prevalence_roll},
+			}
+		);
+		
+		my $item_type = shift @item_types;
+		
+		# Choose a random character to find it
+		my $finder;
+		while (! $finder || $finder->is_dead) {
+			$finder = (shuffle @characters)[0];
+		}
+		
+		# Create the item
+		my $item = $c->model('Items')->create(
+			{
+				item_type_id => $item_type->id,
+				character_id => $finder->id,				
+			},
+		);
+		
+		push @{$c->stash->{combat_messages}}, $finder->character_name . " finds a " . $item->display_name;
+	}
+	
 	$c->stash->{party}->in_combat_with(undef);
 	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
 	$c->stash->{party}->update;	

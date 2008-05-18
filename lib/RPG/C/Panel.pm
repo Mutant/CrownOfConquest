@@ -24,19 +24,19 @@ sub refresh : Private {
 	if ($c->stash->{error}) {
 		$response{error} = $c->stash->{error};
 	}
-	else {	
-		foreach my $panel (@panels_to_refresh) {
-			unless (ref $panel eq 'ARRAY') {
-				my $panel_path = $c->forward('find_panel_path', [$panel]);
-				$response{refresh_panels}{$panel} = $c->forward($panel_path);
-			}
-			else {
-				$response{refresh_panels}{$panel->[0]} = $panel->[1];
-			}
+
+	foreach my $panel (@panels_to_refresh) {
+		unless (ref $panel eq 'ARRAY') {
+			my $panel_path = $c->forward('find_panel_path', [$panel]);
+			$response{refresh_panels}{$panel} = $c->forward($panel_path);
+		}
+		else {
+			$response{refresh_panels}{$panel->[0]} = $panel->[1];
 		}
 	}
+
 	
-	$c->res->body(to_json \%response);	
+	$c->res->body(to_json \%response);
 }
 
 sub find_panel_path : Private {
@@ -46,7 +46,7 @@ sub find_panel_path : Private {
 	
     my $party = $c->stash->{party};    
 		
-	$party->discard_changes; # TODO: needed?
+	#$party->discard_changes; # TODO: needed?
 	
 	if ($party->location->town) {
 		return '/town/main';

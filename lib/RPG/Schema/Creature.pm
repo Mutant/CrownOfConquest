@@ -109,4 +109,17 @@ sub execute_attack {
 	return;
 }
 
+sub change_hit_points {
+	my $self = shift;
+	my $amount = shift;
+	
+	$self->hit_points_current($self->hit_points_current + $amount);
+	$self->hit_points_current($self->hit_points_max)
+		if $self->hit_points_current > $self->hit_points_max;
+		
+	$self->hit_points_current(0) if $self->hit_points_current < 0;
+	
+	return;	
+}
+
 1;

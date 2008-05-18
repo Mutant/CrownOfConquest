@@ -25,7 +25,10 @@ sub cast : Local {
    
    	$c->error("Spell not found"), return unless $spell;
    	
-   	my $message = $c->forward('/magic/' . lc $spell->class->class_name . '/' . lc $spell->spell_name,
+   	my $spell_action = lc $spell->spell_name;
+   	$spell_action =~ s/ /_/g;
+   	
+   	my $message = $c->forward('/magic/' . lc $spell->class->class_name . '/' . $spell_action,
    		[
    			$character,
    			$target,

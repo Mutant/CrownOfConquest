@@ -37,12 +37,11 @@ sub party_attacks : Local {
 	if ($creature_group) {
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
-		$c->forward('/panel/refresh', ['messages']);
+		$c->forward('/panel/refresh', ['messages', 'party']);
 	}
 	else {
 		$c->error("Couldn't find creature group in party's location.");
-	}
-		
+	}		
 }
 
 sub default : Private {

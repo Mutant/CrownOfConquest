@@ -27,18 +27,6 @@ sub sector_menu : Local {
     my ($self, $c) = @_;
     
 	my $creature_group = $c->stash->{creature_group};
-	
-	unless ($creature_group) {
-		$creature_group = $c->model('DBIC::CreatureGroup')->find(
-	        {
-	            'location.x' => $c->stash->{party}->location->x,
-	            'location.y' => $c->stash->{party}->location->y,
-	        },
-	        {
-	            prefetch => [('location', {'creatures' => 'type'})],
-	        },
-	    );	
-	}
     
     $c->forward('RPG::V::TT',
         [{
@@ -78,18 +66,26 @@ sub list : Local {
     	$spells{$character->id} = \@spells if @spells;
     }
     
-    $c->forward('RPG::V::TT',
+    #warn ref $c->stash->{creature_group};
+    
+    my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
+    
+    my $foo = $c->forward('RPG::V::TT',
         [{
             template => 'party/party_list.html',
 			params => {
                 party => $party,
                 characters => \@characters,
                 combat_actions => $c->session->{combat_action},
+                creatures => \@creatures,
                 spells => \%spells,
 			},
 			return_output => 1,
         }]
     );
+    #warn $foo;
+    
+    return $foo;
 }
 
 sub status : Local {

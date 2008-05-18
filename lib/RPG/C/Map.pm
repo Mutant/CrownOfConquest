@@ -12,7 +12,13 @@ sub view : Local {
     
     $c->stats->profile("Entered /map/view");
 
-    my $party_location = $c->stash->{party}->location;
+	# Fetch from the DB, since it may have changed recently
+    my $party_location = $c->model('DBIC::Land')->find(
+    	{
+    		land_id => $c->stash->{party}->land_id,
+    	}
+    );
+    
 	$c->stats->profile("Got party's location");
 
     my ($start_point, $end_point) = RPG::Map->surrounds(
@@ -69,7 +75,7 @@ Move the party to a new location
 sub move_to : Local {
     my ($self, $c) = @_;
     
-    my $party = $c->stash->{party};
+    #my $party = $c->stash->{party};
     
     my $new_land = $c->model('Land')->find( 
     	$c->req->param('land_id'),
@@ -95,32 +101,31 @@ sub move_to : Local {
     }
     
     else {        
-	    $party->land_id($c->req->param('land_id'));
-	    $party->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
+	    $c->stash->{party}->land_id($c->req->param('land_id'));
+	    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
 	    
 		# See if party is in same location as a creature
 	    my $creature_group = $c->model('DBIC::CreatureGroup')->find(
 	        {
-	            'location.x' => $party->location->x,
-	            'location.y' => $party->location->y,
+	            'location.x' => $new_land->x,
+	            'location.y' => $new_land->y,
 	        },
 	        {
 	            prefetch => [('location', {'creatures' => 'type'})],
 	        },
-	    );
+	    );		    
 		    
 	    # If there are creatures here, check to see if we go straight into a combat
 	    if ($creature_group) {
 	    	$c->stash->{creature_group} = $creature_group;
 	    		    	
-	    	if ($creature_group->initiate_combat($party, $c->config->{creature_attack_chance})) {
-	        	$party->in_combat_with($creature_group->id);
+	    	if ($creature_group->initiate_combat($c->stash->{party}, $c->config->{creature_attack_chance})) {
+	        	$c->stash->{party}->in_combat_with($creature_group->id);
 	    	}
     	}	
 	    
-	    $party->update;
+	    $c->stash->{party}->update;	    
 	    
-	    $c->stash->{party}->discard_changes;
     }
     
     $c->forward('/panel/refresh', ['map', 'messages', 'party_status']);

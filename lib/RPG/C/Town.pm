@@ -20,6 +20,16 @@ sub main : Local {
     );
 }
 
+sub back_to_main : Local {
+	my ($self, $c) = @_;
+	
+	my $panel = $c->forward('main', [1]);
+	
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+    
+    $c->forward('/panel/refresh');
+}
+
 sub shop_list : Local {
 	my ($self, $c) = @_;
 	
@@ -54,6 +64,7 @@ sub healer : Local {
 				cost_to_heal => $cost_to_heal,
 				dead_characters => \@dead_chars, 
 				town => $town,
+				messages => $c->stash->{messages},
 			},
 			return_output => 1,
         }]
@@ -83,9 +94,11 @@ sub heal_party : Local {
 			$character->hit_points($character->max_hit_points);
 			$character->update;
 		}
+		
+		$c->stash->{messages} = 'The party has been fully healed';
 	}
 	
-	push @{ $c->stash->{refresh_panels} }, 'party';
+	push @{ $c->stash->{refresh_panels} }, ('party', 'party_status');
 	
 	$c->forward('/town/healer');
 }
@@ -110,11 +123,15 @@ sub resurrect : Local {
 			$c->stash->{party}->update;
 			
 			$char_to_res->hit_points(round $char_to_res->max_hit_points * 0.1);
-			$char_to_res->update;			
+			my $xp_to_lose = int ($char_to_res->xp * RPG->config->{ressurection_percent_xp_to_lose} / 100);
+			$char_to_res->xp($char_to_res->xp - $xp_to_lose); 
+			$char_to_res->update;
+			
+			$c->stash->{messages} = $char_to_res->character_name . " has risen from the dead. He lost $xp_to_lose xp.";
 		}
 	}
 	
-	push @{ $c->stash->{refresh_panels} }, 'party';
+	push @{ $c->stash->{refresh_panels} }, ('party', 'party_status');
 	
 	$c->forward('/town/healer');		
 }

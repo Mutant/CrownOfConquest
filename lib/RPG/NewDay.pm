@@ -22,7 +22,7 @@ sub run {
 	);
 	
 	# Run shops update
-	#RPG::NewDay::Shop->run($config, $schema);
+	RPG::NewDay::Shop->run($config, $schema);
 	
 	# New day for Party
 	RPG::NewDay::Party->run($config, $schema);

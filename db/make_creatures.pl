@@ -5,6 +5,7 @@ use warnings;
 
 use Data::Dumper;
 use RPG::Schema;
+use List::Util qw(shuffle);
 
 $ENV{DBIC_TRACE} = 1;
 
@@ -17,13 +18,13 @@ my $schema = RPG::Schema->connect(
 	{AutoCommit => 1},
 );	
 
-my $max_x = 20;
-my $max_y = 20;
+my $max_x = 100;
+my $max_y = 100;
 
 $schema->resultset('Creature')->delete;
 $schema->resultset('CreatureGroup')->delete;
 
-my @creature_types = $schema->resultset('CreatureType')->search();
+my @creature_types =  $schema->resultset('CreatureType')->search();
 
 for my $count (1 .. $creature_count) {
 	my %cords;	
@@ -60,8 +61,17 @@ for my $count (1 .. $creature_count) {
 	});
 	
 	my $number = int (rand 7) + 3;
-	my $index = int rand $#creature_types;
-	my $type = $creature_types[$index];
+	
+	my $max_level = (int $land->creature_threat / 10) + 1;
+	warn "CTR: " . $land->creature_threat;
+	warn "max level : $max_level\n";
+	
+	my $type;
+	foreach my $type_to_check (shuffle @creature_types) {
+		next if $type_to_check->level > $max_level;
+		$type = $type_to_check;
+		last;
+	}	
 		
 	for my $creature (1 .. $number) {
 		

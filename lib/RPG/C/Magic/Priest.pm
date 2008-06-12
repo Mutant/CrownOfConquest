@@ -64,4 +64,26 @@ sub bless : Private {
 	return $character->character_name . " cast Bless on " . $target_char->character_name . ", blessing him for $duration rounds";	
 }
 
+sub blades : Private {
+	my ($self, $c, $character, $target) = @_;
+	
+	my $modifier = $character->level;
+	my $duration = 2 + (int $character->level / 3 + 1);
+	
+	$c->forward('/magic/create_effect',
+		[{
+			target_type => 'character',
+			target_id => $target,
+			effect_name => 'Blades',
+			duration => $duration,
+			modifier => $modifier,
+			combat => 1,
+			modified_state => 'damage',
+		}]
+	);
+	
+	my $target_char = $c->stash->{characters}{$target};
+	return $character->character_name . " cast Blades on " . $target_char->character_name . ", enhancing his weapon for $duration rounds";
+}
+
 1;

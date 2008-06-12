@@ -31,11 +31,14 @@ __PACKAGE__->has_many(
 sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
-	my $chance = shift || croak "Chance of initiating combat not supplied";
+	my $chance = shift;
+	croak "Chance of initiating combat not supplied" unless defined $chance;
 	
 	my $roll = int rand 100;
 	
-	return $roll >= $chance;
+	warn "chance: $chance, roll: $roll\n";
+	
+	return $roll < $chance;
 }
 
 sub creature_summary {

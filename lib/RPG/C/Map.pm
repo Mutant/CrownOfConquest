@@ -121,6 +121,9 @@ sub move_to : Local {
 	    
 	    $c->stash->{party}->update;
 	    
+	    $c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 1);
+	    $c->stash->{party_location}->update;
+	    
 	    # Fetch from the DB, since it may have changed recently
 	    $c->stash->{party_location} = $c->model('DBIC::Land')->find(
 	    	{

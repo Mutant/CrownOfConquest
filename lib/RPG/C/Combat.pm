@@ -295,13 +295,16 @@ sub attack : Private {
 	
 	my $defence_bonus = $defending ? RPG->config->{defend_bonus} : 0;
 	
-	my $aq = $attacker->attack_factor  - $a_roll;	
-	my $dq = $defender->defence_factor + $defence_bonus - $d_roll;
+	my $af = $attacker->attack_factor;
+	my $df = $defender->defence_factor;
+	
+	my $aq = $af - $a_roll;	
+	my $dq = $df + $defence_bonus - $d_roll;
 	
 	$c->log->debug("Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name);
 	
-	$c->log->debug("Attack:  Roll: $a_roll  Quotient: $aq");
-	$c->log->debug("Defence: Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
+	$c->log->debug("Attack:  Factor: $af Roll: $a_roll  Quotient: $aq");
+	$c->log->debug("Defence: Factor: $df Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
 	
 	my $damage = 0;
 	
@@ -365,7 +368,7 @@ sub flee : Local {
 		$c->stash->{party}->in_combat_with(undef);
     	# TODO: do we make them use up turns?
     	$c->stash->{party}->update;
-    	$c->stash->{party}->discard_changes;
+    	$c->stash->{party_location}->discard_changes;
     	
     	$c->forward('/panel/refresh', ['messages', 'map']);
 	}
@@ -450,7 +453,7 @@ sub finish : Private {
 			},
 		);
 		
-		push @{$c->stash->{combat_messages}}, $finder->character_name . " finds a " . $item->display_name;
+		push @{$c->stash->{combat_messages}}, $finder->character_name . " found a " . $item->display_name;
 	}
 	
 	$c->stash->{party}->in_combat_with(undef);
@@ -458,6 +461,9 @@ sub finish : Private {
 	$c->stash->{party}->update;	
 	
 	$c->stash->{creature_group}->delete;
+	
+	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
+	$c->stash->{party_location}->update;
 	
 	push @{ $c->stash->{refresh_panels} }, 'party_status';
 }

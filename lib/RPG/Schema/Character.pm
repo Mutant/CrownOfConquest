@@ -220,9 +220,13 @@ sub damage {
 	# TODO needs to change to support multiple weapons
 	my $weapon = shift @items;
 	
-	return 2 unless $weapon; # nothing equipped, assume bare hands
+	# Apply effects
+	my $effect_dam = 0;
+	map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
+	warn "effect dam: $effect_dam";
+	return 2 + $effect_dam unless $weapon; # nothing equipped, assume bare hands
 	
-	return $weapon->attribute('Damage')->item_attribute_value;
+	return $weapon->attribute('Damage')->item_attribute_value + $effect_dam;
 }
 
 sub weapon {

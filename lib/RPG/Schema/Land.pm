@@ -48,6 +48,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
+    'creature_threat' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'creature_threat',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
 );
 __PACKAGE__->set_primary_key('land_id');
 

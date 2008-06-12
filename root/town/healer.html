@@ -1,4 +1,10 @@
+[% UNLESS messages %]
 The Healer of [% town.town_name %] welcomes you. Which services do you require today?
+[% ELSE %]
+[% messages %]
+<br><br>
+Do you require any further services?
+[% END %]
 
 <ul>
 	[% IF cost_to_heal != 0 %]<li><a href="javascript:getPanels('/town/heal_party')">Heal Party</a> ([% cost_to_heal %] gold)</li>[% END %]
@@ -7,3 +13,5 @@ The Healer of [% town.town_name %] welcomes you. Which services do you require t
 	[% END %]
 	<li>Buy Healing Potions</li>
 </ul>
+
+[% INCLUDE town/town_footer.html %]

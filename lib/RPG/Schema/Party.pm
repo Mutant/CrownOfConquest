@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Data::Dumper;
+use List::Util qw(sum);
+use POSIX;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Party');
@@ -135,6 +137,18 @@ sub movement_factor {
 	$self->{_movement_factor} = int $rec->get_column('avg_con') / 3;
 	
 	return $self->{_movement_factor};
+}
+
+sub level {
+	my $self = shift;
+	
+	my (@characters) = $self->characters;
+	
+	return int _median( map { $_->level } @characters ); 	
+}
+
+sub _median {
+  sum( ( sort { $a <=> $b } @_ )[ int( $#_/2 ), ceil( $#_/2 ) ] )/2;
 }
 
 1;

@@ -84,18 +84,32 @@ sub heal_party : Local {
 	
 	my ($cost_to_heal, @dead_chars) = _get_party_health($town, @characters);
 	
-	# TODO: if they don't have enough gold, we should just heal as much as we can
-	if ($cost_to_heal <= $c->stash->{party}->gold) {
-		$c->stash->{party}->gold($c->stash->{party}->gold - $cost_to_heal);
+	my $amount_to_spend = defined $c->req->param('gold') ? $c->req->param('gold') : $cost_to_heal;
+	
+	my $percent_to_heal = $amount_to_spend / $cost_to_heal * 100;   
+	
+	if ($amount_to_spend <= $c->stash->{party}->gold) {
+		$c->stash->{party}->gold($c->stash->{party}->gold - $amount_to_spend);
 		$c->stash->{party}->update;
 		
 		foreach my $character (@characters) {
 			next if $character->is_dead;
-			$character->hit_points($character->max_hit_points);
+			
+			my $amount_to_heal = int ($character->max_hit_points - $character->hit_points) * ($percent_to_heal / 100);
+			
+			$character->hit_points($character->hit_points + $amount_to_heal);
 			$character->update;
 		}
 		
-		$c->stash->{messages} = 'The party has been fully healed';
+		if ($percent_to_heal == 100) {
+			$c->stash->{messages} = 'The party has been fully healed';
+		}
+		else {
+			$c->stash->{messages} = "The party has been healed for $amount_to_spend gold";
+		}
+	}
+	else {
+		# TODO: should error here.. not enough gold	for amount_to_heal
 	}
 	
 	push @{ $c->stash->{refresh_panels} }, ('party', 'party_status');

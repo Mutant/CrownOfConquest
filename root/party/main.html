@@ -102,6 +102,13 @@ dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 
 dojo.addOnLoad( init );
 
+/* From healer panel */
+function healParty(dialogFields) {
+	console.log("dialogFields");
+	console.log(dialogFields);
+	getPanels('/town/heal_party?gold=' + dialogFields.heal_amount);
+}
+
 </script>
 
 <h2>[% party.name %]</h2>

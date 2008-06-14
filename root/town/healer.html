@@ -1,3 +1,9 @@
+<div dojoType="dijit.Dialog" id="partial-heal-diag" style="display: none" title="Heal Party" execute="healParty(arguments[0]);">
+    How much would you like to spend on healing the party?
+    <input type="text" size="5" name="heal_amount" dojoType="dijit.form.TextBox">
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
 [% UNLESS messages %]
 The Healer of [% town.town_name %] welcomes you. Which services do you require today?
 [% ELSE %]
@@ -7,7 +13,10 @@ Do you require any further services?
 [% END %]
 
 <ul>
-	[% IF cost_to_heal != 0 %]<li><a href="javascript:getPanels('/town/heal_party')">Heal Party</a> ([% cost_to_heal %] gold)</li>[% END %]
+	[% IF cost_to_heal != 0 %]
+		<li><a href="javascript:getPanels('/town/heal_party')">Heal Party (Full)</a> ([% cost_to_heal %] gold)</li>
+		<li><a href="javascript:dijit.byId('partial-heal-diag').show()">Heal Party (Partial)</a></li>
+	[% END %]
 	[% FOREACH dead_char IN dead_characters %]
 		<li><a href="javascript:getPanels('/town/resurrect?character_id=[% dead_char.id %]')">Resurrect [% dead_char.character_name %]</a> ([% dead_char.resurrect_cost %] gold)</li>
 	[% END %]

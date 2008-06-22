@@ -2,4 +2,11 @@
 
 [% map %]
 
+<center>
+<a href="?x_offset=[% x_offset - move_amount %]&y_offset=[% y_offset %]">L</a>
+<a href="?y_offset=[% y_offset - move_amount %]&x_offset=[% x_offset %]">U</a>
+<a href="?y_offset=[% y_offset + move_amount %]&x_offset=[% x_offset %]">D</a>
+<a href="?x_offset=[% x_offset + move_amount %]&y_offset=[% y_offset %]">R</a>
+</center>
+
 [% INCLUDE bottom.html %]

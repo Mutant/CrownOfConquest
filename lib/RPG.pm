@@ -39,7 +39,7 @@ our $VERSION = '0.01';
 # Start the application
 #
 
-__PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex/ );
+__PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex DBIC::Schema::Profiler/ );
 
 __PACKAGE__->config->{static}->{debug} = 1;
     

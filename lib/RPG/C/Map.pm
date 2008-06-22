@@ -6,13 +6,14 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use JSON;
+use DBIx::Class::ResultClass::HashRefInflator;
 
 sub view : Local {
     my ($self, $c) = @_;
     
     my $party_location = $c->stash->{party_location};
     
-    return $c->forward('render',
+    my $grid_params = $c->forward('generate_grid',
     	[
 			$c->config->{map_x_size},
 			$c->config->{map_y_size},
@@ -21,9 +22,61 @@ sub view : Local {
 			1,
 		],
 	);
+	
+	$grid_params->{click_to_move} = 1;
+	
+	return $c->forward('render_grid',
+		[
+			$grid_params,
+		]
+	);
 }
 
-sub render : Private {
+sub party : Local {
+	my ($self, $c) = @_;
+	
+	my ($centre_x, $centre_y);
+	
+	if ($c->req->param('center_x') && $c->req->param('center_y')) {
+		($centre_x, $centre_y) = ($c->req->param('center_x'), $c->req->param('center_y'));
+	}
+	else {		 
+	    my $party_location = $c->stash->{party_location};
+	    
+	    $centre_x = $party_location->x + $c->req->param('x_offset');
+	    $centre_y = $party_location->y + $c->req->param('y_offset');
+	}
+    
+	my $grid_params = $c->forward('generate_grid',
+		[
+			25,
+	        25,
+	        $centre_x,
+	        $centre_y,
+	    ],
+	);
+	
+	$grid_params->{click_to_move} = 0;
+	
+	my $map = $c->forward('render_grid',
+		[
+			$grid_params,
+		]
+	);
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'map/party.html',
+            params => {
+                map => $map,
+                move_amount => 12,                
+               
+            },
+        }]
+    );
+}
+
+sub generate_grid : Private {
     my ($self, $c, $x_size, $y_size, $x_centre, $y_centre, $add_to_party_map) = @_;
     
     $c->stats->profile("Entered /map/view");
@@ -37,53 +90,72 @@ sub render : Private {
     	$y_size,
 	);
                                     
-	$c->stats->profile("Got start and end point");                                    
-    
-    my @area = $c->model('Land')->search(
+	$c->stats->profile("Got start and end point");       
+	
+    my $search_rs = $c->model('Land')->search(
         {
             'x' => {'>=', $start_point->{x},'<=', $end_point->{x}},
             'y' => {'>=', $start_point->{y},'<=', $end_point->{y}},
             'party_id' => [$c->stash->{party}->id, undef],
         },
         {
-        	prefetch => ['terrain', 'mapped_sector'],
+        	prefetch => ['terrain', 'mapped_sector', 'town'],
         },
     );
-    
+
+	$search_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+        
     $c->stats->profile("Queried db for sectors");
     
     my @grid;    
         
-    foreach my $location (@area) {
-        $grid[$location->x][$location->y] = $location;
+    while (my $location = $search_rs->next) {
+        $grid[$location->{x}][$location->{y}] = $location;
         
         # Record sector to the party's map
-        if ($add_to_party_map && ! $location->mapped_sector) {
+        if ($add_to_party_map && ! $location->{mapped_sector}) {
         	$c->model('DBIC::Mapped_Sectors')->create(
 	        	{
 		    	    party_id => $c->stash->{party}->id,
-			       	land_id  => $location->id,
+			       	land_id  => $location->{land_id},
 		    	},
        		);
         }
-        elsif (! $add_to_party_map && ! $location->mapped_sector) {
-        	$grid[$location->x][$location->y] = "";
+        elsif (! $add_to_party_map && ! $location->{mapped_sector}) {
+        	$grid[$location->{x}][$location->{y}] = "";
         }
     }
     
     $c->stats->profile("Built grid");
     
+    return {
+    	grid => \@grid,
+    	start_point => $start_point,
+    	end_point => $end_point,
+    };
+}
+    
+# Render a map grid
+# Params in hash:
+#  * grid: grid of the map sectors to render
+#  * start_point: hash of x & y location for start (i.e. top left) of the map
+#  * end_point: hash of x & y location for end (i.e. bottom right) of the map
+#  * party_movement_factor: (optional) movement factor of the party. Must be supplied if click_to_move is true
+
+sub render_grid : Private {
+	my ($self, $c, $params) = @_;
+	
+	$params->{x_range} = [$params->{start_point}{x} .. $params->{end_point}{x}];
+	$params->{y_range} = [$params->{start_point}{y} .. $params->{end_point}{y}];
+	$params->{image_path} = RPG->config->{map_image_path};
+	$params->{current_position} = $c->stash->{party_location};
+	$params->{party_movement_factor} = $c->stash->{party}->movement_factor
+		if $params->{click_to_move};
+    
     return $c->forward('RPG::V::TT',
         [{
             template => 'map/generate_map.html',
-            params => {
-                grid => \@grid,
-                current_position => $c->stash->{party_location},
-                party_movement_factor => $c->stash->{party}->movement_factor,
-                image_path => RPG->config->{map_image_path},
-                x_range => [$start_point->{x} .. $end_point->{x}],
-                y_range => [$start_point->{y} .. $end_point->{y}],
-            },
+            params => $params,
             return_output => 1,
         }]
     );    
@@ -162,30 +234,6 @@ sub move_to : Local {
     }
     
     $c->forward('/panel/refresh', ['map', 'messages', 'party_status']);
-}
-
-sub party : Local {
-	my ($self, $c) = @_;
-	
-    my $party_location = $c->stash->{party_location};
-    
-	my $map = $c->forward('render',
-		[
-			25,
-	        25,
-			$party_location->x,
-	        $party_location->y,
-	    ],
-	);
-	
-	$c->forward('RPG::V::TT',
-        [{
-            template => 'map/party.html',
-            params => {
-                map => $map,
-            },
-        }]
-    );
 }
 
 1;

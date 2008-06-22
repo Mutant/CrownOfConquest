@@ -33,6 +33,7 @@ sub sector_menu : Local {
             template => 'party/sector_menu.html',
 			params => {
 				creature_group => $creature_group,
+				messages => $c->stash->{messages},
 			},
 			return_output => 1,
         }]
@@ -70,7 +71,7 @@ sub list : Local {
     
     my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
     
-    my $foo = $c->forward('RPG::V::TT',
+    return $c->forward('RPG::V::TT',
         [{
             template => 'party/party_list.html',
 			params => {
@@ -83,9 +84,6 @@ sub list : Local {
 			return_output => 1,
         }]
     );
-    #warn $foo;
-    
-    return $foo;
 }
 
 sub status : Local {
@@ -301,6 +299,25 @@ sub move_rank_separator : Local {
 	
 	$c->stash->{party}->rank_separator_position($new_pos);
 	$c->stash->{party}->update;
+}
+
+sub camp : Local {
+	my ($self, $c) = @_;
+	
+	my $party = $c->stash->{party};
+	
+	if ($party->turns >= RPG->config->{camping_turns}) {
+		$party->turns($party->turns - RPG->config->{camping_turns});
+		$party->rest($party->rest + 1);
+		$party->update;
+			
+		$c->stash->{messages} = "The party camps for a short period of time";
+	}
+	else {
+		$c->stash->{error} = "You don't have enough turns left today to camp";	
+	}
+	
+	$c->forward('/panel/refresh', ['messages', 'party_status']);
 }
 
 1;

@@ -13,7 +13,6 @@ sub surrounds {
     my $y_base = shift || croak 'y base not supplied';
     my $x_size = shift || croak 'x size not supplied';
     my $y_size = shift || croak 'y size not supplied';
-
     
     # XXX: x_size and y_size must both be odd numbers;
     my ($x_start, $y_start) = (_coord_diff($x_base, $x_size, 0), _coord_diff($y_base, $y_size, 0));
@@ -39,7 +38,16 @@ sub _coord_diff {
     
     my $factor = (($size-1) / 2);
     
-    return $direction ? $coord + $factor : $coord - $factor;
+    my $diff;
+    if ($direction == 1) {
+    	$diff = $coord + $factor;
+    }
+    else {
+    	$diff = $coord - $factor;
+    }
+    $diff = 1 if $diff <= 0;
+    
+    return $diff;
 }
 
 1;

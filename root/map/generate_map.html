@@ -1,8 +1,8 @@
-<table border="0" align="center">
-[% FOREACH line = grid %]
-    [% IF line %]
+<table border="1" cellpadding=0 cellspacing=0 align="center">
+[% FOREACH x IN x_range %]
     <tr>
-    [% FOREACH position = line %]
+	[% FOREACH y IN y_range %]
+        [% position = grid.$x.$y %]        
         [% IF position %]            
         <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %]>        
         	[% IF position.next_to(current_position) %]
@@ -13,11 +13,11 @@
         	[% IF position.next_to(current_position) %]
 				</a>
         	[% END %]
-
-        </td>
+	        </td>
+        [% ELSE %]
+        	<td width=35>&nbsp;</td>        
         [% END %]
     [% END %]
     </tr>
-    [% END %]
 [% END %]
 </table>

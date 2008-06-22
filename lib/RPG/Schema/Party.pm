@@ -83,12 +83,12 @@ __PACKAGE__->add_columns(
       'is_nullable' => 1,
       'size' => 0
     }, 
-    'camp_quality' => {
+    'rest' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,
-      'default_value' => '',
+      'default_value' => '0',
       'is_foreign_key' => 0,
-      'name' => 'camp_quality',
+      'name' => 'rest',
       'is_nullable' => 0,
       'size' => 0
     },

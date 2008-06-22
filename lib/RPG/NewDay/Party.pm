@@ -15,13 +15,13 @@ sub run {
 		$party->turns($party->turns + $config->{daily_turns});
 		$party->turns($config->{maximum_turns}) if $party->turns > $config->{maximum_turns};
 
-		my $percentage_to_heal = $config->{min_heal_percentage} + $party->camp_quality * $config->{max_heal_percentage} / 10;
+		my $percentage_to_heal = $config->{min_heal_percentage} + $party->rest * $config->{max_heal_percentage} / 10;
 
 		foreach my $character ($party->characters) {
-			# Heal chars based on camp quality
-			if ($party->camp_quality != 0) {				
+			# Heal chars based on amount of rest they've had during the day
+			if ($party->rest != 0) {				
 				my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;
-				$hp_increase = 1 if $hp_increase == 0; # Always a min of 0
+				$hp_increase = 1 if $hp_increase == 0; # Always a min of 1
 				
 				$character->change_hit_points($hp_increase);
 			}
@@ -49,8 +49,8 @@ sub run {
 			$character->update;
 		}
 		
-		# They're no longer camping
-		$party->camp_quality(0);
+		# They're no rested
+		$party->rest(0);
 		$party->update;
 	}
 }

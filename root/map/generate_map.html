@@ -1,7 +1,7 @@
 [% MACRO sector_title(position) BLOCK %]
 [% position.terrain.terrain_name %]
 [% IF position.town %] - [% position.town.town_name %] (prosperity: [% position.town.prosperity %])[% END %]
-[% IF click_to_move %] ([% position.movement_cost(party_movement_factor) %])[% END %]
+[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
 ([% position.x %], [% position.y %])
 [% END %]
 
@@ -18,14 +18,14 @@
 	[% FOREACH x IN x_range %]
 		[% position = grid.$x.$y %]        
         [% IF position %]            
-        <td [% IF position.id == current_position.id %]class="map_current_pos"[% END %]>              
-        	[% IF click_to_move && position.next_to(current_position) %]
-        		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.id %]')"">
+        <td [% IF position.land_id == current_position.id %]class="map_current_pos"[% END %]>              
+        	[% IF click_to_move && position.next_to_centre %]
+        		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')"">
         	[% ELSIF ! click_to_move %]
         		<a href="?center_x=[% position.x %]&center_y=[% position.y %]">
         	[% END %]
 			<img src="[% base %][% image_path %][% position.terrain.image %]" border=0 title="[% sector_title(position) %]">
-        	[% IF ! click_to_move || position.next_to(current_position) %]
+        	[% IF ! click_to_move || position.next_to_centre %]
 				</a>
         	[% END %]
 	        </td>

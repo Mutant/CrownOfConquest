@@ -100,9 +100,13 @@ sub generate_grid : Private {
         },
         {
         	prefetch => ['terrain', 'mapped_sector', 'town'],
+        	'+select' => [{ '' => '(x >= ' . ($x_centre-1) . ' and x <= ' . ($x_centre+1) . 
+        				 ') and (y >= ' . ($y_centre-1) . ' and y <= ' . ($y_centre+1) .
+        				 ") and (y!=$y_centre or x!=$x_centre)"}],
+        	'+as' => ['next_to_centre'],
         },
     );
-
+    
 	$search_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
         
     $c->stats->profile("Queried db for sectors");
@@ -111,6 +115,8 @@ sub generate_grid : Private {
         
     while (my $location = $search_rs->next) {
         $grid[$location->{x}][$location->{y}] = $location;
+        
+        $location->{party_movement_factor} = $c->stash->{party}->movement_factor + $location->{terrain}{modifier};
         
         # Record sector to the party's map
         if ($add_to_party_map && ! $location->{mapped_sector}) {
@@ -140,7 +146,6 @@ sub generate_grid : Private {
 #  * grid: grid of the map sectors to render
 #  * start_point: hash of x & y location for start (i.e. top left) of the map
 #  * end_point: hash of x & y location for end (i.e. bottom right) of the map
-#  * party_movement_factor: (optional) movement factor of the party. Must be supplied if click_to_move is true
 
 sub render_grid : Private {
 	my ($self, $c, $params) = @_;
@@ -149,8 +154,6 @@ sub render_grid : Private {
 	$params->{y_range} = [$params->{start_point}{y} .. $params->{end_point}{y}];
 	$params->{image_path} = RPG->config->{map_image_path};
 	$params->{current_position} = $c->stash->{party_location};
-	$params->{party_movement_factor} = $c->stash->{party}->movement_factor
-		if $params->{click_to_move};
     
     return $c->forward('RPG::V::TT',
         [{

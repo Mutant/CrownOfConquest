@@ -78,25 +78,6 @@ __PACKAGE__->might_have(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
-sub next_to {
-    my $self = shift;
-    my $compare_to = shift || croak 'sector to compare to not supplied';
-   
-    my ($current_x, $current_y) = ($self->x,       $self->y);
-    my ($new_x,     $new_y)     = ($compare_to->x, $compare_to->y);
-
-    my $x_diff = abs $current_x - $new_x;
-    my $y_diff = abs $current_y - $new_y;
-    
-    # Same sector is not considered next to
-    if ($x_diff > 1 || $y_diff > 1 || ($x_diff == 0 && $y_diff == 0)) {
-        return 0;
-    }
-    else {
-        return 1;
-    }    
-}
-
 sub movement_cost {
 	my $self = shift;
 	my $movement_factor = shift || croak 'movement factor not supplied';

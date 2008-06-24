@@ -1,3 +1,4 @@
 [% FOREACH item IN items %]
-	[% item.display_name %] <a href="#" onClick="sellItemConfirm('[% item.item_type.item_type %]','[% item.id %]', '[% item.sell_price(shop) %]')">Sell</a><br>
+	[% item.display_name %] [% IF item.equip_place_id %](e)[% END %]
+	<a href="#" onClick="sellItemConfirm('[% item.item_type.item_type %]','[% item.id %]', '[% item.sell_price(shop) %]')">Sell</a> ([% item.sell_price(shop) %] gold)<br>
 [% END %]

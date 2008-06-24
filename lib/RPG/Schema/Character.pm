@@ -12,7 +12,7 @@ __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
 __PACKAGE__->add_columns(qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
- 							level spell_points max_hit_points party_id party_order last_combat_action/);
+ 							level spell_points max_hit_points party_id party_order last_combat_action stat_points/);
  							
 __PACKAGE__->add_columns(xp => { accessor => '_xp' });
  							
@@ -398,7 +398,11 @@ sub xp {
 		
 		my %rolls = $self->roll_all;
 		
-		# TODO: Check for Stat point addition
+		# Check for Stat point addition
+		if ($self->level % RPG->config->{levels_per_stat_point} == 0) {
+			$self->stat_points($self->stat_points+1);
+			$rolls{stat_points} = 1;	
+		}
 		
 		return %rolls; 
 	}

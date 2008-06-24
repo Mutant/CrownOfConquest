@@ -75,6 +75,35 @@
 	}
 	
 	dojo.addOnLoad( init );	
+	
+function addStatPoint(char_id, stat) {
+	if (parseInt( dojo.byId('stat-points').innerHTML ) == 0) {
+		return;
+	}
+
+	dojo.xhrGet( {
+        url: "[% base %]/character/add_stat_point?stat=" + stat + "&character_id=" + char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+        	if (responseObject.message) {
+   	          	dojo.byId('message-text').innerHTML = responseObject.message;
+		      	dijit.byId('message').show();					
+        	}
+        	else {
+        		statVal = parseInt( dojo.byId('stat-' + stat).innerHTML ) +1;
+        		
+        		statVal = statVal + "";
+        		if (statVal.length == 1) {
+        			statVal = "0" + statVal;
+        		}
+        		
+        		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
+        		dojo.byId('stat-' + stat).innerHTML = statVal;
+        	}
+        },
+    });
+
+}
 </script>
 
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
@@ -117,7 +146,7 @@
 
 <div class="aligned-line">
     <span class="aligned-label">Experience:</span>
-    <span class="aligned-value">[% character.xp %]</span>
+    <span class="aligned-value">[% character.xp %] / [% xp_for_next_level %]</span>
 </div>
 
 </div>
@@ -128,32 +157,27 @@
       <div dojoType="dijit.layout.ContentPane" title="Stats">
 		<div class="aligned" id="character">
 		
+		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
 		<div class="aligned-line">
-		    <span class="aligned-label">Strength:</span>
-		    <span class="aligned-value">[% character.strength %]</span>
+		    <span class="aligned-label">[% stat | ucfirst %]:</span>
+		    <span class="aligned-value" id="stat-[% stat %]">[% character.$stat | format('%02d') %]</span>
+		    <span>
+		    	[% IF character.stat_points %]
+		    		<input type="button" value="+" onClick="addStatPoint('[% character.id %]','[% stat %]')">
+		    	[% END %]
+		    </span>
 		</div>
-		
+		[% END %]
+
+		[% IF character.stat_points %]
+		<br><br>
 		<div class="aligned-line">
-		    <span class="aligned-label">Intelligence:</span>
-		    <span class="aligned-value">[% character.intelligence %]</span>
-		</div>
-		
-		<div class="aligned-line">
-		    <span class="aligned-label">Agility:</span>
-		    <span class="aligned-value">[% character.agility %]</span>
-		</div>
-		
-		<div class="aligned-line">
-		    <span class="aligned-label">Divinity:</span>
-		    <span class="aligned-value">[% character.divinity %]</span>
-		</div>
-		
-		<div class="aligned-line">
-		    <span class="aligned-label">Constitution:</span>
-		    <span class="aligned-value">[% character.constitution %]</span>
-		</div>
-		
-		</div>
+		    <span class="aligned-label">Stat Points:</span>
+		    <span class="aligned-value" id="stat-points">[% character.stat_points %]</span>
+		</div>			
+		[% END %]
+
+		</div>		
 	</div>
 	
     <div dojoType="dijit.layout.ContentPane" title="Equipment" href="[% based %]/character/equipment_tab?character_id=[% character.id %]">    

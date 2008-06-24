@@ -92,6 +92,7 @@ sub generate_grid : Private {
                                     
 	$c->stats->profile("Got start and end point");       
 	
+	# TODO: move into model
     my $search_rs = $c->model('Land')->search(
         {
             'x' => {'>=', $start_point->{x},'<=', $end_point->{x}},

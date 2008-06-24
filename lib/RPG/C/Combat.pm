@@ -405,7 +405,7 @@ sub finish : Private {
 	foreach my $character (@characters) {
 		next if $character->is_dead;
 		
-		# TODO template these combat messages?
+		# TODO template these combat messages? (yes)
 		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
 		
 		my %level_up_details = $character->xp($character->xp + $awarded_xp->{$character->id});
@@ -417,6 +417,8 @@ sub finish : Private {
 				if $level_up_details{magic_points};
 			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{prayer_points} . " prayer points."
 				if $level_up_details{prayer_points};
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{stat_points} . " stat points."
+				if $level_up_details{stat_points};
 		}
 		
 		$character->update;

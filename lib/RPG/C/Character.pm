@@ -22,7 +22,13 @@ sub view : Local {
 	    		'class',
 	    	],
 	    },
-	);	
+	);
+	
+	my $next_level = $c->model('DBIC::Levels')->find(
+		{
+			level_number => $character->level + 1,
+		}
+	);
 	
 	my @characters = $c->stash->{party}->characters;
     
@@ -32,6 +38,7 @@ sub view : Local {
             params => {
                 character => $character,
                 characters => \@characters,
+                xp_for_next_level => $next_level->xp_needed,
             }
         }]
     );
@@ -362,6 +369,29 @@ sub unmemorise_spell : Local {
 	$memorised_spell->update;
 	
 	$c->forward('/character/view');
+}
+
+sub add_stat_point : Local {
+	my ($self, $c) = @_;	
+	
+	my $character = $c->model('DBIC::Character')->find(
+    	{ 
+	        character_id => $c->req->param('character_id'),
+	        party_id => $c->stash->{party}->id,
+	    },
+	);
+	
+	$c->res->body(to_json({error => 'No stat points to add'})), return
+		unless $character->stat_points;
+		
+	if (my $stat = $character->get_column($c->req->param('stat'))) {
+		$character->set_column($c->req->param('stat'), $stat+1);
+		$character->stat_points($character->stat_points - 1);
+		$character->update;
+	}
+	
+	# Need to return something so caller knows it was successful 
+	$c->res->body(to_json({}));
 }
 
 1;

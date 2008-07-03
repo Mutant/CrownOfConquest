@@ -53,6 +53,7 @@ sub purchase : Local {
                 shops_in_town => \@shops_in_town,
                 items => \%items,
                 gold => $party->gold,
+                town => $party->location->town,
             }
         }]
     );

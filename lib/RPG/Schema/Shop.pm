@@ -17,14 +17,23 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
-    'shop_name' => {
+    'shop_owner_name' => {
       'data_type' => 'varchar',
       'is_auto_increment' => 0,
       'default_value' => '',
       'is_foreign_key' => 0,
-      'name' => 'shop_name',
+      'name' => 'shop_owner_name',
       'is_nullable' => 0,
       'size' => '255'
+    },
+    'shop_suffix' => {
+      'data_type' => 'varchar',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'shop_suffix',
+      'is_nullable' => 0,
+      'size' => '40'
     },
     'town_id' => {
       'data_type' => 'int',
@@ -116,6 +125,12 @@ sub grouped_items_in_shop {
 			order_by => 'item_category',
 		},
 	);
+}
+
+sub shop_name {
+	my $self = shift;
+	
+	return $self->shop_owner_name . "'s " . $self->shop_suffix;	
 }
 
 1;

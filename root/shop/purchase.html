@@ -175,17 +175,40 @@ dojo.addOnLoad( init );
 
 <h1>[% shop.shop_name %]</h1>
 
-Shops in town: 
+<br><br>
+
+Shops in [% town.town_name %]: 
 [% FOREACH other_shop IN shops_in_town %]
 	[% UNLESS shop.id == other_shop.id %]<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% END %]
 		[% other_shop.shop_name %][% UNLESS shop.id == other_shop.id %]</a>[% END %]&nbsp;
 [% END %]
-<br>
+<br><br>
+
+[% IF shop.status == 'Open' %]
+	[% shop.shop_owner_name %] welcomes you to his humble store. "I hope you find what you're looking for!"
+[% ELSIF shop.status == 'Opening' %]
+	[% shop.shop_owner_name %] greets you. "My brand bew shop is only just opening! Come back soon for a fine selection of equipment"
+[% ELSIF shop.status == 'Closing' %]
+	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
+	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
+[% ELSIF shop.status == 'Closed' %]
+	There doesn't seem to be anyone here. The shop appears to be closed.
+[% END %]
+<br><br>
+
+<!-- Yes this layout is *really* messed up. Will fix it one day -->
+<table class="main" border="0" align="center">
+<tr><td valign="top">
+<table class="main">
 [%  FOREACH char = characters %]
 <div id="char_[% char.character_id %]">
-<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" class="target" accept="item">
+
+<tr><td>
+<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" 
+	class="target" accept="item" style="width: 70%;">
 		[% char.character_name %]
 </span>
+</td><td>
 
 <span dojoType="dijit.form.DropDownButton">
         <span>Equipment</span>
@@ -194,21 +217,21 @@ Shops in town:
         </div>
 </span>
 
+</td></tr>
+
 <span id="char_items_[% char.character_id %]" style="visibility: hidden; border: 1px dotted black"><span>
 
-</div><br>
+</div>
 [% END %]
+</table>
 
-Current Gold: <span id="current-gold">[% gold %]</span>
+</td><td width="20">&nbsp;</td><td>
 
-<br><br>
-
-<table id="items-table" border="1">
+<table id="main" border="0" cellpadding="6">
 [% last_category = '' %]
 [% FOREACH category IN items %]
 	[% IF last_category != category.key %]
-		<tr><td colspan="3"><b>[% category.key %]</b></td></tr>
-		<tr><td>Number Available</td><td>Item</td><td>Cost</td></tr>
+		<tr><td><b>[% category.key %]</b></td></tr>
 		[% last_category = category.key %]
 	[% END %]
 	
@@ -216,30 +239,33 @@ Current Gold: <span id="current-gold">[% gold %]</span>
 		[% IF item_or_type.key == 'item' %]
 			[% FOREACH item IN item_or_type.value %]
 			<tr>
-				<td id="item-count-[% item.item_type.id %]">[% item.get_column('number_of_items') %]</td>
 				<td>
+					[% item.get_column('number_of_items') %] x
 					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-source-[% item.item_type.id %]">
 						<span class="dojoDndItem" dndType="item" id="item-[% item.item_id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
 					</span>	
+					([% item.item_type.modified_cost(shop) %] gold)
 				</td>
-				<td>[% item.item_type.modified_cost(shop) %]</td>
 			</tr>
 			[% END %]
 		[% ELSE %]
 			[% FOREACH item_type IN item_or_type.value %]
 			<tr>
-				<td>[ N/A ]</td>
 				<td>
 					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-type-source-[% item_type.id %]">
 						<span class="dojoDndItem" dndType="item" id="item_type-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
 					</span>					
+					([% item_type.modified_cost(shop) %] gold each)
 				</td>
-				<td>[% item_type.modified_cost(shop) %]</td>
 			</tr>
 			[% END %]
 		[% END %]
 	[% END %]				
 [% END %]	
 </table>
+
+</td></tr></table>
+
+Party Gold: <span id="current-gold">[% gold %]</span>
 
 [% INCLUDE bottom.html %]

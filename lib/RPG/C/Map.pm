@@ -92,20 +92,14 @@ sub generate_grid : Private {
                                     
 	$c->stats->profile("Got start and end point");       
 	
-	# TODO: move into model
-    my $search_rs = $c->model('Land')->search(
-        {
-            'x' => {'>=', $start_point->{x},'<=', $end_point->{x}},
-            'y' => {'>=', $start_point->{y},'<=', $end_point->{y}},
-            'party_id' => [$c->stash->{party}->id, undef],
-        },
-        {
-        	prefetch => ['terrain', 'mapped_sector', 'town'],
-        	'+select' => [{ '' => '(x >= ' . ($x_centre-1) . ' and x <= ' . ($x_centre+1) . 
-        				 ') and (y >= ' . ($y_centre-1) . ' and y <= ' . ($y_centre+1) .
-        				 ") and (y!=$y_centre or x!=$x_centre)"}],
-        	'+as' => ['next_to_centre'],
-        },
+    my $search_rs = $c->model('Land')->get_party_grid(
+    	start_point  => $start_point,
+    	end_point    => $end_point,
+    	centre_point => {
+			x => $x_centre,
+    		y => $y_centre,
+    	},
+    	party_id => $c->stash->{party}->id,    	
     );
     
 	$search_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');

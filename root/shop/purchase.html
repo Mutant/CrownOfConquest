@@ -35,7 +35,7 @@ function init() {
 		if (tmp[0] == 'item') {
 			var item_id = tmp[1];	
 			
-			dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar;
+			dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
 			dojo.byId('purchasing-char-id').value = char_id;
 			dojo.byId('purchasing-item-id').value = item_id;
 			
@@ -60,11 +60,13 @@ function init() {
 
 function savePurchase(dialogFields) {	
 	dojo.xhrGet( {
-        url: "[% base %]/shop/buy_item?character_id=" + dialogFields.purchasing_char_id + "&item_id=" + dialogFields.purchasing_item_id, 
+        url: "[% base %]/shop/buy_item?character_id=" + dialogFields.purchasing_char_id 
+        	+ "&item_id=" + dialogFields.purchasing_item_id
+        	+ "&shop_id=[% shop.id %]", 
         handleAs: "json",
         
         load: function(responseObject, ioArgs) {
-  	  	  console.log(responseObject);
+  	  	  //console.log(responseObject);
           if (responseObject.error) {
           	dojo.byId('error-message').innerHTML = responseObject.error;
           	dijit.byId('error').show();
@@ -78,9 +80,8 @@ function savePurchase(dialogFields) {
 			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
 			  }
 			  else {
-			  	console.log(dialogFields.purchasing_item_id);
+			  	//console.log(dialogFields.purchasing_item_id);
 				dojo.byId('item-' + dialogFields.purchasing_item_id).id = 'item-' + responseObject.updated_stock.next_item;
-				//dojo.byId('item-quantity' + dialogFields.purchasing_item_id)
 		  	  }		  	  
 		  }
           return responseObject;
@@ -116,8 +117,14 @@ function saveQuantityPurchase(dialogFields) {
 	return true;
 }
 
-function sellItemConfirm(item_type, item_id, sell_price) {
-	dojo.byId('confirm-sale-message').innerHTML = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
+function sellItemConfirm(item_type, item_id, sell_price, equip_place_id) {
+	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
+
+	if (equip_place_id != "" && equip_place_id != 0) {
+		message += " (Note, this item is currently equipped)";
+	}
+	
+	dojo.byId('confirm-sale-message').innerHTML = message;
 	dojo.byId('item-to-sell').value = item_id;
 	dijit.byId('confirm-sale').show();
 }
@@ -151,19 +158,20 @@ dojo.addOnLoad( init );
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
-    <button dojoType=dijit.form.Button>Cancel</button>
+    <!-- <button dojoType=dijit.form.Button onClick="dijit.byId('confirmation').hide()">Cancel</button> -->
 </div>
 
 <div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="saveQuantityPurchase(arguments[0]);">
     <span id="quantity-selection-message"></span>
-    <input dojoType="dijit.form.NumberSpinner"
-                value="1"
-                size="5"
-                smallDelta="10"
-                constraints="{min: 1}"
-                maxlength="5"
-                id="quantity-spinner"
-                name="quantity">
+    <input id="quantity-spinner" type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name= "quantity"
+        value="1"
+        constraints="{min:1,max:1000,places:0}"
+        promptMessage= "Enter a value between 1 and 1000"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+        />
     <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>

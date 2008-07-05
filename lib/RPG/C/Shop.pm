@@ -65,18 +65,38 @@ sub buy_item : Local {
     my $item = $c->model('Items')->find({
     	item_id => $c->req->param('item_id'),
     });
+    
+	my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
+
+    my $party = $c->stash->{party};    
+    
+    my $town = $shop->in_town;
 	
-    my $party = $c->stash->{party};
-    
-    # TODO: deal with item being bought by another party
-    my $town = $item->in_shop->in_town;
-    
     if ($town->id != 0 && $town->id != $party->location->town->id) {
     	$c->res->body(to_json({error => "Attempting to buy an item in another town"}));
-    	# TODO: this does allow them to buy items from a different shop, which may or may not be OK
+    	# TODO: this does allow them to buy items from a different shop in the same town, which may or may not be OK
    		return;	
-    }  
+    }
     
+    # Deal with item being bought by another party
+    if ($item->character_id) {
+    	# The item they tried to buy has now been bought by someone else. But the shop may have more items of this type...
+    	my $item_rs = $c->model('Items')->search({
+    		shop_id => $shop->id,
+    		item_type_id => $item->item_type_id,
+    		character_id => undef,
+    	});
+    	
+    	if ($item_rs->count == 0) {
+    		$c->res->body(to_json({error => "The shop no longer has any " . $item->item_type->item_type . " items left. Another party may " .
+    			 " have just bought the last one!"}));
+    		return;
+    	}
+    	else {
+    		$item = $item_rs->first;
+    	}
+    }
+	
     my $cost = $item->item_type->modified_cost($item->in_shop);
     
     if ($party->gold < $cost) {
@@ -84,8 +104,7 @@ sub buy_item : Local {
         return;        
     }
     
-    my $shop_id = $item->shop_id;
-    
+   
     $item->character_id($c->req->param('character_id'));
     $item->shop_id(undef);
     $item->update;
@@ -95,7 +114,7 @@ sub buy_item : Local {
     
     # Find the next item id for this item type in the shop (if any)
     my $item_rs = $c->model('Items')->search({
-    	shop_id => $shop_id,
+    	shop_id => $shop->id,
     	item_type_id => $item->item_type_id,
     });
 

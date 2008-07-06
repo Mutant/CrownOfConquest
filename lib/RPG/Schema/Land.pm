@@ -8,7 +8,7 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Land');
 
- __PACKAGE__->resultset_class('RPG::ResultSet::Land');
+__PACKAGE__->resultset_class('RPG::ResultSet::Land');
 
 
 __PACKAGE__->add_columns(

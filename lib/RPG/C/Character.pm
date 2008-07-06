@@ -67,12 +67,15 @@ sub equipment_tab : Local {
 	
 	my $equipped_items = $character->equipped_items;
 	
+	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
+	
     $c->forward('RPG::V::TT',
         [{
             template => 'character/equipment_tab.html',
             params => {
                 character => $character,
                 equipped_items => $equipped_items,
+                equip_place_category_list => \%equip_place_category_list,
             }
         }]
     );
@@ -151,6 +154,8 @@ sub equip_item : Local {
     # Check to see if we're going to affect the opposite hand's equipped item
     my $other_hand = $equip_place->opposite_hand;
     
+	my %ret;
+    
     if ($other_hand) {
     	my ($item_in_opposite_hand) = $c->model('Items')->search(
     		{
@@ -172,16 +177,16 @@ sub equip_item : Local {
 		    	$item_in_opposite_hand->update;
 		    }
 	    	
-	    	$c->res->body(to_json({clear_equip_place => $other_hand->equip_place_name}));
+	    	%ret = (clear_equip_place => $other_hand->equip_place_name);
 	    }
     }
     
     # Tell client that item should be unequipped from original place
     #  XXX: Note, we currently expect this not to occur if a two-handed weapon is being equipped, since it should have
     #   been taken care of above (since weapons can only be equipped in the hands) 
-    if ($item->equip_place_id) {
-    	$c->res->body(to_json({clear_equip_place => $item->equipped_in->equip_place_name}));	
-    }
+	%ret = (clear_equip_place => $item->equipped_in->equip_place_name) if $item->equip_place_id;
+    
+    $c->res->body(to_json(\%ret));
     
     $item->equip_place_id($equip_place->id);
     $item->update;    

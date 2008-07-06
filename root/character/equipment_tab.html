@@ -1,19 +1,35 @@
 <b>Equipped Items</b>
 
-<br>
+<br><br>
 
-<table class="main">
+Mouse over an equipped item slot to see what types of items can be equipped there.
+
+<br><br>
+
+<table class="main" cellspacing="1">
 [% FOREACH equipped_item IN equipped_items %]
+	[% eq_item = equipped_item.key %]
 	<tr>
-		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-equip_place" accept="item">[% equipped_item.key %]</td>
+		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-equip_place" accept="item" class="main-highlighted-col">
+			<span id="[% equipped_item.key %]">[% equipped_item.key %]</span>
+			<div dojoType="dijit.Tooltip"
+                   connectId="[% equipped_item.key %]"
+                   label="[% FOREACH category IN equip_place_category_list.$eq_item %][% category %][% UNLESS loop.last %],[% END %][% END %]"></div>
+		</td>
 		<td id="[% equipped_item.key %]-equip-place-item">[% equipped_item.value.item_type.item_type %]</td>
 	</tr>
 [% END %]
 </table>
 
-<b>All Items</b>
-
 <br>
+
+<b>Inventory</b>
+
+<br><br>
+
+Drag items from inventory onto equipped item slots to equip them.
+
+<br><br>
 
 <table class="main">
 [% last_category = '' %]

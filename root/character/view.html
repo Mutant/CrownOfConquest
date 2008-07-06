@@ -2,6 +2,7 @@
 
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
+	dojo.require("dijit.Tooltip");
 	dojo.require("dijit.layout.TabContainer");
 	
 	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
@@ -46,11 +47,14 @@
 	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
 	        handleAs: "json",
 	        load: function(responseObject, ioArgs) {
+	        	console.log(responseObject);
 	        	if (responseObject.error) {
        	          	dojo.byId('error-message').innerHTML = responseObject.error;
 			      	dijit.byId('error').show();
 	        	}
 	        	else {
+		        	console.log(item_data);
+					console.log(equip_place);
 					dojo.byId(equip_place + '-equip-place-item').innerHTML = item_data;
 					
 					if (responseObject.clear_equip_place) {
@@ -94,7 +98,7 @@ function addStatPoint(char_id, stat) {
         		
         		statVal = statVal + "";
         		if (statVal.length == 1) {
-        			statVal = "0" + statVal;
+        			statVal = "&nbsp;" + statVal;
         		}
         		
         		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
@@ -160,7 +164,10 @@ function addStatPoint(char_id, stat) {
 		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
 		<div class="aligned-line">
 		    <span class="aligned-label">[% stat | ucfirst %]:</span>
-		    <span class="aligned-value" id="stat-[% stat %]">[% character.$stat | format('%02d') %]</span>
+		    [% IF character.$stat < 10 %]
+		    	[% character.$stat = '&nbsp;' _ character.$stat %]
+		    [% END %]		     
+		    <span class="aligned-value" id="stat-[% stat %]">[% character.$stat %]</span>
 		    <span>
 		    	[% IF character.stat_points %]
 		    		<input type="button" value="+" onClick="addStatPoint('[% character.id %]','[% stat %]')">

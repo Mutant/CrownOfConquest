@@ -336,21 +336,18 @@ sub flee : Local {
 			3,
 			3,
 		);
-		
-		$c->log->debug(Dumper $start_point, Dumper $end_point);
-		
+				
 		# Randomly choose a square to flee to
 		my ($new_x, $new_y);
 		
 		my %x_y_range = $c->model('Land')->get_x_y_range();
-		warn Dumper \%x_y_range;
-		
+				
 		# Find a location to flee to that's not the current location and is in the bounds of the map
 		do {
 			$new_x = $start_point->{x} + int rand($end_point->{x} - $start_point->{x} + 1);
 			$new_y = $start_point->{y} + int rand($end_point->{y} - $start_point->{y} + 1);
 		} while (
-			$new_x == $party_location->x && $new_y == $party_location->y &&
+			$new_x == $party_location->x && $new_y == $party_location->y ||
 			($new_x < $x_y_range{min_x}  || $new_x > $x_y_range{max_x}  ||
 			 $new_y < $x_y_range{min_y}  || $new_y > $x_y_range{max_y})
 		);
@@ -364,13 +361,24 @@ sub flee : Local {
 		
 		$c->error("Couldn't find sector: $new_x, $new_y"), return unless $land;
 		
-		$c->stash->{party}->land_id($land->id);
-		$c->stash->{party}->in_combat_with(undef);
-    	# TODO: do we make them use up turns?
-    	$c->stash->{party}->update;
-    	$c->stash->{party_location}->discard_changes;
+		my $party = $c->stash->{party};
+		
+		$party->land_id($land->id);
+		$party->in_combat_with(undef);
+		
+		# Still costs them turns to move (but they can do it even if they don't have enough turns left)
+		$party->turns($c->stash->{party}->turns - $land->movement_cost($party->movement_factor));
+		$party->turns(0) if $party->turns < 0;		
+
+    	$party->update;
     	
-    	$c->forward('/panel/refresh', ['messages', 'map']);
+    	# Refresh stash
+    	$c->stash->{party} = $party; 	
+    	$c->stash->{party_location} = $land;
+    	
+    	$c->stash->{messages} = "You got away!";
+    	
+    	$c->forward('/panel/refresh', ['messages', 'map', 'party', 'party_status']);
 	}
 	else {
 		push @{ $c->stash->{combat_messages} }, 'You were unable to flee.';

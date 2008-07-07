@@ -72,6 +72,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	if (responseObject.message) {
        	          	dojo.byId('message-text').innerHTML = responseObject.message;
+       	          	dojo.byId('item-row-' + item_id).style.display = 'none';
 			      	dijit.byId('message').show();					
 	        	}
 	        },
@@ -183,9 +184,37 @@ function addStatPoint(char_id, stat) {
 		    <span class="aligned-value" id="stat-points">[% character.stat_points %]</span>
 		</div>			
 		[% END %]
+		
+		<br>
+		<div class="aligned-line">
+		    <span class="aligned-label">Hit Points:</span>
+		    <span class="aligned-value">[% character.hit_points %] / [% character.max_hit_points %]</span>
+		</div>
 
-		</div>		
+		<div class="aligned-line">
+		    <span class="aligned-label">Spell Points:</span>
+		    <span class="aligned-value">[% character.spell_points %]</span>
+		</div>
+		
+		<br>
+		<div class="aligned-line">
+		    <span class="aligned-label">Attack Factor:</span>
+		    <span class="aligned-value">[% character.attack_factor %]</span>
+		</div>
+
+		<div class="aligned-line">
+		    <span class="aligned-label">Defence Factor:</span>
+		    <span class="aligned-value">[% character.defence_factor %]</span>
+		</div>
+
+		<div class="aligned-line">
+		    <span class="aligned-label">Damage:</span>
+		    <span class="aligned-value">[% character.damage %]</span>
+		</div>
+		
+		</div>
 	</div>
+
 	
     <div dojoType="dijit.layout.ContentPane" title="Equipment" href="[% based %]/character/equipment_tab?character_id=[% character.id %]">    
     </div>

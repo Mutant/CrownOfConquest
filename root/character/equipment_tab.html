@@ -14,7 +14,7 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 			<span id="[% equipped_item.key %]">[% equipped_item.key %]</span>
 			<div dojoType="dijit.Tooltip"
                    connectId="[% equipped_item.key %]"
-                   label="[% FOREACH category IN equip_place_category_list.$eq_item %][% category %][% UNLESS loop.last %],[% END %][% END %]"></div>
+                   label="[% FOREACH category IN equip_place_category_list.$eq_item %][% category %][% UNLESS loop.last %], [% END %][% END %]"></div>
 		</td>
 		<td id="[% equipped_item.key %]-equip-place-item">[% equipped_item.value.item_type.item_type %]</td>
 	</tr>
@@ -27,9 +27,10 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 
 <br><br>
 
-Drag items from inventory onto equipped item slots to equip them.
+Drag an item from inventory onto an equipped item slot to equip it.<br>
+Drag an item from inventory onto a character's name to give the item to that character.<br>
 
-<br><br>
+<br>
 
 <table class="main">
 [% last_category = '' %]
@@ -38,7 +39,7 @@ Drag items from inventory onto equipped item slots to equip them.
 		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
-	<tr>
+	<tr id="item-row-[% item.id %]">
 		<td>
 			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
 				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.display_name %]</span>

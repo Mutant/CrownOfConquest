@@ -66,25 +66,12 @@ br {
                 url(images/dndMove.png);}
 </style>
 
-<script>
-function processOnLoad() {
-	return;
-}
-</script>
-
-
-<script type="text/javascript" src="[% base %]/static/dojo/dojo.js" djConfig="parseOnLoad: true, isDebug: false, debugContainerId: 'dojoDebug'"></script>
-<style>
-	@import "http://o.aolcdn.com/dojo/1.0/dijit/themes/tundra/tundra.css";
-	@import "http://o.aolcdn.com/dojo/1.0/dojo/resources/dojo.css"	
-	
-	html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
-</style>
+[% INCLUDE layout/dojo.html %]
 
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body onLoad="processOnLoad()" class="tundra">
+<body class="tundra">
 <script>
 	dojo.require("dojo.parser");
 	dojo.require("dijit.form.Button");
@@ -108,10 +95,6 @@ dojo.addOnLoad( error_init );
 </div>
 
 <div dojoType="dijit.layout.BorderContainer" design="headline">
-    <div dojoType="dijit.layout.ContentPane" region="top" class="main">
-        Game Game Game!!
-    </div>
-
    <div dojoType="dijit.layout.ContentPane" region="left" style="background-color:red" class="main">
 		[% INCLUDE layout/left_hand_nav.html %]
    </div>

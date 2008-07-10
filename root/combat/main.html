@@ -1,7 +1,3 @@
-<a href="javascript:getPanels('/combat/fight')">Fight!</a> <a href="javascript:getPanels('/combat/flee')">Flee!</a>
-
-<br><br>
-
 [% IF creatures_initiated %]
 	You have been attacked by a group of 
 	[% FOREACH summary IN creature_group.creature_summary %]
@@ -12,6 +8,12 @@
 			[% END %]
 		[% END %]
 	[% END %]
+[% END %]
+
+[% UNLESS combat_complete %]
+<a href="javascript:getPanels('/combat/fight')">Fight!</a> <a href="javascript:getPanels('/combat/flee')">Flee!</a>
+
+<br><br>
 [% END %]
 
 [% INCLUDE combat/creature_group.html %]

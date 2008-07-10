@@ -7,7 +7,7 @@ use Data::Dumper;
 use List::Util qw(sum);
 use POSIX;
 
-__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Party');
 
 __PACKAGE__->add_columns(
@@ -90,6 +90,15 @@ __PACKAGE__->add_columns(
       'is_foreign_key' => 0,
       'name' => 'rest',
       'is_nullable' => 0,
+      'size' => 0
+    },
+    'created' => {
+      'data_type' => 'datetime',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'created',
+      'is_nullable' => 1,
       'size' => 0
     },
 );

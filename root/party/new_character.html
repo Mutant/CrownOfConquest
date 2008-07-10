@@ -2,9 +2,6 @@
 
 <h1>New Character</h1>
 
-<script src="[% base %]static/js/prototype.js" type="text/javascript">
-
-</script>
 
 <div style="visibility: hidden; position: absolute; top: 0px; z-index: -100" id="points-div"></div>
 
@@ -27,23 +24,16 @@
 <script>
 var points = Object();
 function calcPoints() {
-	var myAjax = new Ajax.Updater(
-		'points-div',
-		'[% base %]/party/calculate_values', 
-		{
-			method: 'get', 
-			parameters: Form.serialize(document.form), 
-			onComplete: populatePoints,
-		}
-	);
-}
-
-function populatePoints() {
-    eval($('points-div').innerHTML);
-
-    document.form.hit_points.value = points['hit_points'] || '';
-    document.form.magic_points.value = points['magic_points'] || '';
-    document.form.faith_points.value = points['faith_points'] || '';    
+	dojo.xhrGet( {
+        url: "[% base %]/party/create/calculate_values",
+        handleAs: "json",
+        load: function(responseObject, ioArgs) {
+            document.form.hit_points.value = responseObject.hit_points || '';
+		    document.form.magic_points.value = responseObject.magic_points || '';
+	    	document.form.faith_points.value = responseObject.faith_points || '';    
+    	},
+        form: "form",
+    });
 }
 
 var raceStats = new Object;
@@ -60,9 +50,7 @@ var raceStats = new Object;
 
 var Stats = Array('str','int','div','con','agl');
 
-function processOnLoad() {
-	setBaseStats(document.getElementById('race-sel'));
-}
+//dojo.addOnLoad( setBaseStats(document.getElementById('race-sel')) );
 
 function setBaseStats(raceSel) {
 	if (raceSel.value) {
@@ -91,12 +79,18 @@ function calculateTotal(stat) {
 	input = Number(String(document.getElementsByName('mod_' + stat)[0].value));
 
 	base  = document.getElementsByName('base_' + stat)[0];
-    total = document.getElementsByName('total_' + stat)[0];
+    total = document.getElementsByName('total_disp_' + stat)[0];
     total.value = input + Number(String(base.value));
 
 	if (total.value == 'NaN') {
 		total.value = base.value;
 	}
+	
+	console.log(stat);
+	console.log(dojo.byId('total_' + stat));
+	dojo.byId('total_' + stat).value = total.value;
+	console.log(total.value);
+	console.log(dojo.byId('total_' + stat).value);
 
 	var pool = [% stats_pool %];
 	for (var i=0; i<Stats.length; i++) {
@@ -107,7 +101,7 @@ function calculateTotal(stat) {
 }
 </script>
 
-<form name="form" method="post" action="[% base %]/party/create_character">
+<form name="form" method="post" id="form" action="[% base %]/party/create/create_character">
 
 <fieldset id="basic">
 <legend>Basic Information</legend>
@@ -142,27 +136,32 @@ function calculateTotal(stat) {
 <label for="stength">Strength:</label>
 <input type="text" size="3" name="base_str"  class="stat" disabled="disabled">
 <input type="text" size="3" name="mod_str"   class="stat" onkeyup="calculateTotal('str')" onChange="calcPoints()">
-<input type="text" size="3" name="total_str" class="stat" disabled="disabled"><br>
+<input type="text" size="3" name="total_disp_str" class="stat" disabled="disabled"><br>
+<input type="hidden" name="total_str" id="total_str">
 
 <label for="stength">Agility:</label>
 <input type="text" size="3" name="base_agl"  class="stat" disabled="disabled">
 <input type="text" size="3" name="mod_agl"   class="stat" onkeyup="calculateTotal('agl')" onChange="calcPoints()">
-<input type="text" size="3" name="total_agl" class="stat" disabled="disabled"><br>
+<input type="text" size="3" name="total_disp_agl" class="stat" disabled="disabled"><br>
+<input type="hidden" name="total_agl" id="total_agl">
 
 <label for="stength">Intelligence:</label>
 <input type="text" size="3" name="base_int"  class="stat" disabled="disabled">
 <input type="text" size="3" name="mod_int"   class="stat" onkeyup="calculateTotal('int')" onChange="calcPoints()">
-<input type="text" size="3" name="total_int" class="stat" disabled="disabled"><br>
+<input type="text" size="3" name="total_disp_int" class="stat" disabled="disabled"><br>
+<input type="hidden" name="total_int" id="total_int">
 
 <label for="stength">Divinity:</label>
 <input type="text" size="3" name="base_div"  class="stat" disabled="disabled">
 <input type="text" size="3" name="mod_div"   class="stat" onkeyup="calculateTotal('div')" onChange="calcPoints()">
-<input type="text" size="3" name="total_div" class="stat" disabled="disabled"><br>
+<input type="text" size="3" name="total_disp_div" class="stat" disabled="disabled"><br>
+<input type="hidden" name="total_div" id="total_div">
 
 <label for="stength">Constitution:</label>
 <input type="text" size="3" name="base_con"  class="stat" disabled="disabled">
 <input type="text" size="3" name="mod_con"   class="stat" onkeyup="calculateTotal('con')" onChange="calcPoints()">
-<input type="text" size="3" name="total_con" class="stat" disabled="disabled"><br>
+<input type="text" size="3" name="total_disp_con" class="stat" disabled="disabled"><br>
+<input type="hidden" name="total_con" id="total_con">
 <br>
 <label for="remaining">Points Remaining:</label>
 <input type="text" size="3" name="remaining" disabled="disabled" class="stat" value="[% stat_pool %]">

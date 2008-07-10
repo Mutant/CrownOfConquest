@@ -76,6 +76,7 @@ sub main : Local {
 				creature_group => $creature_group,
 				creatures_initiated => 0, #TODO: fixme! $params->{creatures_initiated},
 				combat_messages => $c->stash->{combat_messages},
+				combat_complete => $c->stash->{combat_complete},
 			},
 			return_output => 1,
         }]

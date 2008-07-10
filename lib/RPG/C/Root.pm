@@ -13,19 +13,14 @@ __PACKAGE__->config->{namespace} = '';
 sub auto : Private {
     my ( $self, $c ) = @_;
     
-    #$c->stats->profile(begin => 'auto');
+    unless ($c->session->{player}) {
+    	$c->detach('/player/login');
+    }
     
-    # XXX: player id hard coded for now (need to implement login)
-    $c->session->{player_id} = 1;
-    $c->session->{party_id}  = 1;
-    
-    #$c->log->debug($c->req->headers->as_string);
-    
-    #$c->stats->profile("Running party query");
-    
-    $c->stash->{party} = $c->model('Party')->find(
+    $c->stash->{party} = $c->model('DBIC::Party')->find(
     	{
-    		party_id => $c->session->{party_id},
+			# Assumes 1 party per player...
+    		player_id => $c->session->{player}->id,
     	},
     	{
     		prefetch => [
@@ -38,24 +33,25 @@ sub auto : Private {
     			},
     			{'location' => 'town'},
     		],
-    		#cache => 1,
     		order_by => 'party_order',
     	},
     );
     
-    $c->stash->{party_location} = $c->stash->{party}->location;
-    
-    #$c->stats->profile("Finished party query");
-    
-    # If the party is currently in combat, they must stay on the combat screen
-    if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat/|
-    	&& $c->action !~ m|^admin/|) {
-    	$c->stash->{error} = "You must flee before trying to move away!";
-    	$c->forward('/party/main');
+    if ($c->stash->{party} && $c->stash->{party}->created) {    
+	    $c->stash->{party_location} = $c->stash->{party}->location;
+	            
+	    # If the party is currently in combat, they must stay on the combat screen
+	    if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat/|
+	    	&& $c->action !~ m|^admin/|) {
+	    	$c->stash->{error} = "You must flee before trying to move away!";
+	    	$c->forward('/party/main');
+	    	return 0;
+	    }
+    }
+    elsif ($c->action !~ m|^party/create|) {
+    	$c->res->redirect('/party/create/create');
     	return 0;
     }
-    
-    #$c->stats->profile(end => 'auto');
     
     return 1;
     
@@ -64,21 +60,7 @@ sub auto : Private {
 sub default : Private {
     my ( $self, $c ) = @_;
     
-    if ($c->session->{player_id}) {
-    	if ($c->stash->{party}) {
-    		$c->forward('/party/main');
-    	}
-    	else {
-    		$c->forward('/party/create');
-    	}
-    }
-    else {
-    	# Login
-    }
-
-    
+	$c->forward('/party/main');
 }
-
-
 
 1;

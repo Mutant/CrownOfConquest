@@ -1,0 +1,41 @@
+[% INCLUDE layout/guest_top.html %]
+<style>
+.outer {
+	//border: 1px solid black;
+	width: 30%;
+	top: 40%;
+	position: absolute;
+	left: 33%;
+	//height: 20%;
+}
+
+.content {
+	
+}
+
+</style>
+
+<div class="outer">
+<div class="content">
+<form method="POST" action="[% base %]/player/login">
+<table>
+	<tr>
+		<td nowrap>Email Address:</td>
+		<td><input type="text" name="email" size="40"></td>
+	</tr>
+	<tr>
+		<td>Password:</td>
+		<td><input type="password" name="password" size="40"></td>
+	</tr>
+	<tr>
+		<td></td>
+		<td><input type="submit" value="Login"></td>
+	</tr>
+</table>
+</form>
+<div align="center">
+	[% IF message %][% message %][% END %]
+	<a href="[% base %]/player/register">Register</a> | <a href="[% base %]/player/forgot_password">Forgot Password</a>
+</div>
+</div>
+</div>

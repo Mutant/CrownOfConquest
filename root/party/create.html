@@ -2,11 +2,38 @@
 
 <h1>Create Party</h1>
 
-<form name="form" method="post" action="[% base %]/party/create_character">
+<form name="form" method="post" action="[% base %]/party/create/save_party">
 
-[ This is where we should have a screen to create the party ]
+Welcome, [% player.player_name %]. You've not yet completed creation of your party.
 
-<a href="[% base %]/party/list_characters">List / Create Characters</a>
+<br><br>
+
+Party Name: <input type="text" name="name" value="[% party.name %]" size="50">
+
+[% IF characters %]
+<br><br>
+<table class="main">
+	<tr>
+		<th>Name</th>
+		<th>Class</th>
+		<th>Race</th>
+	</tr>
+	[% FOREACH char IN characters %]
+	<tr>
+		<td>[% char.character_name %]</td>
+	    <td>[% char.race.race_name %]</td>
+	    <td>[% char.class.class_name %]</td>
+	</tr>
+	[% END %]
+</table>
+[% END %]
+
+<br><br>
+[% IF new_char_allowed %]
+	<input type="submit" value="Add Character" name="add_character">
+[% ELSE %]
+	<input type="submit" value="Finish Party Setup" name="finish_setup">
+[% END %]
 
 </form>
 

@@ -62,6 +62,8 @@ sub roll_all {
     $rolls{magic_points} = $self->roll_magic_points;
     $rolls{faith_points} = $self->roll_faith_points;
     
+    $self->update;
+    
     return %rolls;
 }
 
@@ -93,10 +95,13 @@ sub roll_hit_points {
     my $point_max = RPG->config->{level_hit_points_max}{$class};
     
     if (ref $self) {
-        my $points = $self->_roll_points('constitution', $point_max);
-        $self->max_hit_points($self->max_hit_points + $points);
-        $self->update;
-        
+    	my $points = $self->_roll_points('constitution', $point_max);
+    	$self->max_hit_points($points);
+    	
+    	if ($self->level == 1) {
+    		$self->hit_points($points);	
+    	}
+    	
         return $points;
     }        
     else {
@@ -115,7 +120,6 @@ sub roll_magic_points {
         return unless $self->class->class_name eq 'Mage';
         my $points = $self->_roll_points('intelligence',$point_max);
         $self->spell_points($self->spell_points + $points);
-        $self->update;
         
         return $points;
     }
@@ -136,7 +140,6 @@ sub roll_faith_points {
         my $points = $self->_roll_points('divinity',$point_max);
         
         $self->spell_points($self->spell_points + $points);
-        $self->update;
         
         return $points;
     }
@@ -156,10 +159,12 @@ sub _roll_points {
     if (ref $self) {
         $level = $self->level;
         $stat = $self->get_column(shift);
+        warn "level: $level\n";
+        warn "stat: $stat\n";
     }    
     else {
         $level = shift || croak 'Level not supplied';    
-        $stat = shift || croak 'Stat not supplied';
+        $stat  = shift || croak 'Stat not supplied';
     }        
     
     my $point_max = shift || croak 'point_max not supplied';
@@ -181,7 +186,9 @@ sub attack_factor {
 	my $item = shift @items;
 	
 	# TODO possibly should be in the DB
-	my $af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength';
+	my $af_attribute = 'strength';
+	$af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength'
+		if $item;
 	
 	# Apply effects
 	my $effect_df = 0;

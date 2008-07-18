@@ -38,6 +38,9 @@ sub setup_context : Test(setup) {
 
 	$self->{session} ||= {};
 	$self->{c}->mock( 'session', sub { $self->{session} } );
+
+	$self->{config} ||= {};
+	$self->{c}->mock( 'config', sub { $self->{config} } );
 	
 }
 

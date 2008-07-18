@@ -238,11 +238,22 @@ Shops in [% town.town_name %]:
 
 </td><td width="40">&nbsp;</td><td valign="top">
 
+[% MACRO item_details(item_type) BLOCK %]
+<td>
+	<span dojoType="dijit.form.DropDownButton">
+	        <span>?</span>
+	        <div dojoType="dijit.TooltipDialog" style="display: none"
+	        	href="[% base %]/item/tooltip?item_type_id=[% item_type.id %]">
+	        </div>
+	</span>
+</td>
+[% END %]
+
 <table id="main" border="0" cellpadding="6">
 [% last_category = '' %]
 [% FOREACH category IN items %]
 	[% IF last_category != category.key %]
-		<tr><td><b>[% category.key %]</b></td></tr>
+		<tr><td colspan="2"><b>[% category.key %]</b></td></tr>
 		[% last_category = category.key %]
 	[% END %]
 	
@@ -257,6 +268,7 @@ Shops in [% town.town_name %]:
 					</span>	
 					([% item.item_type.modified_cost(shop) %] gold)
 				</td>
+				[% item_details(item.item_type) %]
 			</tr>
 			[% END %]
 		[% ELSE %]
@@ -268,6 +280,7 @@ Shops in [% town.town_name %]:
 					</span>					
 					([% item_type.modified_cost(shop) %] gold each)
 				</td>
+				[% item_details(item.item_type) %]
 			</tr>
 			[% END %]
 		[% END %]

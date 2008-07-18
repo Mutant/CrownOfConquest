@@ -411,7 +411,7 @@ sub xp {
 			$rolls{stat_points} = 1;	
 		}
 		
-		return %rolls; 
+		return \%rolls; 
 	}
 }
 

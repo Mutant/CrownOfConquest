@@ -21,6 +21,12 @@ __PACKAGE__->has_many(
     { 'foreign.item_category_id' => 'self.item_category_id' }
 );
 
+__PACKAGE__->has_many(
+    'item_variable_names',
+    'RPG::Schema::Item_Variable_Name',
+    { 'foreign.item_category_id' => 'self.item_category_id' }
+);
+
 __PACKAGE__->belongs_to(
     'super_category',
     'RPG::Schema::Super_Category',

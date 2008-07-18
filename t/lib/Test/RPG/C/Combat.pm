@@ -17,7 +17,7 @@ sub startup : Test(startup => 1) {
 	
 	$self->{dice} = Test::MockObject->fake_module( 
 		'Games::Dice::Advanced',
-		roll => sub { $self->{roll_result} }, 
+		roll => sub { $self->{roll_result} || 0 }, 
 	);
 	
 	# TODO: move into base class and possibly make a yml config?
@@ -30,7 +30,7 @@ sub startup : Test(startup => 1) {
 	
 }
 
-sub test_finish : Tests(14) {
+sub test_finish : Tests(17) {
 	my $self = shift;
 	
 	my @creatures;
@@ -52,6 +52,7 @@ sub test_finish : Tests(14) {
 		$mock_character->set_always('character_name', "char$_");
 		$mock_character->set_always('xp', 50);
 		$mock_character->set_true('update');
+		$mock_character->set_false('is_dead');
 		push @characters, $mock_character;
 	}
 	my $mock_party = Test::MockObject->new();
@@ -60,14 +61,20 @@ sub test_finish : Tests(14) {
 	$mock_party->set_true('update');
 	$mock_party->set_true('in_combat_with');
 	
+	my $mock_party_location = Test::MockObject->new();
+	$mock_party_location->set_always('creature_threat', 5);
+	$mock_party_location->set_always('update');
+	
 	$self->{stash} = {
 		creature_group => $mock_cg,
 		party => $mock_party,
+		party_location => $mock_party_location,
 	};	
 	
 	$self->{roll_result} = 5;
 		
 	$self->{mock_forward}{'/combat/distribute_xp'} = sub { {1 => 10, 2 => 10, 3 => 8, 4 => 10, 5 => 14} };
+	$self->{mock_forward}{'check_for_item_found'} = sub { };
 	
 	RPG::C::Combat->finish($self->{c});
 	
@@ -102,6 +109,12 @@ sub test_finish : Tests(14) {
 	$mock_party->called_ok('update', 'Party updated');
 	
 	$mock_cg->called_ok('delete', 'Creature group deleted');
+	
+	is($mock_party_location->call_pos(2), 'creature_threat', "Create threat modified");
+	@args = $mock_party_location->call_args(2);	
+	is($args[1], 0, "Reduced by 5");
+	
+	$mock_party_location->called_ok('update', "Location updated");
 
 }
 
@@ -153,11 +166,11 @@ sub test_distribute_xp : Tests(12) {
 				},											
 			},
 			result => {
-				1 => 30,
-				2 => 30,
-				3 => 30,
-				4 => 5,
-				5 => 5,	
+				1 => 26,
+				2 => 26,
+				3 => 26,
+				4 => 10,
+				5 => 10,	
 			},
 			description => 'Two chars take minimum, three chars, take 30% each',
 		},
@@ -179,7 +192,7 @@ sub test_distribute_xp : Tests(12) {
 				},															
 			},
 			result => {
-				1 => 37,
+				1 => 36,
 				2 => 33,
 				3 => 29,	
 			},
@@ -222,6 +235,8 @@ sub test_distribute_xp : Tests(12) {
 		$self->{session} = {damage_done => \%damage, attack_count => \%attacks};
 		
 		my $dist_xp = RPG::C::Combat->distribute_xp($self->{c}, $test->{xp}, \@char_ids);
+		#warn Dumper $dist_xp;
+		#warn Dumper $test->{result};
 		is_deeply($dist_xp, $test->{result}, $test->{description});
 		
 		is($self->{session}{damage_done},  undef, "Damage done cleared");

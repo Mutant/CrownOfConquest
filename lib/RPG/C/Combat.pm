@@ -405,6 +405,7 @@ sub finish : Private {
 		
 		$level_aggr += $creature->type->level; 
 	}
+
 	my $avg_creature_level = $level_aggr / scalar @creatures;
 	
 	my @characters = $c->stash->{party}->characters;
@@ -417,28 +418,44 @@ sub finish : Private {
 		# TODO template these combat messages? (yes)
 		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
 		
-		my %level_up_details = $character->xp($character->xp + $awarded_xp->{$character->id});
+		my $level_up_details = $character->xp($character->xp + $awarded_xp->{$character->id});
 		
-		if ($level_up_details{hit_points}) {
+		if (ref $level_up_details eq 'HASH' && $level_up_details->{hit_points}) {
 			push @{$c->stash->{combat_messages}}, $character->character_name . " went up a level! (Now level " . $character->level . ")";
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{hit_points} . " hit points.";
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{magic_points} . " magic points."
-				if $level_up_details{magic_points};
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{prayer_points} . " prayer points."
-				if $level_up_details{prayer_points};
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details{stat_points} . " stat points."
-				if $level_up_details{stat_points};
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{hit_points} . " hit points.";
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{magic_points} . " magic points."
+				if $level_up_details->{magic_points};
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{prayer_points} . " prayer points."
+				if $level_up_details->{prayer_points};
+			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{stat_points} . " stat points."
+				if $level_up_details->{stat_points};
 		}
 		
 		$character->update;
 	}
-		
-	my $gold = scalar @creatures * $avg_creature_level * Games::Dice::Advanced->roll('1d10');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('1d10');
 	
 	push @{$c->stash->{combat_messages}}, "You find $gold gold";
 	
+	$c->forward('check_for_item_found', [\@characters, $avg_creature_level]);
+
+	$c->stash->{party}->in_combat_with(undef);
+	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
+	$c->stash->{party}->update;	
+	
+	$c->stash->{creature_group}->delete;
+	
+	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
+	$c->stash->{party_location}->update;
+	
+	push @{ $c->stash->{refresh_panels} }, 'party_status';
+}
+
+sub check_for_item_found : Private {
+	my ($self, $c, $characters, $avg_creature_level) = @_;
+	
 	# See if party find an item
-	if (Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * RPG->config->{chance_to_find_item}) {
+	if (Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $c->config->{chance_to_find_item}) {
 		my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
 		
 		# Get item_types within the prevalance roll
@@ -453,7 +470,7 @@ sub finish : Private {
 		# Choose a random character to find it
 		my $finder;
 		while (! $finder || $finder->is_dead) {
-			$finder = (shuffle @characters)[0];
+			$finder = (shuffle @$characters)[0];
 		}
 		
 		# Create the item
@@ -465,18 +482,7 @@ sub finish : Private {
 		);
 		
 		push @{$c->stash->{combat_messages}}, $finder->character_name . " found a " . $item->display_name;
-	}
-	
-	$c->stash->{party}->in_combat_with(undef);
-	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
-	$c->stash->{party}->update;	
-	
-	$c->stash->{creature_group}->delete;
-	
-	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
-	$c->stash->{party_location}->update;
-	
-	push @{ $c->stash->{refresh_panels} }, 'party_status';
+	}	
 }
 
 sub distribute_xp : Private {

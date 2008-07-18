@@ -31,6 +31,8 @@ sub test_swap_chars : Tests(37) {
 	
 	my $party = Test::MockObject->new();
 	$party->mock('characters', sub { @characters });
+	$party->set_always('rank_separator_position', 2);
+	$party->set_always('update');
 	
 	$self->{stash} = {
 		party => $party,

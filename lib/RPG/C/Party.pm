@@ -119,9 +119,9 @@ sub swap_chars : Local {
 	# Move the rank separator if necessary.
 	# We need to do this before adjusting for drop_pos
 	my $sep_pos = $c->stash->{party}->rank_separator_position;
-	warn "moving_up: $moving_up, dest: $moved_char_destination, sep_pos: $sep_pos\n";
+	#warn "moving_up: $moving_up, dest: $moved_char_destination, sep_pos: $sep_pos\n";
 	if ($moving_up && $moved_char_destination <= $sep_pos) {
-		warn "updating sep_pos\n";
+		#warn "updating sep_pos\n";
 		$c->stash->{party}->rank_separator_position($sep_pos+1);
 		$c->stash->{party}->update;
 	}

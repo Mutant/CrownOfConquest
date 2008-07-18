@@ -135,7 +135,7 @@ sub display_name {
 		$quantity_string = ' (x' . $quantity  . ')';
 	}
 	
-	return $self->item_type->item_type . $quantity_string . ' (' . $self->id . ')';
+	return $self->item_type->item_type . $quantity_string;
 }
 
 # Override insert to populate item_variable data

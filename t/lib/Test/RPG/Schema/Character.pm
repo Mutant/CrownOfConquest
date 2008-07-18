@@ -14,9 +14,14 @@ use RPG::Schema::Character;
 
 sub test_get_equipped_item : Tests(2) {
 	my $self = shift;
+
+	my $super_cat = $self->{schema}->resultset('Super_Category')->create({
+		super_category_name => 'Test1',
+	});
 	
 	my $item_cat = $self->{schema}->resultset('Item_Category')->create({
-		item_category => 'Test1',
+		item_category => 'SubCat1',
+		super_category_id => $super_cat->id,
 	});
 	
 	my $ian = $self->{schema}->resultset('Item_Attribute_Name')->create({
@@ -48,7 +53,7 @@ sub test_get_equipped_item : Tests(2) {
 	});	
 	
 	
-	my $equipped_item = $char->_get_equipped_item('Test1');
+	my ($equipped_item) = $char->get_equipped_item('Test1');
 	
 	isa_ok($equipped_item, 'RPG::Schema::Items', "Item record returned"); 
 	is($equipped_item->id, $item->id, "Correct item returned");
@@ -60,6 +65,7 @@ sub test_get_equipped_item : Tests(2) {
 	$ia->delete;
 	$item->delete;	
 	$char->delete;
+	$super_cat->delete;
 	
 }
 

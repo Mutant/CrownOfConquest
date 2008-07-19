@@ -50,4 +50,33 @@ sub _coord_diff {
     return $diff;
 }
 
+# Returns a list of sectors next to a given sector, within a given range of co-ordinates
+sub get_adjacent_sectors {
+	my ($package, $current_x, $current_y, $min_x, $min_y, $max_x, $max_y) = @_;
+	
+	# Get adjacent squares
+    my ($start_point, $end_point) = __PACKAGE__->surrounds(
+		$current_x,
+		$current_y,
+		3,
+		3,
+	);				
+	my ($new_x, $new_y);
+	
+	my @sectors;
+	
+	for my $x ($start_point->{x} .. $end_point->{x}) {
+		for my $y ($start_point->{y} .. $end_point->{y}) {
+			unless ($x == $current_x && $y == $current_y ||
+					($x < $min_x  || $x > $max_x  ||
+		 			 $y < $min_y  || $y > $max_y)) {
+			
+				push @sectors, [$x, $y];
+			}
+		}
+	}
+	
+	return @sectors;	
+}
+
 1;

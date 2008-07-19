@@ -330,28 +330,20 @@ sub flee : Local {
 	if ($rand < RPG->config->{flee_chance}) {
 	    my $party_location = $c->stash->{party}->location;
 
-		# Get adjacent squares
-    	my ($start_point, $end_point) = RPG::Map->surrounds(
+		my %x_y_range = $c->model('Land')->get_x_y_range();
+
+		# Find sector to flee to
+		my @adjacent_sectors = RPG::Map->get_adjacent_sectors(
 			$party_location->x,
 			$party_location->y,
-			3,
-			3,
+			$x_y_range{min_x},
+			$x_y_range{min_y},
+			$x_y_range{max_x},
+			$x_y_range{max_y},
 		);
-				
-		# Randomly choose a square to flee to
-		my ($new_x, $new_y);
+		@adjacent_sectors = shuffle @adjacent_sectors;
 		
-		my %x_y_range = $c->model('Land')->get_x_y_range();
-				
-		# Find a location to flee to that's not the current location and is in the bounds of the map
-		do {
-			$new_x = $start_point->{x} + int rand($end_point->{x} - $start_point->{x} + 1);
-			$new_y = $start_point->{y} + int rand($end_point->{y} - $start_point->{y} + 1);
-		} while (
-			$new_x == $party_location->x && $new_y == $party_location->y ||
-			($new_x < $x_y_range{min_x}  || $new_x > $x_y_range{max_x}  ||
-			 $new_y < $x_y_range{min_y}  || $new_y > $x_y_range{max_y})
-		);
+		my ($new_x, $new_y) = @{shift @adjacent_sectors};
 		
 		$c->log->debug("Fleeing to: $new_x, $new_y");
 		

@@ -9,24 +9,26 @@
 <tr>
     <td></td>
 [% FOREACH x IN x_range %]
-	<td>[% x %]</td>
+<!--  <td>[% x %]</td> -->
 [% END %]
 </tr>
 [% FOREACH y IN y_range %]
     <tr>
-    <td>[% y %]</td>
+    <!--  <td>[% y %]</td> -->
 	[% FOREACH x IN x_range %]
 		[% position = grid.$x.$y %]        
         [% IF position %]            
-        <td [% IF position.land_id == current_position.id %]class="map_current_pos"[% END %]>              
+        <td [% IF position.land_id == current_position.id %]id="map_current_pos"[% END %] class="map_square">
+            [% FILTER collapse %]    
         	[% IF click_to_move && position.next_to_centre %]
         		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')"">
         	[% ELSIF ! click_to_move %]
         		<a href="?center_x=[% position.x %]&center_y=[% position.y %]">
         	[% END %]
 			<img src="[% base %][% image_path %][% position.terrain.image %]" border=0 title="[% sector_title(position) %]">
-        	[% IF ! click_to_move || position.next_to_centre %]
+			[% IF ! click_to_move || position.next_to_centre %]
 				</a>
+        	[% END %]
         	[% END %]
 	        </td>
         [% ELSE %]

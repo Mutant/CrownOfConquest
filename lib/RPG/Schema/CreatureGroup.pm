@@ -21,6 +21,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
+__PACKAGE__->might_have(
+    'in_combat_with',
+    'RPG::Schema::Party',
+    { 'foreign.in_combat_with' => 'self.creature_group_id' }
+);
+
 __PACKAGE__->has_many(
     'creatures',
     'RPG::Schema::Creature',

@@ -1,0 +1,11 @@
+<h4>[% item_type.item_type %][% IF item %] (ID: [% item.id %])[% END %]</h4>
+
+[% FOREACH attribute IN item_type.category.item_attribute_names %]
+[% attribute.item_attribute_name %]: [% item_type.attribute(attribute.item_attribute_name).formatted_value %]<br>
+[% END %]
+
+[% IF item %]
+	[% FOREACH variable IN item_type.category.item_variable_names %]
+	[% variable.item_variable_name %]: [% item.variable(variable.item_variable_name) %]<br>
+	[% END %]
+[% END %]

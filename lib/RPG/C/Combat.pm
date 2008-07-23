@@ -91,10 +91,24 @@ sub select_action : Local {
 	$character->last_combat_action($c->req->param('action'));
 	$character->update; 
 	
-	my @action_params = grep { $_ } $c->req->param('action_param'); 
+	# Remove empty strings
+	my @action_params = grep { $_ ne '' } $c->req->param('action_param');
 	
-	$c->session->{combat_action_param}{$c->req->param('character_id')} = 
-		scalar @action_params > 1 ? \@action_params : $action_params[0];
+	warn "action params:\n";
+	warn Dumper \@action_params;
+	
+	if (scalar @action_params == 0) {
+		delete $c->session->{combat_action_param}{$c->req->param('character_id')};
+	}
+	elsif (scalar @action_params == 1) {
+		$c->session->{combat_action_param}{$c->req->param('character_id')} = $action_params[0];
+	}
+	else {
+		$c->session->{combat_action_param}{$c->req->param('character_id')} = \@action_params;
+	}	
+	warn Dumper $c->session->{combat_action_param};
+	
+	$c->res->body(' ');
 }
 
 sub fight : Local {
@@ -146,6 +160,7 @@ sub fight : Local {
 				push @combat_messages, {
 					attacker => $combatant, 
 					defender => $target, 
+					defender_killed => $target->is_dead,
 					damage => $damage || 0,
 				};
 			}
@@ -179,7 +194,7 @@ sub character_action : Private {
 	if ($character->last_combat_action eq 'Attack') {
 		# If they've selected a target, make sure it's still alive
 		my $targetted_creature = $c->session->{combat_action_param}{$character->id};
-		warn Dumper $targetted_creature;
+		#warn Dumper $targetted_creature;
 		if ($targetted_creature && $c->stash->{creatures}{$targetted_creature} && ! $c->stash->{creatures}{$targetted_creature}->is_dead) {
 			$creature = $c->stash->{creatures}{$targetted_creature};
 		}
@@ -188,7 +203,7 @@ sub character_action : Private {
 		unless ($creature) {
 			do {
 				my @ids = shuffle keys %{$c->stash->{creatures}};
-				$creature = $c->stash->{creatures}{$ids[0]};
+				$creature = $c->stash->{creatures}{$ids[0]};				
 			} while ($creature->is_dead);
 		}
 			
@@ -208,6 +223,9 @@ sub character_action : Private {
 	    return [$creature, $damage];
 	}
 	elsif ($character->last_combat_action eq 'Cast') {
+		warn "Action parms for char#: " . $character->id . "\n";
+		warn Dumper $c->session->{combat_action_param}{$character->id};
+		
 		my $message = $c->forward('/magic/cast',
 			[
 				$character,
@@ -425,7 +443,7 @@ sub finish : Private {
 		
 		$character->update;
 	}
-	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('1d10');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d10');
 	
 	push @{$c->stash->{combat_messages}}, "You find $gold gold";
 	

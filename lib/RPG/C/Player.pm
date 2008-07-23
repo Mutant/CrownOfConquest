@@ -38,7 +38,7 @@ sub login : Local {
 sub logout : Local {
 	my ($self, $c) = @_;
 	
-	delete $c->session->{player};
+	$c->session_clear;
 	$c->res->redirect('/');		
 }
 

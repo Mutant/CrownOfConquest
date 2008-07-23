@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
+use Data::Dumper;
+
 #
 # Sets the actions in this controller to be registered with no prefix
 # so they function identically to actions created in MyApp.pm
@@ -16,6 +18,9 @@ sub auto : Private {
     unless ($c->session->{player}) {
     	$c->detach('/player/login');
     }
+    
+    warn Dumper [keys %{$c->session}];
+    warn "action params: " . Dumper $c->session->{combat_action_param};
     
     $c->stash->{party} = $c->model('DBIC::Party')->find(
     	{

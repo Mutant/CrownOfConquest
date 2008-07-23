@@ -8,7 +8,7 @@
 		
 		[% IF message.damage > 0 %]
 			hit for [% message.damage %] points of damage.
-				[% IF message.defender.is_dead %][% message.defender.name %] was killed![% END %]
+				[% IF message.defender_killed %][% message.defender.name %] was killed![% END %]
 		[% ELSE %]
 			missed.
 		[% END %]

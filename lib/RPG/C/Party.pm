@@ -184,6 +184,7 @@ sub camp : Local {
 	my $party = $c->stash->{party};
 	
 	if ($party->turns >= RPG->config->{camping_turns}) {
+		warn $party->turns;
 		$party->turns($party->turns - RPG->config->{camping_turns});
 		$party->rest($party->rest + 1);
 		$party->update;

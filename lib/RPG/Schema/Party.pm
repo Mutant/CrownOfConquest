@@ -63,7 +63,8 @@ __PACKAGE__->add_columns(
       'is_foreign_key' => 0,
       'name' => 'turns',
       'is_nullable' => 0,
-      'size' => 0
+      'size' => 0,
+      'accessor' => '_turns',
     },
     'in_combat_with' => {
       'data_type' => 'int',
@@ -100,6 +101,15 @@ __PACKAGE__->add_columns(
       'name' => 'created',
       'is_nullable' => 1,
       'size' => 0
+    },
+    'turns_used' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'turns_used',
+      'is_nullable' => 1,
+      'size' => 0,
     },
 );
 __PACKAGE__->set_primary_key('party_id');
@@ -158,6 +168,22 @@ sub level {
 
 sub _median {
   sum( ( sort { $a <=> $b } @_ )[ int( $#_/2 ), ceil( $#_/2 ) ] )/2;
+}
+
+# Recored turns used whenever number of turns are decreased
+sub turns {
+	my $self = shift;
+	my $new_turns = shift;
+	
+	return $self->_turns unless defined $new_turns;
+	
+	# only do it if turns are decreaed
+	if ($new_turns < $self->_turns) {
+		$self->turns_used($self->turns_used + ($self->_turns - $new_turns));
+		# No need to call update, since something else will call it to update the new turns value
+	}
+	
+	$self->_turns($new_turns);
 }
 
 1;

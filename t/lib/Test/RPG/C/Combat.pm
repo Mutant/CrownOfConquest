@@ -244,4 +244,44 @@ sub test_distribute_xp : Tests(12) {
 	}	
 }
 
+sub test_select_action : Tests(4) {
+	my $self = shift;
+	
+	my $mock_char = Test::MockObject->new();	
+	$mock_char->set_true('last_combat_action');
+	$mock_char->set_true('update');
+	
+	my $mock_rs = Test::MockObject->new();
+	$mock_rs->set_always('find', $mock_char);
+	
+	$self->{c}->set_always('model', $mock_rs);
+	
+	$self->{params}{action_param} = ['',''];
+	$self->{params}{character_id} = 1;
+	$self->{params}{action} = 'Attack';
+	
+	RPG::C::Combat->select_action($self->{c});
+	
+	is_deeply($self->{session}{combat_action_param}, {});
+	
+	$self->{params}{action_param} = ['foo','bar'];
+	
+	RPG::C::Combat->select_action($self->{c});
+	
+	is_deeply($self->{session}{combat_action_param}, {1 => ['foo','bar']});
+	
+	$self->{params}{action_param} = 'foo1';
+	
+	RPG::C::Combat->select_action($self->{c});
+	
+	is_deeply($self->{session}{combat_action_param}, {1 => 'foo1'});
+	
+	$self->{params}{action_param} = 'foo2';
+	$self->{params}{character_id} = 2;
+	
+	RPG::C::Combat->select_action($self->{c});
+	
+	is_deeply($self->{session}{combat_action_param}, {1 => 'foo1', 2 => 'foo2'});
+}
+
 1;

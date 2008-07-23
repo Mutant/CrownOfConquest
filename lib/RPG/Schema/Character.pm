@@ -96,7 +96,7 @@ sub roll_hit_points {
     
     if (ref $self) {
     	my $points = $self->_roll_points('constitution', $point_max);
-    	$self->max_hit_points($points);
+    	$self->max_hit_points($self->max_hit_points + $points);
     	
     	if ($self->level == 1) {
     		$self->hit_points($points);	

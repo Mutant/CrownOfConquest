@@ -13,6 +13,9 @@ sub cast : Local {
 		$target       = $c->req->param('target');
 	}
 	
+	die "No spell, target or character. ($character, $spell_id, $target)\n"
+		unless $character && $spell_id && $target;
+	
 	my $spell = $c->model('DBIC::Spell')->find(
 		{
    			spell_id => $spell_id,
@@ -23,7 +26,7 @@ sub cast : Local {
 		},
 	);
    
-   	$c->error("Spell not found"), return unless $spell;
+   	die "Spell not found" unless $spell;
    	
    	my $spell_action = lc $spell->spell_name;
    	$spell_action =~ s/ /_/g;

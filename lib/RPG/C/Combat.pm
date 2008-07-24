@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use Carp;
 
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
@@ -125,6 +126,18 @@ sub fight : Local {
 	
 	# Later actions might need this
 	$c->stash->{creature_group} = $creature_group;
+	
+	# See if the creatures want to flee
+	warn "creature level: " . $creature_group->level . "\n";
+	if ($creature_group->level < $c->stash->{party}->level) {
+		my $chance_of_fleeing = ($c->stash->{party}->level - $creature_group->level) * $c->config->{chance_creatures_flee_per_level_diff};
+		
+		warn "chance of fleeing: $chance_of_fleeing\n";
+		
+		if ($chance_of_fleeing >= Games::Dice::Advanced->roll('1d100')) {
+			$c->detach('creatures_flee');
+		}
+	}
 	
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
@@ -346,31 +359,7 @@ sub flee : Local {
 	$c->log->debug("Flee roll: $rand");
 	$c->log->debug("Flee chance: " . RPG->config->{flee_chance});
 	if ($rand < RPG->config->{flee_chance}) {
-	    my $party_location = $c->stash->{party}->location;
-
-		my %x_y_range = $c->model('Land')->get_x_y_range();
-
-		# Find sector to flee to
-		my @adjacent_sectors = RPG::Map->get_adjacent_sectors(
-			$party_location->x,
-			$party_location->y,
-			$x_y_range{min_x},
-			$x_y_range{min_y},
-			$x_y_range{max_x},
-			$x_y_range{max_y},
-		);
-		@adjacent_sectors = shuffle @adjacent_sectors;
-		
-		my ($new_x, $new_y) = @{shift @adjacent_sectors};
-		
-		$c->log->debug("Fleeing to: $new_x, $new_y");
-		
-		my $land = $c->model('Land')->find({
-			x => $new_x,
-			y => $new_y,
-		});
-		
-		$c->error("Couldn't find sector: $new_x, $new_y"), return unless $land;
+		my $land = $c->forward('get_sector_to_flee_to');	
 		
 		my $party = $c->stash->{party};
 		
@@ -397,6 +386,56 @@ sub flee : Local {
 	}
 }
 
+sub creatures_flee : Private {
+	my ($self, $c) = @_;
+	
+	my $land = $c->forward('get_sector_to_flee_to');
+	
+	$c->stash->{creature_group}->land_id($land->id);
+	$c->stash->{creature_group}->update;
+	undef $c->stash->{creature_group};
+		
+	$c->stash->{party}->in_combat_with(undef);
+	$c->stash->{party}->update;
+	
+	$c->stash->{messages} = "The creatures fled!";
+	
+	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
+}
+
+# For the party or the creatures
+sub get_sector_to_flee_to : Private {
+	my ($self, $c) = @_;
+	
+	my $party_location = $c->stash->{party}->location;
+
+	my %x_y_range = $c->model('Land')->get_x_y_range();
+
+	# Find sector to flee to
+	my @adjacent_sectors = RPG::Map->get_adjacent_sectors(
+		$party_location->x,
+		$party_location->y,
+		$x_y_range{min_x},
+		$x_y_range{min_y},
+		$x_y_range{max_x},
+		$x_y_range{max_y},
+	);
+	@adjacent_sectors = shuffle @adjacent_sectors;
+	
+	my ($new_x, $new_y) = @{shift @adjacent_sectors};
+
+	$c->log->debug("Fleeing to: $new_x, $new_y");
+		
+	my $land = $c->model('Land')->find({
+		x => $new_x,
+		y => $new_y,
+	});
+	
+	croak "Couldn't find sector: $new_x, $new_y\n" unless $land;
+	
+	return $land;
+}
+
 sub finish : Private {
 	my ($self, $c) = @_;	
 	
@@ -407,16 +446,13 @@ sub finish : Private {
 	
 	my $xp;
 	
-	my $level_aggr = 0;
 	foreach my $creature (@creatures) {
 		# Generate random modifier between 0.6 and 1.5
 		my $rand = (Games::Dice::Advanced->roll('1d10') / 10) + 0.5;
-		$xp += int ($creature->type->level * $rand * RPG->config->{xp_multiplier});
-		
-		$level_aggr += $creature->type->level; 
+		$xp += int ($creature->type->level * $rand * RPG->config->{xp_multiplier});		 
 	}
 
-	my $avg_creature_level = $level_aggr / scalar @creatures;
+	my $avg_creature_level = $c->stash->{creature_group}->level;
 	
 	my @characters = $c->stash->{party}->characters;
 	

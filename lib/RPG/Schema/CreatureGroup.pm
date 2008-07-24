@@ -69,4 +69,22 @@ sub number_alive {
 	});	
 }
 
+sub level {
+	my $self = shift;
+	
+	return $self->{level} if $self->{level};
+	
+	my @creatures = $self->creatures;
+	
+	my $level_aggr = 0;
+	foreach my $creature (@creatures) {
+		$level_aggr += $creature->type->level; 
+	}
+	
+	$self->{level} = int ($level_aggr / scalar @creatures);
+	
+	return $self->{level};
+			
+}
+
 1;

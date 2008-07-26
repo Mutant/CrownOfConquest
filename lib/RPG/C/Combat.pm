@@ -10,16 +10,6 @@ use Carp;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 
-sub start : Local {
-	my ($self, $c, $params) = @_;
-		
-	$c->stash->{party}->in_combat_with($params->{creature_group}->id);
-	$c->stash->{party}->update;
-	
-	$c->forward('/combat/main', $params);
-		
-}
-
 sub party_attacks : Local {
 	my ($self, $c) = @_;
 	
@@ -43,12 +33,6 @@ sub party_attacks : Local {
 	else {
 		$c->error("Couldn't find creature group in party's location.");
 	}		
-}
-
-sub default : Private {
-	my ($self, $c) = @_;
-	
-	$c->forward('/combat/main');
 }
 
 sub main : Local {
@@ -98,10 +82,9 @@ sub select_action : Local {
 	warn "action params:\n";
 	warn Dumper \@action_params;
 	
-	if (scalar @action_params == 0) {
-		delete $c->session->{combat_action_param}{$c->req->param('character_id')};
-	}
-	elsif (scalar @action_params == 1) {
+	delete $c->session->{combat_action_param}{$c->req->param('character_id')};
+	
+	if (scalar @action_params == 1) {
 		$c->session->{combat_action_param}{$c->req->param('character_id')} = $action_params[0];
 	}
 	else {
@@ -128,11 +111,8 @@ sub fight : Local {
 	$c->stash->{creature_group} = $creature_group;
 	
 	# See if the creatures want to flee
-	warn "creature level: " . $creature_group->level . "\n";
 	if ($creature_group->level < $c->stash->{party}->level) {
-		my $chance_of_fleeing = ($c->stash->{party}->level - $creature_group->level) * $c->config->{chance_creatures_flee_per_level_diff};
-		
-		warn "chance of fleeing: $chance_of_fleeing\n";
+		my $chance_of_fleeing = ($c->stash->{party}->level - $creature_group->level) * $c->config->{chance_creatures_flee_per_level_diff};		
 		
 		if ($chance_of_fleeing >= Games::Dice::Advanced->roll('1d100')) {
 			$c->detach('creatures_flee');
@@ -196,7 +176,10 @@ sub fight : Local {
         }]
     );
     
-	$c->forward('/panel/refresh', ['messages', 'party']);
+    $c->stash->{party}->turns($c->stash->{party}->turns - 1);
+    $c->stash->{party}->update;
+    
+	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
 
 sub character_action : Private {
@@ -278,7 +261,7 @@ sub creature_action : Private {
 	do {
 		my $rand = int rand($#characters + 1);
 		$character = $characters[$rand];
-	} while ($character->is_dead && $count++ < 20);
+	} while ($character->is_dead && $count++ < 50);
 		
 	my $defending = $character->last_combat_action eq 'Defend' ? 1 : 0;
 		
@@ -493,8 +476,6 @@ sub finish : Private {
 	
 	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
 	$c->stash->{party_location}->update;
-	
-	push @{ $c->stash->{refresh_panels} }, 'party_status';
 }
 
 sub check_for_item_found : Private {
@@ -555,9 +536,9 @@ sub distribute_xp : Private {
 	foreach my $char_id (@$char_ids) {
 		my ($damage_percent, $attacked_percent) = (0,0);
 		
-		$damage_percent   = ($c->session->{damage_done}{$char_id} / $total_damage)  * 0.6
+		$damage_percent   = ($c->session->{damage_done}{$char_id} || 0 / $total_damage)  * 0.6
 			if $total_damage > 0;
-		$attacked_percent = ($c->session->{attack_count}{$char_id}/ $total_attacks) * 0.4
+		$attacked_percent = ($c->session->{attack_count}{$char_id} || 0/ $total_attacks) * 0.4
 			if $total_attacks > 0;
 			
 				my $total_percent = $damage_percent + $attacked_percent;

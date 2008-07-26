@@ -190,7 +190,7 @@ sub move_to : Local {
     
     # Check that the party has enough movement points
     elsif ($c->stash->{party}->turns < $new_land->movement_cost($movement_factor)) {
-        $c->stash->{error} = 'You do not have enough movement points to move there';
+        $c->stash->{error} = 'You do not have enough turns to move there';
     }
     
     else {        
@@ -212,8 +212,9 @@ sub move_to : Local {
 	    if ($creature_group) {
 	    	$c->stash->{creature_group} = $creature_group;
 	    		    	
-	    	if ($creature_group->initiate_combat($c->stash->{party}, $c->config->{creature_attack_chance})) {
+	    	if ($creature_group->initiate_combat($c->stash->{party})) {
 	        	$c->stash->{party}->in_combat_with($creature_group->id);
+	        	push @{ $c->stash->{refresh_panels} }, 'party';
 	    	}
     	}	
 	    

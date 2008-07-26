@@ -11,3 +11,5 @@ __PACKAGE__->config(
                         #{debug => 1},
                       ]
 );
+
+RPG::Schema->config(RPG->config);

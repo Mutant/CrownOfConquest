@@ -18,6 +18,7 @@ use RPG::Map;
 #
 use Catalyst;
 
+=comment
 __PACKAGE__->config->{session} = { 
     Store => 'MySQL',
     DataSource => 'dbi:mysql:game',
@@ -30,6 +31,7 @@ __PACKAGE__->config->{session} = {
     cookie_name => 'session', 
     domain => '',
 };
+=cut
 
 $ENV{DBIC_TRACE} = 1;
 
@@ -39,7 +41,16 @@ our $VERSION = '0.01';
 # Start the application
 #
 
-__PACKAGE__->setup( qw/-Debug -Stats ConfigLoader Static::Simple Session::Flex DBIC::Schema::Profiler/ );
+__PACKAGE__->setup( qw/
+	-Debug 
+	-Stats 
+	ConfigLoader 
+	Static::Simple 
+	Session
+    Session::Store::FastMmap
+    Session::State::Cookie 
+    DBIC::Schema::Profiler/ 
+);
 
 __PACKAGE__->config->{static}->{debug} = 1;
     

@@ -27,12 +27,19 @@ sub sector_menu : Local {
     my ($self, $c) = @_;
     
 	my $creature_group = $c->stash->{creature_group};
+	
+	my $confirm_attack = 0;
+	
+	if ($creature_group) {
+		$confirm_attack = $creature_group->level - $c->stash->{party}->level > $c->config->{cg_attack_max_level_diff};	
+	}
     
     $c->forward('RPG::V::TT',
         [{
             template => 'party/sector_menu.html',
 			params => {
 				creature_group => $creature_group,
+				confirm_attack => $confirm_attack,
 				messages => $c->stash->{messages},
 				day_logs => $c->stash->{day_logs},
 			},

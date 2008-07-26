@@ -37,13 +37,14 @@ __PACKAGE__->has_many(
 sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
-	my $chance = shift;
-	croak "Chance of initiating combat not supplied" unless defined $chance;
+
+	return 0
+		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_diff};
+
+	my $chance = RPG::Schema->config->{creature_attack_chance};
 	
 	my $roll = int rand 100;
-	
-	warn "chance: $chance, roll: $roll\n";
-	
+		
 	return $roll < $chance;
 }
 

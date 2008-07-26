@@ -15,7 +15,7 @@ my %PANEL_PATHS = (
 
 sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
-	
+		
 	@panels_to_refresh = ( @panels_to_refresh, @{ $c->stash->{refresh_panels} } )
 		if $c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY';
 	
@@ -48,9 +48,7 @@ sub find_panel_path : Private {
 	
 	return $PANEL_PATHS{$panel} unless $panel eq 'messages';
 	
-    my $party = $c->stash->{party};    
-		
-	#$party->discard_changes; # TODO: needed?
+    my $party = $c->stash->{party};
 	
 	if ($c->stash->{party_location}->town) {
 		return '/town/main';
@@ -65,6 +63,9 @@ sub find_panel_path : Private {
 
 sub day_logs_check : Private {
 	my ($self, $c) = @_;
+	
+	# Don't check if the party is currently in combat
+	return if $c->stash->{party}->in_combat_with;
 	
     # Check if new day message should be displayed
     my @day_logs = $c->model('DBIC::DayLog')->search(

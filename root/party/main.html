@@ -105,12 +105,32 @@ dojo.addOnLoad( init );
 
 /* From healer panel */
 function healParty(dialogFields) {
-	console.log("dialogFields");
-	console.log(dialogFields);
+	//console.log("dialogFields");
+	//console.log(dialogFields);
 	getPanels('/town/heal_party?gold=' + dialogFields.heal_amount);
 }
 
+function checkAttack(creatureGroupId, confirmAttack) {
+	if (confirmAttack) {
+		dojo.byId('creature-group-id').value = creatureGroupId;
+		dijit.byId('confirm-attack').show();
+	}
+	else {
+		getPanels('/combat/party_attacks?creature_group_id=' + creatureGroupId);
+	}
+}
+
+function execConfirmedAttack(dialogFields) {
+	getPanels('/combat/party_attacks?creature_group_id=' + dialogFields.creature_group_id);
+}
+
 </script>
+
+<div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
+    <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>
+    <input id="creature-group-id" name="creature_group_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <button dojoType=dijit.form.Button type="submit">OK</button> 
+</div>
 
 <h2>[% party.name %]</h2>
 

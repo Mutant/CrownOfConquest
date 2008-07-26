@@ -2,6 +2,7 @@
 
 <script>
 dojo.require('dijit.layout.SplitContainer');
+dojo.require('dijit.Tooltip');
 	
 function getPanels(url) {
     dijit.byId('messages-pane').setContent('Loading...');
@@ -15,7 +16,7 @@ function getPanels(url) {
 	          	dijit.byId('error').show();
         	}
         	else {
-        		console.log(responseObject);
+        		//console.log(responseObject);
 	       	    if (responseObject.refresh_panels) {
 					refreshPanels(responseObject.refresh_panels);
 		       	}
@@ -28,7 +29,7 @@ function getPanels(url) {
 
 function refreshPanels(panel_hash) {
 	for (var panel in panel_hash) {
-		console.log(panel);
+		//console.log(panel);
 		dijit.byId(panel+'-pane').setContent(panel_hash[panel]);
 	}
 }

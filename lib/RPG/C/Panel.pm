@@ -27,6 +27,10 @@ sub refresh : Private {
 
 	foreach my $panel (@panels_to_refresh) {
 		unless (ref $panel eq 'ARRAY') {
+			if ($panel eq 'messages') {
+				$c->forward('day_logs_check');
+			}
+			
 			my $panel_path = $c->forward('find_panel_path', [$panel]);
 			$response{refresh_panels}{$panel} = $c->forward($panel_path);
 		}
@@ -57,6 +61,41 @@ sub find_panel_path : Private {
 	else {
 		return '/party/sector_menu';
 	}	
+}
+
+sub day_logs_check : Private {
+	my ($self, $c) = @_;
+	
+    # Check if new day message should be displayed
+    my @day_logs = $c->model('DBIC::DayLog')->search(
+    	{
+    		'displayed' => 0,
+    		'party_id' => $c->stash->{party}->id,
+    	},
+    	{
+    		order_by => 'day.date_started desc',
+    		prefetch => 'day',
+    		rows => 7, # TODO: config me
+    	},
+    );
+    
+    if (@day_logs) {
+    	foreach my $day_log (@day_logs) {   		
+    		$day_log->displayed(1);
+    		$day_log->update;
+    	}
+    	
+    	$c->stash->{day_logs} = $c->forward('RPG::V::TT',
+	        [{
+	            template => 'party/day_logs.html',
+				params => {
+					day_logs => \@day_logs,
+				},
+				return_output => 1,
+	        }]		       
+   		);
+   			
+    }
 }
 
 1;

@@ -5,6 +5,7 @@ use warnings;
 
 use Data::Dumper;
 use List::Util qw(sum);
+use Math::Round qw(round);
 use POSIX;
 
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
@@ -111,12 +112,27 @@ __PACKAGE__->add_columns(
       'is_nullable' => 1,
       'size' => 0,
     },
+    'new_day_due' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'new_day_due',
+      'is_nullable' => 0,
+      'size' => 0,
+    },
 );
 __PACKAGE__->set_primary_key('party_id');
 
 __PACKAGE__->has_many(
     'characters',
     'RPG::Schema::Character',
+    'party_id',
+);
+
+__PACKAGE__->has_many(
+    'day_logs',
+    'RPG::Schema::DayLog',
     'party_id',
 );
 
@@ -184,6 +200,66 @@ sub turns {
 	}
 	
 	$self->_turns($new_turns);
+}
+
+sub new_day {
+	my $self = shift;
+	my $new_day = shift;
+	
+	my @log; # TODO: should be a template
+
+	$self->turns($self->turns + RPG::Schema->config->{daily_turns});
+	$self->turns(RPG::Schema->config->{maximum_turns}) if $self->turns > RPG::Schema->config->{maximum_turns};
+		
+	push @log, "You now have " . $self->turns . " turns.";
+
+	my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $self->rest * RPG::Schema->config->{max_heal_percentage} / 10;
+
+	foreach my $character ($self->characters) {
+		# Heal chars based on amount of rest they've had during the day
+		if ($self->rest != 0) {
+			my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;
+			$hp_increase = 1 if $hp_increase == 0; # Always a min of 1
+			
+			push @log, $character->name . " was rested, and healed " . $hp_increase . " hit points";
+			
+			$character->change_hit_points($hp_increase);
+		}
+				
+		# Memorise new spells for the day
+		my @spells_to_memorise = $character->memorised_spells;
+		
+		push @log, $character->name . " has " . scalar @spells_to_memorise . " spells memorised"
+			if @spells_to_memorise;
+		
+		foreach my $spell (@spells_to_memorise) {
+			if ($spell->memorise_tomorrow) {
+				$spell->memorised_today(1);
+				$spell->memorise_count($spell->memorise_count_tomorrow);
+				$spell->number_cast_today(0);
+				$spell->update;
+			}
+			else {
+				# Spell no longer memorised, so delete the record
+				$spell->delete;	
+			}	
+		}
+				
+		$character->update;
+	}
+		
+	# They're no longer rested
+	$self->rest(0);
+	$self->update;
+		
+	$self->add_to_day_logs(
+		{
+			day_id => $new_day->id,
+			log => join "\n", @log,
+		}
+	);
+	
+	return;
 }
 
 1;

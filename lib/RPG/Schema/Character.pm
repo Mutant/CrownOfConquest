@@ -38,12 +38,12 @@ __PACKAGE__->has_many(
 );
 
 __PACKAGE__->has_many(
-    'mem_spells_link',
+    'memorised_spells',
     'RPG::Schema::Memorised_Spells',
     { 'foreign.character_id' => 'self.character_id' },
 );
 
-__PACKAGE__->many_to_many('memorised_spells' => 'mem_spells_link', 'spell');
+__PACKAGE__->many_to_many('spells' => 'memorised_spells', 'spell');
 
 __PACKAGE__->has_many(
     'character_effects',

@@ -19,9 +19,6 @@ sub auto : Private {
     	$c->detach('/player/login');
     }
     
-    warn Dumper [keys %{$c->session}];
-    warn "action params: " . Dumper $c->session->{combat_action_param};
-    
     $c->stash->{party} = $c->model('DBIC::Party')->find(
     	{
 			# Assumes 1 party per player...
@@ -52,6 +49,12 @@ sub auto : Private {
 	    	$c->forward('/party/main');
 	    	return 0;
 	    }
+	    
+	    # Check if they're due a new day
+	    if (! $c->stash->{party}->in_combat_with && $c->stash->{party}->new_day_due) {
+	    	$c->forward('/party/process_new_day');
+	    }   
+
     }
     elsif ($c->action !~ m|^party/create|) {
     	$c->res->redirect('/party/create/create');

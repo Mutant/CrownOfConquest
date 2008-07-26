@@ -34,6 +34,7 @@ sub sector_menu : Local {
 			params => {
 				creature_group => $creature_group,
 				messages => $c->stash->{messages},
+				day_logs => $c->stash->{day_logs},
 			},
 			return_output => 1,
         }]

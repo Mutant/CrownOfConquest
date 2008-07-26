@@ -14,6 +14,7 @@ sub main : Local {
             template => 'town/main.html',
 			params => {
 				town => $c->stash->{party_location}->town,
+				day_logs => $c->stash->{day_logs},
 			},
 			return_output => $return_output || 0,
         }]

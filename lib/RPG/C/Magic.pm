@@ -57,7 +57,7 @@ sub create_effect : Private {
 	}
 	else {
 		$search_field = 'creature_id';
-		$relationship_name = 'creature_id';
+		$relationship_name = 'creature_effect';
 		$joining_table = 'Creature_Effect';
 	}
 	

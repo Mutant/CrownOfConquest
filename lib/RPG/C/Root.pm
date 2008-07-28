@@ -18,9 +18,7 @@ sub auto : Private {
     unless ($c->session->{player}) {
     	$c->detach('/player/login');
     }
-    
-    warn "auto: " . Dumper $c->session->{combat_action_param};
-    
+        
     $c->stash->{party} = $c->model('DBIC::Party')->find(
     	{
 			# Assumes 1 party per player...

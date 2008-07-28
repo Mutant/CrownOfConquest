@@ -17,6 +17,7 @@ sub run {
 	my $config = YAML::LoadFile('../rpg.yml');
 	
 	my $schema = RPG::Schema->connect(
+		$config,
 		$config->{datasource},
         $config->{username},
         $config->{password},
@@ -66,9 +67,8 @@ sub spawn_monsters {
 			last;
 		}	
 			
-		for my $creature (1 .. $number) {
-			
-			my $hps = int (rand 10) * $type->level + 1;
+		for my $creature (1 .. $number) {			
+			my $hps = Games::Dice::Advanced->roll($type->level . 'd8');
 			
 			$schema->resultset('Creature')->create({
 				creature_type_id => $type->id,

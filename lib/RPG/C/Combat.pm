@@ -59,7 +59,7 @@ sub main : Local {
             template => 'combat/main.html',
 			params => {
 				creature_group => $creature_group,
-				creatures_initiated => 0, #TODO: fixme! $params->{creatures_initiated},
+				creatures_initiated => $c->stash->{creatures_initiated},
 				combat_messages => $c->stash->{combat_messages},
 				combat_complete => $c->stash->{combat_complete},
 			},
@@ -218,10 +218,7 @@ sub character_action : Private {
 	    
 	    return [$creature, $damage];
 	}
-	elsif ($character->last_combat_action eq 'Cast') {
-		warn "Action parms for char#: " . $character->id . "\n";
-		warn Dumper $c->session->{combat_action_param}{$character->id};
-		
+	elsif ($character->last_combat_action eq 'Cast') {		
 		my $message = $c->forward('/magic/cast',
 			[
 				$character,
@@ -569,7 +566,7 @@ sub distribute_xp : Private {
 sub process_effects : Private {
 	my ($self, $c) = @_;
 	
-	my @effects = $c->model('DBIC::Character_Effect')->search(
+	my @character_effects = $c->model('DBIC::Character_Effect')->search(
 		{
 			character_id => [keys %{$c->stash->{characters}}],
 			'effect.combat' => 1,
@@ -578,8 +575,18 @@ sub process_effects : Private {
 			prefetch => 'effect',
 		},
 	);
+
+	my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
+		{
+			creature_id => [keys %{$c->stash->{creatures}}],
+			'effect.combat' => 1,
+		},
+		{
+			prefetch => 'effect',
+		},
+	);
 	
-	foreach my $effect (@effects) {
+	foreach my $effect (@character_effects, @creature_effects) {
 		$effect->effect->time_left($effect->effect->time_left-1);
 		
 		if ($effect->effect->time_left == 0) {
@@ -589,8 +596,7 @@ sub process_effects : Private {
 		else {
 			$effect->effect->update;
 		}
-	}
-	
+	}	
 }
 
 1;

@@ -214,6 +214,7 @@ sub move_to : Local {
 	    		    	
 	    	if ($creature_group->initiate_combat($c->stash->{party})) {
 	        	$c->stash->{party}->in_combat_with($creature_group->id);
+	        	$c->stash->{creatures_initiated} = 1;
 	        	push @{ $c->stash->{refresh_panels} }, 'party';
 	    	}
     	}	

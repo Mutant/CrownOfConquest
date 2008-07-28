@@ -20,6 +20,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.creature_type_id' => 'self.creature_type_id' },
 );
 
+__PACKAGE__->has_many(
+    'creature_effects',
+    'RPG::Schema::Creature_Effect',
+    { 'foreign.creature_id' => 'self.creature_id' },
+);
+
 sub health {
 	my $self = shift;
 	
@@ -60,21 +66,33 @@ sub hit {
 sub attack_factor {
 	my $self = shift;
 	
-	return $self->_calculate_factor(
+	my $base = $self->_calculate_factor(
 		$self->type->level,
 		RPG->config->{creature_attack_base}, 
 		RPG->config->{create_attack_factor_increment},
 	);
+	
+    # Apply effects
+	my $effect_af = 0;
+	map { $effect_af += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->creature_effects;
+	
+	return $base + $effect_af;
 }
 
 sub defence_factor {
 	my $self = shift;
 	
-	return $self->_calculate_factor(
+	my $base = $self->_calculate_factor(
 		$self->type->level,
 		RPG->config->{creature_defence_base}, 
 		RPG->config->{create_defence_factor_increment},
 	);
+
+    # Apply effects
+	my $effect_df = 0;
+	map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->creature_effects;
+	
+	return $base + $effect_df;
 }
 
 sub _calculate_factor {

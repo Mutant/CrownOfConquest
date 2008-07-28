@@ -2,7 +2,14 @@
 [% FOREACH creature IN creature_group.creatures %]
 	<tr>
 		<td>[% creature.name %]</td>
-		<td>[% creature.health %]</td>
+		<td>[% creature.health %]</td>		
+		[% IF creature.creature_effects %]
+			<td>(
+			[% FOREACH effect IN creature.creature_effects %]
+				[% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %]
+			[% END %]				
+			)</td>
+		[% END %]
 	</tr>
 [% END %]
 </table>

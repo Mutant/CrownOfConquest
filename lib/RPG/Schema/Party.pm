@@ -216,6 +216,8 @@ sub new_day {
 	my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $self->rest * RPG::Schema->config->{max_heal_percentage} / 10;
 
 	foreach my $character ($self->characters) {
+		next if $character->is_dead;
+		
 		# Heal chars based on amount of rest they've had during the day
 		if ($self->rest != 0) {
 			my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;

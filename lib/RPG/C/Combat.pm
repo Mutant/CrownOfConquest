@@ -279,15 +279,17 @@ sub characters_allowed_second_attack : Private {
 		next unless $character->class->class_name eq 'Archer';
 		
 		my @weapons = $character->get_equipped_item('Weapon');
-		
+				
 		my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
-		
-		$c->session->{rounds_since_last_double_attack}{$character->id}++;
-		
+				
 		# TODO: config or add to DB number of rounds for 2nd attack
-		if ($ranged_weapons >= 0 && $c->session->{rounds_since_last_double_attack}{$character->id} == 2) {
-			$c->session->{rounds_since_last_double_attack}{$character->id} = 0;
-			push @allowed_second_attack, $character;			
+		if ($ranged_weapons > 0) {			
+			$c->session->{rounds_since_last_double_attack}{$character->id}++;
+			
+			if ($c->session->{rounds_since_last_double_attack}{$character->id} == 2) {
+				$c->session->{rounds_since_last_double_attack}{$character->id} = 0;
+				push @allowed_second_attack, $character;
+			}			
 		}
 	}
 	
@@ -459,7 +461,7 @@ sub finish : Private {
 		
 		$character->update;
 	}
-	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d10');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d8');
 	
 	push @{$c->stash->{combat_messages}}, "You find $gold gold";
 	
@@ -526,6 +528,9 @@ sub distribute_xp : Private {
 	map { $total_damage+=$_  } values %{$c->session->{damage_done}};
 	map { $total_attacks+=$_ } values %{$c->session->{attack_count}}; 
 
+warn "total dam: $total_damage\n";
+warn "total att: $total_attacks\n";
+
 	# Assign each character XP points, up to a max of 30% of the pool
 	# (note, they can actually get up to 35%, but we've already given them 5% above)
 	# Damage done vs attacks recieved is weighted at 60/40
@@ -538,8 +543,8 @@ sub distribute_xp : Private {
 		$attacked_percent = ($c->session->{attack_count}{$char_id} || 0/ $total_attacks) * 0.4
 			if $total_attacks > 0;
 			
-				my $total_percent = $damage_percent + $attacked_percent;
-		$total_percent = 0.35 if $total_percent > 0.35;
+		my $total_percent = $damage_percent + $attacked_percent;
+		$total_percent = 0.40 if $total_percent > 0.40;
 		
 		my $xp_awarded = int $xp * $total_percent;
 				

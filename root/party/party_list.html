@@ -35,11 +35,20 @@
     <td>[% char.xp %]</td>
     <td>[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %][% END %]</td>
     
-    [% IF party.in_combat_with && ! char.is_dead %]
+    [% UNLESS char.is_dead %]
     	<td>
         <div dojoType="dijit.form.DropDownButton" id="char_action_button_[% char.id %]">
-             <span>[% char.last_combat_action %]</span>
+        	 [% IF party.in_combat_with %]
+        	 	[% label = char.last_combat_action %]
+        	 [% ELSE %]
+        	 	[% label = "Action" %]
+        	 [% END %]
+
+             <span>[% label %]</span>
     	     <div dojoType="dijit.Menu" style="display: none">
+
+
+			[% IF party.in_combat_with %]
 		         <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]');">Attack</div>
 		         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
 	             <div dojoType="dijit.PopupMenuItem">
@@ -52,6 +61,8 @@
 				         [% END %]
 				    </div>
 		        </div>
+		    [% END %]
+		        
 		        [% IF spells.$char_id %]
 		        [% character_spells = spells.$char_id %]
 	             <div dojoType="dijit.PopupMenuItem">

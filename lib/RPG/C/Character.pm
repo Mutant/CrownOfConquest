@@ -39,6 +39,7 @@ sub view : Local {
                 character => $character,
                 characters => \@characters,
                 xp_for_next_level => $next_level->xp_needed,
+                selected => $c->stash->{selected_tab},
             }
         }]
     );
@@ -282,6 +283,7 @@ sub spells_tab : Local {
 	my @available_spells = $c->model('DBIC::Spell')->search(
 		{
 			class_id => $character->class_id,
+	        hidden => 0,
 		},
 		{
 			order_by => 'spell_name',
@@ -321,7 +323,7 @@ sub memorise_spell : Local {
 	
 	return unless $spell;
 			
-	if ($spell->points > $character->spell_points - $character->spell_points_used) {
+	if ($spell->points * $c->req->param('number') > $character->spell_points - $character->spell_points_used) {
 		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise " . $spell->spell_name;	
 	}
 	else {
@@ -333,10 +335,11 @@ sub memorise_spell : Local {
 		);
 		
 		$memorised_spell->memorise_tomorrow(1);
-		$memorised_spell->memorise_count_tomorrow($memorised_spell->memorise_count_tomorrow+1);
+		$memorised_spell->memorise_count_tomorrow($c->req->param('number'));
 		$memorised_spell->update;
 	}
 	
+	$c->stash->{selected_tab} = 'spells';
 	$c->forward('/character/view');
 }
 
@@ -373,6 +376,7 @@ sub unmemorise_spell : Local {
 		if $memorised_spell->memorise_count_tomorrow == 0;
 	$memorised_spell->update;
 	
+	$c->stash->{selected_tab} = 'spells';
 	$c->forward('/character/view');
 }
 

@@ -71,11 +71,9 @@ sub list : Local {
     			prefetch => 'spell',
     		},
     	);
-    	
+    	warn "char has: " . scalar @spells;	
     	$spells{$character->id} = \@spells if @spells;
-    }
-    
-    #warn ref $c->stash->{creature_group};
+    }    
     
     my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
     
@@ -204,6 +202,37 @@ sub camp : Local {
 	}
 	
 	$c->forward('/panel/refresh', ['messages', 'party_status']);
+}
+
+sub select_action : Local {
+	my ($self, $c) = @_;
+	
+	warn "hi?";
+	
+	# If we're in combat, we don't handle the action here
+	if ($c->stash->{party}->in_combat_with) {
+		$c->detach('/combat/select_action');	
+	}
+	
+	if ($c->req->param('action') eq 'Cast') {
+		my $character = $c->model('DBIC::Character')->find(
+			{
+				character_id => $c->req->param('character_id'),
+				party_id => $c->stash->{party}->id,
+			}
+		);		
+		
+		my $message = $c->forward('/magic/cast',
+			[
+				$character,
+				$c->req->param('action_param'),
+			],
+		);
+		
+		$c->stash->{messages} = $message;
+		
+		$c->forward('/panel/refresh', ['messages', 'party_status', 'party']);	
+	}
 }
 
 1;

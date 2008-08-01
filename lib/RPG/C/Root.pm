@@ -43,8 +43,9 @@ sub auto : Private {
 	    $c->stash->{party_location} = $c->stash->{party}->location;
 	            
 	    # If the party is currently in combat, they must stay on the combat screen
-	    if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat/|
+	    if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat| && $c->action ne 'party/select_action'
 	    	&& $c->action !~ m|^admin/|) {
+	    	$c->debug('Forwarding to /party/main since party is in combat');
 	    	$c->stash->{error} = "You must flee before trying to move away!";
 	    	$c->forward('/party/main');
 	    	return 0;

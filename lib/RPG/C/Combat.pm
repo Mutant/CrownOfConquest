@@ -79,9 +79,6 @@ sub select_action : Local {
 	# Remove empty strings
 	my @action_params = grep { $_ ne '' } $c->req->param('action_param');
 	
-	warn "action params:\n";
-	warn Dumper \@action_params;
-	
 	delete $c->session->{combat_action_param}{$c->req->param('character_id')};
 	
 	if (scalar @action_params == 1) {
@@ -90,9 +87,8 @@ sub select_action : Local {
 	else {
 		$c->session->{combat_action_param}{$c->req->param('character_id')} = \@action_params;
 	}	
-	warn Dumper $c->session->{combat_action_param};
 	
-	$c->res->body(' ');
+	$c->forward('/panel/refresh', ['messages']);
 }
 
 sub fight : Local {
@@ -121,10 +117,7 @@ sub fight : Local {
 	
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
-	
-	$c->stash->{characters} = { map { $_->id => $_ } @characters };
-	$c->stash->{creatures}  = { map { $_->id => $_ } @creatures  };
-	
+		
 	$c->forward('process_effects');
 	
 	# Find out if any chars are allowed a second attack
@@ -187,19 +180,21 @@ sub character_action : Private {
 	
 	my ($creature, $damage);
 	
+	my %creatures = map { $_->id => $_ } $creature_group->creatures;
+	
 	if ($character->last_combat_action eq 'Attack') {
 		# If they've selected a target, make sure it's still alive
 		my $targetted_creature = $c->session->{combat_action_param}{$character->id};
 		#warn Dumper $targetted_creature;
-		if ($targetted_creature && $c->stash->{creatures}{$targetted_creature} && ! $c->stash->{creatures}{$targetted_creature}->is_dead) {
-			$creature = $c->stash->{creatures}{$targetted_creature};
+		if ($targetted_creature && $creatures{$targetted_creature} && ! $creatures{$targetted_creature}->is_dead) {
+			$creature = $creatures{$targetted_creature};
 		}
 		
 		# If we don't have a target, choose one randomly
 		unless ($creature) {
 			do {
-				my @ids = shuffle keys %{$c->stash->{creatures}};
-				$creature = $c->stash->{creatures}{$ids[0]};				
+				my @ids = shuffle keys %creatures;
+				$creature = $creatures{$ids[0]};				
 			} while ($creature->is_dead);
 		}
 			
@@ -573,7 +568,7 @@ sub process_effects : Private {
 	
 	my @character_effects = $c->model('DBIC::Character_Effect')->search(
 		{
-			character_id => [keys %{$c->stash->{characters}}],
+			character_id => [ map { $_->id } $c->stash->{party}->characters ],
 			'effect.combat' => 1,
 		},
 		{
@@ -583,7 +578,7 @@ sub process_effects : Private {
 
 	my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
 		{
-			creature_id => [keys %{$c->stash->{creatures}}],
+			creature_id => [ map { $_->id } $c->stash->{creature_group}->creatures ],
 			'effect.combat' => 1,
 		},
 		{

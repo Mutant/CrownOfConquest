@@ -6,11 +6,11 @@ use base 'Catalyst::Controller';
 
 sub cast : Local {
 	my ($self, $c, $character, $spell_id, $target) = @_;
+
+	$c->stash->{characters} = { map { $_->id => $_ } $c->stash->{party}->characters };
 	
-	if ($c->req->param('spell_id')) {
-		$character    = $c->model('DBIC::Character')->find($c->req->param('character_id'));
-		$spell_id     = $c->req->param('spell_id');
-		$target       = $c->req->param('target');
+	if ($c->stash->{party}->in_combat_with) {
+		$c->stash->{creatures} = { map { $_->id => $_ } $c->stash->{creature_group}->creatures };
 	}
 	
 	die "No spell, target or character. ($character, $spell_id, $target)\n"

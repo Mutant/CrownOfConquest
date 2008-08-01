@@ -165,10 +165,11 @@ function addStatPoint(char_id, stat) {
 		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
 		<div class="aligned-line">
 		    <span class="aligned-label">[% stat | ucfirst %]:</span>
+    		[% formatted_stat = character.$stat %]
 		    [% IF character.$stat < 10 %]
-		    	[% character.$stat = '&nbsp;' _ character.$stat %]
+		    	[% formatted_stat = '&nbsp;' _ character.$stat %]
 		    [% END %]		     
-		    <span class="aligned-value" id="stat-[% stat %]">[% character.$stat %]</span>
+		    <span class="aligned-value" id="stat-[% stat %]">[% formatted_stat %]</span>
 		    <span>
 		    	[% IF character.stat_points %]
 		    		<input type="button" value="+" onClick="addStatPoint('[% character.id %]','[% stat %]')">
@@ -220,7 +221,8 @@ function addStatPoint(char_id, stat) {
     </div>
 
 	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]
-    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% based %]/character/spells_tab?character_id=[% character.id %]">    
+    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% based %]/character/spells_tab?character_id=[% character.id %]"
+         [% IF selected == 'spells' %]selected="true"[% END %]>    
     </div>
     [% END %]
 

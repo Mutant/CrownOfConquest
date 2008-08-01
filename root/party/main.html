@@ -57,14 +57,8 @@ function selectAction(action, char_id, action_param, action_param2, action_label
 
 	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
 
-	dojo.xhrGet( { //
-	        url: "[% base %]/combat/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
-		        "&action_param=" + (action_param2 || ''),  
-	        handleAs: "text",
-	
-	        timeout: 5000, // Time in milliseconds
-	
-	        });
+	getPanels("party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+		        "&action_param=" + (action_param2 || ''));
 	        
 	return false;
 }

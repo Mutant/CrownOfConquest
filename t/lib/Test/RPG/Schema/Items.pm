@@ -10,7 +10,7 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 use Test::MockObject;
 
-sub setup_data : Tests(startup=>1) {
+sub setup_data : Tests(setup=>1) {
 	my $self = shift;
 	
 	use_ok('RPG::Schema::Items');
@@ -62,7 +62,7 @@ sub setup_data : Tests(startup=>1) {
 	});
 }
 
-sub delete_data : Tests(shutdown) {
+sub delete_data : Tests(teardown) {
 	my $self = shift;
 		
 	$self->{item_attribute_name}->delete;
@@ -81,18 +81,21 @@ sub test_attribute : Tests(1) {
 	is($self->{item}->attribute('Test1')->item_attribute_value, 99, "Item attribute value returned");
 }
 
-sub test_variable_params_created : Tests(4) {
+sub test_variable_params_created : Tests(5) {
 	my $self = shift;
 	
 	my @item_variables = $self->{item}->item_variables;
 	
-	my $val1 = $self->{item}->variable('Var1');
+	my $val1 = $self->{item}->variable_row('Var1');
 	ok($val1->item_variable_value >= 1 && $val1->item_variable_value <= 10, "Var1 in correct range");
 	is($val1->max_value, undef, "Max value not set for var1");
 
-	my $val2 = $self->{item}->variable('Var2');
+	my $val2 = $self->{item}->variable_row('Var2');
 	ok($val2->item_variable_value >= 5 && $val2->item_variable_value <= 8, "Var2 in correct range");
 	is($val2->max_value, $val2->item_variable_value, "Max value set for var2");	
+	
+	my $val1_value = $self->{item}->variable('Var1');
+	ok($val1_value >= 1 && $val1_value <= 10, "Got variable value directly");
 	
 }
 

@@ -78,10 +78,11 @@ sub select_action : Local {
 	
 	# Remove empty strings
 	my @action_params = grep { $_ ne '' } $c->req->param('action_param');
-	
-	delete $c->session->{combat_action_param}{$c->req->param('character_id')};
-	
-	if (scalar @action_params == 1) {
+		
+	if (! @action_params) {
+		delete $c->session->{combat_action_param}{$c->req->param('character_id')};
+	}
+	elsif (scalar @action_params == 1) {
 		$c->session->{combat_action_param}{$c->req->param('character_id')} = $action_params[0];
 	}
 	else {
@@ -120,15 +121,13 @@ sub fight : Local {
 		
 	$c->forward('process_effects');
 	
-	# Find out if any chars are allowed a second attack
-	my $allowed_second_attack = $c->forward('characters_allowed_second_attack', \@characters);
-	push @characters, @$allowed_second_attack; 
-	
-	my @combatants = shuffle (@creatures, @characters);
+	# Get list of combatants, modified for changes in attack frequency, and radomised in order
+	warn scalar @creatures;
+	my $combatants = $c->forward('get_combatant_list', [\@characters, \@creatures]);
 	
 	my @combat_messages;
 	
-	foreach my $combatant (@combatants) {
+	foreach my $combatant (@$combatants) {
 		next if $combatant->is_dead;
 		
 		my $action_result;
@@ -265,11 +264,16 @@ sub creature_action : Private {
 	return [$character, $damage];
 }
 
-sub characters_allowed_second_attack : Private {
-	my ($self, $c, @characters) = @_;
+sub get_combatant_list : Private {
+	my ($self, $c, $characters, $creatures) = @_;
 	
-	my @allowed_second_attack;
-	foreach my $character (@characters) {
+	warn $creatures;
+	
+	my @combatants;
+	foreach my $character (@$characters) {
+		push @combatants, $character;
+		
+		# Check for Archer's second attack
 		# TODO: currently hardcoded class name and item category, but could be in the DB
 		next unless $character->class->class_name eq 'Archer';
 		
@@ -283,12 +287,27 @@ sub characters_allowed_second_attack : Private {
 			
 			if ($c->session->{rounds_since_last_double_attack}{$character->id} == 2) {
 				$c->session->{rounds_since_last_double_attack}{$character->id} = 0;
-				push @allowed_second_attack, $character;
+				push @combatants, $character;
 			}			
 		}
 	}
 	
-	return \@allowed_second_attack;		
+	foreach my $creature (@$creatures) {
+		my @attack_history = @{$c->session->{attack_history}{creature}{$creature->id}}
+			if $c->session->{attack_history}{creature}{$creature->id};	
+
+		my $attack_allowed = $creature->is_attack_allowed(@attack_history);
+	
+		push @attack_history, $attack_allowed;	
+		
+		$c->session->{attack_history}{creature}{$creature->id} = \@attack_history;
+		
+		push @combatants, $creature if $attack_allowed;
+	}
+	
+	@combatants = shuffle @combatants;
+	
+	return \@combatants;		
 }
 
 sub attack : Private {
@@ -523,8 +542,8 @@ sub distribute_xp : Private {
 	map { $total_damage+=$_  } values %{$c->session->{damage_done}};
 	map { $total_attacks+=$_ } values %{$c->session->{attack_count}}; 
 
-warn "total dam: $total_damage\n";
-warn "total att: $total_attacks\n";
+#warn "total dam: $total_damage\n";
+#warn "total att: $total_attacks\n";
 
 	# Assign each character XP points, up to a max of 30% of the pool
 	# (note, they can actually get up to 35%, but we've already given them 5% above)
@@ -532,16 +551,28 @@ warn "total att: $total_attacks\n";
 	my $total_awarded = 0;
 	foreach my $char_id (@$char_ids) {
 		my ($damage_percent, $attacked_percent) = (0,0);
+
+		#warn $char_id;
 		
-		$damage_percent   = ($c->session->{damage_done}{$char_id} || 0 / $total_damage)  * 0.6
+		#warn "dam_done:  " . $c->session->{damage_done}{$char_id};
+		#warn "att_count: " . $c->session->{attack_count}{$char_id};
+		
+		$damage_percent   = (($c->session->{damage_done}{$char_id} || 0) / $total_damage)   * 0.6
 			if $total_damage > 0;
-		$attacked_percent = ($c->session->{attack_count}{$char_id} || 0/ $total_attacks) * 0.4
+		$attacked_percent = (($c->session->{attack_count}{$char_id} || 0) / $total_attacks) * 0.4
 			if $total_attacks > 0;
 			
+		#warn "dam: " . $damage_percent;
+		#warn "att: " . $attacked_percent;
+			
 		my $total_percent = $damage_percent + $attacked_percent;
-		$total_percent = 0.40 if $total_percent > 0.40;
+		$total_percent = 0.35 if $total_percent > 0.35;
+		
+		#warn $total_percent;
 		
 		my $xp_awarded = int $xp * $total_percent;
+
+		#warn $xp_awarded;
 				
 		$awarded_xp{$char_id}+=$xp_awarded;
 		$total_awarded+=$xp_awarded;

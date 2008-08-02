@@ -112,6 +112,16 @@ sub variable {
 	my $variable_name = shift;
 	my $new_val = shift;
 	
+	my $variable = $self->variable_row($variable_name, $new_val);
+	
+	return $variable->item_variable_value;
+}
+
+sub variable_row {
+	my $self = shift;
+	my $variable_name = shift;
+	my $new_val = shift;
+	
 	$self->{variables} = { map { $_->item_variable_name => $_ } $self->item_variables }
 		unless $self->{variables};
 	
@@ -124,7 +134,7 @@ sub variable {
 		$variable->update;	
 	}
 	
-	return $variable->item_variable_value;
+	return $variable;	
 }
 
 sub display_name {

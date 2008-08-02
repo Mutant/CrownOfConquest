@@ -75,7 +75,7 @@ br {
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body class="tundra">
+<body class="tundra" bgcolor="lightblue">
 <script>
 	dojo.require("dojo.parser");
 	dojo.require("dijit.form.Button");
@@ -98,12 +98,9 @@ dojo.addOnLoad( error_init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<div dojoType="dijit.layout.BorderContainer" design="headline">
-   <div dojoType="dijit.layout.ContentPane" region="left" style="background-color:red" class="main">
-		[% INCLUDE layout/left_hand_nav.html %]
-   </div>
-   
-
-    <div dojoType="dijit.layout.ContentPane" region="center" style="background-color:lightblue" class="main">
-<div id="dojoDebug"></div>
+<table class="main" width="100%" height="100%">
+	<tr>
+		<td valign="top" bgcolor="lightgray" width="100" nowrap>[% INCLUDE layout/left_hand_nav.html %]</td>
+		<td valign="top" width="100%">
+			<div id="dojoDebug"></div>
 		

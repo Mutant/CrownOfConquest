@@ -207,8 +207,6 @@ sub camp : Local {
 sub select_action : Local {
 	my ($self, $c) = @_;
 	
-	warn "hi?";
-	
 	# If we're in combat, we don't handle the action here
 	if ($c->stash->{party}->in_combat_with) {
 		$c->detach('/combat/select_action');	
@@ -233,6 +231,32 @@ sub select_action : Local {
 		
 		$c->forward('/panel/refresh', ['messages', 'party_status', 'party']);	
 	}
+}
+
+sub details : Local {
+	my ($self, $c) = @_;
+	
+    # Check if new day message should be displayed
+    my @day_logs = $c->model('DBIC::DayLog')->search(
+    	{
+    		'party_id' => $c->stash->{party}->id,
+    	},
+    	{
+    		order_by => 'day.date_started desc',
+    		prefetch => 'day',
+    		rows => 7, # TODO: config me
+    	},
+    );
+
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/details.html',
+			params => {
+                party => $c->stash->{party},
+                day_logs => \@day_logs,
+			},
+        }]
+    );
 }
 
 1;

@@ -44,6 +44,7 @@ sub test_finish : Tests(17) {
 	my $mock_cg = Test::MockObject->new();
 	$mock_cg->set_bound('creatures', \@creatures);
 	$mock_cg->set_true('delete');
+	$mock_cg->set_always('level', 1);
 
 	my @characters;
 	for (1..5) {
@@ -140,7 +141,7 @@ sub test_distribute_xp : Tests(12) {
 			},
 			description => 'Two chars, take 50% each',
 		},
-		
+	
 		{
 			xp => 100,
 			characters => {
@@ -246,6 +247,8 @@ sub test_distribute_xp : Tests(12) {
 
 sub test_select_action : Tests(4) {
 	my $self = shift;
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub { };
 	
 	my $mock_char = Test::MockObject->new();	
 	$mock_char->set_true('last_combat_action');

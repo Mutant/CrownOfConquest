@@ -3,6 +3,9 @@ use warnings;
 
 package RPG::Schema::Creature;
 
+use Data::Dumper;
+use List::MoreUtils qw(true);
+
 use base 'DBIx::Class';
 
 use Carp;
@@ -119,7 +122,10 @@ sub is_dead {
 sub damage {
 	my $self = shift;
 	
-	return $self->type->level * 2;	
+	my $effect_dam = 0;
+	map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
+	
+	return $self->type->level * 2 + $effect_dam;	
 }
 
 sub weapon {
@@ -147,6 +153,32 @@ sub change_hit_points {
 	$self->hit_points_current(0) if $self->hit_points_current < 0;
 	
 	return;	
+}
+
+sub is_attack_allowed {
+	my $self = shift;
+	my @attack_history = @_;
+	
+	my $attack_allowed = 1;
+	
+	my $modifier = 0;
+	map { $modifier += $_->effect->modifier if $_->effect->modified_stat eq 'attack_frequency' } $self->creature_effects;
+	
+	if ($modifier > 0) {
+		my $offset = 0-$modifier;
+		$offset = scalar @attack_history if $modifier > scalar @attack_history;
+		
+		my @recent = splice @attack_history, $offset;
+		
+		my $count = true { $_ == 0; } @recent;
+		
+		if ($count < $modifier) {
+			$attack_allowed = 0;	
+		}
+	}
+	
+	return $attack_allowed;
+		
 }
 
 1;

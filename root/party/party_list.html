@@ -12,7 +12,7 @@
 
 </style>
 
-<table dojoType="dojo.dnd.Source" id="party-table" accept="character" moveOnly="true" class="main">
+<table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main">
 <tr>
     <th>Name</th>
     <th>Race</th>
@@ -26,7 +26,7 @@
 
 [% FOREACH char = characters %]
 [% char_id = char.id %]
-<tr class="dojoDndItem" dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]" [% IF char.is_dead %]style="background: grey"[% END %]>
+<tr [% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]" [% IF char.is_dead %]style="background: grey"[% END %]>
     <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td>[% char.race.race_name %]</td>
     <td>[% char.class.class_name %]</td>
@@ -112,7 +112,7 @@
     [% IF party.rank_separator_position == char.party_order %]
     	</tr>
     	<tr>
-    		<tr class="dojoDndItem" dndType="character" id="rank_separator" jsId="rank_separator">
+    		<tr [% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] dndType="character" id="rank_separator" jsId="rank_separator">
     			<td colspan="10"></td>
     [% END %]
 </tr>

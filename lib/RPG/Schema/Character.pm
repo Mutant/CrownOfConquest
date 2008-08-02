@@ -1,4 +1,4 @@
-use strict;
+	use strict;
 use warnings;
 
 package RPG::Schema::Character;
@@ -230,7 +230,6 @@ sub damage {
 	# Apply effects
 	my $effect_dam = 0;
 	map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
-	warn "effect dam: $effect_dam";
 	return 2 + $effect_dam unless $weapon; # nothing equipped, assume bare hands
 	
 	return $weapon->attribute('Damage')->item_attribute_value + $effect_dam;

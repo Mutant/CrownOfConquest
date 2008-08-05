@@ -7,7 +7,7 @@ use base qw(Test::Class);
 
 use Carp;
 
-sub setup_context : Test(setup) {
+sub setup_context : Test(setup=>1) {
 	my $self = shift;
 	
 	my $mock_context = Test::MockObject->new;
@@ -53,7 +53,7 @@ sub setup_context : Test(setup) {
 	$self->{mock_response} = Test::MockObject->new;
 	$self->{mock_response}->mock('body', sub {});
 	$self->{c}->set_always('res',$self->{mock_response});
-	
+		
 }
 
 sub clear_data : Test(teardown) {

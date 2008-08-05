@@ -122,7 +122,6 @@ sub fight : Local {
 	$c->forward('process_effects');
 	
 	# Get list of combatants, modified for changes in attack frequency, and radomised in order
-	warn scalar @creatures;
 	my $combatants = $c->forward('get_combatant_list', [\@characters, \@creatures]);
 	
 	my @combat_messages;
@@ -170,7 +169,7 @@ sub fight : Local {
     
     $c->stash->{party}->turns($c->stash->{party}->turns - 1);
     $c->stash->{party}->update;
-    
+  
 	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
 
@@ -484,6 +483,13 @@ sub finish : Private {
 	$c->stash->{party}->in_combat_with(undef);
 	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
 	$c->stash->{party}->update;	
+	
+	# Remove character effects from this combat
+    foreach my $character ($c->stash->{party}->characters) {
+    	foreach my $effect ($character->character_effects) {
+    		$effect->delete if $effect->effect->combat;	
+    	}
+    }
 	
 	$c->stash->{creature_group}->delete;
 	

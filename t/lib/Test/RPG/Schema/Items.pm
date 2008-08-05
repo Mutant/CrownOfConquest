@@ -10,10 +10,12 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 use Test::MockObject;
 
-sub setup_data : Tests(setup=>1) {
-	my $self = shift;
-	
+sub startup : Tests(startup=>1) {
 	use_ok('RPG::Schema::Items');
+}
+
+sub setup_data : Tests(setup) {
+	my $self = shift;
 	
 	$self->{item_attribute_name} = $self->{schema}->resultset('Item_Attribute_Name')->create({
 		item_attribute_name => 'Test1',

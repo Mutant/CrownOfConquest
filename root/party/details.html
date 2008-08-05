@@ -1,0 +1,43 @@
+[% INCLUDE top.html %]
+
+<h2>[% party.name %]</h2>
+
+<table class="main">
+	<tr>
+		<td>Owned by:</td>
+		<td>[% party.owned_by_player.player_name %] ([% party.owned_by_player.email %])</td>
+	</tr>
+	<tr>
+		<td>Party Created:</td>
+		<td>[% party.created.ymd %] [% party.created.hms %]</td>
+	</tr>
+	<tr>
+		<td>Party Level:</td>
+		<td>[% party.level %]</td>
+	</tr>
+	<tr>
+		<td>Gold:</td>
+		<td>[% party.gold %]</td>
+	</tr>
+	<tr>
+		<td>Movement Factor:</td>
+		<td>[% party.movement_factor %]</td>
+	</tr>
+	<tr>
+		<td>Current Turns:</td>
+		<td>[% party.turns %]</td>
+	</tr>
+	<tr>
+		<td>Total Turns Used:</td>
+		<td>[% party.turns_used %]</td>
+	</tr>
+</table>
+
+<h4>Recent New Day Messages</h4>
+[% FOREACH day_log IN day_logs %]
+	<b>Day [% day_log.day.day_number %] of Year [% day_log.day.game_year %]</b><br>
+	[% day_log.log | html_line_break %]
+	<br><br>
+[% END %]
+
+[% INCLUDE bottom.html %]

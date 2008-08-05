@@ -30,6 +30,12 @@ sub startup : Test(startup => 1) {
 	
 }
 
+sub shutdown : Test(shutdown) {
+	my $self = shift;
+	
+	delete $INC{'Games/Dice/Advanced.pm'};	
+}
+
 sub test_finish : Tests(17) {
 	my $self = shift;
 	

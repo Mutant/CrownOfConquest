@@ -11,7 +11,7 @@ sub energy_beam : Private {
 	
 	my $dice_count = int $character->level / 5 + 1;
 	
-	my $beam = Games::Dice::Advanced->roll($dice_count . "d8");
+	my $beam = Games::Dice::Advanced->roll($dice_count . "d6");
 	
 	my $target_creature = $c->stash->{creatures}{$target};
 	$target_creature->change_hit_points(-$beam);
@@ -109,6 +109,45 @@ sub slow : Private {
 	
 	my $target_char = $c->stash->{creatures}{$target};
 	return $character->character_name . " cast Slow on " . $target_char->name . ", slowing it for $duration rounds";
+}
+
+sub entangle : Private {
+	my ($self, $c, $character, $target) = @_;
+	
+	my $duration = 3 + (int $character->level / 5 + 1);
+	
+	$c->forward('/magic/create_effect',
+		[{
+			target_type => 'creature',
+			target_id => $target,
+			effect_name => 'Entangled',
+			duration => $duration,
+			modifier => $duration,
+			combat => 1,
+			modified_state => 'attack_frequency',
+		}]
+	);
+	
+	my $target_char = $c->stash->{creatures}{$target};
+	return $character->character_name . " cast Entangle on " . $target_char->name . ", entangling it for $duration rounds";
+}
+
+sub flame : Private {
+	my ($self, $c, $character, $target) = @_;
+	
+	my $dice_count = int $character->level / 3 + 1;
+	
+	my $flame= Games::Dice::Advanced->roll($dice_count . "d10");
+	
+	my $target_creature = $c->stash->{creatures}{$target};
+	$target_creature->change_hit_points(-$flame);
+	$target_creature->update;
+	
+	my $msg = $character->character_name . " cast Flame on " . $target_creature->name . ", frying him for $flame hit points.";	
+	
+	$msg .= " " . $target_creature->name . " was killed!" if $target_creature->is_dead;
+	
+	return $msg;
 }
 
 1;

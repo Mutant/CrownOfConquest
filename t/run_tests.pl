@@ -7,7 +7,7 @@ use lib '../lib','lib';
 
 use Test::Class::Load './lib/';
 
-if ($ARGV[0] eq '--refresh-schema') {
+if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 	shift @ARGV;
 	
 	print "# Refreshing schema...\n";

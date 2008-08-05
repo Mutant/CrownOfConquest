@@ -114,6 +114,8 @@ sub variable {
 	
 	my $variable = $self->variable_row($variable_name, $new_val);
 	
+	return unless $variable; 
+	
 	return $variable->item_variable_value;
 }
 

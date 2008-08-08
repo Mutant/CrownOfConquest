@@ -16,7 +16,7 @@
 		markupFactory: function(params, node){
 		    params._skipStartup = true;
 		    return new rpg.dnd.Target(node, params);
-		},
+		}
 		
     });
     
@@ -61,7 +61,7 @@
 						dojo.byId(responseObject.clear_equip_place + '-equip-place-item').innerHTML = '';
 					}
 				}
-	        },
+	        }
 	    });
 	}
 	
@@ -75,7 +75,7 @@
        	          	dojo.byId('item-row-' + item_id).style.display = 'none';
 			      	dijit.byId('message').show();					
 	        	}
-	        },
+	        }
 	    });	       
 	}
 	
@@ -105,7 +105,7 @@ function addStatPoint(char_id, stat) {
         		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
         		dojo.byId('stat-' + stat).innerHTML = statVal;
         	}
-        },
+        }
     });
 
 }
@@ -159,7 +159,7 @@ function addStatPoint(char_id, stat) {
 <br>
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
-      <div dojoType="dijit.layout.ContentPane" title="Stats">
+      <div dojoType="dijit.layout.ContentPane" title="Stats" style="display: none">
 		<div class="aligned" id="character">
 		
 		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
@@ -217,11 +217,11 @@ function addStatPoint(char_id, stat) {
 	</div>
 
 	
-    <div dojoType="dijit.layout.ContentPane" title="Equipment" href="[% based %]/character/equipment_tab?character_id=[% character.id %]">    
+    <div dojoType="dijit.layout.ContentPane" title="Equipment" href="[% base %]/character/equipment_tab?character_id=[% character.id %]">    
     </div>
 
 	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]
-    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% based %]/character/spells_tab?character_id=[% character.id %]"
+    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% base %]/character/spells_tab?character_id=[% character.id %]"
          [% IF selected == 'spells' %]selected="true"[% END %]>    
     </div>
     [% END %]

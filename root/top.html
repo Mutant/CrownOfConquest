@@ -35,18 +35,59 @@ br {
 
 .main {
 	font-size: 10pt;
+	font-family: verdana, kalimati, helvetica;
+}
+
+#content {
+	border: 3px gray ridge;
+	width: 1000px;
+	height: 100%;
+	float: left;
+	margin-left: 15px;
+	background: #9FB7FF;
+	padding: 2px;
+}
+
+.nav {
+	font-size: 10pt;
 	font-family: verdana;
+
+
+	width: 120px;
+	float: left;
+	padding: 2px;
+}
+
+.nav a {
+	width: 100%;
+	text-decoration: none;
+	display: block;
+	color: #2F72FF;
+}
+html>body .nav a {width: auto}
+
+.nav a:visited {
+	color: #2F72FF;
+}
+
+.nav a:hover {
+	background: #9FB7FF;
+	color: white;
 }
 
 .aligned-label {
   float: left;
   text-align: left;
   font-weight: bold;
-  width: 10%;
+  width: 12%;
 }
 
 .main-highlighted-col {
 	background: #A09AFF;
+}
+
+#body {
+	background: lightgray;
 }
 
 		.highlighted: {
@@ -68,6 +109,17 @@ br {
         .dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
         .dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
                 url(images/dndMove.png);}
+                
+.dojoDndItemBefore {border-left: 2px dotted gray; } 
+
+.dojoDndItemAfter {border-right: 2px dotted gray; }
+
+.dijitButtonText { font-size: 10pt }
+
+#rank_separator {
+	background: #000;
+	height: 5px;
+}
 </style>
 
 [% INCLUDE layout/dojo.html %]
@@ -75,7 +127,7 @@ br {
 <script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
-<body class="tundra" bgcolor="lightblue">
+<body class="tundra" id="body">
 <script>
 	dojo.require("dojo.parser");
 	dojo.require("dijit.form.Button");
@@ -98,9 +150,7 @@ dojo.addOnLoad( error_init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<table class="main" width="100%" height="100%">
-	<tr>
-		<td valign="top" bgcolor="lightgray" width="100" nowrap>[% INCLUDE layout/left_hand_nav.html %]</td>
-		<td valign="top" width="100%">
+<div class="nav">[% INCLUDE layout/left_hand_nav.html %]</div>
+<div id="content" class="main">
 			<div id="dojoDebug"></div>
 		

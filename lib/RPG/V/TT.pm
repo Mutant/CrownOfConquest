@@ -20,6 +20,7 @@ sub process {
     %{$c->stash} = (%{$c->req->params}, %{$params->{params}});
     $c->stash->{template} = $params->{template};
     
+    
     #$c->log->debug(Dumper $params->{params}{combat_actions});
 
     $self->SUPER::process($c);

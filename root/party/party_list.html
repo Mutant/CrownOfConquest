@@ -1,16 +1,4 @@
-<style>
-.dojoDndItemBefore {border-left: 2px dotted gray; } 
-
-.dojoDndItemAfter {border-right: 2px dotted gray; }
-
-.dijitButtonText { font-size: 10pt }
-
-#rank_separator {
-	background: #000;
-	height: 5px;
-}
-
-</style>
+<h3>Party Members</h3>
 
 <table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main">
 <tr>

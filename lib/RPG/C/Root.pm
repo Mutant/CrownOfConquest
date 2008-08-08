@@ -15,6 +15,8 @@ __PACKAGE__->config->{namespace} = '';
 sub auto : Private {
     my ( $self, $c ) = @_;
     
+    $c->req->base($c->config->{url_root});
+    
     unless ($c->session->{player}) {
     	$c->detach('/player/login');
     }
@@ -58,7 +60,7 @@ sub auto : Private {
 
     }
     elsif ($c->action !~ m|^party/create|) {
-    	$c->res->redirect('/party/create/create');
+    	$c->res->redirect($c->config->{url_root} . '/party/create/create');
     	return 0;
     }
     

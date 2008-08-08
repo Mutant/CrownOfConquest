@@ -7,7 +7,7 @@ dojo.require('dijit.Tooltip');
 function getPanels(url) {
     dijit.byId('messages-pane').setContent('Loading...');
 	dojo.xhrGet( {
-        url: "[% base %]" + url,
+        url: "[% base %]" + url + "?no_cache=" + Math.random() *100000000000,
         handleAs: "json",
         
         load: function(responseObject, ioArgs) {        
@@ -23,14 +23,16 @@ function getPanels(url) {
 	       	}
         },
 
-	    timeout: 5000, // Time in milliseconds	
+	    timeout: 5000 // Time in milliseconds	
     });
 }
 
 function refreshPanels(panel_hash) {
 	for (var panel in panel_hash) {
 		//console.log(panel);
+		//alert(panel_hash[panel]);
 		dijit.byId(panel+'-pane').setContent(panel_hash[panel]);
+		dijit.byId(panel+'-pane').refresh();
 	}
 }
 
@@ -79,7 +81,7 @@ dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 	        url: "[% base %]/party/move_rank_separator?target=" + char_2 + "&drop_pos=" + drop_pos, 
 	        handleAs: "text",
 
-    	    timeout: 5000, // Time in milliseconds	
+    	    timeout: 5000 // Time in milliseconds	
         });			
 	}
 	else {
@@ -90,7 +92,7 @@ dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 	        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
 	        handleAs: "text",
 
-    	    timeout: 5000, // Time in milliseconds	
+    	    timeout: 5000 // Time in milliseconds	
         });
     }
 });
@@ -136,7 +138,7 @@ function execConfirmedAttack(dialogFields) {
                 orientation="horizontal"
                 sizerWidth="7"
                 activeSizing="true"
-                style="border: 1px solid #bfbfbf; width: 90%; height: 260px;">
+                style="border: 1px solid #bfbfbf; width: 98%; height: 260px; margin:0px auto;">
 	<div dojoType="dijit.layout.ContentPane" selected="true" title="Pane 1" id="map-pane" sizeShare="35" sizeMin="370">
 
 	</div>
@@ -148,7 +150,7 @@ function execConfirmedAttack(dialogFields) {
 
 <br><br>
 
-<div dojoType="dijit.layout.ContentPane" id="party-pane">
+<div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%">
 
 </div>
 

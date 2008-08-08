@@ -18,7 +18,7 @@ sub login : Local {
 		
 		if ($user) {
 			$c->session->{player} = $user;
-			$c->res->redirect('/');
+			$c->res->redirect($c->config->{url_root});
 		}
 		else {
 			$message = "Email address and/or password incorrect";	
@@ -39,7 +39,7 @@ sub logout : Local {
 	my ($self, $c) = @_;
 	
 	$c->delete_session;
-	$c->res->redirect('/');		
+	$c->res->redirect($c->config->{url_root});		
 }
 
 1;

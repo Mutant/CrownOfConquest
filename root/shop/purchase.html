@@ -1,5 +1,11 @@
 [% INCLUDE top.html %]
 
+<style>
+#current-shop {
+	background: #D3D3D3;
+}
+</style>
+
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
@@ -181,7 +187,6 @@ dojo.addOnLoad( init );
     <span id="confirm-sale-message"></span>
     <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
-    <button dojoType=dijit.form.Button>Cancel</button>
 </div>
 
 <h1>[% shop.shop_name %]</h1>
@@ -190,8 +195,12 @@ dojo.addOnLoad( init );
 
 Shops in [% town.town_name %]: 
 [% FOREACH other_shop IN shops_in_town %]
-	[% UNLESS shop.id == other_shop.id %]<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% END %]
-		[% other_shop.shop_name %][% UNLESS shop.id == other_shop.id %]</a>[% END %]&nbsp;
+	[% IF shop.id == other_shop.id %]
+		<span id="current-shop">[% other_shop.shop_name %]</span>
+	[% ELSE %]
+		<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% other_shop.shop_name %]</a>
+	[% END %]
+	&nbsp;
 [% END %]
 <br><br>
 

@@ -6,8 +6,15 @@ dojo.require('dijit.Tooltip');
 	
 function getPanels(url) {
     dijit.byId('messages-pane').setContent('Loading...');
+    
+    var no_cache = "&no_cache=" + Math.random() *100000000000;
+    
+    if (url.indexOf('?') == -1) {
+    	no_cache = '?' + no_cache;
+    }
+    
 	dojo.xhrGet( {
-        url: "[% base %]" + url + "?no_cache=" + Math.random() *100000000000,
+        url: "[% base %]" + url + no_cache,
         handleAs: "json",
         
         load: function(responseObject, ioArgs) {        

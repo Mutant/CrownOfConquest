@@ -1,14 +1,15 @@
-<script>
-	dojo.require("dijit.form.FilteringSelect");
-</script>
-
 <h3>Currently Memorised Spells</h3>
 
 <table class="main">
 [% FOREACH spell IN memorised_spells %]
 	[% IF spell.memorised_today %]
 	<tr>
-		<td>[% spell.spell.spell_name %]</td><td>x[% spell.memorise_count %]</td><td>(Cast [% spell.number_cast_today %] times today)</td>
+		<td id="spell_[% spell.spell.id %]">[% spell.spell.spell_name %]
+			<div dojoType="dijit.Tooltip"
+                   connectId="spell_[% spell.spell.id %]"
+                   label="[% spell.spell.description %]"></div>		
+		</td><td>x[% spell.memorise_count %]</td><td>(Cast [% spell.number_cast_today %] times today)</td>
+
 	</tr>
 	[% END %]
 [% END %]
@@ -20,7 +21,11 @@
 [% FOREACH spell IN memorised_spells %]
 	[% IF spell.memorise_tomorrow %]
 	<tr>
-		<td>[% spell.spell.spell_name %]</td><td>x[% spell.memorise_count_tomorrow %]</td><td>
+		<td id="mem_spell_[% spell.spell.id %]">[% spell.spell.spell_name %]
+			<div dojoType="dijit.Tooltip"
+                   connectId="mem_spell_[% spell.spell.id %]"
+                   label="[% spell.spell.description %]"></div></td>
+		<td>x[% spell.memorise_count_tomorrow %]</td><td>
 		<a href="[% base %]/character/unmemorise_spell?character_id=[% character.id %]&spell_id=[% spell.spell_id %]">Remove Spell</a></td>
 	</tr>
 	[% END %]
@@ -32,17 +37,26 @@
 [% IF character.class.class_name == 'Mage' %]Magic[% ELSE %]Faith[% END %] 
 	Points Used: [% character.spell_points_used %] / [% character.spell_points %]
 <br>
+
 <form method="post" action="[% base %]/character/memorise_spell">
 <input type="hidden" name="character_id" value="[% character.id %]">
 <table class="main">
 <tr>
  <td>Memorise New Spell:</td>
-<select name="spell_id">
+ <td>
+<select name="spell_id" onChange="dojo.byId('spell-desc-fieldset').style.display = 'block'; dojo.byId('spell-desc').innerHTML = this.options[this.selectedIndex].id">
 	<option></option>
     [% FOREACH spell IN available_spells %]        
-	    <option value="[% spell.id %]">[% spell.spell_name %] ([% spell.points %] pts)</option>
+	    <option value="[% spell.id %]" id="[% spell.description %]">[% spell.spell_name %] ([% spell.points %] pts)</option>
  	[% END %]
 </select>
+  </td>
+  <td>
+	<fieldset id="spell-desc-fieldset" style="display: none">
+		<legend>Description</legend>
+		<div id="spell-desc"></div>	
+	</fieldset>
+  </td>
 </tr><tr>
   <td>Number of time to memorise:<br><i>(Removes any spells of this<br>type you already have memorised)</i></td>
   <td valign="top"><input type="text" name="number" size="3" maxlength="2" value="1"></td>

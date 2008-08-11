@@ -3,11 +3,11 @@
 <br><br>
 [% END %]
 [% day_logs %]
-[ 
-	<a href="javascript:getPanels('/party/camp')">Camp</a> 
-	| <a href="javascript:getPanels('/party/forage')">Forage</a> 
+You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
+<br><br>
+<a href="javascript:getPanels('/party/camp')">Camp</a> 
+	<!-- | <a href="javascript:getPanels('/party/forage')">Forage</a>  -->
 	[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
-]
 <br>
 
 [% IF creature_group %]

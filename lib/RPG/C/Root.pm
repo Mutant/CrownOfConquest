@@ -17,8 +17,11 @@ sub auto : Private {
     
     $c->req->base($c->config->{url_root});
     
-    unless ($c->session->{player}) {
-    	$c->detach('/player/login');
+    if (! $c->session->{player}) {
+    	if ($c->action !~ m|^player|) {
+    		$c->detach('/player/login');
+    	}
+    	return 1;
     }
         
     $c->stash->{party} = $c->model('DBIC::Party')->find(
@@ -45,6 +48,7 @@ sub auto : Private {
 	    $c->stash->{party_location} = $c->stash->{party}->location;
 	            
 	    # If the party is currently in combat, they must stay on the combat screen
+	    # TODO: clean up this logic!
 	    if ($c->stash->{party}->in_combat_with && $c->action ne 'party/main' && $c->action !~ m|^combat| && $c->action ne 'party/select_action'
 	    	&& $c->action !~ m|^admin/| && $c->action ne '/') {
 	    	$c->debug('Forwarding to /party/main since party is in combat');
@@ -59,7 +63,7 @@ sub auto : Private {
 	    }   
 
     }
-    elsif ($c->action !~ m|^party/create|) {
+    elsif ($c->action !~ m|^party/create| && $c->action ne 'player/logout') {
     	$c->res->redirect($c->config->{url_root} . '/party/create/create');
     	return 0;
     }

@@ -19,6 +19,12 @@ __PACKAGE__->add_columns(xp => { accessor => '_xp' });
 __PACKAGE__->set_primary_key('character_id');
 
 __PACKAGE__->belongs_to(
+    'party',
+    'RPG::Schema::Party',
+    { 'foreign.party_id' => 'self.party_id' }
+);
+
+__PACKAGE__->belongs_to(
     'class',
     'RPG::Schema::Class',
     { 'foreign.class_id' => 'self.class_id' }
@@ -189,12 +195,22 @@ sub attack_factor {
 	my $af_attribute = 'strength';
 	$af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength'
 		if $item;
+		
+	my $attack_factor = $self->get_column($af_attribute);
+	
+	# Add in item AF
+	$attack_factor += $item ? $item->attribute('Attack Factor')->item_attribute_value : 0;
+	
+	# Subtract back rank penalty if necessary
+	$attack_factor -= $item->attribute('Back Rank Penalty')->item_attribute_value
+		unless $self->in_front_rank;
 	
 	# Apply effects
 	my $effect_df = 0;
 	map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
+	$attack_factor += $effect_df;
 
-	return $self->get_column($af_attribute) + ($item ? $item->attribute('Attack Factor')->item_attribute_value : 0) + $effect_df;
+	return $attack_factor;
 }
 
 sub defence_factor {
@@ -452,6 +468,14 @@ sub change_hit_points {
 	$self->hit_points(0) if $self->hit_points < 0;
 	
 	return;	
+}
+
+# Returns true if character is in the front rank
+sub in_front_rank {
+	my $self = shift;
+	
+	return $self->party->rank_separator_position > $self->party_order;
+	
 }
 
 1;

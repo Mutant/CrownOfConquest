@@ -14,17 +14,24 @@
 
 [% FOREACH char = characters %]
 [% char_id = char.id %]
-<tr [% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] dndType="character" id="char-[% char.id %]" jsId="char-[% char.id %]" [% IF char.is_dead %]style="background: grey"[% END %]>
-    <td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
-    <td>[% char.race.race_name %]</td>
-    <td>[% char.class.class_name %]</td>
-    <td align="center">[% char.level %]</td>
-    <td>[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
-    <td>[% char.xp %]</td>
-    <td>[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %][% END %]</td>
+<tr 
+	[% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] 
+	dndType="character" 
+	accept="character"
+	id="char-[% char.id %]" 
+	jsId="char-[% char.id %]" 
+	[% IF char.is_dead %]style="background: #D3D3D3"[% END %]
+>
+    <td nowrap="nowrap"><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
+    <td nowrap="nowrap">[% char.race.race_name %]</td>
+    <td nowrap="nowrap">[% char.class.class_name %]</td>
+    <td nowrap="nowrap" align="center">[% char.level %]</td>
+    <td nowrap="nowrap">[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
+    <td nowrap="nowrap">[% char.xp %]</td>
+    <td nowrap="nowrap">[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %][% END %]</td>
     
     [% UNLESS char.is_dead %]
-    	<td>
+    <td>
         <div dojoType="dijit.form.DropDownButton" id="char_action_button_[% char.id %]">
         	 [% IF party.in_combat_with %]
         	 	[% label = char.last_combat_action %]
@@ -100,7 +107,7 @@
     [% IF party.rank_separator_position == char.party_order %]
     	</tr>
     	<tr>
-    		<tr [% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] dndType="character" id="rank_separator" jsId="rank_separator">
+    		<tr [% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
     			<td colspan="10"></td>
     [% END %]
 </tr>

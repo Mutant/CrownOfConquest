@@ -1,0 +1,39 @@
+[% INCLUDE layout/guest_top.html %]
+
+<div class="outer">
+<div class="content">
+<form method="POST" action="[% base %]/player/register">
+<table>
+	<tr>
+		<td nowrap>Username:</td>
+		<td><input type="text" name="player_name" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td nowrap>Email Address:</td>
+		<td><input type="text" name="email" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td>Password:</td>
+		<td><input type="password" name="password1" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td>Retype Password:</td>
+		<td><input type="password" name="password2" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td>Captcha:</td>
+		<td><img src="[% base %]/player/captcha"><br>
+		    <input type="text" name="captcha" style="width: 300px">
+		</td>
+	</tr>
+	<tr>
+		<td></td>
+		<td><input type="submit" value="Register" name="submit"></td>
+	</tr>
+</table>
+</form>
+<div align="center">
+	<div style="font-weight: bold">[% IF message %][% message %][% END %]</div>
+</div>
+</div>
+</div>

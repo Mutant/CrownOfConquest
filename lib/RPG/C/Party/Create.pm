@@ -55,7 +55,7 @@ sub save_party : Local {
 	$c->stash->{party}->update;
 	
 	if ($c->req->param('add_character')) {
-		$c->res->redirect('/party/create/new_character');	
+		$c->res->redirect($c->config->{url_root} . '/party/create/new_character');	
 	}
 	else {
 		$c->stash->{party}->created(DateTime->now());
@@ -72,7 +72,7 @@ sub save_party : Local {
 	
 		$c->stash->{party}->update;
 		
-		$c->res->redirect('/party/create/complete');
+		$c->res->redirect($c->config->{url_root} . '/party/create/complete');
 	}
 }
 
@@ -148,7 +148,7 @@ sub create_character : Local {
     
     $character->roll_all;
 
-    $c->res->redirect('/party/create');
+    $c->res->redirect($c->config->{url_root} . '/party/create');
 }
 
 =head2 calculate_values

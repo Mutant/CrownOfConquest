@@ -5,6 +5,8 @@ dojo.require('dijit.layout.SplitContainer');
 dojo.require('dijit.Tooltip');
 	
 function getPanels(url) {
+	var originalContent = dojo.byId('messages-pane').innerHTML;
+
     dijit.byId('messages-pane').setContent('Loading...');
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
@@ -21,6 +23,7 @@ function getPanels(url) {
         	if (responseObject.error) {
 				dojo.byId('error-message').innerHTML = responseObject.error;
 	          	dijit.byId('error').show();
+	          	dijit.byId('messages-pane').setContent(originalContent);
         	}
         	else {
         		//console.log(responseObject);
@@ -157,7 +160,7 @@ function execConfirmedAttack(dialogFields) {
 
 <br><br>
 
-<div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%">
+<div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%; overflow: visible">
 
 </div>
 

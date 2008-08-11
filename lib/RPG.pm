@@ -18,21 +18,6 @@ use RPG::Map;
 #
 use Catalyst;
 
-=comment
-__PACKAGE__->config->{session} = { 
-    Store => 'MySQL',
-    DataSource => 'dbi:mysql:game',
-    UserName   => 'root',
-    Password   => '',    
-    Lock => 'Null', 
-    Generate => 'MD5', 
-    Serialize => 'Storable', 
-    expires => '+1d', 
-    cookie_name => 'session', 
-    domain => '',
-};
-=cut
-
 $ENV{DBIC_TRACE} = 1;
 
 our $VERSION = '0.01';
@@ -49,7 +34,9 @@ __PACKAGE__->setup( qw/
 	Session
     Session::Store::FastMmap
     Session::State::Cookie 
-    DBIC::Schema::Profiler/ 
+    DBIC::Schema::Profiler
+    Captcha
+    / 
 );
 
 __PACKAGE__->config->{static}->{debug} = 1;
@@ -58,7 +45,20 @@ __PACKAGE__->config->{static}->{dirs} = [
 	'static',
 ];
 
-
+__PACKAGE__->config->{captcha} = {
+    session_name => 'captcha_string',
+    new => {
+      width => 300,
+      height => 40,
+      lines => 7,
+      #gd_font => 'giant',
+      font => '/usr/lib/jvm/java-6-sun-1.6.0.03/jre/lib/fonts/LucidaSansRegular.ttf',
+      #rnd_data => ['a'..'z'],      
+    },
+    create => [qw/normal rect/],
+    particle => [100],
+    out => {force => 'jpeg'}
+};
 
 
 

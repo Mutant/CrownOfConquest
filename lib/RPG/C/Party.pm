@@ -42,6 +42,7 @@ sub sector_menu : Local {
 				confirm_attack => $confirm_attack,
 				messages => $c->stash->{messages},
 				day_logs => $c->stash->{day_logs},
+				location => $c->stash->{party_location},
 			},
 			return_output => 1,
         }]

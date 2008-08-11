@@ -1,132 +1,8 @@
 <head>
-<style type="text/css">
-label {
-	display: block;
-	width: 200px;
-	float: left;
-	margin-bottom: 5px;
-}
 
-label {
-	text-align: right;
-	width: 130px;
-	padding-right: 20px;
-	white-space: nowrap;
-}
-
-br {
-	clear: left;
-}
-
-.map_square {
-	font-size: 1px;
-}
-
-#map_current_pos {
-	border: 1px solid blue;
-}
-
-.dojoDialog {
-        background : #eee;
-        border : 1px solid #999;
-        -moz-border-radius : 5px;
-        padding : 4px;
-}
-
-.main {
-	font-size: 10pt;
-	font-family: verdana, kalimati, helvetica;
-}
-
-#content {
-	border: 3px gray ridge;
-	width: 1000px;
-	height: 100%;
-	float: left;
-	margin-left: 15px;
-	background: #9FB7FF;
-	padding: 2px;
-}
-
-#content a {
-	color: #2A31FF;
-}
-
-#body {
-	background: #D3D3D3;
-}
-
-.nav {
-	font-size: 10pt;
-	font-family: verdana;
-
-
-	width: 120px;
-	float: left;
-	padding: 2px;
-}
-
-.nav a {
-	width: 100%;
-	text-decoration: none;
-	display: block;
-	color: #2F72FF;
-}
-html>body .nav a {width: auto}
-
-.nav a:visited {
-	color: #2F72FF;
-}
-
-.nav a:hover {
-	background: #9FB7FF;
-	color: white;
-}
-
-.aligned-label {
-  float: left;
-  text-align: left;
-  font-weight: bold;
-  width: 12%;
-}
-
-.main-highlighted-col {
-	background: #A09AFF;
-}
-
-		.highlighted: {
-			background: #222222;
-		}
-
-        .target {border: 1px dotted gray; padding: 5px;-moz-border-radius:8pt 8pt;radius:8pt;}
-        .source {border: 1px dotted skyblue;-moz-border-radius:8pt 8pt;radius:8pt;}
-        .dojoDndItemOver {background: #feb;border: 1px dotted gray; }
-        .dojoDndItemBefore {border-left: 2px dotted gray; }
-        .dojoDndItemAfter {border-right: 2px dotted gray; }
-        .target .dojoDndItemAnchor {border:1px solid gray;}
-        .dojoDndAvatar {font-size: 75%; color: black;}
-        .dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px}
-        .dojoDndAvatarHeader {background: #ccc; background-repeat: no-repeat;}
-        .dojoDndAvatarItem {background: #eee;}
-        .dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
-        .dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
-                url(images/dndMove.png);}
-                
-.dojoDndItemBefore {border-left: 2px dotted gray; } 
-
-.dojoDndItemAfter {border-right: 2px dotted gray; }
-
-.dijitButtonText { font-size: 10pt }
-
-#rank_separator {
-	background: #000;
-	height: 5px;
-}
-</style>
+<link rel="stylesheet" type="text/css" href="[% base %]/static/main.css" />
 
 [% INCLUDE layout/dojo.html %]
-
-<script type="text/javascript" src="[% base %]/static/common.js"></script>
 
 </head>
 <body class="tundra" id="body">
@@ -136,7 +12,6 @@ html>body .nav a {width: auto}
 	dojo.require("dijit.Dialog");
 	dojo.require("dijit.form.TextBox");
     dojo.require("dijit.layout.ContentPane");
-    dojo.require("dijit.layout.BorderContainer");
     
 [% IF error %]
 function error_init() {
@@ -154,5 +29,5 @@ dojo.addOnLoad( error_init );
 
 <div class="nav">[% INCLUDE layout/left_hand_nav.html %]</div>
 <div id="content" class="main">
-			<div id="dojoDebug"></div>
+<div id="dojoDebug"></div>
 		

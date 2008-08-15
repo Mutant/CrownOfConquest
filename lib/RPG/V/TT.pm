@@ -7,6 +7,8 @@ use Carp;
 use HTML::FillInForm;
 use Data::Dumper;
 
+#__PACKAGE__->config->{DEBUG} = 'all';
+
 sub process {
     my ($self, $c, $params) = @_;
 
@@ -19,9 +21,6 @@ sub process {
 
     %{$c->stash} = (%{$c->req->params}, %{$params->{params}});
     $c->stash->{template} = $params->{template};
-    
-    
-    #$c->log->debug(Dumper $params->{params}{combat_actions});
 
     $self->SUPER::process($c);
     

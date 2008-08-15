@@ -39,27 +39,40 @@ __PACKAGE__->setup( qw/
     / 
 );
 
-__PACKAGE__->config->{static}->{debug} = 1;
-    
-__PACKAGE__->config->{static}->{dirs} = [
-	'static',
-];
-
-__PACKAGE__->config->{captcha} = {
-    session_name => 'captcha_string',
-    new => {
-      width => 300,
-      height => 40,
-      lines => 7,
-      #gd_font => 'giant',
-      font => '/usr/lib/jvm/java-6-sun-1.6.0.03/jre/lib/fonts/LucidaSansRegular.ttf',
-      #rnd_data => ['a'..'z'],      
-    },
-    create => [qw/normal rect/],
-    particle => [100],
-    out => {force => 'jpeg'}
-};
-
-
+BEGIN {
+	__PACKAGE__->config->{static}->{debug} = 1;
+	    
+	__PACKAGE__->config->{static}->{dirs} = [
+		'static',
+	];
+	
+	__PACKAGE__->config->{captcha} = {
+	    session_name => 'captcha_string',
+	    new => {
+	      width => 300,
+	      height => 40,
+	      lines => 7,
+	      #gd_font => 'giant',
+	      font => '/usr/lib/jvm/java-6-sun-1.6.0.03/jre/lib/fonts/LucidaSansRegular.ttf',
+	      #rnd_data => ['a'..'z'],      
+	    },
+	    create => [qw/normal rect/],
+	    particle => [100],
+	    out => {force => 'jpeg'}
+	};
+	
+	# Not sure why this is needed...
+	__PACKAGE__->config->{home} = '/home/sam/workspace/game/';
+	
+	#warn "root: " . __PACKAGE__->path_to('root');
+	__PACKAGE__->config(
+		root     => __PACKAGE__->path_to('root'),
+		'View::TT' => {
+			INCLUDE_PATH => [
+	              __PACKAGE__->path_to('root'),
+	        ]
+		},
+	);
+}
 
 1;

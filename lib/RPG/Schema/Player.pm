@@ -44,6 +44,24 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '255'
     },
+    'verified' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 1,
+      'default_value' => 0,
+      'is_foreign_key' => 0,
+      'name' => 'player_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
+    'verification_code' => {
+      'data_type' => 'varchar',
+      'is_auto_increment' => 0,
+      'default_value' => '',
+      'is_foreign_key' => 0,
+      'name' => 'password',
+      'is_nullable' => 0,
+      'size' => '255'
+    },
 
 );
 __PACKAGE__->set_primary_key('player_id');

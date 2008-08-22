@@ -7,6 +7,7 @@ use base 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
+use List::Util qw(sum);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
@@ -198,12 +199,14 @@ sub attack_factor {
 		
 	my $attack_factor = $self->get_column($af_attribute);
 	
-	# Add in item AF
-	$attack_factor += $item ? $item->attribute('Attack Factor')->item_attribute_value : 0;
+	if ($item) {
+		# Add in item AF
+		$attack_factor += $item->attribute('Attack Factor')->item_attribute_value || 0;
 	
-	# Subtract back rank penalty if necessary
-	$attack_factor -= $item->attribute('Back Rank Penalty')->item_attribute_value
-		unless $self->in_front_rank;
+		# Subtract back rank penalty if necessary
+		$attack_factor -= $item->attribute('Back Rank Penalty') && $item->attribute('Back Rank Penalty')->item_attribute_value || 0
+			unless $self->in_front_rank;
+	}
 	
 	# Apply effects
 	my $effect_df = 0;
@@ -474,8 +477,68 @@ sub change_hit_points {
 sub in_front_rank {
 	my $self = shift;
 	
-	return $self->party->rank_separator_position > $self->party_order;
+	return $self->party->rank_separator_position > $self->party_order;	
+}
+
+# Return the number of attacks allowed by this character
+sub number_of_attacks {
+	my $self = shift;
+	my @attack_history = @_;
 	
+	my $number_of_attacks = 1;
+	
+	# Modifier is number of extra attacks per round
+	#  i.e. 1 = 2 attacks per round, 0.5 = 2 attacks every 3 rounds
+	my $modifier = 0;
+	
+	# Check for Archer's second attack, which applies an extra modifier
+	# TODO: currently hardcoded class name and item category, but could be in the DB
+	if ($self->class->class_name eq 'Archer') {	
+		my @weapons = $self->get_equipped_item('Weapon');
+				
+		my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
+		
+		$modifier+=0.5 if $ranged_weapons > 1;
+	}
+	
+	# Check for any attack_frequency effects
+	$modifier += $self->effect_value('attack_frequency') || 0;
+	
+	# Any whole numbers are added on to number of attacks
+	my $whole_extra_attacks = int $modifier;
+	$number_of_attacks += $whole_extra_attacks;
+	
+	# Find out the decimal if any, and decide whether another attack should occur this round
+	$modifier = $modifier - $whole_extra_attacks;
+	
+	if ($modifier > 0) {
+		# Figure out number of attacks they should've had in recent rounds
+		my $expected_attacks = int 1/$modifier;
+		
+		# Figure out how far to look back
+		my $lookback = $expected_attacks-1; 
+		$lookback = scalar @attack_history if $lookback > scalar @attack_history;
+		
+		my @recent = splice @attack_history, -$lookback;
+		
+		my $count = sum @recent;
+		
+		if ($count < $expected_attacks + $whole_extra_attacks * $lookback) {
+			$number_of_attacks++;	
+		}
+	}
+	
+	return $number_of_attacks;
+}
+
+sub effect_value {
+	my $self = shift;
+	my $effect = shift || croak "Effect not supplied";
+		
+	my $modifier;
+	map { $modifier += $_->effect->modifier if $_->effect->modified_stat eq $effect } $self->character_effects;
+	
+	return $modifier;
 }
 
 1;

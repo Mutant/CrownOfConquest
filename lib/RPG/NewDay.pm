@@ -39,12 +39,13 @@ sub run {
 			'date_started' => DateTime->now(),
 		},
 	);
-	
-	# Run shops update
-	#RPG::NewDay::Shop->run($config, $schema, $new_day);
-	
+		
 	# New day for Party
 	RPG::NewDay::Party->run($config, $schema, $new_day);
+
+	# Run shops update
+	RPG::NewDay::Shop->run($config, $schema, $new_day);
+
 }
 
 1;

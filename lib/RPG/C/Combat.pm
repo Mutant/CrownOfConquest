@@ -265,29 +265,20 @@ sub creature_action : Private {
 
 sub get_combatant_list : Private {
 	my ($self, $c, $characters, $creatures) = @_;
-	
-	warn $creatures;
-	
+		
 	my @combatants;
-	foreach my $character (@$characters) {
-		push @combatants, $character;
-		
-		# Check for Archer's second attack
-		# TODO: currently hardcoded class name and item category, but could be in the DB
-		next unless $character->class->class_name eq 'Archer';
-		
-		my @weapons = $character->get_equipped_item('Weapon');
-				
-		my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
-				
-		# TODO: config or add to DB number of rounds for 2nd attack
-		if ($ranged_weapons > 0) {			
-			$c->session->{rounds_since_last_double_attack}{$character->id}++;
+	foreach my $character (@$characters) {		
+		my @attack_history = @{$c->session->{attack_history}{character}{$character->id}}
+			if $c->session->{attack_history}{character}{$character->id};
 			
-			if ($c->session->{rounds_since_last_double_attack}{$character->id} == 2) {
-				$c->session->{rounds_since_last_double_attack}{$character->id} = 0;
-				push @combatants, $character;
-			}			
+		my $number_of_attacks = $character->number_of_attacks(@attack_history);
+		
+		push @attack_history, $number_of_attacks;	
+		
+		$c->session->{attack_history}{character}{$character->id} = \@attack_history;		
+		
+		for (1..$number_of_attacks) {
+			push @combatants, $character;
 		}
 	}
 	

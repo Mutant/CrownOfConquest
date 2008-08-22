@@ -86,4 +86,25 @@ sub blades : Private {
 	return $character->character_name . " cast Blades on " . $target_char->character_name . ", enhancing his weapon for $duration rounds";
 }
 
+sub haste : Private {
+	my ($self, $c, $character, $target) = @_;
+	
+	my $duration = 2 * (int $character->level / 3 + 1);
+	
+	$c->forward('/magic/create_effect',
+		[{
+			target_type => 'character',
+			target_id => $target,
+			effect_name => 'Haste',
+			duration => $duration,
+			modifier => 0.5,
+			combat => 1,
+			modified_state => 'attack_frequency',
+		}]
+	);
+	
+	my $target_char = $c->stash->{characters}{$target};
+	return $character->character_name . " cast Haste on " . $target_char->character_name . ", speeding his attack for $duration rounds";
+}
+
 1;

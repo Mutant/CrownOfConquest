@@ -9,6 +9,8 @@ use RPG::Schema;
 
 sub db_startup : Test(startup) {
 	my $self = shift;
+	
+	return if $ENV{TEST_NO_DB};
 
 	$self->{schema} = RPG::Schema->connect(
 		{}, # TODO: pass in config

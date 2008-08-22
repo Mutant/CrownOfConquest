@@ -20,8 +20,13 @@ sub login : Local {
 		);
 		
 		if ($user) {
-			$c->session->{player} = $user;
-			$c->res->redirect($c->config->{url_root});
+			if ($user->verified) {
+				$c->session->{player} = $user;
+				$c->res->redirect($c->config->{url_root});
+			}
+			else {
+				$c->res->redirect($c->config->{url_root} . "/player/verify?email=" . $c->req->param('email'));
+			}
 		}
 		else {
 			$message = "Email address and/or password incorrect";	
@@ -42,7 +47,7 @@ sub logout : Local {
 	my ($self, $c) = @_;
 	
 	$c->delete_session;
-	$c->res->redirect($c->config->{url_root});		
+	$c->res->redirect($c->config->{url_root});
 }
 
 sub register : Local {
@@ -67,17 +72,36 @@ sub register : Local {
 			$message = "Please enter your email address, name, password and the CAPTCHA code";
 				
 		}
+		elsif (length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
+			$message = "Password must be at least " . $c->config->{minimum_password_length} . " characters";
+		}
 		else {
+			my $verification_code = String::Random::random_regex('\w{8}');
+			
 			my $player = $c->model('DBIC::Player')->create(
 				{
 					player_name => $c->req->param('player_name'),
 					email => $c->req->param('email'),
 					password => $c->req->param('password1'),
+					verification_code => $verification_code,
 				}
-			);	
+			);
 			
-			$c->session->{player} = $player;
-			$c->res->redirect($c->config->{url_root});
+			my $msg = MIME::Lite->new(
+		        From     => $c->config->{send_email_from},
+		        To       => $c->req->param('email'),
+		        Subject  =>'Verification code',
+		        Data     => "Your verification code is: $verification_code\n",
+		    );
+			$msg->send(
+				'smtp', 
+				$c->config->{smtp_server},
+	       		AuthUser=>$c->config->{smtp_user}, 
+	       		AuthPass=>$c->config->{smtp_pass},
+	       		Debug => 0,
+			);
+			
+			$c->res->redirect($c->config->{url_root} . "/player/verify?email=" . $c->req->param('email'));
 		}
 	}
 	
@@ -144,6 +168,86 @@ sub forgot_password : Local {
 sub captcha : Local {
 	my ($self, $c) = @_;
     $c->create_captcha();
+}
+
+sub change_password : Local {
+	my ($self, $c) = @_;
+	
+	my $message;
+	
+	if ($c->req->param('current_password')) {
+		if ($c->req->param('current_password') ne $c->session->{player}->password) {
+			$c->stash->{error} = "Current password is incorrect";
+		}
+		elsif ($c->req->param('new_password') ne $c->req->param('retyped_password')) {
+			$c->stash->{error} = "New passwords don't match";	
+		}
+		elsif (length $c->req->param('new_password') < $c->config->{minimum_password_length} ) {
+			$c->stash->{error} = "New password must be at least " . $c->config->{minimum_password_length} . " characters";
+		}
+		else {
+			my $player = $c->model('DBIC::Player')->find(
+				player_id => $c->session->{player}->id,
+			);
+			
+			$player->password($c->req->param('new_password'));
+			$player->update;
+			
+			$c->session->{player} = $player;
+			
+			$message = 'Password changed';
+		}
+	}
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'player/change_password.html',
+			params => {
+				message => $message,
+			},
+        }]
+    );
+}
+
+sub verify : Local {
+	my ($self, $c) = @_;
+	
+	my $message;
+	
+	if ($c->req->param('verification_code')) {
+		my $player = $c->model('DBIC::Player')->find(
+			email => $c->req->param('email'),
+		);
+		
+		if ($player) {
+			if ($player->verification_code eq $c->req->param('verification_code')) {
+				$player->verified(1);
+				$player->update;
+				$c->session->{player} = $player;
+				
+				$c->res->redirect($c->config->{url_root});
+				
+				return;
+			}
+			else {
+				$message = "Verifcation code incorrect";
+			}
+		}
+		else {
+			$message = "Can't find that email address... make sure you've already registered";
+		}
+	}
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'player/verify.html',
+			params => {
+				message => $message,
+				email => $c->req->param('email'),
+			},
+			fill_in_form => 1,
+        }]
+    );
 }
 
 1;

@@ -69,4 +69,72 @@ sub test_get_equipped_item : Tests(2) {
 	
 }
 
+sub test_number_of_attacks : Tests(no_plan) {
+	my $self = shift;
+	
+	my $mock_char = Test::MockObject->new();
+	$mock_char->set_always('class',$mock_char);
+	$mock_char->set_true('class_name');
+	
+	
+	$mock_char->set_always('effect_value', 0.5);
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (1,1)),
+		2,
+		'2 attacks allowed this round because of modifier',
+	);
+	
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (1,2)),
+		1,
+		'1 attacks allowed this round because of history',
+	);		
+	
+	$mock_char->set_always('effect_value', 0.33);
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2,1,1)),
+		2,
+		'2 attacks allowed this round because of modifier',
+	);
+	
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2,1)),
+		1,
+		'1 attacks allowed this round because of history',
+	);
+	
+	$mock_char->set_always('effect_value', 1);
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (7,2)),
+		2,
+		'2 attacks allowed this round because of modifier',
+	);
+	
+	$mock_char->set_always('effect_value', 1.5);
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2,2)),
+		3,
+		'3 attacks allowed this round because of modifier',
+	);
+	
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2,3)),
+		2,
+		'2 attacks allowed this round because of modifier',
+	);
+	
+	$mock_char->set_always('effect_value', 1.25);
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2,3,2,2)),
+		2,
+		'2 attacks allowed this round because of history',
+	);
+	
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (3,2,2,2)),
+		3,
+		'3 attacks allowed this round because of modifier',
+	);
+}
+
 1;

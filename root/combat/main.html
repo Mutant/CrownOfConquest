@@ -1,13 +1,6 @@
 [% IF creatures_initiated %]
 	You have been attacked by a group of 
-	[% FOREACH summary IN creature_group.creature_summary %]
-		[% summary.value %] [% summary.key %][% IF summary.value > 1 %]s[% END %]
-		[% IF loop.size > 1 %]
-			[% UNLESS loop.size == loop.count + 1 %],
-			[% ELSE %]and
-			[% END %]
-		[% END %]
-	[% END %]
+	[% INCLUDE combat/creature_group_summary.html creature_group=creature_group %]
 	<br><br>
 [% END %]
 

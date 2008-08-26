@@ -10,7 +10,6 @@ __PACKAGE__->table('Land');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Land');
 
-
 __PACKAGE__->add_columns(
     'land_id' => {
       'data_type' => 'int',

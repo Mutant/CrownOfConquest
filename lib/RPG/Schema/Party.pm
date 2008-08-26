@@ -11,6 +11,8 @@ use POSIX;
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Party');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Party');
+
 __PACKAGE__->add_columns(
     'party_id' => {
       'data_type' => 'int',
@@ -159,17 +161,9 @@ sub movement_factor {
 	
 	return $self->{_movement_factor} if defined $self->{_movement_factor};
 
-	my ($rec) = $self->result_source->schema->resultset('Character')->search(
-		{
-			party_id => $self->id,
-		},
-		{
-			select => { avg => 'constitution' },
-			as => 'avg_con',
-		}
-	);
+	my $avg_con = $self->average_stat('constitution');
 	
-	$self->{_movement_factor} = int $rec->get_column('avg_con') / 3;
+	$self->{_movement_factor} = int $avg_con / 3;
 	
 	return $self->{_movement_factor};
 }
@@ -183,7 +177,7 @@ sub level {
 }
 
 sub _median {
-  sum( ( sort { $a <=> $b } @_ )[ int( $#_/2 ), ceil( $#_/2 ) ] )/2;
+	sum( ( sort { $a <=> $b } @_ )[ int( $#_/2 ), ceil( $#_/2 ) ] )/2;
 }
 
 # Recored turns used whenever number of turns are decreased
@@ -200,6 +194,13 @@ sub turns {
 	}
 	
 	$self->_turns($new_turns);
+}
+
+sub average_stat {
+	my $self = shift;
+	my $stat = shift;
+	
+	return $self->result_source->schema->resultset('Party')->average_stat($self->id, $stat);	
 }
 
 sub new_day {

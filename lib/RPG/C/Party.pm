@@ -28,6 +28,11 @@ sub sector_menu : Local {
     
 	my $creature_group = $c->stash->{creature_group};
 	
+	unless ($creature_group) {
+		$creature_group = $c->stash->{party_location}->creature_group
+			if $c->stash->{party_location}->creature_group;
+	}
+	
 	my $confirm_attack = 0;
 	
 	if ($creature_group) {
@@ -258,6 +263,67 @@ sub details : Local {
 			},
         }]
     );
+}
+
+sub scout : Local {
+	my ($self, $c) = @_;
+	
+	my $party = $c->stash->{party};
+	
+	if ($party->turns < 1) {
+		$c->stash->{error} = "You do not have enough turns to scout";
+		$c->forward('/panel/refresh', ['messages']);
+		return;
+	}
+	
+	my $avg_int = $party->average_stat('intelligence');
+	
+	my $chance_to_scout = $avg_int * $c->config->{scout_chance_per_int};
+	$chance_to_scout = $c->config->{max_chance_scout} if $chance_to_scout > $c->config->{max_chance_scout};
+	
+	my @creatures;
+	
+	if (Games::Dice::Advanced->roll('1d100') < $chance_to_scout) {
+		# Scout was successful, see what monsters are about
+		my ($start_point, $end_point) = RPG::Map->surrounds(
+	    	$party->location->x,
+	    	$party->location->y,
+	    	3,
+	    	3,
+		);
+		
+		my $search_rs = $c->model('Land')->get_party_grid(
+	    	start_point  => $start_point,
+	    	end_point    => $end_point,
+	    	centre_point => {
+				x => $party->location->x,
+	    		y => $party->location->y,
+	    	},
+	    	party_id => $c->stash->{party}->id,    	
+	    );
+	    
+	    while (my $sector = $search_rs->next) {
+	    	next if $sector->x == $party->location->x && $sector->y == $party->location->y;
+	    	if ($sector->creature_group) {
+	    		push @creatures, $sector;	
+	    	}
+	    }	
+	}
+
+    $c->stash->{messages} = $c->forward('RPG::V::TT',
+        [{
+            template => 'party/scout_messages.html',
+			params => {
+            	creatures_scouted => \@creatures,
+			},
+			return_output => 1,
+        }],
+    );
+    
+    $party->turns($party->turns-1);
+    $party->update;
+	
+	$c->forward('/panel/refresh', ['messages', 'party_status']);
 }
 
 1;

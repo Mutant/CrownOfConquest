@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use Carp qw(cluck);
 
 #
 # Sets the actions in this controller to be registered with no prefix
@@ -67,7 +68,7 @@ sub auto : Private {
     	$c->res->redirect($c->config->{url_root} . '/party/create/create');
     	return 0;
     }
-    
+        
     return 1;
     
 }
@@ -76,6 +77,43 @@ sub default : Private {
     my ( $self, $c ) = @_;
     
 	$c->forward('/party/main');
+}
+
+sub end : Private {
+	my ( $self, $c ) = @_;
+
+    if ( scalar @{ $c->error } ) {
+    	# Log error message
+    	$c->log->error('An error occured...');
+    	$c->log->error("Action: " . $c->action);
+    	$c->log->error("Path: " . $c->req->path);
+    	$c->log->error("Params: " . Dumper $c->req->params);
+    	$c->log->error("Player: " . $c->session->{player}->id) if $c->session->{player};
+    	$c->log->error("Party: " . $c->stash->{party}->id) if $c->stash->{party};
+
+    	foreach my $err_str (@{ $c->error }) {
+    		$c->log->error($err_str);
+    	}
+        
+        # Display error page        
+        $c->forward('RPG::V::TT',
+ 	       [{
+				template => 'error.html',
+				params => {
+					error_msgs => $c->error,
+				},
+		   }]
+		);            
+
+        $c->error(0);
+	}
+
+    return 1 if $c->response->status =~ /^3\d\d$/;
+    return 1 if $c->response->body;
+
+    unless ( $c->response->content_type ) {
+        $c->response->content_type('text/html; charset=utf-8');
+    }
 }
 
 1;

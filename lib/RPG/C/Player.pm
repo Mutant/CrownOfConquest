@@ -13,6 +13,7 @@ sub login : Local {
 	my $message;
 	
 	if ($c->req->param('email')) {
+
 		my $user = $c->model('DBIC::Player')->find(
 			{
 				email => $c->req->param('email'),

@@ -167,9 +167,7 @@ Move the party to a new location
 
 sub move_to : Local {
     my ($self, $c) = @_;
-    
-    #my $party = $c->stash->{party};
-    
+        
     my $new_land = $c->model('Land')->find( 
     	$c->req->param('land_id'),
     	{
@@ -197,26 +195,11 @@ sub move_to : Local {
 	    $c->stash->{party}->land_id($c->req->param('land_id'));
 	    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
 	    
-		# See if party is in same location as a creature
-	    my $creature_group = $c->model('DBIC::CreatureGroup')->find(
-	        {
-	            'location.x' => $new_land->x,
-	            'location.y' => $new_land->y,
-	        },
-	        {
-	            prefetch => [('location', {'creatures' => 'type'})],
-	        },
-	    );		    
-		    
-	    # If there are creatures here, check to see if we go straight into a combat
+	    my $creature_group = $c->forward('/combat/check_for_attack', [$new_land]);
+	    		    
+	    # If creatures attacked, refresh party panel
 	    if ($creature_group) {
-	    	$c->stash->{creature_group} = $creature_group;
-	    		    	
-	    	if ($creature_group->initiate_combat($c->stash->{party})) {
-	        	$c->stash->{party}->in_combat_with($creature_group->id);
-	        	$c->stash->{creatures_initiated} = 1;
-	        	push @{ $c->stash->{refresh_panels} }, 'party';
-	    	}
+	        push @{ $c->stash->{refresh_panels} }, 'party';
     	}	
 	    
 	    $c->stash->{party}->update;

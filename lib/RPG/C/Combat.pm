@@ -9,6 +9,78 @@ use Carp;
 
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
+use DateTime;
+
+sub auto : Private {
+	my ($self, $c) = @_;
+
+	# Load combat_log into stash (if we're in combat)
+	if ($c->stash->{party}->in_combat_with) {
+		$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->find(
+			{
+				party_id => $c->stash->{party}->id,
+				creature_group_id => $c->stash->{party}->in_combat_with,
+				land_id => $c->stash->{party_location}->id,
+				encounter_ended => undef,
+			},
+		);
+		
+		unless ($c->stash->{combat_log}) {
+			$c->error('No combat log found for in progress combat');
+			return 0;	
+		}
+	}
+	
+	return 1;
+}
+
+sub end : Private {
+	my ($self, $c) = @_;
+	
+	# Save any changes to the combat log
+    $c->stash->{combat_log}->update if $c->stash->{combat_log};	
+}
+
+# Check to see if creatures attack party (if there are any in their current sector)
+sub check_for_attack : Local {
+	my ($self, $c, $new_land) = @_;
+	
+	# See if party is in same location as a creature
+	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
+        {
+            'location.x' => $new_land->x,
+            'location.y' => $new_land->y,
+        },
+        {
+            prefetch => [('location', {'creatures' => 'type'})],
+        },
+    );
+		    
+    # If there are creatures here, check to see if we go straight into a combat
+    if ($creature_group) {
+    	$c->stash->{creature_group} = $creature_group;
+	    		    	
+    	if ($creature_group->initiate_combat($c->stash->{party})) {
+        	$c->stash->{party}->in_combat_with($creature_group->id);
+        	$c->stash->{party}->update;
+        	$c->stash->{creatures_initiated} = 1;
+        	
+        	$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
+				{
+					party_id => $c->stash->{party}->id,
+					creature_group_id => $creature_group->id,
+					land_id  => $new_land->id,
+					encounter_started => DateTime->now(),
+					combat_initiated_by => 'creatures',
+					party_level => $c->stash->{party}->level,
+					creature_group_level => $creature_group->level,
+				},
+			);
+        	
+        	return $creature_group;    
+    	}
+   	}	
+}
 
 sub party_attacks : Local {
 	my ($self, $c) = @_;
@@ -28,6 +100,19 @@ sub party_attacks : Local {
 	if ($creature_group) {
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
+		
+		$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
+			{
+				party_id => $c->stash->{party}->id,
+				creature_group_id => $creature_group->id,
+				land_id  => $c->stash->{party_location}->id,
+				encounter_started => DateTime->now(),
+				combat_initiated_by => 'party',
+				party_level => $c->stash->{party}->level,
+				creature_group_level => $creature_group->level,
+			},
+		);
+		
 		$c->forward('/panel/refresh', ['messages', 'party']);
 	}
 	else {
@@ -169,6 +254,8 @@ sub fight : Local {
     
     $c->stash->{party}->turns($c->stash->{party}->turns - 1);
     $c->stash->{party}->update;
+    
+    $c->stash->{combat_log}->rounds($c->stash->{combat_log}->rounds+1);
   
 	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
@@ -206,6 +293,9 @@ sub character_action : Private {
 	    if ($creature->is_dead && $creature_group->number_alive == 0) {	    	
 	    	# We don't actually do any of the stuff to complete the combat here, so a
 	    	#  later action can still display monsters, messages, etc.
+	    	$c->stash->{combat_log}->outcome('party_won');
+	    	$c->stash->{combat_log}->encounter_ended(DateTime->now());
+	    	
 	    	$c->stash->{combat_complete} = 1;
 	    }
 	    
@@ -222,6 +312,8 @@ sub character_action : Private {
 		
 		$character->last_combat_action('Defend');
 		$character->update;
+		
+		$c->stash->{combat_log}->spells_cast($c->stash->{combat_log}->spells_cast+1);
 		
 		return $message;
 	}
@@ -332,6 +424,15 @@ sub attack : Private {
 		
 		$defender->hit($damage);
 		
+		# Record damage in combat log
+		my $damage_col = $attacker->is_character ? 'total_character_damage' : 'total_creature_damage';
+		$c->stash->{combat_log}->set_column($damage_col, $c->stash->{combat_log}->get_column($damage_col) + $damage);
+		
+		if ($defender->is_dead) {
+			my $death_col = $defender->is_character ? 'character_deaths' : 'creature_deaths';	
+			$c->stash->{combat_log}->set_column($death_col, $c->stash->{combat_log}->get_column($death_col) + 1);
+		} 
+		
 		$c->log->debug("Damage: $damage");
 	}	
 	
@@ -364,6 +465,9 @@ sub flee : Local {
     	
     	$c->stash->{messages} = "You got away!";
     	
+    	$c->stash->{combat_log}->outcome('party_fled');
+    	$c->stash->{combat_log}->encounter_ended(DateTime->now());
+    	
     	$c->forward('/panel/refresh', ['messages', 'map', 'party', 'party_status']);
 	}
 	else {
@@ -385,6 +489,9 @@ sub creatures_flee : Private {
 	$c->stash->{party}->update;
 	
 	$c->stash->{messages} = "The creatures fled!";
+	
+	$c->stash->{combat_log}->outcome('creatures_fled');
+	$c->stash->{combat_log}->encounter_ended(DateTime->now());
 	
 	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
@@ -473,16 +580,21 @@ sub finish : Private {
 
 	$c->stash->{party}->in_combat_with(undef);
 	$c->stash->{party}->gold($c->stash->{party}->gold + $gold);
-	$c->stash->{party}->update;	
+	$c->stash->{party}->update;
+	
+	$c->stash->{combat_log}->gold_found($gold);
+	$c->stash->{combat_log}->xp_awarded($xp);
+	$c->stash->{combat_log}->encounter_ended(DateTime->now());
 	
 	# Remove character effects from this combat
+	# TODO: needs to be done after fleeing...
     foreach my $character ($c->stash->{party}->characters) {
     	foreach my $effect ($character->character_effects) {
     		$effect->delete if $effect->effect->combat;	
     	}
     }
 	
-	$c->stash->{creature_group}->delete;
+	#$c->stash->{creature_group}->delete;
 	
 	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
 	$c->stash->{party_location}->update;

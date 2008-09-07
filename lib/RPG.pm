@@ -27,6 +27,7 @@ our $VERSION = '0.01';
 #
 
 __PACKAGE__->setup( qw/
+	-Debug
 	-Stats 
 	ConfigLoader 
 	Static::Simple 

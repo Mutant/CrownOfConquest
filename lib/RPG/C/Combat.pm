@@ -65,17 +65,7 @@ sub check_for_attack : Local {
         	$c->stash->{party}->update;
         	$c->stash->{creatures_initiated} = 1;
         	
-        	$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
-				{
-					party_id => $c->stash->{party}->id,
-					creature_group_id => $creature_group->id,
-					land_id  => $new_land->id,
-					encounter_started => DateTime->now(),
-					combat_initiated_by => 'creatures',
-					party_level => $c->stash->{party}->level,
-					creature_group_level => $creature_group->level,
-				},
-			);
+        	$c->forward('create_combat_log', [$creature_group, 'creatures']);
         	
         	return $creature_group;    
     	}
@@ -101,23 +91,40 @@ sub party_attacks : Local {
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
 		
-		$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
-			{
-				party_id => $c->stash->{party}->id,
-				creature_group_id => $creature_group->id,
-				land_id  => $c->stash->{party_location}->id,
-				encounter_started => DateTime->now(),
-				combat_initiated_by => 'party',
-				party_level => $c->stash->{party}->level,
-				creature_group_level => $creature_group->level,
-			},
-		);
+		$c->forward('create_combat_log', [$creature_group, 'party']);
+		
 		
 		$c->forward('/panel/refresh', ['messages', 'party']);
 	}
 	else {
 		$c->error("Couldn't find creature group in party's location.");
 	}		
+}
+
+sub create_combat_log : Private {
+	my ($self, $c, $creature_group, $initiated_by) = @_;
+
+	my $current_day = $c->model('DBIC::Day')->find(
+		{			
+		},
+		{
+			select => {max => 'day_number'},
+			as => 'current_day'
+		},
+	)->get_column('current_day');	
+		
+	$c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
+		{
+			party_id => $c->stash->{party}->id,
+			creature_group_id => $creature_group->id,
+			land_id  => $c->stash->{party_location}->id,
+			encounter_started => DateTime->now(),
+			combat_initiated_by => $initiated_by,
+			party_level => $c->stash->{party}->level,
+			creature_group_level => $creature_group->level,
+			game_day => $current_day,
+		},
+	);	
 }
 
 sub main : Local {
@@ -594,7 +601,8 @@ sub finish : Private {
     	}
     }
 	
-	#$c->stash->{creature_group}->delete;
+	$c->stash->{creature_group}->land_id(undef);
+	$c->stash->{creature_group}->update;
 	
 	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
 	$c->stash->{party_location}->update;

@@ -171,4 +171,40 @@ sub _get_party_health {
 	return ($cost_to_heal, @dead_chars);	
 }
 
+sub news : Local {
+	my ($self, $c) = @_;
+	
+	my $current_day = $c->model('DBIC::Day')->find(
+		{			
+		},
+		{
+			select => {max => 'day_number'},
+			as => 'current_day'
+		},
+	)->get_column('current_day');	
+	
+	my @logs = $c->model('DBIC::Combat_Log')->get_logs_around_sector(
+		$c->stash->{party_location}->x,
+		$c->stash->{party_location}->y,
+		$c->config->{combat_news_x_size},
+		$c->config->{combat_news_y_size},
+		$current_day - $c->config->{combat_news_day_range},	
+	);	
+
+	my $panel = $c->forward('RPG::V::TT',
+        [{
+            template => 'town/news.html',
+			params => {
+				town => $c->stash->{party_location}->town,
+				combat_logs => \@logs,
+			},
+			return_output => 1,
+        }]
+    );
+    
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+
+	$c->forward('/panel/refresh');
+}
+
 1;

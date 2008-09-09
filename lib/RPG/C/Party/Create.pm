@@ -15,8 +15,6 @@ sub auto : Private {
     	$c->stash->{party} = $c->model('DBIC::Party')->find_or_create(
     		{
     			player_id => $c->session->{player}->id,
-    			turns => $c->config->{daily_turns},
-    			gold => $c->config->{start_gold},
     		},
     	)
     }
@@ -147,6 +145,8 @@ sub create_character : Local {
     });
     
     $character->roll_all;
+    
+    $character->set_default_spells;
 
     $c->res->redirect($c->config->{url_root} . '/party/create');
 }
@@ -172,10 +172,10 @@ sub calculate_values : Local {
 	        hit_points => RPG::Schema::Character->roll_hit_points($c->req->param('class'), 1, $c->req->param('total_con'))
 	    );
 	    
-	    $points{magic_points} = RPG::Schema::Character->roll_magic_points(1, $c->req->param('total_int'))
+	    $points{magic_points} = RPG::Schema::Character->roll_spell_points(1, $c->req->param('total_int'))
 	        if $class->class_name eq 'Mage';
 	    
-	    $points{faith_points} = RPG::Schema::Character->roll_faith_points(1, $c->req->param('total_div'))
+	    $points{faith_points} = RPG::Schema::Character->roll_spell_points(1, $c->req->param('total_div'))
 	        if $class->class_name eq 'Priest';
 	                
 	    $return = to_json(\%points);
@@ -187,6 +187,10 @@ sub calculate_values : Local {
 
 sub complete : Local {
 	my ($self, $c) = @_;
+	
+	$c->stash->{party}->turns($c->config->{daily_turns});
+    $c->stash->{party}->gold ($c->config->{start_gold});	
+	$c->stash->{party}->update;
 	
     $c->forward('RPG::V::TT',
         [{

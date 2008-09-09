@@ -322,8 +322,8 @@ sub memorise_spell : Local {
 	);
 	
 	return unless $spell;
-			
-	if ($spell->points * $c->req->param('number') > $character->spell_points - $character->spell_points_used) {
+	
+	if ($spell->points * $c->req->param('number') > $character->spell_points - $character->spell_points_used($spell->id)) {
 		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise " . $spell->spell_name;	
 	}
 	else {

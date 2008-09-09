@@ -66,8 +66,13 @@ sub roll_all {
     my %rolls;
     
     $rolls{hit_points}   = $self->roll_hit_points;
-    $rolls{magic_points} = $self->roll_magic_points;
-    $rolls{faith_points} = $self->roll_faith_points;
+    
+    if ($self->class->class_name eq 'Mage') {
+    	$rolls{magic_points} = $self->roll_spell_points;
+    }
+    elsif ($self->class->class_name eq 'Priest') {
+    	$rolls{faith_points} = $self->roll_spell_points;
+    }
     
     $self->update;
     
@@ -118,33 +123,18 @@ sub roll_hit_points {
     }
 }
 
-sub roll_magic_points {
+sub roll_spell_points {
     my $self = shift;
     
-    my $point_max = RPG->config->{level_magic_points_max};
+    my $point_max = RPG->config->{level_spell_points_max};
+    my $point_min = RPG->config->{level_spell_points_min};
     
     if (ref $self) {
-        return unless $self->class->class_name eq 'Mage';
-        my $points = $self->_roll_points('intelligence',$point_max);
-        $self->spell_points($self->spell_points + $points);
+        return unless $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage';
         
-        return $points;
-    }
-    else {
-        my $level = shift || croak 'Level not supplied';
-        my $int = shift || croak 'Intelligence not supplied';
-        return $self->_roll_points($level, $int, $point_max);
-    }
-}
-
-sub roll_faith_points {
-    my $self = shift;
-    
-    my $point_max = RPG->config->{level_faith_points_max};
-    
-    if (ref $self) {
-        return unless $self->class->class_name eq 'Priest';
-        my $points = $self->_roll_points('divinity',$point_max);
+        my $stat = $self->class->class_name eq 'Priest' ? 'divinity' : 'intelligence';
+        
+        my $points = $self->_roll_points($stat,$point_max,$point_min);
         
         $self->spell_points($self->spell_points + $points);
         
@@ -153,8 +143,8 @@ sub roll_faith_points {
     
     else {
         my $level = shift || croak 'Level not supplied';
-        my $div = shift || croak 'Divinity not supplied';
-        return $self->_roll_points($level, $div, $point_max);
+        my $div = shift || croak 'Stat value not supplied';
+        return $self->_roll_points($level, $div, $point_max, $point_min);
     }
 }
 
@@ -166,8 +156,6 @@ sub _roll_points {
     if (ref $self) {
         $level = $self->level;
         $stat = $self->get_column(shift);
-        warn "level: $level\n";
-        warn "stat: $stat\n";
     }    
     else {
         $level = shift || croak 'Level not supplied';    
@@ -175,12 +163,48 @@ sub _roll_points {
     }        
     
     my $point_max = shift || croak 'point_max not supplied';
+    my $point_min = shift || 1;
     
-    my $points = $level == 1 ? $point_max : int rand $point_max;
+    my $points = $level == 1 ? $point_max : Games::Dice::Advanced->roll('1d' . $point_max - $point_min) + $point_min-1;
     
     $points += $self->point_bonus($stat);
     
     return $points;
+}
+
+# Set the default spells for a new char (if they're of the appropriate class)
+sub set_default_spells {
+	my $self = shift;
+	
+	return unless $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage';
+	
+	# Get all the spells for this class, sorted by points ascending
+	my @spells = $self->result_source->schema->resultset('Spell')->search(
+		{
+			class_id => $self->class->id,
+		},
+		{
+			order_by => 'points',
+		},
+	);
+	
+	my $spell_points_used = 0;
+	foreach my $spell (@spells) {
+		last if $self->spell_points < $spell_points_used + $spell->points;
+		
+		my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->create(
+			{
+				character_id => $self->id,
+				spell_id => $spell->id,			
+				memorised_today => 1,
+				memorise_count => 1,
+				memorise_tomorrow => 1,
+				memorise_count_tomorrow => 1,	
+			},
+		);	
+		
+		$spell_points_used+=$spell->points;
+	}
 }
 
 sub attack_factor {
@@ -442,13 +466,21 @@ sub resurrect_cost {
 }
 
 # Number of prayer or magic points used for spells memorised tomorrow
+#  Takes optional parameter of a spell to *exclude* from this count 
 sub spell_points_used {
 	my $self = shift;
+	my $exclude_spell_id = shift;
+	
+	my %where;
+	if ($exclude_spell_id) {
+		$where{'spell_id'} = {'!=', $exclude_spell_id};
+	}
 	
 	my $result = $self->result_source->schema->resultset('Memorised_Spells')->find(
 		{
 			character_id => $self->id,
 			memorise_tomorrow => 1,
+			%where,
 		},
 		{
 			join => 'spell',

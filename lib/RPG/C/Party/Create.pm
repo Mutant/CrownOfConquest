@@ -95,6 +95,7 @@ sub new_character : Local {
                     races => [ $c->model('Race')->all ],
                     classes => [ $c->model('Class')->all ],
                     stats_pool => $c->config->{stats_pool},
+                    stat_max => $c->config->{stat_max},
                 },
                 fill_in_form => 1,
             }]

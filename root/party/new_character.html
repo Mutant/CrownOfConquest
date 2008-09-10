@@ -79,18 +79,26 @@ function calculateTotal(stat) {
 	input = Number(String(document.getElementsByName('mod_' + stat)[0].value));
 
 	base  = document.getElementsByName('base_' + stat)[0];
+	
+	var new_total = input + Number(String(base.value));
+
+	if (new_total > [% stat_max %]) {
+		mod = document.getElementsByName('mod_' + stat)[0];
+		mod.value = [% stat_max %] - base.value;
+		new_total = [% stat_max %];
+		dojo.byId('error-message').innerHTML = 
+			"You've exceeded the maximum value for a stat. Stats can be no bigger than [% stat_max %] for a new character";
+       	dijit.byId('error').show();
+	}
+
     total = document.getElementsByName('total_disp_' + stat)[0];
-    total.value = input + Number(String(base.value));
+    total.value = new_total;
 
 	if (total.value == 'NaN') {
 		total.value = base.value;
 	}
-	
-	console.log(stat);
-	console.log(dojo.byId('total_' + stat));
+
 	dojo.byId('total_' + stat).value = total.value;
-	console.log(total.value);
-	console.log(dojo.byId('total_' + stat).value);
 
 	var pool = [% stats_pool %];
 	for (var i=0; i<Stats.length; i++) {
@@ -103,7 +111,13 @@ function calculateTotal(stat) {
 
 <form name="form" method="post" id="form" action="[% base %]/party/create/create_character">
 
-<fieldset id="basic">
+<style>
+#stats-set input { width: 65px }
+
+.stat-header { display: block; float: left; width: 60px;  }
+</style>
+
+<fieldset id="basic" class="char-form">
 <legend>Basic Information</legend>
 <label for="character_name">Character Name:</label>
 <input type="text" size="50" name="name" id="character_name"><br>
@@ -125,7 +139,10 @@ function calculateTotal(stat) {
 </select><br>
 </fieldset>
 
-<fieldset id="stats-set">
+<p>Add points from the stats pool in the "Modifier" column to increase your character's stats. 
+Stats can be no higher than [% stat_max %] (for a new character).</p>
+
+<fieldset id="stats-set" class="char-form">
 <legend>Stats</legend>
 
 <label></label>

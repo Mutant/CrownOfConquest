@@ -448,11 +448,9 @@ sub xp {
 		
 		my %rolls = $self->roll_all;
 		
-		# Check for Stat point addition
-		if ($self->level % RPG->config->{levels_per_stat_point} == 0) {
-			$self->stat_points($self->stat_points+1);
-			$rolls{stat_points} = 1;	
-		}
+		# Add stat points
+		$self->stat_points($self->stat_points+RPG::Schema->config->{stat_points_per_level});
+		$rolls{stat_points} = RPG::Schema->config->{stat_points_per_level};
 		
 		return \%rolls; 
 	}

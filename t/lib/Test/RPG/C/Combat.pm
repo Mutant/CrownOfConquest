@@ -12,7 +12,7 @@ use Test::More;
 
 use Data::Dumper;
 
-sub startup : Test(startup => 1) {
+sub startup : Test(startup=>1) {
 	my $self = shift;
 	
 	$self->{dice} = Test::MockObject->fake_module( 
@@ -36,7 +36,7 @@ sub shutdown : Test(shutdown) {
 	delete $INC{'Games/Dice/Advanced.pm'};	
 }
 
-sub test_finish : Tests(17) {
+sub test_finish : Tests(18) {
 	my $self = shift;
 	
 	my @creatures;
@@ -49,7 +49,8 @@ sub test_finish : Tests(17) {
 	}
 	my $mock_cg = Test::MockObject->new();
 	$mock_cg->set_bound('creatures', \@creatures);
-	$mock_cg->set_true('delete');
+	$mock_cg->set_true('land_id');
+	$mock_cg->set_true('update');
 	$mock_cg->set_always('level', 1);
 
 	my @characters;
@@ -59,6 +60,7 @@ sub test_finish : Tests(17) {
 		$mock_character->set_always('character_name', "char$_");
 		$mock_character->set_always('xp', 50);
 		$mock_character->set_true('update');
+		$mock_character->mock('character_effects', sub {return ()});
 		$mock_character->set_false('is_dead');
 		push @characters, $mock_character;
 	}
@@ -72,10 +74,16 @@ sub test_finish : Tests(17) {
 	$mock_party_location->set_always('creature_threat', 5);
 	$mock_party_location->set_always('update');
 	
+	my $mock_combat_log = Test::MockObject->new();
+	$mock_combat_log->set_true('gold_found');
+	$mock_combat_log->set_true('xp_awarded');
+	$mock_combat_log->set_true('encounter_ended');
+	
 	$self->{stash} = {
 		creature_group => $mock_cg,
 		party => $mock_party,
 		party_location => $mock_party_location,
+		combat_log => $mock_combat_log,
 	};	
 	
 	$self->{roll_result} = 5;
@@ -115,7 +123,8 @@ sub test_finish : Tests(17) {
 	
 	$mock_party->called_ok('update', 'Party updated');
 	
-	$mock_cg->called_ok('delete', 'Creature group deleted');
+	is($mock_cg->call_pos(3), 'land_id', 'Creature group land id changed');
+	is($mock_cg->call_pos(4), 'update', 'Creature group updated');
 	
 	is($mock_party_location->call_pos(2), 'creature_threat', "Create threat modified");
 	@args = $mock_party_location->call_args(2);	

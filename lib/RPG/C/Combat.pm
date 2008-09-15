@@ -615,7 +615,6 @@ sub finish : Private {
     		$effect->delete if $effect->effect->combat;	
     	}
     }
-	
 	$c->stash->{creature_group}->land_id(undef);
 	$c->stash->{creature_group}->update;
 	

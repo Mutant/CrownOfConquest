@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Item_Category');
 
-__PACKAGE__->add_columns(qw/item_category_id item_category super_category_id/);
+__PACKAGE__->add_columns(qw/item_category_id item_category super_category_id hidden/);
 __PACKAGE__->set_primary_key('item_category_id');
 
 __PACKAGE__->has_many(

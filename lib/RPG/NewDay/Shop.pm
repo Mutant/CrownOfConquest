@@ -17,9 +17,12 @@ sub run {
 	
 	# Get list of item types, as we only need to get it once
 	my @item_types = $schema->resultset('Item_Type')->search( 
-		{}, 
+		{
+			'category.hidden' => 0,
+		}, 
 		{ 
 			prefetch => {'item_variable_params' => 'item_variable_name'}, 
+			join => 'category',
 		},
 	);
 	my %item_types_by_prevalence;

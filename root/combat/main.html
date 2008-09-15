@@ -4,7 +4,7 @@
 	<br><br>
 [% END %]
 
-[% UNLESS combat_complete %]
+[% UNLESS combat_complete || party_dead %]
 <a href="javascript:getPanels('/combat/fight')">Fight!</a> <a href="javascript:getPanels('/combat/flee')">Flee!</a>
 
 <br><br>
@@ -19,4 +19,8 @@
 	<li>[% message %]</li>
 	[% END %]
 </ul>
+
+[% IF party_dead %]
+	Your party has been wiped out! <a href="[% base %]">Click to Restart your party.</a>
+[% END %]
 [% END %]

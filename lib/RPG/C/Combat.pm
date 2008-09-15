@@ -117,7 +117,7 @@ sub create_combat_log : Private {
 		{
 			party_id => $c->stash->{party}->id,
 			creature_group_id => $creature_group->id,
-			land_id  => $c->stash->{party_location}->id,
+			land_id  => $creature_group->location->id,
 			encounter_started => DateTime->now(),
 			combat_initiated_by => $initiated_by,
 			party_level => $c->stash->{party}->level,
@@ -144,7 +144,7 @@ sub main : Local {
 	
 	if ($c->stash->{combat_complete}) {
 		$c->forward('/combat/finish');
-	}
+	}	
 
 	return $c->forward('RPG::V::TT',
         [{
@@ -154,6 +154,7 @@ sub main : Local {
 				creatures_initiated => $c->stash->{creatures_initiated},
 				combat_messages => $c->stash->{combat_messages},
 				combat_complete => $c->stash->{combat_complete},
+				party_dead => $c->stash->{party}->defunct ? 1 : 0,
 			},
 			return_output => 1,
         }]
@@ -245,7 +246,7 @@ sub fight : Local {
 			}
 		}
 		
-		last if $c->stash->{combat_complete};
+		last if $c->stash->{combat_complete} || $c->stash->{party}->defunct;
 	}
 		
 	push @{ $c->stash->{combat_messages} }, $c->forward('RPG::V::TT',
@@ -330,6 +331,7 @@ sub creature_action : Private {
 	my ($self, $c, $creature, $party) = @_;
 		
 	my @characters = sort { $a->party_order <=> $b->party_order } $party->characters;
+	@characters = grep { ! $_->is_dead } @characters; # Get rid of corpses 
 	
 	# Figure out whether creature will target front or back rank
 	my $rank_pos = $c->stash->{party}->rank_separator_position;
@@ -345,12 +347,14 @@ sub creature_action : Private {
 		}
 	}
 	
-	my $character;	
-	my $count; # XXX this is just here to stop things looping forever if the party is dead
+	# Go back to original list if there's nothing in characters (i.e. there are only dead (or no) chars in this rank)
+	@characters = $party->characters unless scalar @characters > 0;
+	 
+	my $character;
 	do {
 		my $rand = int rand($#characters + 1);
 		$character = $characters[$rand];
-	} while ($character->is_dead && $count++ < 50);
+	} while ($character->is_dead);
 		
 	my $defending = $character->last_combat_action eq 'Defend' ? 1 : 0;
 		
@@ -358,6 +362,17 @@ sub creature_action : Private {
 	$c->session->{attack_count}{$character->id}++;
 			
 	my $damage = $c->forward('attack', [$creature, $character, $defending]);
+	    
+	# Check for wiped out party
+	if ($character->is_dead && $party->number_alive == 0) {
+	   	$c->stash->{combat_log}->outcome('creatures_won');
+	   	$c->stash->{combat_log}->encounter_ended(DateTime->now());
+	   	
+	   	$party->defunct(DateTime->now());
+	   	$party->update;
+	    	
+	   	#$c->stash->{party_dead} = 1;
+	}
 	    
 	return [$character, $damage];
 }

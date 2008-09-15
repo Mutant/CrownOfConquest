@@ -182,6 +182,7 @@ sub set_default_spells {
 	my @spells = $self->result_source->schema->resultset('Spell')->search(
 		{
 			class_id => $self->class->id,
+			hidden => 0,
 		},
 		{
 			order_by => 'points',

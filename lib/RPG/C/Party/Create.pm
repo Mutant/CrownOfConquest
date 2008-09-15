@@ -15,6 +15,7 @@ sub auto : Private {
     	$c->stash->{party} = $c->model('DBIC::Party')->find_or_create(
     		{
     			player_id => $c->session->{player}->id,
+    			defunct => undef,
     		},
     	)
     }
@@ -50,12 +51,14 @@ sub save_party : Local {
 	my ($self, $c) = @_;
 	
 	$c->stash->{party}->name($c->req->param('name'));
-	$c->stash->{party}->update;
 	
 	if ($c->req->param('add_character')) {
-		$c->res->redirect($c->config->{url_root} . '/party/create/new_character');	
+		$c->stash->{party}->update;
+		$c->res->redirect($c->config->{url_root} . '/party/create/new_character');			
 	}
 	else {
+		$c->stash->{party}->turns($c->config->{starting_turns});
+    	$c->stash->{party}->gold ($c->config->{start_gold});
 		$c->stash->{party}->created(DateTime->now());
 
 		# Find starting town
@@ -70,7 +73,7 @@ sub save_party : Local {
 	
 		$c->stash->{party}->update;
 		
-		$c->res->redirect($c->config->{url_root} . '/party/create/complete');
+		$c->res->redirect($c->config->{url_root} . '/party/new_party_message');
 	}
 }
 
@@ -118,13 +121,13 @@ sub create_character : Local {
     }
 
     my $total_mod_points = 0;
-    foreach my $stat (@RPG::M::Character::STATS) {
+    foreach my $stat (@RPG::Schema::Character::STATS) {
         $total_mod_points += $c->req->param('mod_' . $stat);
     }
 
     if ($total_mod_points > $c->config->{stats_pool}) {
         $c->stash->{error} = "You've used more than the total stats pool!";
-        $c->detach('/party/new_character');
+        $c->detach('/party/create/new_character');
     }
 
     my $race = $c->model('Race')->find( $c->req->param('race') );
@@ -184,24 +187,6 @@ sub calculate_values : Local {
 	}
     
     $c->res->body($return);
-}
-
-sub complete : Local {
-	my ($self, $c) = @_;
-	
-	$c->stash->{party}->turns($c->config->{daily_turns});
-    $c->stash->{party}->gold ($c->config->{start_gold});	
-	$c->stash->{party}->update;
-	
-    $c->forward('RPG::V::TT',
-        [{
-            template => 'party/complete.html',
-            params => {
-            	party => $c->stash->{party},
-            	town => $c->stash->{party}->location->town,
-        	},
-    	}]
-	);	
 }
 
 1;

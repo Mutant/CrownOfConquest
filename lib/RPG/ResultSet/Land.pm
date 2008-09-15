@@ -35,33 +35,40 @@ sub get_x_y_range {
 sub get_party_grid {
 	my $self = shift;	
 	
-	my %params = @_;	 
-	 
-	return $self->search(
-        {
-            'x' => {'>=', $params{start_point}->{x},'<=', $params{end_point}->{x}},
-            'y' => {'>=', $params{start_point}->{y},'<=', $params{end_point}->{y}},
-            'party_id' => [$params{party_id}, undef],
-        },
-        {
-        	prefetch => ['terrain', 'mapped_sector', 'town'],
-        	'+select' => [ _get_next_to_coords_column($params{centre_point}->{x}, $params{centre_point}->{y}) ],
-        	'+as' => ['next_to_centre'],
-        },
-    );    
-}
-
-# Return a hashref with the criteria for a column that is true/false depending on whether it's next to the x/y coords passed in 
-sub _get_next_to_coords_column {
-	my ($x, $y) = @_;
+	my %params = @_;
 	
-	croak "x and y not supplied" unless $x && $y;
+	my $dbh = $self->result_source->schema->storage->dbh;
+	#$dbh->trace(2);
 
-	return 
-		{ '' => 
-			'(x >= ' . ($x-1) . ' and x <= ' . ($x+1) . 
-        	') and (y >= ' . ($y-1) . ' and y <= ' . ($y+1) .
-        	") and (y!=$y or x!=$x)"
-	}
+	my $sql = <<SQL;
+SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (y!=? or x!=?) ) as next_to_centre, 
+	terrain.terrain_id, terrain.terrain_name, terrain.image, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
+	mapped_sector.party_id, mapped_sector.date_stored, town.town_id, town.town_name, town.prosperity 
+	
+	FROM Land me  
+	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id ) 
+	LEFT JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? ) 
+	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
+	WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )
+SQL
+	
+	my $result = $dbh->selectall_arrayref( 
+		$sql,
+		{ Slice => {} }, 
+		$params{centre_point}->{x}-1,
+		$params{centre_point}->{x}+1,
+		$params{centre_point}->{y}-1,
+		$params{centre_point}->{y}+1,
+		$params{centre_point}->{x},
+		$params{centre_point}->{y},				
+		$params{party_id},
+		$params{start_point}->{x}, 
+		$params{end_point}->{x},
+		$params{start_point}->{y},
+		$params{end_point}->{y},
+	);
+	
+	return $result;
 }
+
 1;

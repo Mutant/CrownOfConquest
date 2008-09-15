@@ -92,7 +92,7 @@ sub generate_grid : Private {
                                     
 	$c->stats->profile("Got start and end point");       
 	
-    my $search_rs = $c->model('Land')->get_party_grid(
+    my $locations = $c->model('Land')->get_party_grid(
     	start_point  => $start_point,
     	end_point    => $end_point,
     	centre_point => {
@@ -101,20 +101,18 @@ sub generate_grid : Private {
     	},
     	party_id => $c->stash->{party}->id,    	
     );
-    
-	$search_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-        
+            
     $c->stats->profile("Queried db for sectors");
     
-    my @grid;    
-        
-    while (my $location = $search_rs->next) {
+    my @grid;       
+    
+    foreach my $location (@$locations) {
         $grid[$location->{x}][$location->{y}] = $location;
         
-        $location->{party_movement_factor} = $c->stash->{party}->movement_factor + $location->{terrain}{modifier};
+        $location->{party_movement_factor} = $c->stash->{party}->movement_factor + $location->{modifier};
         
         # Record sector to the party's map
-        if ($add_to_party_map && ! $location->{mapped_sector}) {
+        if ($add_to_party_map && ! $location->{mapped_sector_id}) {
         	$c->model('DBIC::Mapped_Sectors')->create(
 	        	{
 		    	    party_id => $c->stash->{party}->id,
@@ -122,7 +120,7 @@ sub generate_grid : Private {
 		    	},
        		);
         }
-        elsif (! $add_to_party_map && ! $location->{mapped_sector}) {
+        elsif (! $add_to_party_map && ! $location->{mapped_sector_id}) {
         	$grid[$location->{x}][$location->{y}] = "";
         }
     }

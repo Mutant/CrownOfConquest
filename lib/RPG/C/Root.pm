@@ -17,18 +17,18 @@ sub auto : Private {
     my ( $self, $c ) = @_;
     
     $c->req->base($c->config->{url_root});
-    
+        
     if (! $c->session->{player}) {
     	if ($c->action !~ m|^player|) {
     		$c->detach('/player/login');
     	}
     	return 1;
     }
-        
+       
     $c->stash->{party} = $c->model('DBIC::Party')->find(
     	{
-			# Assumes 1 party per player...
     		player_id => $c->session->{player}->id,
+    		defunct => undef,
     	},
     	{
     		prefetch => [

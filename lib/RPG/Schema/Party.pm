@@ -123,6 +123,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => 0,
     },
+    'defunct' => {
+      'data_type' => 'datetime',
+      'is_auto_increment' => 0,
+      'default_value' => undef,
+      'is_foreign_key' => 0,
+      'name' => 'created',
+      'is_nullable' => 1,
+      'size' => 0
+    },
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -263,6 +272,16 @@ sub new_day {
 	);
 	
 	return;
+}
+
+sub number_alive {
+	my $self = shift;
+	
+	return $self->result_source->schema->resultset('Character')->count({
+		hit_points => {'>',0},
+		party_id => $self->id,	
+	});	
+	
 }
 
 1;

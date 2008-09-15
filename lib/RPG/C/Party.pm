@@ -326,4 +326,18 @@ sub scout : Local {
 	$c->forward('/panel/refresh', ['messages', 'party_status']);
 }
 
+sub new_party_message : Local {
+	my ($self, $c) = @_;
+
+    $c->forward('RPG::V::TT',
+        [{
+            template => 'party/complete.html',
+            params => {
+            	party => $c->stash->{party},
+            	town => $c->stash->{party}->location->town,
+        	},
+    	}]
+	);	
+}
+
 1;

@@ -2,7 +2,6 @@
 
 <h1>New Character</h1>
 
-
 <div style="visibility: hidden; position: absolute; top: 0px; z-index: -100" id="points-div"></div>
 
 <style>
@@ -50,7 +49,7 @@ var raceStats = new Object;
 
 var Stats = Array('str','int','div','con','agl');
 
-//dojo.addOnLoad( setBaseStats(document.getElementById('race-sel')) );
+dojo.addOnLoad( function() {setBaseStats(document.getElementById('race-sel'))} );
 
 function setBaseStats(raceSel) {
 	if (raceSel.value) {

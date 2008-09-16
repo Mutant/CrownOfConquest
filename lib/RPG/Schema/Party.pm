@@ -196,8 +196,9 @@ sub turns {
 	
 	return $self->_turns unless defined $new_turns;
 	
-	# only do it if turns are decreaed
-	if ($new_turns < $self->_turns) {
+	# only do it if turns are decreased, and it's not getting reduced to the maximum number of turns allowed 
+	#  (since those turns that are getting decreased couldn't have possibly been used)
+	if ($new_turns < $self->_turns && $new_turns != RPG::Schema->config->{maximum_turns}) {
 		$self->turns_used($self->turns_used + ($self->_turns - $new_turns));
 		# No need to call update, since something else will call it to update the new turns value
 	}

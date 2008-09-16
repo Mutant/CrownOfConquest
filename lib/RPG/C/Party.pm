@@ -39,6 +39,10 @@ sub sector_menu : Local {
 		$confirm_attack = $creature_group->level - $c->stash->{party}->level > $c->config->{cg_attack_max_level_diff};	
 	}
     
+    warn $c->stash->{party_location};
+    
+    my $parties_in_sector = $c->forward('parties_in_sector');
+    
     $c->forward('RPG::V::TT',
         [{
             template => 'party/sector_menu.html',
@@ -48,6 +52,31 @@ sub sector_menu : Local {
 				messages => $c->stash->{messages},
 				day_logs => $c->stash->{day_logs},
 				location => $c->stash->{party_location},
+				parties_in_sector => $parties_in_sector,
+			},
+			return_output => 1,
+        }]
+    );
+}
+
+sub parties_in_sector : Private {
+	my ($self, $c) = @_;
+	
+	my @parties = $c->model('DBIC::Party')->search(
+		{
+			party_id => {'!=', $c->stash->{party}->id},
+			land_id  => $c->stash->{party_location}->id,
+		},
+		{},
+	);
+	
+	return unless @parties;
+	
+    return $c->forward('RPG::V::TT',
+        [{
+            template => 'party/parties_in_sector.html',
+			params => {
+				parties => \@parties,
 			},
 			return_output => 1,
         }]
@@ -77,7 +106,6 @@ sub list : Local {
     			prefetch => 'spell',
     		},
     	);
-    	warn "char has: " . scalar @spells;	
     	$spells{$character->id} = \@spells if @spells;
     }    
     

@@ -9,12 +9,15 @@ use Math::Round qw(round);
 sub main : Local {
 	my ($self, $c, $return_output) = @_;
 	
+	my $parties_in_sector = $c->forward('/party/parties_in_sector');
+	
 	$c->forward('RPG::V::TT',
         [{
             template => 'town/main.html',
 			params => {
 				town => $c->stash->{party_location}->town,
 				day_logs => $c->stash->{day_logs},
+				parties_in_sector => $parties_in_sector,
 			},
 			return_output => $return_output || 0,
         }]

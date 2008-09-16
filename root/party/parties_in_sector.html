@@ -1,0 +1,6 @@
+[% IF parties.0 %]
+Other parties here: 
+[% FOREACH party IN parties %]
+	[% party.name %][% UNLESS loop.last %], [% END %]
+[% END %]
+[% END %]

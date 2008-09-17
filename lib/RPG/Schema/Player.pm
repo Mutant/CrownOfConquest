@@ -46,7 +46,7 @@ __PACKAGE__->add_columns(
     },
     'verified' => {
       'data_type' => 'int',
-      'is_auto_increment' => 1,
+      'is_auto_increment' => 0,
       'default_value' => 0,
       'is_foreign_key' => 0,
       'name' => 'player_id',
@@ -62,7 +62,15 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '255'
     },
-
+    'admin_user' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => 0,
+      'is_foreign_key' => 0,
+      'name' => 'player_id',
+      'is_nullable' => 0,
+      'size' => '11'
+    },
 );
 __PACKAGE__->set_primary_key('player_id');
 

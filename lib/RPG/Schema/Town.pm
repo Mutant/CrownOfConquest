@@ -20,4 +20,10 @@ __PACKAGE__->has_many(
     { 'foreign.town_id' => 'self.town_id' },
 );
 
+__PACKAGE__->has_many(
+    'quests',
+    'RPG::Schema::Quest',
+    { 'foreign.town_id' => 'self.town_id' }
+);
+
 1;

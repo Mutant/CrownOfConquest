@@ -9,6 +9,7 @@ use DateTime;
 
 use RPG::NewDay::Shop;
 use RPG::NewDay::Party;
+use RPG::NewDay::Quest;
 
 sub run {
 	my $package = shift;
@@ -41,10 +42,13 @@ sub run {
 	);
 		
 	# New day for Party
-	RPG::NewDay::Party->run($config, $schema, $new_day);
+	#RPG::NewDay::Party->run($config, $schema, $new_day);
 
 	# Run shops update
-	RPG::NewDay::Shop->run($config, $schema, $new_day);
+	#RPG::NewDay::Shop->run($config, $schema, $new_day);
+
+	# Add quests to towns
+	RPG::NewDay::Quest->run($config, $schema, $new_day);
 
 }
 

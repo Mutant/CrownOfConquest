@@ -7,7 +7,7 @@ use base qw(Test::Class);
 
 use Carp;
 
-sub setup_context : Test(setup=>1) {
+sub setup_context : Test(setup) {
 	my $self = shift;
 	
 	my $mock_context = Test::MockObject->new;

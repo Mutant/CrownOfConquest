@@ -18,6 +18,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.quest_type_id' => 'self.quest_type_id' }
 );
 
+__PACKAGE__->belongs_to(
+    'town',
+    'RPG::Schema::Town',
+    { 'foreign.town_id' => 'self.town_id' }
+);
+
 __PACKAGE__->has_many(
     'quest_params',
     'RPG::Schema::Quest_Param',

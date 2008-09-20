@@ -26,4 +26,10 @@ __PACKAGE__->has_many(
     { 'foreign.town_id' => 'self.town_id' }
 );
 
+__PACKAGE__->belongs_to(
+    'location',
+    'RPG::Schema::Land',
+    { 'foreign.land_id' => 'self.land_id' }
+);
+
 1;

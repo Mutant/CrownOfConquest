@@ -210,4 +210,30 @@ sub news : Local {
 	$c->forward('/panel/refresh');
 }
 
+sub town_hall : Local {
+	my ($self, $c) = @_;
+	
+	my @quests = $c->model('DBIC::Quest')->search(
+		{
+			town_id => $c->stash->{party_location}->town->id,
+			party_id => undef,
+		},
+	);
+
+	my $panel = $c->forward('RPG::V::TT',
+        [{
+            template => 'town/town_hall.html',
+			params => {
+				town => $c->stash->{party_location}->town,
+				quests => \@quests,
+			},
+			return_output => 1,
+        }]
+    );
+    
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+
+	$c->forward('/panel/refresh');		
+}
+
 1;

@@ -1,0 +1,10 @@
+[% sector_range = quest.sector_range %]
+
+<p>Lately, there have been many raids on the town of [% town.town_name %] by the foul creatures that roam around the wilderness. 
+The towns people have demanded the authorities do something about this.</p>
+
+<p>We'd like you to hunt down [% quest.param_start_value('Number Of Creatures To Kill') %] groups of creatures near [% town.town_name %], and
+wipe out each group completely. The creatures must be killed between the sectors [% sector_range.0.x %], [% sector_range.0.y %] 
+and [% sector_range.1.x %], [% sector_range.1.y %].</p>
+
+<p>Once you complete the quest, come back here and we will reward you with [% quest.gold_value %] gold.</p>

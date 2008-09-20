@@ -1,15 +1,16 @@
 Welcome to the Town of [% town.town_name %]! (Prosperity: [% town.prosperity %])
 <br><br>
-[% day_logs %]
+[% IF day_logs %][% day_logs %][% END %]
+[% IF messages %]<p>[% messages %]</p>[% END %]
 In [% town.town_name %], you can:
 <ul>
 <li><a href="javascript:getPanels('town/shop_list')">Go Equipment Shopping</a></li>
 <li><a href="javascript:getPanels('town/healer')">Visit the local Healer</a></li>
 <li><a href="javascript:getPanels('town/news')">Get the local News</a></li>
+<li><a href="javascript:getPanels('town/town_hall')">Visit the Town Hall</a></li>
 [%#
 <li><a href="javascript:getPanels('town/tavern')">Get a room at the Tavern</a></li>
 <li><a href="javascript:getPanels('town/recruitment')">Head to the Recruitment Office</a></li>
-<li><a href="javascript:getPanels('town/town_hall')">Visit the Town Hall</a></li>
 %]
 </ul>
 [% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]

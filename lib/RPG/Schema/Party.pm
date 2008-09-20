@@ -165,6 +165,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.player_id' => 'self.player_id' }
 );
 
+__PACKAGE__->has_many(
+    'quests',
+    'RPG::Schema::Quest',
+    'party_id',
+);
+
 sub movement_factor {
 	my $self = shift;
 	

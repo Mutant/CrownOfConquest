@@ -1,0 +1,13 @@
+Welcome to the Town Hall of [% town.town_name %].
+
+The following quests are available:
+
+[% PROCESS quest/description.html %]
+
+<ul>
+[% FOREACH quest IN quests %]
+	<li>[% short_description(quest) %]</li>
+[% END %]
+</ul>
+
+[% INCLUDE town/town_footer.html %]

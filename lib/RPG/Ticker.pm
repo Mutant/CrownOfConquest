@@ -150,7 +150,9 @@ sub move_monsters {
 	my ($package, $config, $schema) = @_;
 	
 	my $cg_rs = $schema->resultset('CreatureGroup')->search(
-		{},
+		{
+			'location.land_id' => {'!=', undef},
+		},
 		{
 			prefetch => ['location', 'in_combat_with'],
 		},

@@ -78,5 +78,17 @@ sub get_adjacent_sectors {
 	
 	return @sectors;	
 }
+# Checks whether a given coord is within a given range
+sub is_in_range {
+	my ($package, $coord_to_check, $start_coord, $end_coord) = @_;
+	
+	if ($coord_to_check->{x} >= $start_coord->{x} && $coord_to_check->{x} <= $end_coord->{x} &&
+	    $coord_to_check->{y} >= $start_coord->{y} && $coord_to_check->{y} <= $end_coord->{y}) {
+	    
+	    return 1;
+	}
+	
+	return 0;
+}
 
 1;

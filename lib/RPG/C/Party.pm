@@ -39,8 +39,6 @@ sub sector_menu : Local {
 		$confirm_attack = $creature_group->level - $c->stash->{party}->level > $c->config->{cg_attack_max_level_diff};	
 	}
     
-    warn $c->stash->{party_location};
-    
     my $parties_in_sector = $c->forward('parties_in_sector');
     
     $c->forward('RPG::V::TT',
@@ -320,17 +318,17 @@ sub scout : Local {
 	    	3,
 		);
 		
-		my $search_rs = $c->model('Land')->get_party_grid(
-	    	start_point  => $start_point,
-	    	end_point    => $end_point,
-	    	centre_point => {
-				x => $party->location->x,
-	    		y => $party->location->y,
-	    	},
-	    	party_id => $c->stash->{party}->id,    	
+		my $search_rs = $c->model('Land')->search(
+			{
+				x => {'>=', $start_point->{x}, '<=', $end_point->{x}},
+				y => {'>=', $start_point->{y}, '<=', $end_point->{y}},
+			},
+			{
+				prefetch => 'creature_group',
+			},				    	
 	    );
 	    
-	    while (my $sector = $search_rs->next) {
+	    while (my $sector = $search_rs->next) {	    
 	    	next if $sector->x == $party->location->x && $sector->y == $party->location->y;
 	    	if ($sector->creature_group) {
 	    		push @creatures, $sector;	

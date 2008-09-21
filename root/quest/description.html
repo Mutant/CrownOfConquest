@@ -5,7 +5,7 @@
 
 [% MACRO short_description(quest) BLOCK %]
 	[% desc_include = 'quest/description/' _ quest.type.quest_type _ '_short.html' %]
-	<a href="[% base %]/quest/offer?quest_id=[% quest.id %]">[% INCLUDE $desc_include %]</a>
+	[% INCLUDE $desc_include %]
 [% END %]
 
 [% MACRO list_quest(quest) BLOCK %]

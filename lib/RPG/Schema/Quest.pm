@@ -95,13 +95,7 @@ sub param {
 	my $self = shift;
 	my $param_name = shift || croak "Param name not supplied";
 	
-	my %quest_param_names = $self->quest_params_by_name;
-	
-	my ($quest_param) = $self->search_related('quest_params',
-		{
-			quest_param_name_id => $quest_param_names{$param_name}->id,
-		}
-	);
+	my $quest_param = $self->param_record($param_name);
 	
 	return ($quest_param->start_value, $quest_param->current_value);
 }
@@ -118,6 +112,22 @@ sub param_current_value {
 	my $param_name = shift || croak "Param name not supplied";
 
 	return +($self->param($param_name))[1];	
+}
+
+sub param_record {
+	my $self = shift;	
+
+	my $param_name = shift || croak "Param name not supplied";
+	
+	my %quest_param_names = $self->quest_params_by_name;
+	
+	my ($quest_param) = $self->search_related('quest_params',
+		{
+			quest_param_name_id => $quest_param_names{$param_name}->id,
+		}
+	);
+	
+	return $quest_param;
 }
 
 sub quest_params_by_name {

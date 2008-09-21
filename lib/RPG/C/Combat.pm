@@ -615,6 +615,11 @@ sub finish : Private {
     		$effect->delete if $effect->effect->combat;	
     	}
     }
+    
+    # Check for state of quests
+    my $messages = $c->forward('/quest/check_action', ['creature_group_killed']);
+    push @{$c->stash->{combat_messages}}, @$messages; 
+    
 	$c->stash->{creature_group}->land_id(undef);
 	$c->stash->{creature_group}->update;
 	

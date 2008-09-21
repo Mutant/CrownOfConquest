@@ -6,7 +6,7 @@ The following quests are available:
 
 <ul>
 [% FOREACH quest IN quests %]
-	<li>[% short_description(quest) %]</li>
+	<li><a href="[% base %]/quest/offer?quest_id=[% quest.id %]">[% short_description(quest) %]</a></li>
 [% END %]
 </ul>
 

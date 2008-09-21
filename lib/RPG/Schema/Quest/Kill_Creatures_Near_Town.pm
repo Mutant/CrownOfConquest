@@ -42,4 +42,32 @@ sub gold_value {
 	return $self->{_config}{gold_per_cg} * $self->param_start_value('Number Of Creatures To Kill');
 }
 
+sub check_action {
+	my $self = shift;
+	my $party = shift;
+	my $action = shift;
+	
+	return 0 unless $action eq 'creature_group_killed';
+	
+	return 0 if $self->param_current_value('Number Of Creatures To Kill') == 0;
+	
+	my $sector_in_range = RPG::Map->is_in_range(
+		{
+			x => $party->location->x,
+			y => $party->location->y,
+		},
+		$self->sector_range,
+	);
+	
+	if ($sector_in_range) {
+		my $quest_param = $self->param_record('Number Of Creatures To Kill');
+		$quest_param->current_value($quest_param->current_value-1);
+		$quest_param->update;
+		
+		return 1;
+	}
+	
+	return 0;
+}
+
 1;

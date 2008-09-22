@@ -9,7 +9,7 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Quest');
 
-__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id/);
+__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete/);
 __PACKAGE__->set_primary_key('quest_id');
 
 __PACKAGE__->belongs_to(
@@ -119,22 +119,27 @@ sub param_record {
 
 	my $param_name = shift || croak "Param name not supplied";
 	
-	my %quest_param_names = $self->quest_params_by_name;
+	unless ($self->{_param_records_by_name}) {
+		my %quest_params_by_name = $self->quest_params_by_name;	
+		my %quest_param_ids_to_names = map { $quest_params_by_name{$_}->id => $_ } keys %quest_params_by_name;
 	
-	my ($quest_param) = $self->search_related('quest_params',
-		{
-			quest_param_name_id => $quest_param_names{$param_name}->id,
+		my @quest_params = $self->quest_params;
+		
+		foreach my $quest_param (@quest_params) {
+			my $name = $quest_param_ids_to_names{$quest_param->quest_param_name_id};
+			$self->{_param_records_by_name}{$name} = $quest_param;
 		}
-	);
-	
-	return $quest_param;
+	}
+		
+	return $self->{_param_records_by_name}{$param_name};
 }
 
 sub quest_params_by_name {
 	my $self = shift;	
-	$self->{_quest_param_names} ||= { map { $_->quest_param_name => $_ } $self->type->search_related('quest_param_names') };
+	$self->{_quest_param_names} ||= { map { $_->quest_param_name => $_ } $self->type->quest_param_names };
 	
 	return %{ $self->{_quest_param_names} };	
 }
+
 
 1;

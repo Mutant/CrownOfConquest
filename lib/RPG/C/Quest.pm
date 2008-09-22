@@ -58,7 +58,18 @@ sub accept : Local {
 sub list : Local {
 	my ($self, $c) = @_;
 	
-	my @quests = $c->stash->{party}->quests;
+	my @quests = $c->model('DBIC::Quest')->search(
+		{
+			party_id => $c->stash->{party}->id,
+			complete => 0,
+		},
+		{
+			prefetch => [
+				'quest_params',
+				{'type' => 'quest_param_names'},
+			],
+		}
+	);
 
 	$c->forward('RPG::V::TT',
         [{

@@ -576,21 +576,19 @@ sub finish : Private {
 	foreach my $character (@characters) {
 		next if $character->is_dead;
 		
-		# TODO template these combat messages? (yes)
-		push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $awarded_xp->{$character->id} . " xp.";
-		
 		my $level_up_details = $character->xp($character->xp + $awarded_xp->{$character->id});
 		
-		if (ref $level_up_details eq 'HASH' && $level_up_details->{hit_points}) {
-			push @{$c->stash->{combat_messages}}, $character->character_name . " went up a level! (Now level " . $character->level . ")";
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{hit_points} . " hit points.";
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{magic_points} . " magic points."
-				if $level_up_details->{magic_points};
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{prayer_points} . " prayer points."
-				if $level_up_details->{prayer_points};
-			push @{$c->stash->{combat_messages}}, $character->character_name . " gained " . $level_up_details->{stat_points} . " stat points."
-				if $level_up_details->{stat_points};
-		}
+		push @{$c->stash->{combat_messages}}, $c->forward('RPG::V::TT',
+	        [{
+	            template => 'party/xp_gain.html',
+				params => {				
+					character => $character,
+					xp_awarded => $awarded_xp->{$character->id},
+					level_up_details => $level_up_details,
+				},
+				return_output => 1,
+	        }]
+	    );
 		
 		$character->update;
 	}

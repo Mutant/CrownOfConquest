@@ -70,4 +70,16 @@ sub check_action {
 	return 0;
 }
 
+sub ready_to_complete {
+	my $self = shift;
+	
+	return $self->param_current_value('Number Of Creatures To Kill') == 0 ? 1 : 0;
+}
+
+sub xp_value {
+	my $self = shift;
+	
+	return $self->type->xp_value;	
+}
+
 1;

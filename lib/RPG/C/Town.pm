@@ -213,12 +213,57 @@ sub news : Local {
 sub town_hall : Local {
 	my ($self, $c) = @_;
 	
-	my @quests = $c->model('DBIC::Quest')->search(
+	# See if party has a quest for this town
+	my $party_quest = $c->model('DBIC::Quest')->find(
 		{
 			town_id => $c->stash->{party_location}->town->id,
-			party_id => undef,
-		},
+			party_id => $c->stash->{party}->id,
+			complete => 0,
+		},	
 	);
+	
+
+	my @quests;
+	my @xp_messages;
+
+	if ($party_quest && $party_quest->ready_to_complete) {
+		$party_quest->complete(1);
+		$party_quest->update;
+		
+		$c->stash->{party}->gold($c->stash->{party}->gold + $party_quest->gold_value);
+		$c->stash->{party}->update;
+		
+		my $xp_gained = $party_quest->xp_value;
+		
+		my @characters = $c->stash->{party}->characters;
+		my $xp_each = int $xp_gained / scalar @characters;
+		
+		foreach my $character (@characters) {
+			my $level_up_details= $character->xp($character->xp+$xp_each);
+			push @xp_messages, $c->forward('RPG::V::TT',
+		        [{
+		            template => 'party/xp_gain.html',
+					params => {				
+						character => $character,
+						xp_awarded => $xp_each,
+						level_up_details => $level_up_details,
+					},
+					return_output => 1,
+		        }]
+		    );
+		}
+		
+		push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
+	}
+	# If they don't have a quest, load in available quests
+	elsif (! $party_quest) {	
+		@quests = $c->model('DBIC::Quest')->search(
+			{
+				town_id => $c->stash->{party_location}->town->id,
+				party_id => undef,
+			},
+		);
+	}
 
 	my $panel = $c->forward('RPG::V::TT',
         [{
@@ -226,6 +271,8 @@ sub town_hall : Local {
 			params => {
 				town => $c->stash->{party_location}->town,
 				quests => \@quests,
+				party_quest => $party_quest,
+				xp_messages => \@xp_messages,
 			},
 			return_output => 1,
         }]

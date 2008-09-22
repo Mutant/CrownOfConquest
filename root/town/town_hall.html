@@ -1,13 +1,25 @@
-Welcome to the Town Hall of [% town.town_name %].
-
-The following quests are available:
+<p>Welcome to the Town Hall of [% town.town_name %].</p>
 
 [% PROCESS quest/description.html %]
 
-<ul>
-[% FOREACH quest IN quests %]
-	<li><a href="[% base %]/quest/offer?quest_id=[% quest.id %]">[% short_description(quest) %]</a></li>
+[% IF party_quest %]
+	[% IF party_quest.complete %]
+		You've completed the quest! The towns people thank you and reward you with [% party_quest.gold_value %] gold.
+		[% FOREACH message IN xp_messages %]
+			[% message %]<br>
+		[% END %]		
+	[% ELSE %]
+		You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="[% base %]quest/list">Quest List</a> for
+		details on what you still have to do.
+	[% END %]
+	<br><br>
+[% ELSE %]	
+The following quests are available:
+	<ul>
+	[% FOREACH quest IN quests %]
+		<li><a href="[% base %]/quest/offer?quest_id=[% quest.id %]">[% short_description(quest) %]</a></li>
+	[% END %]
+	</ul>
 [% END %]
-</ul>
 
 [% INCLUDE town/town_footer.html %]

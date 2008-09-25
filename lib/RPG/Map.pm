@@ -55,7 +55,7 @@ sub get_adjacent_sectors {
 	my ($package, $current_x, $current_y, $min_x, $min_y, $max_x, $max_y) = @_;
 	
 	# Get adjacent squares
-    my ($start_point, $end_point) = __PACKAGE__->surrounds(
+    my ($start_point, $end_point) = $package->surrounds(
 		$current_x,
 		$current_y,
 		3,
@@ -103,6 +103,53 @@ sub get_distance_between_points {
 	my $dist = $first_dist > $second_dist ? $first_dist : $second_dist;
 	
 	return $dist;
+}
+
+# Return a string indicating the direction from one point to another
+sub direction_to_point {
+	my $package = shift;
+	my $point1 = shift;
+	my $point2 = shift;
+	
+	my $x_diff  = $point1->{x} - $point2->{x};
+	my $y_diff	= $point1->{y} - $point2->{y};
+	
+	return '' if $x_diff == 0 && $y_diff == 0;
+	
+	my ($x_dir, $y_dir);
+	
+	if ($x_diff < 1) {
+		$x_dir = 'South';
+	}
+	elsif ($x_diff > 1) {
+		$x_dir = 'North';	
+	}
+
+	if ($y_diff < 1) {
+		$y_dir = 'East';
+	}
+	elsif ($y_diff > 1) {
+		$y_dir = 'West';	
+	}
+	
+	return $x_dir unless $y_diff;
+	return $y_dir unless $x_diff;
+	
+	# We have both an x and y direction. If one is much bigger than the other, only use that one, otherwise combine them.
+	$x_diff = abs $x_diff;
+	$y_diff = abs $y_diff;
+	
+	if ($x_diff > $y_diff) {
+		my $factor = $x_diff / $y_diff;
+		warn $factor;
+		return $x_dir if $factor > 2;
+	}
+	if ($y_diff > $x_diff) {
+		my $factor = $y_diff / $x_diff;
+		return $y_dir if $factor > 2;
+	}
+	
+	return "$x_dir $y_dir";
 }
 
 1;

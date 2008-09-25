@@ -41,7 +41,7 @@ sub get_party_grid {
 	#$dbh->trace(2);
 
 	my $sql = <<SQL;
-SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (y!=? or x!=?) ) as next_to_centre, 
+SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre, 
 	terrain.terrain_id, terrain.terrain_name, terrain.image, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
 	mapped_sector.party_id, mapped_sector.date_stored, town.town_id, town.town_name, town.prosperity 
 	
@@ -52,9 +52,7 @@ SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and 
 	WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )
 SQL
 	
-	my $result = $dbh->selectall_arrayref( 
-		$sql,
-		{ Slice => {} }, 
+	my @query_params = (
 		$params{centre_point}->{x}-1,
 		$params{centre_point}->{x}+1,
 		$params{centre_point}->{y}-1,
@@ -66,6 +64,15 @@ SQL
 		$params{end_point}->{x},
 		$params{start_point}->{y},
 		$params{end_point}->{y},
+	);
+	
+	warn "get_party_grid: $sql\n";
+	warn join (',',@query_params) . "\n";
+	
+	my $result = $dbh->selectall_arrayref( 
+		$sql,
+		{ Slice => {} }, 
+		@query_params,
 	);
 	
 	return $result;

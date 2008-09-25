@@ -2,6 +2,12 @@
 
 [% PROCESS quest/description.html %]
 
+[% IF quest_messages.0 %]
+	[% FOREACH message IN quest_messages %]
+		[% message %]
+	[% END %]
+[% END %]
+
 [% IF party_quest %]
 	[% IF party_quest.complete %]
 		You've completed the quest! The towns people thank you and reward you with [% party_quest.gold_value %] gold.

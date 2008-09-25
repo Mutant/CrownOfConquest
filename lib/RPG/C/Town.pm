@@ -213,6 +213,9 @@ sub news : Local {
 sub town_hall : Local {
 	my ($self, $c) = @_;
 	
+	# Check for quest actions which can be triggered by a visit to the town hall
+	my $quest_messages = $c->forward('/quest/check_action', ['townhall_visit']);
+	
 	# See if party has a quest for this town
 	my $party_quest = $c->model('DBIC::Quest')->find(
 		{
@@ -220,8 +223,7 @@ sub town_hall : Local {
 			party_id => $c->stash->{party}->id,
 			complete => 0,
 		},	
-	);
-	
+	);	
 
 	my @quests;
 	my @xp_messages;
@@ -273,6 +275,7 @@ sub town_hall : Local {
 				quests => \@quests,
 				party_quest => $party_quest,
 				xp_messages => \@xp_messages,
+				quest_messages => $quest_messages,
 			},
 			return_output => 1,
         }]

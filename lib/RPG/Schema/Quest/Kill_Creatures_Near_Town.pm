@@ -21,6 +21,7 @@ sub set_quest_params {
 }
 
 # Returns the range of sectors creatures must be killed within
+#  Used by templates
 sub sector_range {
 	my $self = shift;
 	

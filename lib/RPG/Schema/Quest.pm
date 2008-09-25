@@ -66,7 +66,7 @@ sub _bless_into_type_class {
 	  	  
 	$self->ensure_class_loaded( $class ); 
 	bless $self, $class;
-	
+		
 	$self->{_config} = RPG::Schema->config->{quest_type_vars}{$self->type->quest_type};
 	
 	return $self;
@@ -77,7 +77,7 @@ sub _bless_into_type_class {
 sub define_quest_param {
 	my $self = shift;
 	my $param_name = shift || croak "Param name not supplied";
-	my $value = shift || croak "Value not supplied";
+	my $value = shift; croak "Value not supplied" unless defined $value;
 	
 	my %quest_param_names = $self->quest_params_by_name;
 	
@@ -130,6 +130,8 @@ sub param_record {
 			$self->{_param_records_by_name}{$name} = $quest_param;
 		}
 	}
+	
+	croak "Param name '$param_name' does not exist for this quest type" unless defined $self->{_param_records_by_name}{$param_name};
 		
 	return $self->{_param_records_by_name}{$param_name};
 }

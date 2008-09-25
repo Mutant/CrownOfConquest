@@ -8,6 +8,7 @@ use warnings;
 use RPG::Map;
 use List::Util qw(shuffle);
 use Data::Dumper;
+use Games::Dice::Advanced;
 
 sub set_quest_params {
     my $self = shift;
@@ -34,7 +35,7 @@ sub set_quest_params {
 				'town_id' => {'!=', $town->id},
 	    	},
 	    	{
-	    		join => 'location',
+	    		prefetch => 'location',
 	    	},
 	    );
 
@@ -45,19 +46,28 @@ sub set_quest_params {
     @towns_in_range = shuffle @towns_in_range;
     
     $self->define_quest_param('Town To Take Msg To', $towns_in_range[0]->id);
-    $self->define_quest_param('Been To Town', 0);    
-}
-
-sub gold_value {
-	my $self = shift;
-	
-	return 100;
-}
-
-sub xp_value {
-	my $self = shift;
-	
-	return $self->type->xp_value;	
+    $self->define_quest_param('Been To Town', 0);
+        
+    my $distance = RPG::Map->get_distance_between_points(
+    	{
+  	    	x => $town_location->x,
+	    	y => $town_location->y,
+    	},
+    	{
+    		x => $towns_in_range[0]->location->x,
+    		y => $towns_in_range[0]->location->y,
+    	},
+    );
+    
+    # Best not to make the gold value based purely on distance, or people will be able to guess how far away the town is    
+    my $gold_variant = Games::Dice::Advanced->roll('1d100') - 50;
+    my $gold_value = $self->{_config}{gold_per_distance} * $distance - $gold_variant;
+    $gold_value = 20 if $gold_value < 20;
+    
+	$self->gold_value($gold_value);
+	$self->xp_value($self->{_config}{xp_per_distance} * $distance);
+	$self->update;
+    
 }
 
 sub check_action {

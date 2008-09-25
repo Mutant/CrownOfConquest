@@ -91,4 +91,18 @@ sub is_in_range {
 	return 0;
 }
 
+# Return distance between two points
+sub get_distance_between_points {
+	my $package = shift;
+	my $point1 = shift;
+	my $point2 = shift;
+	
+	my $first_dist  = abs $point1->{x} - $point2->{x};
+	my $second_dist	= abs $point1->{y} - $point2->{y};
+	
+	my $dist = $first_dist > $second_dist ? $first_dist : $second_dist;
+	
+	return $dist;
+}
+
 1;

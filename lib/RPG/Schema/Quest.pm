@@ -9,7 +9,7 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Quest');
 
-__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete/);
+__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete gold_value xp_value/);
 __PACKAGE__->set_primary_key('quest_id');
 
 __PACKAGE__->belongs_to(

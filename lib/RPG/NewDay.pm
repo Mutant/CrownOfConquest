@@ -48,7 +48,7 @@ sub run {
 	#RPG::NewDay::Shop->run($config, $schema, $new_day);
 
 	# Add quests to towns
-	#RPG::NewDay::Quest->run($config, $schema, $new_day);
+	RPG::NewDay::Quest->run($config, $schema, $new_day);
 
 }
 

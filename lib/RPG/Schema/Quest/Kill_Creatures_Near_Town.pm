@@ -18,6 +18,10 @@ sub set_quest_params {
 	my $number_of_creatures_to_kill = Games::Dice::Advanced->roll("1d" . ($max_cgs - $min_cgs + 1)) + $min_cgs - 1;
 	$self->define_quest_param('Number Of Creatures To Kill', $number_of_creatures_to_kill);
 	$self->define_quest_param('Range', $self->{_config}{range});
+	
+	$self->gold_value($self->{_config}{gold_per_cg} * $self->param_start_value('Number Of Creatures To Kill'));
+	$self->xp_value($self->{_config}{xp_per_cg} * $self->param_start_value('Number Of Creatures To Kill'));
+	$self->update;	
 }
 
 # Returns the range of sectors creatures must be killed within
@@ -35,12 +39,6 @@ sub sector_range {
 		$size,
 		$size,
 	);
-}
-
-sub gold_value {
-	my $self = shift;
-	
-	return $self->{_config}{gold_per_cg} * $self->param_start_value('Number Of Creatures To Kill');
 }
 
 sub check_action {
@@ -75,12 +73,6 @@ sub ready_to_complete {
 	my $self = shift;
 	
 	return $self->param_current_value('Number Of Creatures To Kill') == 0 ? 1 : 0;
-}
-
-sub xp_value {
-	my $self = shift;
-	
-	return $self->type->xp_value;	
 }
 
 1;

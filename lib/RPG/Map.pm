@@ -106,30 +106,30 @@ sub get_distance_between_points {
 }
 
 # Return a string indicating the direction from one point to another
-sub direction_to_point {
+sub get_direction_to_point {
 	my $package = shift;
 	my $point1 = shift;
 	my $point2 = shift;
 	
-	my $x_diff  = $point1->{x} - $point2->{x};
-	my $y_diff	= $point1->{y} - $point2->{y};
+	my $x_diff  = $point2->{x} - $point1->{x};
+	my $y_diff	= $point2->{y} - $point1->{y};
 	
 	return '' if $x_diff == 0 && $y_diff == 0;
 	
 	my ($x_dir, $y_dir);
 	
 	if ($x_diff < 1) {
-		$x_dir = 'South';
+		$x_dir = 'West';
 	}
 	elsif ($x_diff > 1) {
-		$x_dir = 'North';	
+		$x_dir = 'East';	
 	}
 
 	if ($y_diff < 1) {
-		$y_dir = 'East';
+		$y_dir = 'North';
 	}
 	elsif ($y_diff > 1) {
-		$y_dir = 'West';	
+		$y_dir = 'South';	
 	}
 	
 	return $x_dir unless $y_diff;
@@ -141,7 +141,6 @@ sub direction_to_point {
 	
 	if ($x_diff > $y_diff) {
 		my $factor = $x_diff / $y_diff;
-		warn $factor;
 		return $x_dir if $factor > 2;
 	}
 	if ($y_diff > $x_diff) {
@@ -149,7 +148,7 @@ sub direction_to_point {
 		return $y_dir if $factor > 2;
 	}
 	
-	return "$x_dir $y_dir";
+	return "$y_dir $x_dir";
 }
 
 1;

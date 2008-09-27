@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Math::Round qw(round);
+use JSON;
 
 sub main : Local {
 	my ($self, $c, $return_output) = @_;
@@ -284,6 +285,125 @@ sub town_hall : Local {
     push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
 
 	$c->forward('/panel/refresh');		
+}
+
+sub sage : Local {
+	my ($self, $c) = @_;
+	
+	my $panel = $c->forward('RPG::V::TT',
+        [{
+            template => 'town/sage.html',
+            params => {
+            	direction_cost => $c->config->{sage_direction_cost},
+            	distance_cost  => $c->config->{sage_distance_cost},
+            	location_cost  => $c->config->{sage_location_cost},
+            	messages => $c->stash->{messages},
+            },	
+			return_output => 1,
+        }]
+    );
+    
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+
+	$c->forward('/panel/refresh');
+}
+
+sub find_town : Local {
+	my ($self, $c) = @_;
+	
+	my $party = $c->stash->{party};
+	my $party_location = $c->stash->{party_location};
+	
+	my $message;
+	my $error;
+	
+	eval {
+		my $cost = $c->config->{'sage_' . $c->req->param('find_type') . '_cost'};
+		
+		die {error => "Invalid find_type: " . $c->req->param('find_type')}
+			unless defined $cost;
+			
+		die {message => "You don't have enough money for that!"}
+			unless $party->gold > $cost;
+	
+		my $town_to_find = $c->model('Town')->find(
+			{
+				town_name => $c->req->param('town_name'),
+			},
+			{
+				prefetch => 'location',
+			},
+		);
+		
+		die {message => "I don't know of a town called " . $c->req->param('town_name')}
+			unless $town_to_find;
+
+		die {message => "You're already in " . $town_to_find->town_name . "!"}
+			if $town_to_find->id == $party_location->town->id;
+	
+		if ($c->req->param('find_type') eq 'direction') {
+			my $direction = RPG::Map->get_direction_to_point(
+				{
+					x => $party_location->x,
+					y => $party_location->y,
+				},
+				{
+					x => $town_to_find->location->x,
+					y => $town_to_find->location->y,
+				},
+			);
+			
+			$message = "The town of " . $town_to_find->town_name . " is to the $direction of here";					
+		}
+		if ($c->req->param('find_type') eq 'distance') {
+			my $distance = RPG::Map->get_distance_between_points(
+				{
+					x => $party_location->x,
+					y => $party_location->y,
+				},
+				{
+					x => $town_to_find->location->x,
+					y => $town_to_find->location->y,
+				},
+			);
+			
+			$message = "The town of " . $town_to_find->town_name . " is $distance sectors from here";					
+		}
+		if ($c->req->param('find_type') eq 'location') {
+			
+			$message = "The town of " . $town_to_find->town_name . " can be found at sector " . 
+				$town_to_find->location->x . ", " . $town_to_find->location->y;
+				
+			$message .= ". The town has been added to your map";
+				
+			$c->model('DBIC::Mapped_Sectors')->find_or_create(
+	        	{
+		    	    party_id => $party->id,
+			       	land_id  => $town_to_find->location->id,
+		    	},
+       		);
+		}
+			
+		$party->gold($party->gold-$cost);
+		$party->update;
+	};
+	if ($@) {
+		if (ref $@ eq 'HASH') {
+			my %excep = %{$@};			
+			$message = $excep{message};
+			$error = $excep{error};
+		}
+		else {
+			die $@;
+		}	
+	}
+	
+	$c->stash->{messages} = $message;
+	$c->error($error);
+	
+	push @{ $c->stash->{refresh_panels} }, ('party_status');
+	
+	$c->forward('/town/sage');	
 }
 
 1;

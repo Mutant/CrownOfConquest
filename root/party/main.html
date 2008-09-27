@@ -3,6 +3,7 @@
 <script>
 dojo.require('dijit.layout.SplitContainer');
 dojo.require('dijit.Tooltip');
+dojo.require('dijit.form.FilteringSelect');
 	
 function getPanels(url) {
 	var originalContent = dojo.byId('messages-pane').innerHTML;
@@ -26,7 +27,6 @@ function getPanels(url) {
 	          	dijit.byId('messages-pane').setContent(originalContent);
         	}
         	else {
-        		//console.log(responseObject);
 	       	    if (responseObject.refresh_panels) {
 					refreshPanels(responseObject.refresh_panels);
 		       	}
@@ -39,8 +39,6 @@ function getPanels(url) {
 
 function refreshPanels(panel_hash) {
 	for (var panel in panel_hash) {
-		//console.log(panel);
-		//alert(panel_hash[panel]);
 		dijit.byId(panel+'-pane').setContent(panel_hash[panel]);
 		dijit.byId(panel+'-pane').refresh();
 	}
@@ -111,9 +109,11 @@ dojo.addOnLoad( init );
 
 /* From healer panel */
 function healParty(dialogFields) {
-	//console.log("dialogFields");
-	//console.log(dialogFields);
 	getPanels('/town/heal_party?gold=' + dialogFields.heal_amount);
+}
+
+function findTown(dialogFields) {
+	getPanels("/town/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
 }
 
 function checkAttack(creatureGroupId, confirmAttack) {

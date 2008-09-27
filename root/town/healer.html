@@ -20,7 +20,9 @@ Do you require any further services?
 	[% FOREACH dead_char IN dead_characters %]
 		<li><a href="javascript:getPanels('/town/resurrect?character_id=[% dead_char.id %]')">Resurrect [% dead_char.character_name %]</a> ([% dead_char.resurrect_cost %] gold)</li>
 	[% END %]
-	<li>Buy Healing Potions</li>
+	[% IF cost_to_heal == 0 && ! dead_characters.0 %]
+		<li>You do not require any healing</li>
+	[% END %]		
 </ul>
 
 [% INCLUDE town/town_footer.html %]

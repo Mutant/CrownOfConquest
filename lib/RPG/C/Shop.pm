@@ -227,8 +227,6 @@ sub sell_item : Local {
     
     $item->character_id(undef);
     $item->equip_place_id(undef);
-    
-
 
     if ($item->variable('Quantity')) {
 		# Qunatity itmes get deleted
@@ -239,10 +237,13 @@ sub sell_item : Local {
     	$item->shop_id($shop->id);        	
     	$item->update;
     }
+    
+    my $messages = $c->forward('/quest/check_action', ['sell_item', $item]);
  
     my $ret = to_json(
     	{
     		gold => $c->stash->{party}->gold,
+    		messages => $messages,
     	}
     ); 
     

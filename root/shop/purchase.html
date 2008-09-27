@@ -72,7 +72,6 @@ function savePurchase(dialogFields) {
         handleAs: "json",
         
         load: function(responseObject, ioArgs) {
-  	  	  //console.log(responseObject);
           if (responseObject.error) {
           	dojo.byId('error-message').innerHTML = responseObject.error;
           	dijit.byId('error').show();
@@ -86,7 +85,6 @@ function savePurchase(dialogFields) {
 			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
 			  }
 			  else {
-			  	//console.log(dialogFields.purchasing_item_id);
 				dojo.byId('item-' + dialogFields.purchasing_item_id).id = 'item-' + responseObject.updated_stock.next_item;
 		  	  }		  	  
 		  }
@@ -145,8 +143,21 @@ function sellItem(dialogFields) {
           	dojo.byId('error-message').innerHTML = responseObject.error;
           	dijit.byId('error').show();
           }
-          else if (responseObject.gold) {
+          else {
+          	if (responseObject.gold) {
 			  dojo.byId('current-gold').innerHTML = responseObject.gold;
+			}
+			if (responseObject.messages) {
+				var messages = responseObject.messages;
+				var message;
+				for ( var i in messages ) {
+					if (message) {
+						message += messages[i] + '<br>';
+					}
+				}
+				dojo.byId('message-text').innerHTML = message;
+				dijit.byId('message-diag').show();
+			}
 		  }
           return responseObject;
         },
@@ -186,6 +197,11 @@ dojo.addOnLoad( init );
 <div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
     <span id="confirm-sale-message"></span>
     <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+<div dojoType="dijit.Dialog" id="message-diag" style="display: none" title="Message">
+    <span id="message-text"></span>
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 

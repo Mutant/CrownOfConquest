@@ -8,6 +8,7 @@ Do you require any further services?
 
 <ul>
 	<li><a href="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
+	<li><a href="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
 </ul>
 
 <div dojoType="dijit.Dialog" id="sage-town-diag" style="display: none" title="Find A Town" execute="findTown(arguments[0]);">
@@ -28,6 +29,23 @@ Do you require any further services?
 		</tr>
 	</table>
 	<div align="center"><button dojoType=dijit.form.Button type="submit" id="sage-dialog-submit">OK</button></div>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-item-diag" style="display: none" title="Find An Item" execute="findItem(arguments[0]);">
+	<table>
+	    <tr>
+	    	<td>Which type of item would you like to find? ([% item_find_cost %] gold)</td>
+	    	<td>
+		    	<select dojoType="dijit.form.FilteringSelect" name="item_type_to_find" autocomplete="true">
+		    		<option></option>
+	                [% FOREACH item_type IN item_types %]
+	                	<option value="[% item_type.id %]">[% item_type.item_type %]</option>
+	                [% END %]
+			</select>
+		    </td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
 
 [% INCLUDE town/town_footer.html %]

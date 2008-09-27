@@ -32,7 +32,7 @@ __PACKAGE__->has_many(
 
 my %QUEST_TYPE_TO_CLASS_MAP = (
 	kill_creatures_near_town => 'RPG::Schema::Quest::Kill_Creatures_Near_Town',
-	buy_item => 'RPG::Schema::Quest::Buy_Item',
+	find_jewel => 'RPG::Schema::Quest::Find_Jewel',
 	msg_to_town => 'RPG::Schema::Quest::Msg_To_Town',
 );
 
@@ -131,7 +131,7 @@ sub param_record {
 		}
 	}
 	
-	croak "Param name '$param_name' does not exist for this quest type" unless defined $self->{_param_records_by_name}{$param_name};
+	confess "Param name '$param_name' does not exist for this quest type" unless defined $self->{_param_records_by_name}{$param_name};
 		
 	return $self->{_param_records_by_name}{$param_name};
 }

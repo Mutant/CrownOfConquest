@@ -83,12 +83,12 @@ sub list : Local {
 
 # Check the party's quests to see if any progress has been made for the particular action just taken
 sub check_action : Private {
-	my ($self, $c, $action) = @_;
+	my ($self, $c, $action, @params) = @_;
 	
 	my @messages;
 	
 	foreach my $quest ($c->stash->{party}->quests) {
-		if ($quest->check_action($c->stash->{party}, $action)) {
+		if ($quest->check_action($c->stash->{party}, $action, @params)) {
 			push @messages, $c->forward('RPG::V::TT',
 		        [{
 		            template => 'quest/action_message.html',

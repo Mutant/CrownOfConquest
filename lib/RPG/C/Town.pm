@@ -290,6 +290,16 @@ sub town_hall : Local {
 sub sage : Local {
 	my ($self, $c) = @_;
 	
+	my @item_types = $c->model('Item_Type')->search(
+		{
+			'category.hidden' => 0,
+		},
+		{
+			join => 'category',
+			order_by => 'item_type',
+		},
+	);
+	
 	my $panel = $c->forward('RPG::V::TT',
         [{
             template => 'town/sage.html',
@@ -297,6 +307,8 @@ sub sage : Local {
             	direction_cost => $c->config->{sage_direction_cost},
             	distance_cost  => $c->config->{sage_distance_cost},
             	location_cost  => $c->config->{sage_location_cost},
+            	item_types => \@item_types,
+            	item_find_cost => $c->config->{sage_item_find_cost},
             	messages => $c->stash->{messages},
             },	
 			return_output => 1,
@@ -313,6 +325,11 @@ sub find_town : Local {
 	
 	my $party = $c->stash->{party};
 	my $party_location = $c->stash->{party_location};
+	
+	unless ($party_location->town) {
+		$c->error("Not in a town!");
+		return;
+	}
 	
 	my $message;
 	my $error;
@@ -404,6 +421,82 @@ sub find_town : Local {
 	push @{ $c->stash->{refresh_panels} }, ('party_status');
 	
 	$c->forward('/town/sage');	
+}
+
+sub find_item : Local {
+	my ($self, $c) = @_;
+	
+	my $party = $c->stash->{party};
+	my $party_location = $c->stash->{party_location};
+	
+	unless ($party_location->town) {
+		$c->error("Not in a town!");
+		return;
+	}
+
+	my $message;
+
+	unless ($party->gold >= $c->config->{sage_item_find_cost}) {
+		$message = "You don't have enough gold to do that!";
+	}
+	else {	
+		my $item_type = $c->model('Item_Type')->find(
+			{
+				item_type_id => $c->req->param('item_type_to_find'),
+			}
+		);
+		
+		unless ($item_type) {
+			$message = "I don't know of that item type";
+		}
+		else {
+			my @towns_with_item_type = $c->model('Town')->search(
+				{
+					'items_in_shop.item_type_id' => $item_type->id,
+				},
+				{
+					join => {'shops' => 'items_in_shop'},
+					prefetch => 'location',
+				},
+			);
+			
+			unless (@towns_with_item_type) {
+				$message = "I don't know of anywhere that has that item";
+			}
+			else {			
+				my $closest_town;
+				my $min_distance;
+				
+				foreach my $town_to_check (@towns_with_item_type) {
+					my $dist = RPG::Map->get_distance_between_points(
+						{
+							x => $party_location->x,
+							y => $party_location->y,
+						},
+						{
+							x => $town_to_check->location->x,
+							y => $town_to_check->location->y,
+						},				
+					);
+					
+					if (! $min_distance || $dist < $min_distance) {
+						$closest_town = $town_to_check;
+					}
+				}
+				
+				$message = "There is currently a " . $item_type->item_type . " in " . $closest_town->town_name;
+				
+				$party->gold($party->gold-$c->config->{sage_item_find_cost});
+				$party->update;
+			}
+		}
+	}
+	
+	$c->stash->{messages} = $message;
+	
+	push @{ $c->stash->{refresh_panels} }, ('party_status');
+	
+	$c->forward('/town/sage');
 }
 
 1;

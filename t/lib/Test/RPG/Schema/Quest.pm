@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Schema::Items;
+package Test::RPG::Schema::Quest;
 
 use base qw(Test::RPG::DB);
 

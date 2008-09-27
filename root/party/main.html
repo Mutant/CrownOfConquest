@@ -116,6 +116,10 @@ function findTown(dialogFields) {
 	getPanels("/town/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
 }
 
+function findItem(dialogFields) {
+	getPanels("/town/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
+}
+
 function checkAttack(creatureGroupId, confirmAttack) {
 	if (confirmAttack) {
 		dojo.byId('creature-group-id').value = creatureGroupId;

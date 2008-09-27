@@ -16,32 +16,14 @@ sub set_quest_params {
     my $town = $self->town;
     my $town_location = $town->location;
     
-    my @towns_in_range;
-    
-    my $search_range = $self->{_config}{initial_search_range};
-    
-    while (! @towns_in_range) {	    
-	    my ($start_point, $end_point) = RPG::Map->surrounds(
-	    	$town_location->x,
-	    	$town_location->y,
-	    	$search_range,
-	    	$search_range,
-	    );
-	    
-	    @towns_in_range = $self->result_source->schema->resultset('Town')->search(
-	    	{
-	    		'location.x' => {'>=', $start_point->{x}, '<=', $end_point->{x}},
-				'location.y' => {'>=', $start_point->{y}, '<=', $end_point->{y}},
-				'town_id' => {'!=', $town->id},
-	    	},
-	    	{
-	    		prefetch => 'location',
-	    	},
-	    );
-
-		# Increase the search range (if we haven't found anything)
-	    $search_range+=2;
-    }
+    my @towns_in_range = $self->result_source->schema->resultset('Town')->find_in_range(
+    	{
+    		x => $town_location->x,
+    		y => $town_location->y,
+    	},
+    	$self->{_config}{initial_search_range},
+    	2,
+    );
     
     @towns_in_range = shuffle @towns_in_range;
     

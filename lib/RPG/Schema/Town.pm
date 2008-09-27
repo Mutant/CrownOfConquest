@@ -10,6 +10,8 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Town');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Town');
+
 __PACKAGE__->add_columns(qw/town_id town_name land_id prosperity/);
 
 __PACKAGE__->set_primary_key('town_id');

@@ -37,19 +37,17 @@ function init() {
 		var purchasingChar = tmp[1];
 		
     	tmp = nodes[0].id.split(/-/);
+    	
+    	var item_type_id = tmp[1];
 		
-		if (tmp[0] == 'item') {
-			var item_id = tmp[1];	
-			
-			dojo.byId('confirmation-message').innerHTML = "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
+		if (tmp[0] == 'item') {			
+			dojo.byId('confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
 			dojo.byId('purchasing-char-id').value = char_id;
-			dojo.byId('purchasing-item-id').value = item_id;
+			dojo.byId('purchasing-item-type-id').value = item_type_id;
 			
 			dijit.byId('confirmation').show();
 		}
-		else if (tmp[0] == 'item_type') {
-			var item_type_id = tmp[1];
-
+		else if (tmp[0] == 'quantity') {
 			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
 			dojo.byId('quantity-char-id').value = char_id;
 			dojo.byId('quantity-item-type-id').value = item_type_id;
@@ -67,7 +65,7 @@ function init() {
 function savePurchase(dialogFields) {	
 	dojo.xhrGet( {
         url: "[% base %]/shop/buy_item?character_id=" + dialogFields.purchasing_char_id 
-        	+ "&item_id=" + dialogFields.purchasing_item_id
+        	+ "&item_type_id=" + dialogFields.purchasing_item_type_id
         	+ "&shop_id=[% shop.id %]", 
         handleAs: "json",
         
@@ -83,10 +81,7 @@ function savePurchase(dialogFields) {
 			  if (responseObject.updated_stock.count == 0) {
 			  	dojo.byId('item-source-' + responseObject.updated_stock.item_type).innerHTML = 
 			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
-			  }
-			  else {
-				dojo.byId('item-' + dialogFields.purchasing_item_id).id = 'item-' + responseObject.updated_stock.next_item;
-		  	  }		  	  
+			  }	  	  
 		  }
           return responseObject;
         },
@@ -125,7 +120,7 @@ function sellItemConfirm(item_type, item_id, sell_price, equip_place_id) {
 	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
 
 	if (equip_place_id != "" && equip_place_id != 0) {
-		message += " (Note, this item is currently equipped)";
+		message += "<br>(Note, this item is currently equipped)";
 	}
 	
 	dojo.byId('confirm-sale-message').innerHTML = message;
@@ -151,12 +146,14 @@ function sellItem(dialogFields) {
 				var messages = responseObject.messages;
 				var message;
 				for ( var i in messages ) {
-					if (message) {
+					if (messages[i]) {
 						message += messages[i] + '<br>';
 					}
 				}
-				dojo.byId('message-text').innerHTML = message;
-				dijit.byId('message-diag').show();
+				if (message) {
+					dojo.byId('message-text').innerHTML = message;
+					dijit.byId('message-diag').show();
+				}
 			}
 		  }
           return responseObject;
@@ -173,7 +170,7 @@ dojo.addOnLoad( init );
 <div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
     <span id="confirmation-message"></span>
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="purchasing-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <button dojoType=dijit.form.Button type="submit">OK</button>
     <!-- <button dojoType=dijit.form.Button onClick="dijit.byId('confirmation').hide()">Cancel</button> -->
 </div>
@@ -283,31 +280,25 @@ Shops in [% town.town_name %]:
 	[% END %]
 	
 	[% FOREACH item_or_type IN category.value %]
-		[% IF item_or_type.key == 'item' %]
-			[% FOREACH item IN item_or_type.value %]
+		[% sell_type = item_or_type.key %]	
+		[% FOREACH item IN item_or_type.value %]
+			[% IF sell_type == 'item' %]
+				[% item_type = item.item_type %]
+			[% ELSE %]
+				[% item_type = item %]
+			[% END %]
+		
 			<tr>
 				<td>
-					<span id="item-quantity-[% item.item_type.id %]">[% item.get_column('number_of_items') %]</span> x
-					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-source-[% item.item_type.id %]">
-						<span class="dojoDndItem" dndType="item" id="item-[% item.item_id %]" dndData="[% item.item_type.item_type %]">[% item.item_type.item_type %]</span>
+				
+					[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
+					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="[% sell_type %]-source-[% item_type.id %]">
+						<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
 					</span>	
-					([% item.item_type.modified_cost(shop) %] gold)
+					([% item_type.modified_cost(shop) %] gold [% IF sell_type == 'quantity' %]each[% END %])
 				</td>
-				[% item_details(item.item_type) %]
+				[% item_details(item_type) %]
 			</tr>
-			[% END %]
-		[% ELSE %]
-			[% FOREACH item_type IN item_or_type.value %]
-			<tr>
-				<td>
-					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="item-type-source-[% item_type.id %]">
-						<span class="dojoDndItem" dndType="item" id="item_type-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
-					</span>					
-					([% item_type.modified_cost(shop) %] gold each)
-				</td>
-				[% item_details(item.item_type) %]
-			</tr>
-			[% END %]
 		[% END %]
 	[% END %]				
 [% END %]	

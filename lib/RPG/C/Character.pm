@@ -245,7 +245,15 @@ sub equipment_list : Local {
     	shop_id => $c->req->param('shop_id'),
     });
     
-    my @items = $character->items;
+    my @items = $c->model('Items')->search(
+    	{
+    		character_id => $character->id,
+    	},
+    	{
+    		prefetch => ['item_type', 'item_variables'],
+    		order_by => 'item_type.item_type',
+    	}
+    );;
         
     $c->forward('RPG::V::TT',
         [{

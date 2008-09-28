@@ -39,7 +39,7 @@ sub purchase : Local {
     }
     
     foreach my $item_type (@item_types_made) {
-    	push @{$items{$item_type->category->item_category}{item_type}}, $item_type;	
+    	push @{$items{$item_type->category->item_category}{quantity}}, $item_type;	
     }
     
     # TODO: sort %items?    
@@ -62,10 +62,6 @@ sub purchase : Local {
 sub buy_item : Local {
     my ($self, $c) = @_;
     
-    my $item = $c->model('Items')->find({
-    	item_id => $c->req->param('item_id'),
-    });
-    
 	my $shop = $c->model('DBIC::Shop')->find($c->req->param('shop_id'));
 
     my $party = $c->stash->{party};    
@@ -78,32 +74,30 @@ sub buy_item : Local {
    		return;	
     }
     
-    # Deal with item being bought by another party
-    if ($item->character_id) {
-    	# The item they tried to buy has now been bought by someone else. But the shop may have more items of this type...
-    	my $item_rs = $c->model('Items')->search({
+    my $item_rs = $c->model('Items')->search(
+    	{
+    		'item_type.item_type_id' => $c->req->param('item_type_id'),
     		shop_id => $shop->id,
-    		item_type_id => $item->item_type_id,
-    		character_id => undef,
-    	});
-    	
-    	if ($item_rs->count == 0) {
-    		$c->res->body(to_json({error => "The shop no longer has any " . $item->item_type->item_type . " items left. Another party may " .
-    			 " have just bought the last one!"}));
-    		return;
-    	}
-    	else {
-    		$item = $item_rs->first;
-    	}
-    }
+    	},
+    	{
+    		prefetch => 'item_type',
+    	},
+    );
+    
+	if ($item_rs->count == 0) {
+    	$c->res->body(to_json({error => "The shop no longer has any of those items left. Another party may " .
+    		 " have just bought the last one!"}));
+    	return;
+   	}
+
+	my $item = $item_rs->first;
 	
     my $cost = $item->item_type->modified_cost($item->in_shop);
     
     if ($party->gold < $cost) {
         $c->res->body(to_json({error => "Your party doesn't have enough gold to buy this item"}));
         return;        
-    }
-    
+    }    
    
     $item->character_id($c->req->param('character_id'));
     $item->shop_id(undef);
@@ -112,26 +106,16 @@ sub buy_item : Local {
     $party->gold($party->gold - $cost);
     $party->update;
     
-    # Find the next item id for this item type in the shop (if any)
-    my $item_rs = $c->model('Items')->search({
-    	shop_id => $shop->id,
-    	item_type_id => $item->item_type_id,
-    });
-
-	my $next_item = $item_rs->first;   
-    my $next_item_id = $next_item ? $next_item->id : undef;
-    
     my $ret = to_json(
     	{
     		gold => $party->gold, 
     		updated_stock => {
     			item_type => $item->item_type->id,
-    			next_item_id => $next_item_id,
     			count => $item_rs->count,	
     		},
     	},
 	);
-	        
+		        
     $c->res->body($ret);
 }
 
@@ -245,7 +229,7 @@ sub sell_item : Local {
     		gold => $c->stash->{party}->gold,
     		messages => $messages,
     	}
-    ); 
+    );
     
     $c->res->body($ret);   
     

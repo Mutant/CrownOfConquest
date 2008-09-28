@@ -41,7 +41,9 @@ __PACKAGE__->has_many(
     'items',
     'RPG::Schema::Items',
     { 'foreign.character_id' => 'self.character_id' },
-    { prefetch => ['item_type', 'item_variables'], },
+    { 
+    	prefetch => ['item_type', 'item_variables'], 
+   	},
 );
 
 __PACKAGE__->has_many(

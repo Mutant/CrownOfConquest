@@ -204,6 +204,8 @@ sub fight : Local {
 	if ($creature_group->level < $c->stash->{party}->level) {
 		my $chance_of_fleeing = ($c->stash->{party}->level - $creature_group->level) * $c->config->{chance_creatures_flee_per_level_diff};		
 		
+		$c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
+		
 		if ($chance_of_fleeing >= Games::Dice::Advanced->roll('1d100')) {
 			$c->detach('creatures_flee');
 		}
@@ -501,7 +503,7 @@ sub flee : Local {
 sub creatures_flee : Private {
 	my ($self, $c) = @_;
 	
-	my $land = $c->forward('get_sector_to_flee_to');
+	my $land = $c->forward('get_sector_to_flee_to', [1]);
 	
 	$c->stash->{creature_group}->land_id($land->id);
 	$c->stash->{creature_group}->update;
@@ -520,33 +522,43 @@ sub creatures_flee : Private {
 
 # For the party or the creatures
 sub get_sector_to_flee_to : Private {
-	my ($self, $c) = @_;
+	my ($self, $c, $check_for_creature_group) = @_;
 	
 	my $party_location = $c->stash->{party}->location;
-
-	my %x_y_range = $c->model('Land')->get_x_y_range();
-
-	# Find sector to flee to
-	my @adjacent_sectors = RPG::Map->get_adjacent_sectors(
-		$party_location->x,
-		$party_location->y,
-		$x_y_range{min_x},
-		$x_y_range{min_y},
-		$x_y_range{max_x},
-		$x_y_range{max_y},
-	);
-	@adjacent_sectors = shuffle @adjacent_sectors;
 	
-	my ($new_x, $new_y) = @{shift @adjacent_sectors};
-
-	$c->log->debug("Fleeing to: $new_x, $new_y");
+	my @sectors_to_flee_to;
+	my $range = 3;
+	
+	while (! @sectors_to_flee_to) { 
+		my ($start_point, $end_point) = RPG::Map->surrounds(
+			$party_location->x,
+			$party_location->y,
+			$range,
+			$range,
+		);
 		
-	my $land = $c->model('Land')->find({
-		x => $new_x,
-		y => $new_y,
-	});
+		my %params;
+		$params{'creature_group.creature_group_id'} = undef
+			if $check_for_creature_group;
+		
+		@sectors_to_flee_to = $c->model('Land')->search(
+			{
+				%params,
+				x => {'>=', $start_point->{x}, '<=', $end_point->{x}, '!=', $party_location->x},
+				y => {'>=', $start_point->{y}, '<=', $end_point->{y}, '!=', $party_location->y}, 
+			},
+			{
+				join => 'creature_group',
+			},
+		);
+		
+		$range++;
+	}
 	
-	croak "Couldn't find sector: $new_x, $new_y\n" unless $land;
+	@sectors_to_flee_to = shuffle @sectors_to_flee_to;
+	my $land = shift @sectors_to_flee_to;
+	
+	$c->log->debug("Fleeing to " . $land->x . ", " . $land->y);
 	
 	return $land;
 }

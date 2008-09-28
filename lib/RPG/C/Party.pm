@@ -23,6 +23,12 @@ sub main : Local {
     );
 }
 
+sub refresh_messages : Local {
+	my ($self, $c) = @_;
+	
+	$c->forward('/panel/refresh', ['messages']);
+}
+
 sub sector_menu : Local {
     my ($self, $c) = @_;
     

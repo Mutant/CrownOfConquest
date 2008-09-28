@@ -20,6 +20,10 @@
 	[% END %]
 </ul>
 
+[% IF combat_complete %]
+	<p><a href="javascript:getPanels('/party/refresh_messages')">Continue</a></p>
+[% END %]
+
 [% IF party_dead %]
 	Your party has been wiped out! <a href="[% base %]">Click to Restart your party.</a>
 [% END %]

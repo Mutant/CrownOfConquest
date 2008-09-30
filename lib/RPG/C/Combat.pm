@@ -604,7 +604,7 @@ sub finish : Private {
 		
 		$character->update;
 	}
-	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d8');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
 	
 	push @{$c->stash->{combat_messages}}, "You find $gold gold";
 	

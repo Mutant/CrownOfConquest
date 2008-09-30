@@ -1,5 +1,4 @@
-[% MACRO sector_title(position) BLOCK %]
-[% position.terrain_name %]
+[% MACRO sector_title(position) BLOCK %][% position.terrain_name | ucfirst %]
 [% IF position.town_id %] - [% position.town_name %] (prosperity: [% position.prosperity %])[% END %]
 [% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
 ([% position.x %], [% position.y %])

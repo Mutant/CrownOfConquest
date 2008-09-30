@@ -238,10 +238,10 @@ sub town_hall : Local {
 		
 		my $xp_gained = $party_quest->xp_value;
 		
-		my @characters = $c->stash->{party}->characters;
+		my @characters = grep { ! $_->is_dead } $c->stash->{party}->characters;
 		my $xp_each = int $xp_gained / scalar @characters;
 		
-		foreach my $character (@characters) {
+		foreach my $character (@characters) {			
 			my $level_up_details= $character->xp($character->xp+$xp_each);
 			push @xp_messages, $c->forward('RPG::V::TT',
 		        [{

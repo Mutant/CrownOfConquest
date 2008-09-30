@@ -21,7 +21,7 @@ sub run {
 		$config->{datasource},
         $config->{username},
         $config->{password},
-		{AutoCommit => 1},
+		{AutoCommit => 0},
 	);
 	
 	# Create a new day
@@ -42,13 +42,19 @@ sub run {
 	);
 		
 	# New day for Party
-	#RPG::NewDay::Party->run($config, $schema, $new_day);
+	RPG::NewDay::Party->run($config, $schema, $new_day);
+
+	$schema->storage->dbh->commit;
 
 	# Run shops update
-	#RPG::NewDay::Shop->run($config, $schema, $new_day);
+	RPG::NewDay::Shop->run($config, $schema, $new_day);
+
+	$schema->storage->dbh->commit;
 
 	# Add quests to towns
 	RPG::NewDay::Quest->run($config, $schema, $new_day);
+	
+	$schema->storage->dbh->commit;
 
 }
 

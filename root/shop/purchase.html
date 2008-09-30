@@ -295,7 +295,7 @@ Shops in [% town.town_name %]:
 					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="[% sell_type %]-source-[% item_type.id %]">
 						<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
 					</span>	
-					([% item_type.modified_cost(shop) %] gold [% IF sell_type == 'quantity' %]each[% END %])
+					([% item_type.modified_cost(shop) %] gold[% IF sell_type == 'quantity' %] each[% END %])
 				</td>
 				[% item_details(item_type) %]
 			</tr>

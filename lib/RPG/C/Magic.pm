@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-sub cast : Local {
+sub cast : Private {
 	my ($self, $c, $character, $spell_id, $target) = @_;
 
 	$c->stash->{characters} = { map { $_->id => $_ } $c->stash->{party}->characters };
@@ -22,7 +22,7 @@ sub cast : Local {
    			character_id => $character->id,
 		},
 		{
-			prefetch => ['memorised_by_characters', 'class'],
+			prefetch => ['class'],
 		},
 	);
    
@@ -38,7 +38,12 @@ sub cast : Local {
    		],
    	);
    	
-   	my ($memorised_spell) = $spell->memorised_by_characters;
+   	my $memorised_spell = $c->model('Memorised_Spell')->find(
+   		{
+   			spell_id => $spell->id,
+   			character_id => $character->id,
+   		}
+   	);
    	$memorised_spell->number_cast_today($memorised_spell->number_cast_today+1);
    	$memorised_spell->update;
    	

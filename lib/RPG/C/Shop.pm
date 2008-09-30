@@ -213,7 +213,7 @@ sub sell_item : Local {
     $item->equip_place_id(undef);
 
     if ($item->variable('Quantity')) {
-		# Qunatity itmes get deleted
+		# Qunatity items get deleted
 		$item->delete;
     }
     else {

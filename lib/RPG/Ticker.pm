@@ -21,7 +21,7 @@ sub run {
 		$config->{datasource},
         $config->{username},
         $config->{password},
-		{AutoCommit => 1},
+		{AutoCommit => 0},
 	);
 	
 	# Spawn monsters
@@ -29,6 +29,8 @@ sub run {
 	
 	# Move monsters
 	$package->move_monsters($config, $schema);
+	
+	$schema->storage->dbh->commit;
 }
 
 sub spawn_monsters {

@@ -89,7 +89,7 @@ sub check_action : Private {
 	
 	foreach my $quest ($c->stash->{party}->quests) {
 		if ($quest->check_action($c->stash->{party}, $action, @params)) {
-			push @messages, $c->forward('RPG::V::TT',
+			my $message = $c->forward('RPG::V::TT',
 		        [{
 		            template => 'quest/action_message.html',
 					params => {
@@ -99,6 +99,7 @@ sub check_action : Private {
 					return_output => 1,
 		        }]
 		    );
+		    push @messages, $message if $message;
 		}	
 	}
 		

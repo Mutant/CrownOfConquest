@@ -85,6 +85,8 @@ sub end : Private {
 	my ( $self, $c ) = @_;
 
     if ( scalar @{ $c->error } ) {
+    	$c->model('DBIC')->schema->storage->dbh->rollback;
+    	
     	# Log error message
     	$c->log->error('An error occured...');
     	$c->log->error("Action: " . $c->action);
@@ -108,6 +110,9 @@ sub end : Private {
 		);            
 
         $c->error(0);
+	}
+	else {
+		$c->model('DBIC')->schema->storage->dbh->commit;	
 	}
 
     return 1 if $c->response->status =~ /^3\d\d$/;

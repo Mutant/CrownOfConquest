@@ -32,6 +32,12 @@ function getPanels(url) {
 		       	}
 	       	}
         },
+        
+        error: function(err) {
+        	errorMsg = "An error occurred processing the action. Please <a href=\"javascript:getPanels('" + url + "')\">try again</a> or report a bug.";
+        	console.debug(err);
+        	dijit.byId('messages-pane').setContent(errorMsg);
+        },
 
 	    timeout: 5000 // Time in milliseconds	
     });

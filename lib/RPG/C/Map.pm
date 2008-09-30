@@ -6,7 +6,8 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use JSON;
-use DBIx::Class::ResultClass::HashRefInflator;
+#use DBIx::Class::ResultClass::HashRefInflator;
+use RPG::Schema::Land;
 
 sub view : Local {
     my ($self, $c) = @_;
@@ -109,7 +110,10 @@ sub generate_grid : Private {
     foreach my $location (@$locations) {
         $grid[$location->{x}][$location->{y}] = $location;
         
-        $location->{party_movement_factor} = $c->stash->{party}->movement_factor + $location->{modifier};
+        $location->{party_movement_factor} = RPG::Schema::Land->movement_cost(
+        	$c->stash->{party}->movement_factor, 
+        	$location->{modifier},
+        );
         
         # Record sector to the party's map
         if ($add_to_party_map && ! $location->{mapped_sector_id}) {
@@ -165,7 +169,7 @@ Move the party to a new location
 
 sub move_to : Local {
     my ($self, $c) = @_;
-        
+    
     my $new_land = $c->model('Land')->find( 
     	$c->req->param('land_id'),
     	{
@@ -200,7 +204,7 @@ sub move_to : Local {
 	        push @{ $c->stash->{refresh_panels} }, 'party';
     	}	
 	    
-	    $c->stash->{party}->update;
+	    $c->stash->{party}->update;	    
 	    
 	    $c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 1);
 	    $c->stash->{party_location}->update;

@@ -7,8 +7,7 @@ __PACKAGE__->config(
                         "dbi:mysql:game",
                         "root",
                         "",
-                        {AutoCommit => 1},
-                        #{debug => 1},
+                        {AutoCommit => 0},
                       ]
 );
 

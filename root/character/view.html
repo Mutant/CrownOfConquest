@@ -95,7 +95,10 @@ function addStatPoint(char_id, stat) {
 		      	dijit.byId('message').show();					
         	}
         	else {
-        		statVal = parseInt( dojo.byId('stat-' + stat).innerHTML ) +1;
+        	    statValStr = dojo.byId('stat-' + stat).innerHTML;
+        	    statValStr = statValStr.replace(/&nbsp;/,'');
+        	    
+        		statVal = parseInt( statValStr )+1;
         		
         		statVal = statVal + "";
         		if (statVal.length == 1) {

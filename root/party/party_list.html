@@ -12,7 +12,7 @@
 
 </tr>
 
-[% FOREACH char = characters %]
+[% FOREACH char IN characters %]
 [% char_id = char.id %]
 <tr 
 	[% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] 

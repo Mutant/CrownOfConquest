@@ -193,7 +193,7 @@ sub fight : Local {
 			creature_group_id => $c->stash->{party}->in_combat_with,
 		},
 		{
-			prefetch => {'creatures' => 'type'},
+			prefetch => {'creatures' => ['type', 'creature_effects']},
 		},
 	);	
 	
@@ -213,7 +213,11 @@ sub fight : Local {
 	
 	my @creatures = $creature_group->creatures;
 	my @characters = $c->stash->{party}->characters;
+	
+	# Compute af/df for each participant. Only do this once per combat since it won't change
+	$c->forward('calculate_factors', [\@characters, \@creatures]);
 		
+	# Process magical effects
 	$c->forward('process_effects');
 	
 	# Get list of combatants, modified for changes in attack frequency, and radomised in order
@@ -270,6 +274,26 @@ sub fight : Local {
 	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
 
+sub calculate_factors : Private {
+	my ($self, $c, $characters, $creatures) = @_;
+	
+	foreach my $combatant (@$characters, @$creatures) {	
+		next if $combatant->is_dead;
+		
+		my $type = $combatant->is_character? 'character' : 'creature';	
+		
+		unless (defined $c->session->{combat_factors}{$type}{$combatant->id}{af}) {
+			$c->session->{combat_factors}{$type}{$combatant->id}{af} = $combatant->attack_factor;
+			$c->log->debug("Calculating attack factor for " . $combatant->name . " - " . $combatant->id);
+		}
+		
+		unless (defined $c->session->{combat_factors}{$type}{$combatant->id}{df}) {
+			$c->session->{combat_factors}{$type}{$combatant->id}{df} = $combatant->defence_factor;
+			$c->log->debug("Calculating defence factor for " . $combatant->name . " - " . $combatant->id);
+		}
+	}
+}
+
 sub character_action : Private {
 	my ($self, $c, $character, $creature_group) = @_;	
 	
@@ -319,6 +343,25 @@ sub character_action : Private {
 				$c->session->{combat_action_param}{$character->id}[1],
 			],
 		);
+		
+		# Since effects could have changed an af or df, we delete any id's in the cache matching the second param
+		#  (the target's id) and then recompute.
+		my $target = $c->session->{combat_action_param}{$character->id}[1];
+		my @cached_combatant_ids = (
+			keys %{$c->session->{combat_factors}{character}},
+			keys %{$c->session->{combat_factors}{creature}},
+		);
+		
+		$c->log->debug("Deleting combat factor cache for target id $target");
+		
+		foreach my $combatant_id (@cached_combatant_ids) {
+			delete $c->session->{combat_factors}{character}{$combatant_id}
+				if $combatant_id == $target;
+			delete $c->session->{combat_factors}{creature}{$combatant_id}
+				if $combatant_id == $target;
+		}
+		
+		$c->forward('calculate_factors', [[$c->stash->{party}->characters], [$creature_group->creatures]]);
 		
 		$character->last_combat_action('Defend');
 		$character->update;
@@ -429,8 +472,9 @@ sub attack : Private {
 	
 	my $defence_bonus = $defending ? RPG->config->{defend_bonus} : 0;
 	
-	my $af = $attacker->attack_factor;
-	my $df = $defender->defence_factor;
+		
+	my $af = $c->session->{combat_factors}{$attacker->is_character ? 'character' : 'creature'}{$attacker->id}{af};
+	my $df = $c->session->{combat_factors}{$defender->is_character ? 'character' : 'creature'}{$defender->id}{df};
 	
 	my $aq = $af - $a_roll;	
 	my $dq = $df + $defence_bonus - $d_roll;

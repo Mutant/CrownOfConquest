@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-sub cast : Private {
+sub cast : Local {
 	my ($self, $c, $character, $spell_id, $target) = @_;
 
 	$c->stash->{characters} = { map { $_->id => $_ } $c->stash->{party}->characters };

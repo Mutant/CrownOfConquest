@@ -92,10 +92,22 @@ sub list : Local {
     
     my $party = $c->stash->{party};
 
-    my @characters = $c->stash->{party}->characters;    
+	# For some reasons, the characters don't have all the data we need (class, race, effects) even tho they're in the prefetch.
+	#  Re-querying here to fix that, altho it'd be nice if it was always here
+    my @characters = $c->model('DBIC::Character')->search(
+    	{
+    		'party_id' => $c->stash->{party}->id,
+    	},
+    	{
+    		prefetch => ['class','race',{'character_effects' => 'effect'}],
+    		order_by => 'party_order',
+    	},
+    );
     
     my %spells;
     foreach my $character (@characters) {
+    	next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
+    	
     	my %search_criteria = (
     		memorised_today => 1,
     		number_cast_today => \'< memorise_count',
@@ -228,7 +240,6 @@ sub camp : Local {
 	my $party = $c->stash->{party};
 	
 	if ($party->turns >= RPG->config->{camping_turns}) {
-		warn $party->turns;
 		$party->turns($party->turns - RPG->config->{camping_turns});
 		$party->rest($party->rest + 1);
 		$party->update;

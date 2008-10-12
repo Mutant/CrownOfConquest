@@ -11,11 +11,11 @@ use DBI;
 use Games::Dice::Advanced;
 use RPG::Map;
 
-my $dbh = DBI->connect("dbi:mysql:game","root","");
+my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
 $dbh->{RaiseError} = 1;
 
-my $max_x = 100;
-my $max_y = 100;
+my $max_x = 40;
+my $max_y = 40;
 
 my ($max_terrain) = $dbh->selectrow_array('select max(terrain_id) from Terrain');
 my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain where terrain_name = "town"');

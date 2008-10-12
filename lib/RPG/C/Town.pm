@@ -243,6 +243,7 @@ sub town_hall : Local {
 		
 		foreach my $character (@characters) {			
 			my $level_up_details= $character->xp($character->xp+$xp_each);
+			$character->update;
 			push @xp_messages, $c->forward('RPG::V::TT',
 		        [{
 		            template => 'party/xp_gain.html',
@@ -290,7 +291,7 @@ sub town_hall : Local {
 sub sage : Local {
 	my ($self, $c) = @_;
 	
-	my @item_types = $c->model('Item_Type')->search(
+	my @item_types = $c->model('DBIC::Item_Type')->search(
 		{
 			'category.hidden' => 0,
 		},
@@ -343,7 +344,7 @@ sub find_town : Local {
 		die {message => "You don't have enough money for that!"}
 			unless $party->gold > $cost;
 	
-		my $town_to_find = $c->model('Town')->find(
+		my $town_to_find = $c->model('DBIC::Town')->find(
 			{
 				town_name => $c->req->param('town_name'),
 			},
@@ -440,7 +441,7 @@ sub find_item : Local {
 		$message = "You don't have enough gold to do that!";
 	}
 	else {	
-		my $item_type = $c->model('Item_Type')->find(
+		my $item_type = $c->model('DBIC::Item_Type')->find(
 			{
 				item_type_id => $c->req->param('item_type_to_find'),
 			}
@@ -450,7 +451,7 @@ sub find_item : Local {
 			$message = "I don't know of that item type";
 		}
 		else {
-			my @towns_with_item_type = $c->model('Town')->search(
+			my @towns_with_item_type = $c->model('DBIC::Town')->search(
 				{
 					'items_in_shop.item_type_id' => $item_type->id,
 				},

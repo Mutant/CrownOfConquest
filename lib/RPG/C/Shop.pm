@@ -24,7 +24,7 @@ sub purchase : Local {
     my @item_types_made = $shop->item_types_made;
 
     # Get a sorted list of categories
-    my @categories = $c->model('Item_Category')->search(
+    my @categories = $c->model('DBIC::Item_Category')->search(
     	{},
     	{
     		order_by => 'item_category',
@@ -74,7 +74,7 @@ sub buy_item : Local {
    		return;	
     }
     
-    my $item_rs = $c->model('Items')->search(
+    my $item_rs = $c->model('DBIC::Items')->search(
     	{
     		'item_type.item_type_id' => $c->req->param('item_type_id'),
     		shop_id => $shop->id,
@@ -123,14 +123,14 @@ sub buy_item : Local {
 sub buy_quantity_item : Local {
     my ($self, $c) = @_;
     
-    my $item_type = $c->model('Item_Type')->find({
+    my $item_type = $c->model('DBIC::Item_Type')->find({
     	item_type_id => $c->req->param('item_type_id'),
     });
 
 	my $party = $c->stash->{party};
 
 	# Make sure the shop they're in checks out	
-	my $shop = $c->model('Shop')->find(
+	my $shop = $c->model('DBIC::Shop')->find(
 		{
 			shop_id => $c->req->param('shop_id'),
 			'items_made.item_type_id' => $c->req->param('item_type_id'),
@@ -160,7 +160,7 @@ sub buy_quantity_item : Local {
     }
     
     # Create the item
-    my $item = $c->model('Items')->create({
+    my $item = $c->model('DBIC::Items')->create({
     	item_type_id => $c->req->param('item_type_id'),
     });
     
@@ -183,7 +183,7 @@ sub buy_quantity_item : Local {
 sub sell_item : Local {
 	my ($self, $c) = @_;
 	
-	my $item = $c->model('Items')->find({
+	my $item = $c->model('DBIC::Items')->find({
 		item_id => $c->req->param('item_id'),
 	});
 	
@@ -195,7 +195,7 @@ sub sell_item : Local {
     	return;	
     }
     
-    my $shop = $c->model('Shop')->find({
+    my $shop = $c->model('DBIC::Shop')->find({
     	shop_id => $c->req->param('shop_id'),
     });
     

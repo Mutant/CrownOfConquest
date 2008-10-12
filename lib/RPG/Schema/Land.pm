@@ -116,4 +116,24 @@ sub movement_cost {
 	return $cost;
 }
 
+# Returns the creature group in this sector, if they're "available" (i.e. not on combat)
+sub available_creature_group {
+	my $self = shift;
+	
+	my @creature_groups = $self->search_related('creature_group',
+		{
+			'in_combat_with.party_id' => undef,
+		},
+		{
+			prefetch => {'creatures' => ['type', 'creature_effects']},
+			join => 'in_combat_with',
+		},
+	);
+	
+	$self->throw_exception("More than one creature group found in this sector!")
+		if scalar @creature_groups > 1;
+	
+	return $creature_groups[0];	
+}
+
 1;

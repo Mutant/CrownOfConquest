@@ -8,6 +8,7 @@ use Data::Dumper;
 use JSON;
 #use DBIx::Class::ResultClass::HashRefInflator;
 use RPG::Schema::Land;
+use RPG::Map;
 
 sub view : Local {
     my ($self, $c) = @_;
@@ -93,7 +94,7 @@ sub generate_grid : Private {
                                     
 	$c->stats->profile("Got start and end point");       
 	
-    my $locations = $c->model('Land')->get_party_grid(
+    my $locations = $c->model('DBIC::Land')->get_party_grid(
     	start_point  => $start_point,
     	end_point    => $end_point,
     	centre_point => {
@@ -170,7 +171,7 @@ Move the party to a new location
 sub move_to : Local {
     my ($self, $c) = @_;
     
-    my $new_land = $c->model('Land')->find( 
+    my $new_land = $c->model('DBIC::Land')->find( 
     	$c->req->param('land_id'),
     	{
     		prefetch => 'terrain',
@@ -196,14 +197,7 @@ sub move_to : Local {
     else {        
 	    $c->stash->{party}->land_id($c->req->param('land_id'));
 	    $c->stash->{party}->turns($c->stash->{party}->turns - $new_land->movement_cost($movement_factor));
-	    
-	    my $creature_group = $c->forward('/combat/check_for_attack', [$new_land]);
-	    		    
-	    # If creatures attacked, refresh party panel
-	    if ($creature_group) {
-	        push @{ $c->stash->{refresh_panels} }, 'party';
-    	}	
-	    
+    
 	    $c->stash->{party}->update;	    
 	    
 	    $c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 1);
@@ -214,7 +208,14 @@ sub move_to : Local {
 	    	{
 	    		land_id => $c->stash->{party}->land_id,
 	    	}
-	    );	    
+	    );	
+	        
+	    my $creature_group = $c->forward('/combat/check_for_attack', [$new_land]);
+	    		    
+	    # If creatures attacked, refresh party panel
+	    if ($creature_group) {
+	        push @{ $c->stash->{refresh_panels} }, 'party';
+    	}
 	    
     }
     

@@ -16,7 +16,7 @@ sub default : Private {
 sub edit_item_type : Local {
 	my ($self, $c) = @_;
 	
-	my @item_types = $c->model('Item_Type')->search(
+	my @item_types = $c->model('DBIC::Item_Type')->search(
 		{},
 		{
 			order_by => 'item_type',
@@ -27,7 +27,7 @@ sub edit_item_type : Local {
 	my @item_attribute_names;
 	my @item_variable_names;
 	if ($c->req->param('item_type_id')) {
-		$item_type_to_edit = $c->model('Item_Type')->find(
+		$item_type_to_edit = $c->model('DBIC::Item_Type')->find(
 			{
 				item_type_id => $c->req->param('item_type_id'),
 			},
@@ -40,20 +40,20 @@ sub edit_item_type : Local {
 			},
 		);
 
-		@item_attribute_names = $c->model('Item_Attribute_Name')->search(
+		@item_attribute_names = $c->model('DBIC::Item_Attribute_Name')->search(
 			{
 				item_category_id => $item_type_to_edit->item_category_id,
 			},
 		);
 		
-		@item_variable_names = $c->model('Item_Variable_Name')->search(
+		@item_variable_names = $c->model('DBIC::Item_Variable_Name')->search(
 			{
 				item_category_id => $item_type_to_edit->item_category_id,
 			},
 		);
 	}
 	
-	my @categories = $c->model('Item_Category')->search;
+	my @categories = $c->model('DBIC::Item_Category')->search;
 		
 	$c->forward('RPG::V::TT',
         [{
@@ -72,7 +72,7 @@ sub edit_item_type : Local {
 sub update_item_type : Local {
 	my ($self, $c) = @_;
 	
-	my $item_type = $c->model('Item_Type')->find(
+	my $item_type = $c->model('DBIC::Item_Type')->find(
 		{
 			item_type_id => $c->req->param('item_type_id'),
 		},
@@ -84,7 +84,7 @@ sub update_item_type : Local {
 	$item_type->update;
 	
 	my $params = $c->req->params;
-	my @item_attribute_names = $c->model('Item_Attribute_Name')->search(
+	my @item_attribute_names = $c->model('DBIC::Item_Attribute_Name')->search(
 		{
 			item_category_id => $item_type->item_category_id,
 		},
@@ -102,7 +102,7 @@ sub update_item_type : Local {
 		$item_attribute->update;
 	}
 	
-	my @item_variable_names = $c->model('Item_Variable_Name')->search(
+	my @item_variable_names = $c->model('DBIC::Item_Variable_Name')->search(
 		{
 			item_category_id => $item_type->item_category_id,
 		},
@@ -129,7 +129,7 @@ sub update_item_type : Local {
 sub new_item_type : Local {
 	my ($self, $c) = @_;
 	
-	my $item_type = $c->model('Item_Type')->create({
+	my $item_type = $c->model('DBIC::Item_Type')->create({
 		'item_category_id' => $c->req->param('category_id'),
 	});
 	
@@ -141,7 +141,7 @@ sub new_item_type : Local {
 sub edit_category : Local {
 	my ($self, $c) = @_;
 	
-	my @categories = $c->model('Item_Category')->search;
+	my @categories = $c->model('DBIC::Item_Category')->search;
 	
 	my $category_to_edit;
 	if ($c->req->param('category_id')) {
@@ -162,7 +162,7 @@ sub edit_category : Local {
 sub edit_item_types_in_category : Local {
 	my ($self, $c) = @_;
 	
-	my @categories = $c->model('Item_Category')->search(
+	my @categories = $c->model('DBIC::Item_Category')->search(
 		{},
 		{
 			prefetch => 'item_attribute_names',

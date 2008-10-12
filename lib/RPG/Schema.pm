@@ -25,7 +25,7 @@ sub connect {
 sub config {
 	my $package = shift;
 	my $new_config = shift;
-	
+		
 	$config = $new_config if defined $new_config;
 	
 	return $config;

@@ -17,7 +17,9 @@ sub auto : Private {
     my ( $self, $c ) = @_;
     
     $c->req->base($c->config->{url_root});
-        
+    
+	$c->model('DBIC')->schema->config(RPG->config);
+	        
     if (! $c->session->{player}) {
     	if ($c->action !~ m|^player|) {
     		$c->detach('/player/login');

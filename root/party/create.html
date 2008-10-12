@@ -10,6 +10,10 @@ Welcome, [% player.player_name %]. You've not yet completed creation of your par
 
 Party Name: <input type="text" name="name" value="[% party.name %]" size="50">
 
+<br><br>
+
+You've created [% characters.size %] of [% num_characters_to_create %] characters.
+
 [% IF characters %]
 <br><br>
 <table class="main">
@@ -29,7 +33,7 @@ Party Name: <input type="text" name="name" value="[% party.name %]" size="50">
 [% END %]
 
 <br><br>
-[% IF new_char_allowed %]
+[% IF characters.size < num_characters_to_create %]
 	<input type="submit" value="Add Character" name="add_character">
 [% ELSE %]
 	<input type="submit" value="Finish Party Setup" name="finish_setup">

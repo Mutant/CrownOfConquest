@@ -41,7 +41,7 @@ sub create : Local {
             	player => $c->session->{player},
             	party => $party,
             	characters => \@characters,
-                new_char_allowed => $c->config->{new_party_characters} > scalar @characters,
+            	num_characters_to_create => $c->config->{new_party_characters},
             },
         }]
     );    
@@ -50,7 +50,20 @@ sub create : Local {
 sub save_party : Local {
 	my ($self, $c) = @_;
 	
-	$c->stash->{party}->name($c->req->param('name'));
+	# Check there's not already a party with this name
+    my $dupe_party = $c->model('DBIC::Party')->find(
+    	{
+    		name => $c->req->param('name'),
+    		defunct => undef,
+    	},
+    );
+    
+    if ($dupe_party && $dupe_party->id != $c->stash->{party}->id) {
+    	$c->stash->{error} = "A party with that name already exists. Please choose another one";
+    	$c->detach('create');
+    }
+
+    $c->stash->{party}->name($c->req->param('name'));
 	
 	if ($c->req->param('add_character')) {
 		$c->stash->{party}->update;
@@ -95,8 +108,8 @@ sub new_character : Local {
             [{
                 template => 'party/new_character.html',
                 params => {
-                    races => [ $c->model('Race')->all ],
-                    classes => [ $c->model('Class')->all ],
+                    races => [ $c->model('DBIC::Race')->all ],
+                    classes => [ $c->model('DBIC::Class')->all ],
                     stats_pool => $c->config->{stats_pool},
                     stat_max => $c->config->{stat_max},
                 },
@@ -130,9 +143,9 @@ sub create_character : Local {
         $c->detach('/party/create/new_character');
     }
 
-    my $race = $c->model('Race')->find( $c->req->param('race') );
+    my $race = $c->model('DBIC::Race')->find( $c->req->param('race') );
     
-    my $class = $c->model('Class')->find({class_name => $c->req->param('class')});
+    my $class = $c->model('DBIC::Class')->find({class_name => $c->req->param('class')});
     
     my $character = $c->model('DBIC::Character')->create({
         character_name => $c->req->param('name'),

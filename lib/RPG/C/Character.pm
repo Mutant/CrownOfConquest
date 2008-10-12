@@ -5,7 +5,6 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
-use Data::JavaScript;
 use JSON;
 
 sub view : Local {
@@ -108,7 +107,7 @@ sub item_list : Local {
 sub equip_item : Local {
     my ($self, $c) = @_;
     
-    my $item = $c->model('Items')->find(
+    my $item = $c->model('DBIC::Items')->find(
     	{
     		item_id => $c->req->param('item_id'),
     	},
@@ -142,7 +141,7 @@ sub equip_item : Local {
     }
     
     # Unequip any already equipped item in that place
-    my ($equipped_item) = $c->model('Items')->search({
+    my ($equipped_item) = $c->model('DBIC::Items')->search({
     	character_id => $item->character_id,
     	equip_place_id => $equip_place->id,
     });
@@ -158,7 +157,7 @@ sub equip_item : Local {
 	my %ret;
     
     if ($other_hand) {
-    	my ($item_in_opposite_hand) = $c->model('Items')->search(
+    	my ($item_in_opposite_hand) = $c->model('DBIC::Items')->search(
     		{
 	    		character_id => $item->character_id,
 	    		equip_place_id => $other_hand->id,
@@ -210,7 +209,7 @@ sub give_item : Local {
     	return;
     }
     
-    my $item = $c->model('Items')->find({
+    my $item = $c->model('DBIC::Items')->find({
     	item_id => $c->req->param('item_id'),
     });
     
@@ -241,11 +240,11 @@ sub equipment_list : Local {
     	return;
     }
     
-    my $shop = $c->model('Shop')->find({
+    my $shop = $c->model('DBIC::Shop')->find({
     	shop_id => $c->req->param('shop_id'),
     });
     
-    my @items = $c->model('Items')->search(
+    my @items = $c->model('DBIC::Items')->search(
     	{
     		character_id => $character->id,
     	},
@@ -279,7 +278,7 @@ sub spells_tab : Local {
 	
 	return unless $character;
 	
-    my @memorised_spells = $c->model('Memorised_Spells')->search(
+    my @memorised_spells = $c->model('DBIC::Memorised_Spells')->search(
     	{ 
 	        character_id => $c->req->param('character_id'),
 	    },
@@ -335,7 +334,7 @@ sub memorise_spell : Local {
 		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise " . $spell->spell_name;	
 	}
 	else {
-		my $memorised_spell = $c->model('Memorised_Spells')->find_or_create(
+		my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find_or_create(
 			{
 				character_id => $character->id,
 				spell_id => $spell->id,				
@@ -371,7 +370,7 @@ sub unmemorise_spell : Local {
 	
 	return unless $spell;	
 	
-	my $memorised_spell = $c->model('Memorised_Spells')->find(
+	my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find(
 		{
 			character_id => $character->id,
 			spell_id => $spell->id,				

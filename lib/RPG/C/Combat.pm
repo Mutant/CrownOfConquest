@@ -38,7 +38,9 @@ sub end : Private {
 	my ($self, $c) = @_;
 	
 	# Save any changes to the combat log
-    $c->stash->{combat_log}->update if $c->stash->{combat_log};	
+    $c->stash->{combat_log}->update if $c->stash->{combat_log};
+    
+    $c->forward('/end'); # TODO: can chaining take care of this?
 }
 
 # Check to see if creatures attack party (if there are any in their current sector)
@@ -46,17 +48,9 @@ sub check_for_attack : Local {
 	my ($self, $c, $new_land) = @_;
 	
 	# See if party is in same location as a creature
-	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
-        {
-            'location.x' => $new_land->x,
-            'location.y' => $new_land->y,
-        },
-        {
-            prefetch => [('location', {'creatures' => 'type'})],
-        },
-    );
+	my $creature_group = $c->stash->{party_location}->available_creature_group;
 		    
-    # If there are creatures here, check to see if we go straight into a combat
+    # If there are creatures here, check to see if we go straight into combat
     if ($creature_group) {
     	$c->stash->{creature_group} = $creature_group;
 	    		    	
@@ -75,29 +69,21 @@ sub check_for_attack : Local {
 sub party_attacks : Local {
 	my ($self, $c) = @_;
 	
-	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
-		{
-			creature_group_id => $c->req->param('creature_group_id'),
-			land_id => $c->stash->{party}->land_id,
-		},
-		{
-			prefetch => {'creatures' => 'type'},
-		},
-	);
-	
-	$c->stash->{creature_group} = $creature_group;
-	
+	my $creature_group = $c->stash->{party_location}->available_creature_group;
+		
 	if ($creature_group) {
+		$c->stash->{creature_group} = $creature_group;
+		
 		$c->stash->{party}->in_combat_with($creature_group->id);
 		$c->stash->{party}->update;
 		
-		$c->forward('create_combat_log', [$creature_group, 'party']);
-		
+		$c->forward('create_combat_log', [$creature_group, 'party']);		
 		
 		$c->forward('/panel/refresh', ['messages', 'party']);
 	}
 	else {
-		$c->error("Couldn't find creature group in party's location.");
+		$c->stash->{messages} = "The creatures have moved, or have been attacked by someone else.";
+		$c->forward('/panel/refresh', ['messages']);
 	}		
 }
 
@@ -132,7 +118,7 @@ sub main : Local {
 	
 	my $creature_group = $c->stash->{creature_group};
 	unless ($creature_group) {
-		$creature_group = $c->model('CreatureGroup')->find(
+		$creature_group = $c->model('DBIC::CreatureGroup')->find(
 			{
 				creature_group_id => $c->stash->{party}->in_combat_with,
 			},
@@ -188,7 +174,7 @@ sub select_action : Local {
 sub fight : Local {
 	my ($self, $c) = @_;
 	
-	my $creature_group = $c->model('CreatureGroup')->find(
+	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
 		{
 			creature_group_id => $c->stash->{party}->in_combat_with,
 		},
@@ -585,7 +571,7 @@ sub get_sector_to_flee_to : Private {
 		$params{'creature_group.creature_group_id'} = undef
 			if $check_for_creature_group;
 		
-		@sectors_to_flee_to = $c->model('Land')->search(
+		@sectors_to_flee_to = $c->model('DBIC::Land')->search(
 			{
 				%params,
 				x => {'>=', $start_point->{x}, '<=', $end_point->{x}, '!=', $party_location->x},
@@ -704,7 +690,7 @@ sub check_for_item_found : Private {
 		}
 		
 		# Create the item
-		my $item = $c->model('Items')->create(
+		my $item = $c->model('DBIC::Items')->create(
 			{
 				item_type_id => $item_type->id,
 				character_id => $finder->id,				

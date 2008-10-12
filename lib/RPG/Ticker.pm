@@ -18,10 +18,7 @@ sub run {
 	
 	my $schema = RPG::Schema->connect(
 		$config,
-		$config->{datasource},
-        $config->{username},
-        $config->{password},
-		{AutoCommit => 0},
+		@{ $config->{'Model::DBIC'}{connect_info} },
 	);
 	
 	# Spawn monsters

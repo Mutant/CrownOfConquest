@@ -11,17 +11,17 @@ use RPG::Map;
 use Math::Round qw(round);
 use List::Util qw(shuffle);
 
-my $dbh = DBI->connect("dbi:mysql:game","root","");
+my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
 $dbh->{RaiseError} = 1;
 
-my $towns = 200;
+my $towns = 40;
 
-# Max distance a town can be from another one
-my $town_dist_x = 7;
-my $town_dist_y = 7;
+# Min distance a town can be from another one
+my $town_dist_x = 12;
+my $town_dist_y = 12;
 
-my $max_x = 100;
-my $max_y = 100;
+my $max_x = 40;
+my $max_y = 40;
 
 my %prosp_limits = (
 	90 => 2,

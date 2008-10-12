@@ -5,7 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use MIME::Lite;
-use String::Random;
+#use String::Random;
 
 sub login : Local {
 	my ($self, $c) = @_;
@@ -76,7 +76,8 @@ sub register : Local {
 			$message = "Password must be at least " . $c->config->{minimum_password_length} . " characters";
 		}
 		else {
-			my $verification_code = String::Random::random_regex('\w{8}');
+			#my $verification_code = String::Random::random_regex('\w{8}');
+			my $verification_code = int rand 100000000;
 			
 			my $player = $c->model('DBIC::Player')->create(
 				{
@@ -122,7 +123,8 @@ sub forgot_password : Local {
 	my $message = 'Enter your email address below, and a reset password will be mailed to you.';
 	
 	if ($c->req->param('email')) {
-		my $new_password = String::Random::random_regex('\w{8}');
+		#my $new_password = String::Random::random_regex('\w{8}');
+		my $new_password = 'temp'; #TODO work around String::Random not being available
 		
 		my $player = $c->model('DBIC::Player')->find(
 			{

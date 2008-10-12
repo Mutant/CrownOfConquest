@@ -4,8 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
-use RPG::Schema;
-use RPG::Map;
+use Data::Dumper;
 
 #
 # Set flags and add plugins for the application
@@ -30,22 +29,16 @@ __PACKAGE__->setup( qw/
 	-Debug
 	-Stats 
 	ConfigLoader 
-	Static::Simple 
 	Session
-    Session::Store::FastMmap
+    Session::Store::File
     Session::State::Cookie 
     DBIC::Schema::Profiler
     Captcha
+    Log::Dispatch
     / 
 );
 
 BEGIN {
-	__PACKAGE__->config->{static}->{debug} = 1;
-	    
-	__PACKAGE__->config->{static}->{dirs} = [
-		'static',
-	];
-	
 	__PACKAGE__->config->{captcha} = {
 	    session_name => 'captcha_string',
 	    new => {
@@ -62,7 +55,7 @@ BEGIN {
 	};
 	
 	# Not sure why this is needed...
-	__PACKAGE__->config->{home} = '/home/sam/workspace/game/';
+	__PACKAGE__->config->{home} = '/home/sam/game/';
 	
 	#warn "root: " . __PACKAGE__->path_to('root');
 	__PACKAGE__->config(
@@ -73,6 +66,10 @@ BEGIN {
 	        ]
 		},
 	);
+	
+	__PACKAGE__->config->{session} = {
+        storage => '/home/scrawley/game/session'
+    };
 }
 
 1;

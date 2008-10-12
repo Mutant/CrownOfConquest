@@ -5,7 +5,6 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
-use Data::JavaScript;
 
 sub main : Local {
 	my ($self, $c) = @_;
@@ -34,10 +33,7 @@ sub sector_menu : Local {
     
 	my $creature_group = $c->stash->{creature_group};
 	
-	unless ($creature_group) {
-		$creature_group = $c->stash->{party_location}->creature_group
-			if $c->stash->{party_location}->creature_group;
-	}
+	$creature_group ||= $c->stash->{party_location}->available_creature_group;
 	
 	my $confirm_attack = 0;
 	
@@ -116,7 +112,7 @@ sub list : Local {
 		
 		$party->in_combat_with ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
     	
-    	my @spells = $c->model('Memorised_Spells')->search(
+    	my @spells = $c->model('DBIC::Memorised_Spells')->search(
 			\%search_criteria,
     		{
     			prefetch => 'spell',
@@ -335,7 +331,7 @@ sub scout : Local {
 	    	3,
 		);
 		
-		my $search_rs = $c->model('Land')->search(
+		my $search_rs = $c->model('DBIC::Land')->search(
 			{
 				x => {'>=', $start_point->{x}, '<=', $end_point->{x}},
 				y => {'>=', $start_point->{y}, '<=', $end_point->{y}},

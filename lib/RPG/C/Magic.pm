@@ -38,7 +38,7 @@ sub cast : Local {
    		],
    	);
    	
-   	my $memorised_spell = $c->model('Memorised_Spell')->find(
+   	my $memorised_spell = $c->model('DBIC::Memorised_Spell')->find(
    		{
    			spell_id => $spell->id,
    			character_id => $character->id,
@@ -78,7 +78,7 @@ sub create_effect : Private {
 	
 	unless ($effect->in_storage) {
 		$effect->insert;
-		$c->model($joining_table)->create(
+		$c->model('DBIC::' . $joining_table)->create(
 			{
 				$search_field => $params->{target_id},
 				effect_id => $effect->id,

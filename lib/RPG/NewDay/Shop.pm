@@ -7,6 +7,7 @@ use Data::Dumper;
 
 use Games::Dice::Advanced;
 use Params::Validate qw(:types validate);
+use List::Util qw(shuffle);
 
 sub run {
 	my $package = shift;
@@ -55,9 +56,11 @@ sub run {
 			# If there's still more left to open, create some new shops			
 			for (1 .. $shops_to_open) {
 				# Create some new 'Opening' shops
+				my ($shop_owner_name, $suffix) = generate_shop_name($config);
 				my $new_shop = $town->add_to_shops({
-					shop_name => 'Shop',
-					status => 'Opening',
+					shop_owner_name => $shop_owner_name,
+					shop_suffix => $suffix,
+					status => 'Open',
 					shop_size => Games::Dice::Advanced->roll('1d10'),
 				});
 				push @shops, $new_shop;
@@ -229,6 +232,37 @@ sub _alter_statuses_of_shops {
 	
 	return $number_to_change;
 		
+}
+
+my @owner_names;
+my @suffixes;
+sub generate_shop_name {
+	my $config = shift;
+	
+	if (! @owner_names) {
+		my $file = $config->{data_file_path} . 'shop_owner_names.txt';
+		open(my $names_fh, '<', $file) || die "Couldn't open names file: $file ($!)\n";
+		@owner_names = <$names_fh>;
+		close ($names_fh);
+		chomp @owner_names;
+	}
+	
+	unless (@suffixes) {
+		my $file = $config->{data_file_path} . 'shop_suffix.txt';
+		open(my $names_fh, '<', $file) || die "Couldn't open names file: $file ($!)\n";
+		@suffixes = <$names_fh>;
+		close ($names_fh);
+		chomp @suffixes;
+	}
+		
+	@owner_names = shuffle @owner_names;
+	
+	my $prefix = $owner_names[0];
+	
+	@suffixes = shuffle @suffixes;	
+	my $suffix = $suffixes[0];
+	
+	return $prefix, $suffix;
 }
 
 1;

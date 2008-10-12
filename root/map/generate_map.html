@@ -20,7 +20,7 @@
         	[% ELSIF ! click_to_move %]
         		<a href="?center_x=[% position.x %]&center_y=[% position.y %]">
         	[% END %]
-			<img src="[% base %][% image_path %][% position.image %]" border=0 title="[% sector_title(position) %]">
+			<img src="[% c.config.static_path %][% image_path %][% position.image %]" border=0 title="[% sector_title(position) %]">
 			[% IF ! click_to_move || position.next_to_centre %]
 				</a>
         	[% END %]

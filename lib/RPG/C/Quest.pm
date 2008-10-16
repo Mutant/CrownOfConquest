@@ -106,4 +106,53 @@ sub check_action : Private {
 	return \@messages;
 }
 
+sub complete_quest : Private {
+	my ($self, $c, $party_quest) = @_;
+
+	$party_quest->complete(1);
+	$party_quest->update;
+	
+	$c->stash->{party}->gold($c->stash->{party}->gold + $party_quest->gold_value);
+	$c->stash->{party}->update;
+	
+	my $xp_gained = $party_quest->xp_value;
+	
+	my @characters = grep { ! $_->is_dead } $c->stash->{party}->characters;
+	my $xp_each = int $xp_gained / scalar @characters;
+	
+	my @xp_messages;
+	
+	foreach my $character (@characters) {			
+		my $level_up_details= $character->xp($character->xp+$xp_each);
+		$character->update;
+		push @xp_messages, $c->forward('RPG::V::TT',
+	        [{
+	            template => 'party/xp_gain.html',
+				params => {				
+					character => $character,
+					xp_awarded => $xp_each,
+					level_up_details => $level_up_details,
+				},
+				return_output => 1,
+	        }]
+	    );
+	}
+	
+	push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
+	
+	my $panel = $c->forward('RPG::V::TT',
+        [{
+            template => 'town/completed_quest.html',
+			params => {
+				xp_messages => \@xp_messages,
+			},
+			return_output => 1,
+        }]
+    );
+    
+    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
+
+	$c->forward('/panel/refresh');	
+}
+
 1;

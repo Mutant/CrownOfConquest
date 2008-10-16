@@ -9,16 +9,10 @@
 [% END %]
 
 [% IF party_quest %]
-	[% IF party_quest.complete %]
-		You've completed the quest! The towns people thank you and reward you with [% party_quest.gold_value %] gold.
-		[% FOREACH message IN xp_messages %]
-			[% message %]<br>
-		[% END %]		
-	[% ELSE %]
-		You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="[% base %]quest/list">Quest List</a> for
-		details on what you still have to do.
-	[% END %]
-	<br><br>
+	You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="[% base %]quest/list">Quest List</a> for
+	details on what you still have to do.
+[% ELSIF ! allowed_more_quests %]
+	You've reached the maximum number of quests allowed for a party of your level.
 [% ELSE %]	
 The following quests are available:
 	<ul>
@@ -27,5 +21,5 @@ The following quests are available:
 	[% END %]
 	</ul>
 [% END %]
-
+<br><br>
 [% INCLUDE town/town_footer.html %]

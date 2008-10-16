@@ -48,7 +48,7 @@ sub auto : Private {
     		order_by => 'party_order',
     	},
     );
-   
+       
     if ($c->stash->{party} && $c->stash->{party}->created) {
 	    $c->stash->{party_location} = $c->stash->{party}->location;
 	            
@@ -68,7 +68,7 @@ sub auto : Private {
 	    }   
 
     }
-    elsif ($c->action !~ m|^party/create| && $c->action ne 'player/logout') {
+    elsif ($c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout') {
     	$c->res->redirect($c->config->{url_root} . '/party/create/create');
     	return 0;
     }

@@ -214,9 +214,6 @@ sub news : Local {
 sub town_hall : Local {
 	my ($self, $c) = @_;
 	
-	# Check for quest actions which can be triggered by a visit to the town hall
-	my $quest_messages = $c->forward('/quest/check_action', ['townhall_visit']);
-	
 	# See if party has a quest for this town
 	my $party_quest = $c->model('DBIC::Quest')->find(
 		{
@@ -226,45 +223,37 @@ sub town_hall : Local {
 		},	
 	);	
 
-	my @quests;
-	my @xp_messages;
-
+	# If the have a quest to complete, send them there now
 	if ($party_quest && $party_quest->ready_to_complete) {
-		$party_quest->complete(1);
-		$party_quest->update;
-		
-		$c->stash->{party}->gold($c->stash->{party}->gold + $party_quest->gold_value);
-		$c->stash->{party}->update;
-		
-		my $xp_gained = $party_quest->xp_value;
-		
-		my @characters = grep { ! $_->is_dead } $c->stash->{party}->characters;
-		my $xp_each = int $xp_gained / scalar @characters;
-		
-		foreach my $character (@characters) {			
-			my $level_up_details= $character->xp($character->xp+$xp_each);
-			$character->update;
-			push @xp_messages, $c->forward('RPG::V::TT',
-		        [{
-		            template => 'party/xp_gain.html',
-					params => {				
-						character => $character,
-						xp_awarded => $xp_each,
-						level_up_details => $level_up_details,
-					},
-					return_output => 1,
-		        }]
-		    );
-		}
-		
-		push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
+		$c->detach('/quest/complete_quest', [$party_quest]);
 	}
+	
+	# Check for quest actions which can be triggered by a visit to the town hall
+	my $quest_messages = $c->forward('/quest/check_action', ['townhall_visit']);
+	
+	my $party_quests_rs = $c->model('DBIC::Quest')->search(
+		{
+			party_id => $c->stash->{party}->id,
+			complete => 0,
+		},
+	);
+	
+	my $number_of_quests_allowed = $c->config->{base_allowed_quests} + ($c->config->{additional_quests_per_level} * $c->stash->{party}->level);
+	my $allowed_more_quests = 1;
+	if ($party_quests_rs->count >= $number_of_quests_allowed) {
+		$allowed_more_quests = 0;
+	}
+	
+	my @quests;	
 	# If they don't have a quest, load in available quests
-	elsif (! $party_quest) {	
+	if (! $party_quest && $allowed_more_quests) {
 		@quests = $c->model('DBIC::Quest')->search(
 			{
 				town_id => $c->stash->{party_location}->town->id,
 				party_id => undef,
+			},
+			{
+				prefetch => 'type',
 			},
 		);
 	}
@@ -276,7 +265,7 @@ sub town_hall : Local {
 				town => $c->stash->{party_location}->town,
 				quests => \@quests,
 				party_quest => $party_quest,
-				xp_messages => \@xp_messages,
+				allowed_more_quests => $allowed_more_quests,
 				quest_messages => $quest_messages,
 			},
 			return_output => 1,

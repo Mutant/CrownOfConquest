@@ -174,13 +174,9 @@ __PACKAGE__->has_many(
 sub movement_factor {
 	my $self = shift;
 	
-	return $self->{_movement_factor} if defined $self->{_movement_factor};
-
 	my $avg_con = $self->average_stat('constitution');
 	
-	$self->{_movement_factor} = int $avg_con / 3;
-	
-	return $self->{_movement_factor};
+	return int $avg_con / 4;
 }
 
 sub level {

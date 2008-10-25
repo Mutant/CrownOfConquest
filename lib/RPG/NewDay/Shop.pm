@@ -13,6 +13,7 @@ sub run {
 	my $package = shift;
 	my $config = shift;
 	my $schema = shift;
+	my $logger = shift;
 	
 	my $town_rs = $schema->resultset('Town')->search( {}, {prefetch=>'shops'} );
 	
@@ -20,6 +21,7 @@ sub run {
 	my @item_types = $schema->resultset('Item_Type')->search( 
 		{
 			'category.hidden' => 0,
+			'category.auto_add_to_shop' => 1,
 		}, 
 		{ 
 			prefetch => {'item_variable_params' => 'item_variable_name'}, 
@@ -40,7 +42,7 @@ sub run {
 		
 		my $open_shops_count = defined $shops_by_status{Open} ? scalar @{$shops_by_status{Open}} : 0;
 		
-		#warn "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count\n";
+		$logger->info("Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count");
 		
 		if ($ideal_number_of_shops > $open_shops_count) {
 			# Open up some new shops
@@ -98,7 +100,9 @@ sub run {
 				else {
 					$new_modifier = $shop->cost_modifier - $config->{max_cost_modifier_change};
 				}
-			}		
+			}
+			
+			$logger->info("Shop: " . $shop->id . " modifier changed from " . $shop->cost_modifier . " to $new_modifier");
 				
 			$shop->cost_modifier($new_modifier);
 			$shop->update;
@@ -121,7 +125,7 @@ sub run {
 			
 			# TODO: add value of quantity items
 			
-			warn "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value\n";
+			$logger->info("Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value");
 			
 			my $item_value_to_add = $ideal_items_value - $actual_items_value;
 			
@@ -130,7 +134,7 @@ sub run {
 				$min_prevalence = 100 if $min_prevalence > 100;
 				$min_prevalence = 1   if $min_prevalence < 1;
 				
-				warn "Min_prevalance: $min_prevalence\n";
+				#warn "Min_prevalance: $min_prevalence\n";
 				
 				my $actual_prevalance = Games::Dice::Advanced->roll('1d' . (100 - $min_prevalence)) + $min_prevalence;
 				

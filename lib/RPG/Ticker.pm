@@ -10,30 +10,58 @@ use YAML;
 use Data::Dumper;
 use List::Util qw(shuffle);
 use Games::Dice::Advanced;
+use Log::Dispatch;
+use Log::Dispatch::File::Stamped;
 
 sub run {
 	my $package = shift;
 	
 	my $config = YAML::LoadFile('../rpg.yml');
-	
-	my $schema = RPG::Schema->connect(
-		$config,
-		@{ $config->{'Model::DBIC'}{connect_info} },
+	if (-f '../rpg_local.yml') {
+		my $local_config = YAML::LoadFile('../rpg_local.yml');
+		$config = {%$config, %$local_config};
+	}
+		
+	my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . '] ' . $_[1]."\n" } );
+	$logger->add( 
+		Log::Dispatch::File::Stamped->new( 
+			name => 'file1',
+			min_level => 'debug',
+			filename => $config->{log_file_dir} . 'ticker.log',
+			mode => 'append',
+			stamp_fmt => '%Y%m%d',
+		), 
 	);
 	
-	# Spawn monsters
-	$package->spawn_monsters($config, $schema);
+	$logger->info('Ticker script beginning');
 	
-	# Move monsters
-	$package->move_monsters($config, $schema);
+	eval {
+		my $schema = RPG::Schema->connect(
+			$config,
+			@{ $config->{'Model::DBIC'}{connect_info} },
+		);
+		
+		# Spawn monsters
+		$package->spawn_monsters($config, $schema, $logger);
+		
+		# Move monsters
+		$package->move_monsters($config, $schema, $logger);
+		
+		$schema->storage->dbh->commit;
+	};
+	if ($@) {
+		$logger->error("Error running ticker script: $@");	
+	}
 	
-	$schema->storage->dbh->commit;
+	$logger->info('Ticker script ended');
 }
 
 sub spawn_monsters {
-	my ($package, $config, $schema) = @_;
+	my ($package, $config, $schema, $logger) = @_;
 	
 	my $number_of_groups_to_spawn = $package->_calculate_number_of_groups_to_spawn($config, $schema);
+	
+	$logger->info("Spawning $number_of_groups_to_spawn monsters");
 	
 	return if $number_of_groups_to_spawn <= 0;
 
@@ -146,7 +174,7 @@ sub _find_land_to_create_cg {
 }
 
 sub move_monsters {
-	my ($package, $config, $schema) = @_;
+	my ($package, $config, $schema, $logger) = @_;
 	
 	my $cg_rs = $schema->resultset('CreatureGroup')->search(
 		{
@@ -159,10 +187,13 @@ sub move_monsters {
 	
 	my %x_y_range = $schema->resultset('Land')->get_x_y_range();
 
+	my $moved = 0;
 	while (my $cg = $cg_rs->next) {
 		next if $cg->in_combat_with;
 		
 		next unless Games::Dice::Advanced->roll('1d100') > $config->{creature_move_chance};
+		
+		$moved++;
 		
 		# Find sector to move to		
 		my @adjacent_sectors = RPG::Map->get_adjacent_sectors(
@@ -195,6 +226,8 @@ sub move_monsters {
 			}
 		}		
 	}
+	
+	$logger->info("Moved $moved groups");
 }
 
 1;

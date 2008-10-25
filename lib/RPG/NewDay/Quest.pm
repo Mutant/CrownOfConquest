@@ -12,6 +12,7 @@ sub run {
 	my $package = shift;
 	my $config = shift;
 	my $schema = shift;
+	my $logger = shift;
 
 	my $town_rs = $schema->resultset('Town')->search( );
 		

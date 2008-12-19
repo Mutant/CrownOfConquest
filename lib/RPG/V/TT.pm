@@ -7,7 +7,7 @@ use Carp;
 use HTML::FillInForm;
 use Data::Dumper;
 
-#__PACKAGE__->config->{DEBUG} = 'parser';
+#__PACKAGE__->config->{DEBUG} = 'all';
 
 sub process {
     my ($self, $c, $params) = @_;

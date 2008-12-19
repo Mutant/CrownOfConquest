@@ -16,9 +16,11 @@ use Log::Dispatch::File::Stamped;
 sub run {
 	my $package = shift;
 	
-	my $config = YAML::LoadFile('../rpg.yml');
+	my $home = $ENV{RPG_HOME};
+	
+	my $config = YAML::LoadFile("$home/rpg.yml");
 	if (-f '../rpg_local.yml') {
-		my $local_config = YAML::LoadFile('../rpg_local.yml');
+		my $local_config = YAML::LoadFile("$home/rpg_local.yml");
 		$config = {%$config, %$local_config};
 	}
 		
@@ -221,7 +223,7 @@ sub move_monsters {
 			unless ($land->town || $land->creature_group) {
 				$cg->land_id($land->id);
 				$cg->update;
-				warn "Moving group " . $cg->id . " to " . $sector->[0] . "," . $sector->[1] . "\n";
+				#warn "Moving group " . $cg->id . " to " . $sector->[0] . "," . $sector->[1] . "\n";
 				last;	
 			}
 		}		

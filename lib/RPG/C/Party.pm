@@ -66,6 +66,7 @@ sub parties_in_sector : Private {
 		{
 			party_id => {'!=', $c->stash->{party}->id},
 			land_id  => $c->stash->{party_location}->id,
+			defunct => undef,
 		},
 		{},
 	);

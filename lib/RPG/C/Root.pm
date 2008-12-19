@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use RPG::Schema;
 use Carp qw(cluck);
 
 #
@@ -19,7 +20,7 @@ sub auto : Private {
     $c->req->base($c->config->{url_root});
     
 	$c->model('DBIC')->schema->config(RPG->config);
-	        
+       
     if (! $c->session->{player}) {
     	if ($c->action !~ m|^player|) {
     		$c->detach('/player/login');
@@ -87,7 +88,7 @@ sub end : Private {
 	my ( $self, $c ) = @_;
 
     if ( scalar @{ $c->error } ) {
-    	$c->model('DBIC')->schema->storage->dbh->rollback;
+    	#$c->model('DBIC')->schema->storage->dbh->rollback;
     	
     	# Log error message
     	$c->log->error('An error occured...');
@@ -114,7 +115,7 @@ sub end : Private {
         $c->error(0);
 	}
 	else {
-		$c->model('DBIC')->schema->storage->dbh->commit;	
+		#$c->model('DBIC')->schema->storage->dbh->commit;			
 	}
 
     return 1 if $c->response->status =~ /^3\d\d$/;

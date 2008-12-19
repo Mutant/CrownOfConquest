@@ -3,8 +3,24 @@
 use strict;
 use warnings;
 
+BEGIN {
+    my $homedir = '/home/scrawley';
+    my @user_include;
+    foreach my $path (@INC) {
+        if ( -d $homedir . '/perl' . $path ) {
+            push @user_include, $homedir . '/perl' . $path;
+        }
+    }
+    unshift @INC, @user_include;
+    unshift @INC, $homedir . '/game/lib';
+}
+
+BEGIN {
+	$ENV{DBIC_NO_WARN_BAD_PERL} = 1;
+}
+
 use RPG::NewDay;
 
-$ENV{DBIC_TRACE} = 1;
+$ENV{DBIC_TRACE} = 0;
 
 RPG::NewDay->run();

@@ -496,20 +496,35 @@ sub attack : Private {
 sub flee : Local {
 	my ($self, $c) = @_;
 	
-	my $rand = int rand 100;
+	my $party = $c->stash->{party};
+	
+	return unless $party->in_combat_with;
+	
+	my $creature_group = $c->model('DBIC::CreatureGroup')->find(
+		{
+			creature_group_id => $party->in_combat_with,
+		},
+		{
+			prefetch => {'creatures' => ['type', 'creature_effects']},
+		},
+	);
+	
+	my $level_difference = $creature_group->level - $party->level;
+	my $flee_chance = $c->config->{base_flee_chance} * ($level_difference > 0 ? $level_difference : 0);
+
+	my $rand = Games::Dice::Advanced->roll("1d100");
+	
 	$c->log->debug("Flee roll: $rand");
-	$c->log->debug("Flee chance: " . RPG->config->{flee_chance});
-	if ($rand < RPG->config->{flee_chance}) {
+	$c->log->debug("Flee chance: " . $flee_chance);
+	if ($rand < $flee_chance) {
 		my $land = $c->forward('get_sector_to_flee_to');	
-		
-		my $party = $c->stash->{party};
-		
+	
 		$party->land_id($land->id);
 		$party->in_combat_with(undef);
 		
 		# Still costs them turns to move (but they can do it even if they don't have enough turns left)
 		$party->turns($c->stash->{party}->turns - $land->movement_cost($party->movement_factor));
-		$party->turns(0) if $party->turns < 0;		
+		$party->turns(0) if $party->turns < 0;
 
     	$party->update;
     	

@@ -188,7 +188,7 @@ sub sell_item : Local {
 			item_id => $c->req->param('item_id'),
 		},
 		{
-			prefetch => 'category',
+			prefetch => {'item_type' => 'category'},
 		},
 	);
 	
@@ -197,7 +197,7 @@ sub sell_item : Local {
     if (scalar (grep { $_->id eq $item->character_id } @characters) == 0) {
     	$c->log->warn("Attempted to sell item " . $item->id . " by party " . $c->stash->{party}->id . 
     		", but item does not belong to this party (item is owned by character: " . $item->character_id . ")");
-    	return;	
+    	return;
     }
     
     my $shop = $c->model('DBIC::Shop')->find({
@@ -223,7 +223,7 @@ sub sell_item : Local {
     }
     
     # If it's not a quantity item, give it back to the shop, except for item categories without "auto_add_to_shop"
-    elsif ($item->category->auto_add_to_shop) {
+    elsif ($item->item_type->category->auto_add_to_shop) {
     	$item->shop_id($shop->id);        	
     	$item->update;
     }

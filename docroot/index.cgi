@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+BEGIN { $ENV{CATALYST_ENGINE} ||= 'CGI' }
+
 BEGIN {
     my $homedir = '/home/scrawley';
     my @user_include;

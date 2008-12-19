@@ -142,7 +142,7 @@ sub complete_quest : Private {
 	
 	my $panel = $c->forward('RPG::V::TT',
         [{
-            template => 'town/completed_quest.html',
+            template => 'quest/completed_quest.html',
 			params => {
 				xp_messages => \@xp_messages,
 			},

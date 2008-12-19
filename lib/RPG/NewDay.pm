@@ -16,9 +16,11 @@ use RPG::NewDay::Quest;
 sub run {
 	my $package = shift;
 	
-	my $config = YAML::LoadFile('../rpg.yml');
+	my $home = $ENV{RPG_HOME};
+	
+	my $config = YAML::LoadFile("$home/rpg.yml");
 	if (-f '../rpg_local.yml') {
-		my $local_config = YAML::LoadFile('../rpg_local.yml');
+		my $local_config = YAML::LoadFile("$home/rpg_local.yml");
 		$config = {%$config, %$local_config};
 	}
 	

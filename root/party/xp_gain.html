@@ -2,7 +2,7 @@
 [% IF level_up_details.hit_points %]
 	<br>[% character.character_name %] went up a level! (Now level [% character.level %])
 	<br>[% character.character_name %] gained [% level_up_details.hit_points %] hit points.
-	<br>[% IF level_up_details.magic_points %][% character.character_name %] gained [% level_up_details.magic_points %] magic points.[% END %]
-	<br>[% IF level_up_details.prayer_points %][% character.character_name %] gained [% level_up_details.prayer_points %] prayer points.[% END %]
-	<br>[% IF level_up_details.stat_points %][% character.character_name %] gained [% level_up_details.stat_points %] stat points.[% END %]
+	[% IF level_up_details.magic_points %]<br>[% character.character_name %] gained [% level_up_details.magic_points %] magic points.[% END %]
+	[% IF level_up_details.prayer_points %]<br>[% character.character_name %] gained [% level_up_details.prayer_points %] prayer points.[% END %]
+	[% IF level_up_details.stat_points %]<br>[% character.character_name %] gained [% level_up_details.stat_points %] stat points.[% END %]
 [% END %]

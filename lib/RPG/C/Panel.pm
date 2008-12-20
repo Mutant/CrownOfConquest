@@ -17,7 +17,7 @@ sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
 		
 	@panels_to_refresh = ( @panels_to_refresh, @{ $c->stash->{refresh_panels} } )
-		if $c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY';
+		if $c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY';		
 	
 	my %response;
 	
@@ -45,6 +45,8 @@ sub refresh : Private {
 
 sub find_panel_path : Private {
 	my ($self, $c, $panel) = @_;
+	
+	$c->log->debug("Finding panel path for: $panel");
 	
 	return $PANEL_PATHS{$panel} unless $panel eq 'messages';
 	

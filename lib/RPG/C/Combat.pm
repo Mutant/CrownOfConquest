@@ -254,7 +254,7 @@ sub fight : Local {
 
     $c->stash->{combat_log}->rounds( $c->stash->{combat_log}->rounds + 1 );
 
-    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status', 'map' ] );
 }
 
 sub calculate_factors : Private {
@@ -561,7 +561,7 @@ sub creatures_flee : Private {
 
     $c->forward('end_of_combat_cleanup');
 
-    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status', 'map' ] );
 }
 
 # For the party or the creatures

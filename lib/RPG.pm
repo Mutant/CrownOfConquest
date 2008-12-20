@@ -48,10 +48,7 @@ BEGIN {
     __PACKAGE__->config->{session} = {
         storage => __PACKAGE__->path_to('session'),
     };
-    
-    
-    warn __PACKAGE__->path_to('root');
-    
+        
 	__PACKAGE__->config(
 		root     => __PACKAGE__->path_to('root'),
 		'View::TT' => {

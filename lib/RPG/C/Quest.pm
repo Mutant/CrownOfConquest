@@ -149,10 +149,10 @@ sub complete_quest : Private {
 			return_output => 1,
         }]
     );
-    
+        
     push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
 
-	$c->forward('/panel/refresh');	
+	$c->forward('/panel/refresh', []);	
 }
 
 1;

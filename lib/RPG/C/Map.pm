@@ -154,6 +154,7 @@ sub render_grid : Private {
 	$params->{y_range} = [$params->{start_point}{y} .. $params->{end_point}{y}];
 	$params->{image_path} = RPG->config->{map_image_path};
 	$params->{current_position} = $c->stash->{party_location};
+	$params->{party_in_combat} = $c->stash->{party}->in_combat_with;
     
     return $c->forward('RPG::V::TT',
         [{

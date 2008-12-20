@@ -1,4 +1,6 @@
-AuthType Basic
-AuthName "Game"
-AuthUserFile "/home/scrawley/.htpasswds/public_html/game/passwd"
-require valid-user
+#AuthType Basic
+#AuthName "Game"
+#AuthUserFile "/home/scrawley/.htpasswds/public_html/game/passwd"
+#require valid-user
+
+DirectoryIndex index.fcgi

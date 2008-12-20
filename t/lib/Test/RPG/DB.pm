@@ -18,7 +18,7 @@ sub db_startup : Test(startup) {
 		$self->{config},
 		"dbi:mysql:game-test",
         "root",
-        "",
+        "root",
 		{AutoCommit => 1},
 	);	
 	

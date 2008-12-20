@@ -137,6 +137,11 @@ html>body .nav a {width: auto}
 	color: #0000FF;
 }
 
+/* Combat */
+.combat-attacker, .combat-defender, .combat-weapon {
+	font-weight: bold;
+}
+
 /* Misc */
 
 #rank_separator {

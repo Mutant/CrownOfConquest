@@ -412,12 +412,13 @@ sub get_combatant_list : Private {
 	my ($self, $c, $characters, $creatures) = @_;
 		
 	my @combatants;
-	foreach my $character (@$characters) {		
-		my @attack_history = @{$c->session->{attack_history}{character}{$character->id}}
+	foreach my $character (@$characters) {
+	    my @attack_history;		
+		@attack_history = @{ $c->session->{attack_history}{character}{$character->id} }
 			if $c->session->{attack_history}{character}{$character->id};
 			
 		my $number_of_attacks = $character->number_of_attacks(@attack_history);
-		
+
 		push @attack_history, $number_of_attacks;	
 		
 		$c->session->{attack_history}{character}{$character->id} = \@attack_history;		
@@ -537,6 +538,8 @@ sub flee : Local {
     	$c->stash->{combat_log}->outcome('party_fled');
     	$c->stash->{combat_log}->encounter_ended(DateTime->now());
     	
+    	$c->forward('end_of_combat_cleanup');
+    	
     	$c->forward('/panel/refresh', ['messages', 'map', 'party', 'party_status']);
 	}
 	else {
@@ -561,6 +564,8 @@ sub creatures_flee : Private {
 	
 	$c->stash->{combat_log}->outcome('creatures_fled');
 	$c->stash->{combat_log}->encounter_ended(DateTime->now());
+	
+	$c->forward('end_of_combat_cleanup');
 	
 	$c->forward('/panel/refresh', ['messages', 'party', 'party_status']);
 }
@@ -613,9 +618,6 @@ sub finish : Private {
 	
 	my @creatures = $c->stash->{creature_group}->creatures;
 	
-	undef $c->session->{combat_action_param};
-	undef $c->session->{rounds_since_last_double_attack};
-	
 	my $xp;
 	
 	foreach my $creature (@creatures) {
@@ -661,16 +663,8 @@ sub finish : Private {
 	
 	$c->stash->{combat_log}->gold_found($gold);
 	$c->stash->{combat_log}->xp_awarded($xp);
-	$c->stash->{combat_log}->encounter_ended(DateTime->now());
-	
-	# Remove character effects from this combat
-	# TODO: needs to be done after fleeing...
-    foreach my $character ($c->stash->{party}->characters) {
-    	foreach my $effect ($character->character_effects) {
-    		$effect->delete if $effect->effect->combat;	
-    	}
-    }
-    
+	$c->stash->{combat_log}->encounter_ended(DateTime->now());	
+  
     # Check for state of quests
     my $messages = $c->forward('/quest/check_action', ['creature_group_killed']);
     push @{$c->stash->{combat_messages}}, @$messages; 
@@ -680,6 +674,24 @@ sub finish : Private {
 	
 	$c->stash->{party_location}->creature_threat($c->stash->{party_location}->creature_threat - 5);
 	$c->stash->{party_location}->update;
+	
+	$c->forward('end_of_combat_cleanup');
+}
+
+# Things that need to be done no matter how the combat ended
+sub end_of_combat_cleanup : Private {
+    my ($self, $c) = @_;
+    
+    undef $c->session->{combat_action_param};
+	undef $c->session->{rounds_since_last_double_attack};
+	undef $c->session->{attack_history};
+
+	# Remove character effects from this combat
+    foreach my $character ($c->stash->{party}->characters) {
+    	foreach my $effect ($character->character_effects) {
+    		$effect->delete if $effect->effect->combat;	
+    	}
+    }
 }
 
 sub check_for_item_found : Private {

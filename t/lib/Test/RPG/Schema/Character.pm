@@ -135,6 +135,35 @@ sub test_number_of_attacks : Tests(no_plan) {
 		3,
 		'3 attacks allowed this round because of modifier',
 	);
+	
+	# Test archer's extra attacks
+	$mock_char->set_always('class_name', 'Archer');
+	my $mock_weapon = Test::MockObject->new();
+	$mock_weapon->set_always('item_type', $mock_weapon);
+	$mock_weapon->set_always('category', $mock_weapon);
+	$mock_weapon->set_always('item_category', 'Ranged Weapon');
+	
+	$mock_char->set_always('get_equipped_item', $mock_weapon);
+	$mock_char->set_always('effect_value', 0);
+
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char),
+		1,
+		'1 attacks allowed this for an archer',
+	);
+
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (2)),
+		1,
+		'1 attacks allowed this for an archer',
+	);
+	
+	is(
+		RPG::Schema::Character::number_of_attacks($mock_char, (1)),
+		2,
+		'2 attacks allowed this for an archer',
+	);
+	
 }
 
 1;

@@ -167,7 +167,19 @@ sub _roll_points {
     my $point_max = shift || croak 'point_max not supplied';
     my $point_min = shift || 1;
     
-    my $points = $level == 1 ? $point_max : Games::Dice::Advanced->roll('1d' . $point_max - $point_min) + $point_min-1;
+    if ($point_max < $point_min) {
+        my $message = "Can't roll stats where max is less than min (min: $point_min, max: $point_max, level: $level, stat: $stat";
+        
+        if (ref $self) {
+            $message .= ", character: " . $self->character_name . ", id: " . $self->id;
+        }
+        
+        $message .= ")";
+        
+        confess($message);
+    }
+    
+    my $points = $level == 1 ? $point_max : Games::Dice::Advanced->roll('1d' . ($point_max - $point_min)) + ($point_min-1);
     
     $points += $self->point_bonus($stat);
     
@@ -530,13 +542,14 @@ sub number_of_attacks {
 		my @weapons = $self->get_equipped_item('Weapon');
 				
 		my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
-		
-		$modifier+=0.5 if $ranged_weapons > 1;
+				
+		$modifier+=0.5 if $ranged_weapons >= 1;
 	}
 	
 	# Check for any attack_frequency effects
-	$modifier += $self->effect_value('attack_frequency') || 0;
-	
+	my $extra_modifier_from_effects = $self->effect_value('attack_frequency') || 0; 
+	$modifier += $extra_modifier_from_effects;
+		
 	# Any whole numbers are added on to number of attacks
 	my $whole_extra_attacks = int $modifier;
 	$number_of_attacks += $whole_extra_attacks;
@@ -544,7 +557,9 @@ sub number_of_attacks {
 	# Find out the decimal if any, and decide whether another attack should occur this round
 	$modifier = $modifier - $whole_extra_attacks;
 	
-	if ($modifier > 0) {
+	# If there's a modifier, and an attack history exists, figure out if there should be another extra attack this round.
+	#  (If there's no history, we start with the smaller amount of attacks)
+	if ($modifier > 0 && @attack_history) {
 		# Figure out number of attacks they should've had in recent rounds
 		my $expected_attacks = int 1/$modifier;
 		

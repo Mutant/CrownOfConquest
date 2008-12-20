@@ -2,13 +2,15 @@
 	[% IF ! message.attacker %]
 		[% message %]
 	[% ELSIF message.damage.no_ammo %]
-		[% message.attacker.name %] couldn't attack because he had no ammo left for his [% message.attacker.weapon %]!
+		<span class="combat-attacker">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
+			<span class="combat-weapon">[% message.attacker.weapon %]</span>!
 	[% ELSE %]
-		[% message.attacker.name %] attacked [% message.defender.name %] with [% message.attacker.weapon %] and 
+		<span class="combat-attacker">[% message.attacker.name %]</span> attacked <span class="combat-defender">[% message.defender.name %]</span> 
+			with <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		
 		[% IF message.damage > 0 %]
 			hit for [% message.damage %] points of damage.
-				[% IF message.defender_killed %][% message.defender.name %] was killed![% END %]
+				[% IF message.defender_killed %]<span class="combat-defender">[% message.defender.name %]</span> was killed![% END %]
 		[% ELSE %]
 			missed.
 		[% END %]

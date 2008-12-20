@@ -108,11 +108,13 @@ sub generate_grid : Private {
     
     my @grid;       
     
+    my $movement_factor = $c->stash->{party}->movement_factor;
+    
     foreach my $location (@$locations) {
         $grid[$location->{x}][$location->{y}] = $location;
         
         $location->{party_movement_factor} = RPG::Schema::Land->movement_cost(
-        	$c->stash->{party}->movement_factor, 
+        	$movement_factor,
         	$location->{modifier},
         );
         

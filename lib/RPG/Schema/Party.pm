@@ -191,7 +191,7 @@ sub _median {
 	sum( ( sort { $a <=> $b } @_ )[ int( $#_/2 ), ceil( $#_/2 ) ] )/2;
 }
 
-# Recored turns used whenever number of turns are decreased
+# Record turns used whenever number of turns are decreased
 sub turns {
 	my $self = shift;
 	my $new_turns = shift;

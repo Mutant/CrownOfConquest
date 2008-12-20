@@ -77,7 +77,7 @@ sub register : Local {
 		}
 		else {
 			#my $verification_code = String::Random::random_regex('\w{8}');
-			my $verification_code = int rand 100000000;
+			my $verification_code = (int rand 100000000 + int rand 100000000);
 			
 			my $player = $c->model('DBIC::Player')->create(
 				{
@@ -124,7 +124,7 @@ sub forgot_password : Local {
 	
 	if ($c->req->param('email')) {
 		#my $new_password = String::Random::random_regex('\w{8}');
-		my $new_password = 'temp'; #TODO work around String::Random not being available
+		my $new_password = (int rand 100000000 + int rand 100000000); #work around String::Random not being available
 		
 		my $player = $c->model('DBIC::Player')->find(
 			{

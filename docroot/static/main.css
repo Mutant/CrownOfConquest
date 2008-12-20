@@ -1,0 +1,145 @@
+/* Aligned Stuff */
+
+.aligned-label {
+  float: left;
+  text-align: left;
+  font-weight: bold;
+  width: 12%;
+}
+
+.aligned-value {
+	float: left;	
+}
+
+.aligned-line {
+	clear: left;
+}
+
+label {
+	display: block;
+	width: 200px;
+	float: left;
+	margin-bottom: 5px;
+}
+
+label {
+	text-align: right;
+	width: 130px;
+	padding-right: 20px;
+	white-space: nowrap;
+}
+
+br {
+	clear: left;
+}
+
+/* Map Grid */
+
+.map_square {
+	font-size: 1px;
+}
+
+#map_current_pos {
+	border: 1px solid blue;
+}
+
+/* Main Layout */
+
+.main {
+	font-size: 10pt;
+	font-family: verdana, kalimati, helvetica;
+}
+
+#content {
+	border: 3px gray ridge;
+	width: 1000px;
+	height: auto;
+	min-height: 400px;
+	float: left;
+	margin-left: 15px;
+	background: #9FB7FF;
+	padding: 2px;
+}
+
+#content a {
+	color: #2A31FF;
+}
+
+#body {
+	background: #D3D3D3;
+}
+
+/* Left Nav */
+
+.nav {
+	font-size: 10pt;
+	font-family: verdana;
+
+
+	width: 120px;
+	float: left;
+	padding: 2px;
+}
+
+.nav a {
+	width: 100%;
+	text-decoration: none;
+	display: block;
+	color: #2F72FF;
+}
+html>body .nav a {width: auto}
+
+.nav a:visited {
+	color: #2F72FF;
+}
+
+.nav a:hover {
+	background: #9FB7FF;
+	color: white;
+}
+
+/* DnD */
+
+.main-highlighted-col {
+	background: #A09AFF;
+}
+
+.target {border: 1px dotted gray; padding: 5px;-moz-border-radius:8pt 8pt;radius:8pt;}
+.source {border: 1px dotted skyblue;-moz-border-radius:8pt 8pt;radius:8pt;}
+.dojoDndItemOver {background: #feb;border: 1px dotted gray; }
+.dojoDndItemBefore {border-left: 2px dotted gray; }
+.dojoDndItemAfter {border-right: 2px dotted gray; }
+.target .dojoDndItemAnchor {border:1px solid gray;}
+.dojoDndAvatar {font-size: 75%; color: black;}
+.dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px}
+.dojoDndAvatarHeader {background: #ccc; background-repeat: no-repeat;}
+.dojoDndAvatarItem {background: #eee;}
+.dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
+.dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
+        url(images/dndMove.png);}
+                
+.dojoDndItemBefore {border-left: 2px dotted gray; } 
+
+.dojoDndItemAfter {border-right: 2px dotted gray; }
+
+.dijitButtonText { font-size: 10pt }
+
+/* Login Form */
+
+.outer {
+	width: 30%;
+	top: 40%;
+	position: absolute;
+	left: 33%;
+}
+
+#guest a {
+	color: #0000FF;
+}
+
+/* Misc */
+
+#rank_separator {
+	background: #000;
+	height: 5px;
+}

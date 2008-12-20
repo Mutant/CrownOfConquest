@@ -1,26 +1,4 @@
-
-#ipw_hosting_settings
-
-AddType application/x-httpd-php .php .htm .html
-
-
-
-
-# -FrontPage-
-
-IndexIgnore .htaccess */.??* *~ *# */HEADER* */README* */_vti*
-
-<Limit GET POST>
-order deny,allow
-deny from all
-allow from all
-</Limit>
-<Limit PUT DELETE>
-order deny,allow
-deny from all
-</Limit>
-AuthName www.mutant.dj
-AuthUserFile /home/scrawley/public_html/_vti_pvt/service.pwd
-AuthGroupFile /home/scrawley/public_html/_vti_pvt/service.grp
-
-AddHandler fastcgi-script .fcgi
+AuthType Basic
+AuthName "Game"
+AuthUserFile "/home/scrawley/.htpasswds/public_html/game/passwd"
+require valid-user

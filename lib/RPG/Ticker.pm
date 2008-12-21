@@ -49,7 +49,7 @@ sub run {
 		# Move monsters
 		$package->move_monsters($config, $schema, $logger);
 		
-		$schema->storage->dbh->commit;
+		$schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
 	};
 	if ($@) {
 		$logger->error("Error running ticker script: $@");	

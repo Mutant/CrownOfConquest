@@ -80,7 +80,7 @@ sub do_new_day {
 	# Add quests to towns
 	RPG::NewDay::Quest->run($config, $schema, $logger, $new_day);
 	
-	$schema->storage->dbh->commit;
+	$schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
 	
 	$logger->info("Successfully completed new day script for day: " . $new_day->day_number);
 

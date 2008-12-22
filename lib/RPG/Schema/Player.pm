@@ -3,73 +3,81 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
-__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Player');
-
 
 __PACKAGE__->add_columns(
     'player_id' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 1,
-      'default_value' => undef,
-      'is_foreign_key' => 0,
-      'name' => 'player_id',
-      'is_nullable' => 0,
-      'size' => '11'
+        'data_type'         => 'int',
+        'is_auto_increment' => 1,
+        'default_value'     => undef,
+        'is_foreign_key'    => 0,
+        'name'              => 'player_id',
+        'is_nullable'       => 0,
+        'size'              => '11'
     },
     'player_name' => {
-      'data_type' => 'varchar',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'player_name',
-      'is_nullable' => 0,
-      'size' => '255'
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'player_name',
+        'is_nullable'       => 0,
+        'size'              => '255'
     },
     'email' => {
-      'data_type' => 'varchar',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'email',
-      'is_nullable' => 0,
-      'size' => '255'
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'email',
+        'is_nullable'       => 0,
+        'size'              => '255'
     },
     'password' => {
-      'data_type' => 'varchar',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'password',
-      'is_nullable' => 0,
-      'size' => '255'
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'password',
+        'is_nullable'       => 0,
+        'size'              => '255'
     },
     'verified' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => 0,
-      'is_foreign_key' => 0,
-      'name' => 'player_id',
-      'is_nullable' => 0,
-      'size' => '11'
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'verified',
+        'is_nullable'       => 0,
+        'size'              => '11'
     },
     'verification_code' => {
-      'data_type' => 'varchar',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'password',
-      'is_nullable' => 0,
-      'size' => '255'
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'verification_code',
+        'is_nullable'       => 0,
+        'size'              => '255'
     },
     'admin_user' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => 0,
-      'is_foreign_key' => 0,
-      'name' => 'player_id',
-      'is_nullable' => 0,
-      'size' => '11'
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'admin_user',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },
+    'last_login' => {
+        'data_type'         => 'datetime',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'last_login',
+        'is_nullable'       => 0,
+        'size'              => '11'
     },
 );
 __PACKAGE__->set_primary_key('player_id');

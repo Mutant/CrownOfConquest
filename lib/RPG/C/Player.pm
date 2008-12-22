@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use MIME::Lite;
+use DateTime;
 #use String::Random;
 
 sub login : Local {
@@ -20,7 +21,10 @@ sub login : Local {
 		);
 		
 		if ($user) {
-			if ($user->verified) {
+		    $user->last_login(DateTime->now());
+		    $user->update;
+		    
+			if ($user->verified) {			    
 				$c->session->{player} = $user;
 				$c->res->redirect($c->config->{url_root});
 			}

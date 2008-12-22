@@ -1,0 +1,22 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+<p>Send mail to all players</p>
+
+<form method="POST" action="[% base %]/admin/mail/send">
+<table>
+	<tr>
+		<td>Subject:</td>
+		<td><input type="text" name="subject" size="100"></td>
+	</tr>
+	<tr>
+		<td valign="top">Body:</td>
+		<td><textarea rows=30 cols=120 name="body"></textarea></td>		
+	</tr>
+	<tr>
+		<td></td>
+		<td><input type="submit" value="Send"></td>
+	</tr>
+</table>
+</form>
+
+[% INCLUDE bottom.html %]

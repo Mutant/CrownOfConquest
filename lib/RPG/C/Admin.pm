@@ -10,7 +10,7 @@ sub auto : Private {
 	return 0 unless $c->session->{player}->admin_user;
 }
 
-sub default : Private {
+sub default : Path {
 	my ($self, $c) = @_;
 	
 	$c->forward('/admin/items/edit_item_type');

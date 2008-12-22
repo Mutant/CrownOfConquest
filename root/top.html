@@ -27,7 +27,13 @@ dojo.addOnLoad( error_init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<div class="nav">[% INCLUDE layout/left_hand_nav.html %]</div>
+<div class="nav">
+	[% IF admin_screen %]
+		[% INCLUDE admin/left_hand_nav.html %]
+	[% ELSE %]
+		[% INCLUDE layout/left_hand_nav.html %]
+	[% END %]
+</div>
 <div id="content" class="main">
 <div id="dojoDebug"></div>
 		

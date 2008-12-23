@@ -193,7 +193,9 @@ sub change_password : Local {
 		}
 		else {
 			my $player = $c->model('DBIC::Player')->find(
-				player_id => $c->session->{player}->id,
+                {
+				    player_id => $c->session->{player}->id,
+                }
 			);
 			
 			$player->password($c->req->param('new_password'));

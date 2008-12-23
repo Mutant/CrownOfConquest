@@ -1,0 +1,6 @@
+<h4>Recent New Day Messages</h4>
+[% FOREACH day_log IN day_logs %]
+	<b>Day [% day_log.day.day_number %] of Year [% day_log.day.game_year %]</b><br>
+	[% day_log.log | html_line_break %]
+	<br><br>
+[% END %]

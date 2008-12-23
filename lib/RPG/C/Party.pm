@@ -374,4 +374,54 @@ sub disband : Local {
     );
 }
 
+# Award XP to all characters. Takes the amount of xp to award if it's the same for everyone, or a hash of
+#  character id to amount awarded
+# Returns an array with the display details of the changes
+sub xp_gain : Private {
+    my ( $self, $c, $awarded_xp ) = @_;
+
+    my @characters = $c->stash->{party}->characters;
+
+    my @messages;
+
+    foreach my $character (@characters) {
+        next if $character->is_dead;
+
+        my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
+
+        my $level_up_details = $character->xp( $character->xp + $xp_gained );
+
+        # Record level up details in character history
+        if ($level_up_details) {
+            $c->model('DBIC::Character_History')->create(
+                {
+                    character_id => $character->id,
+                    day_id       => $c->stash->{today}->id,
+                    event        => $character->character_name . " reached level " . $character->level,
+                },
+            );
+        }
+
+        push @messages,
+            $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template => 'party/xp_gain.html',
+                    params   => {
+                        character        => $character,
+                        xp_awarded       => $xp_gained,
+                        level_up_details => $level_up_details,
+                    },
+                    return_output => 1,
+                }
+            ]
+            );
+
+        $character->update;
+    }
+
+    return \@messages;
+}
+
 1;

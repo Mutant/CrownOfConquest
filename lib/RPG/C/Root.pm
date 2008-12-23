@@ -30,10 +30,18 @@ sub auto : Private {
 
     return 1 if $c->action =~ m/^admin/;
 
-    $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id($c->session->{player}->id);
+    $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         $c->stash->{party_location} = $c->stash->{party}->location;
+
+        $c->stash->{today} = $c->model('DBIC::Day')->find(
+            {},
+            {
+                'rows'     => 1,
+                'order_by' => 'day_number desc'
+            },
+        );
 
         # If the party is currently in combat, they must stay on the combat screen
         # TODO: clean up this logic!
@@ -77,6 +85,7 @@ sub end : Private {
     my $dbh = $c->model('DBIC')->schema->storage->dbh;
 
     if ( scalar @{ $c->error } ) {
+
         # Log error message
         $c->log->error('An error occured...');
         $c->log->error( "Action: " . $c->action );

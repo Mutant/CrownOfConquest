@@ -120,23 +120,7 @@ sub complete_quest : Private {
 	my @characters = grep { ! $_->is_dead } $c->stash->{party}->characters;
 	my $xp_each = int $xp_gained / scalar @characters;
 	
-	my @xp_messages;
-	
-	foreach my $character (@characters) {			
-		my $level_up_details= $character->xp($character->xp+$xp_each);
-		$character->update;
-		push @xp_messages, $c->forward('RPG::V::TT',
-	        [{
-	            template => 'party/xp_gain.html',
-				params => {				
-					character => $character,
-					xp_awarded => $xp_each,
-					level_up_details => $level_up_details,
-				},
-				return_output => 1,
-	        }]
-	    );
-	}
+	my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );
 	
 	push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
 	
@@ -144,7 +128,7 @@ sub complete_quest : Private {
         [{
             template => 'quest/completed_quest.html',
 			params => {
-				xp_messages => \@xp_messages,
+				xp_messages => $xp_messages,
 			},
 			return_output => 1,
         }]

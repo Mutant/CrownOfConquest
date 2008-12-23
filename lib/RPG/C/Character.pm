@@ -303,7 +303,6 @@ sub spells_tab : Local {
             }
         ]
     );
-
 }
 
 sub memorise_spell : Local {
@@ -396,6 +395,39 @@ sub add_stat_point : Local {
 
     # Need to return something so caller knows it was successful
     $c->res->body( to_json( {} ) );
+}
+
+sub history_tab : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->model('DBIC::Character')->find(
+        {
+            party_id     => $c->stash->{party}->id,
+            character_id => $c->req->param('character_id'),
+        }
+    );
+
+    croak "Invalid character id" unless $character;
+
+    my @history = $c->model('DBIC::Character_History')->search(
+        { character_id => $c->req->param('character_id'), },
+        {
+            prefetch => 'day',
+            order_by => [ 'day.day_number desc', 'history_id desc' ],
+        },
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'character/history_tab.html',
+                params   => {
+                    history => \@history,
+                }
+            }
+        ]
+    );
 }
 
 1;

@@ -171,11 +171,12 @@ sub select_action : Local {
 sub fight : Local {
     my ( $self, $c ) = @_;
 
-    $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id($c->stash->{party}->in_combat_with);
+    $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 
     # See if the creatures want to flee
     if ( $c->stash->{creature_group}->level < $c->stash->{party}->level ) {
-        my $chance_of_fleeing = ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
+        my $chance_of_fleeing =
+            ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
 
         $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 
@@ -477,6 +478,16 @@ sub attack : Private {
         if ( $defender->is_dead ) {
             my $death_col = $defender->is_character ? 'character_deaths' : 'creature_deaths';
             $c->stash->{combat_log}->set_column( $death_col, $c->stash->{combat_log}->get_column($death_col) + 1 );
+
+            if ( $defender->is_character ) {
+                $c->model('DBIC::Character_History')->create(
+                    {
+                        character_id => $defender->id,
+                        day_id       => $c->stash->{today}->id,
+                        event        => $defender->character_name . " was slain by a " . $attacker->type->creature_type,
+                    },
+                );
+            }
         }
 
         $c->log->debug("Damage: $damage");
@@ -616,29 +627,10 @@ sub finish : Private {
 
     my $awarded_xp = $c->forward( '/combat/distribute_xp', [ $xp, [ map { $_->is_dead ? () : $_->id } @characters ] ] );
 
-    foreach my $character (@characters) {
-        next if $character->is_dead;
+    my $xp_messages = $c->forward( '/party/xp_gain', [$awarded_xp] );
 
-        my $level_up_details = $character->xp( $character->xp + $awarded_xp->{ $character->id } );
+    push @{ $c->stash->{combat_messages} }, @$xp_messages; 
 
-        push @{ $c->stash->{combat_messages} },
-            $c->forward(
-            'RPG::V::TT',
-            [
-                {
-                    template => 'party/xp_gain.html',
-                    params   => {
-                        character        => $character,
-                        xp_awarded       => $awarded_xp->{ $character->id },
-                        level_up_details => $level_up_details,
-                    },
-                    return_output => 1,
-                }
-            ]
-            );
-
-        $character->update;
-    }
     my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
 
     push @{ $c->stash->{combat_messages} }, "You find $gold gold";
@@ -812,14 +804,14 @@ sub process_effects : Private {
             $effect->effect->update;
         }
     }
-    
+
     # Refresh party / creature_group in stash if necessary
     if (@creature_effects) {
-        $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id($c->stash->{creature_group}->id);
+        $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{creature_group}->id );
     }
-    
+
     if (@character_effects) {
-        $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id($c->session->{player}->id);
+        $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
     }
 }
 

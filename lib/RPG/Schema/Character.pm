@@ -475,13 +475,18 @@ sub change_hit_points {
     my $self   = shift;
     my $amount = shift;
 
-    $self->hit_points( $self->hit_points + $amount );
-    $self->hit_points( $self->max_hit_points )
-        if $self->hit_points > $self->max_hit_points;
+    return if $self->is_dead;
+    
+    my $actual_amount = $amount;
+    
+    # Reduce amount if it would take us beyond the maximum hit points
+    if ($self->max_hit_points < $amount + $self->hit_points) {
+        $actual_amount = $self->max_hit_points - $self->hit_points;
+    }
 
-    $self->hit_points(0) if $self->hit_points < 0;
-
-    return;
+    $self->hit_points( $self->hit_points + $actual_amount );
+    
+    return $actual_amount;
 }
 
 # Returns true if character is in the front rank

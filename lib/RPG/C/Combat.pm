@@ -561,7 +561,7 @@ sub creatures_flee : Private {
     $c->stash->{party}->in_combat_with(undef);
     $c->stash->{party}->update;
 
-    $c->stash->{messages} = "The creatures fled!";
+    $c->stash->{messages} = "The creatures have fled!";
 
     $c->stash->{combat_log}->outcome('creatures_fled');
     $c->stash->{combat_log}->encounter_ended( DateTime->now() );
@@ -667,10 +667,17 @@ sub end_of_combat_cleanup : Private {
     undef $c->session->{attack_history};
     undef $c->session->{unsuccessful_flee_attempts};
 
-    # Remove character effects from this combat
     foreach my $character ( $c->stash->{party}->characters ) {
+        # Remove character effects from this combat
         foreach my $effect ( $character->character_effects ) {
             $effect->delete if $effect->effect->combat;
+        }
+        
+        # Remove last_combat_actions that can't be carried between combats
+        #  (currently just 'cast')
+        if ($character->last_combat_action eq 'Cast') {
+            $character->last_combat_action('Defend');
+            $character->update;
         }
     }
 }

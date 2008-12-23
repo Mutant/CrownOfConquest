@@ -121,8 +121,12 @@ sub heal_party : Local {
         }
     }
     else {
-
-        # TODO: should error here.. not enough gold	for amount_to_heal
+        if ($c->req->param('gold')) {
+            $c->stash->{error} = "You only have " . $c->stash->{party}->gold . " gold. You can't heal for more gold than you have!";
+        }
+        else {
+            $c->stash->{error} = "You don't have enough gold for a full heal. Try a partial heal";
+        }
     }
 
     push @{ $c->stash->{refresh_panels} }, ( 'party', 'party_status' );

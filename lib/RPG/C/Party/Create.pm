@@ -135,7 +135,14 @@ sub create_character : Local {
     
     my $total_mod_points = 0;
     foreach my $stat (@RPG::Schema::Character::STATS) {
-        $total_mod_points += $c->req->param('mod_' . $stat) || 0;
+        my $mod_points = $c->req->param('mod_' . $stat) || 0;
+        
+        if ($mod_points < 0) {
+            $c->stash->{error} = "You've set a  modifier to a negative value! Modifiers must be positive or zero";
+            $c->detach('/party/create/new_character');   
+        }
+        
+        $total_mod_points += $mod_points;
     }
 
     if ($total_mod_points > $c->config->{stats_pool}) {

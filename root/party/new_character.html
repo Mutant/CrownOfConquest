@@ -106,9 +106,29 @@ function calculateTotal(stat) {
 	}
 	document.getElementsByName('remaining')[0].value = pool;	
 }
+
+function checkStats() {
+	if (document.getElementById("remaining").value > 0) {
+		dijit.byId('stats-alert').show();
+		return false;
+	}
+	
+	return true;
+}
+
+function submitForm() {
+	document.getElementById("form").submit();
+}
 </script>
 
-<form name="form" method="post" id="form" action="[% base %]/party/create/create_character">
+<div dojoType="dijit.Dialog" id="stats-alert" title="Alert" execute="submitForm();">
+You haven't used all your stat points for this character.<br>
+You won't be able to regain these stat points if you continue!<br>
+<center><button dojoType=dijit.form.Button type="submit">Continue</button>
+<button dojoType="dijit.form.Button" onclick="dijit.byId('stats-alert').hide()">Cancel</button></center>
+</div>
+
+<form name="form" method="post" id="form" action="[% base %]/party/create/create_character" onsubmit="return checkStats()">
 
 <style>
 #stats-set input { width: 65px }
@@ -180,7 +200,7 @@ Stats can be no higher than [% stat_max %] (for a new character).</p>
 <input type="hidden" name="total_con" id="total_con">
 <br>
 <label for="remaining">Points Remaining:</label>
-<input type="text" size="3" name="remaining" disabled="disabled" class="stat" value="[% stat_pool %]">
+<input type="text" size="3" name="remaining" id="remaining" disabled="disabled" class="stat" value="[% stat_pool %]">
 </fieldset>
 <br>
 <label for="remaining">Hit Points:</label>

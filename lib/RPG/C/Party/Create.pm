@@ -132,10 +132,10 @@ sub create_character : Local {
     	$c->stash->{error} = 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
     	$c->detach('create');
     }
-
+    
     my $total_mod_points = 0;
     foreach my $stat (@RPG::Schema::Character::STATS) {
-        $total_mod_points += $c->req->param('mod_' . $stat);
+        $total_mod_points += $c->req->param('mod_' . $stat) || 0;
     }
 
     if ($total_mod_points > $c->config->{stats_pool}) {
@@ -151,11 +151,11 @@ sub create_character : Local {
         character_name => $c->req->param('name'),
         class_id => $class->id,
         race_id => $c->req->param('race'),
-        strength => $race->base_str + $c->req->param('mod_str'),
-        intelligence => $race->base_int + $c->req->param('mod_int'),
-        agility => $race->base_agl + $c->req->param('mod_agl'),
-        divinity => $race->base_div + $c->req->param('mod_div'),
-        constitution => $race->base_con + $c->req->param('mod_con'),
+        strength => $race->base_str + $c->req->param('mod_str') || 0,
+        intelligence => $race->base_int + $c->req->param('mod_int') || 0,
+        agility => $race->base_agl + $c->req->param('mod_agl') || 0,
+        divinity => $race->base_div + $c->req->param('mod_div') || 0,
+        constitution => $race->base_con + $c->req->param('mod_con') || 0,
         party_id => $c->stash->{party}->id,
         level => 1,
         party_order => $char_count+1,

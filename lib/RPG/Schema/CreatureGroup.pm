@@ -11,6 +11,8 @@ use Data::Dumper;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Creature_Group');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::CreatureGroup');
+
 __PACKAGE__->add_columns(qw/creature_group_id land_id trait_id/);
 
 __PACKAGE__->set_primary_key('creature_group_id');

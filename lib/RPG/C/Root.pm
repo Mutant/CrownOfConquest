@@ -30,16 +30,7 @@ sub auto : Private {
 
     return 1 if $c->action =~ m/^admin/;
 
-    $c->stash->{party} = $c->model('DBIC::Party')->find(
-        {
-            player_id => $c->session->{player}->id,
-            defunct   => undef,
-        },
-        {
-            prefetch => [ { 'characters' => [ 'race', 'class', { 'character_effects' => 'effect' }, ] }, { 'location' => 'town' }, ],
-            order_by => 'party_order',
-        },
-    );
+    $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id($c->session->{player}->id);
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         $c->stash->{party_location} = $c->stash->{party}->location;

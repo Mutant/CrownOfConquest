@@ -171,16 +171,11 @@ sub select_action : Local {
 sub fight : Local {
     my ( $self, $c ) = @_;
 
-    my $creature_group =
-        $c->model('DBIC::CreatureGroup')
-        ->find( { creature_group_id => $c->stash->{party}->in_combat_with, }, { prefetch => { 'creatures' => [ 'type', 'creature_effects' ] }, }, );
-
-    # Later actions might need this
-    $c->stash->{creature_group} = $creature_group;
+    $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id($c->stash->{party}->in_combat_with);
 
     # See if the creatures want to flee
-    if ( $creature_group->level < $c->stash->{party}->level ) {
-        my $chance_of_fleeing = ( $c->stash->{party}->level - $creature_group->level ) * $c->config->{chance_creatures_flee_per_level_diff};
+    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level ) {
+        my $chance_of_fleeing = ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
 
         $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 
@@ -189,14 +184,14 @@ sub fight : Local {
         }
     }
 
-    my @creatures  = $creature_group->creatures;
+    # Process magical effects
+    $c->forward('process_effects');
+
+    my @creatures  = $c->stash->{creature_group}->creatures;
     my @characters = $c->stash->{party}->characters;
 
     # Compute af/df for each participant. Only do this once per combat since it won't change
     $c->forward( 'calculate_factors', [ \@characters, \@creatures ] );
-
-    # Process magical effects
-    $c->forward('process_effects');
 
     # Get list of combatants, modified for changes in attack frequency, and radomised in order
     my $combatants = $c->forward( 'get_combatant_list', [ \@characters, \@creatures ] );
@@ -208,7 +203,7 @@ sub fight : Local {
 
         my $action_result;
         if ( $combatant->is_character ) {
-            $action_result = $c->forward( 'character_action', [ $combatant, $creature_group ] );
+            $action_result = $c->forward( 'character_action', [ $combatant, $c->stash->{creature_group} ] );
         }
         else {
             $action_result = $c->forward( 'creature_action', [ $combatant, $c->stash->{party} ] );
@@ -502,9 +497,10 @@ sub flee : Local {
         ->find( { creature_group_id => $party->in_combat_with, }, { prefetch => { 'creatures' => [ 'type', 'creature_effects' ] }, }, );
 
     my $level_difference = $creature_group->level - $party->level;
-    my $flee_chance = $c->config->{base_flee_chance} + ($c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ));
-    
-    $flee_chance += ($c->config->{flee_chance_attempt_modifier} * $c->session->{unsuccessful_flee_attempts});
+    my $flee_chance =
+        $c->config->{base_flee_chance} + ( $c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+
+    $flee_chance += ( $c->config->{flee_chance_attempt_modifier} * $c->session->{unsuccessful_flee_attempts} );
 
     my $rand = Games::Dice::Advanced->roll("1d100");
 
@@ -815,6 +811,15 @@ sub process_effects : Private {
         else {
             $effect->effect->update;
         }
+    }
+    
+    # Refresh party / creature_group in stash if necessary
+    if (@creature_effects) {
+        $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id($c->stash->{creature_group}->id);
+    }
+    
+    if (@character_effects) {
+        $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id($c->session->{player}->id);
     }
 }
 

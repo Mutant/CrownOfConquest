@@ -73,6 +73,7 @@ sub equipment_tab : Local {
                     character                 => $character,
                     equipped_items            => $equipped_items,
                     equip_place_category_list => \%equip_place_category_list,
+                    items                     => \@items,
                 }
             }
         ]
@@ -143,6 +144,7 @@ sub equip_item : Local {
 
     my %ret;
     if ( scalar @slots_changed > 1 ) {
+
         # More than one slot changed... clear anything that wasn't the slot we tried to equip to
         # XXX: currently the AJAX call just expects one slot to clear, since there's no way more than one
         #  could be cleared. If this changes, we'll have to give it a different data structure
@@ -188,11 +190,21 @@ sub give_item : Local {
         return;
     }
 
+    my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
+
     $item->equip_place_id(undef);
-    $item->add_to_characters_inventory($character);    
+    $item->add_to_characters_inventory($character);
     $item->update;
 
-    $c->res->body( to_json( { message => "A " . $item->item_type->item_type . " was given to " . $character->character_name } ) );
+    $c->res->body(
+        to_json(
+            {
+                message           => "A " . $item->item_type->item_type . " was given to " . $character->character_name,
+                clear_equip_place => $slot_to_clear,
+
+            }
+        )
+    );
 }
 
 # Called by shop screen to get list of equipment.

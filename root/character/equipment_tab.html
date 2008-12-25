@@ -34,7 +34,7 @@ Drag an item from inventory onto a character's name to give the item to that cha
 
 <table class="main">
 [% last_category = '' %]
-[% FOREACH item IN character.items %]
+[% FOREACH item IN items %]
 	[% IF last_category != item.item_type.category.item_category %]
 		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
 		[% last_category = item.item_type.category.item_category %]

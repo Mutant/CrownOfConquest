@@ -106,11 +106,11 @@ sub movement_cost {
 	my $self = shift;
 		
 	my $movement_factor = shift || croak 'movement factor not supplied';
-	my $terrain_modifer = shift; 
-	$terrain_modifer = $self->terrain->modifier unless defined $terrain_modifer;
+	my $terrain_modifier = shift; 
+	$terrain_modifier = $self->terrain->modifier unless defined $terrain_modifier;
 	
 	
-	my $cost = $terrain_modifer - $movement_factor;
+	my $cost = $terrain_modifier - $movement_factor;
 	$cost = 1 if $cost < 1;
 	
 	return $cost;

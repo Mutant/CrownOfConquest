@@ -17,8 +17,6 @@ sub startup : Tests(startup=>1) {
 sub setup_data : Tests(setup) {
 	my $self = shift;
 	
-	$self->{schema}->storage->dbh->begin_work;
-
 	$self->{quest_type} = $self->{schema}->resultset('Quest_Type')->create(
 		{
 			quest_type => 'find_jewel',	

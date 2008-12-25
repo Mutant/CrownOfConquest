@@ -573,7 +573,7 @@ sub creatures_flee : Private {
 
 # For the party or the creatures
 sub get_sector_to_flee_to : Private {
-    my ( $self, $c, $check_for_creature_group ) = @_;
+    my ( $self, $c, $no_creatures_or_towns ) = @_;
 
     my $party_location = $c->stash->{party}->location;
 
@@ -584,8 +584,10 @@ sub get_sector_to_flee_to : Private {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $party_location->x, $party_location->y, $range, $range, );
 
         my %params;
-        $params{'creature_group.creature_group_id'} = undef
-            if $check_for_creature_group;
+        if ($no_creatures_or_towns) {
+            $params{'creature_group.creature_group_id'} = undef;
+            $params{'town.town_id'}                     = undef;
+        }
 
         @sectors_to_flee_to = $c->model('DBIC::Land')->search(
             {
@@ -593,7 +595,7 @@ sub get_sector_to_flee_to : Private {
                 x => { '>=', $start_point->{x}, '<=', $end_point->{x}, '!=', $party_location->x },
                 y => { '>=', $start_point->{y}, '<=', $end_point->{y}, '!=', $party_location->y },
             },
-            { join => 'creature_group', },
+            { join => [ 'creature_group', 'town' ] },
         );
 
         $range++;
@@ -629,7 +631,7 @@ sub finish : Private {
 
     my $xp_messages = $c->forward( '/party/xp_gain', [$awarded_xp] );
 
-    push @{ $c->stash->{combat_messages} }, @$xp_messages; 
+    push @{ $c->stash->{combat_messages} }, @$xp_messages;
 
     my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
 
@@ -668,14 +670,15 @@ sub end_of_combat_cleanup : Private {
     undef $c->session->{unsuccessful_flee_attempts};
 
     foreach my $character ( $c->stash->{party}->characters ) {
+
         # Remove character effects from this combat
         foreach my $effect ( $character->character_effects ) {
             $effect->delete if $effect->effect->combat;
         }
-        
+
         # Remove last_combat_actions that can't be carried between combats
         #  (currently just 'cast')
-        if ($character->last_combat_action eq 'Cast') {
+        if ( $character->last_combat_action eq 'Cast' ) {
             $character->last_combat_action('Defend');
             $character->update;
         }
@@ -687,10 +690,10 @@ sub check_for_item_found : Private {
 
     # See if party find an item
     if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $c->config->{chance_to_find_item} ) {
-        my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
+        my $max_prevalence = $avg_creature_level * $c->{config}->{prevalence_per_creature_level_to_find};
 
         # Get item_types within the prevalance roll
-        my @item_types = shuffle $c->model('DBIC::Item_Type')->search( { prevalence => { '>=', $prevalence_roll }, } );
+        my @item_types = shuffle $c->model('DBIC::Item_Type')->search( { prevalence => { '<=', $max_prevalence }, } );
 
         my $item_type = shift @item_types;
 
@@ -701,12 +704,8 @@ sub check_for_item_found : Private {
         }
 
         # Create the item
-        my $item = $c->model('DBIC::Items')->create(
-            {
-                item_type_id => $item_type->id,
-            },
-        );
-        
+        my $item = $c->model('DBIC::Items')->create( { item_type_id => $item_type->id, }, );
+
         $item->add_to_characters_inventory($finder);
 
         push @{ $c->stash->{combat_messages} }, $finder->character_name . " found a " . $item->display_name;

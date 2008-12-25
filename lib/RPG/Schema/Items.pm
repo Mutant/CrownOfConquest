@@ -229,7 +229,6 @@ sub equip_item {
             $equipped_item->update;
         }
         else {
-
             # We're not replacing existing items, so nothing more to do here
             return;
         }

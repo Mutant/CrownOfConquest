@@ -92,29 +92,20 @@ sub test_finish : Tests(18) {
 	$self->{mock_forward}{'check_for_item_found'} = sub { };
 	$self->{mock_forward}{'RPG::V::TT'} = sub { };
 	$self->{mock_forward}{'/quest/check_action'} = sub { [] };	
+	$self->{mock_forward}{'/party/xp_gain'} = sub { ['xp_messages'] };
+	$self->{mock_forward}{'end_of_combat_cleanup'} = sub { };	
 	
 	RPG::C::Combat->finish($self->{c});
 	
 	my $char_msgs;
 	foreach my $message (@{$self->{c}->stash->{combat_messages}}) {
-		if ($message =~ /^char/) {
-			$char_msgs++;
+		if ($message eq 'xp_messages') {
+			ok(1, "xp messages put into combat messages");
 		}
 		else {
 			like($message, qr/ 25 gold/, "gold found message created"); 
 		}
-	}
-	
-	SKIP: {
-		skip "Broken by changes to how xp msgs are built", 2;
-		is(scalar @{$self->{c}->stash->{combat_messages}}, 6, "6 messages added to combat_messages");
-		is ($char_msgs, 5, "5 messages found for characters experience");
-	};
-	
-	foreach my $character (@characters) {
-		$character->called_ok('update', "Character updated");
-	}
-	
+	}	
 	my @args;
 	
 	is($mock_party->call_pos(2), 'in_combat_with', "in_combat_with set to new value");

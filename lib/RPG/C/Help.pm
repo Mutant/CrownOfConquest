@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-sub default : Private {
+sub default : Path {
 	my ($self, $c) = @_;
 	
 	my $action = $c->req->path;
@@ -26,6 +26,16 @@ sub default : Private {
 	$c->forward('RPG::V::TT',
         [{
             template => $template,
+        }]
+    );	
+}
+
+sub about : Local {
+	my ($self, $c) = @_;	
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'help/about.html',
         }]
     );	
 }

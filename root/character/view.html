@@ -68,11 +68,16 @@
 	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
+				console.log(responseObject);
 	        	if (responseObject.message) {
        	          	dojo.byId('message-text').innerHTML = responseObject.message;
        	          	dojo.byId('item-row-' + item_id).style.display = 'none';
 			      	dijit.byId('message').show();					
 	        	}
+				
+				if (responseObject.clear_equip_place) {
+					dojo.byId(responseObject.clear_equip_place + '-equip-place-item').innerHTML = '';
+				}
 	        }
 	    });	       
 	}

@@ -17,8 +17,6 @@ sub startup : Tests(startup=>1) {
 sub setup_data : Tests(setup) {
 	my $self = shift;
 	
-	$self->{schema}->storage->dbh->begin_work;
-
 	$self->{quest_type} = $self->{schema}->resultset('Quest_Type')->create(
 		{
 			quest_type => 'kill_creatures_near_town',	
@@ -48,12 +46,6 @@ sub setup_data : Tests(setup) {
 			},			
 		},
 	};		
-}
-
-sub delete_data : Tests(teardown) {
-	my $self = shift;
-	
-	$self->{schema}->storage->dbh->rollback;
 }
 
 sub test_create_quest : Tests(7) {

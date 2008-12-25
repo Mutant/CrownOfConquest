@@ -97,11 +97,11 @@ sub buy_item : Local {
     if ($party->gold < $cost) {
         $c->res->body(to_json({error => "Your party doesn't have enough gold to buy this item"}));
         return;        
-    }    
+    }
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id')} $party->characters;
    
-    $item->character_id($c->req->param('character_id'));
-    $item->shop_id(undef);
-    $item->update;
+    $item->add_to_characters_inventory($character);
     
     $party->gold($party->gold - $cost);
     $party->update;

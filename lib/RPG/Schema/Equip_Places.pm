@@ -22,6 +22,12 @@ __PACKAGE__->has_many(
     { 'foreign.equip_place_id' => 'self.equip_place_id' }
 );
 
+__PACKAGE__->has_many(
+    'items',
+    'RPG::Schema::Items',
+    { 'foreign.equip_place_id' => 'self.equip_place_id' }
+);
+
 my %OPPOSITE_HANDS = (
 	'Left Hand' => 'Right Hand',
 	'Right Hand' => 'Left Hand',

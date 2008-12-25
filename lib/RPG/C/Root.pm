@@ -32,16 +32,16 @@ sub auto : Private {
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
+    $c->stash->{today} = $c->model('DBIC::Day')->find(
+        {},
+        {
+            'rows'     => 1,
+            'order_by' => 'day_number desc'
+        },
+    );
+
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         $c->stash->{party_location} = $c->stash->{party}->location;
-
-        $c->stash->{today} = $c->model('DBIC::Day')->find(
-            {},
-            {
-                'rows'     => 1,
-                'order_by' => 'day_number desc'
-            },
-        );
 
         # If the party is currently in combat, they must stay on the combat screen
         # TODO: clean up this logic!

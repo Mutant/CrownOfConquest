@@ -704,9 +704,10 @@ sub check_for_item_found : Private {
         my $item = $c->model('DBIC::Items')->create(
             {
                 item_type_id => $item_type->id,
-                character_id => $finder->id,
             },
         );
+        
+        $item->add_to_characters_inventory($finder);
 
         push @{ $c->stash->{combat_messages} }, $finder->character_name . " found a " . $item->display_name;
     }

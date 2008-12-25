@@ -125,71 +125,36 @@ sub equip_item : Local {
         return;
     }
 
-    my ($equip_place) = $c->model('DBIC::Equip_Places')->search(
-        {
-            equip_place_name                          => $c->req->param('equip_place'),
-            'equip_place_categories.item_category_id' => $item->item_type->item_category_id,
-        },
-        { join => 'equip_place_categories', },
-    );
+    my @slots_changed;
+    eval { @slots_changed = $item->equip_item( $c->req->param('equip_place') ); };
+    if ($@) {
 
-    # Make sure this category of item can be equipped here
-    unless ($equip_place) {
-        $c->res->body( to_json( { error => "You can't equip a " . $item->item_type->item_type . " there!" } ) );
-        return;
-    }
-
-    # Unequip any already equipped item in that place
-    my ($equipped_item) = $c->model('DBIC::Items')->search(
-        {
-            character_id   => $item->character_id,
-            equip_place_id => $equip_place->id,
+        # TODO: need better way of detecting exceptions
+        if ( $@ =~ "Can't equip an item of that type there" ) {
+            $c->res->body( to_json( { error => "You can't equip a " . $item->item_type->item_type . " there!" } ) );
+            return;
         }
-    );
+        else {
 
-    if ($equipped_item) {
-        $equipped_item->equip_place_id(undef);
-        $equipped_item->update;
+            # Rethrow
+            croak $@;
+        }
     }
-
-    # Check to see if we're going to affect the opposite hand's equipped item
-    my $other_hand = $equip_place->opposite_hand;
 
     my %ret;
+    if ( scalar @slots_changed > 1 ) {
+        # More than one slot changed... clear anything that wasn't the slot we tried to equip to
+        # XXX: currently the AJAX call just expects one slot to clear, since there's no way more than one
+        #  could be cleared. If this changes, we'll have to give it a different data structure
+        my @slots_to_clear = grep { $_ ne $c->req->param('equip_place') } @slots_changed;
 
-    if ($other_hand) {
-        my ($item_in_opposite_hand) = $c->model('DBIC::Items')->search(
-            {
-                character_id   => $item->character_id,
-                equip_place_id => $other_hand->id,
-            },
-            { prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } }, },
-        );
+        # Just warn for now if we have more than 1
+        $c->log->warn("Found more than one slot to clear in equip_item") if scalar @slots_to_clear > 1;
 
-        # If we're equipping a two-handed weapon, or there's one already equipped also clear the other hand
-        my $attribute = $item->attribute('Two-Handed');
-        my $opposite_hand_attribute = $item_in_opposite_hand ? $item_in_opposite_hand->attribute('Two-Handed') : undef;
-        if ( ( $attribute && $attribute->value ) || ( $opposite_hand_attribute && $opposite_hand_attribute->value ) ) {
-
-            if ( $item_in_opposite_hand && $item_in_opposite_hand->id != $item->id ) {
-                $item_in_opposite_hand->equip_place_id(undef);
-                $item_in_opposite_hand->update;
-            }
-
-            %ret = ( clear_equip_place => $other_hand->equip_place_name );
-        }
+        %ret = ( clear_equip_place => $slots_to_clear[0] );
     }
 
-    # Tell client that item should be unequipped from original place
-    #  XXX: Note, we currently expect this not to occur if a two-handed weapon is being equipped, since it should have
-    #   been taken care of above (since weapons can only be equipped in the hands)
-    %ret = ( clear_equip_place => $item->equipped_in->equip_place_name ) if $item->equip_place_id;
-
     $c->res->body( to_json( \%ret ) );
-
-    $item->equip_place_id( $equip_place->id );
-    $item->update;
-
 }
 
 sub give_item : Local {
@@ -223,8 +188,8 @@ sub give_item : Local {
         return;
     }
 
-    $item->character_id( $character->id );
     $item->equip_place_id(undef);
+    $item->add_to_characters_inventory($character);    
     $item->update;
 
     $c->res->body( to_json( { message => "A " . $item->item_type->item_type . " was given to " . $character->character_name } ) );
@@ -384,7 +349,7 @@ sub add_stat_point : Local {
         },
     );
 
-    unless ($character->stat_points != 0) {
+    unless ( $character->stat_points != 0 ) {
         $c->res->body( to_json( { error => 'No stat points to add' } ) );
         return;
     }
@@ -394,7 +359,7 @@ sub add_stat_point : Local {
         $character->stat_points( $character->stat_points - 1 );
         $character->update;
     }
-    
+
     # Need to return something so caller knows it was successful
     $c->res->body( to_json( {} ) );
 }
@@ -424,9 +389,7 @@ sub history_tab : Local {
         [
             {
                 template => 'character/history_tab.html',
-                params   => {
-                    history => \@history,
-                }
+                params   => { history => \@history, }
             }
         ]
     );

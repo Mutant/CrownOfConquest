@@ -286,7 +286,7 @@ sub weapon {
 
 =head2 get_equipped_item($super_category)
 
-Returns an list of equipped item records specified super category, if any.
+Returns a list of any equipped item records for a specified super category.
 
 =cut
 

@@ -82,7 +82,7 @@
 	dojo.addOnLoad( init );	
 	
 function addStatPoint(char_id, stat) {
-	if (parseInt( dojo.byId('stat-points').innerHTML ) == 0) {
+	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
 		return;
 	}
 
@@ -90,9 +90,9 @@ function addStatPoint(char_id, stat) {
         url: "[% base %]/character/add_stat_point?stat=" + stat + "&character_id=" + char_id,
         handleAs: "json",	
         load: function(responseObject, ioArgs) {
-        	if (responseObject.message) {
-   	          	dojo.byId('message-text').innerHTML = responseObject.message;
-		      	dijit.byId('message').show();					
+        	if (responseObject.error) {
+   	          	dojo.byId('message-text').innerHTML = responseObject.error;
+		      	dijit.byId('message').show();			
         	}
         	else {
         	    statValStr = dojo.byId('stat-' + stat).innerHTML;

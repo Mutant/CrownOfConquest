@@ -171,8 +171,11 @@ dojo.addOnLoad( init );
     <span id="confirmation-message"></span>
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <button dojoType=dijit.form.Button type="submit">OK</button>
-    <!-- <button dojoType=dijit.form.Button onClick="dijit.byId('confirmation').hide()">Cancel</button> -->
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirmation').hide()">Cancel</button>
+	</div>
 </div>
 
 <div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="saveQuantityPurchase(arguments[0]);">
@@ -185,10 +188,14 @@ dojo.addOnLoad( init );
         promptMessage= "Enter a value between 1 and 1000"
         required= "true"
         invalidMessage= "Invalid quantity."
+		style="width: 80px"
         />
     <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <button dojoType=dijit.form.Button type="submit">OK</button>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('quantity-selection').hide()">Cancel</button>
+	</div>
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">

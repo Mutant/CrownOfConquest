@@ -384,15 +384,17 @@ sub add_stat_point : Local {
         },
     );
 
-    $c->res->body( to_json( { error => 'No stat points to add' } ) ), return
-        unless $character->stat_points;
+    unless ($character->stat_points != 0) {
+        $c->res->body( to_json( { error => 'No stat points to add' } ) );
+        return;
+    }
 
     if ( my $stat = $character->get_column( $c->req->param('stat') ) ) {
         $character->set_column( $c->req->param('stat'), $stat + 1 );
         $character->stat_points( $character->stat_points - 1 );
         $character->update;
     }
-
+    
     # Need to return something so caller knows it was successful
     $c->res->body( to_json( {} ) );
 }

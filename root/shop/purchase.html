@@ -1,11 +1,5 @@
 [% INCLUDE top.html %]
 
-<style>
-#current-shop {
-	background: #D3D3D3;
-}
-</style>
-
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
@@ -216,7 +210,7 @@ dojo.addOnLoad( init );
 Shops in [% town.town_name %]: 
 [% FOREACH other_shop IN shops_in_town %]
 	[% IF shop.id == other_shop.id %]
-		<span id="current-shop">[% other_shop.shop_name %]</span>
+		<span id="current-selection">[% other_shop.shop_name %]</span>
 	[% ELSE %]
 		<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% other_shop.shop_name %]</a>
 	[% END %]

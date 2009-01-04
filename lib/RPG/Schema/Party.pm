@@ -143,7 +143,7 @@ __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' =>
 
 __PACKAGE__->might_have( 'cg_opponent', 'RPG::Schema::CreatureGroup', { 'foreign.creature_group_id' => 'self.in_combat_with' } );
 
-__PACKAGE__->belongs_to( 'owned_by_player', 'RPG::Schema::Player', { 'foreign.player_id' => 'self.player_id' } );
+__PACKAGE__->belongs_to( 'player', 'RPG::Schema::Player', { 'foreign.player_id' => 'self.player_id' } );
 
 __PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'party_id', );
 

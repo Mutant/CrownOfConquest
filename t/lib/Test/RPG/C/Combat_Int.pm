@@ -66,7 +66,7 @@ sub test_process_effects_refreshes_stash : Tests(no_plan) {
 	};
 	
 	$self->{session} = {
-	    player => $party->owned_by_player,
+	    player => $party->player,
 	};
 	
 	RPG::C::Combat->process_effects($self->{c});

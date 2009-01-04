@@ -148,3 +148,7 @@ html>body .nav a {width: auto}
 	background: #000;
 	height: 5px;
 }
+
+#current-selection {
+	background: #D3D3D3;
+}

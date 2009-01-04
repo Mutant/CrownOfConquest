@@ -43,6 +43,9 @@ sub run {
 			@{ $config->{'Model::DBIC'}{connect_info} },
 		);
 		
+		# Clean up
+		$package->clean_up($config, $schema, $logger);
+		
 		# Spawn monsters
 		$package->spawn_monsters($config, $schema, $logger);
 		
@@ -230,6 +233,20 @@ sub move_monsters {
 	}
 	
 	$logger->info("Moved $moved groups");
+}
+
+# Clean up any dead monster groups. These sometimes get created due to bugs
+# In an ideal world (or at least one with transactions) this wouldn't be needed.
+sub clean_up {
+    my ($package, $config, $schema, $logger) = @_;
+    
+    my $cg_rs = $schema->resultset('CreatureGroup')->search();
+        
+    while (my $cg = $cg_rs->next) {
+        if ($cg->number_alive <= 0) {
+            $cg->delete;            
+        }
+    }
 }
 
 1;

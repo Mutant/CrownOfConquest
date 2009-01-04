@@ -51,7 +51,7 @@ sub check_for_attack : Local {
     my $creature_group = $c->stash->{party_location}->available_creature_group;
 
     # If there are creatures here, check to see if we go straight into combat
-    if ($creature_group) {
+    if ($creature_group && $creature_group->number_alive > 0) {
         $c->stash->{creature_group} = $creature_group;
 
         if ( $creature_group->initiate_combat( $c->stash->{party} ) ) {

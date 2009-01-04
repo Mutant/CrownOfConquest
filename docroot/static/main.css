@@ -52,7 +52,7 @@ br {
 
 #content {
 	border: 3px gray ridge;
-	width: 1000px;
+	width: 83%;
 	height: auto;
 	min-height: 400px;
 	float: left;
@@ -76,7 +76,7 @@ br {
 	font-family: verdana;
 
 
-	width: 120px;
+	width: 110px;
 	float: left;
 	padding: 2px;
 }

@@ -12,6 +12,7 @@ use Log::Dispatch::File::Stamped;
 use RPG::NewDay::Shop;
 use RPG::NewDay::Party;
 use RPG::NewDay::Quest;
+use RPG::NewDay::Recruitment;
 
 sub run {
 	my $package = shift;
@@ -19,7 +20,7 @@ sub run {
 	my $home = $ENV{RPG_HOME};
 	
 	my $config = YAML::LoadFile("$home/rpg.yml");
-	if (-f '../rpg_local.yml') {
+	if (-f "$home/rpg_local.yml") {
 		my $local_config = YAML::LoadFile("$home/rpg_local.yml");
 		$config = {%$config, %$local_config};
 	}
@@ -72,13 +73,16 @@ sub do_new_day {
 	$logger->info("Beginning new day script for day: " . $new_day->day_number);
 		
 	# New day for Party
-	RPG::NewDay::Party->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Party->run($config, $schema, $logger, $new_day);
 
 	# Run shops update
-	RPG::NewDay::Shop->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Shop->run($config, $schema, $logger, $new_day);
 
 	# Add quests to towns
-	RPG::NewDay::Quest->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Quest->run($config, $schema, $logger, $new_day);
+
+	# Create characters at the recruitment market
+	RPG::NewDay::Recruitment->run($config, $schema, $logger, $new_day);
 	
 	$schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
 	

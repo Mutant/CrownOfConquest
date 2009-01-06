@@ -14,7 +14,7 @@ __PACKAGE__->table('`Character`');
 
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
-        level spell_points max_hit_points party_id party_order last_combat_action stat_points/
+        level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id/
 );
 
 __PACKAGE__->add_columns( xp => { accessor => '_xp' } );
@@ -68,7 +68,7 @@ sub point_bonus {
 
     my $stat_value = shift || $self->get_column(shift);
 
-    return int $stat_value / RPG->config->{'point_dividend'};
+    return int $stat_value / RPG::Schema->config->{'point_dividend'};
 }
 
 # Rolls hit points for the next level.
@@ -86,7 +86,7 @@ sub roll_hit_points {
         $class = shift;
     }
 
-    my $point_max = RPG->config->{level_hit_points_max}{$class};
+    my $point_max = RPG::Schema->config->{level_hit_points_max}{$class};
 
     if ( ref $self ) {
         my $points = $self->_roll_points( 'constitution', $point_max );
@@ -108,8 +108,8 @@ sub roll_hit_points {
 sub roll_spell_points {
     my $self = shift;
 
-    my $point_max = RPG->config->{level_spell_points_max};
-    my $point_min = RPG->config->{level_spell_points_min};
+    my $point_max = RPG::Schema->config->{level_spell_points_max};
+    my $point_min = RPG::Schema->config->{level_spell_points_min};
 
     if ( ref $self ) {
         return unless $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage';
@@ -182,21 +182,24 @@ sub set_default_spells {
     );
 
     my $spell_points_used = 0;
-    foreach my $spell (@spells) {
-        last if $self->spell_points < $spell_points_used + $spell->points;
 
-        my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->create(
-            {
-                character_id            => $self->id,
-                spell_id                => $spell->id,
-                memorised_today         => 1,
-                memorise_count          => 1,
-                memorise_tomorrow       => 1,
-                memorise_count_tomorrow => 1,
-            },
-        );
+    while ( $spell_points_used < $self->spell_points ) {
+        foreach my $spell (@spells) {
+            last if $self->spell_points < $spell_points_used + $spell->points;
 
-        $spell_points_used += $spell->points;
+            my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->create(
+                {
+                    character_id            => $self->id,
+                    spell_id                => $spell->id,
+                    memorised_today         => 1,
+                    memorise_count          => 1,
+                    memorise_tomorrow       => 1,
+                    memorise_count_tomorrow => 1,
+                },
+            );
+
+            $spell_points_used += $spell->points;
+        }
     }
 }
 
@@ -441,7 +444,7 @@ sub resurrect_cost {
 
     # TODO: cost should be modified by the town's prosperity
 
-    return $self->level * RPG->config->{resurrection_cost};
+    return $self->level * RPG::Schema->config->{resurrection_cost};
 }
 
 # Number of prayer or magic points used for spells memorised tomorrow
@@ -476,16 +479,16 @@ sub change_hit_points {
     my $amount = shift;
 
     return if $self->is_dead;
-    
+
     my $actual_amount = $amount;
-    
+
     # Reduce amount if it would take us beyond the maximum hit points
-    if ($self->max_hit_points < $amount + $self->hit_points) {
+    if ( $self->max_hit_points < $amount + $self->hit_points ) {
         $actual_amount = $self->max_hit_points - $self->hit_points;
     }
 
     $self->hit_points( $self->hit_points + $actual_amount );
-    
+
     return $actual_amount;
 }
 
@@ -559,6 +562,25 @@ sub effect_value {
     map { $modifier += $_->effect->modifier if $_->effect->modified_stat eq $effect } $self->character_effects;
 
     return $modifier;
+}
+
+sub value {
+    my $self = shift;
+    
+    return $self->{value} if defined $self->{value}; 
+
+    #my $value = 150 + (($self->level) ** 3) + (($self->level-1) * 250);
+    my $value = 150 + $self->xp;
+    $value += int $self->hit_points;
+    $value += int $self->spell_points;
+    
+    foreach my $item ($self->items) {
+        $value += int $item->item_type->base_cost * 0.8;
+    }
+    
+    $self->{value} = $value;
+
+    return $self->{value};
 }
 
 1;

@@ -6,6 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Race');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Race');
 
 __PACKAGE__->add_columns(
     'race_id' => {

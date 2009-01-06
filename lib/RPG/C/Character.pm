@@ -9,20 +9,42 @@ use JSON;
 
 use Carp;
 
-sub view : Local {
+sub auto : Private {
     my ( $self, $c ) = @_;
-
-    my $character = $c->model('DBIC::Character')->find(
+    
+    $c->stash->{character} = $c->model('DBIC::Character')->find(
         {
             character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
         },
         { prefetch => [ 'race', 'class', ], },
     );
+    
+    # Make sure party is allowed to view this character
+    if ($c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id) {
+        croak "Not allowed to view this character\n";
+    }
+    elsif ($c->stash->{character}->town_id && $c->stash->{character}->town_id != $c->stash->{party_location}->town->id) {
+        croak "Not allowed to view this character\n";
+    }
+    
+    return 1;
+}
 
+
+sub view : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->stash->{character};
+    
     my $next_level = $c->model('DBIC::Levels')->find( { level_number => $character->level + 1, } );
 
-    my @characters = $c->stash->{party}->characters;
+    my @characters;
+    if ($character->party_id) {
+        @characters = $c->stash->{party}->characters;
+    }
+    else {
+        @characters = $c->stash->{party_location}->town->characters;
+    }
 
     $c->forward(
         'RPG::V::TT',
@@ -43,12 +65,7 @@ sub view : Local {
 sub equipment_tab : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            party_id     => $c->stash->{party}->id,
-            character_id => $c->req->param('character_id'),
-        }
-    );
+    my $character = $c->stash->{character};
 
     croak "Invalid character id" unless $character;
 
@@ -83,12 +100,7 @@ sub equipment_tab : Local {
 sub item_list : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        }
-    );
+    my $character = $c->stash->{character};
 
     my @items = $character->items;
 
@@ -162,18 +174,7 @@ sub equip_item : Local {
 sub give_item : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        },
-    );
-
-    # Make sure character being given to is in the party
-    unless ($character) {
-        $c->log->warn( "Can't find " . $c->req->param('character_id') . " in party " . $c->stash->{party}->id );
-        return;
-    }
+    my $character = $c->stash->{character};
 
     my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
@@ -211,13 +212,7 @@ sub give_item : Local {
 sub equipment_list : Local {
     my ( $self, $c ) = @_;
 
-    my ($character) = grep { $_->id eq $c->req->param('character_id') } $c->stash->{party}->characters;
-
-    # Make sure character is in the party
-    unless ($character) {
-        $c->log->warn( "Can't find " . $c->req->param('character_id') . " in party " . $c->stash->{party}->id );
-        return;
-    }
+    my $character = $c->stash->{character};
 
     my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
 
@@ -247,13 +242,8 @@ sub equipment_list : Local {
 sub spells_tab : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        },
-    );
-
+    my $character = $c->stash->{character};
+    
     return unless $character;
 
     my @memorised_spells =
@@ -285,15 +275,8 @@ sub spells_tab : Local {
 sub memorise_spell : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        },
-    );
-
-    return unless $character;
-
+    my $character = $c->stash->{character};
+    
     my $spell = $c->model('DBIC::Spell')->find( { spell_id => $c->req->param('spell_id'), }, );
 
     return unless $spell;
@@ -321,14 +304,7 @@ sub memorise_spell : Local {
 sub unmemorise_spell : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        },
-    );
-
-    return unless $character;
+    my $character = $c->stash->{character};
 
     my $spell = $c->model('DBIC::Spell')->find( { spell_id => $c->req->param('spell_id'), }, );
 
@@ -354,13 +330,8 @@ sub unmemorise_spell : Local {
 sub add_stat_point : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-            party_id     => $c->stash->{party}->id,
-        },
-    );
-
+    my $character = $c->stash->{character};
+    
     unless ( $character->stat_points != 0 ) {
         $c->res->body( to_json( { error => 'No stat points to add' } ) );
         return;
@@ -379,15 +350,8 @@ sub add_stat_point : Local {
 sub history_tab : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find(
-        {
-            party_id     => $c->stash->{party}->id,
-            character_id => $c->req->param('character_id'),
-        }
-    );
-
-    croak "Invalid character id" unless $character;
-
+    my $character = $c->stash->{character};
+    
     my @history = $c->model('DBIC::Character_History')->search(
         { character_id => $c->req->param('character_id'), },
         {

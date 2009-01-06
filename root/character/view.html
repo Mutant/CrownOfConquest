@@ -124,7 +124,9 @@ function addStatPoint(char_id, stat) {
 
 <h1>[% character.character_name %]</h1>
 
-<b>Party:</b>
+[% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
+
+<b>[% IF character.party_id %]Party[% ELSE %]Other Characters Available to Recruit[% END %]:</b>
 [% FOREACH other_character IN characters %]
 	[% IF other_character.id == character.id %]
 		[% other_character.character_name %]
@@ -132,6 +134,7 @@ function addStatPoint(char_id, stat) {
 	<span dojoType="rpg.dnd.Target" id="[% other_character.id %]-char" accept="item">
 	<a href="[% base %]/character/view?character_id=[% other_character.id %]">[% other_character.character_name %]</a>
 	</span>
+	&nbsp;
 	[% END %]
 [% END %]
 

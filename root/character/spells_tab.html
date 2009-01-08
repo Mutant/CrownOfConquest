@@ -26,7 +26,9 @@
                    connectId="mem_spell_[% spell.spell.id %]"
                    label="[% spell.spell.description %]"></div></td>
 		<td>x[% spell.memorise_count_tomorrow %]</td><td>
-		<a href="[% base %]/character/unmemorise_spell?character_id=[% character.id %]&spell_id=[% spell.spell_id %]">Remove Spell</a></td>
+		[% IF character.party_id %]
+			<a href="[% base %]/character/unmemorise_spell?character_id=[% character.id %]&spell_id=[% spell.spell_id %]">Remove Spell</a></td>
+		[% END %]
 	</tr>
 	[% END %]
 [% END %]
@@ -37,6 +39,8 @@
 [% IF character.class.class_name == 'Mage' %]Magic[% ELSE %]Faith[% END %] 
 	Points Used: [% character.spell_points_used %] / [% character.spell_points %]
 <br>
+
+[% IF character.party_id %]
 
 <form method="post" action="[% base %]/character/memorise_spell">
 <input type="hidden" name="character_id" value="[% character.id %]">
@@ -65,3 +69,5 @@
 </tr>
 </table>
 </form>
+
+[% END %]

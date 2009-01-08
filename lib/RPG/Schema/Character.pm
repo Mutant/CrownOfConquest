@@ -187,16 +187,18 @@ sub set_default_spells {
         foreach my $spell (@spells) {
             last if $self->spell_points < $spell_points_used + $spell->points;
 
-            my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->create(
+            my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->find_or_create(
                 {
-                    character_id            => $self->id,
-                    spell_id                => $spell->id,
-                    memorised_today         => 1,
-                    memorise_count          => 1,
-                    memorise_tomorrow       => 1,
-                    memorise_count_tomorrow => 1,
+                    character_id    => $self->id,
+                    spell_id        => $spell->id,
+                    memorised_today => 1,
+                    memorise_tomorrow => 1,
                 },
             );
+
+            $memorised_spell->memorise_count( $memorised_spell->memorise_count + 1 );
+            $memorised_spell->memorise_count_tomorrow( $memorised_spell->memorise_count_tomorrow + 1 );
+            $memorised_spell->update;
 
             $spell_points_used += $spell->points;
         }
@@ -495,6 +497,9 @@ sub change_hit_points {
 # Returns true if character is in the front rank
 sub in_front_rank {
     my $self = shift;
+    
+    # If character isn't in a party, say they're in the front rank
+    return 1 unless $self->party_id;
 
     return $self->party->rank_separator_position > $self->party_order;
 }
@@ -566,21 +571,27 @@ sub effect_value {
 
 sub value {
     my $self = shift;
-    
-    return $self->{value} if defined $self->{value}; 
+
+    return $self->{value} if defined $self->{value};
 
     #my $value = 150 + (($self->level) ** 3) + (($self->level-1) * 250);
     my $value = 150 + $self->xp;
     $value += int $self->hit_points;
     $value += int $self->spell_points;
-    
-    foreach my $item ($self->items) {
+
+    foreach my $item ( $self->items ) {
         $value += int $item->item_type->base_cost * 0.8;
     }
-    
+
     $self->{value} = $value;
 
     return $self->{value};
+}
+
+sub sell_value {
+    my $self = shift;
+    
+    return int $self->value * 0.8;
 }
 
 1;

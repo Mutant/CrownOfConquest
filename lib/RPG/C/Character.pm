@@ -54,7 +54,7 @@ sub view : Local {
                 params   => {
                     character         => $character,
                     characters        => \@characters,
-                    xp_for_next_level => $next_level->xp_needed,
+                    xp_for_next_level => $next_level ? $next_level->xp_needed : '????',
                     selected          => $c->stash->{selected_tab},
                 }
             }

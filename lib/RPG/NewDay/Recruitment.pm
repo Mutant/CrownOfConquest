@@ -12,13 +12,14 @@ use RPG::Maths;
 use File::Slurp;
 
 # Package scope so everyone can read these
-my ( $config, $schema );
+my ( $config, $schema, $logger, $new_day );
 
 sub run {
     my $package = shift;
     $config = shift;
     $schema = shift;
-    my $logger = shift;
+    $logger = shift;
+    $new_day = shift;
 
     my $town_rs = $schema->resultset('Town')->search( {}, { prefetch => { 'characters' => 'items' }, }, );
 
@@ -67,7 +68,7 @@ sub generate_character {
 
     # Initial allocation of stat points
     %stats = _allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
-    
+
     my $character = $schema->resultset('Character')->create(
         {
             character_name => _generate_name(),
@@ -98,7 +99,15 @@ sub generate_character {
 
     $character->set_default_spells;
 
-    #$package->_allocate_equipment($character);
+    $package->_allocate_equipment($character);
+
+    $schema->resultset('Character_History')->create(
+        {
+            character_id => $character->id,
+            day_id       => $new_day->id,
+            event        => $character->character_name . " arrived at the town of " . $town->town_name . " and began looking for a party to join",
+        },        
+    );
 }
 
 sub _allocate_stat_points {
@@ -126,26 +135,65 @@ sub _allocate_stat_points {
 }
 
 my @names;
+
 sub _generate_name {
     unless (@names) {
-        @names = read_file( $ENV{RPG_HOME} . '/script/data/character_names.txt' );   
+        @names = read_file( $ENV{RPG_HOME} . '/script/data/character_names.txt' );
     }
-    
+
     @names = shuffle @names;
-    
+
     return $names[0];
 }
 
 sub _allocate_equipment {
     my $package   = shift;
     my $character = shift;
-    
-    my @equip_places = $schema->resultset('Equip_Places')->search();
-    
-    foreach my $equip_places (@equip_places) {       
-        
-        
-    } 
+
+    my %weapon = (
+        'Warrior' => 'Melee Weapon',
+        'Archer'  => 'Ranged Weapon',
+        'Priest'  => 'Melee Weapon',
+        'Mage'    => 'Melee Weapon',
+    );
+
+    my $min_primary_prevalance = 100 - $character->level * 10;
+
+    my $max_primary_prevalance = 100 - ( $character->level - 4 ) * 10;
+    $max_primary_prevalance = $min_primary_prevalance if $max_primary_prevalance < $min_primary_prevalance;
+    $max_primary_prevalance = 40 if $max_primary_prevalance < 40;
+
+    my @equip_places = $schema->resultset('Equip_Places')->search( {}, { prefetch => { 'equip_place_categories' => 'item_category' }, }, );
+
+    foreach my $equip_place (@equip_places) {
+        my @categories = map { $_->item_category } $equip_place->categories;
+
+        if ( $equip_place->equip_place_name eq 'Left Hand' ) {
+            @categories = $weapon{ $character->class->class_name };
+        }
+        elsif ( $equip_place->equip_place_name eq 'Right Hand' ) {
+            next;
+        }
+
+        my @item_types = $schema->resultset('Item_Type')->search(
+            {
+                prevalence               => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
+                'category.item_category' => \@categories,
+            },
+            { join => 'category', },
+        );
+
+        next unless @item_types;
+
+        @item_types = shuffle @item_types;
+
+        my $item = $schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
+
+        $item->equip_item( $equip_place->equip_place_name, 0 );
+
+        $item->character_id( $character->id );
+        $item->update;
+    }
 }
 
 1;

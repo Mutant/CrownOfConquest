@@ -27,10 +27,12 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 
 <br><br>
 
+[% IF character.party_id %]
 Drag an item from inventory onto an equipped item slot to equip it.<br>
 Drag an item from inventory onto a character's name to give the item to that character.<br>
 
 <br>
+[% END %]
 
 <table class="main">
 [% last_category = '' %]
@@ -41,9 +43,13 @@ Drag an item from inventory onto a character's name to give the item to that cha
 	[% END %]
 	<tr id="item-row-[% item.id %]">
 		<td>
+			[% IF character.party_id %]
 			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
 				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.display_name %]</span>
 			</span>	
+			[% ELSE %]
+				[% item.display_name %]
+			[% END %]
 		</td>
 		<td>
 			<span dojoType="dijit.form.DropDownButton">

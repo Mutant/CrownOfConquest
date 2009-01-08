@@ -15,4 +15,10 @@ __PACKAGE__->belongs_to(
     { 'foreign.item_category_id' => 'self.item_category_id' }
 );
 
+__PACKAGE__->belongs_to(
+    'equip_places',
+    'RPG::Schema::Equip_Places',
+    { 'foreign.equip_place_id' => 'self.equip_place_id' }
+);
+
 1;

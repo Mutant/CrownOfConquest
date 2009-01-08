@@ -4,16 +4,25 @@
 function confirmPurchase(charName, charId, charCost) {
 	dojo.byId('confirmation-message').innerHTML = "Are you sure you want to recruit " + charName + " for " + charCost + " gold?";
 	dojo.byId('char-id').value = charId;
+	dojo.byId('action').value = "buy";
+	dijit.byId('confirmation').show();
+}
+
+function confirmSale(charName, charId, charValue) {
+	dojo.byId('confirmation-message').innerHTML = "Are you sure you want to sell " + charName + " for " + charValue + " gold?";
+	dojo.byId('char-id').value = charId;
+	dojo.byId('action').value = "sell";
 	dijit.byId('confirmation').show();
 }
 
 function saveRecruitment(dialogFields) {
-	window.location = '[% base %]/town/recruitment/buy?character_id=' + dialogFields.char_id;
+	window.location = '[% base %]/town/recruitment/' + dialogFields.action + '?character_id=' + dialogFields.char_id;
 }
 </script>
 
 <div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Recruitment" execute="saveRecruitment(arguments[0]);">
     <span id="confirmation-message"></span>
+	<input id="action" name="action" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<br>
 	<div align="center">
@@ -37,6 +46,7 @@ The town of [% town.town_name %] has the following characters available for recr
 		<th>Cost</th>
 		<th>Name</th>
 		<th>Level</th>
+		<th>XP</th>
 		<th>Race</th>
 		<th>Class</th>
 		<th>Str</th>
@@ -45,15 +55,15 @@ The town of [% town.town_name %] has the following characters available for recr
 		<th>Int</th>
 		<th>Con</th>
 		<th>Hit Points</th>
-		<th>Spell Points</th>
-		<th>XP</th>		
+		<th>Spell Points</th>				
 	</tr>
 
-[% FOREACH character IN characters %]
+[% FOREACH character IN town_characters %]
 	<tr>
 		<td>[% character.value %]</td>
 		<td><a href="[% base %]/character/view?character_id=[% character.id %]">[% character.character_name %]</a></td>
 		<td>[% character.level %]</td>
+		<td>[% character.xp %]</td>
 		<td>[% character.race.race_name %]</td>
 		<td>[% character.class.class_name %]</td>
 		<td>[% character.strength %]</td>
@@ -62,11 +72,49 @@ The town of [% town.town_name %] has the following characters available for recr
 		<td>[% character.intelligence %]</td>
 		<td>[% character.constitution %]</td>
 		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
-		<td>[% character.spell_points %]</td>
-		<td>[% character.xp %]</td>
+		<td>[% character.spell_points %]</td>		
 		<td>[% IF party.gold >= character.value %]
 				<a href="javascript:confirmPurchase('[% character.character_name %]', '[% character.id %]', '[% character.value %]')">Buy</a>
 			[% END %]
+		</td>
+	</tr>
+[% END %]
+
+<tr><td colspan="14"><br><br>Or you can sell one of your characters:<br><br></td></tr>
+
+
+	<tr>
+		<th>Value</th>
+		<th>Name</th>
+		<th>Level</th>
+		<th>XP</th>
+		<th>Race</th>
+		<th>Class</th>
+		<th>Str</th>
+		<th>Agl</th>
+		<th>Div</th>
+		<th>Int</th>
+		<th>Con</th>
+		<th>Hit Points</th>
+		<th>Spell Points</th>				
+	</tr>
+
+[% FOREACH character IN party_characters %]
+	<tr>
+		<td>[% character.sell_value %]</td>
+		<td>[% character.character_name %]</td>
+		<td>[% character.level %]</td>
+		<td>[% character.xp %]</td>
+		<td>[% character.race.race_name %]</td>
+		<td>[% character.class.class_name %]</td>
+		<td>[% character.strength %]</td>
+		<td>[% character.agility %]</td>
+		<td>[% character.divinity %]</td>
+		<td>[% character.intelligence %]</td>
+		<td>[% character.constitution %]</td>
+		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
+		<td>[% character.spell_points %]</td>		
+		<td><a href="javascript:confirmSale('[% character.character_name %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
 		</td>
 	</tr>
 [% END %]

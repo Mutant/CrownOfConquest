@@ -1,0 +1,12 @@
+	[% IF target.is_character %]
+		[% 
+			target_class  = "combat-party-attacker"
+		%]
+	[% ELSE %]
+		[% 
+			target_class  = "combat-creature-attacker"
+		%]
+	[% END %]	
+
+<span class="combat-party-attacker">[% caster.character_name %]</span> cast <span class="combat-weapon">[% spell_name %]</span> on 
+<span class="[% target_class %]">[% target.name %]</span> [% effect %] for [% duration %] rounds.

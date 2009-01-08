@@ -1,16 +1,28 @@
 [% FOREACH message IN combat_messages %]
+	[% IF message.attacker.is_character %]
+		[% 
+			attacker_class  = "combat-party-attacker"
+			defender_class  = "combat-creature-defender"
+		%]
+	[% ELSE %]
+		[% 
+			attacker_class  = "combat-creature-attacker"
+			defender_class  = "combat-party-defender"
+		%]
+	[% END %]	
+
 	[% IF ! message.attacker %]
 		[% message %]
 	[% ELSIF message.damage.no_ammo %]
-		<span class="combat-attacker">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
+		<span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span>!
 	[% ELSE %]
-		<span class="combat-attacker">[% message.attacker.name %]</span> attacked <span class="combat-defender">[% message.defender.name %]</span> 
+		<span class="[% attacker_class %]">[% message.attacker.name %]</span> attacked <span class="[% defender_class %]">[% message.defender.name %]</span> 
 			with <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		
 		[% IF message.damage > 0 %]
-			hit for [% message.damage %] points of damage.
-				[% IF message.defender_killed %]<span class="combat-defender">[% message.defender.name %]</span> was killed![% END %]
+			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of damage.
+				[% IF message.defender_killed %]<span class="[% defender_class %]">[% message.defender.name %]</span> was killed![% END %]
 		[% ELSE %]
 			missed.
 		[% END %]

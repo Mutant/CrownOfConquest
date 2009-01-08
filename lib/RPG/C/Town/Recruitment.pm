@@ -16,15 +16,19 @@ sub default : Path {
     my @town_characters  = $town->characters;
     my @party_characters = $c->stash->{party}->characters;
 
+    my $party_full = scalar @party_characters >= $c->config->{max_party_characters};
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'town/recruitment/main.html',
                 params   => {
-                    town_characters  => \@town_characters,
-                    party_characters => \@party_characters,
-                    party            => $c->stash->{party},
+                    town_characters      => \@town_characters,
+                    party_characters     => \@party_characters,
+                    party                => $c->stash->{party},
+                    party_full           => $party_full,
+                    max_party_characters => $c->config->{max_party_characters},
                 },
             }
         ]
@@ -42,6 +46,10 @@ sub buy : Local {
 
     if ( $c->stash->{party}->gold < $character->value ) {
         croak "Can't afford that character\n";
+    }
+
+    if ( scalar $c->stash->{party}->characters >= $c->config->{max_party_characters} ) {
+        croak "Already enough characters in your party\n";
     }
 
     $c->stash->{party}->gold( $c->stash->{party}->gold - $character->value );

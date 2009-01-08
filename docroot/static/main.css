@@ -138,8 +138,16 @@ html>body .nav a {width: auto}
 }
 
 /* Combat */
-.combat-attacker, .combat-defender, .combat-weapon {
+.combat-party-attacker, .combat-party-defender, .combat-creature-attacker, .combat-creature-defender, .combat-weapon {
 	font-weight: bold;
+}
+
+.combat-party-attacker, .combat-party-defender {
+	color: #000AA3;
+}
+
+.combat-creature-attacker, .combat-creature-defender {
+	color: #B40000;
 }
 
 /* Misc */

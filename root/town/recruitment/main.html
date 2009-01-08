@@ -35,6 +35,12 @@ function saveRecruitment(dialogFields) {
 
 Party Gold: [% party.gold %]
 
+[% IF party_full %]
+<br><br>
+
+(Note, your party currently has the maximum of [% max_party_characters %] allowed. You'll have to sell a character to recruit a new one).
+[% END %]
+
 <br><br>
 
 The town of [% town.town_name %] has the following characters available for recruitment:
@@ -73,7 +79,7 @@ The town of [% town.town_name %] has the following characters available for recr
 		<td>[% character.constitution %]</td>
 		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
 		<td>[% character.spell_points %]</td>		
-		<td>[% IF party.gold >= character.value %]
+		<td>[% IF ! party_full && party.gold >= character.value %]
 				<a href="javascript:confirmPurchase('[% character.character_name %]', '[% character.id %]', '[% character.value %]')">Buy</a>
 			[% END %]
 		</td>

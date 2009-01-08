@@ -13,10 +13,8 @@ sub get_logs_around_sector {
 	
 	return $self->search(
 		{
-			'land.x'   => {'>=', $coords[0]->{x}},
-			'land.x'   => {'<=', $coords[1]->{x}},
-			'land.y'   => {'>=', $coords[0]->{y}},
-			'land.y'   => {'<=', $coords[1]->{y}},
+			'land.x'   => {'>=', $coords[0]->{x},'<=', $coords[1]->{x}},
+			'land.y'   => {'>=', $coords[0]->{y},'<=', $coords[1]->{y}},
 			'game_day' => {'>=', $start_day}, 
 		},
 		{

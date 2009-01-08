@@ -200,13 +200,7 @@ sub _get_party_health {
 sub news : Local {
     my ( $self, $c ) = @_;
 
-    my $current_day = $c->model('DBIC::Day')->find(
-        {},
-        {
-            select => { max => 'day_number' },
-            as     => 'current_day'
-        },
-    )->get_column('current_day');
+    my $current_day = $c->stash->{today}->day_number;
 
     my @logs = $c->model('DBIC::Combat_Log')->get_logs_around_sector(
         $c->stash->{party_location}->x,

@@ -25,6 +25,7 @@ Top Parties By:
 		<th>Player</th>
 		<th>Average XP</th>
 		<th>Total XP</th>
+		<th># of Chars</th>
 		<th>Turns Used</th>
 		<th>Date Created</th>		
 	</tr>
@@ -35,6 +36,7 @@ Top Parties By:
 		<td>[% party.player.player_name %]</td>
 		<td align="right">[% party.get_column('average_xp') %]</td>
 		<td align="right">[% party.get_column('total_xp') %]</td>
+		<td align="right">[% party.characters.size %]</td>
 		<td align="right">[% party.turns_used %]</td>
 		<td>[% party.created.ymd %]</td>		
 	</tr>

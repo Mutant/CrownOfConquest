@@ -32,7 +32,7 @@ sub default : Path {
                 template => 'leaderboards/main.html',
                 params   => { 
                     parties => \@parties,
-                    current_sort => $sort, 
+                    current_sort => $sort,
                 },
             }
         ]

@@ -141,6 +141,7 @@ sub _generate_name {
         @names = read_file( $ENV{RPG_HOME} . '/script/data/character_names.txt' );
     }
 
+    chomp @names;
     @names = shuffle @names;
 
     return $names[0];

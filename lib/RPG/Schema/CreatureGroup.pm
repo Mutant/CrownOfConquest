@@ -57,6 +57,7 @@ sub creature_summary {
 	my %summary;
 	
 	foreach my $creature (@creatures) {
+	    next if $creature->is_dead;
 		$summary{$creature->type->creature_type}++;
 	}
 	

@@ -4,6 +4,7 @@
 dojo.require('dijit.layout.SplitContainer');
 dojo.require('dijit.Tooltip');
 dojo.require('dijit.form.FilteringSelect');
+dojo.require("dijit.form.Textarea");
 	
 function getPanels(url) {
 	var originalContent = dojo.byId('messages-pane').innerHTML;
@@ -140,12 +141,43 @@ function execConfirmedAttack(dialogFields) {
 	getPanels('/combat/party_attacks?creature_group_id=' + dialogFields.creature_group_id);
 }
 
+function buryDiag(char_name, char_id) {
+	dojo.byId('bury-message').innerHTML = "Are you sure you want to bury " + char_name + "?";
+	dojo.byId('char-id').value = char_id;
+	dijit.byId('confirm-bury').show();
+}
+
+function bury(dialogFields) {
+	getPanels('/character/bury?character_id=' + dialogFields.char_id + '&epitaph=' + dialogFields.epitaph);
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
     <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>
     <input id="creature-group-id" name="creature_group_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <button dojoType=dijit.form.Button type="submit">OK</button> 
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button> 
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-attack').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="confirm-bury" style="display: none" title="Bury Character" execute="bury(arguments[0]);">
+    <input id="char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<span id="bury-message"></span>
+	<br><br>
+	Enter an epitaph for the grave:
+	<br><br>
+	<div align="center"><input dojoType=dijit.form.TextBox name="epitaph" style="width: 400px"></div>
+	<br><br>
+	Graves in the wilderness will eventually disappear.<br>Those in a town will remain permanently in the Cemetery.    
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button> 
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-bury').hide()">Cancel</button>
+	</div>
+	 
 </div>
 
 <h2>[% party.name %]</h2>

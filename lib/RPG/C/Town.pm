@@ -501,4 +501,31 @@ sub find_item : Local {
     $c->forward('/town/sage');
 }
 
+sub cemetry : Local {
+    my ( $self, $c ) = @_;
+        
+    my @graves = $c->model('DBIC::Grave')->search(
+        {
+            land_id => $c->stash->{party_location}->id,
+        },
+    );
+    
+    my $panel = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'town/cemetery.html',
+                params   => {
+                    graves => \@graves,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+
+    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+    $c->forward('/panel/refresh');
+}
+
 1;

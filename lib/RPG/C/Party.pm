@@ -44,6 +44,12 @@ sub sector_menu : Local {
     if ($creature_group) {
         $confirm_attack = $creature_group->level - $c->stash->{party}->level > $c->config->{cg_attack_max_level_diff};
     }
+    
+    my @graves = $c->model('DBIC::Grave')->search(
+        {
+            land_id => $c->stash->{party_location}->id,
+        },
+    );
 
     my $parties_in_sector = $c->forward('parties_in_sector');
 
@@ -59,6 +65,7 @@ sub sector_menu : Local {
                     day_logs          => $c->stash->{day_logs},
                     location          => $c->stash->{party_location},
                     parties_in_sector => $parties_in_sector,
+                    graves            => \@graves,
                 },
                 return_output => 1,
             }

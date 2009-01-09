@@ -115,6 +115,36 @@ function addStatPoint(char_id, stat) {
     });
 }
 
+function changeNameDiag(char_name, char_id) {
+	dojo.byId('char-id').value = char_id;
+	dojo.byId('character-name').value = char_name;
+	dojo.byId('character-name').select();
+	dijit.byId('change-name-diag').show();
+}
+
+function changeName(arguments) {
+	if (! arguments.character_name) {
+		return;
+	}
+	
+	new_name = arguments.character_name;
+	
+	dojo.xhrGet( {
+        url: "[% base %]/character/change_name?new_name=" + arguments.character_name + "&character_id=" + arguments.char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+        	if (responseObject.error) {
+   	          	dojo.byId('message-text').innerHTML = responseObject.error;
+		      	dijit.byId('message').show();			
+        	}
+        	else {
+				console.log(arguments.character_name);
+        	    dojo.byId('name-header').innerHTML = new_name;
+        	}
+        }
+    });	
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
@@ -122,7 +152,19 @@ function addStatPoint(char_id, stat) {
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<h1>[% character.character_name %]</h1>
+
+<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name" execute="changeName(arguments[0]);">
+    Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="character_name">
+    <input id="char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+</div>
+
+
+<h1><span id="name-header">[% character.character_name %]</span> <a href="javascript:changeNameDiag('[% character.character_name %]', '[% character.id %]')" class="main">Change</a></h1>
 
 [% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
 
@@ -133,9 +175,9 @@ function addStatPoint(char_id, stat) {
 	[% ELSE %]
 	<span dojoType="rpg.dnd.Target" id="[% other_character.id %]-char" accept="item">
 	<a href="[% base %]/character/view?character_id=[% other_character.id %]">[% other_character.character_name %]</a>
-	</span>
-	&nbsp;
+	</span>	
 	[% END %]
+	&nbsp;
 [% END %]
 
 <br><br>

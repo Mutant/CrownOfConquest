@@ -6,6 +6,10 @@
 You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
 <br><br>
 
+[% IF graves.0 %]
+	[% INCLUDE graves/main.html %]
+[% END %]
+
 [% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
 
 <a href="javascript:getPanels('/party/camp')">Camp</a> 

@@ -11,35 +11,32 @@ use Carp;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
-    
-    $c->stash->{character} = $c->model('DBIC::Character')->find(
-        {
-            character_id => $c->req->param('character_id'),
-        },
-        { prefetch => [ 'race', 'class', ], },
-    );
-    
+
+    $c->stash->{character} =
+        $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class', ], }, );
+
+    return 1 unless $c->stash->{character};
+
     # Make sure party is allowed to view this character
-    if ($c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id) {
+    if ( $c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id ) {
         croak "Not allowed to view this character\n";
     }
-    elsif ($c->stash->{character}->town_id && $c->stash->{character}->town_id != $c->stash->{party_location}->town->id) {
+    elsif ( $c->stash->{character}->town_id && $c->stash->{character}->town_id != $c->stash->{party_location}->town->id ) {
         croak "Not allowed to view this character\n";
     }
-    
+
     return 1;
 }
-
 
 sub view : Local {
     my ( $self, $c ) = @_;
 
     my $character = $c->stash->{character};
-    
+
     my $next_level = $c->model('DBIC::Levels')->find( { level_number => $character->level + 1, } );
 
     my @characters;
-    if ($character->party_id) {
+    if ( $character->party_id ) {
         @characters = $c->stash->{party}->characters;
     }
     else {
@@ -243,7 +240,7 @@ sub spells_tab : Local {
     my ( $self, $c ) = @_;
 
     my $character = $c->stash->{character};
-    
+
     return unless $character;
 
     my @memorised_spells =
@@ -276,7 +273,7 @@ sub memorise_spell : Local {
     my ( $self, $c ) = @_;
 
     my $character = $c->stash->{character};
-    
+
     my $spell = $c->model('DBIC::Spell')->find( { spell_id => $c->req->param('spell_id'), }, );
 
     return unless $spell;
@@ -331,7 +328,7 @@ sub add_stat_point : Local {
     my ( $self, $c ) = @_;
 
     my $character = $c->stash->{character};
-    
+
     unless ( $character->stat_points != 0 ) {
         $c->res->body( to_json( { error => 'No stat points to add' } ) );
         return;
@@ -351,7 +348,7 @@ sub history_tab : Local {
     my ( $self, $c ) = @_;
 
     my $character = $c->stash->{character};
-    
+
     my @history = $c->model('DBIC::Character_History')->search(
         { character_id => $c->req->param('character_id'), },
         {
@@ -369,6 +366,49 @@ sub history_tab : Local {
             }
         ]
     );
+}
+
+sub change_name : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->stash->{character};
+
+    my $original_name = $character->character_name;
+
+    $character->character_name( $c->req->param('new_name') );
+    $character->update;
+
+    $c->model('DBIC::Character_History')->create(
+        {
+            character_id => $character->id,
+            day_id       => $c->stash->{today}->id,
+            event        => $original_name . " is now known as " . $c->req->param('new_name'),
+        },
+    );
+
+    $c->res->body( to_json {} );
+}
+
+sub bury : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->stash->{character};
+
+    $c->model('DBIC::Grave')->create(
+        {
+            character_name => $character->character_name,
+            land_id        => $c->stash->{party_location}->id,
+            day_created    => $c->stash->{today}->id,
+            epitaph        => $c->req->param('epitaph'),
+        }
+    );
+
+    $c->stash->{messages} = "You say your last goodbyes to " . $character->character_name . ". RIP";
+
+    $character->delete;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
+
 }
 
 1;

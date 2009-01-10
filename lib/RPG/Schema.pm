@@ -5,6 +5,8 @@ use warnings;
 
 use base qw/DBIx::Class::Schema/;
 
+use Carp;
+
 __PACKAGE__->load_classes(qw/
     Items Item_Category Race Item_Type Player Party Terrain Land Dimension Class Character Shop Items_Made
     Creature CreatureType CreatureGroup Trait Town GameVars Equip_Places Item_Attribute Item_Attribute_Name
@@ -19,7 +21,14 @@ sub connect {
 	my $package = shift;
 	$config = shift;
 	
-	return $package->SUPER::connect(@_);		
+	my @connect_params = @_;
+	
+	unless (ref $config) {
+	    unshift @connect_params, $config;
+	    $config = undef;	    
+	}
+	
+	return $package->SUPER::connect(@connect_params);		
 }
 
 sub config {

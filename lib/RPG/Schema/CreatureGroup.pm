@@ -52,12 +52,13 @@ sub initiate_combat {
 
 sub creature_summary {
 	my $self = shift;
+	my $include_dead_creatures = shift || 0;
 	my @creatures = $self->creatures;
 		
 	my %summary;
 	
 	foreach my $creature (@creatures) {
-	    next if $creature->is_dead;
+	    next if ! $include_dead_creatures && $creature->is_dead;
 		$summary{$creature->type->creature_type}++;
 	}
 	

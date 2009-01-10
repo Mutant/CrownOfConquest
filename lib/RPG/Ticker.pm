@@ -237,6 +237,7 @@ sub move_monsters {
 
 # Clean up any dead monster groups. These sometimes get created due to bugs
 # In an ideal world (or at least one with transactions) this wouldn't be needed.
+# We don't delete them, since the news needs to display them
 sub clean_up {
     my ($package, $config, $schema, $logger) = @_;
     
@@ -244,7 +245,8 @@ sub clean_up {
         
     while (my $cg = $cg_rs->next) {
         if ($cg->number_alive <= 0) {
-            $cg->delete;            
+            $cg->land_id(undef);
+            $cg->update;            
         }
     }
 }

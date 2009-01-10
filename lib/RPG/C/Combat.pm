@@ -651,6 +651,7 @@ sub finish : Private {
     my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
     push @{ $c->stash->{combat_messages} }, @$messages;
 
+    # Don't delete creature group, since it's needed by news
     $c->stash->{creature_group}->land_id(undef);
     $c->stash->{creature_group}->update;
 

@@ -82,6 +82,11 @@ sub sell : Local {
     if ( $character->party_id != $c->stash->{party}->id ) {
         croak "Invalid character id: " . $c->req->param('character_id');
     }
+    
+    if ($character->is_dead) {
+        croak "Can't sell a dead character\n";
+    }   
+    
 
     $c->stash->{party}->gold( $c->stash->{party}->gold + $character->sell_value );
     $c->stash->{party}->update;

@@ -1,4 +1,4 @@
-	[% FOREACH summary IN creature_group.creature_summary %]
+	[% FOREACH summary IN creature_group.creature_summary(include_dead_creatures) %]
 		[% summary.value %] [% summary.key %][% IF summary.value > 1 %]s[% END %]
 		[% IF loop.size > 1 %]
 			[% UNLESS loop.size == loop.count + 1 %],

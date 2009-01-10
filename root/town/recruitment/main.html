@@ -120,7 +120,9 @@ The town of [% town.town_name %] has the following characters available for recr
 		<td>[% character.constitution %]</td>
 		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
 		<td>[% character.spell_points %]</td>		
-		<td><a href="javascript:confirmSale('[% character.character_name %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
+		<td>[% UNLESS character.is_dead %]
+				<a href="javascript:confirmSale('[% character.character_name %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
+			[% END %]
 		</td>
 	</tr>
 [% END %]

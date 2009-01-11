@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use MIME::Lite;
 use DateTime;
+use Carp;
 
 #use String::Random;
 
@@ -15,10 +16,11 @@ sub login : Local {
     my $message;
 
     if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
+        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0} );
 
         if ($user) {
             $user->last_login( DateTime->now() );
+            $user->warned_for_deletion(0);
             $user->update;
 
             if ( $user->verified ) {
@@ -63,55 +65,79 @@ sub register : Local {
     my $message;
 
     if ( $c->req->param('submit') ) {
-        unless ( $c->req->param('email')
-            && $c->req->param('player_name')
-            && $c->req->param('password1')
-            && $c->req->param('password1') eq $c->req->param('password2')
-            && $c->validate_captcha( $c->req->param('captcha') ) )
-        {
+        eval {
+            unless ( $c->req->param('email')
+                && $c->req->param('player_name')
+                && $c->req->param('password1')
+                && $c->req->param('password1') eq $c->req->param('password2')
+                && $c->validate_captcha( $c->req->param('captcha') ) )
+            {
 
-            $message = "Please enter your email address, name, password and the CAPTCHA code";
+                croak { message => "Please enter your email address, name, password and the CAPTCHA code" };
 
-        }
-        elsif ( length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
-            $message = "Password must be at least " . $c->config->{minimum_password_length} . " characters";
-        }
-        else {
-            my $existing_player = $c->model('DBIC::Player')->search( { email => $c->req->param('email'), } );
+            }
+
+            if ( length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
+                croak { message => "Password must be at least " . $c->config->{minimum_password_length} . " characters" };
+            }
+
+            my $existing_player = $c->model('DBIC::Player')->find(
+                { email => $c->req->param('email'), deleted => 0 },
+            );
 
             if ($existing_player) {
-                $message = "The email address " . $c->req->param('email') . " has already been registered.";
+                croak { message => "The email address " . $c->req->param('email') . " has already been registered." };
             }
-            else {
 
-                #my $verification_code = String::Random::random_regex('\w{8}');
-                my $verification_code = ( int rand 100000000 + int rand 100000000 );
+            #my $verification_code = String::Random::random_regex('\w{8}');
+            my $verification_code = ( int rand 100000000 + int rand 100000000 );
 
-                my $player = $c->model('DBIC::Player')->create(
+            my $player;
+
+            eval {
+                $player = $c->model('DBIC::Player')->create(
                     {
                         player_name       => $c->req->param('player_name'),
                         email             => $c->req->param('email'),
                         password          => $c->req->param('password1'),
                         verification_code => $verification_code,
+                        last_login        => DateTime->now(),
                     }
                 );
-
-                my $msg = MIME::Lite->new(
-                    From    => $c->config->{send_email_from},
-                    To      => $c->req->param('email'),
-                    Subject => 'Verification code',
-                    Data    => "Your verification code is: $verification_code\n",
-                );
-                $msg->send(
-                    'smtp',
-                    $c->config->{smtp_server},
-                    AuthUser => $c->config->{smtp_user},
-                    AuthPass => $c->config->{smtp_pass},
-                    Debug    => 0,
-                );
-
-                $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
+            };
+            if ($@) {
+                if ( $@ =~ /Duplicate entry '.+' for key 2/ ) {
+                    croak { message => "A player with the name '" . $c->req->param('player_name') . "' is already registered" };
+                }
+                else {
+                    croak $@;
+                }
             }
+
+            my $msg = MIME::Lite->new(
+                From    => $c->config->{send_email_from},
+                To      => $c->req->param('email'),
+                Subject => 'Verification code',
+                Data    => "Your verification code is: $verification_code\n",
+            );
+            $msg->send(
+                'smtp',
+                $c->config->{smtp_server},
+                AuthUser => $c->config->{smtp_user},
+                AuthPass => $c->config->{smtp_pass},
+                Debug    => 0,
+            );
+
+            $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
+        };
+    }
+    if ($@) {
+        my $error = $@;
+        if ( ref $error && $error->{message} ) {
+            $message = $error->{message};
+        }
+        else {
+            croak $error;
         }
     }
 

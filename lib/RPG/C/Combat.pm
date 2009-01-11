@@ -694,7 +694,15 @@ sub check_for_item_found : Private {
         my $max_prevalence = $avg_creature_level * $c->config->{prevalence_per_creature_level_to_find};
 
         # Get item_types within the prevalance roll
-        my @item_types = shuffle $c->model('DBIC::Item_Type')->search( { prevalence => { '<=', $max_prevalence }, } );
+        my @item_types = shuffle $c->model('DBIC::Item_Type')->search( 
+            { 
+                prevalence => { '<=', $max_prevalence },
+                'category.hidden' => 0,
+            },
+            {
+                join => 'category',  
+            },
+        );
 
         my $item_type = shift @item_types;
         

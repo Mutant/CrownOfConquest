@@ -8,6 +8,9 @@ use Data::Dumper;
 use RPG::Schema;
 use Carp qw(cluck);
 
+use DateTime;
+use DateTime::Format::HTTP;
+
 #
 # Sets the actions in this controller to be registered with no prefix
 # so they function identically to actions created in MyApp.pm
@@ -81,6 +84,9 @@ sub default : Private {
 
 sub end : Private {
     my ( $self, $c ) = @_;
+    
+    $c->response->headers->header( 'Expires' => DateTime::Format::HTTP->format_datetime(DateTime->now()) );     
+    $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
 
     my $dbh = $c->model('DBIC')->schema->storage->dbh;
 

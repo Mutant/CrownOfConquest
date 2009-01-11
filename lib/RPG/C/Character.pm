@@ -116,7 +116,7 @@ sub item_list : Local {
 }
 
 sub equip_item : Local {
-    my ( $self, $c ) = @_;
+    my ( $self, $c ) = @_;    
 
     my $item =
         $c->model('DBIC::Items')
@@ -170,6 +170,8 @@ sub equip_item : Local {
 
 sub give_item : Local {
     my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
 
@@ -254,78 +256,88 @@ sub spells_tab : Local {
         { order_by => 'spell_name', },
     );
 
+    my %memorised_spells_by_id = map { $_->spell->id => $_ } @memorised_spells;
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'character/spells_tab.html',
                 params   => {
-                    character        => $character,
-                    memorised_spells => \@memorised_spells,
-                    available_spells => \@available_spells,
+                    character              => $character,
+                    memorised_spells       => \@memorised_spells,
+                    available_spells       => \@available_spells,
+                    memorised_spells_by_id => \%memorised_spells_by_id,
                 }
             }
         ]
     );
 }
 
-sub memorise_spell : Local {
+sub update_spells : Local {
     my ( $self, $c ) = @_;
+
+    $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
 
-    my $spell = $c->model('DBIC::Spell')->find( { spell_id => $c->req->param('spell_id'), }, );
+    my $params = $c->req->params;
 
-    return unless $spell;
-
-    if ( $spell->points * $c->req->param('number') > $character->spell_points - $character->spell_points_used( $spell->id ) ) {
-        $c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise " . $spell->spell_name;
-    }
-    else {
-        my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find_or_create(
-            {
-                character_id => $character->id,
-                spell_id     => $spell->id,
-            },
-        );
-
-        $memorised_spell->memorise_tomorrow(1);
-        $memorised_spell->memorise_count_tomorrow( $c->req->param('number') );
-        $memorised_spell->update;
-    }
-
-    $c->stash->{selected_tab} = 'spells';
-    $c->forward('/character/view');
-}
-
-sub unmemorise_spell : Local {
-    my ( $self, $c ) = @_;
-
-    my $character = $c->stash->{character};
-
-    my $spell = $c->model('DBIC::Spell')->find( { spell_id => $c->req->param('spell_id'), }, );
-
-    return unless $spell;
-
-    my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find(
+    my @available_spells = $c->model('DBIC::Spell')->search(
         {
-            character_id => $character->id,
-            spell_id     => $spell->id,
+            class_id => $character->class_id,
+            hidden   => 0,
         },
     );
 
-    $memorised_spell->memorise_count_tomorrow( $memorised_spell->memorise_count_tomorrow - 1 )
-        if $memorised_spell->memorise_count_tomorrow != 0;
-    $memorised_spell->memorise_tomorrow(0)
-        if $memorised_spell->memorise_count_tomorrow == 0;
-    $memorised_spell->update;
+    my %memorise_tomorrow;
+    foreach my $param ( keys %$params ) {
+        if ( $param =~ /^mem_tomorrow_(\d+)$/ ) {
+            $memorise_tomorrow{$1} = $params->{$param};
+        }
+    }
+    
+    # Check they've got enough spell points
+    my $points_to_memorise = 0;
+    foreach my $spell_id ( keys %memorise_tomorrow ) {
+        my ($spell) = grep { $_->id == $spell_id } @available_spells;
+        croak "Couldn't find spell with id: $spell_id" unless $spell;
+        $points_to_memorise += $spell->points * $memorise_tomorrow{$spell_id};
+    }
+    
+    if ( $points_to_memorise > $character->spell_points ) {
+        $c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise those spells";
+    }
+    else {
+        foreach my $spell_id ( keys %memorise_tomorrow ) {
+            my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find_or_create(
+                {
+                    character_id => $character->id,
+                    spell_id     => $spell_id,
+                },
+            );
+
+            my $mem_count = $memorise_tomorrow{$spell_id};
+            if ( $mem_count > 0 ) {
+                $memorised_spell->memorise_tomorrow(1);
+                $memorised_spell->memorise_count_tomorrow($mem_count);
+                $memorised_spell->update;
+            }
+            else {
+                $memorised_spell->delete;
+            }
+        }
+    }
 
     $c->stash->{selected_tab} = 'spells';
     $c->forward('/character/view');
+
 }
 
 sub add_stat_point : Local {
     my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
 
@@ -370,6 +382,8 @@ sub history_tab : Local {
 
 sub change_name : Local {
     my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
 
@@ -391,6 +405,8 @@ sub change_name : Local {
 
 sub bury : Local {
     my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
 
@@ -409,6 +425,14 @@ sub bury : Local {
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
 
+}
+
+sub check_action_allowed : Local {
+    my ( $self, $c ) = @_;
+    
+    unless ($c->stash->{character}->party_id) {
+        croak "Can only make changes to a character in your party\n";
+    }
 }
 
 1;

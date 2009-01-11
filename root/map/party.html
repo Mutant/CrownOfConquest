@@ -9,7 +9,7 @@
 <table class="main" cellpadding="5" cellspacing="5">
 	<tr>
 [% FOREACH town IN known_towns %]
-	<td>[% town.town_name %] ([% town.location.x %], [% town.location.y %])</td>
+	<td>[% town.town_name %] ([% town.prosperity %]) ([% town.location.x %], [% town.location.y %])</td>
 	[% IF loop.count % 5 == 0 %]
 		</tr><tr>
 	[% END %]

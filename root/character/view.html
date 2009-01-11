@@ -145,6 +145,33 @@ function changeName(arguments) {
     });	
 }
 
+function calculateSpellPoints() {
+	inputs = dojo.byId('spells-form').getElementsByTagName('input');
+	
+	console.log("inputs: " + inputs.length);
+	
+	
+	var points_used = 0;
+	
+	spell_id_regex = /^mem_tomorrow_(\d+)$/;
+	
+	for	(i=0; i<inputs.length; i++) {
+		input = inputs[i];
+						
+		if (matches = spell_id_regex.exec(input.name)) {
+			spell_id = matches[1];
+			number_of_casts = input.value;
+			
+			spell_points = dojo.byId('spell_points_' + spell_id).innerHTML;
+			
+			points_used+= number_of_casts * spell_points;
+		}
+	}
+	
+	dojo.byId('spell-points-used').innerHTML = points_used;
+}
+
+
 </script>
 
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
@@ -164,7 +191,8 @@ function changeName(arguments) {
 </div>
 
 
-<h1><span id="name-header">[% character.character_name %]</span> <a href="javascript:changeNameDiag('[% character.character_name %]', '[% character.id %]')" class="main">Change</a></h1>
+<h1><span id="name-header">[% character.character_name %]</span> 
+	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
 
 [% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
 

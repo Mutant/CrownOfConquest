@@ -317,7 +317,6 @@ sub add_to_characters_inventory {
             eval {
                 if ( $self->equip_item( $equip_place, 0 ) )
                 {
-
                     # Equip was successful, so don't try to equip again
                     last;
                 }

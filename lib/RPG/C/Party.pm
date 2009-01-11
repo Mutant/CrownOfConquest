@@ -10,7 +10,7 @@ use DateTime;
 sub main : Local {
     my ( $self, $c ) = @_;
 
-    my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
+    my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status' ] );
 
     $c->forward(
         'RPG::V::TT',
@@ -154,13 +154,16 @@ sub status : Local {
     my ( $self, $c ) = @_;
 
     my $party = $c->stash->{party};
-
+    
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template      => 'party/status.html',
-                params        => { party => $party, },
+                params        => { 
+                    party => $party,
+                    day_number => $c->stash->{today}->day_number, 
+                },
                 return_output => 1,
             }
         ]

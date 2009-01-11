@@ -129,7 +129,7 @@ You won't be able to regain these stat points if you continue!<br>
 </div>
 
 <form name="form" method="post" id="form" action="[% base %]/party/create/create_character" onsubmit="return checkStats()">
-
+<input type="hidden" name="character_id">
 <style>
 #stats-set input { width: 65px }
 
@@ -171,31 +171,31 @@ Stats can be no higher than [% stat_max %] (for a new character).</p>
 	
 <label for="stength">Strength:</label>
 <input type="text" size="3" name="base_str"  class="stat" disabled="disabled">
-<input type="text" size="3" name="mod_str"   class="stat" onkeyup="calculateTotal('str')" onChange="calcPoints()">
+<input type="text" size="3" name="mod_str"   autocomplete="off" class="stat" onkeyup="calculateTotal('str')" onChange="calcPoints()">
 <input type="text" size="3" name="total_disp_str" class="stat" disabled="disabled"><br>
 <input type="hidden" name="total_str" id="total_str">
 
 <label for="stength">Agility:</label>
 <input type="text" size="3" name="base_agl"  class="stat" disabled="disabled">
-<input type="text" size="3" name="mod_agl"   class="stat" onkeyup="calculateTotal('agl')" onChange="calcPoints()">
+<input type="text" size="3" name="mod_agl"   autocomplete="off" class="stat" onkeyup="calculateTotal('agl')" onChange="calcPoints()">
 <input type="text" size="3" name="total_disp_agl" class="stat" disabled="disabled"><br>
 <input type="hidden" name="total_agl" id="total_agl">
 
 <label for="stength">Intelligence:</label>
 <input type="text" size="3" name="base_int"  class="stat" disabled="disabled">
-<input type="text" size="3" name="mod_int"   class="stat" onkeyup="calculateTotal('int')" onChange="calcPoints()">
+<input type="text" size="3" name="mod_int"   autocomplete="off" class="stat" onkeyup="calculateTotal('int')" onChange="calcPoints()">
 <input type="text" size="3" name="total_disp_int" class="stat" disabled="disabled"><br>
 <input type="hidden" name="total_int" id="total_int">
 
 <label for="stength">Divinity:</label>
 <input type="text" size="3" name="base_div"  class="stat" disabled="disabled">
-<input type="text" size="3" name="mod_div"   class="stat" onkeyup="calculateTotal('div')" onChange="calcPoints()">
+<input type="text" size="3" name="mod_div"   autocomplete="off" class="stat" onkeyup="calculateTotal('div')" onChange="calcPoints()">
 <input type="text" size="3" name="total_disp_div" class="stat" disabled="disabled"><br>
 <input type="hidden" name="total_div" id="total_div">
 
 <label for="stength">Constitution:</label>
 <input type="text" size="3" name="base_con"  class="stat" disabled="disabled">
-<input type="text" size="3" name="mod_con"   class="stat" onkeyup="calculateTotal('con')" onChange="calcPoints()">
+<input type="text" size="3" name="mod_con"   autocomplete="off" class="stat" onkeyup="calculateTotal('con')" onChange="calcPoints()">
 <input type="text" size="3" name="total_disp_con" class="stat" disabled="disabled"><br>
 <input type="hidden" name="total_con" id="total_con">
 <br>
@@ -212,6 +212,6 @@ Stats can be no higher than [% stat_max %] (for a new character).</p>
 <label for="remaining">Faith Points:</label>
 <input type="text" size="3" name="faith_points" disabled="disabled" class="stat">
 <br>
-<input type="submit" value="Create Character">
+<input type="submit" value="[% IF character_id %]Update[% ELSE %]Create[% END %] Character">
 </form>
 [% INCLUDE bottom.html %]

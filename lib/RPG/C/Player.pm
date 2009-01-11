@@ -16,7 +16,7 @@ sub login : Local {
     my $message;
 
     if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0} );
+        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0 } );
 
         if ($user) {
             $user->last_login( DateTime->now() );
@@ -57,7 +57,7 @@ sub logout : Local {
 sub register : Local {
     my ( $self, $c ) = @_;
 
-    if ( $c->model('DBIC::Player')->count >= $c->config->{max_number_of_players} ) {
+    if ( $c->model('DBIC::Player')->count( { deleted => 0 } ) >= $c->config->{max_number_of_players} ) {
         $c->forward( 'RPG::V::TT', [ { template => 'player/full.html', } ] );
         return;
     }
@@ -81,9 +81,7 @@ sub register : Local {
                 croak { message => "Password must be at least " . $c->config->{minimum_password_length} . " characters" };
             }
 
-            my $existing_player = $c->model('DBIC::Player')->find(
-                { email => $c->req->param('email'), deleted => 0 },
-            );
+            my $existing_player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0 }, );
 
             if ($existing_player) {
                 croak { message => "The email address " . $c->req->param('email') . " has already been registered." };

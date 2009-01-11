@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use JSON;
 use DateTime;
 use List::Util qw(shuffle);
+use Carp;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
@@ -78,11 +79,20 @@ sub save_party : Local {
         $c->stash->{party}->created( DateTime->now() );
 
         foreach my $character ( $c->stash->{party}->characters ) {
+            $character->roll_all;
+
+            $character->set_default_spells;
+            
+            $character->set_starting_equipment;
+            
             $c->model('DBIC::Character_History')->create(
                 {
                     character_id => $character->id,
                     day_id       => $c->stash->{today}->id,
-                    event        => $character->character_name . " joined " . $c->stash->{party}->name . " as a fresh-faced level 1 " 
+                    event        => $character->character_name
+                        . " joined "
+                        . $c->stash->{party}->name
+                        . " as a fresh-faced level 1 "
                         . $character->class->class_name,
                 },
             );
@@ -115,22 +125,54 @@ sub new_character : Local {
         );
     }
     else {
-        $c->forward(
-            'RPG::V::TT',
-            [
-                {
-                    template => 'party/new_character.html',
-                    params   => {
-                        races      => [ $c->model('DBIC::Race')->all ],
-                        classes    => [ $c->model('DBIC::Class')->all ],
-                        stats_pool => $c->config->{stats_pool},
-                        stat_max   => $c->config->{stat_max},
-                    },
-                    fill_in_form => 1,
-                }
-            ]
-        );
+        $c->forward('new_character_form');
     }
+}
+
+sub edit_character : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class' ] } );
+
+    croak "Invalid character" unless $character && $character->party_id == $c->stash->{party}->id;
+
+    my %params = (
+        name         => $character->character_name,
+        race         => $character->race_id,
+        class        => $character->class->class_name,
+        mod_str      => $character->strength - $character->race->base_str,
+        mod_agl      => $character->agility - $character->race->base_agl,
+        mod_int      => $character->intelligence - $character->race->base_int,
+        mod_div      => $character->divinity - $character->race->base_div,
+        mod_con      => $character->constitution - $character->race->base_con,
+        character_id => $character->id,
+    );
+
+    $c->forward( 'new_character_form', [ \%params ] );
+
+}
+
+sub new_character_form : Private {
+    my ( $self, $c, $params ) = @_;
+    
+    $params ||= {};
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/new_character.html',
+                params   => {
+                    races      => [ $c->model('DBIC::Race')->all ],
+                    classes    => [ $c->model('DBIC::Class')->all ],
+                    stats_pool => $c->config->{stats_pool},
+                    stat_max   => $c->config->{stat_max},
+                    %$params,
+                },
+                fill_in_form => 1,
+            }
+        ]
+    );
 }
 
 sub create_character : Local {
@@ -168,28 +210,51 @@ sub create_character : Local {
 
     my $class = $c->model('DBIC::Class')->find( { class_name => $c->req->param('class') } );
 
-    my $character = $c->model('DBIC::Character')->create(
-        {
-            character_name => $c->req->param('name'),
-            class_id       => $class->id,
-            race_id        => $c->req->param('race'),
-            strength       => $race->base_str + $c->req->param('mod_str') || 0,
-            intelligence   => $race->base_int + $c->req->param('mod_int') || 0,
-            agility        => $race->base_agl + $c->req->param('mod_agl') || 0,
-            divinity       => $race->base_div + $c->req->param('mod_div') || 0,
-            constitution   => $race->base_con + $c->req->param('mod_con') || 0,
-            party_id       => $c->stash->{party}->id,
-            level          => 1,
-            party_order    => $char_count + 1,
-        }
+    my %char_params = (
+        character_name => $c->req->param('name'),
+        class_id       => $class->id,
+        race_id        => $c->req->param('race'),
+        strength       => $race->base_str + $c->req->param('mod_str') || 0,
+        intelligence   => $race->base_int + $c->req->param('mod_int') || 0,
+        agility        => $race->base_agl + $c->req->param('mod_agl') || 0,
+        divinity       => $race->base_div + $c->req->param('mod_div') || 0,
+        constitution   => $race->base_con + $c->req->param('mod_con') || 0,
+        party_id       => $c->stash->{party}->id,
+        level          => 1,        
     );
 
-    $character->roll_all;
-
-    $character->set_default_spells;
+    if ( $c->req->param('character_id') ) {
+        my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), } );
+        
+        while (my ($field, $value) = each %char_params) {
+            $character->set_column($field, $value);
+        }
+        $character->update;
+    }
+    else {
+        my $character = $c->model('DBIC::Character')->create( 
+            { 
+                %char_params, 
+                party_order    => $char_count + 1, 
+            },
+        );
+    }
 
     $c->res->redirect( $c->config->{url_root} . '/party/create' );
 }
+
+sub delete_character : Local {
+    my ( $self, $c ) = @_;
+
+    my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class' ] } );
+
+    croak "Invalid character" unless $character && $character->party_id == $c->stash->{party}->id;
+    
+    $character->delete;
+    
+    $c->res->redirect( $c->config->{url_root} . '/party/create' );
+}
+    
 
 =head2 calculate_values
 

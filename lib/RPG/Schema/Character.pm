@@ -189,9 +189,9 @@ sub set_default_spells {
 
             my $memorised_spell = $self->result_source->schema->resultset('Memorised_Spells')->find_or_create(
                 {
-                    character_id    => $self->id,
-                    spell_id        => $spell->id,
-                    memorised_today => 1,
+                    character_id      => $self->id,
+                    spell_id          => $spell->id,
+                    memorised_today   => 1,
                     memorise_tomorrow => 1,
                 },
             );
@@ -497,7 +497,7 @@ sub change_hit_points {
 # Returns true if character is in the front rank
 sub in_front_rank {
     my $self = shift;
-    
+
     # If character isn't in a party, say they're in the front rank
     return 1 unless $self->party_id;
 
@@ -590,8 +590,33 @@ sub value {
 
 sub sell_value {
     my $self = shift;
-    
+
     return int $self->value * 0.8;
+}
+
+my %starting_equipment = (
+    'Warrior' => [ 'Short Sword', 'Wooden Shield' ],
+    'Archer'  => [ 'Sling',       'Sling Stones' ],
+    'Priest'  => [ 'Short Sword', 'Wooden Shield' ],
+    'Mage'    => [ 'Dagger',      'Wooden Shield' ],
+);
+
+sub set_starting_equipment {
+    my $self = shift;
+
+    my $schema = $self->result_source->schema;
+
+    foreach my $starting_item ( @{ $starting_equipment{ $self->class->class_name } } ) {
+        my $item_type = $schema->resultset('Item_Type')->find( { item_type => $starting_item } );
+
+        my $item = $schema->resultset('Items')->create( { item_type_id => $item_type->id, } );
+
+        $item->add_to_characters_inventory($self);
+
+        if ( $item->variable('Quantity') ) {
+            $item->variable( 'Quantity', 20 );
+        }
+    }
 }
 
 1;

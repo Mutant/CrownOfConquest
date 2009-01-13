@@ -6,6 +6,13 @@ use warnings;
 use base qw(Test::Class);
 
 use Carp;
+use Data::Dumper;
+
+sub aa_init_params : Test(startup) {
+    my $self = shift;
+    
+    $self->{config} = {};
+}
 
 sub setup_context : Test(setup) {
 	my $self = shift;
@@ -39,6 +46,7 @@ sub setup_context : Test(setup) {
 		
 		return $ret;
 	} );
+	$req->mock('params', sub {$self->{params}});
 	$self->{c}->set_always('req', $req);
 
 	$self->{stash} ||= {};
@@ -52,7 +60,9 @@ sub setup_context : Test(setup) {
 	
 	$self->{mock_response} = Test::MockObject->new;
 	$self->{mock_response}->mock('body', sub {});
+	$self->{mock_response}->set_true('redirect');
 	$self->{c}->set_always('res',$self->{mock_response});
+	
 		
 }
 

@@ -17,6 +17,9 @@ sub build_character {
             party_id => $params{party_id},
             race_id  => $race->id,
             class_id => $class->id,
+            hit_points => $params{hit_points} || 10,
+            max_hit_points => $params{max_hit_points} || 10,
+            party_order => $params{party_order} || 1,
         }
     );
         

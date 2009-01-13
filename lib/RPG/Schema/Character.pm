@@ -476,6 +476,32 @@ sub spell_points_used {
     return $result->get_column('total_points') || 0;
 }
 
+sub rememorise_spells {
+    my $self = shift;
+
+    my @spells_to_memorise = $self->memorised_spells;
+
+    my $spell_count = 0;
+
+    foreach my $spell (@spells_to_memorise) {
+        if ( $spell->memorise_tomorrow ) {
+            $spell->memorised_today(1);
+            $spell->memorise_count( $spell->memorise_count_tomorrow );
+            $spell->number_cast_today(0);
+            $spell->update;
+
+            $spell_count += $spell->memorise_count_tomorrow;
+        }
+        else {
+
+            # Spell no longer memorised, so delete the record
+            $spell->delete;
+        }
+    }
+
+    return $spell_count;
+}
+
 sub change_hit_points {
     my $self   = shift;
     my $amount = shift;

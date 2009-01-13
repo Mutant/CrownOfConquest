@@ -5,6 +5,7 @@ use warnings;
 
 use base qw/DBIx::Class::Schema/;
 
+use Data::Dumper;
 use Carp;
 
 __PACKAGE__->load_classes(qw/
@@ -22,12 +23,12 @@ sub connect {
 	$config = shift;
 	
 	my @connect_params = @_;
-	
+		
 	unless (ref $config) {
 	    unshift @connect_params, $config;
-	    $config = undef;	    
+	    $config = undef;
 	}
-	
+		
 	return $package->SUPER::connect(@connect_params);		
 }
 

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::C::Shop;
+package Test::RPG::NewDay::Shop;
 
 use base qw(Test::RPG);
 

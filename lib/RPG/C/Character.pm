@@ -116,7 +116,7 @@ sub item_list : Local {
 }
 
 sub equip_item : Local {
-    my ( $self, $c ) = @_;    
+    my ( $self, $c ) = @_;
 
     my $item =
         $c->model('DBIC::Items')
@@ -170,7 +170,7 @@ sub equip_item : Local {
 
 sub give_item : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
@@ -296,7 +296,7 @@ sub update_spells : Local {
             $memorise_tomorrow{$1} = $params->{$param};
         }
     }
-    
+
     # Check they've got enough spell points
     my $points_to_memorise = 0;
     foreach my $spell_id ( keys %memorise_tomorrow ) {
@@ -304,7 +304,7 @@ sub update_spells : Local {
         croak "Couldn't find spell with id: $spell_id" unless $spell;
         $points_to_memorise += $spell->points * $memorise_tomorrow{$spell_id};
     }
-    
+
     if ( $points_to_memorise > $character->spell_points ) {
         $c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise those spells";
     }
@@ -320,12 +320,13 @@ sub update_spells : Local {
             my $mem_count = $memorise_tomorrow{$spell_id};
             if ( $mem_count > 0 ) {
                 $memorised_spell->memorise_tomorrow(1);
-                $memorised_spell->memorise_count_tomorrow($mem_count);
-                $memorised_spell->update;
             }
             else {
-                $memorised_spell->delete;
+                $memorised_spell->memorise_tomorrow(0);
             }
+
+            $memorised_spell->memorise_count_tomorrow($mem_count);
+            $memorised_spell->update;
         }
     }
 
@@ -336,7 +337,7 @@ sub update_spells : Local {
 
 sub add_stat_point : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
@@ -382,7 +383,7 @@ sub history_tab : Local {
 
 sub change_name : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
@@ -405,7 +406,7 @@ sub change_name : Local {
 
 sub bury : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->forward('check_action_allowed');
 
     my $character = $c->stash->{character};
@@ -419,7 +420,7 @@ sub bury : Local {
         }
     );
 
-    $c->stash->{messages} = "You say your last goodbyes to " . $character->character_name . ". RIP";
+    $c->stash->{messages} = "You say your last goodbyes to " . $character->character_name . ". R.I.P.";
 
     $character->delete;
 
@@ -429,8 +430,8 @@ sub bury : Local {
 
 sub check_action_allowed : Local {
     my ( $self, $c ) = @_;
-    
-    unless ($c->stash->{character}->party_id) {
+
+    unless ( $c->stash->{character}->party_id ) {
         croak "Can only make changes to a character in your party\n";
     }
 }

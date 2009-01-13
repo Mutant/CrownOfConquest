@@ -26,7 +26,7 @@ sub run {
 		$config = {%$config, %$local_config};
 	}
 	
-	my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . '] ' . $_[1]."\n" } );
+	my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$]" . $_[1]."\n" } );
 	$logger->add( 
 		Log::Dispatch::File::Stamped->new( 
 			name => 'file1',

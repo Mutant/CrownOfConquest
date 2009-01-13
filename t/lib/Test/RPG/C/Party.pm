@@ -5,7 +5,7 @@ package Test::RPG::C::Party;
 
 use base qw(Test::RPG);
 
-#__PACKAGE__->runtests unless caller();
+__PACKAGE__->runtests unless caller();
 
 use Test::MockObject;
 use Test::More;

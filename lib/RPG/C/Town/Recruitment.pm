@@ -95,6 +95,16 @@ sub sell : Local {
     $character->town_id( $c->stash->{party_location}->town->id );
     $character->party_order(undef);
     $character->update;
+    
+    # Rejig party order
+    my $count = 0;
+    foreach my $existing_character ($c->stash->{party}->characters) {
+        next if $existing_character->id == $character->id;
+        
+        $count++;
+        $existing_character->party_order($count);
+        $existing_character->update;
+    }
 
     $c->model('DBIC::Character_History')->create(
         {

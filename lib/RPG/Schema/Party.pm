@@ -220,27 +220,10 @@ sub new_day {
         }
 
         # Memorise new spells for the day
-        my @spells_to_memorise = $character->memorised_spells;
-
-        my $spell_count = 0;
-
-        foreach my $spell (@spells_to_memorise) {
-            if ( $spell->memorise_tomorrow ) {
-                $spell->memorised_today(1);
-                $spell->memorise_count( $spell->memorise_count_tomorrow );
-                $spell->number_cast_today(0);
-                $spell->update;
-
-                $spell_count += $spell->memorise_count_tomorrow;
-            }
-            else {
-                # Spell no longer memorised, so delete the record
-                $spell->delete;
-            }
-        }
+        my $spell_count = $character->rememorise_spells();
 
         push @log, $character->name . " has $spell_count spells memorised"
-            if @spells_to_memorise;
+            if $spell_count > 0;
 
         $character->update;
     }
@@ -252,8 +235,7 @@ sub new_day {
     $self->add_to_day_logs(
         {
             day_id => $new_day->id,
-            log    => join "\n",
-            @log,
+            log    => join ("\n", @log),
         }
     );
 

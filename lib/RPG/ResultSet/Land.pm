@@ -8,6 +8,8 @@ use base 'DBIx::Class::ResultSet';
 use Carp;
 use Data::Dumper;
 
+use RPG::Map;
+
 sub get_x_y_range {
 	my ($self) = @_;
 

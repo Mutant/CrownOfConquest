@@ -5,7 +5,7 @@ use warnings;
 
 use Carp;
 
-# XXX: could be moved into Land schema class?
+use Math::Round qw(round);
 
 sub surrounds {
     my $self = shift;

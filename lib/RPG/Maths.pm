@@ -37,9 +37,11 @@ sub weighted_random_number {
     #warn Dumper \%chances;
     
     my $roll = Games::Dice::Advanced->roll("1d" . $cumulative_chance);
+    #warn $roll;
     
     foreach my $chance_to_check (sort {$a <=> $b} keys %chances) {
-        if ($roll < $chance_to_check) {
+        #warn $chance_to_check;
+        if ($roll <= $chance_to_check) {
             return $chances{$chance_to_check};
         }
     }

@@ -21,6 +21,4 @@ BEGIN {
 
 use RPG::NewDay;
 
-$ENV{DBIC_TRACE} = 1;
-
 RPG::NewDay->run();

@@ -83,6 +83,12 @@ __PACKAGE__->might_have(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
+__PACKAGE__->might_have(
+    'orb',
+    'RPG::Schema::Creature_Orb',
+    { 'foreign.land_id' => 'self.land_id' }
+);
+
 sub next_to {
     my $self = shift;
     my $compare_to = shift || croak 'sector to compare to not supplied';

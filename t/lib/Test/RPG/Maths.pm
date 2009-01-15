@@ -23,6 +23,12 @@ sub startup : Test(startup) {
 	);
 }
 
+sub shutdown : Test(shutdown) {
+	my $self = shift;
+	
+	delete $INC{'Games/Dice/Advanced.pm'};	
+}
+
 sub test_weighted_random_number_even_number_list : Tests(no_plan) {
     my $self = shift;
     

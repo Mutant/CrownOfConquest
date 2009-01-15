@@ -21,6 +21,4 @@ BEGIN {
 
 use RPG::Ticker;
 
-$ENV{DBIC_TRACE} = 0;
-
 RPG::Ticker->run();

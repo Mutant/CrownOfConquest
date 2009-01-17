@@ -31,13 +31,15 @@ sub setup : Test(setup) {
     my $self = shift;
 
     $self->{config} = {
-        land_per_orb                   => 4,
-        min_orb_distance_from_town     => 2,
-        min_orb_level_cg               => 2,
-        max_orb_level_cg               => 3,
-        creature_groups_to_parties     => 5,
-        max_creature_groups_per_sector => 1,
-        min_creature_groups_per_sector => 0,
+        land_per_orb                     => 4,
+        orb_distance_from_town_per_level => 2,
+        min_orb_level_cg                 => 2,
+        max_orb_level_cg                 => 3,
+        creature_groups_to_parties       => 5,
+        max_creature_groups_per_sector   => 1,
+        min_creature_groups_per_sector   => 0,
+        max_hops                         => 2,
+        max_orb_level                    => 1,
     };
 
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
@@ -151,7 +153,7 @@ sub test_spawn_monsters : Tests(4) {
     my @land = $self->_create_land();
 
     # Orb in top left
-    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, } );
+    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, level => 1 } );
 
     # Create a party to force some monsters to be generated
     $self->{schema}->resultset('Party')->create( {} );
@@ -189,10 +191,10 @@ sub test_spawn_monsters_multiple_orbs : Tests(13) {
     my @land = $self->_create_land();
 
     # Orb in top left
-    my $orb1 = $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, } );
+    my $orb1 = $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, level => 1 } );
 
     # Orb in top right
-    my $orb2 = $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[2]->id, } );
+    my $orb2 = $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[2]->id, level => 1 } );
 
     # Create a party to force some monsters to be generated
     $self->{schema}->resultset('Party')->create( {} );
@@ -207,18 +209,22 @@ sub test_spawn_monsters_multiple_orbs : Tests(13) {
     # Make sure all 6 groups are in different squares, and all 1 square away from an orb, or on the orb itself
     my %land_ids_used;
     foreach my $cg (@cgs) {
-        isnt($land_ids_used{$cg->location->id}, 1, "Land id not already used");
-        
-        $land_ids_used{$cg->location->id} = 1;
-        
-        if ($orb1->land_id == $cg->land_id || $orb2->land_id == $cg->land_id) {
+        isnt( $land_ids_used{ $cg->location->id }, 1, "Land id not already used" );
+
+        $land_ids_used{ $cg->location->id } = 1;
+
+        if ( $orb1->land_id == $cg->land_id || $orb2->land_id == $cg->land_id ) {
             pass("CG spawned on the orb");
             next;
         }
-        
+
         my $adjacent_to_orb;
-        
-        for my $orb ($orb1, $orb2) {        
+
+        #warn "checking cg: " . $cg->location->x . ", " . $cg->location->y;
+
+        for my $orb ( $orb1, $orb2 ) {
+
+            #warn "orb: " . $orb->land->x . ", " . $orb->land->y;
             $adjacent_to_orb = RPG::Map->is_adjacent_to(
                 {
                     x => $cg->location->x,
@@ -231,10 +237,10 @@ sub test_spawn_monsters_multiple_orbs : Tests(13) {
             );
             last if $adjacent_to_orb;
         }
-        
-        is($adjacent_to_orb, 1, "Group spawned adjacent to orb");
-        
-    }   
+
+        is( $adjacent_to_orb, 1, "Group spawned adjacent to orb" );
+
+    }
 
 }
 
@@ -415,7 +421,7 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 sub test_move_monsters : Tests(2) {
     my $self = shift;
 
-    my @land = $self->_create_land(4,4);
+    my @land = $self->_create_land( 4, 4 );
 
     my $cg1 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[0]->id, }, );
     my $cg2 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[5]->id, }, );
@@ -435,19 +441,19 @@ sub test_move_monsters : Tests(2) {
     # Make land where second cg is high enough to move
     $land[5]->creature_threat(20);
     $land[5]->update;
-    
+
     # Make land where second cg can move
     $land[15]->creature_threat(20);
     $land[15]->update;
-    
-    $self->{config}{creature_move_chance} = 100; # Always move cgs
-        
-    RPG::Ticker->move_monsters($self->{config}, $self->{schema}, $self->{logger});
-    
+
+    $self->{config}{creature_move_chance} = 100;    # Always move cgs
+
+    RPG::Ticker->move_monsters( $self->{config}, $self->{schema}, $self->{logger} );
+
     $cg1->discard_changes;
     $cg2->discard_changes;
-    is($cg1->land_id, $land[5]->id, "First cg moved to where second was");
-    is($cg2->land_id, $land[15]->id, "Second cg moved to available square");
+    is( $cg1->land_id, $land[5]->id,  "First cg moved to where second was" );
+    is( $cg2->land_id, $land[15]->id, "Second cg moved to available square" );
 
 }
 

@@ -95,7 +95,7 @@ sub spawn_orbs {
     for my $orb_number ( 1 .. $orbs_to_create ) {
         $logger->debug("Creating orb # $orb_number");
         
-        my $level = RPG::Maths->weighted_random_number( 1 .. 3 );
+        my $level = RPG::Maths->weighted_random_number( 1 .. $config->{max_orb_level} );
 
         my %coords;
 
@@ -197,9 +197,15 @@ sub spawn_monsters {
             unless ($land) {
 
                 # Load in some sectors to check
-                $orb_surrounds{ $creature_orb->id }{size}++;
+                if ($orb_surrounds{ $creature_orb->id }{size}) {
+                    $orb_surrounds{ $creature_orb->id }{size}+=2;    
+                } 
+                else {
+                    $orb_surrounds{ $creature_orb->id }{size}=1;    
+                }
+                
                 my $size_to_get = $orb_surrounds{ $creature_orb->id }{size};
-
+                
                 my @range = RPG::Map->surrounds( $creature_orb->land->x, $creature_orb->land->y, $size_to_get, $size_to_get );
 
                 # Somewhat ineffecient, as we'll look thru a lot of sectors multiple times...
@@ -332,7 +338,8 @@ sub move_monsters {
         next if Games::Dice::Advanced->roll('1d100') > $config->{creature_move_chance};
 
         # Find sector to move to.. try sectors immediately adjacent first, and then go one more sector if we can't find anything
-        for my $size ( 3, 5, 7 ) {
+        my @sizes = map { $_+2 } 1 .. $config->{max_hops};
+        for my $size ( @sizes ) {
             $cg_moved = $package->_move_cg( $schema, $size, $cg );
 
             if ($cg_moved) {

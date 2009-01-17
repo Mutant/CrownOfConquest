@@ -11,11 +11,11 @@ use Carp;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
+    
+    return 1 unless $c->req->param('character_id');
 
     $c->stash->{character} =
         $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class', ], }, );
-
-    return 1 unless $c->stash->{character};
 
     # Make sure party is allowed to view this character
     if ( $c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id ) {

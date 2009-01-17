@@ -40,6 +40,11 @@ sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
 
+    if ($self->location->orb ) {
+        # Always attack if there's an orb in the sector
+        return 1;
+    }
+
 	return 0
 		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_diff};
 
@@ -80,6 +85,8 @@ sub level {
 	return $self->{level} if $self->{level};
 	
 	my @creatures = $self->creatures;
+	
+	return 0 unless @creatures;
 	
 	my $level_aggr = 0;
 	foreach my $creature (@creatures) {

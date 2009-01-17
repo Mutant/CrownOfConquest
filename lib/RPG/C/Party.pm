@@ -7,6 +7,8 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use DateTime;
 
+use List::Util qw(shuffle);
+
 sub main : Local {
     my ( $self, $c ) = @_;
 
@@ -44,12 +46,8 @@ sub sector_menu : Local {
     if ($creature_group) {
         $confirm_attack = $creature_group->level - $c->stash->{party}->level > $c->config->{cg_attack_max_level_diff};
     }
-    
-    my @graves = $c->model('DBIC::Grave')->search(
-        {
-            land_id => $c->stash->{party_location}->id,
-        },
-    );
+
+    my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
     my $parties_in_sector = $c->forward('parties_in_sector');
 
@@ -64,6 +62,7 @@ sub sector_menu : Local {
                     messages          => $c->stash->{messages},
                     day_logs          => $c->stash->{day_logs},
                     location          => $c->stash->{party_location},
+                    orb               => $c->stash->{party_location}->orb || undef,
                     parties_in_sector => $parties_in_sector,
                     graves            => \@graves,
                 },
@@ -154,15 +153,15 @@ sub status : Local {
     my ( $self, $c ) = @_;
 
     my $party = $c->stash->{party};
-    
+
     $c->forward(
         'RPG::V::TT',
         [
             {
-                template      => 'party/status.html',
-                params        => { 
-                    party => $party,
-                    day_number => $c->stash->{today}->day_number, 
+                template => 'party/status.html',
+                params   => {
+                    party      => $party,
+                    day_number => $c->stash->{today}->day_number,
                 },
                 return_output => 1,
             }
@@ -432,6 +431,55 @@ sub xp_gain : Private {
     }
 
     return \@messages;
+}
+
+sub destroy_orb : Local {
+    my ( $self, $c ) = @_;
+
+    my $orb = $c->stash->{party_location}->orb;
+
+    return unless $orb;
+
+    my $party = $c->stash->{party};
+
+    if ( $party->turns < 1 ) {
+        $c->stash->{error} = "You do not have enough turns to destroy the orb";
+        $c->forward( '/panel/refresh', ['messages'] );
+        return;
+    }
+
+    $c->stash->{party_location}->discard_changes;
+
+    my $level_needed = $orb->level * 3;
+
+    if ( $party->level < $level_needed ) {
+        $c->stash->{messages} = "It's not good - you're just not powerful enough to destroy this Orb of " . $orb->name;
+        $c->forward( '/panel/refresh', ['messages'] );
+        return;
+    }
+
+    my $random_char = ( shuffle $party->characters )[0];
+
+    $c->stash->{messages} = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/destroy_orb.html',
+                params   => {
+                    random_char => $random_char,
+                    orb         => $orb,
+                },
+                return_output => 1,
+            }
+        ],
+    );
+
+    $party->turns( $party->turns - 1 );
+    $party->update;
+
+    $orb->delete;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
 1;

@@ -15,6 +15,7 @@ use List::Util qw(shuffle);
 use Games::Dice::Advanced;
 use Log::Dispatch;
 use Log::Dispatch::File::Stamped;
+use File::Slurp qw(read_file);
 
 sub run {
     my $package = shift;
@@ -74,6 +75,10 @@ sub spawn_orbs {
             prefetch => [ 'terrain', 'orb' ],
         }
     );
+    
+
+    my @names = read_file( $ENV{RPG_HOME} . '/script/data/orb_names.txt' );
+    chomp @names;
 
     my $land_size = $land_rs->count;
 
@@ -89,6 +94,8 @@ sub spawn_orbs {
 
     for my $orb_number ( 1 .. $orbs_to_create ) {
         $logger->debug("Creating orb # $orb_number");
+        
+        my $level = RPG::Maths->weighted_random_number( 1 .. 3 );
 
         my %coords;
 
@@ -96,7 +103,7 @@ sub spawn_orbs {
         while ( my $land = $land_rs->next ) {
             next if $land->orb || $land->terrain->terrain_name eq 'town';
 
-            my $size = $config->{min_orb_distance_from_town} * 2 - 1;
+            my $size = $config->{orb_distance_from_town_per_level} * $level * 2 - 1;
             my @range = RPG::Map->surrounds( $land->x, $land->y, $size, $size );
 
             my @sectors = $schema->resultset('Land')->search(
@@ -112,11 +119,15 @@ sub spawn_orbs {
             next if $towns > 0;
 
             # No towns in range, and no existing orb here... we can use this sector
-
-            $schema->resultset('Creature_Orb')->create( { land_id => $land->id, } );
+            my $name = (shuffle @names)[0];
+            $schema->resultset('Creature_Orb')->create( { 
+                land_id => $land->id, 
+                level => $level,
+                name => $name 
+            } );
 
             # Create creature group at orb
-            $package->_create_group( $schema, $land, $config->{min_orb_level_cg}, $config->{max_orb_level_cg} );
+            $package->_create_group( $schema, $land, $level * 3, $level * 3 );
 
             $created = 1;
 
@@ -127,10 +138,7 @@ sub spawn_orbs {
 
             # Warn that we weren't able to create an orb
             $logger->warn("Unable to create orb # $orb_number, as no suitable land could be found");
-        }
-        else {
-
-            # Create
+            last;
         }
     }
 }
@@ -151,13 +159,15 @@ sub spawn_monsters {
     my $level_rs = $schema->resultset('CreatureType')->find(
         {},
         {
-            select => [              { max => 'level' }, { min => 'level' }, ],
-            as     => [ 'max_level', 'min_level' ],
+            select => [ { max => 'level' }, { min => 'level' }, ],
+            as => [ 'max_level', 'min_level' ],
         }
     );
 
     # Spawn random groups
-    for ( 1 .. $number_of_groups_to_spawn ) {
+    my $spawned = {};
+    
+    for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
 
         # Pick an orb to spawn near
 
@@ -171,13 +181,11 @@ sub spawn_monsters {
             # See if any of the sectors loaded around this orb are free
             my $count = 0;
             foreach my $possible_sector ( @{ $orb_surrounds{ $creature_orb->id }{sectors} } ) {
-                if ( $possible_sector && !$possible_sector->creature_group ) {
+                if ( ! $spawned->{$possible_sector->x}{$possible_sector->y} && !$possible_sector->creature_group ) {
                     $land = $possible_sector;
 
-                    # Delete the sector out of the orb_surrounds array, so nothing will try to use it again.
-                    #  Since we haven't re-read it from the DB, we won't find the creature group we've just added
-                    #  Removing it prevents this.
-                    undef $orb_surrounds{ $creature_orb->id }{sectors}->[$count];
+                    # Record where we've spawned creatures, so we don't have to re-read everything
+                    $spawned->{$possible_sector->x}{$possible_sector->y} = 1;
 
                     last;
                 }
@@ -205,12 +213,15 @@ sub spawn_monsters {
 
                 $orb_surrounds{ $creature_orb->id }{sectors} = \@sectors;
             }
-
         }
 
-        my $level = RPG::Maths->weighted_random_number( $level_rs->get_column('min_level') .. $level_rs->get_column('max_level') );
+        my $level = RPG::Maths->weighted_random_number( 1 .. $creature_orb->level * 3 );
 
         $package->_create_group( $schema, $land, $level, $level );
+        
+        if ($group_number % 100 == 0) {
+            $logger->info("Spawned $group_number groups...");
+        }
     }
 }
 
@@ -285,49 +296,67 @@ sub _create_group {
     return $cg;
 }
 
+my %cant_move_reason;
 sub move_monsters {
     my ( $package, $config, $schema, $logger ) = @_;
 
-    my $cg_rs =
-        $schema->resultset('CreatureGroup')
-        ->search( { 'location.land_id' => { '!=', undef }, }, { prefetch => [ { 'location' => 'orb' }, 'in_combat_with' ], }, );
+    my @cgs_to_move = $schema->resultset('CreatureGroup')->search(
+        { 'location.land_id' => { '!=', undef }, },
+        { prefetch => [ { 'location' => 'orb', }, { 'creatures' => 'type' }, 'in_combat_with' ], },
+    );
 
-    my %x_y_range = $schema->resultset('Land')->get_x_y_range();
+    my $cg_count = scalar @cgs_to_move;
 
-    my $moved = 0;
-    my $size = 3;
-    while ( my $cg = $cg_rs->next ) {
-        next if $cg->in_combat_with;
+    $logger->info("Moving monsters ($cg_count available)");
 
-        next unless Games::Dice::Advanced->roll('1d100') > $config->{creature_move_chance};
+    my $moved           = 0;
+    my $attempted_moves = 0;
+    my $retries = 0;
+
+    while (@cgs_to_move) {
+        $attempted_moves++;
+
+        if ( $attempted_moves > $cg_count * 2 ) {
+
+            # Stop trying to move cgs after a while...
+            last;
+        }
+
+        my $cg = shift @cgs_to_move;
+
+        my $cg_moved = 0;
+
+        # Don't move creatures in combat, or guarding an orb
+        next if $cg->in_combat_with || $cg->location->orb;
+
+        next if Games::Dice::Advanced->roll('1d100') > $config->{creature_move_chance};
 
         # Find sector to move to.. try sectors immediately adjacent first, and then go one more sector if we can't find anything
-        OUTER: for my $size (3, 5) {
-            my @range = RPG::Map->surrounds( $cg->location->x, $cg->location->y, $size, $size );
-            my @sectors = $schema->resultset('Land')->search(
-                {
-                    'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
-                    'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
-                },
-                { prefetch => [ 'creature_group', 'town' ], }
-            );
-    
-            foreach my $sector (@sectors) {    
-                # Can't move to a town or sector that already has a creature group
-                if ( ! $sector->town && ! $sector->creature_group && ($sector->creature_threat / 10) + 1 > $cg->level ) {
-                    $cg->land_id( $sector->id );
-                    $cg->update;
-    
-                    $moved++;
-    
-                    #warn "Moving group " . $cg->id . " to " . $sector->[0] . "," . $sector->[1] . "\n";
-                    last OUTER;
+        for my $size ( 3, 5, 7 ) {
+            $cg_moved = $package->_move_cg( $schema, $size, $cg );
+
+            if ($cg_moved) {
+                $moved++;
+                
+                if ($moved % 100 == 0) {
+                    $logger->info("Moved $moved so far...");
                 }
+                
+                last;
             }
+        }
+        unless ($cg_moved) {
+
+            # Couldn't move this CG. Add it back into the array and try again later
+            #  (After other cg's have moved and possibly cleared some space)
+            $retries++;
+            push @cgs_to_move, $cg;
         }
     }
 
-    $logger->info("Moved $moved groups");
+    $logger->info("Moved $moved groups ($retries retries)");
+    
+    $logger->debug(Dumper \%cant_move_reason);
 }
 
 # Clean up any dead monster groups. These sometimes get created due to bugs
@@ -336,7 +365,7 @@ sub move_monsters {
 sub clean_up {
     my ( $package, $config, $schema, $logger ) = @_;
 
-    my $cg_rs = $schema->resultset('CreatureGroup')->search();
+    my $cg_rs = $schema->resultset('CreatureGroup')->search( { land_id => { '!=', undef }, }, {} );
 
     while ( my $cg = $cg_rs->next ) {
         if ( $cg->number_alive <= 0 ) {
@@ -347,3 +376,43 @@ sub clean_up {
 }
 
 1;
+
+sub _move_cg {
+    my $package = shift;
+    my $schema  = shift;
+    my $size    = shift;
+    my $cg      = shift;
+
+    my $cg_moved = 0;
+
+    my @range = RPG::Map->surrounds( $cg->location->x, $cg->location->y, $size, $size );
+    my @sectors = $schema->resultset('Land')->search(
+        {
+            'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
+            'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
+        },
+        { prefetch => [ 'creature_group', 'town' ], }
+    );
+
+    foreach my $sector (@sectors) {
+        # Can't move to a town or sector that already has a creature group
+        if ( !$sector->town && !$sector->creature_group && ( ( $sector->creature_threat / 10 ) + 1 ) > $cg->level ) {
+            $cg->land_id( $sector->id );
+            $cg->update;
+
+            $sector->creature_threat( $sector->creature_threat + 1 );
+            $sector->update;
+
+            $cg_moved = 1;
+
+            last;
+        }
+        else {
+            $cant_move_reason{town}++, next if $sector->town;
+            $cant_move_reason{cg}++, next if $sector->creature_group;
+            $cant_move_reason{ctr}++;
+        }
+    }
+
+    return $cg_moved;
+}

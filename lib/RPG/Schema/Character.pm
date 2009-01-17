@@ -600,8 +600,7 @@ sub value {
 
     return $self->{value} if defined $self->{value};
 
-    #my $value = 150 + (($self->level) ** 3) + (($self->level-1) * 250);
-    my $value = 150 + $self->xp;
+    my $value = int 150 + $self->xp * 0.8;
     $value += int $self->hit_points;
     $value += int $self->spell_points;
 

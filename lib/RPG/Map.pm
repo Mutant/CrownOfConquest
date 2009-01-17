@@ -52,7 +52,7 @@ sub _coord_diff {
 
 # Returns a list of sectors next to a given sector, within a given range of co-ordinates
 sub get_adjacent_sectors {
-	my ($package, $current_x, $current_y, $min_x, $min_y, $max_x, $max_y) = @_;
+	my ($package, $current_x, $current_y) = @_;
 	
 	# Get adjacent squares
     my ($start_point, $end_point) = $package->surrounds(
@@ -67,11 +67,12 @@ sub get_adjacent_sectors {
 	
 	for my $x ($start_point->{x} .. $end_point->{x}) {
 		for my $y ($start_point->{y} .. $end_point->{y}) {
-			unless ($x == $current_x && $y == $current_y ||
-					($x < $min_x  || $x > $max_x  ||
-		 			 $y < $min_y  || $y > $max_y)) {
+			unless ($x == $current_x && $y == $current_y) {
 			
-				push @sectors, [$x, $y];
+				push @sectors, {
+				    x => $x,
+				    y => $y,
+				};
 			}
 		}
 	}
@@ -89,6 +90,22 @@ sub is_in_range {
 	}
 	
 	return 0;
+}
+
+# Check whether one coord is immediately adjacent to another
+sub is_adjacent_to {
+    my ($package, $first_coord, $second_coord) = @_;
+    
+    my @adjacent_sectors = $package->get_adjacent_sectors($first_coord->{x}, $first_coord->{y});
+    
+    foreach my $adjacent_sector (@adjacent_sectors) {
+        if ($second_coord->{x} == $adjacent_sector->{x} && $second_coord->{y} == $adjacent_sector->{y}) {
+            return 1;
+        }
+    }
+    
+    return 0;
+    
 }
 
 # Return distance between two points

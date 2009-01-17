@@ -1,11 +1,14 @@
 [% INCLUDE top.html %]
 
+[% INCLUDE stats/subnav.html %]
+
 <h2>Top Parties</h2>
 
 Top Parties By:
 
 [% sort_params = [
-	{ param => 'average_xp', label => 'Average XP' },
+	{ param => 'xp_per_turn'  label => 'XP per Turn' },
+	{ param => 'average_xp', label => 'XP per Char' },
 	{ param => 'total_xp',   label => 'Total XP' },
 	{ param => 'turns_used'  label => 'Turns Used' },
 ] %]
@@ -23,7 +26,8 @@ Top Parties By:
 		<th>Rank</th>
 		<th>Party</th>
 		<th>Player</th>
-		<th>Average XP</th>
+		<th>XP per Turn</th>
+		<th>XP per Char</th>
 		<th>Total XP</th>
 		<th># of Chars</th>
 		<th>Turns Used</th>
@@ -34,6 +38,7 @@ Top Parties By:
 		<td>[% loop.count %]</td>		
 		<td>[% party.name %]</td>		
 		<td>[% party.player.player_name %]</td>
+		<td align="right">[% party.get_column('xp_per_turn') %]</td>
 		<td align="right">[% party.get_column('average_xp') %]</td>
 		<td align="right">[% party.get_column('total_xp') %]</td>
 		<td align="right">[% party.characters.size %]</td>

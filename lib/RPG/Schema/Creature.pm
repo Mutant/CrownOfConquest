@@ -23,6 +23,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.creature_type_id' => 'self.creature_type_id' },
 );
 
+__PACKAGE__->belongs_to(
+    'creature_group',
+    'RPG::Schema::CreatureGroup',
+    { 'foreign.creature_group_id' => 'self.creature_group_id' },
+);
+
 __PACKAGE__->has_many(
     'creature_effects',
     'RPG::Schema::Creature_Effect',

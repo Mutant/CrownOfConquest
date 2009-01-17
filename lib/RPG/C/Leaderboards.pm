@@ -7,7 +7,11 @@ use base 'Catalyst::Controller';
 sub default : Path {
     my ( $self, $c ) = @_;
 
-    my $sort = $c->req->param('sort') || 'average_xp';
+    my @sort_options = qw/average_xp total_xp turns_used xp_per_turn/;
+    
+    my $sort = $c->req->param('sort') || 'xp_per_turn';
+    
+    return unless grep {$_ eq $sort} @sort_options;    
 
     my @parties = $c->model('DBIC::Party')->search(
         {
@@ -17,8 +21,8 @@ sub default : Path {
         {
             prefetch  => 'player',
             join      => 'characters',
-            '+select' => [ \'sum(characters.xp) as total_xp', \'round(avg(characters.xp)) as average_xp', ],
-            '+as'     => [ 'total_xp', 'average_xp', ],
+            '+select' => [ \'sum(characters.xp) as total_xp', \'round(avg(characters.xp)) as average_xp', \'sum(characters.xp)/turns_used as xp_per_turn' ],
+            '+as'     => [ 'total_xp', 'average_xp', 'xp_per_turn' ],
             order_by  => $sort . ' desc',
             group_by  => 'party_id',
             rows      => 10,

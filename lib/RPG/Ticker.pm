@@ -111,10 +111,10 @@ sub spawn_orbs {
                     'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
                     'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
                 },
-                { prefetch => [ 'terrain', 'orb' ], }
+                { prefetch => [ 'town', 'orb' ], }
             );
 
-            my $towns = grep { $_->terrain->terrain_name eq 'town' } @sectors;
+            my $towns = grep { $_->town } @sectors;
 
             next if $towns > 0;
 
@@ -181,7 +181,7 @@ sub spawn_monsters {
             # See if any of the sectors loaded around this orb are free
             my $count = 0;
             foreach my $possible_sector ( @{ $orb_surrounds{ $creature_orb->id }{sectors} } ) {
-                if ( ! $spawned->{$possible_sector->x}{$possible_sector->y} && !$possible_sector->creature_group ) {
+                if ( ! $spawned->{$possible_sector->x}{$possible_sector->y} && !$possible_sector->creature_group && !$possible_sector->town ) {
                     $land = $possible_sector;
 
                     # Record where we've spawned creatures, so we don't have to re-read everything
@@ -214,7 +214,7 @@ sub spawn_monsters {
                         'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
                         'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
                     },
-                    { prefetch => ['creature_group'], }
+                    { prefetch => ['creature_group', 'town'], }
                 );
 
                 $orb_surrounds{ $creature_orb->id }{sectors} = \@sectors;

@@ -70,10 +70,9 @@ sub test_spawn_orbs_successful_run : Tests(7) {
     my @land = $self->_create_land();
 
     # Towns on top left and bottom right corners
-    $land[0]->terrain_id( $self->{town_terrain}->id );
-    $land[0]->update;
-    $land[8]->terrain_id( $self->{town_terrain}->id );
-    $land[8]->update;
+    for my $idx (0, 8) {
+        $self->{schema}->resultset('Town')->create({'land_id' => $land[$idx]->id});
+    }
 
     RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
 
@@ -125,14 +124,11 @@ sub test_spawn_orb_no_room_for_new_orb : Test(2) {
     my $self = shift;
 
     my @land = $self->_create_land();
-
-    $land[0]->terrain_id( $self->{town_terrain}->id );
-    $land[0]->update;
-    $land[4]->terrain_id( $self->{town_terrain}->id );
-    $land[4]->update;
-    $land[8]->terrain_id( $self->{town_terrain}->id );
-    $land[8]->update;
-
+    
+    for my $idx (0, 4, 8) {
+        $self->{schema}->resultset('Town')->create({'land_id' => $land[$idx]->id});
+    }
+    
     RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
 
     my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
@@ -242,6 +238,39 @@ sub test_spawn_monsters_multiple_orbs : Tests(13) {
 
     }
 
+}
+
+sub test_spawn_monsters_with_towns : Tests(2) {
+    my $self = shift;
+
+    my @land = $self->_create_land();
+
+    # Orb in top left
+    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, level => 1 } );
+    
+    # Town next to Orb
+    $self->{schema}->resultset('Town')->create( { land_id => $land[1]->id } );    
+
+    # Create a party to force some monsters to be generated
+    $self->{schema}->resultset('Party')->create( {} );
+    
+    $self->{config}{creature_groups_to_parties} = 3;
+
+    RPG::Ticker->spawn_monsters( $self->{config}, $self->{schema}, $self->{logger} );
+
+    my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
+    is( scalar @cgs, 3, "3 groups generated" );
+
+    # Check if any spawned in the town
+    my $spawned_in_town = 0;
+    foreach my $cg (@cgs) {
+        if ($cg->land_id == $land[1]->id) {
+            $spawned_in_town = 1;
+            last;
+        }
+    }
+    
+    is($spawned_in_town, 0, "No groups were spawned in town");
 }
 
 sub test_move_cg_no_other_cgs : Tests(3) {
@@ -416,6 +445,26 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 
     $cg2->discard_changes;
     is( $cg2->land_id, $land[4]->id, "Still in the same sqaure" );
+}
+
+sub test_move_cg_town_blocks_some_squares : Tests(2) {
+    my $self = shift;
+
+    my @land = $self->_create_land();
+
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[0]->id, }, );
+    
+    # Block cg in with towns
+    for my $idx (1 .. 4) {
+        $self->{schema}->resultset('Town')->create( { land_id => $land[$idx]->id, }, );
+    }
+
+    my $moved = RPG::Ticker->_move_cg( $self->{schema}, 3, $cg );
+
+    is( $moved, 0, "Creature group couldn't be moved" );
+
+    $cg->discard_changes;
+    is( $cg->land_id, $land[0]->id, "Still in same sector" );
 }
 
 sub test_move_monsters : Tests(2) {

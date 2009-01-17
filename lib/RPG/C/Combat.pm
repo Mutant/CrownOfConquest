@@ -174,7 +174,8 @@ sub fight : Local {
     $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 
     # See if the creatures want to flee
-    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level ) {
+    #  Only flee if cg level is lower than party, and we're not on an orb
+    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level && ! $c->stash->{party_location}->orb ) {
         my $chance_of_fleeing =
             ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
 

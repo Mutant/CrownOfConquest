@@ -18,7 +18,12 @@
 		[% ELSE %]
 			[% color = 'white' %]
 		[% END %]
-		<td style="height: 6px; width: 6px; font-size: 6px; background-color: [% color %];">[% IF sector.cg_level %][% sector.cg_level %][% ELSE %]&nbsp;[% END %]</td>
+		<td style="height: 6px; width: 6px; font-size: 6px; background-color: [% color %];">
+			[% IF sector.orb_level %]
+				[% sector.orb_level %]			
+			[% ELSIF sector.cg_level %]
+				[% sector.cg_level %]
+			[% ELSE %]&nbsp;[% END %]</td>
 	[% END %]
 	[% current_x = 0 %]
 [% END %]

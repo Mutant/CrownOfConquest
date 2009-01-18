@@ -138,7 +138,7 @@ function sellItem(dialogFields) {
 			}
 			if (responseObject.messages) {
 				var messages = responseObject.messages;
-				var message;
+				var message = "";
 				for ( var i in messages ) {
 					if (messages[i]) {
 						message += messages[i] + '<br>';

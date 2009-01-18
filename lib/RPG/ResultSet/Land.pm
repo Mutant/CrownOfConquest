@@ -72,7 +72,7 @@ sub get_admin_grid {
     my $dbh = $self->result_source->schema->storage->dbh;
 
     my $sql = <<SQL;
-SELECT * FROM Land me
+SELECT *, orb.level as orb_level FROM Land me
 	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
     LEFT JOIN Creature_Group creature_group ON ( creature_group.land_id = me.land_id )
     LEFT JOIN Creature_Orb orb ON ( orb.land_id = me.land_id )

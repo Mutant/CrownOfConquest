@@ -72,6 +72,8 @@ sub creature_summary {
 
 sub number_alive {
 	my $self = shift;
+	
+	# TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
 
 	return $self->result_source->schema->resultset('Creature')->count({
 		hit_points_current => {'>',0},

@@ -20,7 +20,7 @@ sub setup_data : Test(startup) {
     my $self = shift;
 
     my $logger = Test::MockObject->new();
-    $logger->set_true('warn');
+    $logger->set_true('warning');
     $logger->set_true('info');
     $logger->set_true('debug');
 
@@ -40,6 +40,7 @@ sub setup : Test(setup) {
         min_creature_groups_per_sector   => 0,
         max_hops                         => 2,
         max_orb_level                    => 1,
+        orb_distance_from_other_orb      => 2,
     };
 
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
@@ -95,14 +96,13 @@ sub test_spawn_orbs_successful_run : Tests(7) {
 
 }
 
-sub test_spawn_orb_successful_run_with_existing_orb : Test(1) {
+sub test_spawn_orb_successful_run_with_existing_orb : Test(2) {
     my $self = shift;
 
     my @land = $self->_create_land();
 
-    # Towns on top left and bottom right corners
-    $land[0]->terrain_id( $self->{town_terrain}->id );
-    $land[0]->update;
+    # Town on top left corner
+    $self->{schema}->resultset('Town')->create({'land_id' => $land[0]->id});
 
     $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[2]->id, } );
 
@@ -117,6 +117,30 @@ sub test_spawn_orb_successful_run_with_existing_orb : Test(1) {
     );
 
     is( scalar @orbs, 2, "Should be two orbs" );
+    is( $orbs[1]->land->x, 3, "Second orb created on bottom row");
+
+}
+
+sub test_spawn_orb_with_town_search_smaller_than_orb_search : Test(1) {
+    my $self = shift;
+
+    my @land = $self->_create_land(5,5);
+
+    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[12]->id, } );
+    
+    $self->{config}->{orb_distance_from_other_orb} = 3;
+
+    RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
+
+    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
+        {},
+        {
+            order_by => 'x,y',
+            prefetch => 'land',
+        }
+    );
+
+    is( scalar @orbs, 1, "Should only be one orb" );
 
 }
 
@@ -140,7 +164,7 @@ sub test_spawn_orb_no_room_for_new_orb : Test(2) {
     );
 
     is( scalar @orbs, 0, "Should be no orbs" );
-    $self->{logger}->called_ok( 'warn', "Warning should be written to log file" );
+    $self->{logger}->called_ok( 'warning', "Warning should be written to log file" );
 }
 
 sub test_spawn_monsters : Tests(4) {

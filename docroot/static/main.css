@@ -160,3 +160,7 @@ html>body .nav a {width: auto}
 #current-selection {
 	background: #D3D3D3;
 }
+
+.login-info {
+	font-size: 7pt;
+}

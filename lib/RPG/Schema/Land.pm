@@ -136,10 +136,14 @@ sub available_creature_group {
 		},
 	);
 	
-	$self->throw_exception("More than one creature group found in this sector!")
-		if scalar @creature_groups > 1;
+	return unless @creature_groups;
 	
-	return $creature_groups[0];	
+	$self->throw_exception("More than one creature group found in this sector!")
+		if scalar @creature_groups > 1;	
+	
+	return $creature_groups[0] if $creature_groups[0]->number_alive > 0;
+	
+	return;
 }
 
 1;

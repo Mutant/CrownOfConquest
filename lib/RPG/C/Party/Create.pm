@@ -184,7 +184,7 @@ sub create_character : Local {
     }
 
     my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
-    if ( $char_count >= $c->config->{new_party_characters} ) {
+    if ( ! $c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
         $c->stash->{error} = 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
         $c->detach('create');
     }
@@ -225,6 +225,8 @@ sub create_character : Local {
 
     if ( $c->req->param('character_id') ) {
         my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), } );
+        
+        croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
         
         while (my ($field, $value) = each %char_params) {
             $character->set_column($field, $value);

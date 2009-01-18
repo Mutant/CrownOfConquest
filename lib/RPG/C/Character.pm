@@ -415,7 +415,7 @@ sub bury : Local {
         {
             character_name => $character->character_name,
             land_id        => $c->stash->{party_location}->id,
-            day_created    => $c->stash->{today}->id,
+            day_created    => $c->stash->{today}->day_number,
             epitaph        => $c->req->param('epitaph'),
         }
     );

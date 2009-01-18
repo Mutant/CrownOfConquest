@@ -44,6 +44,9 @@ sub auto : Private {
     );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
+        $c->stash->{party}->last_action(DateTime->now());
+        $c->stash->{party}->update;
+        
         $c->stash->{party_location} = $c->stash->{party}->location;
 
         # If the party is currently in combat, they must stay on the combat screen
@@ -71,6 +74,14 @@ sub auto : Private {
         $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
         return 0;
     }
+    
+    # Get parties online
+    my @parties_online = $c->model('DBIC::Party')->search(
+        {
+            last_action => {'>=', DateTime->now()->subtract( minutes => 10 ) },    
+        }
+    );
+    $c->stash->{parties_online} = \@parties_online;
 
     return 1;
 

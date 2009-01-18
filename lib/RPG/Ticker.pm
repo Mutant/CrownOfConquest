@@ -16,6 +16,7 @@ use Games::Dice::Advanced;
 use Log::Dispatch;
 use Log::Dispatch::File::Stamped;
 use File::Slurp qw(read_file);
+use Math::Round qw(round);
 
 sub run {
     my $package = shift;
@@ -68,19 +69,24 @@ sub run {
 sub spawn_orbs {
     my ( $package, $config, $schema, $logger ) = @_;
 
-    my $land_rs = $schema->resultset('Land')->search(
+    my @land = $schema->resultset('Land')->search(
         {},
         {
             order_by => 'rand()',
-            prefetch => [ 'terrain', 'orb' ],
+            prefetch => [ 'town', 'orb' ],
         }
-    );
+    ); 
     
+    my $land_by_sector;
+    foreach my $sector (@land) {
+        $land_by_sector->[$sector->x][$sector->y] = $sector;
+    }
+       
 
     my @names = read_file( $ENV{RPG_HOME} . '/script/data/orb_names.txt' );
     chomp @names;
 
-    my $land_size = $land_rs->count;
+    my $land_size = scalar @land;
 
     my $ideal_number_of_orbs = int $land_size / $config->{land_per_orb};
 
@@ -90,33 +96,51 @@ sub spawn_orbs {
 
     my %x_y_range = $schema->resultset('Land')->get_x_y_range();
 
-    my $used = {};
+    my $used = [];
 
-    for my $orb_number ( 1 .. $orbs_to_create ) {
-        $logger->debug("Creating orb # $orb_number");
-        
+    for my $orb_number ( 1 .. $orbs_to_create ) {       
         my $level = RPG::Maths->weighted_random_number( 1 .. $config->{max_orb_level} );
-
-        my %coords;
+        
+        $logger->debug("Creating orb # $orb_number (level: $level)");
 
         my $created = 0;
-        while ( my $land = $land_rs->next ) {
-            next if $land->orb || $land->terrain->terrain_name eq 'town';
+        OUTER: foreach my $land (@land) {
+            next if $land->orb || $land->town;
+           
+            
+            # Search for towns and orbs in this sector to see if it will block us spawning the orb.
+            # The two searches are different sizes, so we have to find the largest one
 
-            my $size = $config->{orb_distance_from_town_per_level} * $level * 2 - 1;
-            my @range = RPG::Map->surrounds( $land->x, $land->y, $size, $size );
+            my $town_search_size = round $config->{orb_distance_from_town_per_level} * $level * 2 - 1;            
+            my @town_range = RPG::Map->surrounds( $land->x, $land->y, $town_search_size, $town_search_size );
+            my $orb_search_size = $config->{orb_distance_from_other_orb} * 2 - 1;
+            my @orb_range = RPG::Map->surrounds( $land->x, $land->y, $orb_search_size, $orb_search_size );
+            
+            my @range;
+            if ($town_search_size > $orb_search_size) {
+                @range = @town_range;
+            }
+            else {
+                @range = @orb_range;
+            }
 
-            my @sectors = $schema->resultset('Land')->search(
-                {
-                    'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
-                    'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
-                },
-                { prefetch => [ 'town', 'orb' ], }
-            );
-
-            my $towns = grep { $_->town } @sectors;
-
-            next if $towns > 0;
+            for my $x ( $range[0]->{x} .. $range[1]->{x} ) {
+                for my $y ( $range[0]->{y} .. $range[1]->{y} ) {
+                    next if $x > $x_y_range{max_x} || $y > $x_y_range{max_y};
+                    
+                    my $sector_to_check = $land_by_sector->[$x][$y];
+                    
+                    # Orb must be minium range from town
+                    if ($x >= $town_range[0]->{x} && $x <= $town_range[1]->{x} && $y >= $town_range[0]->{y} && $y <= $town_range[1]->{y}) {
+                        next OUTER if $sector_to_check->town;
+                    }
+                    
+                    # Check for orbs
+                    if ($x >= $orb_range[0]->{x} && $x <= $orb_range[1]->{x} && $y >= $orb_range[0]->{y} && $y <= $orb_range[1]->{y}) {
+                        next OUTER if $used->[$x][$y] || $sector_to_check->orb;
+                    }
+                }
+            }
 
             # No towns in range, and no existing orb here... we can use this sector
             my $name = (shuffle @names)[0];
@@ -128,6 +152,8 @@ sub spawn_orbs {
 
             # Create creature group at orb
             $package->_create_group( $schema, $land, $level * 3, $level * 3 );
+            
+            $used->[$land->x][$land->y] = 1;
 
             $created = 1;
 
@@ -135,10 +161,8 @@ sub spawn_orbs {
         }
 
         unless ($created) {
-
             # Warn that we weren't able to create an orb
-            $logger->warn("Unable to create orb # $orb_number, as no suitable land could be found");
-            last;
+            $logger->warning("Unable to create orb # $orb_number, as no suitable land could be found");
         }
     }
 }

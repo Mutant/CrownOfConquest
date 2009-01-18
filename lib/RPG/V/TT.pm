@@ -16,11 +16,12 @@ sub process {
 
     $params->{params}{error} = $c->stash->{error};
     $params->{params}{error} =~ s/'/\\\'/g if $params->{params}{error};
-
+    
     my %old_stash = %{$c->stash};
 
     %{$c->stash} = (%{$c->req->params}, %{$params->{params}});
     $c->stash->{template} = $params->{template};
+    $c->stash->{parties_online} = $old_stash{parties_online};
 
     $self->SUPER::process($c);
     

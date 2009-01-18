@@ -1,0 +1,26 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+[% current_x = 0 %]
+[% current_y = 0 %]
+<table border=1 cellspacing=0 cellpadding=0>	
+[% WHILE current_y < max_y %]
+	[% current_y=current_y+1 %]
+	<tr>
+	[% WHILE current_x < max_x %]
+		[% current_x=current_x+1 %]
+		[% sector = grid.$current_x.$current_y %]
+		[% IF sector.creature_orb_id %]
+			[% color = 'blue' %]
+		[% ELSIF sector.creature_group_id %]
+			[% color = 'red' %]
+		[% ELSIF sector.town_id %]
+			[% color = 'black' %]
+		[% ELSE %]
+			[% color = 'white' %]
+		[% END %]
+		<td style="height: 6px; width: 6px; font-size: 6px; background-color: [% color %];">[% IF sector.cg_level %][% sector.cg_level %][% ELSE %]&nbsp;[% END %]</td>
+	[% END %]
+	[% current_x = 0 %]
+[% END %]
+
+[% INCLUDE bottom.html %]

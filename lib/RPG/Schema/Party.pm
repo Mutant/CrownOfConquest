@@ -128,7 +128,16 @@ __PACKAGE__->add_columns(
         'is_auto_increment' => 0,
         'default_value'     => undef,
         'is_foreign_key'    => 0,
-        'name'              => 'created',
+        'name'              => 'defunct',
+        'is_nullable'       => 1,
+        'size'              => 0
+    },
+    'last_action' => {
+        'data_type'         => 'datetime',
+        'is_auto_increment' => 0,
+        'default_value'     => undef,
+        'is_foreign_key'    => 0,
+        'name'              => 'last_action',
         'is_nullable'       => 1,
         'size'              => 0
     },
@@ -235,7 +244,7 @@ sub new_day {
     $self->add_to_day_logs(
         {
             day_id => $new_day->id,
-            log    => join ("\n", @log),
+            log    => join( "\n", @log ),
         }
     );
 

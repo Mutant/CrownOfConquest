@@ -22,8 +22,8 @@ function getPanels(url) {
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
-			if (panelData.error) {
-				dojo.byId('error-message').innerHTML = panelData.error;
+			if (responseObject.error) {
+				dojo.byId('error-message').innerHTML = responseObject.error;
 	    		dijit.byId('error').show();
 	    		dijit.byId('messages-pane').setContent(originalContent);
 			}		

@@ -6,10 +6,10 @@ dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
 
 
-function getPanels(url) {
+function getPanels(url) {    
 	var originalContent = dojo.byId('messages-pane').innerHTML;
-
-    dijit.byId('messages-pane').setContent('Loading...');
+	
+	dijit.byId('messages-pane').setContent('Loading...');	
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
     
@@ -22,6 +22,12 @@ function getPanels(url) {
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
+			if (panelData.error) {
+				dojo.byId('error-message').innerHTML = panelData.error;
+	    		dijit.byId('error').show();
+	    		dijit.byId('messages-pane').setContent(originalContent);
+			}		
+			
 			refreshPanels(responseObject);
 		},
         
@@ -35,23 +41,15 @@ function getPanels(url) {
     });
 }
 
-function refreshPanels(panelData) {
-	console.log(panelData);
-	if (panelData.error) {
-		dojo.byId('error-message').innerHTML = panelData.error;
-	    dijit.byId('error').show();
-	    dijit.byId('messages-pane').setContent(originalContent);
-	}			
-    else {
-		if (panelData.panel_messages) {
-			displayMessages(panelData.panel_messages);
-		}				
+function refreshPanels(panelData) {    
+	if (panelData.panel_messages) {
+		displayMessages(panelData.panel_messages);
+	}				
 				
-	    if (panelData.refresh_panels) {
-			for (var panel in panelData.refresh_panels) {
-				dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
-				dijit.byId(panel+'-pane').refresh();
-			}
+    if (panelData.refresh_panels) {
+		for (var panel in panelData.refresh_panels) {
+			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
+			dijit.byId(panel+'-pane').refresh();
 		}
 	}
 }

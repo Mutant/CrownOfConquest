@@ -19,12 +19,12 @@ sub default : Path {
             created => { '!=', undef },
         },
         {
-            prefetch  => 'player',
+            prefetch  => ['player'],
             join      => 'characters',
-            '+select' => [ \'sum(characters.xp) as total_xp', \'round(avg(characters.xp)) as average_xp', \'sum(characters.xp)/turns_used as xp_per_turn' ],
-            '+as'     => [ 'total_xp', 'average_xp', 'xp_per_turn' ],
+            '+select' => [ \'sum(characters.xp) as total_xp', \'round(avg(characters.xp)) as average_xp', \'sum(characters.xp)/turns_used as xp_per_turn', \'count(character_id) as character_count' ],
+            '+as'     => [ 'total_xp', 'average_xp', 'xp_per_turn', 'character_count' ],
             order_by  => $sort . ' desc',
-            group_by  => 'party_id',
+            group_by  => 'me.party_id',
             rows      => 10,
         },
     );

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
   
-package RPG::ResultSet::Town;
+package RPG::ResultSet::Creature_Orb;
   
 use base 'DBIx::Class::ResultSet';
 
@@ -13,7 +13,7 @@ sub find_in_range {
 	my $search_range = shift;
 	my $increment_search_by = shift;
 	
-	return RPG::ResultSet::RowsInSectorRange->find_in_range($self, 'location', $base_point, $search_range, $increment_search_by);
+	return RPG::ResultSet::RowsInSectorRange->find_in_range($self, 'land', $base_point, $search_range, $increment_search_by);
 }
 
 1;

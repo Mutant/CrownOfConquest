@@ -39,6 +39,10 @@ sub refresh : Private {
 		}
 	}
 
+	if ($c->stash->{panel_messages}) {
+		$response{panel_messages} = $c->stash->{panel_messages};
+	}
+
 	
 	$c->res->body(to_json \%response);
 }

@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use DateTime;
+use JSON;
 
 use List::Util qw(shuffle);
 
@@ -20,8 +21,9 @@ sub main : Local {
             {
                 template => 'party/main.html',
                 params   => {
-                    party  => $c->stash->{party},
-                    panels => $panels,
+                    party          => $c->stash->{party},
+                    panels         => $panels,   
+                    #party_messages => $party_messages,                 
                 },
             }
         ]
@@ -50,6 +52,8 @@ sub sector_menu : Local {
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
     my $parties_in_sector = $c->forward('parties_in_sector');
+    
+    $c->forward('/party/party_messages_check');
 
     $c->forward(
         'RPG::V::TT',
@@ -96,6 +100,27 @@ sub parties_in_sector : Private {
             }
         ]
     );
+}
+
+sub party_messages_check : Private {
+    my ( $self, $c ) = @_;
+
+    # Get party messages
+    my @party_messages = $c->model('DBIC::Party_Messages')->search(
+        {
+            alert_party => 1,
+            party_id    => $c->stash->{party}->id,
+        }
+    );
+
+    if (@party_messages) {
+        foreach my $message (@party_messages) {
+            $message->alert_party(0);
+            $message->update;
+        }
+
+        $c->stash->{panel_messages} = [ map { $_->message } @party_messages ];
+    }
 }
 
 sub list : Local {
@@ -473,6 +498,8 @@ sub destroy_orb : Local {
             }
         ],
     );
+
+    $c->stash->{messages} .= $c->forward( '/quest/check_action', [ 'orb_destroyed', $orb->id ] );
 
     $party->turns( $party->turns - 1 );
     $party->update;

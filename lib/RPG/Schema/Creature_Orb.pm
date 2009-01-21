@@ -8,6 +8,8 @@ __PACKAGE__->table('Creature_Orb');
 
 __PACKAGE__->add_columns(qw/creature_orb_id level land_id name/);
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Creature_Orb');
+
 __PACKAGE__->set_primary_key(qw/creature_orb_id/);
 
 __PACKAGE__->belongs_to(

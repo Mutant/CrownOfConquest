@@ -2,6 +2,10 @@
 	You have been attacked by a group of 
 	[% INCLUDE combat/creature_group_summary.html creature_group=creature_group %]
 	<br><br>
+	[% IF orb %]
+	These creatures guard the Orb of [% orb.name %]!
+	<br><br>
+	[% END %]	
 [% END %]
 
 [% UNLESS combat_complete || party_dead %]

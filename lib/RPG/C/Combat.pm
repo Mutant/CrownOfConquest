@@ -51,7 +51,7 @@ sub check_for_attack : Local {
     my $creature_group = $c->stash->{party_location}->available_creature_group;
 
     # If there are creatures here, check to see if we go straight into combat
-    if ($creature_group && $creature_group->number_alive > 0) {
+    if ( $creature_group && $creature_group->number_alive > 0 ) {
         $c->stash->{creature_group} = $creature_group;
 
         if ( $creature_group->initiate_combat( $c->stash->{party} ) ) {
@@ -126,6 +126,11 @@ sub main : Local {
         $c->forward('/combat/finish');
     }
 
+    my $orb;
+    if ( $c->stash->{creatures_initiated} ) {
+        $orb = $c->stash->{party_location}->orb;
+    }
+
     return $c->forward(
         'RPG::V::TT',
         [
@@ -137,6 +142,7 @@ sub main : Local {
                     combat_messages     => $c->stash->{combat_messages},
                     combat_complete     => $c->stash->{combat_complete},
                     party_dead          => $c->stash->{party}->defunct ? 1 : 0,
+                    orb                 => $orb,
                 },
                 return_output => 1,
             }
@@ -175,7 +181,7 @@ sub fight : Local {
 
     # See if the creatures want to flee
     #  Only flee if cg level is lower than party, and we're not on an orb
-    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level && ! $c->stash->{party_location}->orb ) {
+    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level && !$c->stash->{party_location}->orb ) {
         my $chance_of_fleeing =
             ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
 
@@ -695,18 +701,16 @@ sub check_for_item_found : Private {
         my $max_prevalence = $avg_creature_level * $c->config->{prevalence_per_creature_level_to_find};
 
         # Get item_types within the prevalance roll
-        my @item_types = shuffle $c->model('DBIC::Item_Type')->search( 
-            { 
-                prevalence => { '<=', $max_prevalence },
+        my @item_types = shuffle $c->model('DBIC::Item_Type')->search(
+            {
+                prevalence        => { '<=', $max_prevalence },
                 'category.hidden' => 0,
             },
-            {
-                join => 'category',  
-            },
+            { join => 'category', },
         );
 
         my $item_type = shift @item_types;
-        
+
         croak "Couldn't find item to give to party under prevalence $max_prevalence\n"
             unless $item_type;
 

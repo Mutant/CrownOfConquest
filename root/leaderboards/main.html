@@ -41,7 +41,7 @@ Top Parties By:
 		<td align="right">[% party.get_column('xp_per_turn') %]</td>
 		<td align="right">[% party.get_column('average_xp') %]</td>
 		<td align="right">[% party.get_column('total_xp') %]</td>
-		<td align="right">[% party.characters.size %]</td>
+		<td align="right">[% party.get_column('character_count') %]</td>
 		<td align="right">[% party.turns_used %]</td>
 		<td>[% party.created.ymd %]</td>		
 	</tr>

@@ -4,7 +4,8 @@
 dojo.require('dijit.layout.SplitContainer');
 dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
-	
+
+
 function getPanels(url) {
 	var originalContent = dojo.byId('messages-pane').innerHTML;
 
@@ -20,18 +21,9 @@ function getPanels(url) {
         url: "[% base %]" + url + no_cache,
         handleAs: "json",
         
-        load: function(responseObject, ioArgs) {        
-        	if (responseObject.error) {
-				dojo.byId('error-message').innerHTML = responseObject.error;
-	          	dijit.byId('error').show();
-	          	dijit.byId('messages-pane').setContent(originalContent);
-        	}
-        	else {
-	       	    if (responseObject.refresh_panels) {
-					refreshPanels(responseObject.refresh_panels);
-		       	}
-	       	}
-        },
+        load: function(responseObject, ioArgs){
+			refreshPanels(responseObject);
+		},
         
         error: function(err) {
         	errorMsg = "An error occurred processing the action. Please <a href=\"[% base %]\">try again</a> or report a bug.";
@@ -39,14 +31,28 @@ function getPanels(url) {
         	dijit.byId('messages-pane').setContent(errorMsg);
         },
 
-	    timeout: 5000 // Time in milliseconds	
+	    timeout: 15000 // Time in milliseconds	
     });
 }
 
-function refreshPanels(panel_hash) {
-	for (var panel in panel_hash) {
-		dijit.byId(panel+'-pane').setContent(panel_hash[panel]);
-		dijit.byId(panel+'-pane').refresh();
+function refreshPanels(panelData) {
+	console.log(panelData);
+	if (panelData.error) {
+		dojo.byId('error-message').innerHTML = panelData.error;
+	    dijit.byId('error').show();
+	    dijit.byId('messages-pane').setContent(originalContent);
+	}			
+    else {
+		if (panelData.panel_messages) {
+			displayMessages(panelData.panel_messages);
+		}				
+				
+	    if (panelData.refresh_panels) {
+			for (var panel in panelData.refresh_panels) {
+				dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
+				dijit.byId(panel+'-pane').refresh();
+			}
+		}
 	}
 }
 
@@ -55,11 +61,34 @@ function setPanel(panel, url) {
 	dijit.byId(panel+'-pane').refresh();
 }
 
+[%# TODO: maybe better with a closer, rather than globals? %]
+var panel_messages;
+var displayCount = 0;	
+function displayMessages(messages_passed) {
+	if (messages_passed) {
+		console.log("messages passed");
+		panel_messages = messages_passed;
+	}
+	
+	if (! panel_messages) {
+		console.log("no panel messages");
+		return;
+	}
+	
+	if (panel_messages[displayCount]) {
+		dojo.byId('party-message-text').innerHTML = panel_messages[displayCount];
+		dijit.byId('party-message').show();
+		displayCount++;
+	}
+	else {
+		displayCount = 0;
+	}
+}
+
 var panel_init = [% panels %];
 
 function init() {
-	//console.log(panel_init);
-	refreshPanels(panel_init.refresh_panels);
+	refreshPanels(panel_init);
 }
 
 function selectAction(action, char_id, action_param, action_param2, action_label) {
@@ -177,6 +206,14 @@ function bury(dialogFields) {
 		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-bury').hide()">Cancel</button>
 	</div>
 	 
+</div>
+
+<div dojoType="dijit.Dialog" id="party-message" style="display: none" title="Message" execute="displayMessages()">
+    <span id="party-message-text"></span>
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+	</div>
 </div>
 
 <h2>[% party.name %]</h2>

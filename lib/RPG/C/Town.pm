@@ -6,11 +6,14 @@ use base 'Catalyst::Controller';
 
 use Math::Round qw(round);
 use JSON;
+use List::Util qw(shuffle);
 
 sub main : Local {
     my ( $self, $c, $return_output ) = @_;
 
     my $parties_in_sector = $c->forward('/party/parties_in_sector');
+    
+    $c->forward('/party/party_messages_check');
 
     $c->forward(
         'RPG::V::TT',
@@ -20,6 +23,7 @@ sub main : Local {
                 params   => {
                     town              => $c->stash->{party_location}->town,
                     day_logs          => $c->stash->{day_logs},
+                    party_messages    => $c->stash->{party_messages},
                     parties_in_sector => $parties_in_sector,
                 },
                 return_output => $return_output || 0,
@@ -237,7 +241,7 @@ sub town_hall : Local {
         {
             town_id  => $c->stash->{party_location}->town->id,
             party_id => $c->stash->{party}->id,
-            complete => 0,
+            status => 'In Progress',
         },
     );
 
@@ -252,7 +256,7 @@ sub town_hall : Local {
     my $party_quests_rs = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            complete => 0,
+            status => 'In Progress',
         },
     );
 
@@ -266,10 +270,11 @@ sub town_hall : Local {
 
     # If they don't have a quest, load in available quests
     if ( !$party_quest && $allowed_more_quests ) {
-        @quests = $c->model('DBIC::Quest')->search(
+        @quests = shuffle $c->model('DBIC::Quest')->search(
             {
                 town_id  => $c->stash->{party_location}->town->id,
                 party_id => undef,
+                'me.min_level' => {'<=', $c->stash->{party}->level},
             },
             { prefetch => 'type', },
         );

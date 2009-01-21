@@ -67,7 +67,7 @@ sub auto : Private {
         # Check if they're due a new day
         if ( !$c->stash->{party}->in_combat_with && $c->stash->{party}->new_day_due ) {
             $c->forward('/party/process_new_day');
-        }
+        }        
 
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' ) {
@@ -79,6 +79,7 @@ sub auto : Private {
     my @parties_online = $c->model('DBIC::Party')->search(
         {
             last_action => {'>=', DateTime->now()->subtract( minutes => 10 ) },    
+            defunct => undef,
         }
     );
     $c->stash->{parties_online} = \@parties_online;

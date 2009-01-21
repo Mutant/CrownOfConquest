@@ -7,136 +7,150 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 
 sub offer : Local {
-	my ($self, $c) = @_;
-	
-	my $quest = $c->model('DBIC::Quest')->find(
-		{
-			quest_id => $c->req->param('quest_id'),
-			town_id => $c->stash->{party_location}->town->id,
-			party_id => undef,
-		},
-	);
-	
-	$c->forward('RPG::V::TT',
-        [{
-            template => 'quest/offer.html',
-			params => {
-				town => $c->stash->{party_location}->town,
-				quest => $quest,
-			},
-        }]
+    my ( $self, $c ) = @_;
+
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            town_id  => $c->stash->{party_location}->town->id,
+            party_id => undef,
+        },
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'quest/offer.html',
+                params   => {
+                    town  => $c->stash->{party_location}->town,
+                    quest => $quest,
+                },
+            }
+        ]
     );
 }
 
 sub accept : Local {
-	my ($self, $c) = @_;
-	
-	my $town = $c->stash->{party_location}->town;
-	
-	my $quest = $c->model('DBIC::Quest')->find(
-		{
-			quest_id => $c->req->param('quest_id'),
-			town_id => $town->id,
-			party_id => undef,
-		},
-	);
-	
-	$quest->party_id($c->stash->{party}->id);
-	$quest->update;
-	
-	# If this town has no quests left, create a new quest of the same type
-	if ($c->model('DBIC::Quest')->count({ town_id => $town->id, party_id => undef, }) == 0) {
-		$c->model('DBIC::Quest')->create(
-			{
-				town_id => $town->id,
-				quest_type_id => $quest->quest_type_id,
-			}
-		);	
-	} 
+    my ( $self, $c ) = @_;
+
+    my $town = $c->stash->{party_location}->town;
+
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            town_id  => $town->id,
+            party_id => undef,
+        },
+    );
+
+    $quest->party_id( $c->stash->{party}->id );
+    $quest->status('In Progress');
+    $quest->update;
+
+    # If this town has no quests left, create a new quest of the same type
+    if ( $c->model('DBIC::Quest')->count( { town_id => $town->id, party_id => undef, } ) == 0 ) {
+        $c->model('DBIC::Quest')->create(
+            {
+                town_id       => $town->id,
+                quest_type_id => $quest->quest_type_id,
+            }
+        );
+    }
 }
 
 sub list : Local {
-	my ($self, $c) = @_;
-	
-	my @quests = $c->model('DBIC::Quest')->search(
-		{
-			party_id => $c->stash->{party}->id,
-			complete => 0,
-		},
-		{
-			prefetch => [
-				'quest_params',
-				{'type' => 'quest_param_names'},
-			],
-		}
-	);
+    my ( $self, $c ) = @_;
 
-	$c->forward('RPG::V::TT',
-        [{
-            template => 'quest/list.html',
-			params => {
-				quests => \@quests,
-			},
-        }]
+    my @quests = $c->model('DBIC::Quest')->search(
+        {
+            party_id => $c->stash->{party}->id,
+            status   => 'In Progress',
+        },
+        { prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ], }
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'quest/list.html',
+                params   => { quests => \@quests, },
+            }
+        ]
     );
 }
 
 # Check the party's quests to see if any progress has been made for the particular action just taken
 sub check_action : Private {
-	my ($self, $c, $action, @params) = @_;
-	
-	my @messages;
-	
-	foreach my $quest ($c->stash->{party}->quests) {
-		if ($quest->check_action($c->stash->{party}, $action, @params)) {
-			my $message = $c->forward('RPG::V::TT',
-		        [{
-		            template => 'quest/action_message.html',
-					params => {
-						quest => $quest,
-						action => $action,
-					},
-					return_output => 1,
-		        }]
-		    );
-		    push @messages, $message if $message;
-		}	
-	}
-		
-	return \@messages;
+    my ( $self, $c, $action, @params ) = @_;
+
+    my @messages;
+
+    foreach my $quest ( $c->stash->{party}->quests ) {
+        if ( $quest->check_action( $c->stash->{party}, $action, @params ) ) {
+
+            my $message = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template => 'quest/action_message.html',
+                        params   => {
+                            quest  => $quest,
+                            action => $action,
+                        },
+                        return_output => 1,
+                    }
+                ]
+            );
+            push @messages, $message if $message;
+
+        }
+    }
+
+    # Check if this action affects any other quests
+    # TODO: make this search smarter, i.e. this only affects Destroy Orb quests at the moment
+    my @quests = $c->model('DBIC::Quest')->search();
+
+    foreach my $quest (@quests) {
+        $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
+    }
+
+    return \@messages;
 }
 
 sub complete_quest : Private {
-	my ($self, $c, $party_quest) = @_;
+    my ( $self, $c, $party_quest ) = @_;
 
-	$party_quest->complete(1);
-	$party_quest->update;
-	
-	$c->stash->{party}->gold($c->stash->{party}->gold + $party_quest->gold_value);
-	$c->stash->{party}->update;
-	
-	my $xp_gained = $party_quest->xp_value;
-	
-	my @characters = grep { ! $_->is_dead } $c->stash->{party}->characters;
-	my $xp_each = int $xp_gained / scalar @characters;
-	
-	my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );
-	
-	push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
-	
-	my $panel = $c->forward('RPG::V::TT',
-        [{
-            template => 'quest/completed_quest.html',
-			params => {
-				xp_messages => $xp_messages,
-			},
-			return_output => 1,
-        }]
+    $party_quest->status('Complete');
+    $party_quest->update;
+
+    $c->stash->{party}->gold( $c->stash->{party}->gold + $party_quest->gold_value );
+    $c->stash->{party}->update;
+
+    my $xp_gained = $party_quest->xp_value;
+
+    my @characters = grep { !$_->is_dead } $c->stash->{party}->characters;
+    my $xp_each = int $xp_gained / scalar @characters;
+
+    my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );
+
+    push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
+
+    my $panel = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template      => 'quest/completed_quest.html',
+                params        => { xp_messages => $xp_messages, },
+                return_output => 1,
+            }
+        ]
     );
-        
-    push @{ $c->stash->{refresh_panels} }, ['messages', $panel];
 
-	$c->forward('/panel/refresh', []);	
+    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+    $c->forward( '/panel/refresh', [] );
 }
 
 1;

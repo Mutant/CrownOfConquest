@@ -137,7 +137,7 @@ sub _create_jewels_in_range {
    		my @quests = $self->result_source->schema->resultset('Quest')->search(
    			{
    				town_id => $town_to_check->id,
-   				complete => 0,
+   				party_id => undef,
    			},
    			{
    				prefetch => [

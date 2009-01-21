@@ -110,11 +110,11 @@ sub check_action : Private {
 
     # Check if this action affects any other quests
     # TODO: make this search smarter, i.e. this only affects Destroy Orb quests at the moment
-    my @quests = $c->model('DBIC::Quest')->search();
+    #my @quests = $c->model('DBIC::Quest')->search();
 
-    foreach my $quest (@quests) {
-        $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
-    }
+    #foreach my $quest (@quests) {
+    #    $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
+    #}
 
     return \@messages;
 }

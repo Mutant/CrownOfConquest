@@ -21,9 +21,10 @@ sub main : Local {
             {
                 template => 'party/main.html',
                 params   => {
-                    party          => $c->stash->{party},
-                    panels         => $panels,   
-                    #party_messages => $party_messages,                 
+                    party  => $c->stash->{party},
+                    panels => $panels,
+
+                    #party_messages => $party_messages,
                 },
             }
         ]
@@ -52,7 +53,7 @@ sub sector_menu : Local {
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
     my $parties_in_sector = $c->forward('parties_in_sector');
-    
+
     $c->forward('/party/party_messages_check');
 
     $c->forward(
@@ -485,26 +486,28 @@ sub destroy_orb : Local {
 
     my $random_char = ( shuffle $party->characters )[0];
 
+    my $quest_messages = $c->forward( '/quest/check_action', [ 'orb_destroyed', $orb->id ] );
+
     $c->stash->{messages} = $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'party/destroy_orb.html',
                 params   => {
-                    random_char => $random_char,
-                    orb         => $orb,
+                    random_char    => $random_char,
+                    orb            => $orb,
+                    quest_messages => $quest_messages,
                 },
                 return_output => 1,
             }
         ],
     );
 
-    $c->stash->{messages} .= $c->forward( '/quest/check_action', [ 'orb_destroyed', $orb->id ] );
-
     $party->turns( $party->turns - 1 );
     $party->update;
 
-    $orb->delete;
+    $orb->land_id(undef);
+    $orb->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

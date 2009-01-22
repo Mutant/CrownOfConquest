@@ -3,3 +3,10 @@
 "I will destroy this foul weapon of the underworld!", he proclaims.
 <br><br>
 With a mighty swing of his weapon, he shatters the Orb [% orb.name %] into a million pieces. There'll be no more creatures spawned in this sector...
+
+[% IF quest_messages %]
+	<br><br>
+	[% FOREACH message IN quest_messages %]
+		[% message %]<br>
+	[% END %]
+[% END %]

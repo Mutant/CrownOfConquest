@@ -44,10 +44,19 @@ sub auto : Private {
     );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
-        $c->stash->{party}->last_action(DateTime->now());
+        $c->stash->{party}->last_action( DateTime->now() );
         $c->stash->{party}->update;
-        
+
         $c->stash->{party_location} = $c->stash->{party}->location;
+
+        # Get parties online
+        my @parties_online = $c->model('DBIC::Party')->search(
+            {
+                last_action => { '>=', DateTime->now()->subtract( minutes => 10 ) },
+                defunct     => undef,
+            }
+        );
+        $c->stash->{parties_online} = \@parties_online;
 
         # If the party is currently in combat, they must stay on the combat screen
         # TODO: clean up this logic!
@@ -67,22 +76,13 @@ sub auto : Private {
         # Check if they're due a new day
         if ( !$c->stash->{party}->in_combat_with && $c->stash->{party}->new_day_due ) {
             $c->forward('/party/process_new_day');
-        }        
+        }
 
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' ) {
         $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
         return 0;
     }
-    
-    # Get parties online
-    my @parties_online = $c->model('DBIC::Party')->search(
-        {
-            last_action => {'>=', DateTime->now()->subtract( minutes => 10 ) },    
-            defunct => undef,
-        }
-    );
-    $c->stash->{parties_online} = \@parties_online;
 
     return 1;
 
@@ -96,8 +96,8 @@ sub default : Private {
 
 sub end : Private {
     my ( $self, $c ) = @_;
-    
-    $c->response->headers->header( 'Expires' => DateTime::Format::HTTP->format_datetime(DateTime->now()) );     
+
+    $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
     $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
 
     my $dbh = $c->model('DBIC')->schema->storage->dbh;

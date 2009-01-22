@@ -9,6 +9,8 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Quest');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Quest');
+
 __PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete gold_value xp_value min_level status/);
 __PACKAGE__->set_primary_key('quest_id');
 
@@ -139,5 +141,25 @@ sub quest_params_by_name {
 
 # This is called when an action from another party happens. Specfic quest types can define an action if they need to
 sub check_action_from_another_party {}
+
+# This returns which actions a quest is interested in, for the 'check_action_from_another_party' method. Should be overriden to return
+#  a list of the actions a quest type is interested in (if any)
+sub interested_in_actions {}
+
+# Class method to get hash of quest types to a list of interested actions
+sub interested_actions_by_quest_type {
+    my $self = shift;
+    
+    my %actions_by_quest_type;
+    while (my ($type, $class) = each %QUEST_TYPE_TO_CLASS_MAP) {
+        $self->ensure_class_loaded($class);
+        
+        my @actions = $class->interested_in_actions;
+        
+        $actions_by_quest_type{$type} = \@actions;
+    }
+    
+    return %actions_by_quest_type;
+}
 
 1;

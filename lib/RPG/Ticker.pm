@@ -146,7 +146,7 @@ sub spawn_orbs {
 
     my $ideal_number_of_orbs = int $land_size / $config->{land_per_orb};
 
-    my $orbs_to_create = $ideal_number_of_orbs - $schema->resultset('Creature_Orb')->count();
+    my $orbs_to_create = $ideal_number_of_orbs - $schema->resultset('Creature_Orb')->count( land_id => {'!=', undef} );
 
     $logger->info("Creating $orbs_to_create orbs");
 
@@ -185,7 +185,7 @@ sub spawn_monsters {
 
     return if $number_of_groups_to_spawn <= 0;
 
-    my @creature_orbs = $schema->resultset('Creature_Orb')->search( {}, { prefetch => 'land', } );
+    my @creature_orbs = $schema->resultset('Creature_Orb')->search( {}, { prefetch => 'land', land_id => {'!=', undef} } );
 
     my %orb_surrounds;
 
@@ -544,7 +544,7 @@ sub _spawn_orb {
     my $existing_orb;
     do {
         $name = ( shuffle @names )[0];
-        $existing_orb = $schema->resultset('Creature_Orb')->find( { name => $name } );
+        $existing_orb = $schema->resultset('Creature_Orb')->find( { name => $name, land_id => {'!=', undef} } );
     } while ($existing_orb);
 
     $schema->resultset('Creature_Orb')->create(

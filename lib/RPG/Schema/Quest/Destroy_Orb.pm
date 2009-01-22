@@ -76,14 +76,20 @@ sub set_quest_params {
 
 }
 
+
+sub interested_in_actions {
+    my $self = shift;
+    
+    # Interested in Orbs being destroyed, to terminate the quest
+    return 'orb_destroyed';
+}
+
 sub check_action {
     my $self   = shift;
     my $party  = shift;
     my $action = shift;
     my $orb_id = shift;
     
-    warn "check action destroy orb: $action, $orb_id\n";
-
     return 0 unless $action eq 'orb_destroyed';
 
     return 0 unless $orb_id == $self->param_start_value('Orb To Destroy');
@@ -103,11 +109,11 @@ sub check_action_from_another_party {
 
     return 0 unless $action eq 'orb_destroyed';
 
-    return 0 unless $orb_id == $self->param_start_value('Orb To Destroy');
-    
-    return 0 if $party_that_triggered->id == $self->party->id;
+    return 0 unless $orb_id == $self->param_start_value('Orb To Destroy');    
     
     if ($self->status eq 'In Progress') {
+        return 0 if $party_that_triggered->id == $self->party->id;
+        
         # Another party has destoryed the Orb. Terminate the quest, and leave a message for this party.
         $self->status('Terminated');
         $self->update;
@@ -138,7 +144,8 @@ sub check_action_from_another_party {
     elsif ($self->status eq 'Not Started') {
         $self->delete;        
     }
-
+    
+    return 1;
 }
 
 sub ready_to_complete {

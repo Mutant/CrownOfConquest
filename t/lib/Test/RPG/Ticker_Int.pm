@@ -33,8 +33,6 @@ sub setup : Test(setup) {
     $self->{config} = {
         land_per_orb                     => 4,
         orb_distance_from_town_per_level => 2,
-        min_orb_level_cg                 => 2,
-        max_orb_level_cg                 => 3,
         creature_groups_to_parties       => 5,
         max_creature_groups_per_sector   => 1,
         min_creature_groups_per_sector   => 0,

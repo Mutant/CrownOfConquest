@@ -94,8 +94,10 @@ sub default : Private {
 sub end : Private {
     my ( $self, $c ) = @_;
 
-    $c->stash->{party}->last_action( DateTime->now() );
-    $c->stash->{party}->update;
+    if ($c->stash->{party}) {
+        $c->stash->{party}->last_action( DateTime->now() );
+        $c->stash->{party}->update;
+    }
 
     $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
     $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );

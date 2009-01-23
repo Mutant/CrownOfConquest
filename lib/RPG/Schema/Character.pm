@@ -88,7 +88,7 @@ sub roll_hit_points {
 
     if ( ref $self ) {
         my $points = $self->_roll_points( 'constitution', $point_max );
-        $self->max_hit_points( $self->max_hit_points || 0 + $points );
+        $self->max_hit_points( $self->max_hit_points + $points );
 
         if ( $self->level == 1 ) {
             $self->hit_points($points);
@@ -116,7 +116,7 @@ sub roll_spell_points {
 
         my $points = $self->_roll_points( $stat, $point_max, $point_min );
 
-        $self->spell_points( $self->spell_points || 0 + $points );
+        $self->spell_points( $self->spell_points + $points );
 
         return $points;
     }
@@ -194,8 +194,8 @@ sub set_default_spells {
                 },
             );
 
-            $memorised_spell->memorise_count( $memorised_spell->memorise_count || 0 + 1 );
-            $memorised_spell->memorise_count_tomorrow( $memorised_spell->memorise_count_tomorrow || 0 + 1 );
+            $memorised_spell->memorise_count( $memorised_spell->memorise_count + 1 );
+            $memorised_spell->memorise_count_tomorrow( $memorised_spell->memorise_count_tomorrow + 1 );
             $memorised_spell->update;
 
             $spell_points_used += $spell->points;

@@ -149,11 +149,7 @@ sub insert {
 
     foreach my $item_variable_param (@item_variable_params) {
         my $range      = $item_variable_param->max_value - $item_variable_param->min_value - 1;
-        warn "max: " . $item_variable_param->max_value;
-        warn "min: " . $item_variable_param->min_value;
-        warn "range: " . $range;
         my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
-        warn "val: $init_value";
         $self->add_to_item_variables(
             {
                 item_variable_name  => $item_variable_param->item_variable_name->item_variable_name,

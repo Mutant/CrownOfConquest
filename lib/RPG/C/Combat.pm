@@ -179,16 +179,18 @@ sub fight : Local {
 
     $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 
-    # See if the creatures want to flee
+    # See if the creatures want to flee... check this every 3 rounds
     #  Only flee if cg level is lower than party, and we're not on an orb
-    if ( $c->stash->{creature_group}->level < $c->stash->{party}->level && !$c->stash->{party_location}->orb ) {
-        my $chance_of_fleeing =
-            ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
-
-        $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
-
-        if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
-            $c->detach('creatures_flee');
+    if ( $c->stash->{combat_log}->rounds != 0 && $c->stash->{combat_log}->rounds % 3 == 0 ) {
+        if ( $c->stash->{creature_group}->level < $c->stash->{party}->level-2 && !$c->stash->{party_location}->orb ) {
+            my $chance_of_fleeing =
+                ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
+    
+            $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
+    
+            if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
+                $c->detach('creatures_flee');
+            }
         }
     }
 

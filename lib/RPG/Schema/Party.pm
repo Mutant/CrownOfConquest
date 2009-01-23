@@ -260,7 +260,20 @@ sub number_alive {
             party_id   => $self->id,
         }
     );
-
 }
 
+# Adjust party order numbers to make sure they're contiguous
+sub adjust_order {
+    my $self = shift;
+
+    my $count = 0;
+    foreach my $character ($self->characters) {
+        $character->discard_changes;
+        next unless $character->in_storage && $character->party_id == $self->id;
+        
+        $count++;
+        $character->party_order($count);
+        $character->update;
+    }
+}
 1;

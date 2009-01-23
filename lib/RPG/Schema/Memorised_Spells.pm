@@ -22,4 +22,10 @@ __PACKAGE__->belongs_to(
     { 'foreign.spell_id' => 'self.spell_id' }
 );
 
+sub casts_left_today {
+    my $self = shift;
+    
+    return $self->memorise_count - $self->number_cast_today;
+}
+
 1;

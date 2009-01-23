@@ -71,8 +71,8 @@ sub test_spawn_orbs_successful_run : Tests(7) {
     my @land = $self->_create_land();
 
     # Towns on top left and bottom right corners
-    for my $idx (0, 8) {
-        $self->{schema}->resultset('Town')->create({'land_id' => $land[$idx]->id});
+    for my $idx ( 0, 8 ) {
+        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
     }
 
     RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
@@ -93,7 +93,6 @@ sub test_spawn_orbs_successful_run : Tests(7) {
     is( $orbs[1]->land->x,                      3, "Second orb should be at x=3" );
     is( $orbs[1]->land->y,                      1, "Second orb should be at y=1" );
     is( defined $orbs[1]->land->creature_group, 1, "Creature group spawned at second orb" );
-
 }
 
 sub test_spawn_orb_successful_run_with_existing_orb : Test(2) {
@@ -102,7 +101,7 @@ sub test_spawn_orb_successful_run_with_existing_orb : Test(2) {
     my @land = $self->_create_land();
 
     # Town on top left corner
-    $self->{schema}->resultset('Town')->create({'land_id' => $land[0]->id});
+    $self->{schema}->resultset('Town')->create( { 'land_id' => $land[0]->id } );
 
     $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[2]->id, } );
 
@@ -116,18 +115,56 @@ sub test_spawn_orb_successful_run_with_existing_orb : Test(2) {
         }
     );
 
-    is( scalar @orbs, 2, "Should be two orbs" );
-    is( $orbs[1]->land->x, 3, "Second orb created on bottom row");
+    is( scalar @orbs,      2, "Should be two orbs" );
+    is( $orbs[1]->land->x, 3, "Second orb created on bottom row" );
 
+}
+
+sub test_spawn_orbs_successful_run_with_existing_cg : Tests(8) {
+    my $self = shift;
+
+    my @land = $self->_create_land();
+
+    # Towns on top left and bottom right corners
+    for my $idx ( 0, 8 ) {
+        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
+    }
+
+    my $existing_cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[2]->id, }, );
+
+    RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
+
+    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
+        {},
+        {
+            order_by => 'x,y',
+            prefetch => 'land',
+        }
+    );
+
+    is( scalar @orbs,      2, "Should be two orbs" );
+    is( $orbs[0]->land->x, 1, "First orb should be at x=1" );
+    is( $orbs[0]->land->y, 3, "First orb should be at y=3" );
+
+    my @spawned_cgs = $orbs[0]->land->search_related('creature_group');
+
+    is( scalar @spawned_cgs, 1, "Creature group spawned at first orb" );
+    is( $spawned_cgs[0]->id, $existing_cg->id, "Didn't spawn a new cg, as one already there" );
+
+    is( $orbs[1]->land->x, 3, "Second orb should be at x=3" );
+    is( $orbs[1]->land->y, 1, "Second orb should be at y=1" );
+
+    @spawned_cgs = $orbs[1]->land->search_related('creature_group');
+    is( scalar @spawned_cgs, 1, "Creature group spawned at first orb" );
 }
 
 sub test_spawn_orb_with_town_search_smaller_than_orb_search : Test(1) {
     my $self = shift;
 
-    my @land = $self->_create_land(5,5);
+    my @land = $self->_create_land( 5, 5 );
 
     $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[12]->id, } );
-    
+
     $self->{config}->{orb_distance_from_other_orb} = 3;
 
     RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
@@ -148,11 +185,11 @@ sub test_spawn_orb_no_room_for_new_orb : Test(2) {
     my $self = shift;
 
     my @land = $self->_create_land();
-    
-    for my $idx (0, 4, 8) {
-        $self->{schema}->resultset('Town')->create({'land_id' => $land[$idx]->id});
+
+    for my $idx ( 0, 4, 8 ) {
+        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
     }
-    
+
     RPG::Ticker->spawn_orbs( $self->{config}, $self->{schema}, $self->{logger} );
 
     my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
@@ -271,13 +308,13 @@ sub test_spawn_monsters_with_towns : Tests(2) {
 
     # Orb in top left
     $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[0]->id, level => 1 } );
-    
+
     # Town next to Orb
-    $self->{schema}->resultset('Town')->create( { land_id => $land[1]->id } );    
+    $self->{schema}->resultset('Town')->create( { land_id => $land[1]->id } );
 
     # Create a party to force some monsters to be generated
     $self->{schema}->resultset('Party')->create( {} );
-    
+
     $self->{config}{creature_groups_to_parties} = 3;
 
     RPG::Ticker->spawn_monsters( $self->{config}, $self->{schema}, $self->{logger} );
@@ -288,13 +325,13 @@ sub test_spawn_monsters_with_towns : Tests(2) {
     # Check if any spawned in the town
     my $spawned_in_town = 0;
     foreach my $cg (@cgs) {
-        if ($cg->land_id == $land[1]->id) {
+        if ( $cg->land_id == $land[1]->id ) {
             $spawned_in_town = 1;
             last;
         }
     }
-    
-    is($spawned_in_town, 0, "No groups were spawned in town");
+
+    is( $spawned_in_town, 0, "No groups were spawned in town" );
 }
 
 sub test_move_cg_no_other_cgs : Tests(3) {
@@ -477,9 +514,9 @@ sub test_move_cg_town_blocks_some_squares : Tests(2) {
     my @land = $self->_create_land();
 
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[0]->id, }, );
-    
+
     # Block cg in with towns
-    for my $idx (1 .. 4) {
+    for my $idx ( 1 .. 4 ) {
         $self->{schema}->resultset('Town')->create( { land_id => $land[$idx]->id, }, );
     }
 

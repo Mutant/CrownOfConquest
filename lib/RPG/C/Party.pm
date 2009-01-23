@@ -129,8 +129,9 @@ sub list : Local {
 
     my $party = $c->stash->{party};
 
-    # For some reasons, the characters don't have all the data we need (class, race, effects) even tho they're in the prefetch.
-    #  Re-querying here to fix that, altho it'd be nice if it was always here
+    # Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
+    #  to be re-read.
+    # TODO: check if an update has occured, and only re-read if it has
     my @characters = $c->model('DBIC::Character')->search(
         { 'party_id' => $c->stash->{party}->id, },
         {
@@ -152,7 +153,10 @@ sub list : Local {
         $party->in_combat_with ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
 
         my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
+
         $spells{ $character->id } = \@spells if @spells;
+        
+
     }
 
     my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
@@ -476,9 +480,7 @@ sub destroy_orb : Local {
 
     $c->stash->{party_location}->discard_changes;
 
-    my $level_needed = $orb->level * 3;
-
-    if ( $party->level < $level_needed ) {
+    if ( $orb->can_destroy( $party->level ) ) {        
         $c->stash->{messages} = "It's not good - you're just not powerful enough to destroy this Orb of " . $orb->name;
         $c->forward( '/panel/refresh', ['messages'] );
         return;

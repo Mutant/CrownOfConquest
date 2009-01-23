@@ -12,7 +12,7 @@ use Test::More;
 
 use Data::Dumper;
 
-sub startup : Test(startup=>1) {
+sub combat_startup : Test(startup=>1) {
 	my $self = shift;
 	
 	$self->{dice} = Test::MockObject->fake_module( 
@@ -30,10 +30,11 @@ sub startup : Test(startup=>1) {
 	
 }
 
-sub shutdown : Test(shutdown) {
+sub combat_shutdown : Test(shutdown) {
 	my $self = shift;
 	
-	delete $INC{'Games/Dice/Advanced.pm'};	
+	delete $INC{'Games/Dice/Advanced.pm'};
+	require 'Games/Dice/Advanced.pm';
 }
 
 sub test_finish : Tests(18) {

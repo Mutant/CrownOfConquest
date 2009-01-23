@@ -97,14 +97,7 @@ sub sell : Local {
     $character->update;
     
     # Rejig party order
-    my $count = 0;
-    foreach my $existing_character ($c->stash->{party}->characters) {
-        next if $existing_character->id == $character->id;
-        
-        $count++;
-        $existing_character->party_order($count);
-        $existing_character->update;
-    }
+    $c->stash->{party}->adjust_order;
 
     $c->model('DBIC::Character_History')->create(
         {

@@ -78,7 +78,7 @@
 						    [% spell = memorised_spell.spell %]
 						 	[% IF spell.target == 'character' || spell.target == 'creature' %]
 						    	<div dojoType="dijit.PopupMenuItem">
-  					             <span>[% spell.spell_name %]</span>
+  					             <span>[% spell.spell_name %] ([% memorised_spell.casts_left_today %])</span>
 					             <div dojoType="dijit.Menu">
   					             [% IF spell.target == 'creature' %]
 									 [% FOREACH creature IN creatures %]

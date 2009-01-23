@@ -27,6 +27,7 @@ sub run {
         my @characters = $town->characters;
 
         my $ideal_number_of_characters = int( $town->prosperity / $config->{characters_per_prosperity} );
+        $ideal_number_of_characters = 1 if $ideal_number_of_characters < 1;
 
         $logger->debug( 'Town id: ' . $town->id . " has " . scalar @characters . " characters, but should have $ideal_number_of_characters" );
 

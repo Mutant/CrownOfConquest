@@ -423,6 +423,8 @@ sub bury : Local {
     $c->stash->{messages} = "You say your last goodbyes to " . $character->character_name . ". R.I.P.";
 
     $character->delete;
+    
+    $c->stash->{party}->adjust_order;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
 

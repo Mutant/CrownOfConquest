@@ -40,19 +40,22 @@ sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
 
-    if ($self->location->orb ) {
-        # Always attack if there's an orb in the sector
+    if ($self->location->orb && $self->location->orb->can_destroy( $party->level) ) {
+        # Always attack if there's an orb in the sector, and the party is high enough level to destroy it
         return 1;
     }
 
 	return 0
-		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_diff};
+		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_above_party};
+		
+	return 0
+	   if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party}; 
 
 	my $chance = RPG::Schema->config->{creature_attack_chance};
 	
-	my $roll = int rand 100;
-		
-	return $roll < $chance;
+	my $roll = Games::Dice::Advanced->roll('1d100');
+				
+	return $roll < $chance ? 1 : 0;
 }
 
 sub creature_summary {

@@ -27,6 +27,7 @@ sub shutdown : Test(shutdown) {
 	my $self = shift;
 	
 	delete $INC{'Games/Dice/Advanced.pm'};	
+	require 'Games/Dice/Advanced.pm';
 }
 
 sub test_weighted_random_number_even_number_list : Tests(no_plan) {
@@ -46,5 +47,4 @@ sub test_weighted_random_number_odd_number_list : Tests(no_plan) {
     $self->{roll_result} = 144;
     is(RPG::Maths->weighted_random_number(@numbers), 3);     
 }
-
 1;

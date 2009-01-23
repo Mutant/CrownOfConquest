@@ -44,9 +44,6 @@ sub auto : Private {
     );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
-        $c->stash->{party}->last_action( DateTime->now() );
-        $c->stash->{party}->update;
-
         $c->stash->{party_location} = $c->stash->{party}->location;
 
         # Get parties online
@@ -96,6 +93,9 @@ sub default : Private {
 
 sub end : Private {
     my ( $self, $c ) = @_;
+
+    $c->stash->{party}->last_action( DateTime->now() );
+    $c->stash->{party}->update;
 
     $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
     $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );

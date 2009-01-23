@@ -18,4 +18,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' }
 );
 
+# Returns true if the party level supplied is high enough to destroy the orb
+sub can_destroy {
+    my $self = shift;
+    my $party_level = shift;   
+    
+    return 1 if $party_level >= $self->level * RPG::Schema->config->{orb_level_multiplier_to_destroy_orb};    
+}
+
 1;

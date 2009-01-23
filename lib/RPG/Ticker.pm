@@ -299,6 +299,8 @@ my @creature_types;
 sub _create_group {
     my ( $package, $schema, $land, $min_level, $max_level ) = @_;
 
+    return if $land->creature_group;
+
     @creature_types = $schema->resultset('CreatureType')->search()
         unless @creature_types;
 

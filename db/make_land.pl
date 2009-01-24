@@ -12,15 +12,18 @@ use Games::Dice::Advanced;
 use RPG::Map;
 
 my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
+#my $dbh = DBI->connect("dbi:mysql:game-test","root","root");
 $dbh->{RaiseError} = 1;
 
-my $max_x = 40;
-my $max_y = 40;
+my $min_x = 1;
+my $min_y = 1;
+my $max_x = 100;
+my $max_y = 100;
 
 my ($max_terrain) = $dbh->selectrow_array('select max(terrain_id) from Terrain');
 my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain where terrain_name = "town"');
 
-$dbh->do('delete from Land');
+#$dbh->do('delete from Land');
 
 my $map;
 my %terrain_count;
@@ -29,8 +32,12 @@ print "Creating a $max_x x $max_y world";
 
 my $previous_ctr;
 
-for my $x (1 .. $max_x) {
-    for my $y (1 .. $max_y) {
+for my $x ($min_x .. $max_x) {
+    for my $y ($min_y .. $max_y) {
+        my ($land_id) = $dbh->selectrow_array("select land_id from Land where x=$x and y=$y");
+        
+        next if $land_id;
+        
         my $terrain_id = get_terrain_id($x, $y);        
         
         $map->[$x][$y] = $terrain_id;

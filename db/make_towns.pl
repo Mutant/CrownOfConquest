@@ -12,16 +12,19 @@ use Math::Round qw(round);
 use List::Util qw(shuffle);
 
 my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
+#my $dbh = DBI->connect("dbi:mysql:game-test","root","root");
 $dbh->{RaiseError} = 1;
 
-my $towns = 40;
+my $towns = 30;
 
 # Min distance a town can be from another one
-my $town_dist_x = 12;
-my $town_dist_y = 12;
+my $town_dist_x = 21;
+my $town_dist_y = 21;
 
-my $max_x = 40;
-my $max_y = 40;
+my $min_x = 1;
+my $min_y = 1;
+my $max_x = 100;
+my $max_y = 100;
 
 my %prosp_limits = (
 	90 => 2,
@@ -40,7 +43,7 @@ my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain wh
 
 $dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
 
-$dbh->do('delete from Town');
+#$dbh->do('delete from Town');
 
 print "\nCreating $towns towns\n";
 
@@ -51,8 +54,11 @@ for (1 .. $towns) {
 	do {
 		undef $close_town;
 		
-		$town_x = Games::Dice::Advanced->roll("1d$max_x");
-		$town_y = Games::Dice::Advanced->roll("1d$max_y");
+		my $x_range = $max_x - $min_x - 1;
+		my $y_range = $max_y - $min_y - 1;
+		
+		$town_x = Games::Dice::Advanced->roll("1d$x_range") + $min_x - 1;
+		$town_y = Games::Dice::Advanced->roll("1d$y_range") + $min_y - 1;
 
 		warn "creating town #$_ at: $town_x, $town_y\n"; 
 		
@@ -80,6 +86,8 @@ for (1 .. $towns) {
 	} while (defined $close_town);
 	
 	my ($land_id) = $dbh->selectrow_array("select land_id from Land where x=$town_x and y=$town_y"); 
+
+    die "No land id found for $town_x, $town_y ($land_id)" unless $land_id;
 	
 	$dbh->do("update Land set terrain_id = $town_terrain_id, creature_threat = 0 where land_id = $land_id"); 
 	
@@ -103,8 +111,14 @@ sub generate_name {
 
 sub generate_prosperity {
 	my $prosp;
+	
+	my @row =$dbh->selectrow_array("select count(*) from Town");
+	my $num_of_towns = shift @row;
+	
 	while (! $prosp) {
 		$prosp = Games::Dice::Advanced->roll("1d100");
+		
+		return $prosp unless $num_of_towns;
 		
 		my $prosp_idx = $prosp-1;	
 		my $prosp_range = $prosp_idx - $prosp_idx % 10;	
@@ -114,7 +128,7 @@ sub generate_prosperity {
  		my @row = $dbh->selectrow_array("select count(*) from Town where prosperity > $prosp_range+1 and prosperity <= $prosp_range+10");
 		my $current_count = shift @row;
 	
-		my $current_percent = ($current_count / $towns * 100);
+		my $current_percent = ($current_count / $num_of_towns * 100);
 	
 		warn "Prosp: $prosp; range: $prosp_range; max: $max_percent; current: $current_count; current_percent: $current_percent\n";
 		

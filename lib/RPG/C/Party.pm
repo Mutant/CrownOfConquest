@@ -209,7 +209,7 @@ sub swap_chars : Local {
     # Moved char moves to the position of the target char
     my $moved_char_destination = $characters{ $c->req->param('target') }->party_order;
     my $moved_char_origin      = $characters{ $c->req->param('moved') }->party_order;
-
+    
     # Is the moved char moving up or down?
     my $moving_up = $characters{ $c->req->param('moved') }->party_order > $moved_char_destination ? 1 : 0;
 
@@ -217,14 +217,12 @@ sub swap_chars : Local {
     # We need to do this before adjusting for drop_pos
     my $sep_pos = $c->stash->{party}->rank_separator_position;
 
-    #warn "moving_up: $moving_up, dest: $moved_char_destination, sep_pos: $sep_pos\n";
-    if ( $moving_up && $moved_char_destination <= $sep_pos ) {
-
-        #warn "updating sep_pos\n";
+    #warn "moving_up: $moving_up, dest: $moved_char_destination, origin: $moved_char_origin, sep_pos: $sep_pos\n";
+    if ( $moving_up && $moved_char_destination <= $sep_pos && $moved_char_origin >= $sep_pos ) {
         $c->stash->{party}->rank_separator_position( $sep_pos + 1 );
         $c->stash->{party}->update;
     }
-    elsif ( !$moving_up && $moved_char_destination >= $sep_pos ) {
+    elsif ( !$moving_up && $moved_char_destination > $sep_pos && $moved_char_origin <= $sep_pos  ) {
         $c->stash->{party}->rank_separator_position( $sep_pos - 1 );
         $c->stash->{party}->update;
     }
@@ -234,6 +232,7 @@ sub swap_chars : Local {
 
     # If the char was dropped before the destination and we're moving down, the destination is incremented
     $moved_char_destination-- if !$moving_up && $c->req->param('drop_pos') eq 'before';
+
 
     # Adjust all the chars' positions
     foreach my $character ( values %characters ) {

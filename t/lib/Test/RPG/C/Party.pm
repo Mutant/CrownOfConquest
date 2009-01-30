@@ -14,7 +14,7 @@ use RPG::C::Party;
 
 use Data::Dumper;
 
-sub test_swap_chars : Tests(37) {
+sub test_swap_chars : Tests(65) {
 	my $self = shift;
 		
 	my @characters;
@@ -31,43 +31,68 @@ sub test_swap_chars : Tests(37) {
 	
 	my $party = Test::MockObject->new();
 	$party->mock('characters', sub { @characters });
-	$party->set_always('rank_separator_position', 2);
+	$party->mock('rank_separator_position',  sub { $_[0]->{rank_sep_set_to} = $_[1] if $_[1]; $_[0]->{rank_sep} } );	
 	$party->set_always('update');
 	
 	$self->{stash} = {
 		party => $party,
-	};
+	};	
 	
 	my @tests = (
 		{
 			moved => 2,
 			target => 4,
 			drop_pos => 'before',
+			rank_separator_expected => 2,
 		},
 		{
 			moved => 1,
 			target => 5,			
 			drop_pos => 'after',
+			rank_separator_expected => 2,
 		},
 		{
 			moved => 4,
 			target => 2,
 			drop_pos => 'after',
+			rank_separator_expected => 4,
 		},
 		{
 			moved => 3,
 			target => 4,
 			drop_pos => 'before',
+			rank_separator_expected => 2,
 		},
-		{
+        {
+			moved => 2,
+			target => 3,
+			drop_pos => 'after',
+		},
+        {
 			moved => 3,
 			target => 4,
 			drop_pos => 'after',
+			rank_separator_expected => 2,
 		},
+        {
+			moved => 4,
+			target => 3,
+			drop_pos => 'after',
+			rank_separator_expected => 4,
+		},
+        {
+			moved => 4,
+			target => 3,
+			drop_pos => 'before',
+			rank_separator_expected => 4,
+		},
+		
 	);
 	
 	foreach my $test (@tests) {
 		map { $_->clear; $_->{party_order_set_to} = undef; } @characters;
+		$party->{rank_sep} = 3;
+		$party->{rank_sep_set_to} = undef;
 		
 		$self->{params} = $test;
 		
@@ -125,6 +150,10 @@ sub test_swap_chars : Tests(37) {
 			
 			$count++;
 		}
+				
+		is($party->{rank_sep_set_to}, $test->{rank_separator_expected}, "Rank separator in expected position");
+		
+		#warn "rank sep: " . $party->{rank_sep_set_to};
 	}
 }
 

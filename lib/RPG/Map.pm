@@ -31,6 +31,21 @@ sub surrounds {
     
 }
 
+# Get the surrounds based on the range from the center square, rather than an x by y size
+# If only one param is passed in as range, it's assumed to be the same for both x and y 
+sub surrounds_by_range {
+    my $self = shift;
+    my $x_base = shift || croak 'x base not supplied';
+    my $y_base = shift || croak 'y base not supplied';
+    my $x_range = shift || croak 'x size not supplied';
+    my $y_range = shift || $x_range;
+    
+    $x_range = $x_range * 2 + 1;
+    $y_range = $y_range * 2 + 1;
+    
+    return $self->surrounds($x_base, $y_base, $x_range, $y_range); 
+}
+
 sub _coord_diff {
     my $coord = shift || croak 'coord value not supplied';
     my $size  = shift || croak 'size not supplied';
@@ -90,6 +105,22 @@ sub is_in_range {
 	}
 	
 	return 0;
+}
+
+# Get the overlapping sectors in two squares
+sub get_overlapping_sectors {
+    my ($package, $first_square, $second_square) = @_;
+    
+    my @overlap;
+    
+    for my $first_x ( $first_square->[0]{x} .. $first_square->[1]{x} ) {
+        for my $first_y ( $first_square->[0]{y} .. $first_square->[1]{y} ) {
+            my $coord_to_test = {x=>$first_x, y=>$first_y};
+            push @overlap, $coord_to_test if $package->is_in_range($coord_to_test, @{$second_square});
+        }    
+    }
+    
+    return @overlap;    
 }
 
 # Check whether one coord is immediately adjacent to another

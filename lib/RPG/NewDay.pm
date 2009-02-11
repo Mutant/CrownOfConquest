@@ -14,6 +14,7 @@ use RPG::NewDay::Party;
 use RPG::NewDay::Player;
 use RPG::NewDay::Quest;
 use RPG::NewDay::Recruitment;
+use RPG::NewDay::Dungeon;
 
 sub run {
 	my $package = shift;
@@ -75,19 +76,22 @@ sub do_new_day {
 	$logger->info("Beginning new day script for day: " . $new_day->day_number);
 	
 	# Clean up players
-	RPG::NewDay::Player->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Player->run($config, $schema, $logger, $new_day);
 		
 	# New day for Party
-	RPG::NewDay::Party->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Party->run($config, $schema, $logger, $new_day);
 
 	# Run shops update
-	RPG::NewDay::Shop->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Shop->run($config, $schema, $logger, $new_day);
 
 	# Add quests to towns
-	RPG::NewDay::Quest->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Quest->run($config, $schema, $logger, $new_day);
 
 	# Create characters at the recruitment market
-	RPG::NewDay::Recruitment->run($config, $schema, $logger, $new_day);
+	#RPG::NewDay::Recruitment->run($config, $schema, $logger, $new_day);
+	
+	# Generate dungeons
+	RPG::NewDay::Dungeon->run($config, $schema, $logger, $new_day);
 	
 	$schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
 	

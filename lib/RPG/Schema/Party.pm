@@ -141,6 +141,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 1,
         'size'              => 0
     },
+    'dungeon_grid_id' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => '0',
+        'is_foreign_key'    => 0,
+        'name'              => 'dungeon_grid_id',
+        'is_nullable'       => 0,
+        'size'              => 0,
+    },    
 );
 __PACKAGE__->set_primary_key('party_id');
 

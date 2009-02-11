@@ -39,7 +39,7 @@ sub party : Local {
         $centre_y = $party_location->y + $c->req->param('y_offset');
     }
 
-    my $grid_params = $c->forward( 'generate_grid', [ 25, 25, $centre_x, $centre_y, ], );
+    my $grid_params = $c->forward( 'generate_grid', [ 21, 21, $centre_x, $centre_y, ], );
 
     $grid_params->{click_to_move} = 0;
 

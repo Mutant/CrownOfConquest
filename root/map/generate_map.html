@@ -13,7 +13,7 @@
 	[% FOREACH x IN x_range %]
 		[% position = grid.$x.$y %]        
         [% IF position %]            
-        <td [% IF position.land_id == current_position.id %]id="map_current_pos"[% END %] class="map_square">
+        <td [% IF position.land_id == current_position.id %]id="map_current_pos"[% END %] class="map_square" [% IF position.town_id %]style="background: lightgrey"[% END %]>
             [% FILTER collapse %]    
         	[% IF click_to_move && position.next_to_centre && ! party_in_combat %]
         		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')"">

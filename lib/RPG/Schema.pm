@@ -14,7 +14,7 @@ __PACKAGE__->load_classes(qw/
     Item_Variable Item_Variable_Params Item_Variable_Name Super_Category Equip_Place_Category Levels
     Spell Memorised_Spells Effect Creature_Effect Character_Effect Mapped_Sectors Day DayLog Combat_Log
     Quest Quest_Param Quest_Param_Name Quest_Type Character_History Grave Creature_Orb Party_Messages
-    Dungeon Dungeon_Grid Dungeon_Wall Dungeon_Position Door Dungeon_Room
+    Dungeon Dungeon_Grid Dungeon_Wall Dungeon_Position Door Dungeon_Room Mapped_Dungeon_Grid
 /);
 
 my $config;

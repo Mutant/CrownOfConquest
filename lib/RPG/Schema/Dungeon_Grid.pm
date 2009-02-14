@@ -32,6 +32,12 @@ __PACKAGE__->belongs_to(
     { 'foreign.dungeon_room_id' => 'self.dungeon_room_id' }
 );
 
+__PACKAGE__->has_many(
+    'mapped_dungeon_grid',
+    'RPG::Schema::Mapped_Dungeon_Grid',
+    { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' }
+);
+
 sub sides_with_walls {
     my $self = shift;
     

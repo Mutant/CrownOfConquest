@@ -10,7 +10,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Grid');
 
-__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_id/);
+__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id/);
 
 __PACKAGE__->set_primary_key('dungeon_grid_id');
 
@@ -24,6 +24,12 @@ __PACKAGE__->has_many(
     'walls',
     'RPG::Schema::Dungeon_Wall',
     { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' }
+);
+
+__PACKAGE__->belongs_to(
+    'dungeon_room',
+    'RPG::Schema::Dungeon_Room',
+    { 'foreign.dungeon_room_id' => 'self.dungeon_room_id' }
 );
 
 sub sides_with_walls {

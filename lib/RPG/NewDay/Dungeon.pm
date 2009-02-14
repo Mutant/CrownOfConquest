@@ -100,8 +100,6 @@ sub _generate_dungeon_grid {
 
     my $number_of_rooms = Games::Dice::Advanced->roll( $dungeon->level + 1 . 'd20' ) + 20;
 
-    my @doors_to_join;
-
     my $sectors_created;
 
     $logger->debug("Creating $number_of_rooms rooms in dungeon");
@@ -109,41 +107,36 @@ sub _generate_dungeon_grid {
     for my $current_room_number ( 1 .. $number_of_rooms ) {
         $logger->debug("Creating room # $current_room_number");
 
-        $logger->debug( scalar @doors_to_join . " doors left to join" );
-
         my ( $start_x, $start_y );
 
-        my $door_to_join;
+        my $wall_to_join;
 
         if ( $current_room_number == 1 ) {
 
             # Pick a spot for the first room
-            $start_x = 1;
-            $start_y = 1;
+            $start_x = 15;
+            $start_y = 15;
         }
         else {
-            # Find a door to join
-            if (scalar @doors_to_join == 0) {
-                # If there are no doors to join, create some more
-                my @sectors;
-                foreach my $sector_array (@$sectors_created) {
-                    push @sectors, map { $_ } @$sector_array;
-                }
-                
-                my ($new_door, $joined);
-                
-                while (! $door_to_join || $joined) {
-                    ( $door_to_join, $joined ) = $package->_create_door( \@sectors, $sectors_created, $positions );
-                }
-            }
-            else {            
-                @doors_to_join = shuffle @doors_to_join;
-                $door_to_join  = shift @doors_to_join;
-            }
 
-            $logger->debug( "Joining to door at: " . $door_to_join->dungeon_grid->x . ", " . $door_to_join->dungeon_grid->y . ": " . $door_to_join->position->position );
+            # Find a wall to join
+            $wall_to_join = $package->_find_wall_to_join($sectors_created);
 
-            ( $start_x, $start_y ) = $door_to_join->opposite_sector;
+            $logger->debug( "Joining wall at "
+                    . $wall_to_join->dungeon_grid->x . ", "
+                    . $wall_to_join->dungeon_grid->y
+                    . " position: "
+                    . $wall_to_join->position->position );
+
+            ( $start_x, $start_y ) = $wall_to_join->opposite_sector;
+
+            # Create existing side of the door
+            my $door = $schema->resultset('Door')->create(
+                {
+                    position_id     => $wall_to_join->position_id,
+                    dungeon_grid_id => $wall_to_join->dungeon_grid_id,
+                }
+            );
         }
 
         $logger->debug("Creating room with start pos of $start_x, $start_y");
@@ -151,49 +144,20 @@ sub _generate_dungeon_grid {
         # Create the room
         my @new_sectors = $package->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
 
-        # Keep track of sectors created
+        # Keep track of sectors and rooms created
         foreach my $new_sector (@new_sectors) {
             $sectors_created->[ $new_sector->x ][ $new_sector->y ] = $new_sector;
         }
 
         # Create other side of door to join
-        if ($door_to_join) {
-            #$logger->debug("Creating other side of door to join at $");
-            
-            my $position = $schema->resultset('Dungeon_Position')->find( { position => $door_to_join->opposite_position }, );
-
+        if ($wall_to_join) {
             my $door = $schema->resultset('Door')->create(
                 {
-                    position_id     => $position->id,
+                    position_id     => $positions->{ $wall_to_join->opposite_position },
                     dungeon_grid_id => $sectors_created->[$start_x][$start_y]->id,
                 }
             );
         }
-
-        # Create doors
-        unless ( $current_room_number == $number_of_rooms ) {
-            my $doors_to_create = Games::Dice::Advanced->roll('1d4') - 1;
-            $doors_to_create++ unless @doors_to_join;
-
-            $logger->debug("Creating $doors_to_create doors");
-
-            for ( 1 .. $doors_to_create ) {
-                my ( $door, $joined ) = $package->_create_door( \@new_sectors, $sectors_created, $positions );
-
-                last unless $door;
-
-                push @doors_to_join, $door if !$joined;
-            }
-        }
-        else {
-            $logger->debug( "Deleting " . scalar @doors_to_join );
-
-            # Delete doors to nowhere
-            foreach my $door (@doors_to_join) {
-                $door->delete;
-            }
-        }
-
     }
 }
 
@@ -212,6 +176,9 @@ sub _create_room {
     #warn "$top_x, $top_y, $bottom_x, $bottom_y\n";
     #warn Dumper $sectors_created;
 
+    my $room = $schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
+
+    my $coords_created;
     my @sectors;
 
     for my $x ( $top_x .. $bottom_x ) {
@@ -220,23 +187,23 @@ sub _create_room {
 
             my $sector = $schema->resultset('Dungeon_Grid')->create(
                 {
-                    x          => $x,
-                    y          => $y,
-                    dungeon_id => $dungeon->id,
+                    x               => $x,
+                    y               => $y,
+                    dungeon_room_id => $room->id,
                 }
             );
 
             my @walls_to_create;
-            if ( $x == $top_x || ($sectors_created->[ $x-1 ][ $y ] && $sectors_created->[ $x-1 ][ $y ]->has_wall('right')) ) {
+            if ( $x == $top_x || ( $sectors_created->[ $x - 1 ][$y] && $sectors_created->[ $x - 1 ][$y]->has_wall('right') ) ) {
                 push @walls_to_create, 'left';
             }
-            if ( $x == $bottom_x || ($sectors_created->[ $x+1 ][ $y ] && $sectors_created->[ $x+1 ][ $y ]->has_wall('left')) ) {
+            if ( $x == $bottom_x || ( $sectors_created->[ $x + 1 ][$y] && $sectors_created->[ $x + 1 ][$y]->has_wall('left') ) ) {
                 push @walls_to_create, 'right';
             }
-            if ( $y == $top_y || ($sectors_created->[ $x ][ $y-1 ] && $sectors_created->[ $x ][ $y-1 ]->has_wall('bottom')) ) {
+            if ( $y == $top_y || ( $sectors_created->[$x][ $y - 1 ] && $sectors_created->[$x][ $y - 1 ]->has_wall('bottom') ) ) {
                 push @walls_to_create, 'top';
             }
-            if ( $y == $bottom_y || ($sectors_created->[ $x ][ $y+1 ] && $sectors_created->[ $x ][ $y+1 ]->has_wall('top')) ) {
+            if ( $y == $bottom_y || ( $sectors_created->[$x][ $y + 1 ] && $sectors_created->[$x][ $y + 1 ]->has_wall('top') ) ) {
                 push @walls_to_create, 'bottom';
             }
 
@@ -250,10 +217,86 @@ sub _create_room {
             }
 
             push @sectors, $sector;
+            $coords_created->[ $sector->x ][ $sector->y ] = 1;
         }
     }
 
-    return @sectors;
+    # Check for any non-contiguous sectors, and remove them
+    my @contiguous_sectors;
+    foreach my $sector (@sectors) {
+        my $path_available = $package->_has_available_path(
+            $start_x,
+            $start_y,
+            $sector->x,
+            $sector->y,
+            $top_x,
+            $top_y,
+            $bottom_x,
+            $bottom_y,
+            $coords_created,
+        );
+        
+        # No path to start sector found, so delete it
+        unless ($path_available) {
+            $logger->debug("Sector " . $sector->x . ", " . $sector->y . " is not contiguous with $start_x, $start_y, so removing it");
+            $sector->delete;
+        }
+        else {
+            push @contiguous_sectors, $sector;
+        }
+    }
+
+    return @contiguous_sectors;
+}
+
+sub _has_available_path {
+    my $package          = shift;
+    my $dest_x           = shift;
+    my $dest_y           = shift;
+    my $x                = shift;
+    my $y                = shift;
+    my $top_x            = shift;
+    my $top_y            = shift;
+    my $bottom_x         = shift;
+    my $bottom_y         = shift;
+    my $coords_available = shift;
+    my $checked = shift;
+
+    #warn Dumper $coords_available;
+    #warn Dumper $checked;
+    
+    return 1 if $dest_x == $x && $dest_y == $y;
+
+    my @paths_to_check = ( [ $x + 1, $y ], [ $x - 1, $y ], [ $x, $y + 1 ], [ $x, $y - 1 ], );
+
+    my $path_available = 0;
+    foreach my $path (@paths_to_check) {
+        my ( $test_x, $test_y ) = @$path;
+
+        next if $test_x < $top_x || $test_y < $top_y || $test_x > $bottom_x || $test_y > $bottom_y;
+   
+        #warn "Checking path: $test_x, $test_y\n";
+
+        if ( $dest_x == $test_x && $dest_y == $test_y ) {
+            # Dest reached
+            return 1;
+        }
+        
+        #warn "Checked: " . ($checked->[$test_x][$test_y] || 0) . "\n";
+        #warn "Avail: " . $coords_available->[$test_x][$test_y] . "\n";
+            
+        if (! $checked->[$test_x][$test_y] && $coords_available->[$test_x][$test_y]) {
+         
+            $checked->[$test_x][$test_y] = 1;
+                 
+            if ($package->_has_available_path( $dest_x, $dest_y, $test_x, $test_y, $top_x, $top_y, $bottom_x, $bottom_y, $coords_available, $checked ) ) {
+                $path_available = 1;
+                last;
+            }
+        }
+    }
+
+    return $path_available;
 
 }
 
@@ -261,7 +304,7 @@ sub _find_room_dimensions {
     my $package = shift;
     my $start_x = shift;
     my $start_y = shift;
-
+    
     my $x_size = Games::Dice::Advanced->roll( '1d' . $config->{max_x_dungeon_room_size} );
     my $y_size = Games::Dice::Advanced->roll( '1d' . $config->{max_y_dungeon_room_size} );
 
@@ -275,73 +318,53 @@ sub _find_room_dimensions {
 
 }
 
-sub _create_door {
-    my $package              = shift;
-    my $sectors_to_create_in = shift;
-    my $existing_sectors     = shift;
-    my $positions            = shift;
-    
-    my $sector_to_create_in;
-    my $position;
-    foreach my $sector ( shuffle @$sectors_to_create_in ) {
-        next unless $sector;
-        if ( my @wall_positions = $sector->sides_with_walls ) {
-            my @doors = $sector->doors;
+sub _find_wall_to_join {
+    my $package         = shift;
+    my $sectors_created = shift;
 
-            my @possible_positions;
-            foreach my $wall_pos (@wall_positions) {
-                next if $wall_pos eq 'left' && $sector->x == 1;
-                next if $wall_pos eq 'top' && $sector->y == 1;
-                
-                next if grep { $_->position->position eq $wall_pos } @doors;
-                
-                push @possible_positions, $wall_pos;                
-            };
-
-            $position = ( shuffle @possible_positions )[0];
-
-            next unless $position;
-
-            $sector_to_create_in = $sector;
-            last;
+    my @all_sectors;
+    foreach my $y_line (@$sectors_created) {
+        foreach my $sector (@$y_line) {
+            next unless defined $sector;
+            push @all_sectors, $sector;
         }
     }
 
-    return unless $sector_to_create_in;
+    my $wall_to_join;
+    SECTOR: foreach my $sector ( shuffle @all_sectors ) {
+        if ( my @walls = $sector->walls ) {
+            foreach my $wall ( shuffle @walls ) {
+                my ( $opp_x, $opp_y ) = $wall->opposite_sector;
 
-    $logger->debug( "Creating door at " . $sector_to_create_in->x . ", " . $sector_to_create_in->y );
+                next if $opp_x < 1 || $opp_y < 1;
 
-    my $door = $schema->resultset('Door')->create(
-        {
-            dungeon_grid_id => $sector_to_create_in->id,
-            position_id     => $positions->{$position},
-        }
-    );
+                unless ( $sectors_created->[$opp_x][$opp_y] ) {
 
-    # See if there's a sector joining into this door. If so, create a door there
-    my $adjacent_room = 0;
+                    # Check there's no existing door
+                    my $existing_door = $schema->resultset('Door')->find(
+                        {
+                            'dungeon_grid.x' => $sector->x,
+                            'dungeon_grid.y' => $sector->x,
+                            position_id      => $wall->position_id,
+                        },
+                        { 'join' => 'dungeon_grid', }
+                    );
 
-    my ( $opposite_door_x, $opposite_door_y ) = $door->opposite_sector;
-    
-    if ( my $adjacent_sector = $existing_sectors->[ $opposite_door_x ][ $opposite_door_y ] ) {
-        $adjacent_room = 1;
-
-        my @doors             = $adjacent_sector->doors;
-        my $opposite_position = $door->opposite_position;
-
-        unless ( grep { $_ eq $opposite_position } @doors ) {
-
-            # There's not already a door joined, so create one
-            $schema->resultset('Door')->create(
-                {
-                    dungeon_grid_id => $adjacent_sector->id,
-                    position_id     => $positions->{$opposite_position},
+                    unless ($existing_door) {
+                        $wall_to_join = $wall;
+                        last SECTOR;
+                    }
                 }
-            );
+            }
         }
     }
 
-    return ( $door, $adjacent_room );
+    unless ($wall_to_join) {
+        croak "Couldn't find a wall to join";
+    }
+
+    return $wall_to_join;
+
 }
 
 1;

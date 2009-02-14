@@ -15,7 +15,13 @@ sub admin_view : Local {
     # XXX temporary
     my $dungeon_id = $c->req->param('dungeon_id');
 
-    my @sectors = $c->model('DBIC::Dungeon_Grid')->search( { dungeon_id => $dungeon_id, }, { prefetch => [ 'doors', 'walls' ] } );
+    my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
+        { 'dungeon_room.dungeon_id' => $dungeon_id, },
+        {
+            prefetch => [ 'doors', 'walls' ],
+            join     => 'dungeon_room',
+        }
+    );
 
     my $grid;
     my ( $max_x, $max_y ) = ( 0, 0 );
@@ -40,9 +46,9 @@ sub view : Local {
 
     my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
         {
-            x          => { '>=', $top_corner->{x}, '<', $bottom_corner->{x} },
-            y          => { '>=', $top_corner->{y}, '<', $bottom_corner->{y} },
-            dungeon_id => $current_location->dungeon_id,
+            x               => { '>=', $top_corner->{x}, '<', $bottom_corner->{x} },
+            y               => { '>=', $top_corner->{y}, '<', $bottom_corner->{y} },
+            dungeon_room_id => $current_location->dungeon_room_id,
         },
         { prefetch => [ 'walls', 'doors' ], },
     );
@@ -59,6 +65,7 @@ sub view : Local {
         $max_y = $sector->y if $max_y < $sector->y;
     }
 
+=comment
     # Clear out sectors that can't be seen because of walls
     my @sectors_to_show;
     foreach my $sector (@sectors) {
@@ -79,6 +86,7 @@ sub view : Local {
             }
         }
     }
+=cut
 
     $c->forward( 'render_dungeon_grid', [ $grid, $max_x, $max_y, $current_location ] );
 }
@@ -107,35 +115,38 @@ sub render_dungeon_grid : Private {
 
 sub move_to : Local {
     my ( $self, $c, $sector_id ) = @_;
-    
+
     # TODO: check move is allowed, i.e. not too far from current sector, in correct dungeon, etc.
-    
+
     $sector_id ||= $c->req->param('sector_id');
-    
+
     $c->stash->{party}->dungeon_grid_id($sector_id);
     $c->stash->{party}->update;
-    
+
     $c->res->redirect( $c->config->{url_root} . '/dungeon/view' );
 }
 
 sub open_door : Local {
     my ( $self, $c ) = @_;
-    
+
     # TODO: check door can be opened
-    
+
     my $door = $c->model('DBIC::Door')->find( $c->req->param('door_id') );
-    
-    my ($opposite_x, $opposite_y) = $door->opposite_sector;
-    
+
+    my ( $opposite_x, $opposite_y ) = $door->opposite_sector;
+
     my $sector_to_move_to = $c->model('DBIC::Dungeon_Grid')->find(
         {
-            x => $opposite_x,
-            y => $opposite_y,
-            dungeon_id => $door->dungeon_grid->dungeon_id,
+            x          => $opposite_x,
+            y          => $opposite_y,
+            'dungeon_room.dungeon_id' => $door->dungeon_grid->dungeon_room->dungeon_id,
         },
+        {
+            join => 'dungeon_room',
+        }
     );
-    
-    $c->forward('move_to', [$sector_to_move_to->id]);
+
+    $c->forward( 'move_to', [ $sector_to_move_to->id ] );
 }
 
 1;

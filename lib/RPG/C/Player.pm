@@ -16,7 +16,7 @@ sub login : Local {
     my $message;
 
     if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0 } );
+        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), password => $c->req->param('password'), deleted => 0 } );
 
         if ($user) {
             $user->last_login( DateTime->now() );

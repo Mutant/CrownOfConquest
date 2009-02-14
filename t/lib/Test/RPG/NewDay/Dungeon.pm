@@ -11,6 +11,7 @@ use Data::Dumper;
 
 use Test::MockObject;
 use Test::More;
+use Test::Exception;
 
 sub dungeon_startup : Test(startup => 1) {
     my $self = shift;
@@ -144,7 +145,7 @@ sub test_create_room_simple : Test(28) {
 
     my $sectors_seen;
     foreach my $sector (@sectors) {
-        is( $sector->dungeon_id, 1, "Sector created in correct dungeon" );
+        is( $sector->dungeon_room->dungeon_id, 1, "Sector created in correct dungeon" );
 
         is( defined $expected_sectors->[ $sector->x ][ $sector->y ], 1, "Sector " . $sector->x . ", " . $sector->y . " was expected" );
 
@@ -190,7 +191,7 @@ sub test_create_room_with_offset : Test(28) {
 
     my $sectors_seen;
     foreach my $sector (@sectors) {
-        is( $sector->dungeon_id, 1, "Sector created in correct dungeon" );
+        is( $sector->dungeon_room->dungeon_id, 1, "Sector created in correct dungeon" );
 
         is( defined $expected_sectors->[ $sector->x ][ $sector->y ], 1, "Sector " . $sector->x . ", " . $sector->y . " was expected" );
 
@@ -246,7 +247,7 @@ sub test_create_room_with_rooms_blocking : Test(17) {
 
     my $sectors_seen;
     foreach my $sector (@sectors) {
-        is( $sector->dungeon_id, 1, "Sector created in correct dungeon" );
+        is( $sector->dungeon_room->dungeon_id, 1, "Sector created in correct dungeon" );
 
         is( defined $expected_sectors->[ $sector->x ][ $sector->y ], 1, "Sector " . $sector->x . ", " . $sector->y . " was expected" );
 
@@ -258,187 +259,71 @@ sub test_create_room_with_rooms_blocking : Test(17) {
     }
 }
 
-sub test_create_door_one_sector_with_no_walls : Tests(1) {
+sub test_create_room_with_non_contiguous_sectors : Test(11) {
+    my $self = shift;
+
+    # GIVEN
+    $RPG::NewDay::Dungeon::config = {
+        max_x_dungeon_room_size => 6,
+        max_y_dungeon_room_size => 6,
+    };
+
+    my $mock_dungeon = Test::MockObject->new();
+    $mock_dungeon->set_always( 'id', 1 );
+
+    $self->{counter} = 0;
+    $self->{rolls} = [ 3, 1, 1, 1 ];
+
+    my @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 2, [], $self->{positions} );
+    
+    is(scalar @sectors, 3, "Sanity check existing room");
+    
+    my $existing_sectors;
+    foreach my $sector (@sectors) {
+        $existing_sectors->[$sector->x][$sector->y] = $sector;
+    }
+
+    $self->{counter} = 0;
+    $self->{rolls} = [ 3, 3, 1, 1 ];
+
+    my $expected_sectors;
+    $expected_sectors->[1][1] = [ 'top', 'bottom', 'left' ];
+    $expected_sectors->[2][1] = ['top', 'bottom'];
+    $expected_sectors->[3][1] = ['bottom', 'right', 'top'];
+
+    # WHEN
+    @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 1, $existing_sectors, $self->{positions});
+
+    # THEN
+    is( scalar @sectors, 3, "3 new sectors created" );
+
+    my $sectors_seen;
+    foreach my $sector (@sectors) {
+        is( $sector->dungeon_room->dungeon_id, 1, "Sector created in correct dungeon" );
+
+        is( defined $expected_sectors->[ $sector->x ][ $sector->y ], 1, "Sector " . $sector->x . ", " . $sector->y . " was expected" );
+
+        my @walls = sort $sector->sides_with_walls;
+
+        my @expected_walls = sort @{ $expected_sectors->[ $sector->x ][ $sector->y ] };
+
+        is_deeply( \@walls, \@expected_walls, "Walls created as expected" );
+    }
+}
+
+
+
+sub test_find_wall_to_join_simple : Test(1) {
     my $self = shift;
     
     # GIVEN
     my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 1,
-            y => 1,
-        }
-    );
-    
-    # WHEN
-    my $door = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
-        [],
-        $self->{positions},
-    );
-    
-    # THEN
-    is($door, undef, "No door created, since no walls available");
-}
-
-sub test_create_door_one_sector_with_one_wall : Tests(2) {
-    my $self = shift;
-    
-    # GIVEN
-    my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 3,
-            y => 3,
-        }
-    );
-        
-    my $wall = $self->{schema}->resultset('Dungeon_Wall')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    # WHEN
-    my ($door) = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
-        [],
-        $self->{positions},
-    );
-    
-    # THEN
-    is(defined $door, 1, "Door created");
-    is($door->position->position, 'left', "Door created in correct position");
-}
-
-sub test_create_door_one_in_top_left : Tests(1) {
-    my $self = shift;
-    
-    # GIVEN
-    my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 1,
-            y => 1,
-        }
-    );
-        
-    my $wall = $self->{schema}->resultset('Dungeon_Wall')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    # WHEN
-    my ($door) = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
-        [],
-        $self->{positions},
-    );
-    
-    # THEN
-    is($door, undef, "Door not created as only wall is top left of map");
-}
-
-sub test_create_door_one_sector_with_one_wall_one_existing_door : Tests(1) {
-    my $self = shift;
-    
-    # Given
-    my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 1,
-            y => 1,
-        }
-    );
-        
-    my $wall = $self->{schema}->resultset('Dungeon_Wall')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    my $existing_door = $self->{schema}->resultset('Door')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    # WHEN
-    my ($door) = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
-        [],
-        $self->{positions},
-    );
-    
-    is($door, undef, "Door not created as not free wall available");
-}
-
-sub test_create_door_one_sector_with_two_walls_one_existing_door : Tests(2) {
-    my $self = shift;
-    
-    # Given
-    my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 1,
-            y => 1,
-        }
-    );
-        
-    my $wall1 = $self->{schema}->resultset('Dungeon_Wall')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    my $wall2 = $self->{schema}->resultset('Dungeon_Wall')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'right'},
-        }
-    );
-    
-    my $existing_door = $self->{schema}->resultset('Door')->create(
-        {
-            dungeon_grid_id => $sector->id,
-            position_id => $self->{positions}{'left'},
-        }
-    );
-    
-    # WHEN
-    my ($door) = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
-        [],
-        $self->{positions},
-    );
-    
-    is(defined $door, 1, "Door created");
-    is($door->position->position, 'right', "Door created in correct position");
-}
-
-sub test_create_door_adjacent_sector_without_joining_door : Tests(5) {
-    my $self = shift;
-    
-    # Given
-    my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
-        {
-            x => 1,
-            y => 1,
-        }
-    );
-    
-    # Given
-    my $sector2 = $self->{schema}->resultset('Dungeon_Grid')->create(
         {
             x => 1,
             y => 2,
         }
     );
     
-    my $existing_sectors;
-    $existing_sectors->[1][2] = $sector2;    
-        
     my $wall = $self->{schema}->resultset('Dungeon_Wall')->create(
         {
             dungeon_grid_id => $sector->id,
@@ -446,21 +331,303 @@ sub test_create_door_adjacent_sector_without_joining_door : Tests(5) {
         }
     );
     
+    my $existing_sectors;
+    $existing_sectors->[1][2] = $sector;
+    
     # WHEN
-    my ($door, $adjacent_door) = RPG::NewDay::Dungeon->_create_door(
-        [$sector],
+    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
         $existing_sectors,
-        $self->{positions},
     );
     
-    is(defined $door, 1, "Door created");    
-    is($door->position->position, 'bottom', "Door created in correct position");
-    is($adjacent_door, 1, "Adjacent door found");
+    # THEN
+    is($wall->id, $wall_found->id, "Wall to join found");
     
-    my @doors = $sector2->doors;
-    
-    is(scalar @doors, 1, "One door created in adjoining sector");
-    is($doors[0]->position->position, 'top', "Adjoining door created in correct place");
 }
+
+sub test_find_wall_to_join_one_sector_at_left_of_map : Test(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $sector1 = $self->{schema}->resultset('Dungeon_Grid')->create(
+        {
+            x => 1,
+            y => 1,
+        }
+    );
+    
+    my $wall1 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector1->id,
+            position_id => $self->{positions}{'left'},
+        }
+    );
+    
+    my $sector2 = $self->{schema}->resultset('Dungeon_Grid')->create(
+        {
+            x => 2,
+            y => 1,
+        }
+    );
+    
+    my $wall2 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector2->id,
+            position_id => $self->{positions}{'right'},
+        }
+    );    
+    
+    my $existing_sectors;
+    $existing_sectors->[1][1] = $sector1;
+    $existing_sectors->[2][1] = $sector2;
+    
+    # WHEN
+    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+        $existing_sectors,
+    );
+    
+    # THEN
+    is($wall2->id, $wall_found->id, "Wall to join is wall not at far left of map");    
+}
+
+sub test_find_wall_to_join_one_sector_with_no_available_walls : Test(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $sector1 = $self->{schema}->resultset('Dungeon_Grid')->create(
+        {
+            x => 2,
+            y => 2,
+        }
+    );
+    
+    my $wall1 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector1->id,
+            position_id => $self->{positions}{'bottom'},
+        }
+    );
+    
+    my $sector2 = $self->{schema}->resultset('Dungeon_Grid')->create(
+        {
+            x => 2,
+            y => 3,
+        }
+    );
+    
+    my $wall2 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector2->id,
+            position_id => $self->{positions}{'bottom'},
+        }
+    );    
+    
+    my $existing_sectors;
+    $existing_sectors->[2][2] = $sector1;
+    $existing_sectors->[2][3] = $sector2;
+    
+    # WHEN
+    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+        $existing_sectors,
+    );
+    
+    # THEN
+    is($wall2->id, $wall_found->id, "Wall to join is wall not one with adjacent sector");    
+}
+
+sub test_find_wall_to_join_one_sector_with_door_blocking_one_wall : Test(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $sector1 = $self->{schema}->resultset('Dungeon_Grid')->create(
+        {
+            x => 2,
+            y => 2,
+        }
+    );
+    
+    my $wall1 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector1->id,
+            position_id => $self->{positions}{'bottom'},
+        }
+    );
+
+    my $wall2 = $self->{schema}->resultset('Dungeon_Wall')->create(
+        {
+            dungeon_grid_id => $sector1->id,
+            position_id => $self->{positions}{'left'},
+        }
+    );
+    
+    my $door = $self->{schema}->resultset('Door')->create(
+        {
+            dungeon_grid_id => $sector1->id,
+            position_id => $self->{positions}{'bottom'},
+        }
+    );    
+    
+    my $existing_sectors;
+    $existing_sectors->[2][2] = $sector1;
+    
+    # WHEN
+    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+        $existing_sectors,
+    );
+    
+    # THEN
+    is($wall2->id, $wall_found->id, "Wall to join is wall not at far left of map");    
+}
+
+
+sub test_has_available_path_simple : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (1, 1);
+    my ($dest_x, $dest_y)  = (1, 2);
+    my @room_range = (1, 1, 1, 2);
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
+
+    # THEN
+    is($has_path, 1, "Path found between two adjacent sectors");
+    
+} 
+
+sub test_has_available_path_sector_missing_between_two_points : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (1, 1);
+    my ($dest_x, $dest_y)  = (1, 3);
+    my @room_range = (1, 1, 1, 3);
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
+
+    # THEN
+    is($has_path, 0, "No path found as intermediate sector missing");
+    
+}
+
+sub test_has_available_path_sector_large_grid : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (1, 1);
+    my ($dest_x, $dest_y)  = (5, 3);
+    my @room_range = (1, 1, 5, 5);
+    
+    my $coords_available;
+    for my $x (1 .. 5) {
+        for my $y (1 .. 5) {
+            $coords_available->[$x][$y] = 1;    
+        }    
+    }
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+
+    # THEN
+    is($has_path, 1, "Path found along large grid");
+    
+}
+
+sub test_has_available_path_sector_large_grid_with_row_missing : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (1, 1);
+    my ($dest_x, $dest_y)  = (5, 3);
+    my @room_range = (1, 1, 5, 5);
+    
+    my $coords_available;
+    for my $x (1 .. 5) {
+        next if $x == 2;
+        for my $y (1 .. 5) {
+            $coords_available->[$x][$y] = 1;    
+        }    
+    }
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+
+    # THEN
+    is($has_path, 0, "No path found as intermediate row missing");
+    
+}
+
+sub test_has_available_two_chunks_missing : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (3, 4);
+    my ($dest_x, $dest_y)  = (1, 1);
+    my @room_range = (1, 1, 3, 4);
+    
+    my $coords_available;
+    $coords_available->[1][1] = 1;
+    $coords_available->[4][1] = 1;
+    $coords_available->[2][1] = 1;
+    $coords_available->[2][2] = 1;
+    $coords_available->[2][3] = 1;
+    $coords_available->[2][4] = 1;
+    $coords_available->[3][1] = 1;
+    $coords_available->[3][4] = 1;
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+
+    # THEN
+    is($has_path, 1, "Path found");
+    
+}
+
+sub test_has_available_diagonally_adjacent_chunks_missing : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (3, 6);
+    my ($dest_x, $dest_y)  = (4, 7);
+    my @room_range = (3, 5, 5, 7);
+    
+    my $coords_available;
+    $coords_available->[3][6] = 1;
+    $coords_available->[4][7] = 1;
+    $coords_available->[5][7] = 1;
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+
+    # THEN
+    is($has_path, 0, "No Path found as dest is only path is diagonal");
+    
+}
+
+sub test_has_available_path_sector_large_grid_with_row_missing_above_start_point : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($start_x, $start_y)  = (15, 16);
+    my ($dest_x, $dest_y)  = (18, 19);
+    my @room_range = (15, 16, 18, 19);
+    
+    my $coords_available;
+    for my $x (15 .. 18) {        
+        for my $y (16 .. 19) {
+            next if $y == 18;
+            $coords_available->[$x][$y] = 1;    
+        }    
+    }
+    
+    # WHEN
+    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+
+    # THEN
+    is($has_path, 0, "No path found as intermediate row missing");
+    
+}
+
 
 1;

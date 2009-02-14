@@ -1,0 +1,90 @@
+[%
+	x = 0;
+	y = 0;
+	size = 40;
+	door_thickness = size / 10;
+	door_length = size - 4;
+%]
+
+<body bgcolor="grey">
+<div style="position: relative">
+[% WHILE y < max_y %]
+	[% y = y+1 %]
+	[% x = 0 %]
+	[% WHILE x < max_x %]
+		[% FILTER collapse %]
+			[% x = x+1 %]
+			[% sector = grid.$x.$y %]		
+			[% IF sector %]
+				[% border = "" %]
+				[% sides_with_walls = sector.sides_with_walls %] 
+				[% FOREACH side IN positions  %]
+					[% border_color = "white" %]
+					[% FOREACH side_with_wall IN sides_with_walls %]
+						[% IF side_with_wall == side %]
+							[% border_color = "black" %]
+						[% END %]
+					[% END %]				
+				
+					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
+				[% END %] 
+			
+				<a href = "[% base %]/dungeon/move_to?sector_id=[% sector.id %]">
+				<div style="
+				    [% border %] 
+					width: [% size - 2 %]px; 
+					height: [% size - 2 %]px; 
+					position: absolute;
+					left: [% sector.x * size %]; 
+					top: [% sector.y * size %];
+					background: [% IF current_location.id == sector.id %]lightblue[% ELSE %]white[% END %];
+					font-size: 10px"
+					>[% sector.x %], [% sector.y %]</div></a>
+					[% FOREACH door IN sector.doors %]
+						[% left_offset = 0 %]
+						[% width_offset = 0 %]
+						[% top_offset = 0 %]
+						[% height_offset = 0 %]
+						[% position = door.position.position %]
+					
+						[% IF position == 'right' ||  position == 'left' %]
+							[% height = door_length %]
+							[% width = door_thickness %]
+							[% height_offset = 2 %]
+						[% ELSE %]
+							[% height = door_thickness %]
+							[% width = door_length %]
+							[% width_offset = 2 %]
+						[% END %]
+					
+						[% IF position == 'right' %]
+							[% left_offset = 1 %]
+							[% width_offset = 0 - width %]
+						[% ELSIF position == 'left' %]
+							[% left_offset = 0 %]
+							[% width_offset = 1 %]
+						[% ELSIF position == 'bottom' %]
+							[% top_offset = 1 %]
+							[% height_offset = 0 - height %]
+						[% END %]
+						
+						
+						
+						<!-- left offset: [% left_offset %], width offset: [% width_offset %], height offset: [% height_offset %], position: [% position %]  -->
+						<div onClick="window.location='[% base %]/dungeon/open_door?door_id=[% door.id %]'"
+						   style="
+							position: absolute;
+							width: [% width %];
+							height: [% height %];
+							background: black;
+							left: [% (sector.x + left_offset) * size + width_offset %];
+							top: [% (sector.y + top_offset) * size + height_offset %];"
+						>&nbsp;</div>
+					[% END %]					
+			[% END %]
+		[% END %]
+	[% END %]	
+[% END %]
+
+</div>
+</body>

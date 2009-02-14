@@ -3,6 +3,8 @@ use warnings;
 
 package RPG::Schema::Door;
 
+use RPG::Position;
+
 use base 'DBIx::Class';
 
 use Carp;
@@ -26,34 +28,16 @@ __PACKAGE__->belongs_to(
     { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' }
 );
 
-my %door_opposites = (
-    'top'    => 'bottom',
-    'bottom' => 'top',
-    'left'   => 'right',
-    'right'  => 'left',
-);
-
 sub opposite_position {
     my $self = shift;
     
-    return $door_opposites{$self->position->position};
+    return RPG::Position->opposite($self->position->position);
 }
 
-# TODO: move to door schema
 sub opposite_sector {
     my $self = shift;
 
-    my %door_position_modifier = (
-        'top'    => { y => -1 },
-        'bottom' => { y => 1 },
-        'left'   => { x => -1 },
-        'right'  => { x => 1 },
-    );
-
-    my $door_x = $self->dungeon_grid->x + ( $door_position_modifier{ $self->position->position }{x} || 0 );
-    my $door_y = $self->dungeon_grid->y + ( $door_position_modifier{ $self->position->position }{y} || 0 );
-
-    return ( $door_x, $door_y );
+    return RPG::Position->opposite_sector($self->position->position, $self->dungeon_grid->x, $self->dungeon_grid->y);
 }
 
 1;

@@ -32,7 +32,7 @@ sub dungeon_setup : Tests(setup) {
     $self->{positions} = \%positions;
 }
 
-sub test_connected_to_room : Tests(1) {
+sub test_connected_to_room : Tests(2) {
     my $self = shift;
 
     # GIVEN
@@ -84,6 +84,8 @@ sub test_connected_to_room : Tests(1) {
 
     # THEN
     is( $rooms_connected, 1, "Rooms are connected" );
+    
+    is( $rooms_connected, 1, "Rooms are connected (second time uses cache)" );
 
 }
 

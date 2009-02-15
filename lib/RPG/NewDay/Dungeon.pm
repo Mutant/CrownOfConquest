@@ -143,6 +143,14 @@ sub _generate_dungeon_grid {
 
         # Create the room
         my @new_sectors = $package->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
+        
+        # Create the stairs if this is the first room
+        if ( $current_room_number == 1 ) {
+            my $sector_for_stairs = (shuffle @new_sectors)[0];
+            
+            $sector_for_stairs->stairs_up(1);
+            $sector_for_stairs->update;
+        }
 
         # Keep track of sectors and rooms created
         foreach my $new_sector (@new_sectors) {

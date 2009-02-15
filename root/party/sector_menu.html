@@ -6,7 +6,7 @@
 You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
-
+[% IF dungeon %]There is an entrance to a dungeon here.<br><br>[% END %]
 
 [% IF graves.0 %]
 	[% INCLUDE graves/main.html %]
@@ -18,6 +18,7 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 | <a href="javascript:getPanels('/party/scout')">Scout</a> 
 	[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
 	[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
+	[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
 <br>
 
 [% IF creature_group %]

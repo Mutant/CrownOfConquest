@@ -45,7 +45,7 @@
 				[% can_move_to_sector = current_location.allowed_to_move_to_sector(sector) %]
 			
 				[% IF can_move_to_sector %]
-					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.id %]')">
+					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.id %]')" style="text-decoration: none;">
 				[% END %]
 				<div style="
 				    [% border %] 
@@ -55,9 +55,20 @@
 					left: [% (sector.x - min_x) * size %]; 
 					top: [% (sector.y - min_y) * size %];
 					background: [% IF current_location.id == sector.id %]lightblue[% ELSE %]white[% END %];
-					font-size: 10px"
+					font-size: [% size / 2 %]px;
+					text-align: center"
 					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
-					>[% sector.x %], [% sector.y %]</div>
+					>
+						[% IF sector.stairs_up %]
+							S
+						[% ELSIF cgs.$x.$y %]
+						    M
+						[% ELSIF can_move_to_sector %]
+						    .
+						[% ELSE %]
+							<!--[% sector.x %], [% sector.y %]-->
+						[% END %]
+					</div>
 					
 					[% IF can_move_to_sector %]</a>[% END %]
 					
@@ -92,7 +103,7 @@
 						
 						
 						<!-- left offset: [% left_offset %], width offset: [% width_offset %], height offset: [% height_offset %], position: [% position %]  -->
-						<div onClick="getPanels('/dungeon/open_door?door_id=[% door.id %]')"
+						<div 
 						   style="
 							position: absolute;
 							width: [% width %];

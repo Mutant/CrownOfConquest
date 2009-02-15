@@ -44,13 +44,10 @@ sub connected_to_room {
     );
     
     my $connected = 0;
-        
-    # Get all the doors
-    # TODO: could be optimised
-    my @doors;
+
     SECTOR: foreach my $sector (@sectors) {
         foreach my $door ($sector->doors) {
-            my ($sector_to_check_x, $sector_to_check_y) = $door->opposite_sector;
+            my ($sector_to_check_x, $sector_to_check_y) = RPG::Position->opposite_sector($door->position->position, $sector->x, $sector->y);
                         
             my $sector_to_check = $self->result_source->schema->resultset('Dungeon_Grid')->find(
                 {

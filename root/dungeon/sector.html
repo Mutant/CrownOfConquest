@@ -1,0 +1,11 @@
+[% IF doors.0 %]
+	Open Doors: 
+	[% FOREACH door IN doors %]
+		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% door.position.position %]</a>&nbsp;
+	[% END %]
+	<br>
+[% END %]
+
+[% IF current_location.stairs_up %]
+	<a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs</a>
+[% END %]

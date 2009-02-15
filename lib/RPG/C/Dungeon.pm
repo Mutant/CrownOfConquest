@@ -60,8 +60,10 @@ sub view : Local {
             y                              => { '>=', $top_corner->{y}, '<', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
         },
-        { prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' } ], },
+        { prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' }, 'creature_group' ], },
     );
+
+    my $cgs;
 
     # Save mapped sectors
     foreach my $sector (@sectors) {
@@ -73,13 +75,18 @@ sub view : Local {
                 }
             );
         }
+
+        if ( my $cg = $sector->creature_group ) {
+            $c->log->debug( "CG at: " . $sector->x . ", " . $sector->y );
+            $cgs->[ $sector->x ][ $sector->y ] = $cg;
+        }
     }
 
-    return $c->forward( 'render_dungeon_grid', [ [ @sectors, @mapped_sectors ], $current_location ] );
+    return $c->forward( 'render_dungeon_grid', [ [ @sectors, @mapped_sectors ], $current_location, $cgs ] );
 }
 
 sub render_dungeon_grid : Private {
-    my ( $self, $c, $sectors, $current_location ) = @_;
+    my ( $self, $c, $sectors, $current_location, $cgs ) = @_;
 
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 
@@ -87,6 +94,7 @@ sub render_dungeon_grid : Private {
     my ( $min_x, $min_y, $max_x, $max_y ) = ( $sectors->[0]->x, $sectors->[0]->y, 0, 0 );
 
     foreach my $sector (@$sectors) {
+
         #$c->log->debug( "Rendering: " . $sector->x . ", " . $sector->y );
         $grid->[ $sector->x ][ $sector->y ] = $sector;
 
@@ -109,6 +117,7 @@ sub render_dungeon_grid : Private {
                     min_y            => $min_y,
                     positions        => \@positions,
                     current_location => $current_location,
+                    cgs              => $cgs,
                 },
                 return_output => 1,
             }
@@ -152,8 +161,6 @@ sub move_to : Local {
 sub open_door : Local {
     my ( $self, $c ) = @_;
 
-    # TODO: check door can be opened
-
     my $door = $c->model('DBIC::Door')->find( $c->req->param('door_id') );
 
     my ( $opposite_x, $opposite_y ) = $door->opposite_sector;
@@ -170,6 +177,44 @@ sub open_door : Local {
     );
 
     $c->forward( 'move_to', [ $sector_to_move_to->id ] );
+}
+
+sub sector_menu : Local {
+    my ( $self, $c ) = @_;
+
+    my $current_location =
+        $c->model('DBIC::Dungeon_Grid')
+        ->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => { 'doors' => 'position' }, } );
+
+    my @doors = $current_location->doors;
+
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'dungeon/sector.html',
+                params   => {
+                    doors            => \@doors,
+                    current_location => $current_location,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+}
+
+sub take_stairs : Local {
+    my ( $self, $c ) = @_;
+
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
+
+    croak "No stairs here" unless $current_location->stairs_up;
+
+    $c->stash->{party}->dungeon_grid_id(undef);
+    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
+    $c->stash->{party}->update;
+
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }
 
 1;

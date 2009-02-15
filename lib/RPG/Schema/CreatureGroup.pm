@@ -13,7 +13,7 @@ __PACKAGE__->table('Creature_Group');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::CreatureGroup');
 
-__PACKAGE__->add_columns(qw/creature_group_id land_id trait_id/);
+__PACKAGE__->add_columns(qw/creature_group_id land_id trait_id dungeon_grid_id/);
 
 __PACKAGE__->set_primary_key('creature_group_id');
 
@@ -21,6 +21,12 @@ __PACKAGE__->belongs_to(
     'location',
     'RPG::Schema::Land',
     { 'foreign.land_id' => 'self.land_id' }
+);
+
+__PACKAGE__->belongs_to(
+    'dungeon_grid',
+    'RPG::Schema::Dungeon_Grid',
+    { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' }
 );
 
 __PACKAGE__->might_have(

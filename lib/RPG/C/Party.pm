@@ -51,6 +51,8 @@ sub sector_menu : Local {
     }
 
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
+    
+    my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
 
     my $parties_in_sector = $c->forward('parties_in_sector');
 
@@ -70,6 +72,7 @@ sub sector_menu : Local {
                     orb               => $c->stash->{party_location}->orb || undef,
                     parties_in_sector => $parties_in_sector,
                     graves            => \@graves,
+                    dungeon           => $dungeon,
                 },
                 return_output => 1,
             }
@@ -511,6 +514,28 @@ sub destroy_orb : Local {
     $orb->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub enter_dungeon : Local {
+    my ( $self, $c ) = @_;
+    
+    # TODO: check level is sufficient
+    my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
+    
+    my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+            'stairs_up' => 1,
+        },
+        {
+            join => 'dungeon_room',
+        }
+    );
+    
+    $c->stash->{party}->dungeon_grid_id($start_sector->id);
+    $c->stash->{party}->update;
+    
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }
 
 1;

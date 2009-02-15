@@ -18,6 +18,7 @@ use Log::Dispatch::File::Stamped;
 use File::Slurp qw(read_file);
 use Math::Round qw(round);
 use Proc::PID::File;
+use DBIx::Class::ResultClass::HashRefInflator;
 
 # See note in spawn_orbs() below for details on this
 my $used = [];
@@ -55,19 +56,21 @@ sub run {
         my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
         # Clean up
-        $package->clean_up( $config, $schema, $logger );
+        #$package->clean_up( $config, $schema, $logger );
 
         # Spawn orbs
-        $package->spawn_orbs( $config, $schema, $logger );
+        #$package->spawn_orbs( $config, $schema, $logger );
 
         # Spawn town orbs
-        $package->spawn_town_orbs( $config, $schema, $logger );
+        #$package->spawn_town_orbs( $config, $schema, $logger );
 
         # Spawn monsters
-        $package->spawn_monsters( $config, $schema, $logger );
+        #$package->spawn_monsters( $config, $schema, $logger );
 
         # Move monsters
-        $package->move_monsters( $config, $schema, $logger );
+        #$package->move_monsters( $config, $schema, $logger );
+        
+        $package->spawn_dungeon_monsters( $config, $schema, $logger );
 
         $schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
     };
@@ -192,7 +195,7 @@ sub spawn_monsters {
     my $level_rs = $schema->resultset('CreatureType')->find(
         {},
         {
-            select => [              { max => 'level' }, { min => 'level' }, ],
+            select => [ { max => 'level' }, { min => 'level' }, ],
             as     => [ 'max_level', 'min_level' ],
         }
     );
@@ -256,13 +259,87 @@ sub spawn_monsters {
 
         my $level = RPG::Maths->weighted_random_number( 1 .. $creature_orb->level * 3 );
 
-        $package->_create_group( $schema, $land, $level, $level );
+        $package->_create_group_in_land( $schema, $land, $level, $level );
 
         if ( $group_number % 100 == 0 ) {
             $logger->info("Spawned $group_number groups...");
         }
     }
 }
+
+sub spawn_dungeon_monsters {
+    my ( $package, $config, $schema, $logger ) = @_;
+
+    my $dungeon_rs = $schema->resultset('Dungeon')->search();
+    
+    $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');    
+    
+    while (my $dungeon = $dungeon_rs->next) {
+        $logger->info("Spawning groups for dungeon id: " . $dungeon->{dungeon_id});
+        
+        my $creature_count = $schema->resultset('CreatureGroup')->search(
+            {
+                'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
+            },
+            {
+                join => {'dungeon_grid' => 'dungeon_room'},
+            }
+        )->count;
+
+        my $sector_count = $schema->resultset('Dungeon_Grid')->search(
+            {
+                'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
+            },
+            {
+                join => 'dungeon_room',
+            }
+        )->count;
+        
+        $logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
+        
+        my $ideal_number_of_creatures = (int $sector_count / $config->{dungeon_sectors_per_creature}) - $creature_count;  
+        
+        my $number_of_groups_to_spawn = $ideal_number_of_creatures;
+    
+        $logger->info("Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id});
+    
+        next if $number_of_groups_to_spawn <= 0;    
+        
+        my $level_rs = $schema->resultset('CreatureType')->find(
+            {},
+            {
+                select => [ { max => 'level' }, { min => 'level' }, ],
+                as     => [ 'max_level', 'min_level' ],
+            }
+        );
+    
+        # Spawn random groups
+        my $spawned = {};
+    
+        for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
+            my $level = RPG::Maths->weighted_random_number( 1 .. $dungeon->{level} * 5 );
+            
+            my $sector_to_spawn = $schema->resultset('Dungeon_Grid')->find(
+                {
+                    'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
+                },
+                {
+                    order_by => 'rand()',
+                    rows => 1,
+                    join => 'dungeon_room',
+                    prefetch => 'creature_group',
+                }
+            );
+    
+            $package->_create_group_in_dungeon( $schema, $sector_to_spawn, $level, $level );
+    
+            if ( $group_number % 100 == 0 ) {
+                $logger->info("Spawned $group_number groups...");
+            }
+        }
+    }
+}
+
 
 sub _calculate_number_of_groups_to_spawn {
     my ( $package, $config, $schema ) = @_;
@@ -296,15 +373,31 @@ sub _calculate_number_of_groups_to_spawn {
 
 my @creature_types;
 
-sub _create_group {
+sub _create_group_in_land {
     my ( $package, $schema, $land, $min_level, $max_level ) = @_;
+    
+    my $cg = $package->_create_group($schema, $land, $min_level, $max_level);
+    
+    return unless $cg;
+    
+    $cg->land_id($land->id);
+    $cg->update;
+ 
+    $land->creature_threat( $land->creature_threat + 5 );
+    $land->update;
+    
+    return $cg;
+}
 
-    return if $land->creature_group;
+sub _create_group {
+    my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
+
+    return if $sector->creature_group;
 
     @creature_types = $schema->resultset('CreatureType')->search()
         unless @creature_types;
 
-    my $cg = $schema->resultset('CreatureGroup')->create( { land_id => $land->id, } );
+    my $cg = $schema->resultset('CreatureGroup')->create( {} );
 
     my $type;
     foreach my $type_to_check ( shuffle @creature_types ) {
@@ -331,10 +424,20 @@ sub _create_group {
         );
     }
 
-    $land->creature_threat( $land->creature_threat + 5 );
-    $land->update;
-
     return $cg;
+}
+
+sub _create_group_in_dungeon {
+    my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
+    
+    my $cg = $package->_create_group($schema, $sector, $min_level, $max_level);
+
+    return unless $cg;
+    
+    $cg->dungeon_grid_id($sector->id);
+    $cg->update;
+    
+    return $cg;    
 }
 
 my %cant_move_reason;
@@ -558,7 +661,7 @@ sub _spawn_orb {
     );
 
     # Create creature group at orb
-    $package->_create_group( $schema, $land, $level * 3, $level * 3 );
+    $package->_create_group_in_land( $schema, $land, $level * 3, $level * 3 );
 }
 
 1;

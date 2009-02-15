@@ -1,19 +1,32 @@
 [%
-	x = 0;
-	y = 0;
-	size = 40;
+	x = min_x - 1;
+	y = min_y - 1;
+	size = 30;
 	door_thickness = size / 10;
 	door_length = size - 4;
+	
+	scroll_to_x = current_location.x + 6;
+%]	
+	[% IF scroll_to_x > max_x %]
+		[% scroll_to_x = max_x %]
+	[% END %]
+[%	
+	scroll_to_y = current_location.y + 4; 
 %]
+	[% IF scroll_to_y > max_y %]
+		[% scroll_to_y = max_y %]
+	[% END %]
 
-<body bgcolor="grey">
+<!--<body bgcolor="grey">-->
+<!-- min_x: [% min_x %], min_y: [% min_y %], x: [% x %], y: [% y %] --> 
 <div style="position: relative">
-[% WHILE y < max_y %]
+[% WHILE y <= max_y %]
 	[% y = y+1 %]
-	[% x = 0 %]
-	[% WHILE x < max_x %]
+	[% x = min_x - 1 %]
+	[% WHILE x <= max_x %]
 		[% FILTER collapse %]
 			[% x = x+1 %]
+			<!-- [% x %], [% y %] -->
 			[% sector = grid.$x.$y %]		
 			[% IF sector %]
 				[% border = "" %]
@@ -28,18 +41,26 @@
 				
 					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
 				[% END %] 
+				
+				[% can_move_to_sector = current_location.allowed_to_move_to_sector(sector) %]
 			
-				<a href = "[% base %]/dungeon/move_to?sector_id=[% sector.id %]">
+				[% IF can_move_to_sector %]
+					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.id %]')">
+				[% END %]
 				<div style="
 				    [% border %] 
 					width: [% size - 2 %]px; 
 					height: [% size - 2 %]px; 
 					position: absolute;
-					left: [% sector.x * size %]; 
-					top: [% sector.y * size %];
+					left: [% (sector.x - min_x) * size %]; 
+					top: [% (sector.y - min_y) * size %];
 					background: [% IF current_location.id == sector.id %]lightblue[% ELSE %]white[% END %];
 					font-size: 10px"
-					>[% sector.x %], [% sector.y %]</div></a>
+					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
+					>[% sector.x %], [% sector.y %]</div>
+					
+					[% IF can_move_to_sector %]</a>[% END %]
+					
 					[% FOREACH door IN sector.doors %]
 						[% left_offset = 0 %]
 						[% width_offset = 0 %]
@@ -71,20 +92,31 @@
 						
 						
 						<!-- left offset: [% left_offset %], width offset: [% width_offset %], height offset: [% height_offset %], position: [% position %]  -->
-						<div onClick="window.location='[% base %]/dungeon/open_door?door_id=[% door.id %]'"
+						<div onClick="getPanels('/dungeon/open_door?door_id=[% door.id %]')"
 						   style="
 							position: absolute;
 							width: [% width %];
 							height: [% height %];
 							background: black;
-							left: [% (sector.x + left_offset) * size + width_offset %];
-							top: [% (sector.y + top_offset) * size + height_offset %];"
+							left: [% ((sector.x - min_x) + left_offset) * size + width_offset %];
+							top: [% ((sector.y - min_y) + top_offset) * size + height_offset %];"
 						>&nbsp;</div>
-					[% END %]					
+					[% END %]
+			[% ELSE %]
+				<div style="
+					left: [% (x - min_x) * size %]; 
+					top: [% (y - min_y) * size %];
+					width: [% size - 2 %]px; 
+					height: [% size - 2 %]px; 					
+					position: absolute;
+				"
+				[% IF scroll_to_x == x && scroll_to_y == y %]id="scroll-to"[% END %]
+				></div>
 			[% END %]
 		[% END %]
 	[% END %]	
 [% END %]
 
 </div>
-</body>
+
+<!--</body>-->

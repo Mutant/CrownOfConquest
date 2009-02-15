@@ -6,9 +6,9 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use JSON;
+use Carp;
 
 my %PANEL_PATHS = (
-	map => '/map/view',
 	party => '/party/list',
 	party_status => '/party/status',
 );
@@ -52,19 +52,34 @@ sub find_panel_path : Private {
 	
 	$c->log->debug("Finding panel path for: $panel");
 	
-	return $PANEL_PATHS{$panel} unless $panel eq 'messages';
+	my $path = $PANEL_PATHS{$panel};
+	
+	return $path if $path;
 	
     my $party = $c->stash->{party};
-	
-	if ($c->stash->{party_location}->town) {
-		return '/town/main';
-	}
-	elsif ($party->in_combat_with) {
-		return '/combat/main';
-	}
-	else {
-		return '/party/sector_menu';
-	}	
+    
+    if ($panel eq 'messages') {	
+    	if ($c->stash->{party_location}->town) {
+    		return '/town/main';
+    	}
+    	elsif ($party->in_combat_with) {
+    		return '/combat/main';
+    	}
+    	else {
+    		return '/party/sector_menu';
+    	}
+    }
+    
+    if ($panel eq 'map') {
+        if ($party->dungeon_grid_id) {
+            return '/dungeon/view';
+        }
+        else {
+            return '/map/view';
+        }
+    }
+    
+    confess "Unknown panel: $panel";
 }
 
 sub day_logs_check : Private {

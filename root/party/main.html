@@ -59,7 +59,7 @@ function setPanel(panel, url) {
 	dijit.byId(panel+'-pane').refresh();
 }
 
-[%# TODO: maybe better with a closer, rather than globals? %]
+[%# TODO: maybe better with a closure, rather than globals? %]
 var panel_messages;
 var displayCount = 0;	
 function displayMessages(messages_passed) {
@@ -87,6 +87,11 @@ var panel_init = [% panels %];
 
 function init() {
 	refreshPanels(panel_init);
+	
+	loc = dojo.byId('scroll-to');
+	if (loc) {
+		dijit.scrollIntoView(loc);
+	}
 }
 
 function selectAction(action, char_id, action_param, action_param2, action_label) {

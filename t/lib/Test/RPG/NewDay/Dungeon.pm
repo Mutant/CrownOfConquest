@@ -58,6 +58,7 @@ sub dungeon_setup : Tests(setup) {
     
     $self->{positions} = \%positions;
 }
+
 sub test_find_room_dimensions : Tests(no_plan) {
     my $self = shift;
 

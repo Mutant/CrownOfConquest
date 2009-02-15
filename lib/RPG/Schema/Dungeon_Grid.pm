@@ -41,6 +41,8 @@ __PACKAGE__->has_many(
 sub sides_with_walls {
     my $self = shift;
     
+    return @{$self->{sides_with_walls}} if defined $self->{sides_with_walls};
+    
     my @walls = $self->walls;
     
     my @sides_with_walls;
@@ -48,6 +50,8 @@ sub sides_with_walls {
     foreach my $wall (@walls) {
         push @sides_with_walls, $wall->position->position;
     }
+    
+    $self->{sides_with_walls} = \@sides_with_walls;
     
     return @sides_with_walls;    
 }
@@ -57,6 +61,99 @@ sub has_wall {
     my $wall_side = shift;
     
     return grep { $wall_side eq $_ } $self->sides_with_walls;
+}
+
+sub sides_with_doors {
+    my $self = shift;
+    
+    return @{$self->{sides_with_doors}} if defined $self->{sides_with_doors};
+    
+    my @doors = $self->doors;
+    
+    my @sides_with_doors;
+    
+    foreach my $door (@doors) {
+        push @sides_with_doors, $door->position->position;
+    }
+    
+    $self->{sides_with_doors} = \@sides_with_doors;
+    
+    return @sides_with_doors;    
+}
+
+sub has_door {
+    my $self = shift;
+    my $door_side = shift;
+    
+    return grep { $door_side eq $_ } $self->sides_with_doors;
+}
+
+
+sub allowed_to_move_to_sector {
+    my $self = shift;
+    my $sector = shift;
+        
+    my $dist = RPG::Map->get_distance_between_points(
+        {
+            x => $self->x,
+            y => $self->y,
+        },
+        {
+            x => $sector->x,
+            y => $sector->y,
+        },
+    );
+    
+    #warn "start: " . $self->x . ", " . $self->y . " dest: " . $sector->x . ", " . $sector->y . ", dist: $dist\n";
+            
+    # Can't move to sector if it's out of range
+    if ($dist > RPG::Schema->config->{dungeon_move_maximum}) {
+        return 0;
+    }
+    
+    if ($self->dungeon_room_id != $sector->dungeon_room_id) {
+        # If sectors aren't in same room, there must be a door between them, or you can't move there
+        # TODO: generates too many queries, so disabled for now... can only move within the room
+        #return $self->dungeon_room->connected_to_room($sector->dungeon_room_id);
+        return unless RPG::Map->is_adjacent_to(
+            {
+                x => $self->x,
+                y => $self->y,
+            },
+            {
+                x => $sector->x,
+                y => $sector->y,
+            }
+        );
+        
+        # Must have a door between them
+        
+        # Sector to the right
+        if ($self->x < $sector->x && $self->y == $sector->y && $sector->has_door('left')) {
+            return 1;
+        }
+        
+        # Sector to the left
+        if ($self->x > $sector->x && $self->y == $sector->y && $sector->has_door('right')) {
+            return 1;
+        }
+    
+        # Sector above
+        if ($self->y > $sector->y && $self->x == $sector->x && $sector->has_door('bottom')) {
+            return 1;
+        }
+        
+        # Sector below
+        if ($self->y < $sector->y && $self->x == $sector->x && $sector->has_door('top')) {
+            return 1;
+        }
+        
+        return 0;
+        
+    } 
+    
+    return 1;
+    
 }
 
 1;

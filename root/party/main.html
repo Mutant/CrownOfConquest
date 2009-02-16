@@ -158,13 +158,18 @@ function findItem(dialogFields) {
 	getPanels("/town/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
 }
 
-function checkAttack(creatureGroupId, confirmAttack) {
+function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {
 	if (confirmAttack) {
 		dojo.byId('creature-group-id').value = creatureGroupId;
 		dijit.byId('confirm-attack').show();
 	}
 	else {
-		getPanels('/combat/party_attacks?creature_group_id=' + creatureGroupId);
+		prefix = '';
+		if (in_dungeon) {
+			prefix = '/dungeon';
+		}
+		
+		getPanels(prefix + '/combat/party_attacks?creature_group_id=' + creatureGroupId);
 	}
 }
 

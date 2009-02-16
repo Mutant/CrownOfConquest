@@ -150,6 +150,13 @@ sub move_to : Local {
         $c->stash->{error} = "You do not have enough turns to move there";
     }
     else {
+        my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
+
+        # If creatures attacked, refresh party panel
+        if ($creature_group) {
+            push @{ $c->stash->{refresh_panels} }, 'party';
+        }
+        
         $c->stash->{party}->dungeon_grid_id($sector_id);
         $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
         $c->stash->{party}->update;
@@ -185,6 +192,8 @@ sub sector_menu : Local {
     my $current_location =
         $c->model('DBIC::Dungeon_Grid')
         ->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => { 'doors' => 'position' }, } );
+        
+    my $creature_group = $current_location->available_creature_group;
 
     my @doors = $current_location->doors;
 
@@ -196,6 +205,7 @@ sub sector_menu : Local {
                 params   => {
                     doors            => \@doors,
                     current_location => $current_location,
+                    creature_group   => $creature_group,
                 },
                 return_output => 1,
             }

@@ -158,8 +158,24 @@ sub allowed_to_move_to_sector {
         
     } 
     
-    return 1;
+    return 1;    
+}
+
+sub available_creature_group {
+    my $self = shift;
     
+    my $creature_group = $self->find_related('creature_group',
+        {
+            dungeon_grid_id => $self->id,
+            'in_combat_with.party_id' => undef,
+        },
+        {
+            prefetch => {'creatures' => ['type', 'creature_effects']},
+            join => 'in_combat_with',
+        }
+    );
+    
+    return $creature_group;
 }
 
 1;

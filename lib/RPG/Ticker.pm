@@ -317,7 +317,10 @@ sub spawn_dungeon_monsters {
         my $spawned = {};
     
         for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
-            my $level = RPG::Maths->weighted_random_number( 1 .. $dungeon->{level} * 5 );
+            my $level_range_start = $dungeon->{level} * 5 - 7;
+            my $level_range_end = $dungeon->{level} * 5;
+            
+            my $level = RPG::Maths->weighted_random_number( $level_range_start  .. $level_range_end );
             
             my $sector_to_spawn = $schema->resultset('Dungeon_Grid')->find(
                 {

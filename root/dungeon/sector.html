@@ -9,3 +9,10 @@
 [% IF current_location.stairs_up %]
 	<a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs</a>
 [% END %]
+
+[% IF creature_group %]
+	[% INCLUDE combat/creature_group.html %]
+	<br>
+[% END %]
+
+[% IF creature_group %]<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)">Attack Creatures</a>[% END %] 

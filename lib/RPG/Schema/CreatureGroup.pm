@@ -46,7 +46,7 @@ sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
 
-    if ($self->location->orb && $self->location->orb->can_destroy( $party->level) ) {
+    if ($self->land_id && $self->location->orb && $self->location->orb->can_destroy( $party->level) ) {
         # Always attack if there's an orb in the sector, and the party is high enough level to destroy it
         return 1;
     }

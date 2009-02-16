@@ -9,7 +9,7 @@
 [% END %]
 
 [% UNLESS combat_complete || party_dead %]
-<a href="javascript:getPanels('/combat/fight')">Fight!</a> <a href="javascript:getPanels('/combat/flee')">Flee!</a>
+<a href="javascript:getPanels('[% IF in_dungeon %]/dungeon[% END %]/combat/fight')">Fight!</a> <a href="javascript:getPanels('[% IF in_dungeon %]/dungeon[% END %]/combat/flee')">Flee!</a>
 
 <br><br>
 [% END %]

@@ -48,7 +48,7 @@ sub check_for_attack : Local {
     my ( $self, $c, $new_land ) = @_;
 
     # See if party is in same location as a creature
-    my $creature_group = $c->stash->{party_location}->available_creature_group;
+    my $creature_group = $new_land->available_creature_group;
 
     # If there are creatures here, check to see if we go straight into combat
     if ( $creature_group && $creature_group->number_alive > 0 ) {
@@ -71,6 +71,13 @@ sub party_attacks : Local {
 
     my $creature_group = $c->stash->{party_location}->available_creature_group;
 
+    $c->forward('execute_attack', [$creature_group]);
+
+}
+
+sub execute_attack : Private {
+    my ( $self, $c, $creature_group ) = @_;
+
     if ($creature_group) {
         $c->stash->{creature_group} = $creature_group;
 
@@ -85,6 +92,7 @@ sub party_attacks : Local {
         $c->stash->{messages} = "The creatures have moved, or have been attacked by someone else.";
         $c->forward( '/panel/refresh', ['messages'] );
     }
+
 }
 
 sub create_combat_log : Private {
@@ -102,7 +110,7 @@ sub create_combat_log : Private {
         {
             party_id             => $c->stash->{party}->id,
             creature_group_id    => $creature_group->id,
-            land_id              => $creature_group->location->id,
+            land_id              => $c->stash->{party_location}->id,
             encounter_started    => DateTime->now(),
             combat_initiated_by  => $initiated_by,
             party_level          => $c->stash->{party}->level,
@@ -127,7 +135,7 @@ sub main : Local {
     }
 
     my $orb;
-    if ( $c->stash->{creatures_initiated} ) {
+    if ( $c->stash->{creatures_initiated} && ! $c->stash->{party}->dungeon_grid_id ) {
         $orb = $c->stash->{party_location}->orb;
     }
 
@@ -143,6 +151,7 @@ sub main : Local {
                     combat_complete     => $c->stash->{combat_complete},
                     party_dead          => $c->stash->{party}->defunct ? 1 : 0,
                     orb                 => $orb,
+                    in_dungeon          => $c->stash->{party}->dungeon_grid_id ? 1 : 0,
                 },
                 return_output => 1,
             }
@@ -176,24 +185,47 @@ sub select_action : Local {
 
 sub fight : Local {
     my ( $self, $c ) = @_;
-
+    
     $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+      
+    # Never flee if there's an orb here... 
+    if (! $c->stash->{party_location}->orb && $c->forward('check_for_creature_flee')) {
+        $c->detach('creatures_flee');
+    }
+      
+    $c->forward('execute_round');
+    
+}
 
+sub check_for_creature_flee : Private {
+    my ( $self, $c ) = @_;
+    
     # See if the creatures want to flee... check this every 3 rounds
-    #  Only flee if cg level is lower than party, and we're not on an orb
+    #  Only flee if cg level is lower than party
+    $c->log->debug("Checking for creature flee");
+    $c->log->debug("Round: " . $c->stash->{combat_log}->rounds);
+    $c->log->debug("CG level: " . $c->stash->{creature_group}->level);
+    $c->log->debug("Party level: " . $c->stash->{party}->level);
+    
     if ( $c->stash->{combat_log}->rounds != 0 && $c->stash->{combat_log}->rounds % 3 == 0 ) {
-        if ( $c->stash->{creature_group}->level < $c->stash->{party}->level-2 && !$c->stash->{party_location}->orb ) {
+        if ( $c->stash->{creature_group}->level < $c->stash->{party}->level-2) {
             my $chance_of_fleeing =
                 ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
     
             $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
     
             if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
-                $c->detach('creatures_flee');
+                return 1;
             }
         }
     }
+    
+    return 0;
+}
 
+sub execute_round : Private {
+    my ( $self, $c ) = @_;    
+    
     # Process magical effects
     $c->forward('process_effects');
 
@@ -512,21 +544,9 @@ sub flee : Local {
 
     return unless $party->in_combat_with;
 
-    my $creature_group =
-        $c->model('DBIC::CreatureGroup')
-        ->find( { creature_group_id => $party->in_combat_with, }, { prefetch => { 'creatures' => [ 'type', 'creature_effects' ] }, }, );
+    my $flee_successful = $c->forward('roll_flee_attempt');
 
-    my $level_difference = $creature_group->level - $party->level;
-    my $flee_chance =
-        $c->config->{base_flee_chance} + ( $c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
-
-    $flee_chance += ( $c->config->{flee_chance_attempt_modifier} * $c->session->{unsuccessful_flee_attempts} );
-
-    my $rand = Games::Dice::Advanced->roll("1d100");
-
-    $c->log->debug("Flee roll: $rand");
-    $c->log->debug( "Flee chance: " . $flee_chance );
-    if ( $rand < $flee_chance ) {
+    if ( $flee_successful ) {
         my $land = $c->forward('get_sector_to_flee_to');
 
         $party->land_id( $land->id );
@@ -556,6 +576,29 @@ sub flee : Local {
         $c->session->{unsuccessful_flee_attempts}++;
         $c->forward('/combat/fight');
     }
+}
+
+sub roll_flee_attempt : Private {
+    my ( $self, $c ) = @_;    
+    
+    my $party = $c->stash->{party};
+    
+    my $creature_group =
+        $c->model('DBIC::CreatureGroup')
+        ->find( { creature_group_id => $party->in_combat_with, }, { prefetch => { 'creatures' => [ 'type', 'creature_effects' ] }, }, );
+
+    my $level_difference = $creature_group->level - $party->level;
+    my $flee_chance =
+        $c->config->{base_flee_chance} + ( $c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+
+    $flee_chance += ( $c->config->{flee_chance_attempt_modifier} * $c->session->{unsuccessful_flee_attempts} );
+
+    my $rand = Games::Dice::Advanced->roll("1d100");
+
+    $c->log->debug("Flee roll: $rand");
+    $c->log->debug( "Flee chance: " . $flee_chance );    
+    
+    return $rand < $flee_chance;    
 }
 
 sub creatures_flee : Private {
@@ -662,6 +705,7 @@ sub finish : Private {
 
     # Don't delete creature group, since it's needed by news
     $c->stash->{creature_group}->land_id(undef);
+    $c->stash->{creature_group}->dungeon_grid_id(undef);
     $c->stash->{creature_group}->update;
 
     $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 5 );

@@ -32,6 +32,8 @@ sub run {
 
     $c->logger->info("Creating $dungeons_to_create dungeons");
 
+    return if $dungeons_to_create < 1;
+
     my @land = $land_rs->all;
 
     my $land_by_sector;
@@ -146,6 +148,8 @@ sub _generate_dungeon_grid {
 
         # Create the room
         my @new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
+
+        croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
 
         # Create the stairs if this is the first room
         if ( $current_room_number == 1 ) {
@@ -294,11 +298,7 @@ sub _has_available_path {
 
             $checked->[$test_x][$test_y] = 1;
 
-            if (
-                $self->_has_available_path(
-                    $dest_x, $dest_y, $test_x, $test_y, $top_x, $top_y, $bottom_x, $bottom_y, $coords_available, $checked
-                )
-                )
+            if ( $self->_has_available_path( $dest_x, $dest_y, $test_x, $test_y, $top_x, $top_y, $bottom_x, $bottom_y, $coords_available, $checked ) )
             {
                 $path_available = 1;
                 last;
@@ -344,27 +344,38 @@ sub _find_wall_to_join {
         }
     }
 
+    $c->logger->debug( scalar @all_sectors . " sectors currently exist" );
+
     my $wall_to_join;
     SECTOR: foreach my $sector ( shuffle @all_sectors ) {
         if ( my @walls = $sector->walls ) {
+            $c->logger->debug( "Sector: " . $sector->x . ", " . $sector->y . " has walls, checking if one can be joined on" );
             foreach my $wall ( shuffle @walls ) {
                 my ( $opp_x, $opp_y ) = $wall->opposite_sector;
+
+                #$c->logger->debug("Opposite of wall is: $opp_x, $opp_y");
 
                 next if $opp_x < 1 || $opp_y < 1;
 
                 unless ( $sectors_created->[$opp_x][$opp_y] ) {
 
+                    #$c->logger->debug("No sector exists opposite wall");
+
                     # Check there's no existing door
                     my $existing_door = $c->schema->resultset('Door')->find(
                         {
-                            'dungeon_grid.x' => $sector->x,
-                            'dungeon_grid.y' => $sector->x,
-                            position_id      => $wall->position_id,
+                            'dungeon_grid.x'          => $sector->x,
+                            'dungeon_grid.y'          => $sector->x,
+                            'dungeon_room.dungeon_id' => $sector->dungeon_room->dungeon_id,
+                            position_id               => $wall->position_id,
+
                         },
-                        { 'join' => 'dungeon_grid', }
+                        { 'join' => { 'dungeon_grid' => 'dungeon_room' } }
                     );
 
                     unless ($existing_door) {
+                        #$c->logger->debug("No door exists opposite wall");
+
                         $wall_to_join = $wall;
                         last SECTOR;
                     }

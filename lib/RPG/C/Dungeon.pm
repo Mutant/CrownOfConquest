@@ -9,26 +9,6 @@ use Carp;
 
 use RPG::Map;
 
-sub admin_view : Local {
-    my ( $self, $c ) = @_;
-
-    # XXX temporary
-    my $dungeon_id = $c->req->param('dungeon_id');
-
-    my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
-        { 'dungeon_room.dungeon_id' => $dungeon_id, },
-        {
-            prefetch => [ 'doors', 'walls' ],
-            join     => 'dungeon_room',
-        }
-    );
-
-    my $map = $c->forward( 'render_dungeon_grid', [ \@sectors ] );
-
-    # TODO: display this!
-
-}
-
 sub view : Local {
     my ( $self, $c ) = @_;
 

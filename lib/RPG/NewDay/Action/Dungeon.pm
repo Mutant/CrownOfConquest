@@ -28,7 +28,7 @@ sub run {
 
     my $ideal_dungeons = int $land_rs->count / $c->config->{land_per_dungeon};
 
-    my $dungeons_to_create = 1;    #$ideal_dungeons - $dungeons_rs->count;
+    my $dungeons_to_create = $ideal_dungeons - $dungeons_rs->count;
 
     $c->logger->info("Creating $dungeons_to_create dungeons");
 

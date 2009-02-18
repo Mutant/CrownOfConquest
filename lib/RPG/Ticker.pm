@@ -9,6 +9,9 @@ use RPG::Schema;
 use RPG::Map;
 use RPG::Maths;
 
+use RPG::Ticker::LandGrid;
+use RPG::Ticker::Context;
+
 use YAML;
 use Data::Dumper;
 use List::Util qw(shuffle);
@@ -20,11 +23,8 @@ use Math::Round qw(round);
 use Proc::PID::File;
 use DBIx::Class::ResultClass::HashRefInflator;
 
-# See note in spawn_orbs() below for details on this
-my $used = [];
-
 sub run {
-    my $package = shift;
+    my $self = shift;
 
     my $home = $ENV{RPG_HOME};
 
@@ -55,22 +55,32 @@ sub run {
     eval {
         my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
+        my $land_grid = RPG::Ticker::LandGrid->new( schema => $schema );
+
+        my $context = RPG::Ticker::Context->new(
+            config    => $config,
+            logger    => $logger,
+            schema    => $schema,
+            land_grid => $land_grid,
+        );
+
         # Clean up
-        #$package->clean_up( $config, $schema, $logger );
+        $self->clean_up($context);
 
         # Spawn orbs
-        #$package->spawn_orbs( $config, $schema, $logger );
+        $self->spawn_orbs($context);
 
         # Spawn town orbs
-        #$package->spawn_town_orbs( $config, $schema, $logger );
+        $self->spawn_town_orbs($context);
 
         # Spawn monsters
-        #$package->spawn_monsters( $config, $schema, $logger );
+        $self->spawn_monsters($context);
 
         # Move monsters
-        #$package->move_monsters( $config, $schema, $logger );
-        
-        $package->spawn_dungeon_monsters( $config, $schema, $logger );
+        $self->move_monsters($context);
+
+        # Spawn dungeon monsters
+        $self->spawn_dungeon_monsters($context);
 
         $schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
     };
@@ -83,126 +93,101 @@ sub run {
 
 # Every town has at least one level 1 orb nearby
 sub spawn_town_orbs {
-    my ( $package, $config, $schema, $logger ) = @_;
-    
-    $logger->info("Creating Orbs near towns");
+    my $self = shift;
+    my $c    = shift;
 
-    my @towns = $schema->resultset('Town')->search( {}, { prefetch => 'location', } );
+    $c->logger->info("Creating Orbs near towns");
 
-    foreach my $town (@towns) {
-        my @range = RPG::Map->surrounds( $town->location->x, $town->location->y, 17, 17 );
-        
-        my @sectors = $schema->resultset('Land')->search(
-            {
-                'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
-                'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
-            },
-            { prefetch => ['orb'], }
-        );
+    my $town_rs = $c->schema->resultset('Town')->search( {}, { prefetch => 'location', } );
 
-        my $orb_in_range;
+    $town_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
-        foreach my $sector (@sectors) {
+    while ( my $town = $town_rs->next ) {
+        my ( $start_point, $end_point ) = RPG::Map->surrounds_by_range( $town->{location}{x}, $town->{location}{y}, 5 );
 
-            # Only check sectors 5 away from the town. We load in a few more because they're needed in creating the orb
-            # (to make sure we don't create the orb too close to a town or another orb)
-            my $distance = RPG::Map->get_distance_between_points(
-                {
-                    x => $town->location->x,
-                    y => $town->location->y,
-                },
-                {
-                    x => $sector->x,
-                    y => $sector->y,
+        my $orb_in_range = 0;
+
+        for my $x ( $start_point->{x} .. $end_point->{x} ) {
+            for my $y ( $start_point->{y} .. $end_point->{y} ) {
+
+                my $sector = $c->land_grid->get_land_at_location( $x, $y );
+
+                if ( $sector->{orb} ) {
+                    $orb_in_range = 1;
+                    last;
                 }
-            );
-                        
-            next if $distance > 4;
-            
-
-            if ( $sector->orb ) {
-                $orb_in_range = 1;
-                last;
             }
         }
 
         if ( !$orb_in_range ) {
-            $logger->info("Orb needed near town " . $town->town_name . " at " . $town->location->x . ", " . $town->location->y);
-            
-            my $created = $package->_create_orb_in_land( $config, $schema, $logger, 1, @sectors );
-            
+            $c->logger->info( "Orb needed near town " . $town->{town_name} . " at " . $town->{x} . ", " . $town->{y} );
+
+            my $created = $self->_create_orb_in_land( $c, 1, $start_point, $end_point );
+
             unless ($created) {
-                $logger->warning("Couldn't create orb near " . $town->town_name . " as no suitable land could be found");
+                $c->logger->warning( "Couldn't create orb near " . $town->{town_name} . " as no suitable land could be found" );
             }
         }
     }
 }
 
 sub spawn_orbs {
-    my ( $package, $config, $schema, $logger ) = @_;
+    my $self = shift;
+    my $c    = shift;
 
-    # Bit hacky, but we have the $used package variable that keeps track of where orbs are spawned. This is done as an optimisation,
-    #  as we don't want to go back to the DB to check for orbs we've created during this session. Clear it here to be sure
-    undef $used;
+    my $land_size = $c->schema->resultset('Land')->search->count;
 
-    my $land_size = $schema->resultset('Land')->search->count;
+    my $ideal_number_of_orbs = int $land_size / $c->config->{land_per_orb};
 
-    my $ideal_number_of_orbs = int $land_size / $config->{land_per_orb};
-
-    my $orbs_to_create = $ideal_number_of_orbs - $schema->resultset('Creature_Orb')->count( land_id => {'!=', undef} );
-
-    $logger->info("Creating $orbs_to_create orbs");
+    my $orbs_to_create = $ideal_number_of_orbs - $c->schema->resultset('Creature_Orb')->count( land_id => { '!=', undef } );
 
     return if $orbs_to_create <= 0;
-
-    my @land = $schema->resultset('Land')->search(
-        {},
-        {
-            order_by => 'rand()',
-            prefetch => [ 'town', 'orb' ],
-        }
-    );
+    $c->logger->info("Creating $orbs_to_create orbs");
 
     for my $orb_number ( 1 .. $orbs_to_create ) {
-        my $level = RPG::Maths->weighted_random_number( 1 .. $config->{max_orb_level} );
+        my $level = RPG::Maths->weighted_random_number( 1 .. $c->config->{max_orb_level} );
 
-        $logger->debug("Creating orb # $orb_number (level: $level)");
+        $c->logger->debug("Creating orb # $orb_number (level: $level)");
 
-        my $created = $package->_create_orb_in_land( $config, $schema, $logger, $level, @land );
+        my $created = $self->_create_orb_in_land( $c, $level, { x => 1, y => 1 }, { x => $c->land_grid->max_x, y => $c->land_grid->max_y } );
 
         unless ($created) {
 
             # Warn that we weren't able to create an orb
-            $logger->warning("Unable to create orb # $orb_number, as no suitable land could be found");
+            $c->logger->warning("Unable to create orb # $orb_number, as no suitable land could be found");
         }
 
     }
 }
 
 sub spawn_monsters {
-    my ( $package, $config, $schema, $logger ) = @_;
+    my $self = shift;
+    my $c    = shift;
 
-    my $number_of_groups_to_spawn = $package->_calculate_number_of_groups_to_spawn( $config, $schema );
+    my $number_of_groups_to_spawn = $self->_calculate_number_of_groups_to_spawn( $c->config, $c->schema );
 
-    $logger->info("Spawning $number_of_groups_to_spawn monsters");
+    $c->logger->info("Spawning $number_of_groups_to_spawn monsters");
 
     return if $number_of_groups_to_spawn <= 0;
 
-    my @creature_orbs = $schema->resultset('Creature_Orb')->search( {}, { prefetch => 'land', land_id => {'!=', undef} } );
+    my $orb_rs = $c->schema->resultset('Creature_Orb')->search( {}, { prefetch => 'land', land_id => { '!=', undef } } );
+
+    $orb_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
+    my @creature_orbs = $orb_rs->all;
 
     my %orb_surrounds;
 
-    my $level_rs = $schema->resultset('CreatureType')->find(
+    my $level_rs = $c->schema->resultset('CreatureType')->find(
         {},
         {
-            select => [ { max => 'level' }, { min => 'level' }, ],
+            select => [              { max => 'level' }, { min => 'level' }, ],
             as     => [ 'max_level', 'min_level' ],
         }
     );
 
     # Spawn random groups
     my $spawned = {};
-
     for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
 
         # Pick an orb to spawn near
@@ -210,138 +195,114 @@ sub spawn_monsters {
         @creature_orbs = shuffle @creature_orbs;
         my $creature_orb = $creature_orbs[0];
 
+        #warn "Using creature orb at: $creature_orb->{land}{x}, $creature_orb->{land}{y}";
+
         my $land;
 
+        my $search_range = 0;
+
         while ( !$land ) {
+            my ( $start_point, $end_point ) = RPG::Map->surrounds_by_range( $creature_orb->{land}{x}, $creature_orb->{land}{y}, $search_range );
 
-            # See if any of the sectors loaded around this orb are free
-            my $count = 0;
-            foreach my $possible_sector ( @{ $orb_surrounds{ $creature_orb->id }{sectors} } ) {
-                if ( !$spawned->{ $possible_sector->x }{ $possible_sector->y } && !$possible_sector->creature_group && !$possible_sector->town ) {
-                    $land = $possible_sector;
+            for my $x ( $start_point->{x} .. $end_point->{x} ) {
+                for my $y ( $start_point->{y} .. $end_point->{y} ) {
 
-                    # Record where we've spawned creatures, so we don't have to re-read everything
-                    $spawned->{ $possible_sector->x }{ $possible_sector->y } = 1;
+                    my $possible_sector = $c->land_grid->get_land_at_location( $x, $y );
 
-                    last;
+                    next unless $possible_sector;
+
+                    if ( !$possible_sector->{creature_group} && !$possible_sector->{town} ) {
+                        $land = $possible_sector;
+
+                        #warn "using sector: $x, $y";
+                        last;
+                    }
                 }
-
-                $count++;
             }
 
-            # Load in more sectors to check if we couldn't find a suitable one
-            unless ($land) {
+            $search_range++;
 
-                # Load in some sectors to check
-                if ( $orb_surrounds{ $creature_orb->id }{size} ) {
-                    $orb_surrounds{ $creature_orb->id }{size} += 2;
-                }
-                else {
-                    $orb_surrounds{ $creature_orb->id }{size} = 1;
-                }
-
-                my $size_to_get = $orb_surrounds{ $creature_orb->id }{size};
-
-                my @range = RPG::Map->surrounds( $creature_orb->land->x, $creature_orb->land->y, $size_to_get, $size_to_get );
-
-                # Somewhat ineffecient, as we'll look thru a lot of sectors multiple times...
-                my @sectors = $schema->resultset('Land')->search(
-                    {
-                        'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
-                        'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
-                    },
-                    { prefetch => [ 'creature_group', 'town' ], }
-                );
-
-                $orb_surrounds{ $creature_orb->id }{sectors} = \@sectors;
-            }
+            last if $search_range > 20;
         }
 
-        my $level = RPG::Maths->weighted_random_number( 1 .. $creature_orb->level * 3 );
+        if ($land) {
+            my $level = RPG::Maths->weighted_random_number( 1 .. $creature_orb->{level} * 3 );
 
-        $package->_create_group_in_land( $schema, $land, $level, $level );
+            $self->_create_group_in_land( $c, $land, $level, $level );
 
-        if ( $group_number % 100 == 0 ) {
-            $logger->info("Spawned $group_number groups...");
+            if ( $group_number % 100 == 0 ) {
+                $c->logger->info("Spawned $group_number groups...");
+            }
+        }
+        else {
+            $c->logger->warning("Couldn't find a suitable sector to spawn in");
         }
     }
 }
 
 sub spawn_dungeon_monsters {
-    my ( $package, $config, $schema, $logger ) = @_;
+    my $self = shift;
+    my $c    = shift;
 
-    my $dungeon_rs = $schema->resultset('Dungeon')->search();
-    
-    $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');    
-    
-    while (my $dungeon = $dungeon_rs->next) {
-        $logger->info("Spawning groups for dungeon id: " . $dungeon->{dungeon_id});
-        
-        my $creature_count = $schema->resultset('CreatureGroup')->search(
-            {
-                'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
-            },
-            {
-                join => {'dungeon_grid' => 'dungeon_room'},
-            }
-        )->count;
+    my $dungeon_rs = $c->schema->resultset('Dungeon')->search();
 
-        my $sector_count = $schema->resultset('Dungeon_Grid')->search(
-            {
-                'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
-            },
-            {
-                join => 'dungeon_room',
-            }
-        )->count;
-        
-        $logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
-        
-        my $number_of_groups_to_spawn = (int $sector_count / $config->{dungeon_sectors_per_creature}) - $creature_count;  
-            
-        $logger->info("Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id});
-    
-        next if $number_of_groups_to_spawn <= 0;    
-        
-        my $level_rs = $schema->resultset('CreatureType')->find(
+    $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
+    while ( my $dungeon = $dungeon_rs->next ) {
+        $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->{dungeon_id} );
+
+        my $creature_count =
+            $c->schema->resultset('CreatureGroup')
+            ->search( { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, }, { join => { 'dungeon_grid' => 'dungeon_room' }, } )->count;
+
+        my $sector_count =
+            $c->schema->resultset('Dungeon_Grid')->search( { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, }, { join => 'dungeon_room', } )
+            ->count;
+
+        $c->logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
+
+        my $number_of_groups_to_spawn = ( int $sector_count / $c->config->{dungeon_sectors_per_creature} ) - $creature_count;
+
+        $c->logger->info( "Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id} );
+
+        next if $number_of_groups_to_spawn <= 0;
+
+        my $level_rs = $c->schema->resultset('CreatureType')->find(
             {},
             {
-                select => [ { max => 'level' }, { min => 'level' }, ],
+                select => [              { max => 'level' }, { min => 'level' }, ],
                 as     => [ 'max_level', 'min_level' ],
             }
         );
-    
+
         # Spawn random groups
         my $spawned = {};
-    
+
         for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
             my $level_range_start = $dungeon->{level} * 5 - 7;
             $level_range_start = 1 if $level_range_start < 1;
             my $level_range_end = $dungeon->{level} * 5;
-            
-            my $level = RPG::Maths->weighted_random_number( $level_range_start  .. $level_range_end );
-            
-            my $sector_to_spawn = $schema->resultset('Dungeon_Grid')->find(
-                {
-                    'dungeon_room.dungeon_id' => $dungeon->{dungeon_id},
-                },
+
+            my $level = RPG::Maths->weighted_random_number( $level_range_start .. $level_range_end );
+
+            my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find(
+                { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, },
                 {
                     order_by => 'rand()',
-                    rows => 1,
-                    join => 'dungeon_room',
+                    rows     => 1,
+                    join     => 'dungeon_room',
                     prefetch => 'creature_group',
                 }
             );
-    
-            $package->_create_group_in_dungeon( $schema, $sector_to_spawn, $level, $level );
-    
+
+            $self->_create_group_in_dungeon( $c->schema, $sector_to_spawn, $level, $level );
+
             if ( $group_number % 100 == 0 ) {
-                $logger->info("Spawned $group_number groups...");
+                $c->logger->info("Spawned $group_number groups...");
             }
         }
     }
 }
-
 
 sub _calculate_number_of_groups_to_spawn {
     my ( $package, $config, $schema ) = @_;
@@ -376,25 +337,35 @@ sub _calculate_number_of_groups_to_spawn {
 my @creature_types;
 
 sub _create_group_in_land {
-    my ( $package, $schema, $land, $min_level, $max_level ) = @_;
-    
-    my $cg = $package->_create_group($schema, $land, $min_level, $max_level);
-    
+    my ( $package, $c, $land, $min_level, $max_level ) = @_;
+
+    my $land_record = $c->schema->resultset('Land')->find(
+        {
+            x => $land->{x},
+            y => $land->{y},
+        },
+        { prefetch => 'creature_group', },
+    );
+
+    my $cg = $package->_create_group( $c->schema, $land_record, $min_level, $max_level );
+
     return unless $cg;
-    
-    $cg->land_id($land->id);
+
+    $c->land_grid->set_land_object( 'creature_group', $land->{x}, $land->{y} );
+
+    $cg->land_id( $land_record->id );
     $cg->update;
- 
-    $land->creature_threat( $land->creature_threat + 5 );
-    $land->update;
-    
+
+    $land_record->creature_threat( $land_record->creature_threat + 5 );
+    $land_record->update;
+
     return $cg;
 }
 
 sub _create_group {
     my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
 
-    # TODO: check if level range is valid, i.e. check against max creature level from DB 
+    # TODO: check if level range is valid, i.e. check against max creature level from DB
 
     return if $sector->creature_group;
 
@@ -433,36 +404,38 @@ sub _create_group {
 
 sub _create_group_in_dungeon {
     my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
-    
-    my $cg = $package->_create_group($schema, $sector, $min_level, $max_level);
+
+    my $cg = $package->_create_group( $schema, $sector, $min_level, $max_level );
 
     return unless $cg;
-    
-    $cg->dungeon_grid_id($sector->id);
+
+    $cg->dungeon_grid_id( $sector->id );
     $cg->update;
-    
-    return $cg;    
+
+    return $cg;
 }
 
 my %cant_move_reason;
 
 sub move_monsters {
-    my ( $package, $config, $schema, $logger ) = @_;
+    my $self = shift;
+    my $c    = shift;
 
-    my @cgs_to_move = $schema->resultset('CreatureGroup')->search(
-        { 'location.land_id' => { '!=', undef }, },
-        { prefetch => [ { 'location' => 'orb', }, { 'creatures' => 'type' }, 'in_combat_with' ], },
-    );
+    my $cg_rs =
+        $c->schema->resultset('CreatureGroup')
+        ->search( {}, { prefetch => [ { 'location' => 'orb', }, { 'creatures' => 'type' }, 'in_combat_with' ], }, );
 
-    my $cg_count = scalar @cgs_to_move;
+    my $cg_count = $cg_rs->count;
 
-    $logger->info("Moving monsters ($cg_count available)");
+    $c->logger->info("Moving monsters ($cg_count available)");
 
     my $moved           = 0;
     my $attempted_moves = 0;
     my $retries         = 0;
 
-    while (@cgs_to_move) {
+    my $cg;
+    my @cgs_to_retry;
+    while ( $cg = $cg_rs->next or $cg = shift @cgs_to_retry ) {
         $attempted_moves++;
 
         if ( $attempted_moves > $cg_count * 2 ) {
@@ -471,51 +444,47 @@ sub move_monsters {
             last;
         }
 
-        my $cg = shift @cgs_to_move;
-
         my $cg_moved = 0;
 
         # Don't move creatures in combat, or guarding an orb
         next if $cg->in_combat_with || $cg->location->orb;
 
-        next if Games::Dice::Advanced->roll('1d100') > $config->{creature_move_chance};
+        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
 
         # Find sector to move to.. try sectors immediately adjacent first, and then go one more sector if we can't find anything
-        my @sizes = map { $_ + 2 } 1 .. $config->{max_hops};
-        for my $size (@sizes) {
-            $cg_moved = $package->_move_cg( $schema, $size, $cg );
+        for my $hop_size ( 1 .. $c->config->{max_hops} ) {
+            $cg_moved = $self->_move_cg( $c, $hop_size, $cg );
 
             if ($cg_moved) {
                 $moved++;
 
                 if ( $moved % 100 == 0 ) {
-                    $logger->info("Moved $moved so far...");
+                    $c->logger->info("Moved $moved so far...");
                 }
-
-                last;
             }
         }
+
         unless ($cg_moved) {
 
             # Couldn't move this CG. Add it back into the array and try again later
             #  (After other cg's have moved and possibly cleared some space)
             $retries++;
-            push @cgs_to_move, $cg;
+            push @cgs_to_retry, $cg;
         }
     }
 
-    $logger->info("Moved $moved groups ($retries retries)");
-
-    $logger->debug( Dumper \%cant_move_reason );
+    $c->logger->info("Moved $moved groups ($retries retries)");
+    $c->logger->debug( Dumper \%cant_move_reason );
 }
 
 # Clean up any dead monster groups. These sometimes get created due to bugs
 # In an ideal world (or at least one with transactions) this wouldn't be needed.
 # We don't delete them, since the news needs to display them
 sub clean_up {
-    my ( $package, $config, $schema, $logger ) = @_;
+    my $self = shift;
+    my $c = shift;
 
-    my $cg_rs = $schema->resultset('CreatureGroup')->search( { land_id => { '!=', undef }, }, {} );
+    my $cg_rs = $c->schema->resultset('CreatureGroup')->search( { land_id => { '!=', undef }, }, {} );
 
     while ( my $cg = $cg_rs->next ) {
         if ( $cg->number_alive <= 0 ) {
@@ -527,38 +496,49 @@ sub clean_up {
 
 sub _move_cg {
     my $package = shift;
-    my $schema  = shift;
+    my $c       = shift;
     my $size    = shift;
     my $cg      = shift;
 
     my $cg_moved = 0;
 
-    my @range = RPG::Map->surrounds( $cg->location->x, $cg->location->y, $size, $size );
-    my @sectors = $schema->resultset('Land')->search(
-        {
-            'x' => { '>=', $range[0]->{x}, '<=', $range[1]->{x} },
-            'y' => { '>=', $range[0]->{y}, '<=', $range[1]->{y} },
-        },
-        { prefetch => [ 'creature_group', 'town' ], }
-    );
+    #warn "size: $size";
+    #warn "loc: " . $cg->location->x . ", " . $cg->location->y;
+
+    my ( $start_point, $end_point ) = RPG::Map->surrounds_by_range( $cg->location->x, $cg->location->y, $size );
+
+    my @sectors = $c->land_grid->get_sectors_within_range( $start_point, $end_point );
 
     foreach my $sector ( shuffle @sectors ) {
 
+        #warn Dumper $sector;
         # Can't move to a town or sector that already has a creature group
-        if ( !$sector->town && !$sector->creature_group && ( ( $sector->creature_threat / 10 ) + 1 ) > $cg->level ) {
-            $cg->land_id( $sector->id );
+        if ( !$sector->{town} && !$sector->{creature_group} && ( ( $sector->{ctr} / 10 ) + 1 ) > $cg->level ) {
+            my ( $orig_x, $orig_y ) = ( $cg->location->x, $cg->location->y );
+
+            my $sector_record = $c->schema->resultset('Land')->find(
+                {
+                    x => $sector->{x},
+                    y => $sector->{y},
+                }
+            );
+
+            $cg->land_id( $sector_record->id );
             $cg->update;
 
-            $sector->creature_threat( $sector->creature_threat + 1 );
-            $sector->update;
+            $sector_record->creature_threat( $sector_record->creature_threat + 1 );
+            $sector_record->update;
+
+            $c->land_grid->set_land_object( 'creature_group', $sector->{x}, $sector->{y} );
+            $c->land_grid->clear_land_object( 'creature_group', $orig_x, $orig_y );
 
             $cg_moved = 1;
 
             last;
         }
         else {
-            $cant_move_reason{town}++, next if $sector->town;
-            $cant_move_reason{cg}++,   next if $sector->creature_group;
+            $cant_move_reason{town}++, next if $sector->{town};
+            $cant_move_reason{cg}++,   next if $sector->{creature_group};
             $cant_move_reason{ctr}++;
         }
     }
@@ -567,70 +547,63 @@ sub _move_cg {
 }
 
 sub _create_orb_in_land {
-    my $package = shift;
-    my $config  = shift;
-    my $schema  = shift;
-    my $logger  = shift;
-    my $level   = shift;
-    my @land    = @_;
-
-    my $land_by_sector;
-    foreach my $sector (@land) {
-        $land_by_sector->[ $sector->x ][ $sector->y ] = $sector;
-    }
-
-    my %x_y_range = $schema->resultset('Land')->get_x_y_range();
+    my $self        = shift;
+    my $c           = shift;
+    my $level       = shift;
+    my $start_point = shift;
+    my $end_point   = shift;
 
     my $created = 0;
 
-    OUTER: foreach my $land (@land) {
-        next if $land->orb || $land->town;
-        
+    my @sectors = $c->land_grid->get_sectors_within_range( $start_point, $end_point );
+
+    OUTER: foreach my $land ( shuffle @sectors ) {
+
+        #warn Dumper $land;
+        my ( $x, $y ) = ( $land->{x}, $land->{y} );
+
+        next if $land->{orb} || $land->{town};
+
         # Search for towns and orbs in this sector to see if it will block us spawning the orb.
         # The two searches are different sizes, so we have to find the largest one
 
-        my $town_search_size = round $config->{orb_distance_from_town_per_level} * $level * 2 - 1;
-        my @town_range       = RPG::Map->surrounds( $land->x, $land->y, $town_search_size, $town_search_size );
-        my $orb_search_size  = $config->{orb_distance_from_other_orb} * 2 - 1;
-        my @orb_range        = RPG::Map->surrounds( $land->x, $land->y, $orb_search_size, $orb_search_size );
+        my @town_range = RPG::Map->surrounds_by_range( $x, $y, $c->config->{orb_distance_from_town_per_level} );
+        my @orb_range  = RPG::Map->surrounds_by_range( $x, $y, $c->config->{orb_distance_from_other_orb} );
 
         my @range;
-        if ( $town_search_size > $orb_search_size ) {
+        if ( $c->config->{orb_distance_from_town_per_level} > $c->config->{orb_distance_from_other_orb} ) {
             @range = @town_range;
         }
         else {
             @range = @orb_range;
         }
+        
+        for my $x_to_check ( $range[0]->{x} .. $range[1]->{x} ) {
+            for my $y_to_check ( $range[0]->{y} .. $range[1]->{y} ) {
 
-        for my $x ( $range[0]->{x} .. $range[1]->{x} ) {
-            for my $y ( $range[0]->{y} .. $range[1]->{y} ) {
-                next if $x > $x_y_range{max_x} || $y > $x_y_range{max_y};
+                #warn "Checking surround sector: $x_to_check, $y_to_check";
+                my $sector_to_check = $c->land_grid->get_land_at_location( $x_to_check, $y_to_check );
+                                
+                next unless $sector_to_check;
 
-                my $sector_to_check = $land_by_sector->[$x][$y];
-                
-                # If we haven't got enough surrounds, don't use this sector
-                next OUTER unless $sector_to_check;
-                
                 # Orb must be minium range from town
-                if ( $x >= $town_range[0]->{x} && $x <= $town_range[1]->{x} && $y >= $town_range[0]->{y} && $y <= $town_range[1]->{y} ) {
-                    next OUTER if $sector_to_check->town;
+                if ( $x_to_check >= $town_range[0]->{x} && $x_to_check <= $town_range[1]->{x} && $y_to_check >= $town_range[0]->{y} && $y_to_check <= $town_range[1]->{y} ) {
+                    next OUTER if $sector_to_check->{town};
                 }
 
                 # Check for orbs
-                if ( $x >= $orb_range[0]->{x} && $x <= $orb_range[1]->{x} && $y >= $orb_range[0]->{y} && $y <= $orb_range[1]->{y} ) {
-                    next OUTER if $used->[$x][$y] || $sector_to_check->orb;
+                if ( $x_to_check >= $orb_range[0]->{x} && $x_to_check <= $orb_range[1]->{x} && $y_to_check >= $orb_range[0]->{y} && $y_to_check <= $orb_range[1]->{y} ) {
+                    next OUTER if $sector_to_check->{orb};
                 }
             }
         }
 
         # No towns in range, and no existing orb here... we can use this sector
-        $package->_spawn_orb( $schema, $land, $level );
+        $self->_spawn_orb( $c, $land, $level );
 
-        $used->[ $land->x ][ $land->y ] = 1;
+        $c->land_grid->set_land_object( 'orb', $x, $y, );
 
         $created = 1;
-
-        last;
     }
 
     return $created;
@@ -640,7 +613,7 @@ my @names;
 
 sub _spawn_orb {
     my $package = shift;
-    my $schema  = shift;
+    my $c       = shift;
     my $land    = shift;
     my $level   = shift;
 
@@ -653,19 +626,26 @@ sub _spawn_orb {
     my $existing_orb;
     do {
         $name = ( shuffle @names )[0];
-        $existing_orb = $schema->resultset('Creature_Orb')->find( { name => $name, land_id => {'!=', undef} } );
+        $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name, land_id => { '!=', undef } } );
     } while ($existing_orb);
 
-    $schema->resultset('Creature_Orb')->create(
+    my $land_record = $c->schema->resultset('Land')->find(
         {
-            land_id => $land->id,
+            x => $land->{x},
+            y => $land->{y},
+        }
+    );
+
+    $c->schema->resultset('Creature_Orb')->create(
+        {
+            land_id => $land_record->id,
             level   => $level,
             name    => $name
         }
     );
 
     # Create creature group at orb
-    $package->_create_group_in_land( $schema, $land, $level * 3, $level * 3 );
+    $package->_create_group_in_land( $c, $land, $level * 3, $level * 3 );
 }
 
 1;

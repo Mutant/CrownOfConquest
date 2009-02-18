@@ -7,7 +7,6 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use JSON;
 
-#use DBIx::Class::ResultClass::HashRefInflator;
 use RPG::Schema::Land;
 use RPG::Map;
 

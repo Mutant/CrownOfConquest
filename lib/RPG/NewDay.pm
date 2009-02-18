@@ -75,6 +75,7 @@ sub do_new_day {
     );
 
     foreach my $action ( $self->actions(context => $context) ) {
+        $logger->info("Running action: " . $action->meta->name);
         $action->run();
     }
 

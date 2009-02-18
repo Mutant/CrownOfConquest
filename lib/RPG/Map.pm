@@ -37,7 +37,8 @@ sub surrounds_by_range {
     my $self = shift;
     my $x_base = shift || croak 'x base not supplied';
     my $y_base = shift || croak 'y base not supplied';
-    my $x_range = shift || croak 'x size not supplied';
+    my $x_range = shift;
+    croak 'x size not supplied' unless defined $x_range;
     my $y_range = shift || $x_range;
     
     $x_range = $x_range * 2 + 1;

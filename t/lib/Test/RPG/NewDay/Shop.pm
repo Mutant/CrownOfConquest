@@ -13,7 +13,7 @@ use Test::More;
 sub startup : Test(startup => 1) {
 	my $self = shift;
 	
-	use_ok 'RPG::NewDay::Shop';
+	use_ok 'RPG::NewDay::Action::Shop';
 	
 }
 
@@ -22,7 +22,7 @@ sub test_alter_statuses_of_shops : Tests(8) {
 	$mock_shop->set_true('status');
 	$mock_shop->set_true('update');
 	
-	my $left = RPG::NewDay::Shop::_alter_statuses_of_shops(
+	my $left = RPG::NewDay::Action::Shop::_alter_statuses_of_shops(
 		number_to_change => 1,
 		open_or_close => 'Open',
 		shops_by_status => {
@@ -41,7 +41,7 @@ sub test_alter_statuses_of_shops : Tests(8) {
 
 	$mock_shop->clear();
 	
-	$left = RPG::NewDay::Shop::_alter_statuses_of_shops(
+	$left = RPG::NewDay::Action::Shop::_alter_statuses_of_shops(
 		number_to_change => 2,
 		open_or_close => 'Close',
 		shops_by_status => {

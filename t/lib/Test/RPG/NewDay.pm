@@ -30,17 +30,14 @@ sub test_run_loads_normal_config : Tests(1) {
     
     my $mock_logger = Test::MockObject::Extends->new( 'Log::Dispatch' );
 
-    my $rs = Test::Resub->new(
-        {
-            name    => 'RPG::NewDay::do_new_day',
-            code    => sub { },
-            capture => 1,
-        }
-    );
+    my $mock_new_day = Test::MockObject->new();
+    $mock_new_day->set_always('do_new_day');
+    
+    RPG::NewDay::run($mock_new_day);
 
-    RPG::NewDay->run();
+    my ($method, $args) = $mock_new_day->next_call();
 
-    my $config_passed = $rs->args->[0][0];
+    my $config_passed = $args->[1];
 
     is_deeply( $mock_config, $config_passed );
 

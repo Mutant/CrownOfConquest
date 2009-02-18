@@ -32,12 +32,18 @@ sub dungeon_startup : Test(startup => 1) {
         }
     );
 
-    use_ok 'RPG::NewDay::Dungeon';
+    use_ok 'RPG::NewDay::Action::Dungeon';
 
     my $logger = Test::MockObject->new();
     $logger->set_always('debug');
-    $RPG::NewDay::Dungeon::logger = $logger;
-    $RPG::NewDay::Dungeon::schema = $self->{schema};
+    
+   
+    $self->{context} = Test::MockObject->new();
+    
+    $self->{context}->set_always('logger', $logger);
+    $self->{context}->set_always('schema', $self->{schema});
+    $self->{context}->set_always('config', $self->{config});
+    $self->{context}->set_isa('RPG::NewDay::Context');
 }
 
 sub dungeon_shutdown : Test(shutdown) {
@@ -57,17 +63,19 @@ sub dungeon_setup : Tests(setup) {
     }
     
     $self->{positions} = \%positions;
+    
+    $self->{config} = {
+        max_x_dungeon_room_size => 6,
+        max_y_dungeon_room_size => 6,
+    };
+    
+    $self->{dungeon} = RPG::NewDay::Action::Dungeon->new(context => $self->{context});
 }
 
 sub test_find_room_dimensions : Tests(no_plan) {
     my $self = shift;
 
     # GIVEN
-    $RPG::NewDay::Dungeon::config = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
     my @tests = (
         {
             start_x  => 1,
@@ -101,7 +109,7 @@ sub test_find_room_dimensions : Tests(no_plan) {
         $self->{counter} = 0;
         $self->{rolls}   = $test->{rolls};
 
-        my @result = RPG::NewDay::Dungeon->_find_room_dimensions( $test->{start_x}, $test->{start_y} );
+        my @result = $self->{dungeon}->_find_room_dimensions( $test->{start_x}, $test->{start_y} );
 
         is( $result[0], $test->{expected}[0], "Top x set correctly" );
         is( $result[1], $test->{expected}[1], "Top y set correctly" );
@@ -117,11 +125,6 @@ sub test_create_room_simple : Test(28) {
     my $self = shift;
 
     # GIVEN
-    $RPG::NewDay::Dungeon::config = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_always( 'id', 1 );
 
@@ -139,7 +142,7 @@ sub test_create_room_simple : Test(28) {
     $expected_sectors->[3][3] = [ 'bottom', 'right' ];
 
     # WHEN
-    my @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
 
     # THEN
     is( scalar @sectors, 9, "9 new sectors created" );
@@ -162,11 +165,6 @@ sub test_create_room_with_offset : Test(28) {
     my $self = shift;
 
     # GIVEN
-    $RPG::NewDay::Dungeon::config = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_always( 'id', 1 );
 
@@ -185,7 +183,7 @@ sub test_create_room_with_offset : Test(28) {
     $expected_sectors->[7][5] = [ 'bottom', 'right' ];
 
     # WHEN
-    my @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 5, 5, [], $self->{positions});
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 5, 5, [], $self->{positions});
 
     # THEN
     is( scalar @sectors, 9, "9 new sectors created" );
@@ -208,11 +206,6 @@ sub test_create_room_with_rooms_blocking : Test(17) {
     my $self = shift;
 
     # GIVEN
-    $RPG::NewDay::Dungeon::config = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_always( 'id', 1 );
 
@@ -220,7 +213,7 @@ sub test_create_room_with_rooms_blocking : Test(17) {
     $self->{counter} = 0;
     $self->{rolls} = [ 3, 2, 1, 1 ];
 
-    my @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
     
     is(scalar @sectors, 6, "Sanity check existing room");
     
@@ -241,7 +234,7 @@ sub test_create_room_with_rooms_blocking : Test(17) {
 
 
     # WHEN
-    @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 3, 3, $existing_sectors, $self->{positions});
+    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 3, 3, $existing_sectors, $self->{positions});
 
     # THEN
     is( scalar @sectors, 5, "5 new sectors created" );
@@ -264,18 +257,13 @@ sub test_create_room_with_non_contiguous_sectors : Test(11) {
     my $self = shift;
 
     # GIVEN
-    $RPG::NewDay::Dungeon::config = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_always( 'id', 1 );
 
     $self->{counter} = 0;
     $self->{rolls} = [ 3, 1, 1, 1 ];
 
-    my @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 2, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 2, [], $self->{positions} );
     
     is(scalar @sectors, 3, "Sanity check existing room");
     
@@ -293,7 +281,7 @@ sub test_create_room_with_non_contiguous_sectors : Test(11) {
     $expected_sectors->[3][1] = ['bottom', 'right', 'top'];
 
     # WHEN
-    @sectors = RPG::NewDay::Dungeon->_create_room( $mock_dungeon, 1, 1, $existing_sectors, $self->{positions});
+    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, $existing_sectors, $self->{positions});
 
     # THEN
     is( scalar @sectors, 3, "3 new sectors created" );
@@ -336,7 +324,7 @@ sub test_find_wall_to_join_simple : Test(1) {
     $existing_sectors->[1][2] = $sector;
     
     # WHEN
-    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+    my ($wall_found) = $self->{dungeon}->_find_wall_to_join(
         $existing_sectors,
     );
     
@@ -382,7 +370,7 @@ sub test_find_wall_to_join_one_sector_at_left_of_map : Test(1) {
     $existing_sectors->[2][1] = $sector2;
     
     # WHEN
-    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+    my ($wall_found) = $self->{dungeon}->_find_wall_to_join(
         $existing_sectors,
     );
     
@@ -427,7 +415,7 @@ sub test_find_wall_to_join_one_sector_with_no_available_walls : Test(1) {
     $existing_sectors->[2][3] = $sector2;
     
     # WHEN
-    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+    my ($wall_found) = $self->{dungeon}->_find_wall_to_join(
         $existing_sectors,
     );
     
@@ -471,7 +459,7 @@ sub test_find_wall_to_join_one_sector_with_door_blocking_one_wall : Test(1) {
     $existing_sectors->[2][2] = $sector1;
     
     # WHEN
-    my ($wall_found) = RPG::NewDay::Dungeon->_find_wall_to_join(
+    my ($wall_found) = $self->{dungeon}->_find_wall_to_join(
         $existing_sectors,
     );
     
@@ -489,7 +477,7 @@ sub test_has_available_path_simple : Tests(1) {
     my @room_range = (1, 1, 1, 2);
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
 
     # THEN
     is($has_path, 1, "Path found between two adjacent sectors");
@@ -505,7 +493,7 @@ sub test_has_available_path_sector_missing_between_two_points : Tests(1) {
     my @room_range = (1, 1, 1, 3);
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range);
 
     # THEN
     is($has_path, 0, "No path found as intermediate sector missing");
@@ -528,7 +516,7 @@ sub test_has_available_path_sector_large_grid : Tests(1) {
     }
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
 
     # THEN
     is($has_path, 1, "Path found along large grid");
@@ -552,7 +540,7 @@ sub test_has_available_path_sector_large_grid_with_row_missing : Tests(1) {
     }
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
 
     # THEN
     is($has_path, 0, "No path found as intermediate row missing");
@@ -578,7 +566,7 @@ sub test_has_available_two_chunks_missing : Tests(1) {
     $coords_available->[3][4] = 1;
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
 
     # THEN
     is($has_path, 1, "Path found");
@@ -599,7 +587,7 @@ sub test_has_available_diagonally_adjacent_chunks_missing : Tests(1) {
     $coords_available->[5][7] = 1;
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
 
     # THEN
     is($has_path, 0, "No Path found as dest is only path is diagonal");
@@ -623,7 +611,7 @@ sub test_has_available_path_sector_large_grid_with_row_missing_above_start_point
     }
     
     # WHEN
-    my $has_path = RPG::NewDay::Dungeon->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
+    my $has_path = $self->{dungeon}->_has_available_path($dest_x, $dest_y, $start_x, $start_y, @room_range, $coords_available);
 
     # THEN
     is($has_path, 0, "No path found as intermediate row missing");

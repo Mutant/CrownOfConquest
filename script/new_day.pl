@@ -21,4 +21,5 @@ BEGIN {
 
 use RPG::NewDay;
 
-RPG::NewDay->run();
+my $new_day = RPG::NewDay->new();
+$new_day->run();

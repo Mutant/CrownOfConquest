@@ -1,7 +1,8 @@
-use strict;
-use warnings;
+package RPG::NewDay::Action::Recruitment;
 
-package RPG::NewDay::Recruitment;
+use Mouse;
+
+extends 'RPG::NewDay::Base';
 
 use Data::Dumper;
 
@@ -11,44 +12,41 @@ use Games::Dice::Advanced;
 use RPG::Maths;
 use File::Slurp;
 
-# Package scope so everyone can read these
-my ( $config, $schema, $logger, $new_day );
-
 sub run {
-    my $package = shift;
-    $config = shift;
-    $schema = shift;
-    $logger = shift;
-    $new_day = shift;
+    my $self = shift;
+    
+    my $c = $self->context;
 
-    my $town_rs = $schema->resultset('Town')->search( {}, { prefetch => { 'characters' => 'items' }, }, );
+    my $town_rs = $c->schema->resultset('Town')->search( {}, { prefetch => { 'characters' => 'items' }, }, );
 
     while ( my $town = $town_rs->next ) {
         my @characters = $town->characters;
 
-        my $ideal_number_of_characters = int( $town->prosperity / $config->{characters_per_prosperity} );
+        my $ideal_number_of_characters = int( $town->prosperity / $c->config->{characters_per_prosperity} );
         $ideal_number_of_characters = 1 if $ideal_number_of_characters < 1;
 
-        $logger->debug( 'Town id: ' . $town->id . " has " . scalar @characters . " characters, but should have $ideal_number_of_characters" );
+        $c->logger->debug( 'Town id: ' . $town->id . " has " . scalar @characters . " characters, but should have $ideal_number_of_characters" );
 
         if ( scalar @characters < $ideal_number_of_characters ) {
             my $number_of_chars_to_create = $ideal_number_of_characters - scalar @characters;
 
             for ( 1 .. $number_of_chars_to_create ) {
-                $package->generate_character($town);
+                $self->generate_character($town);
             }
         }
     }
 }
 
 sub generate_character {
-    my $package = shift;
+    my $self = shift;
     my $town    = shift;
+    
+    my $c = $self->context;
 
-    my $race  = $schema->resultset('Race')->random;
-    my $class = $schema->resultset('Class')->random;
+    my $race  = $c->schema->resultset('Race')->random;
+    my $class = $c->schema->resultset('Class')->random;
 
-    my %levels = map { $_->level_number => $_->xp_needed } $schema->resultset('Levels')->search();
+    my %levels = map { $_->level_number => $_->xp_needed } $c->schema->resultset('Levels')->search();
     my $max_level = max keys %levels;
 
     my $level = RPG::Maths->weighted_random_number( 1 .. $max_level );
@@ -64,13 +62,13 @@ sub generate_character {
         'constitution' => $race->base_con,
     );
 
-    my $stat_pool = $config->{stats_pool};
-    my $stat_max  = $config->{stat_max};
+    my $stat_pool = $c->config->{stats_pool};
+    my $stat_max  = $c->config->{stat_max};
 
     # Initial allocation of stat points
-    %stats = _allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
+    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
 
-    my $character = $schema->resultset('Character')->create(
+    my $character = $c->schema->resultset('Character')->create(
         {
             character_name => _generate_name(),
             class_id       => $class->id,
@@ -86,7 +84,7 @@ sub generate_character {
     for ( 1 .. $level ) {
         $character->roll_all;
 
-        %stats = _allocate_stat_points( $config->{stat_points_per_level}, undef, $class->primary_stat, \%stats );
+        %stats = $self->_allocate_stat_points( $c->config->{stat_points_per_level}, undef, $class->primary_stat, \%stats );
 
         for my $stat ( keys %stats ) {
             $character->set_column( $stat, $stats{$stat} );
@@ -100,23 +98,24 @@ sub generate_character {
 
     $character->set_default_spells;
 
-    $package->_allocate_equipment($character);
+    $self->_allocate_equipment($character);
 
-    $schema->resultset('Character_History')->create(
+    $c->schema->resultset('Character_History')->create(
         {
             character_id => $character->id,
-            day_id       => $new_day->id,
+            day_id       => $c->current_day->id,
             event        => $character->character_name . " arrived at the town of " . $town->town_name . " and began looking for a party to join",
         },        
     );
 }
 
 sub _allocate_stat_points {
+    my $self = shift;
     my $stat_pool    = shift;
     my $stat_max     = shift;
     my $primary_stat = shift;
     my $stats        = shift;
-
+    
     my @stats = keys %$stats;
     push @stats, $primary_stat;    # Primary stat goes in twice to make it more likely to get added
 
@@ -149,8 +148,10 @@ sub _generate_name {
 }
 
 sub _allocate_equipment {
-    my $package   = shift;
+    my $self   = shift;
     my $character = shift;
+    
+    my $c = $self->context;
 
     my %weapon = (
         'Warrior' => 'Melee Weapon',
@@ -165,7 +166,7 @@ sub _allocate_equipment {
     $max_primary_prevalance = $min_primary_prevalance if $max_primary_prevalance < $min_primary_prevalance;
     $max_primary_prevalance = 40 if $max_primary_prevalance < 40;
 
-    my @equip_places = $schema->resultset('Equip_Places')->search( {}, { prefetch => { 'equip_place_categories' => 'item_category' }, }, );
+    my @equip_places = $c->schema->resultset('Equip_Places')->search( {}, { prefetch => { 'equip_place_categories' => 'item_category' }, }, );
 
     foreach my $equip_place (@equip_places) {
         my @categories = map { $_->item_category } $equip_place->categories;
@@ -177,7 +178,7 @@ sub _allocate_equipment {
             next;
         }
 
-        my @item_types = $schema->resultset('Item_Type')->search(
+        my @item_types = $c->schema->resultset('Item_Type')->search(
             {
                 prevalence               => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
                 'category.item_category' => \@categories,
@@ -189,7 +190,7 @@ sub _allocate_equipment {
 
         @item_types = shuffle @item_types;
 
-        my $item = $schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
+        my $item = $c->schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
 
         $item->equip_item( $equip_place->equip_place_name, 0 );
 

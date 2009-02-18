@@ -1,7 +1,8 @@
-use strict;
-use warnings;
+package RPG::NewDay::Action::Shop;
 
-package RPG::NewDay::Shop;
+use Mouse;
+
+extends 'RPG::NewDay::Base';
 
 use Data::Dumper;
 
@@ -9,18 +10,15 @@ use Games::Dice::Advanced;
 use Params::Validate qw(:types validate);
 use List::Util qw(shuffle);
 
-my ( $config, $schema, $logger );
-
 sub run {
-    my $package = shift;
-    $config = shift;
-    $schema = shift;
-    $logger = shift;
+    my $self = shift;
 
-    my $town_rs = $schema->resultset('Town')->search( {}, { prefetch => 'shops' } );
+    my $c = $self->context;
+
+    my $town_rs = $c->schema->resultset('Town')->search( {}, { prefetch => 'shops' } );
 
     # Get list of item types, as we only need to get it once
-    my @item_types = $schema->resultset('Item_Type')->search(
+    my @item_types = $c->schema->resultset('Item_Type')->search(
         {
             'category.hidden'           => 0,
             'category.auto_add_to_shop' => 1,
@@ -34,17 +32,18 @@ sub run {
     map { push @{ $item_types_by_prevalence{ $_->prevalence } }, $_ } @item_types;
 
     while ( my $town = $town_rs->next ) {
-        my @shops = _adjust_number_of_shops($town);
+        my @shops = $self->_adjust_number_of_shops($town);
 
         foreach my $shop (@shops) {
             next unless $shop->status eq 'Open';
 
-            _adjust_shops_modifier( $town, $shop );
+            $self->_adjust_shops_modifier( $town, $shop );
 
             # Calculate items in shop
             my $ideal_items_value = $shop->shop_size * 50 + ( Games::Dice::Advanced->roll('1d40') - 20 );
             my $actual_items_value = 0;
-            my @items_in_shop = $schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
+            my @items_in_shop =
+                $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
 
             # Remove some random items. This lets new items, or changes in prevalence, etc. have a chance to take affect
             @items_in_shop = _remove_random_items_from_shop(@items_in_shop);
@@ -56,7 +55,7 @@ sub run {
 
             # TODO: add value of quantity items
 
-            $logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value" );
+            $c->logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value" );
 
             my $item_value_to_add = $ideal_items_value - $actual_items_value;
 
@@ -87,7 +86,7 @@ sub run {
                 # If the item_type has a 'quantity' variable param, add as an 'item made' rather than an
                 #  individual item
                 if ( my $variable_param = $item_type->variable_param('Quantity') ) {
-                    my $items_made = $schema->resultset('Items_Made')->find_or_new(
+                    my $items_made = $c->schema->resultset('Items_Made')->find_or_new(
                         {
                             item_type_id => $item_type->id,
                             shop_id      => $shop->id,
@@ -109,7 +108,7 @@ sub run {
                     $item_value_to_add -= $item_type->modified_cost($shop) * $median_value;
                 }
                 else {
-                    my $item = $schema->resultset('Items')->create(
+                    my $item = $c->schema->resultset('Items')->create(
                         {
                             item_type_id => $item_type->id,
                             shop_id      => $shop->id,
@@ -152,7 +151,7 @@ sub _alter_statuses_of_shops {
     }
 
     my $order_index = 0;
-OUTER: foreach my $status_to_change (@order) {
+    OUTER: foreach my $status_to_change (@order) {
 
         #warn "Changing status from: $status_to_change to: $order[$order_index+1]";
 
@@ -212,10 +211,13 @@ sub generate_shop_name {
 }
 
 sub _adjust_number_of_shops {
+    my $self = shift;
     my $town = shift;
 
+    my $c = $self->context;
+
     # Adjust number of shops, if necessary
-    my $ideal_number_of_shops = int( $town->prosperity / $config->{prosperity_per_shop} );
+    my $ideal_number_of_shops = int( $town->prosperity / $c->config->{prosperity_per_shop} );
     $ideal_number_of_shops = 1 if $ideal_number_of_shops < 1;    # Always at least one shop per town
 
     my @shops = $town->shops;
@@ -224,7 +226,7 @@ sub _adjust_number_of_shops {
 
     my $open_shops_count = defined $shops_by_status{Open} ? scalar @{ $shops_by_status{Open} } : 0;
 
-    $logger->info( "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count" );
+    $c->logger->info( "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count" );
 
     if ( $ideal_number_of_shops > $open_shops_count ) {
 
@@ -242,7 +244,7 @@ sub _adjust_number_of_shops {
         for ( 1 .. $shops_to_open ) {
 
             # Create some new 'Opening' shops
-            my ( $shop_owner_name, $suffix ) = generate_shop_name($config);
+            my ( $shop_owner_name, $suffix ) = generate_shop_name( $c->config );
             my $new_shop = $town->add_to_shops(
                 {
                     shop_owner_name => $shop_owner_name,
@@ -270,8 +272,11 @@ sub _adjust_number_of_shops {
 }
 
 sub _adjust_shops_modifier {
+    my $self = shift;
     my $town = shift;
     my $shop = shift;
+
+    my $c = $self->context;
 
     # Calculate shop's cost_modifier
     # TODO: the 100 below is max prosperity, the 60 is range of cost modifiers.
@@ -286,16 +291,16 @@ sub _adjust_shops_modifier {
     my $modifier_difference = $new_modifier - $shop->cost_modifier;
 
     # New modifier can't be too far away from the old one
-    if ( abs($modifier_difference) > $config->{max_cost_modifier_change} ) {
+    if ( abs($modifier_difference) > $c->config->{max_cost_modifier_change} ) {
         if ( $modifier_difference > 0 ) {
-            $new_modifier = $shop->cost_modifier + $config->{max_cost_modifier_change};
+            $new_modifier = $shop->cost_modifier + $c->config->{max_cost_modifier_change};
         }
         else {
-            $new_modifier = $shop->cost_modifier - $config->{max_cost_modifier_change};
+            $new_modifier = $shop->cost_modifier - $c->config->{max_cost_modifier_change};
         }
     }
 
-    $logger->info( "Shop: " . $shop->id . " modifier changed from " . $shop->cost_modifier . " to $new_modifier" );
+    $c->logger->info( "Shop: " . $shop->id . " modifier changed from " . $shop->cost_modifier . " to $new_modifier" );
 
     $shop->cost_modifier($new_modifier);
     $shop->update;

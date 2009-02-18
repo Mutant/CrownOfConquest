@@ -297,10 +297,8 @@ sub spawn_dungeon_monsters {
         
         $logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
         
-        my $ideal_number_of_creatures = (int $sector_count / $config->{dungeon_sectors_per_creature}) - $creature_count;  
-        
-        my $number_of_groups_to_spawn = $ideal_number_of_creatures;
-    
+        my $number_of_groups_to_spawn = (int $sector_count / $config->{dungeon_sectors_per_creature}) - $creature_count;  
+            
         $logger->info("Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id});
     
         next if $number_of_groups_to_spawn <= 0;    
@@ -318,6 +316,7 @@ sub spawn_dungeon_monsters {
     
         for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
             my $level_range_start = $dungeon->{level} * 5 - 7;
+            $level_range_start = 1 if $level_range_start < 1;
             my $level_range_end = $dungeon->{level} * 5;
             
             my $level = RPG::Maths->weighted_random_number( $level_range_start  .. $level_range_end );
@@ -394,6 +393,8 @@ sub _create_group_in_land {
 
 sub _create_group {
     my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
+
+    # TODO: check if level range is valid, i.e. check against max creature level from DB 
 
     return if $sector->creature_group;
 

@@ -8,6 +8,8 @@ use Data::Dumper;
 use DateTime;
 use JSON;
 
+use Carp;
+
 use List::Util qw(shuffle);
 
 sub main : Local {
@@ -53,6 +55,7 @@ sub sector_menu : Local {
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
     
     my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
+    $dungeon = undef if $dungeon && ! $dungeon->party_can_enter($c->stash->{party});
 
     my $parties_in_sector = $c->forward('parties_in_sector');
 
@@ -517,10 +520,13 @@ sub destroy_orb : Local {
 }
 
 sub enter_dungeon : Local {
-    my ( $self, $c ) = @_;
+    my ( $self, $c ) = @_;    
     
-    # TODO: check level is sufficient
     my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
+    
+    unless ($dungeon->party_can_enter($c->stash->{party})) {
+        croak "Party not allowed to enter this dungeon";
+    }
     
     my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
         {

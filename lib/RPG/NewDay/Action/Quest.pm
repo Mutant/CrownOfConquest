@@ -1,7 +1,7 @@
-use strict;
-use warnings;
+package RPG::NewDay::Action::Quest;
+use Mouse;
 
-package RPG::NewDay::Quest;
+extends 'RPG::NewDay::Base';
 
 use Data::Dumper;
 
@@ -9,14 +9,13 @@ use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 
 sub run {
-	my $package = shift;
-	my $config = shift;
-	my $schema = shift;
-	my $logger = shift;
+	my $self = shift;
+	
+	my $c = $self->context;
 
-	my $town_rs = $schema->resultset('Town')->search( );
+	my $town_rs = $c->schema->resultset('Town')->search( );
 		
-	my @quest_types = $schema->resultset('Quest_Type')->search( 
+	my @quest_types = $c->schema->resultset('Quest_Type')->search( 
 		{
 			hidden => 0,
 		},
@@ -24,9 +23,9 @@ sub run {
 	my @first_level_quests = grep { $_->min_level == 1 } @quest_types;
 	
 	while (my $town = $town_rs->next) {	
-		my $number_of_quests = int ($town->prosperity / $config->{prosperity_per_quest});
+		my $number_of_quests = int ($town->prosperity / $c->config->{prosperity_per_quest});
 		
-		my @quests = $schema->resultset('Quest')->search(
+		my @quests = $c->schema->resultset('Quest')->search(
 			{
 				town_id => $town->id,
 				party_id => undef,
@@ -53,7 +52,7 @@ sub run {
 				$quest_type = $quest_types[0];
 			}
 			
-			$schema->resultset('Quest')->create(
+			$c->schema->resultset('Quest')->create(
 				{
 					quest_type_id => $quest_type->id,
 					town_id => $town->id,

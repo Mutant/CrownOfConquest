@@ -353,6 +353,7 @@ sub _find_wall_to_join {
             foreach my $wall ( shuffle @walls ) {
                 my ( $opp_x, $opp_y ) = $wall->opposite_sector;
 
+                #$c->logger->debug("Checking position: " . $wall->position->position);
                 #$c->logger->debug("Opposite of wall is: $opp_x, $opp_y");
 
                 next if $opp_x < 1 || $opp_y < 1;
@@ -362,18 +363,7 @@ sub _find_wall_to_join {
                     #$c->logger->debug("No sector exists opposite wall");
 
                     # Check there's no existing door
-                    my $existing_door = $c->schema->resultset('Door')->find(
-                        {
-                            'dungeon_grid.x'          => $sector->x,
-                            'dungeon_grid.y'          => $sector->x,
-                            'dungeon_room.dungeon_id' => $sector->dungeon_room->dungeon_id,
-                            position_id               => $wall->position_id,
-
-                        },
-                        { 'join' => { 'dungeon_grid' => 'dungeon_room' } }
-                    );
-
-                    unless ($existing_door) {
+                    unless ($sector->has_door($wall->position->position)) {
                         #$c->logger->debug("No door exists opposite wall");
 
                         $wall_to_join = $wall;

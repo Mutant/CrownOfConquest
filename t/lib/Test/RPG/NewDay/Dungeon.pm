@@ -35,7 +35,8 @@ sub dungeon_startup : Test(startup => 1) {
     use_ok 'RPG::NewDay::Action::Dungeon';
 
     my $logger = Test::MockObject->new();
-    $logger->set_always('debug');
+    #$logger->set_always('debug');
+    $logger->mock('debug', sub { warn @_->[1] . "\n" } );
 
     $self->{context} = Test::MockObject->new();
 

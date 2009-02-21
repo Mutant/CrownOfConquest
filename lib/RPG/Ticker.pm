@@ -10,6 +10,7 @@ use RPG::Map;
 use RPG::Maths;
 
 use RPG::Ticker::LandGrid;
+use RPG::Ticker::DungeonGrid;
 use RPG::Ticker::Context;
 
 use YAML;
@@ -56,31 +57,36 @@ sub run {
         my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
         my $land_grid = RPG::Ticker::LandGrid->new( schema => $schema );
+        my $dungeon_grid = RPG::Ticker::DungeonGrid->new( schema => $schema );
 
         my $context = RPG::Ticker::Context->new(
-            config    => $config,
-            logger    => $logger,
-            schema    => $schema,
-            land_grid => $land_grid,
+            config       => $config,
+            logger       => $logger,
+            schema       => $schema,
+            land_grid    => $land_grid,
+            dungeon_grid => $dungeon_grid,
         );
 
         # Clean up
-        $self->clean_up($context);
+        #$self->clean_up($context);
 
         # Spawn orbs
-        $self->spawn_orbs($context);
+        #$self->spawn_orbs($context);
 
         # Spawn town orbs
-        $self->spawn_town_orbs($context);
+        #$self->spawn_town_orbs($context);
 
         # Spawn monsters
-        $self->spawn_monsters($context);
+        #$self->spawn_monsters($context);
 
         # Move monsters
-        $self->move_monsters($context);
+        #$self->move_monsters($context);
 
         # Spawn dungeon monsters
         $self->spawn_dungeon_monsters($context);
+
+        # Spawn dungeon monsters
+        $self->move_dungeon_monsters($context);
 
         $schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
     };
@@ -248,6 +254,14 @@ sub spawn_dungeon_monsters {
 
     $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
+    my $level_rs = $c->schema->resultset('CreatureType')->find(
+        {},
+        {
+            select => [              { max => 'level' }, { min => 'level' }, ],
+            as     => [ 'max_level', 'min_level' ],
+        }
+    );
+
     while ( my $dungeon = $dungeon_rs->next ) {
         $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->{dungeon_id} );
 
@@ -266,14 +280,6 @@ sub spawn_dungeon_monsters {
         $c->logger->info( "Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id} );
 
         next if $number_of_groups_to_spawn <= 0;
-
-        my $level_rs = $c->schema->resultset('CreatureType')->find(
-            {},
-            {
-                select => [              { max => 'level' }, { min => 'level' }, ],
-                as     => [ 'max_level', 'min_level' ],
-            }
-        );
 
         # Spawn random groups
         my $spawned = {};
@@ -297,7 +303,7 @@ sub spawn_dungeon_monsters {
 
             $self->_create_group_in_dungeon( $c->schema, $sector_to_spawn, $level, $level );
 
-            if ( $group_number % 100 == 0 ) {
+            if ( $group_number % 50 == 0 ) {
                 $c->logger->info("Spawned $group_number groups...");
             }
         }
@@ -477,12 +483,60 @@ sub move_monsters {
     $c->logger->debug( Dumper \%cant_move_reason );
 }
 
+sub move_dungeon_monsters {
+    my $self = shift;
+    my $c    = shift;
+
+    my $cg_rs =
+        $c->schema->resultset('CreatureGroup')
+        ->search( {}, { prefetch => [ { 'dungeon_grid' => 'dungeon_room' }, 'in_combat_with' ], }, );
+
+    my $cg_count = $cg_rs->count;
+
+    $c->logger->info("Moving dungeon monsters ($cg_count available)");
+
+    my $moved = 0;
+
+    my $cg;
+    my @cgs_to_retry;
+    while ( $cg = $cg_rs->next ) {
+
+        # Don't move creatures in combat
+        next if $cg->in_combat_with;
+
+        next if 0; #Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+
+        # Find sector to move to (if we can)
+        my ( $start_point, $end_point ) = RPG::Map->surrounds_by_range( $cg->dungeon_grid->x, $cg->dungeon_grid->y, 1 );
+
+        my @sectors = $c->dungeon_grid->get_sectors_within_range( $cg->dungeon_grid->dungeon_room->dungeon_id, $start_point, $end_point );
+
+        foreach my $sector (@sectors) {
+
+            # We're not checking if the move can usually be made (i.e. not moving thru walls..) but probably not an issue for creatures
+            if ( !$sector->{creature_group} ) {
+                $cg->dungeon_grid_id( $sector->{id} );
+                $cg->update;
+                $c->dungeon_grid->clear_land_object( 'creature_group', $cg->dungeon_grid->dungeon_room->dungeon_id,
+                    $cg->dungeon_grid->x, $cg->dungeon_grid->y );
+                $c->dungeon_grid->set_land_object( 'creature_group', $cg->dungeon_grid->dungeon_room->dungeon_id, $sector->{x}, $sector->{y} );
+                
+                $moved++;
+                
+                last;
+            }
+        }
+    }
+
+    $c->logger->info("Moved $moved groups");
+}
+
 # Clean up any dead monster groups. These sometimes get created due to bugs
 # In an ideal world (or at least one with transactions) this wouldn't be needed.
 # We don't delete them, since the news needs to display them
 sub clean_up {
     my $self = shift;
-    my $c = shift;
+    my $c    = shift;
 
     my $cg_rs = $c->schema->resultset('CreatureGroup')->search( { land_id => { '!=', undef }, }, {} );
 
@@ -577,22 +631,30 @@ sub _create_orb_in_land {
         else {
             @range = @orb_range;
         }
-        
+
         for my $x_to_check ( $range[0]->{x} .. $range[1]->{x} ) {
             for my $y_to_check ( $range[0]->{y} .. $range[1]->{y} ) {
 
                 #warn "Checking surround sector: $x_to_check, $y_to_check";
                 my $sector_to_check = $c->land_grid->get_land_at_location( $x_to_check, $y_to_check );
-                                
+
                 next unless $sector_to_check;
 
                 # Orb must be minium range from town
-                if ( $x_to_check >= $town_range[0]->{x} && $x_to_check <= $town_range[1]->{x} && $y_to_check >= $town_range[0]->{y} && $y_to_check <= $town_range[1]->{y} ) {
+                if (   $x_to_check >= $town_range[0]->{x}
+                    && $x_to_check <= $town_range[1]->{x}
+                    && $y_to_check >= $town_range[0]->{y}
+                    && $y_to_check <= $town_range[1]->{y} )
+                {
                     next OUTER if $sector_to_check->{town};
                 }
 
                 # Check for orbs
-                if ( $x_to_check >= $orb_range[0]->{x} && $x_to_check <= $orb_range[1]->{x} && $y_to_check >= $orb_range[0]->{y} && $y_to_check <= $orb_range[1]->{y} ) {
+                if (   $x_to_check >= $orb_range[0]->{x}
+                    && $x_to_check <= $orb_range[1]->{x}
+                    && $y_to_check >= $orb_range[0]->{y}
+                    && $y_to_check <= $orb_range[1]->{y} )
+                {
                     next OUTER if $sector_to_check->{orb};
                 }
             }

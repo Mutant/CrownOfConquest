@@ -1,7 +1,7 @@
 [% INCLUDE top.html %]
 
 <script>
-dojo.require('dijit.layout.SplitContainer');
+dojo.require('dijit.layout.BorderContainer');
 dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
 
@@ -230,23 +230,21 @@ function bury(dialogFields) {
 [% INCLUDE party/status.html %]
 </div>
 
-<div dojoType="dijit.layout.SplitContainer"
-                orientation="horizontal"
-                sizerWidth="7"
-                activeSizing="true"
+<div dojoType="dijit.layout.BorderContainer"
+				design="sidebar"                
                 style="border: 1px solid #bfbfbf; width: 98%; height: 300px; margin:0px auto;">
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" sizeShare="35" sizeMin="336" style="background: #898E73">
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="left" style="width: 360px; height: 300px; background: #898E73">
 
 	</div>
 
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" sizeShare="65">
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" region="center" style="padding-left: 5px">
 
 	</div>
 </div>
 
 <br><br>
 
-<div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%; overflow: visible">
+<div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%; overflow: visible;">
 
 </div>
 

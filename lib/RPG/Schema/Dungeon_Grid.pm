@@ -1,17 +1,19 @@
 package RPG::Schema::Dungeon_Grid;
 
-use Mouse;
-extends 'DBIx::Class';
+use strict;
+use warnings;
+
+use base 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
 
 use Clone qw(clone);
 
-has 'allowed_to_move_to' => (is => 'rw', isa => 'Int');
-
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Grid');
+
+__PACKAGE__->resultset_class('RPG::ResultSet::Dungeon_Grid');
 
 __PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id stairs_up/);
 

@@ -41,6 +41,7 @@ sub roll_back : Test(teardown) {
     my $self = shift;
         
     $self->{schema}->storage->dbh->rollback;    
+    #$self->{schema}->storage->dbh->commit;
 }
 
 1;

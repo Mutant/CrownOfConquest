@@ -17,8 +17,6 @@
 		[% scroll_to_y = max_y %]
 	[% END %]
 
-<!--<body bgcolor="grey">-->
-<!-- min_x: [% min_x %], min_y: [% min_y %], x: [% x %], y: [% y %] --> 
 <div style="position: relative">
 [% WHILE y <= max_y %]
 	[% y = y+1 %]
@@ -26,11 +24,10 @@
 	[% WHILE x <= max_x %]
 		[% FILTER collapse %]
 			[% x = x+1 %]
-			<!-- [% x %], [% y %] -->
-			[% sector = grid.$x.$y %]		
+			[% sector = grid.$x.$y %]
 			[% IF sector %]
 				[% border = "" %]
-				[% sides_with_walls = sector.sides_with_walls %] 
+				[% sides_with_walls = sector.walls %] 
 				[% FOREACH side IN positions  %]
 					[% border_color = "white" %]
 					[% FOREACH side_with_wall IN sides_with_walls %]
@@ -42,10 +39,14 @@
 					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
 				[% END %] 
 				
-				[% can_move_to_sector = sector.allowed_to_move_to %]
+				[%
+					current_x = sector.x
+					current_y = sector.y
+					can_move_to_sector = allowed_to_move_to.$current_x.$current_y 
+				%]
 			
 				[% IF can_move_to_sector %]
-					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.id %]')" style="text-decoration: none;">
+					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" style="text-decoration: none;">
 				[% END %]
 				<div style="
 				    [% border %] 
@@ -54,7 +55,7 @@
 					position: absolute;
 					left: [% (sector.x - min_x) * size %]; 
 					top: [% (sector.y - min_y) * size %];
-					background: [% IF current_location.id == sector.id %]lightblue[% ELSE %]white[% END %];
+					background: [% IF current_location.id == sector.dungeon_grid_id %]lightblue[% ELSE %]white[% END %];
 					font-size: [% size / 2 %]px;
 					text-align: center"
 					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
@@ -77,7 +78,7 @@
 						[% width_offset = 0 %]
 						[% top_offset = 0 %]
 						[% height_offset = 0 %]
-						[% position = door.position.position %]
+						[% position = door %]
 					
 						[% IF position == 'right' ||  position == 'left' %]
 							[% height = door_length %]
@@ -100,10 +101,7 @@
 							[% height_offset = 0 - height %]
 						[% END %]
 						
-						
-						
-						<!-- left offset: [% left_offset %], width offset: [% width_offset %], height offset: [% height_offset %], position: [% position %]  -->
-						<div 
+		         		<div 
 						   style="
 							position: absolute;
 							width: [% width %];
@@ -129,5 +127,3 @@
 [% END %]
 
 </div>
-
-<!--</body>-->

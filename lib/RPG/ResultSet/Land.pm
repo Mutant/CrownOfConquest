@@ -56,8 +56,8 @@ SQL
         $params{end_point}->{x},        $params{start_point}->{y},      $params{end_point}->{y},
     );
 
-    warn "get_party_grid: $sql\n";
-    warn join( ',', @query_params ) . "\n";
+    #warn "get_party_grid: $sql\n";
+    #warn join( ',', @query_params ) . "\n";
 
     my $result = $dbh->selectall_arrayref( $sql, { Slice => {} }, @query_params, );
 

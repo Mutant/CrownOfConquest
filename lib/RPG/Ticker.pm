@@ -504,7 +504,7 @@ sub move_dungeon_monsters {
         # Don't move creatures in combat
         next if $cg->in_combat_with;
 
-        next if 0; #Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
 
         # Find sector to move to (if we can)
         my ( $start_point, $end_point ) = RPG::Map->surrounds_by_range( $cg->dungeon_grid->x, $cg->dungeon_grid->y, 1 );

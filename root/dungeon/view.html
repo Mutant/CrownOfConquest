@@ -44,6 +44,7 @@
 					current_y = sector.y
 				%]					
 					
+				[% can_move_to_sector = 0 %]
 				[% IF allowed_to_move_to.$current_x.$current_y && ! in_combat %]
 					[% can_move_to_sector =  1 %]
 				[% END %]

@@ -1,12 +1,14 @@
-use strict;
-use warnings;
-
 package RPG::Schema::Dungeon_Grid;
 
-use base 'DBIx::Class';
+use Mouse;
+extends 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
+
+use Clone qw(clone);
+
+has 'allowed_to_move_to' => (is => 'rw', isa => 'Int');
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Grid');
@@ -158,8 +160,6 @@ sub _check_has_path {
         if ( !$sectors_tried->[$test_x][$test_y] && $sector_grid->[$test_x][$test_y] ) {
 
             my $sector_to_try = $sector_grid->[$test_x][$test_y];
-            
-            #warn "Sector to try: " . $sector_to_try->x . ", " . $sector_to_try->y;
 
             #warn "Seeing if we can move there...\n";
 
@@ -173,7 +173,7 @@ sub _check_has_path {
                 return 1;
             }
 
-            if ( $self->_check_has_path( $sector_to_try, $sector_grid, $max_moves, $moves_made, $sectors_tried ) ) {
+            if ( $self->_check_has_path( $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried ) ) {
                 #warn "... path found";
                 return 1;
             }
@@ -300,6 +300,10 @@ sub can_move_to {
     my $src_pos2_blocked = $self->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$self->has_door($src_wall_2) );
     
     return 0 if $src_pos1_blocked && $src_pos2_blocked;
+    
+    # Now check if there's a horizontal or vertical blockage
+    return 0 if ($self->has_wall($src_wall_1) && ! $self->has_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_door($dest_wall_1));
+    return 0 if ($self->has_wall($src_wall_2) && ! $self->has_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_door($dest_wall_2)); 
     
     #warn "No blockages found\n";
     

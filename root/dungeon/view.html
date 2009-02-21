@@ -42,7 +42,7 @@
 					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
 				[% END %] 
 				
-				[% can_move_to_sector = current_location.allowed_to_move_to_sector(sector) %]
+				[% can_move_to_sector = sector.allowed_to_move_to %]
 			
 				[% IF can_move_to_sector %]
 					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.id %]')" style="text-decoration: none;">

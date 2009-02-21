@@ -34,7 +34,7 @@ sub dungeon_setup : Tests(setup) {
     $self->{positions} = \%positions;
 }
 
-sub test_can_move_to : Test(10) {
+sub test_can_move_to : Test(13) {
     my $self = shift;
     
     # GIVEN
@@ -174,7 +174,53 @@ sub test_can_move_to : Test(10) {
                 
             },
             expected_result => 0,
+        },
+        
+        'verticle_in_line_walls_block_diagonal_move_to_bottom_right' => {
+            first_sector => {
+                x => 1,
+                y => 1,
+                walls => ['right'],
+            },
+            second_sector => {
+                x => 2,
+                y => 2,
+                walls => ['left'],
+                
+            },
+            expected_result => 0,
         },         
+
+        'horizontal_in_line_walls_block_diagonal_move_to_bottom_right' => {
+            first_sector => {
+                x => 1,
+                y => 1,
+                walls => ['bottom'],
+            },
+            second_sector => {
+                x => 2,
+                y => 2,
+                walls => ['top'],
+                
+            },
+            expected_result => 0,
+        },
+        
+        'horizontal_wall_blocks_but_door_allows_diagonal_move_to_bottom_right' => {
+            first_sector => {
+                x => 1,
+                y => 1,
+                walls => ['bottom'],
+                doors => ['bottom'],
+            },
+            second_sector => {
+                x => 2,
+                y => 2,
+                walls => ['top'],
+                
+            },
+            expected_result => 1,
+        },        
           
     );
 
@@ -400,6 +446,87 @@ sub test_allowed_to_move_to_sectors_2 : Tests(25) {
     
     # WHEN
     my $allowed_to_move_to = $start_sector->allowed_to_move_to_sectors(\@sectors, 2);
+    
+    # THEN
+    for my $x (1 .. 5) {
+        for my $y (1 .. 5) {
+            is($allowed_to_move_to->[$x][$y], $expected_allowed_to_move_to->[$x][$y] || 0, "Allowed to move for $x, $y as expected");
+        }
+    }
+}
+
+sub test_allowed_to_move_to_sectors_3 : Tests(25) {
+    my $self = shift;
+    
+    # GIVEN
+    my @sectors;
+    for my $x (1 .. 5) {
+        for my $y (1 .. 5) {
+            my @walls;
+            my @doors;
+            
+            if ($x == 5 && $y == 5) {
+                @walls = ('left','top');
+                @doors = ('top');
+            }
+            if ($x == 5 && $y == 4) {
+                @walls = ('bottom');
+                @doors = ('bottom');
+            }
+            if ($x == 4 && $y == 4) {
+                @walls = ('bottom', 'left');
+            }
+            if ($x == 4 && $y == 5) {
+                @walls = ('right', 'top');
+            }
+            if ($x == 4 && $y == 3) {
+                @walls = ('left');
+                @doors = ('left');
+            }
+            if ($x == 4 && $y == 2) {
+                @walls = ('left');
+            }
+            if ($x == 4 && $y == 1) {
+                @walls = ('left');
+            }
+                                    
+            my $sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid( 
+                $self->{schema},
+                x => $x,
+                y => $y,
+                walls => \@walls,
+                doors => \@doors,
+            );
+            
+            push @sectors, $sector;
+        }
+    }
+    
+    my $start_sector = $sectors[24]; # 5,5
+   
+    my $expected_allowed_to_move_to;
+    for my $x (1 .. 5) {
+        for my $y (1 .. 5) {
+            $expected_allowed_to_move_to->[$x][$y] = 0;
+        }
+    }
+    
+       
+    $expected_allowed_to_move_to->[5][2] = 1;
+    $expected_allowed_to_move_to->[5][3] = 1;
+    $expected_allowed_to_move_to->[5][4] = 1;
+    $expected_allowed_to_move_to->[4][2] = 1;
+    $expected_allowed_to_move_to->[4][3] = 1;
+    $expected_allowed_to_move_to->[4][4] = 1;
+    $expected_allowed_to_move_to->[3][2] = 1;
+    $expected_allowed_to_move_to->[3][3] = 1;
+    $expected_allowed_to_move_to->[3][4] = 1;
+    $expected_allowed_to_move_to->[2][2] = 1;
+    $expected_allowed_to_move_to->[2][3] = 1;
+    $expected_allowed_to_move_to->[2][4] = 1;
+    
+    # WHEN
+    my $allowed_to_move_to = $start_sector->allowed_to_move_to_sectors(\@sectors, 3);
     
     # THEN
     for my $x (1 .. 5) {

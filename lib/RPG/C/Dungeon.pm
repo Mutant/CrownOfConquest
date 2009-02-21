@@ -72,10 +72,16 @@ sub render_dungeon_grid : Private {
 
     my $grid;
     my ( $min_x, $min_y, $max_x, $max_y ) = ( $sectors->[0]->x, $sectors->[0]->y, 0, 0 );
-
+    
+    my $allowed_to_move_to;
+    if ($current_location) {
+        $allowed_to_move_to = $current_location->allowed_to_move_to_sectors($sectors, $c->config->{dungeon_move_maximum});
+    }
+    
     foreach my $sector (@$sectors) {
 
         #$c->log->debug( "Rendering: " . $sector->x . ", " . $sector->y );
+        $sector->allowed_to_move_to($allowed_to_move_to->[$sector->x][$sector->y]);
         $grid->[ $sector->x ][ $sector->y ] = $sector;
 
         $max_x = $sector->x if $max_x < $sector->x;
@@ -123,8 +129,8 @@ sub move_to : Local {
     }
 
     # Check they're allowed to move to this sector
-    unless ( $current_location->allowed_to_move_to_sector($sector) ) {
-        $c->stash->{error} = "You must be in range of the door before opening it";
+    unless ( 1 ) { #$current_location->can_move_to($sector) ) {
+        $c->stash->{error} = "You must be in range of the sector";
     }
     elsif ( $c->stash->{party}->turns < 1 ) {
         $c->stash->{error} = "You do not have enough turns to move there";

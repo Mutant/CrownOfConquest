@@ -67,7 +67,7 @@ sub test_get_party_grid_simple : Tests(5) {
     my $sector = shift @sectors;
     is ( $sector->{x}, 1, "Returned sector has correct x");
     is ( $sector->{y}, 1, "Returned sector has correct y");
-    is_deeply( $sector->{walls}, ['top','right'], "Walls returned correctly");
+    is_deeply( [sort @{$sector->{walls}}], ['right','top'], "Walls returned correctly");
     is_deeply( $sector->{doors}, ['top'], "Doors returned correctly");
 }
 

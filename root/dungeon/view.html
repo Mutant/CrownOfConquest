@@ -42,8 +42,11 @@
 				[%
 					current_x = sector.x
 					current_y = sector.y
-					can_move_to_sector = allowed_to_move_to.$current_x.$current_y 
-				%]
+				%]					
+					
+				[% IF allowed_to_move_to.$current_x.$current_y && ! in_combat %]
+					[% can_move_to_sector =  1 %]
+				[% END %]
 			
 				[% IF can_move_to_sector %]
 					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" style="text-decoration: none;">

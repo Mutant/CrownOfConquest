@@ -5,6 +5,7 @@ use Mouse;
 extends 'RPG::NewDay::Base';
 
 use RPG::Map;
+use RPG::Maths;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 
@@ -53,7 +54,7 @@ sub run {
         my $dungeon = $c->schema->resultset('Dungeon')->create(
             {
                 land_id => $sector_to_use->id,
-                level   => Games::Dice::Advanced->roll( '1d' . $c->config->{dungeon_max_level} ),
+                level   => RPG::Maths->weighted_random_number( 1 .. $c->config->{dungeon_max_level} ),
             }
         );
 

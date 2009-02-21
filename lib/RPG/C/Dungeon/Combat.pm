@@ -156,7 +156,7 @@ sub get_sector_to_flee_to : Private {
         );
         
         foreach my $sector_in_range (@sectors_in_range) {
-            if ($current_location->allowed_to_move_to_sector($sector_in_range)) {
+            if ($current_location->can_move_to($sector_in_range)) {
                 push @sectors_to_flee_to, $sector_in_range;
             }
         }

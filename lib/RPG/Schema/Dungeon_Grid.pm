@@ -332,4 +332,19 @@ sub available_creature_group {
     return $creature_group;
 }
 
+sub get_as_hash {
+    my $self = shift;
+    
+    my %result = (
+        dungeon_grid_id => $self->id,
+        x => $self->x,
+        y => $self->y,
+        stairs_up => $self->stairs_up,
+        walls => [ $self->sides_with_walls ],
+        doors => [ $self->sides_with_doors ],
+    );
+    
+    return %result;
+}
+
 1;

@@ -22,7 +22,7 @@ sub view : Local {
         }
     );
 
-    my $map = $c->forward( '/dungeon/render_dungeon_grid', [ \@sectors ] );
+    my $map = $c->forward( '/dungeon/render_dungeon_grid', [ [], \@sectors ] );
 
     return $c->forward(
         'RPG::V::TT',

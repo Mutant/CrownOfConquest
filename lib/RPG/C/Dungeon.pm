@@ -37,19 +37,32 @@ sub view : Local {
 
     my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
         {
-            x                              => { '>=', $top_corner->{x}, '<', $bottom_corner->{x} },
-            y                              => { '>=', $top_corner->{y}, '<', $bottom_corner->{y} },
+            x                              => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
+            y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
         },
         { prefetch => [ 'dungeon_room', { 'doors' => 'position' }, { 'walls' => 'position' }, 'creature_group' ], },
     );
     
     $c->stats->profile("Queried viewable sectors");
+    
+    #warn "sectors: " . scalar @sectors;
+
+    my $allowed_to_move_to = $current_location->allowed_to_move_to_sectors(\@sectors, $c->config->{dungeon_move_maximum});
+    
+    $c->stats->profile("Got sectors allowed to move to");
 
     my $cgs;
 
-    # Save mapped sectors
+    my @viewable_sectors;
     foreach my $sector (@sectors) {
+        next unless $sector->dungeon_room_id == $current_location->dungeon_room_id;
+        
+        #$c->log->debug("Adding: " . $sector->x . ", " . $sector->y . " to viewable sectors");
+        
+        push @viewable_sectors, $sector;
+
+        # Save newly mapped sectors        
         unless ( $mapped_sectors_by_coord->[ $sector->x ][ $sector->y ] ) {
             my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->create(
                 {
@@ -57,34 +70,28 @@ sub view : Local {
                     dungeon_grid_id => $sector->dungeon_grid_id,
                 }
             );
+            
+            push @mapped_sectors, {$sector->get_as_hash};
         }
 
-        if ( $sector->dungeon_room_id == $current_location->dungeon_room_id and my $cg = $sector->creature_group ) {
+        if ( my $cg = $sector->creature_group ) {
             
             $c->log->debug( "CG at: " . $sector->x . ", " . $sector->y );
             $cgs->[ $sector->x ][ $sector->y ] = $cg;
         }
     }
+    
+    #warn "viewable sectors: " . scalar @viewable_sectors;
 
     $c->stats->profile("Saved newly discovered sectors");
 
-    return $c->forward( 'render_dungeon_grid', [ \@sectors, \@mapped_sectors, $current_location, $cgs ] );
+    return $c->forward( 'render_dungeon_grid', [ \@viewable_sectors, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs ] );
 }
 
 sub render_dungeon_grid : Private {
-    my ( $self, $c, $sectors, $mapped_sectors, $current_location, $cgs ) = @_;
+    my ( $self, $c, $sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs ) = @_;
 
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
-
-    $c->stats->profile("About to get sectors allowed to move to");
-    warn "sectors: " . scalar @$sectors;
-
-    my $allowed_to_move_to;
-    if ($current_location) {
-        $allowed_to_move_to = $current_location->allowed_to_move_to_sectors($sectors, $c->config->{dungeon_move_maximum});
-    }
-    
-    $c->stats->profile("Got sectors allowed to move to");
 
     my $grid;
     my ( $min_x, $min_y, $max_x, $max_y ) = ( $mapped_sectors->[0]->{x}, $mapped_sectors->[0]->{y}, 0, 0 );
@@ -114,6 +121,7 @@ sub render_dungeon_grid : Private {
                     current_location => $current_location,
                     allowed_to_move_to => $allowed_to_move_to,
                     cgs              => $cgs,
+                    in_combat        => $c->stash->{party}->in_combat_with,
                 },
                 return_output => 1,
             }
@@ -132,6 +140,8 @@ sub move_to : Local {
     my $sector = $c->model('DBIC::Dungeon_Grid')->find( { 'dungeon_grid_id' => $sector_id, }, { prefetch => 'dungeon_room', } );
 
     croak "Can't find sector: $sector_id" unless $sector;
+
+    $c->log->debug("Attempting to move to " . $sector->x . ", " .$sector->y);
 
     # Check they're moving to a sector in the dungeon they're currently in
     if ( $current_location->dungeon_room->dungeon_id != $current_location->dungeon_room->dungeon_id ) {
@@ -158,6 +168,7 @@ sub move_to : Local {
         $c->stash->{party}->dungeon_grid_id($sector_id);
         $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
         $c->stash->{party}->update;
+        $c->stash->{party}->discard_changes;
     }
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
@@ -188,7 +199,7 @@ sub check_for_creature_move : Private {
     foreach my $cg (@creatures_in_room) {
         next if $cg->in_combat_with;
 
-        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance_on_party_move};
 
         my $sector_to_move_to = shift @possible_sectors;
         

@@ -68,19 +68,19 @@ sub run {
         );
 
         # Clean up
-        #$self->clean_up($context);
+        $self->clean_up($context);
 
         # Spawn orbs
-        #$self->spawn_orbs($context);
+        $self->spawn_orbs($context);
 
         # Spawn town orbs
-        #$self->spawn_town_orbs($context);
+        $self->spawn_town_orbs($context);
 
         # Spawn monsters
-        #$self->spawn_monsters($context);
+        $self->spawn_monsters($context);
 
         # Move monsters
-        #$self->move_monsters($context);
+        $self->move_monsters($context);
 
         # Spawn dungeon monsters
         $self->spawn_dungeon_monsters($context);

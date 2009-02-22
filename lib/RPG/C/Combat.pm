@@ -291,7 +291,7 @@ sub execute_round : Private {
 
     $c->stash->{combat_log}->rounds( $c->stash->{combat_log}->rounds + 1 );
 
-    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status', 'map' ] );
+    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status' ] );
 }
 
 sub calculate_factors : Private {

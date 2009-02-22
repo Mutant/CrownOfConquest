@@ -442,6 +442,8 @@ sub move_monsters {
     my $cg;
     my @cgs_to_retry;
     while ( $cg = $cg_rs->next or $cg = shift @cgs_to_retry ) {
+        next unless $cg->land_id;
+        
         $attempted_moves++;
 
         if ( $attempted_moves > $cg_count * 2 ) {
@@ -688,10 +690,10 @@ sub _spawn_orb {
 
     my $name;
     my $existing_orb;
-    do {
+    #do {
         $name = ( shuffle @names )[0];
-        $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name, land_id => { '!=', undef } } );
-    } while ($existing_orb);
+    #    $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name, land_id => { '!=', undef } } );
+    #} while ($existing_orb);
 
     my $land_record = $c->schema->resultset('Land')->find(
         {

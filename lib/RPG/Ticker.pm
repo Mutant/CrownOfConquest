@@ -57,14 +57,14 @@ sub run {
         my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
         my $land_grid = RPG::Ticker::LandGrid->new( schema => $schema );
-        my $dungeon_grid = RPG::Ticker::DungeonGrid->new( schema => $schema );
+        #my $dungeon_grid = RPG::Ticker::DungeonGrid->new( schema => $schema );
 
         my $context = RPG::Ticker::Context->new(
             config       => $config,
             logger       => $logger,
             schema       => $schema,
             land_grid    => $land_grid,
-            dungeon_grid => $dungeon_grid,
+            #dungeon_grid => $dungeon_grid,
         );
 
         # Clean up
@@ -86,7 +86,7 @@ sub run {
         $self->spawn_dungeon_monsters($context);
 
         # Spawn dungeon monsters
-        $self->move_dungeon_monsters($context);
+        #$self->move_dungeon_monsters($context);
 
         $schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
     };
@@ -126,7 +126,7 @@ sub spawn_town_orbs {
         }
 
         if ( !$orb_in_range ) {
-            $c->logger->info( "Orb needed near town " . $town->{town_name} . " at " . $town->{x} . ", " . $town->{y} );
+            $c->logger->info( "Orb needed near town " . $town->{town_name} . " at " . $town->{location}{x} . ", " . $town->{location}{y} );
 
             my $created = $self->_create_orb_in_land( $c, 1, $start_point, $end_point );
 
@@ -683,6 +683,8 @@ sub _spawn_orb {
         @names = read_file( $ENV{RPG_HOME} . '/script/data/orb_names.txt' );
         chomp @names;
     }
+    
+    $c->logger->debug("Spawning Orb at $land->{x}, $land->{y}");
 
     my $name;
     my $existing_orb;

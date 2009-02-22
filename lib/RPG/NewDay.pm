@@ -10,7 +10,7 @@ use DateTime;
 use Log::Dispatch;
 use Log::Dispatch::File::Stamped;
 
-use Module::Pluggable search_path => ['RPG::NewDay::Action'], instantiate => 'new', sub_name => 'actions', only => 'RPG::NewDay::Action::Dungeon';
+use Module::Pluggable search_path => ['RPG::NewDay::Action'], instantiate => 'new', sub_name => 'actions';
 
 sub run {
     my $self = shift;

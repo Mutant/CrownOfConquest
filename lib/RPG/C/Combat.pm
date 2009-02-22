@@ -709,7 +709,7 @@ sub finish : Private {
     $c->stash->{creature_group}->update;
 
     $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 5 );
-    $c->stash->{party_location}->update;
+    $c->stash->{party_location}->update;    
 
     $c->forward('end_of_combat_cleanup');
 }
@@ -737,6 +737,8 @@ sub end_of_combat_cleanup : Private {
             $character->update;
         }
     }
+    
+    $c->stash->{refresh_panels} = ['map'];
 }
 
 sub check_for_item_found : Private {

@@ -43,7 +43,7 @@ BEGIN {
 	# Needs to be set here or the config won't be loaded in time, and DBIC will complain it doesn't have a schema
 	#  You would think it would just be found automatically... oh well...
 	#  For a dev environment, set RPG_HOME environment var 
-	__PACKAGE__->config->{home} = $ENV{RPG_HOME} || '/home/scrawley/game';
+	__PACKAGE__->config->{home} = $ENV{RPG_HOME} || '/home/sam/RPG';
 	
     __PACKAGE__->config->{session} = {
         storage => __PACKAGE__->path_to('session'),

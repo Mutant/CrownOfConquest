@@ -249,6 +249,7 @@ sub sector_menu : Local {
                     doors            => \@doors,
                     current_location => $current_location,
                     creature_group   => $creature_group,
+                    messages => $c->stash->{messages},
                 },
                 return_output => 1,
             }

@@ -4,32 +4,50 @@
 ([% position.x %], [% position.y %])
 [% END %]
 
-<table border="1" cellpadding=0 cellspacing=0 align="center">
-<tr>
-    <td></td>
-</tr>
+[%
+	sector_width = 48;
+	sector_height = 40;
+%]
+
+<div style="position: relative; width: [% x_size * sector_width %]px; height: [% y_size * sector_height %]px; margin: 1px auto">
 [% FOREACH y IN y_range %]
-    <tr>
+
 	[% FOREACH x IN x_range %]
-		[% position = grid.$x.$y %]        
-        [% IF position %]            
-        <td [% IF position.land_id == current_position.id %]id="map_current_pos"[% END %] class="map_square" [% IF position.town_id %]style="background: lightgrey"[% END %]>
-            [% FILTER collapse %]    
-        	[% IF click_to_move && position.next_to_centre && ! party_in_combat %]
+		[% position = grid.$x.$y %] 
+		<!-- pos [% x %], [% y %] -->
+		[% FILTER collapse %]
+        	[% border_colour = 'gray' %]
+        	[% IF position.land_id == current_position.id %]
+        		[% border_colour= 'blue' %]
+        	[% END %]
+	
+		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
         		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')"">
         	[% ELSIF ! click_to_move %]
-        		<a href="?center_x=[% position.x %]&center_y=[% position.y %]">
+        		<a href="?center_x=[% x %]&center_y=[% y %]">
         	[% END %]
-			<img src="[% c.config.static_path %][% image_path %][% position.image %]" border=0 title="[% sector_title(position) %]">
+        	
+			<div style="			
+					width: 48px; 
+					height: 40px; 
+					position: absolute;
+					left: [% (x - min_x) * sector_width %]px; 
+					top: [% (y - min_y) * sector_height %]px;					
+					text-align: center;
+					border: 1px solid [% border_colour %];
+					[% IF position.town_id %]background: lightgrey;[% END %]
+					"					
+					>
+					[% IF position %]
+						<img src="[% c.config.static_path %][% image_path %][% position.image %]" border=0 title="[% sector_title(position) %]">
+					[% END %]
+					</div>
 			[% IF ! click_to_move || position.next_to_centre %]
 				</a>
         	[% END %]
-        	[% END %]
-	        </td>
-        [% ELSE %]
-        	<td width=35>&nbsp;</td>        
         [% END %]
-    [% END %]
-    </tr>
+	[% END %]
 [% END %]
-</table>
+
+</div>
+

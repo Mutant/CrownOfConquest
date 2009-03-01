@@ -19,6 +19,8 @@ sub view : Local {
         $c->forward( 'generate_grid', [ $c->config->{map_x_size}, $c->config->{map_y_size}, $party_location->x, $party_location->y, 1, ], );
 
     $grid_params->{click_to_move} = 1;
+    $grid_params->{x_size} = $c->config->{map_x_size};
+    $grid_params->{y_size} = $c->config->{map_y_size};
 
     return $c->forward( 'render_grid', [ $grid_params, ] );
 }
@@ -40,7 +42,9 @@ sub party : Local {
 
     my $grid_params = $c->forward( 'generate_grid', [ 21, 21, $centre_x, $centre_y, ], );
 
-    $grid_params->{click_to_move} = 0;
+    $grid_params->{click_to_move} = 0;    
+    $grid_params->{x_size} = 21;
+    $grid_params->{y_size} = 21;
 
     my $map = $c->forward( 'render_grid', [ $grid_params, ] );
 
@@ -136,6 +140,9 @@ sub render_grid : Private {
     $params->{image_path}       = RPG->config->{map_image_path};
     $params->{current_position} = $c->stash->{party_location};
     $params->{party_in_combat}  = $c->stash->{party}->in_combat_with;
+    $params->{min_x} = $params->{start_point}{x};
+    $params->{min_y} = $params->{start_point}{y};
+
 
     return $c->forward(
         'RPG::V::TT',

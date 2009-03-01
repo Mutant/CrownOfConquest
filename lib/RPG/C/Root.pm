@@ -1,3 +1,4 @@
+
 package RPG::C::Root;
 
 use strict;
@@ -19,11 +20,6 @@ __PACKAGE__->config->{namespace} = '';
 
 sub auto : Private {
     my ( $self, $c ) = @_;
-
-    $c->response->content_type('text/html; charset=utf-8');
-    $c->res->body('The game is down for maintenance while I move server! Hopefully won\'t be more than a day. <a href="http://game.mutant.dj/forum/index.php">Forum</a>');
-    
-    return 0; 
 
     $c->req->base( $c->config->{url_root} );
 

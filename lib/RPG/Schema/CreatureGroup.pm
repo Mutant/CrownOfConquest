@@ -51,17 +51,26 @@ sub initiate_combat {
         return 1;
     }
 
-	return 0
-		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_above_party};
-		
-	return 0
-	   if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party}; 
+	return unless $self->party_within_level_range($party);
 
 	my $chance = RPG::Schema->config->{creature_attack_chance};
 	
 	my $roll = Games::Dice::Advanced->roll('1d100');
 				
 	return $roll < $chance ? 1 : 0;
+}
+
+sub party_within_level_range {
+	my $self = shift;
+	my $party = shift || croak "Party not supplied";
+	
+	return 0
+		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_above_party};
+		
+	return 0
+	   if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
+	   
+	return 1; 
 }
 
 sub creature_summary {

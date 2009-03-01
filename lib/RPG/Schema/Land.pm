@@ -132,22 +132,20 @@ sub movement_cost {
 sub available_creature_group {
 	my $self = shift;
 	
-	my @creature_groups = $self->search_related('creature_group',
+	my $creature_group = $self->find_related('creature_group',
 		{
 			'in_combat_with.party_id' => undef,
 		},
 		{
 			prefetch => {'creatures' => ['type', 'creature_effects']},
 			join => 'in_combat_with',
+			order_by => 'type.creature_type, group_order',
 		},
 	);
 	
-	return unless @creature_groups;
+	return unless $creature_group;
 	
-	#$self->throw_exception("More than one creature group found in this sector!")
-	#	if scalar @creature_groups > 1;	
-	
-	return $creature_groups[0] if $creature_groups[0]->number_alive > 0;
+	return $creature_group if $creature_group->number_alive > 0;
 	
 	return;
 }

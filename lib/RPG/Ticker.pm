@@ -42,7 +42,7 @@ sub run {
 
     my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . '] ' . $_[1] . "\n" } );
     $logger->add(
-        Log::Dispatch::File::Stamped->new(
+        Log::Dispatch::File->new(
             name      => 'file1',
             min_level => 'debug',
             filename  => $config->{log_file_dir} . 'ticker.log',
@@ -57,14 +57,12 @@ sub run {
         my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
         my $land_grid = RPG::Ticker::LandGrid->new( schema => $schema );
-        #my $dungeon_grid = RPG::Ticker::DungeonGrid->new( schema => $schema );
 
         my $context = RPG::Ticker::Context->new(
             config       => $config,
             logger       => $logger,
             schema       => $schema,
             land_grid    => $land_grid,
-            #dungeon_grid => $dungeon_grid,
         );
 
         # Clean up
@@ -231,10 +229,9 @@ sub spawn_monsters {
             last if $search_range > 20;
         }
 
-        if ($land) {
-            my $level = RPG::Maths->weighted_random_number( 1 .. $creature_orb->{level} * 3 );
+        if ($land) {   
 
-            $self->_create_group_in_land( $c, $land, $level, $level );
+            $self->_create_group_in_land( $c, $land, 1, $creature_orb->{level} * 3 );
 
             if ( $group_number % 100 == 0 ) {
                 $c->logger->info("Spawned $group_number groups...");
@@ -339,9 +336,6 @@ sub _calculate_number_of_groups_to_spawn {
 
     return $number_of_groups_to_spawn;
 }
-
-my @creature_types;
-
 sub _create_group_in_land {
     my ( $package, $c, $land, $min_level, $max_level ) = @_;
 
@@ -368,6 +362,7 @@ sub _create_group_in_land {
     return $cg;
 }
 
+my $creature_types_by_level;
 sub _create_group {
     my ( $package, $schema, $sector, $min_level, $max_level ) = @_;
 
@@ -375,34 +370,40 @@ sub _create_group {
 
     return if $sector->creature_group;
 
-    @creature_types = $schema->resultset('CreatureType')->search()
-        unless @creature_types;
+    unless ($creature_types_by_level) {
+        my @creature_types = $schema->resultset('CreatureType')->search();
+        
+        foreach my $creature_type (@creature_types) {
+            push @{$creature_types_by_level->[$creature_type->level]}, $creature_type;
+        }
+    }   
 
     my $cg = $schema->resultset('CreatureGroup')->create( {} );
+    
+    my $number_of_types = RPG::Maths->weighted_random_number( 1 .. 3 );
 
-    my $type;
-    foreach my $type_to_check ( shuffle @creature_types ) {
-        next if $type_to_check->level > $max_level || $type_to_check->level < $min_level;
-        $type = $type_to_check;
-        last;
-    }
-
-    confess "Couldn't find a type for min level: $min_level, max level: $max_level\n" unless $type;
-
-    my $number = int( rand 7 ) + 3;
-
-    for my $creature ( 1 .. $number ) {
-        my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
-
-        $schema->resultset('Creature')->create(
-            {
-                creature_type_id   => $type->id,
-                creature_group_id  => $cg->id,
-                hit_points_current => $hps,
-                hit_points_max     => $hps,
-                group_order        => $creature,
-            }
-        );
+    my $number_in_group = int( rand 7 ) + 3;
+        
+    for (1 .. $number_of_types) {
+        my $level = RPG::Maths->weighted_random_number( $min_level .. $max_level );
+    
+        my $type = (shuffle @{$creature_types_by_level->[$level]})[0];
+        
+        my $number_of_type = round $number_in_group / $number_of_types;    
+   
+        for my $creature ( 1 .. $number_of_type ) {
+            my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
+    
+            $schema->resultset('Creature')->create(
+                {
+                    creature_type_id   => $type->id,
+                    creature_group_id  => $cg->id,
+                    hit_points_current => $hps,
+                    hit_points_max     => $hps,
+                    group_order        => $creature,
+                }
+            );
+        }
     }
 
     return $cg;

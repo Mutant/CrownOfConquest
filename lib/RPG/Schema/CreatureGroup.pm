@@ -39,7 +39,6 @@ __PACKAGE__->has_many(
     'creatures',
     'RPG::Schema::Creature',
     { 'foreign.creature_group_id' => 'self.creature_group_id' },
-    { order_by => 'group_order' },
 );
 
 sub initiate_combat {

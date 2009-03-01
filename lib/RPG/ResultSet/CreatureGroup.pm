@@ -13,6 +13,7 @@ sub get_by_id {
         { creature_group_id => $creature_group_id, },
         {
             prefetch => { 'creatures' => [ 'type', 'creature_effects' ] },
+            order_by => 'type.creature_type, group_order',
         },
     );
 

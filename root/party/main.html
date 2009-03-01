@@ -166,7 +166,7 @@ function findItem(dialogFields) {
 }
 
 function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {
-	if (confirmAttack) {
+	if (confirmAttack == 1) {
 		dojo.byId('creature-group-id').value = creatureGroupId;
 		dijit.byId('confirm-attack').show();
 	}

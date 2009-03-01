@@ -1,8 +1,13 @@
+[% USE infl = Lingua.EN.Inflect; %]
+
+
+[% FILTER collapse %]	
 	[% FOREACH summary IN creature_group.creature_summary(include_dead_creatures) %]
-		[% summary.value %] [% summary.key %][% IF summary.value > 1 %]s[% END %]
-		[% IF loop.size > 1 %]
-			[% UNLESS loop.size == loop.count + 1 %],
-			[% ELSE %]and
-			[% END %]
+		[% summary.value %] [% FILTER inflect(number => summary.value); %]PL([% summary.key %])[% END %]
+		[% IF loop.size > 1 %]			
+				[% IF loop.size == loop.count + 1 %]and
+				[% ELSE %][% IF loop.size != loop.count %],[% END %]
+				[% END %]			
 		[% END %]
 	[% END %]
+[% END %]	

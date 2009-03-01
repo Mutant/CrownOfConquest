@@ -610,6 +610,21 @@ sub test_move_monsters : Tests(4) {
 
 }
 
+sub test_create_group_simple : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my ($sector) = $self->_create_land(1, 1);
+    
+    # WHEN
+    my $cg = RPG::Ticker->_create_group($self->{schema}, $sector, 1, 3);
+    
+    # THEN
+    isa_ok($cg, 'RPG::Schema::CreatureGroup', "Creature Group created");
+    ok(scalar $cg->creatures >= 3, "3 or more creatures in the group");  
+    
+}
+
 sub _create_land {
     my $self   = shift;
     my $x_size = shift || 3;

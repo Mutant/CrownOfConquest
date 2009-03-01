@@ -18,7 +18,7 @@ use Data::Dumper;
 use List::Util qw(shuffle);
 use Games::Dice::Advanced;
 use Log::Dispatch;
-use Log::Dispatch::File::Stamped;
+use Log::Dispatch::File;
 use File::Slurp qw(read_file);
 use Math::Round qw(round);
 use Proc::PID::File;

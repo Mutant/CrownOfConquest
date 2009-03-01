@@ -8,7 +8,7 @@ use RPG::NewDay::Context;
 use YAML;
 use DateTime;
 use Log::Dispatch;
-use Log::Dispatch::File::Stamped;
+use Log::Dispatch::File;
 
 use Module::Pluggable search_path => ['RPG::NewDay::Action'], instantiate => 'new', sub_name => 'actions';
 
@@ -25,7 +25,7 @@ sub run {
 
     my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$]" . $_[1] . "\n" } );
     $logger->add(
-        Log::Dispatch::File::Stamped->new(
+        Log::Dispatch::File->new(
             name      => 'file1',
             min_level => 'debug',
             filename  => $config->{log_file_dir} . 'new_day.log',

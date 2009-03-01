@@ -32,6 +32,8 @@ sub dungeon_setup : Tests(setup) {
     }
 
     $self->{positions} = \%positions;
+    
+    undef $RPG::Schema::Dungeon_Grid::can_move_to;
 }
 
 sub test_can_move_to : Test(13) {
@@ -227,6 +229,7 @@ sub test_can_move_to : Test(13) {
     # WHEN
     my %results;
     while ( my ($test_name, $test_data) = each %tests ) {
+        undef $RPG::Schema::Dungeon_Grid::can_move_to;
         my $first_sector  = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid( $self->{schema}, %{ $test_data->{first_sector} } );
         my $second_sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid( $self->{schema}, %{ $test_data->{second_sector} } );
 

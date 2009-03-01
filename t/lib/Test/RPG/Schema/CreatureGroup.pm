@@ -38,6 +38,7 @@ sub test_initiate_combat : Test(6) {
     my $creature_group = Test::MockObject->new();
     $creature_group->set_always( 'location', $creature_group );
     $creature_group->set_always( 'land_id', 1 );
+    $creature_group->mock('party_within_level_range', sub { RPG::Schema::CreatureGroup::party_within_level_range(@_) } );
 
     my $party = Test::MockObject->new();
     $party->set_true('level');

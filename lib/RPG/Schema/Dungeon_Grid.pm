@@ -188,7 +188,26 @@ sub _check_has_path {
     return 0;
 }
 
+# Wraps _can_move_to() and adds (global) caching
+# Safe enough, since dungeons shouldn't change structure (much)
+# Decalared with 'our' for testing purposes
+our $can_move_to;
 sub can_move_to {
+    my $self   = shift;
+    my $sector = shift;
+    
+    if (my $cached_result = $can_move_to->[$self->x][$self->y][$sector->x][$sector->y]) {
+        return $cached_result;
+    }
+    
+    my $result = $self->_can_move_to($sector); 
+    
+    $can_move_to->[$self->x][$self->y][$sector->x][$sector->y] = $result;
+    
+    return $result;
+}
+
+sub _can_move_to {
     my $self   = shift;
     my $sector = shift;
 

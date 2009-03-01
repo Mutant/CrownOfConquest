@@ -51,7 +51,7 @@ sub initiate_combat {
         return 1;
     }
 
-	return unless $self->party_within_level_range($party);
+	return 0 unless $self->party_within_level_range($party);
 
 	my $chance = RPG::Schema->config->{creature_attack_chance};
 	

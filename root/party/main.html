@@ -29,6 +29,8 @@ function getPanels(url) {
 			}		
 			
 			refreshPanels(responseObject);
+			
+			dungeonScroll();
 		},
         
         error: function(err) {
@@ -88,11 +90,16 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	
+	dungeonScroll();
+}
+
+function dungeonScroll() {
 	loc = dojo.byId('scroll-to');
 	if (loc) {
 		dijit.scrollIntoView(loc);
 	}
 }
+
 
 function selectAction(action, char_id, action_param, action_param2, action_label) {
 	if (! action_label) {

@@ -1,0 +1,9 @@
+<b>[% item_type.item_type %][% IF item %] (ID: [% item.id %])[% END %]</b><br>
+
+[% FOREACH attribute IN item_type.category.item_attribute_names %]
+	[% IF item && attribute.item_attribute_name == "Defence Factor" && item.variable("Defence Factor Upgrade") %]
+		Attack Factor: [% item_type.attribute(attribute.item_attribute_name).value + item.variable("Defence Factor Upgrade") %] ([% item_type.attribute(attribute.item_attribute_name).formatted_value %] + [% item.variable("Defence Factor Upgrade") %])<br>
+	[% ELSE %]
+		[% attribute.item_attribute_name %]: [% item_type.attribute(attribute.item_attribute_name).formatted_value %]<br>
+	[% END %]
+[% END %]

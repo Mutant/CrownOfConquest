@@ -1,0 +1,5 @@
+[% IF upgrade_increase == 0 %]
+	The blacksmith hands back the [% item.display_name %], but it doesn't feel a lot different. "That's the best I can do", he says.
+[% ELSE %]
+	After hours of work, the it's finally done. The [% item.display_name %]'s [% upgraded_attribute %] has been increased by [% upgrade_increase %].
+[% END %]

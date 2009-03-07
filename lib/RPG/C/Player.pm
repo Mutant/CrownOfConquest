@@ -121,8 +121,6 @@ sub register : Local {
             $msg->send(
                 'smtp',
                 $c->config->{smtp_server},
-                AuthUser => $c->config->{smtp_user},
-                AuthPass => $c->config->{smtp_pass},
                 Debug    => 0,
             );
 

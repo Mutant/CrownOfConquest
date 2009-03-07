@@ -7,6 +7,7 @@ use Games::Dice::Advanced;
 
 use Carp;
 use Data::Dumper;
+use Math::Round qw(round);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Items');
@@ -113,7 +114,7 @@ sub variable_row {
     my $variable_name = shift;
     my $new_val       = shift;
 
-    $self->{variables} = { map { $_->item_variable_name => $_ } $self->item_variables }
+    $self->{variables} = { map { $_->item_variable_name->item_variable_name => $_ } $self->item_variables }
         unless $self->{variables};
 
     my $variable = $self->{variables}{$variable_name};
@@ -152,9 +153,9 @@ sub insert {
         my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
         $self->add_to_item_variables(
             {
-                item_variable_name  => $item_variable_param->item_variable_name->item_variable_name,
-                item_variable_value => $init_value,
-                max_value           => $item_variable_param->keep_max ? $init_value : undef,
+                item_variable_name_id => $item_variable_param->item_variable_name->id,
+                item_variable_value   => $init_value,
+                max_value             => $item_variable_param->keep_max ? $init_value : undef,
             }
         );
     }
@@ -170,10 +171,16 @@ sub sell_price {
 
     my $price = int( $self->item_type->modified_cost($shop) / ( 100 / ( 100 + $modifier ) ) );
 
+    # Adjust for upgrades
+    my @upgrade_variables = $self->item_type->category->variables_in_property_category('Upgrade');
+    foreach my $upgrade_variable (@upgrade_variables) {
+        $price += ($self->variable($upgrade_variable) || 0) * 20;   
+    }
+
     $price = 1 if $price == 0;
 
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
-
+    
     return $price;
 }
 
@@ -230,6 +237,7 @@ sub equip_item {
             $equipped_item->update;
         }
         else {
+
             # We're not replacing existing items, so nothing more to do here
             return;
         }
@@ -250,7 +258,8 @@ sub equip_item {
         # If this item and the item in opposite hand are both weapons, we have to unequip old weapon
         #  unless $replace_existing_equipment is false, in which case we return
         # This is temporary while two weapons can't be equipped
-        if ($item_in_opposite_hand && $item_in_opposite_hand->item_type->category->super_category->super_category_name eq 'Weapon'
+        if (   $item_in_opposite_hand
+            && $item_in_opposite_hand->item_type->category->super_category->super_category_name eq 'Weapon'
             && $self->item_type->category->super_category->super_category_name eq 'Weapon' )
         {
             if ($replace_existing_equipment) {
@@ -318,6 +327,7 @@ sub add_to_characters_inventory {
             eval {
                 if ( $self->equip_item( $equip_place, 0 ) )
                 {
+
                     # Equip was successful, so don't try to equip again
                     last;
                 }
@@ -334,7 +344,31 @@ sub add_to_characters_inventory {
     $self->update;
 
     return;
+}
 
+# Cost to upgrade a particular variable on this item
+# TODO: not sure this belongs here? some items can't be upgraded...
+sub upgrade_cost {
+    my $self = shift;
+    my $variable = shift;
+    
+    my $current_value = $self->variable($variable->item_variable_name) || 0;
+    
+    my $cost_factor = int 2 ** round ($current_value / 3 );
+    
+    return $cost_factor * RPG::Schema->config->{base_item_upgrade_cost};
+    
+}
+
+sub upgraded {
+    my $self = shift;
+    
+    my @upgrade_vars = $self->item_type->category->variables_in_property_category('Upgrade');
+    foreach my $upgrade_variable (@upgrade_vars) {     
+        return 1 if $self->variable($upgrade_variable);
+    }
+    
+    return 0;
 }
 
 1;

@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Item_Attribute_Name');
 
-__PACKAGE__->add_columns(qw/item_attribute_name_id item_attribute_name item_category_id value_type/);
+__PACKAGE__->add_columns(qw/item_attribute_name_id item_attribute_name item_category_id value_type property_category_id/);
 __PACKAGE__->set_primary_key('item_attribute_name_id');
 
 __PACKAGE__->has_many(

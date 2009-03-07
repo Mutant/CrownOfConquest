@@ -45,8 +45,6 @@ sub run {
         $msg->send(
             'smtp',
             $context->config->{smtp_server},
-            AuthUser => $context->config->{smtp_user},
-            AuthPass => $context->config->{smtp_pass},
             Debug    => 1,
         );
 

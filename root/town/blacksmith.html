@@ -1,0 +1,115 @@
+[% INCLUDE top.html %]
+[% USE infl = Lingua.EN.Inflect; -%]
+
+<script>
+dojo.require("dijit.Dialog");
+dojo.require("dijit.Menu");
+
+function confirmUpgrade(variableId, variableName, itemId, itemName, cost) {
+	dojo.byId('upgrade-name').innerHTML = variableName;
+	dojo.byId('item-name').innerHTML = itemName;
+	dojo.byId('cost').innerHTML = cost;
+	dojo.byId('item-id').value = itemId;
+	dojo.byId('variable-id').value = variableId;
+	
+	dijit.byId('upgrade-diag').show();
+}
+
+function upgradeItem(args) {
+	window.location = '[% base %]/town/blacksmith/upgrade?item_id=' + args.item_id + "&variable_id=" + args.variable_id;
+}
+</script>
+
+<h2>Blacksmith</h2>
+
+[% IF town.blacksmith_age == 0 %]
+	We don't have a blacksmith in the town of [% town.town_name %]. Our last one retired... if you know anyone looking for work.... drop us a line! 
+	The mayor could use some new shoes for his personal stead.
+[% ELSE %]
+	The blacksmith of [% town.town_name %] proudly proclaims he's been working here for [% town.blacksmith_age %] days. Judging by the way he's hammering that
+	sword, you'd guess his skill to be:
+	[% IF town.blacksmith_skill < 3 %]
+		terrible.
+	[% ELSIF town.blacksmith_skill < 6 %]
+		poor.
+	[% ELSIF town.blacksmith_skill < 9 %]
+		average.
+	[% ELSIF town.blacksmith_skill < 12 %]
+		decent.
+	[% ELSIF town.blacksmith_skill < 15 %]
+		good.
+	[% ELSIF town.blacksmith_skill < 18 %]
+		excellent.
+	[% ELSIF town.blacksmith_skill < 21 %]
+		amazing.
+	[% ELSE %]
+		god-like.
+	[% END %]
+	<br><br>
+	Party Gold: [% gold %]
+	<br><br>
+	<a href="[% base %]">Back To Town</a>
+	<br><br>
+	Select your service:	
+	<table class="main">
+	[% 
+		variable_label = {
+			'Attack Factor Upgrade' = 'AF',
+			'Defence Factor Upgrade' = 'DF',
+			'Damage Upgrade' = 'Dam',
+		}
+	%]
+		
+	[% FOREACH item IN items %]
+		<tr>
+		[% IF last_character != item.character_id %]
+			<td colspan="3"><br><b>[% item.belongs_to_character.character_name %]</b></td></tr><tr>
+			[% last_character = item.character_id %]
+		[% END %]
+			<td>[% item.item_type.item_type %]</td>
+			<td>
+				<span dojoType="dijit.form.DropDownButton">
+			        <span>Stats</span>
+			        <div dojoType="dijit.TooltipDialog" style="display: none"
+			        	href="[% base %]/item/tooltip?item_id=[% item.id %]">
+			        </div>
+				</span>
+			</td>
+			[% FOREACH variable IN categories.${item.item_type.item_category_id}.item_variable_names %]
+				[% FILTER collapse %]
+				<td>
+					<input type="button"
+						id="button_[% item.id %]_[% variable.id %]" 
+						onClick="confirmUpgrade(
+							'[% variable.id %]',
+							'[% infl.A(variable.item_variable_name) %]',								
+							'[% item.id %]', 
+							'[% infl.A(item.item_type.item_type) %]',
+							'[% item.upgrade_cost(variable) %]'
+						)"
+						value = "[% variable_label.${variable.item_variable_name} %]">
+				</td>
+					<div
+						dojoType="dijit.Tooltip" 
+						connectId="button_[% item.id %]_[% variable.id %]"
+						label="[% variable.item_variable_name %] ([% item.upgrade_cost(variable) %] gold)"/></div>
+					
+					
+				[% END %]
+			[% END %]
+		</tr>
+	[% END %]
+	</table>	
+[% END %]
+
+<div dojoType="dijit.Dialog" id="upgrade-diag" style="display: none" title="Upgrade Item" execute="upgradeItem(arguments[0]);">
+	Are you sure you want to buy <span id="upgrade-name"></span> on <span id="item-name"></span> for <span id="cost"></span> gold?
+	<input id="item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<input id="variable-id" name="variable_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+		<button dojoType=dijit.form.Button type="submit" id="upgrade-diag-submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('upgrade-diag').hide()">Cancel</button>
+	</div>
+</div>
+
+[% INCLUDE bottom.html %]

@@ -227,6 +227,9 @@ sub attack_factor {
         # Subtract back rank penalty if necessary
         $attack_factor -= $item->attribute('Back Rank Penalty') && $item->attribute('Back Rank Penalty')->item_attribute_value || 0
             unless $self->in_front_rank;
+            
+        # Add in upgrade bonus
+        $attack_factor += $item->variable("Attack Factor Upgrade");
     }
 
     # Apply effects
@@ -243,12 +246,12 @@ sub defence_factor {
     my @items = $self->get_equipped_item('Armour');
 
     my $armour_df = 0;
-    map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value } @items;
+    map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ($_->variable('Defence Factor Upgrade') || 0) } @items;
 
     # Apply effects
     my $effect_df = 0;
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
-
+    
     return $self->agility + $armour_df + $effect_df;
 }
 
@@ -272,7 +275,7 @@ sub damage {
     map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
     return 2 + $effect_dam unless $weapon;    # nothing equipped, assume bare hands
 
-    return $weapon->attribute('Damage')->item_attribute_value + $effect_dam;
+    return $weapon->attribute('Damage')->item_attribute_value + $weapon->variable('Damage Upgrade') + $effect_dam;
 }
 
 sub weapon {

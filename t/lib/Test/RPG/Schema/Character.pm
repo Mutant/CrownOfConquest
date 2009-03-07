@@ -163,7 +163,6 @@ sub test_number_of_attacks : Tests(no_plan) {
 		2,
 		'2 attacks allowed this for an archer',
 	);
-	
 }
 
 1;

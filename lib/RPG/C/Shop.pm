@@ -217,11 +217,10 @@ sub sell_item : Local {
     $item->character_id(undef);
     $item->equip_place_id(undef);
 
-    if ($item->variable('Quantity')) {
-		# Qunatity items get deleted
+    if ($item->variable('Quantity') || $item->upgraded) {
+		# Qunatity and upgraded items get deleted
 		$item->delete;
-    }
-    
+    }    
 
     else {
         # If it's not a quantity item, give it back to the shop, except for item categories without "auto_add_to_shop"

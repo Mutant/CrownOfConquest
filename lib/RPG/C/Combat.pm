@@ -70,6 +70,8 @@ sub party_attacks : Local {
     my ( $self, $c ) = @_;
 
     my $creature_group = $c->stash->{party_location}->available_creature_group;
+    
+    push @{ $c->stash->{refresh_panels} }, 'map';
 
     $c->forward('execute_attack', [$creature_group]);
 
@@ -268,7 +270,10 @@ sub execute_round : Private {
             }
         }
 
-        last if $c->stash->{combat_complete} || $c->stash->{party}->defunct;
+        if ($c->stash->{combat_complete} || $c->stash->{party}->defunct) {
+            push @{ $c->stash->{refresh_panels} }, 'map';   
+            last;
+        }
     }
 
     push @{ $c->stash->{combat_messages} },
@@ -737,8 +742,6 @@ sub end_of_combat_cleanup : Private {
             $character->update;
         }
     }
-    
-    $c->stash->{refresh_panels} = ['map'];
 }
 
 sub check_for_item_found : Private {

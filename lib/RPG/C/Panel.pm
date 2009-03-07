@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use JSON;
 use Carp;
+use List::MoreUtils qw(uniq);
 
 my %PANEL_PATHS = (
 	party => '/party/list',
@@ -16,8 +17,10 @@ my %PANEL_PATHS = (
 sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
 		
-	@panels_to_refresh = ( @panels_to_refresh, @{ $c->stash->{refresh_panels} } )
+	@panels_to_refresh = uniq ( @panels_to_refresh, @{ $c->stash->{refresh_panels} } )
 		if $c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY';		
+	
+	$c->log->info("Refreshing these panels: " . join ',',@panels_to_refresh);
 	
 	my %response;
 	

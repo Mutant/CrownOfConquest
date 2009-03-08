@@ -46,7 +46,7 @@ sub view : Local {
                 'dungeon_room', 
                 { 'doors' => 'position' }, 
                 { 'walls' => 'position' }, 
-                { 'creature_group' => {'creatures' => 'creature_type'} }, 
+                { 'creature_group' => {'creatures' => 'type'} }, 
             ], 
                 
         },

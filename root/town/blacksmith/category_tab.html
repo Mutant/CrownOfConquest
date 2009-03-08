@@ -21,7 +21,7 @@
 			<td colspan="3"><br><b>[% item.belongs_to_character.character_name %]</b></td></tr><tr>
 			[% last_character = item.character_id %]
 		[% END %]
-			<td>[% item.item_type.item_type %]</td>
+			<td>[% item.item_type.item_type %] [% IF item.equip_place_id %](e)[% END %]</td>
 			<td>
 				<span dojoType="dijit.form.DropDownButton">
 			        <span>Stats</span>

@@ -27,7 +27,7 @@ sub equip_place_category_list {
 		} 	
 	}
 	
-	warn Dumper \%equip_place_category_list;
+	#warn Dumper \%equip_place_category_list;
 	
 	return %equip_place_category_list;	
 }

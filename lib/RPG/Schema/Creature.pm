@@ -148,6 +148,10 @@ sub execute_attack {
 	return;
 }
 
+sub execute_defence {
+	return;
+}
+
 sub change_hit_points {
 	my $self = shift;
 	my $amount = shift;

@@ -12,6 +12,8 @@ use Math::Round qw(round);
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Items');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Items');
+
 __PACKAGE__->add_columns(
     'item_id' => {
         'data_type'         => 'int',
@@ -145,12 +147,12 @@ sub insert {
     my ( $self, @args ) = @_;
 
     $self->next::method(@args);
-    
+
     my @item_variable_params = $self->item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
 
     foreach my $item_variable_param (@item_variable_params) {
         next unless $item_variable_param->item_variable_name->create_on_insert;
-        
+
         my $range      = $item_variable_param->max_value - $item_variable_param->min_value + 1;
         my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
         $self->add_to_item_variables(
@@ -176,13 +178,13 @@ sub sell_price {
     # Adjust for upgrades
     my @upgrade_variables = $self->item_type->category->variables_in_property_category('Upgrade');
     foreach my $upgrade_variable (@upgrade_variables) {
-        $price += ($self->variable($upgrade_variable) || 0) * 20;   
+        $price += ( $self->variable($upgrade_variable) || 0 ) * 20;
     }
 
     $price = 1 if $price == 0;
 
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
-    
+
     return $price;
 }
 
@@ -351,42 +353,43 @@ sub add_to_characters_inventory {
 # Cost to upgrade a particular variable on this item
 # TODO: not sure this belongs here? some items can't be upgraded...
 sub upgrade_cost {
-    my $self = shift;
+    my $self     = shift;
     my $variable = shift;
-        
+
     my $current_value = $self->variable($variable) || 0;
-    
-    my $cost_factor = int 2 ** round ($current_value / 3 );
-    
+
+    my $cost_factor = int 2**round( $current_value / 3 );
+
     return $cost_factor * RPG::Schema->config->{base_item_upgrade_cost};
-    
+
 }
 
 sub upgraded {
     my $self = shift;
-    
+
     my @upgrade_vars = $self->item_type->category->variables_in_property_category('Upgrade');
-    foreach my $upgrade_variable (@upgrade_vars) {     
+    foreach my $upgrade_variable (@upgrade_vars) {
         return 1 if $self->variable($upgrade_variable);
     }
-    
+
     return 0;
 }
 
 sub repair_cost {
     my $self = shift;
     my $town = shift;
-    
+
     my $variable_rec = $self->variable_row('Durability');
-    
-    return 0 if ! defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
-    
+
+    return 0 if !defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
+
     my $repair_factor = $town->prosperity + $town->blacksmith_skill;
     $repair_factor = 100 if $repair_factor > 100;
-    
-    my $per_durability_point_cost = round( RPG::Schema->config->{min_repair_cost} + ( 100 - $repair_factor ) / 100 * RPG::Schema->config->{max_repair_cost} );
-    
-    return ($variable_rec->max_value - $variable_rec->item_variable_value) * $per_durability_point_cost;
+
+    my $per_durability_point_cost =
+        round( RPG::Schema->config->{min_repair_cost} + ( 100 - $repair_factor ) / 100 * RPG::Schema->config->{max_repair_cost} );
+
+    return ( $variable_rec->max_value - $variable_rec->item_variable_value ) * $per_durability_point_cost;
 }
 
 1;

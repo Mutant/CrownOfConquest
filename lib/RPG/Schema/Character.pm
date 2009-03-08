@@ -227,7 +227,7 @@ sub attack_factor {
         # Subtract back rank penalty if necessary
         $attack_factor -= $item->attribute('Back Rank Penalty') && $item->attribute('Back Rank Penalty')->item_attribute_value || 0
             unless $self->in_front_rank;
-            
+
         # Add in upgrade bonus
         $attack_factor += $item->variable("Attack Factor Upgrade");
     }
@@ -244,14 +244,17 @@ sub defence_factor {
     my $self = shift;
 
     my @items = $self->get_equipped_item('Armour');
+    
+    # Get rid of broken items (items without a durability (i.e. not defined) are ok)
+    @items = grep { my $dur = $_->variable('Durability'); ! defined $dur || $dur > 0 } @items;
 
     my $armour_df = 0;
-    map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ($_->variable('Defence Factor Upgrade') || 0) } @items;
+    map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ( $_->variable('Defence Factor Upgrade') || 0 ) } @items;
 
     # Apply effects
     my $effect_df = 0;
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
-    
+
     return $self->agility + $armour_df + $effect_df;
 }
 
@@ -388,19 +391,19 @@ sub execute_attack {
 
     my @items = $self->get_equipped_item('Weapon');
 
+    # TODO: we're looping, but no really dealing with multiple weapons as we return from the loop
     foreach my $item (@items) {
+
         # Check durability
-        my $durability_rec = $item->variable_row('Durability'); 
+        my $durability_rec = $item->variable_row('Durability');
         if ($durability_rec) {
-            if ($durability_rec->item_variable_value == 0) {
+            my $new_durability = $self->_check_damage_to_item($durability_rec);
+
+            if ( !defined $new_durability ) {
                 return { weapon_broken => 1 };
             }
-            else {
-                $durability_rec->item_variable_value($durability_rec->item_variable_value - 1);
-                $durability_rec->update;
-            }
         }
-        
+
         # Check for ammunition
         if ( $item->item_type->category->item_category eq 'Ranged Weapon' ) {
             my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
@@ -426,6 +429,56 @@ sub execute_attack {
                 last;
             }
         }
+    }
+}
+
+# Called when character is attacked. Used to take damage to armour
+sub execute_defence {
+    my $self = shift;
+
+    my @items = $self->get_equipped_item('Armour');
+
+    my $armour_now_broken = 0;
+    foreach my $item (@items) {
+        my $durability_rec = $item->variable_row('Durability');
+        if ($durability_rec) {
+            return if $durability_rec->item_variable_value == 0;
+    
+            my $new_durability = $self->_check_damage_to_item($durability_rec);
+    
+            if ( $new_durability == 0 ) {
+    
+                # Armour is now broken
+                $armour_now_broken = 1;                
+            }
+        }
+    }
+    
+    return $armour_now_broken ? { armour_broken => 1 } : undef;
+
+}
+
+# Checks if we should deal damage to an item (i.e. decrements durability). Damage is dealt based on chance
+# Returns the new durability, or undef if it was already broken
+sub _check_damage_to_item {
+    my $self           = shift;
+    my $durability_rec = shift;
+
+    if ( $durability_rec->item_variable_value == 0 ) {
+        return undef;
+    }
+    else {
+        my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
+
+        my $durability = $durability_rec->item_variable_value;
+
+        if ( $weapon_damage_roll == 1 ) {
+            $durability--;
+            $durability_rec->item_variable_value($durability);
+            $durability_rec->update;
+        }
+
+        return $durability;
     }
 }
 

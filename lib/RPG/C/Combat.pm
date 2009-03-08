@@ -70,10 +70,10 @@ sub party_attacks : Local {
     my ( $self, $c ) = @_;
 
     my $creature_group = $c->stash->{party_location}->available_creature_group;
-    
+
     push @{ $c->stash->{refresh_panels} }, 'map';
 
-    $c->forward('execute_attack', [$creature_group]);
+    $c->forward( 'execute_attack', [$creature_group] );
 
 }
 
@@ -137,7 +137,7 @@ sub main : Local {
     }
 
     my $orb;
-    if ( $c->stash->{creatures_initiated} && ! $c->stash->{party}->dungeon_grid_id ) {
+    if ( $c->stash->{creatures_initiated} && !$c->stash->{party}->dungeon_grid_id ) {
         $orb = $c->stash->{party_location}->orb;
     }
 
@@ -187,47 +187,47 @@ sub select_action : Local {
 
 sub fight : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
-      
-    # Never flee if there's an orb here... 
-    if (! $c->stash->{party_location}->orb && $c->forward('check_for_creature_flee')) {
+
+    # Never flee if there's an orb here...
+    if ( !$c->stash->{party_location}->orb && $c->forward('check_for_creature_flee') ) {
         $c->detach('creatures_flee');
     }
-      
+
     $c->forward('execute_round');
-    
+
 }
 
 sub check_for_creature_flee : Private {
     my ( $self, $c ) = @_;
-    
+
     # See if the creatures want to flee... check this every 3 rounds
     #  Only flee if cg level is lower than party
     $c->log->debug("Checking for creature flee");
-    $c->log->debug("Round: " . $c->stash->{combat_log}->rounds);
-    $c->log->debug("CG level: " . $c->stash->{creature_group}->level);
-    $c->log->debug("Party level: " . $c->stash->{party}->level);
-    
+    $c->log->debug( "Round: " . $c->stash->{combat_log}->rounds );
+    $c->log->debug( "CG level: " . $c->stash->{creature_group}->level );
+    $c->log->debug( "Party level: " . $c->stash->{party}->level );
+
     if ( $c->stash->{combat_log}->rounds != 0 && $c->stash->{combat_log}->rounds % 3 == 0 ) {
-        if ( $c->stash->{creature_group}->level < $c->stash->{party}->level-2) {
+        if ( $c->stash->{creature_group}->level < $c->stash->{party}->level - 2 ) {
             my $chance_of_fleeing =
                 ( $c->stash->{party}->level - $c->stash->{creature_group}->level ) * $c->config->{chance_creatures_flee_per_level_diff};
-    
+
             $c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
-    
+
             if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
                 return 1;
             }
         }
     }
-    
+
     return 0;
 }
 
 sub execute_round : Private {
-    my ( $self, $c ) = @_;    
-    
+    my ( $self, $c ) = @_;
+
     # Process magical effects
     $c->forward('process_effects');
 
@@ -270,8 +270,8 @@ sub execute_round : Private {
             }
         }
 
-        if ($c->stash->{combat_complete} || $c->stash->{party}->defunct) {
-            push @{ $c->stash->{refresh_panels} }, 'map';   
+        if ( $c->stash->{combat_complete} || $c->stash->{party}->defunct ) {
+            push @{ $c->stash->{refresh_panels} }, 'map';
             last;
         }
     }
@@ -317,6 +317,27 @@ sub calculate_factors : Private {
             $c->log->debug( "Calculating defence factor for " . $combatant->name . " - " . $combatant->id );
         }
     }
+}
+
+# Refresh a combatant's details in the factor cache
+# Note, we're only passed in a combatant id, which could be a creature or character. It's possible that we could have
+#  a creature *and* a character with the same id. If that happens, we'll just end up refreshing both of them in the cache. Oh well.
+# We only have the id as this is all we have when casting a spell, and we don't know whether it's a creature or character
+sub refresh_factor_cache : Private {
+    my ( $self, $c, $combatant_id_to_refresh ) = @_;
+
+    my @cached_combatant_ids = ( keys %{ $c->session->{combat_factors}{character} }, keys %{ $c->session->{combat_factors}{creature} }, );
+
+    $c->log->debug("Deleting combat factor cache for target id $combatant_id_to_refresh");
+
+    foreach my $combatant_id (@cached_combatant_ids) {
+        delete $c->session->{combat_factors}{character}{$combatant_id}
+            if $combatant_id == $combatant_id_to_refresh;
+        delete $c->session->{combat_factors}{creature}{$combatant_id}
+            if $combatant_id == $combatant_id_to_refresh;
+    }
+
+    $c->forward( 'calculate_factors', [ [ $c->stash->{party}->characters ], [ $c->stash->{creature_group}->creatures ] ] );
 }
 
 sub character_action : Private {
@@ -372,18 +393,8 @@ sub character_action : Private {
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.
         my $target = $c->session->{combat_action_param}{ $character->id }[1];
-        my @cached_combatant_ids = ( keys %{ $c->session->{combat_factors}{character} }, keys %{ $c->session->{combat_factors}{creature} }, );
-
-        $c->log->debug("Deleting combat factor cache for target id $target");
-
-        foreach my $combatant_id (@cached_combatant_ids) {
-            delete $c->session->{combat_factors}{character}{$combatant_id}
-                if $combatant_id == $target;
-            delete $c->session->{combat_factors}{creature}{$combatant_id}
-                if $combatant_id == $target;
-        }
-
-        $c->forward( 'calculate_factors', [ [ $c->stash->{party}->characters ], [ $creature_group->creatures ] ] );
+        
+        $c->forward('refresh_factor_cache', [ $target ]);
 
         $character->last_combat_action('Defend');
         $character->update;
@@ -492,6 +503,13 @@ sub attack : Private {
         return $attack_error;
     }
 
+    if ( my $defence_message = $defender->execute_defence ) {
+        if ( $defence_message->{armour_broken} ) {
+            # Armour has broken, clear out this character's factor cache
+            $c->forward('refresh_factor_cache', [ $defender->id ]);
+        }
+    }
+
     my $a_roll = Games::Dice::Advanced->roll( '1d' . RPG->config->{attack_dice_roll} );
     my $d_roll = Games::Dice::Advanced->roll( '1d' . RPG->config->{defence_dice_roll} );
 
@@ -551,7 +569,7 @@ sub flee : Local {
 
     my $flee_successful = $c->forward('roll_flee_attempt');
 
-    if ( $flee_successful ) {
+    if ($flee_successful) {
         my $land = $c->forward('get_sector_to_flee_to');
 
         $party->land_id( $land->id );
@@ -584,10 +602,10 @@ sub flee : Local {
 }
 
 sub roll_flee_attempt : Private {
-    my ( $self, $c ) = @_;    
-    
+    my ( $self, $c ) = @_;
+
     my $party = $c->stash->{party};
-    
+
     my $creature_group =
         $c->model('DBIC::CreatureGroup')
         ->find( { creature_group_id => $party->in_combat_with, }, { prefetch => { 'creatures' => [ 'type', 'creature_effects' ] }, }, );
@@ -601,9 +619,9 @@ sub roll_flee_attempt : Private {
     my $rand = Games::Dice::Advanced->roll("1d100");
 
     $c->log->debug("Flee roll: $rand");
-    $c->log->debug( "Flee chance: " . $flee_chance );    
-    
-    return $rand < $flee_chance;    
+    $c->log->debug( "Flee chance: " . $flee_chance );
+
+    return $rand < $flee_chance;
 }
 
 sub creatures_flee : Private {
@@ -714,7 +732,7 @@ sub finish : Private {
     $c->stash->{creature_group}->update;
 
     $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 5 );
-    $c->stash->{party_location}->update;    
+    $c->stash->{party_location}->update;
 
     $c->forward('end_of_combat_cleanup');
 }

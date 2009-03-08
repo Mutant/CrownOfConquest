@@ -145,11 +145,13 @@ sub insert {
     my ( $self, @args ) = @_;
 
     $self->next::method(@args);
-
+    
     my @item_variable_params = $self->item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
 
     foreach my $item_variable_param (@item_variable_params) {
-        my $range      = $item_variable_param->max_value - $item_variable_param->min_value - 1;
+        next unless $item_variable_param->item_variable_name->create_on_insert;
+        
+        my $range      = $item_variable_param->max_value - $item_variable_param->min_value + 1;
         my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
         $self->add_to_item_variables(
             {

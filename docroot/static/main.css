@@ -150,6 +150,11 @@ html>body .nav a {width: auto}
 	color: #B40000;
 }
 
+.attack-error {
+	background: red;
+	color: white;
+}
+
 /* Misc */
 
 #rank_separator {

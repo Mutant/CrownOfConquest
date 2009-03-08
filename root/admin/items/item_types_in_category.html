@@ -14,7 +14,6 @@
 </form>
 
 [% IF category_to_edit %]
-	<form method="post" action="[% base %]/admin/items/mass_update_item_types">
 	<table class="main" border=1 cellpadding=2 cellspacing=0>
 		<tr>
 			<th>ID</th>
@@ -24,6 +23,11 @@
 			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
 				<th>[% attribute.item_attribute_name %]</th>
 			[% END %]
+			[% FOREACH variable IN category_to_edit.item_variable_names %]
+				[% IF variable.create_on_insert %]
+					<th>[% variable.item_variable_name %]</th>
+				[% END %]
+			[% END %]				
 		</tr>
 	
 	[% FOREACH item_type IN item_types %]
@@ -35,12 +39,18 @@
 			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
 				<td>[% item_type.attribute(attribute.item_attribute_name).formatted_value %]</td>
 			[% END %]
+			[% FOREACH variable IN category_to_edit.item_variable_names %]
+				[% IF variable.create_on_insert %]
+					[% variable_params = item_type.variable_param(variable.item_variable_name) %]
+					<td>[% variable_params.min_value %] - [% variable_params.max_value %] [% IF variable_params.keep_max %](KpMx)[% END %]</td>
+				[% END %]
+			[% END %]			
 		</tr>
 	
 	[% END %]
 	
-	</table>	
-	</form>
+	</table>
+
 [% END %]
 
 [% INCLUDE bottom.html %]

@@ -14,9 +14,12 @@
 	[% IF ! message.attacker %]
 		[% message %]
 	[% ELSIF message.damage.no_ammo %]
-		<span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
-			<span class="combat-weapon">[% message.attacker.weapon %]</span>!
-	[% ELSE %]
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
+			<span class="combat-weapon">[% message.attacker.weapon %]</span>!</span>
+	[% ELSIF message.damage.weapon_broken %]
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because his 
+			<span class="combat-weapon">[% message.attacker.weapon %]</span> is broken and needs to be repaired!</span>
+	[% ELSE %]	
 		<span class="[% attacker_class %]">[% message.attacker.name %]</span> attacked <span class="[% defender_class %]">[% message.defender.name %]</span> 
 			with <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		

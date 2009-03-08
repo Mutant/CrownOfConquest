@@ -5,7 +5,9 @@ ALTER TABLE `game`.`Item_Variable` ADD COLUMN `item_variable_name_id` INTEGER  N
 
 UPDATE `game`.`Item_Variable` set `item_variable_name_id` = 1;
 
-INSERT INTO `Item_Variable_Name` VALUES (2,'Damage Upgrade',1),(3,'Attack Factor Upgrade',1);
+ALTER TABLE `game`.`Item_Variable_Name` ADD COLUMN `create_on_insert` TINYINT  NOT NULL DEFAULT 1 AFTER `property_category_id`;
+
+INSERT INTO `Item_Variable_Name` VALUES (2,'Damage Upgrade',1,0),(3,'Attack Factor Upgrade',1,0);
 
 CREATE TABLE `game`.`Item_Property_Category` (
   `property_category_id` integer  NOT NULL AUTO_INCREMENT,

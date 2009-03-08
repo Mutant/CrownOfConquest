@@ -41,7 +41,15 @@ sub view : Local {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
         },
-        { prefetch => [ 'dungeon_room', { 'doors' => 'position' }, { 'walls' => 'position' }, 'creature_group' ], },
+        { 
+            prefetch => [ 
+                'dungeon_room', 
+                { 'doors' => 'position' }, 
+                { 'walls' => 'position' }, 
+                { 'creature_group' => {'creatures' => 'creature_type'} }, 
+            ], 
+                
+        },
     );
     
     $c->stats->profile("Queried viewable sectors");

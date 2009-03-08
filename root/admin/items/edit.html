@@ -77,11 +77,15 @@
 	<tr>
 		<td>[% item_variable_name.item_variable_name %]:</td>
 		<td>
-			Min: <input type="text" size="5" name="item_variable_param_min_[% item_variable_name.id %]" value="[% item_variable_param.min_value %]">
-			Max: <input type="text" size="5" name="item_variable_param_max_[% item_variable_name.id %]" value="[% item_variable_param.max_value %]">
-			Keep Max?
-			<input type="checkbox" name="item_variable_param_keep_max_[% item_variable_name.id %]" value="1"
-				[% IF item_variable_param.keep_max %]checked=checked[% END %]>
+			[% IF item_variable_name.create_on_insert %]
+				Min: <input type="text" size="5" name="item_variable_param_min_[% item_variable_name.id %]" value="[% item_variable_param.min_value %]">
+				Max: <input type="text" size="5" name="item_variable_param_max_[% item_variable_name.id %]" value="[% item_variable_param.max_value %]">
+				Keep Max?
+				<input type="checkbox" name="item_variable_param_keep_max_[% item_variable_name.id %]" value="1"
+					[% IF item_variable_param.keep_max %]checked=checked[% END %]>
+			[% ELSE %]
+				(Not created on insert)
+			[% END %]
 		</td>
 	</tr>
 	[% END %]

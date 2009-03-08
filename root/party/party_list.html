@@ -32,6 +32,14 @@
             </div>
 			</span>
 		[% END %]
+		[% IF broken_items.${char.id} %]
+			<span id="brokenItems-[% char.character_id %]">[!]</span>
+			<div dojoType="dijit.Tooltip"
+                   connectId="brokenItems-[% char.character_id %]"
+                   label="These equipped items need to be repaired: [% FOREACH item IN broken_items.${char.id} %][% item.display_name %][% UNLESS loop.last %], [% END %][% END %]">
+            </div>
+			</span>
+		[% END %]
 	</td>
     <td nowrap="nowrap"><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
     <td nowrap="nowrap">[% char.race.race_name %]</td>

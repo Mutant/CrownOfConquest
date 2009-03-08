@@ -382,13 +382,26 @@ sub is_character {
     return 1;
 }
 
-# Execute an attack, mainly just make sure there is ammo for ranged weapons, and deduct one from quantity
+# Execute an attack, make sure there is ammo for ranged weapons, and deduct one from quantity, and handle durability of items
 sub execute_attack {
     my $self = shift;
 
     my @items = $self->get_equipped_item('Weapon');
 
     foreach my $item (@items) {
+        # Check durability
+        my $durability_rec = $item->variable_row('Durability'); 
+        if ($durability_rec) {
+            if ($durability_rec->item_variable_value == 0) {
+                return { weapon_broken => 1 };
+            }
+            else {
+                $durability_rec->item_variable_value($durability_rec->item_variable_value - 1);
+                $durability_rec->update;
+            }
+        }
+        
+        # Check for ammunition
         if ( $item->item_type->category->item_category eq 'Ranged Weapon' ) {
             my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
 
@@ -397,7 +410,7 @@ sub execute_attack {
 
             return { no_ammo => 1 } unless @ammo;    # Didn't find anything, so return - they can't attack!
 
-            # Find the first ammo item and
+            # Find the first ammo item and decrement
             foreach my $ammo (@ammo) {
                 my $quantity = $ammo->variable('Quantity');
 

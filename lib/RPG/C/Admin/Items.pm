@@ -199,7 +199,7 @@ sub edit_item_types_in_category : Local {
 				item_types => \@item_types,
 			},
         }]
-    );	
+    );
 		
 }
 

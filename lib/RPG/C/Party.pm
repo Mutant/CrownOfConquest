@@ -145,6 +145,32 @@ sub list : Local {
             order_by => 'party_order',
         },
     );
+    
+    # See if any chars have broken weapons equipped
+    my @broken_equipped_items = $c->model('DBIC::Items')->search(
+        {
+            'belongs_to_character.party_id' => $c->stash->{party}->id,
+            'equip_place_id' => {'!=', undef},
+            -and => [
+                'item_variables.item_variable_value' => '0',
+                'item_variable_name.item_variable_name' => 'Durability',
+            ],
+        },
+        {
+            join => [
+                'belongs_to_character',
+                {
+                    'item_variables' => 'item_variable_name',
+                }
+            ],
+            prefetch => 'item_type',
+        }
+    );
+    
+    my %broken_items_by_char_id;
+    foreach my $broken_item (@broken_equipped_items) {
+        push @{ $broken_items_by_char_id{$broken_item->character_id} }, $broken_item;   
+    }
 
     my %spells;
     foreach my $character (@characters) {
@@ -178,6 +204,7 @@ sub list : Local {
                     combat_actions => $c->session->{combat_action},
                     creatures      => \@creatures,
                     spells         => \%spells,
+                    broken_items   => \%broken_items_by_char_id,
                 },
                 return_output => 1,
             }

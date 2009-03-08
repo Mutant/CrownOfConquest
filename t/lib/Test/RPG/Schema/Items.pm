@@ -106,7 +106,6 @@ sub test_variable_params_created : Tests(5) {
     is( $val1->max_value, undef, "Max value not set for var1" );
 
     my $val2 = $self->{item}->variable_row('Var2');
-    warn $val2->item_variable_value;
     ok( $val2->item_variable_value >= 5 && $val2->item_variable_value <= 8, "Var2 in correct range" );
     is( $val2->max_value, $val2->item_variable_value, "Max value set for var2" );
 

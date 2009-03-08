@@ -67,7 +67,11 @@
 						[% IF sector.stairs_up %]
 							S
 						[% ELSIF cgs.$x.$y %]
-						    M
+							<span id="m_[% x _ y %]">M</span>
+						    <div 
+								dojoType="dijit.Tooltip" 
+								connectId="m_[% x _ y %]"
+								label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
 						[% ELSIF can_move_to_sector %]
 						    .
 						[% ELSE %]

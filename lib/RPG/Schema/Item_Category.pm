@@ -22,19 +22,24 @@ my %variables_in_property_category;
 sub variables_in_property_category {
     my $self                   = shift;
     my $property_category_name = shift;
+    my $return_records         = shift // 0;
 
-    return @{ $variables_in_property_category{$property_category_name}{$self->id} }
-        if ref $variables_in_property_category{$property_category_name}{$self->id} eq 'ARRAY';
-
-    my @variables = map { $_->item_variable_name } $self->search_related(
-        'item_variable_names',
-        { 'property_category.category_name' => $property_category_name, },
-        { join                              => ['property_category'], }
-    );
+    my @variables;
+   
+    if (ref $variables_in_property_category{$property_category_name}{$self->id} eq 'ARRAY') {
+        @variables = @{ $variables_in_property_category{$property_category_name}{$self->id} }
+    }
+    else {
+        @variables = $self->search_related(
+            'item_variable_names',
+            { 'property_category.category_name' => $property_category_name, },
+            { join                              => ['property_category'], }
+        );
+    }
 
     $variables_in_property_category{$property_category_name}{$self->id} = \@variables;
 
-    return @variables;
+    return $return_records ? @variables : map { $_->item_variable_name } @variables;
 }
 
 1;

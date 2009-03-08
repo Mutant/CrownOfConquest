@@ -353,8 +353,8 @@ sub add_to_characters_inventory {
 sub upgrade_cost {
     my $self = shift;
     my $variable = shift;
-    
-    my $current_value = $self->variable($variable->item_variable_name) || 0;
+        
+    my $current_value = $self->variable($variable) || 0;
     
     my $cost_factor = int 2 ** round ($current_value / 3 );
     
@@ -371,6 +371,22 @@ sub upgraded {
     }
     
     return 0;
+}
+
+sub repair_cost {
+    my $self = shift;
+    my $town = shift;
+    
+    my $variable_rec = $self->variable_row('Durability');
+    
+    return 0 if ! defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
+    
+    my $repair_factor = $town->prosperity + $town->blacksmith_skill;
+    $repair_factor = 100 if $repair_factor > 100;
+    
+    my $per_durability_point_cost = round( RPG::Schema->config->{min_repair_cost} + ( 100 - $repair_factor ) / 100 * RPG::Schema->config->{max_repair_cost} );
+    
+    return ($variable_rec->max_value - $variable_rec->item_variable_value) * $per_durability_point_cost;
 }
 
 1;

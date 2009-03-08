@@ -19,20 +19,57 @@ sub default : Path {
 sub main : Local {
     my ( $self, $c ) = @_;
     
-    my %categories = map { $_->id => $_} $c->model('DBIC::Item_Category')->search(
+    my @categories = $c->model('DBIC::Item_Category')->search(
         {
-            'property_category.category_name' => 'Upgrade',
+            'property_category.category_name' => ['Upgrade', 'Durability'],
         },
         {
-            prefetch => { 'item_variable_names' => 'property_category' },
+            join => {'item_variable_names' => 'property_category'},
+            distinct => 1,
+            order_by => 'item_category',
+        }
+   );
+    
+   $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'town/blacksmith.html',
+                params   => {
+                    town  => $c->stash->{party_location}->town,
+                    error => $c->flash->{error},
+                    message => $c->flash->{message},
+                    current_tab => $c->flash->{current_tab},
+                    gold => $c->stash->{party}->gold,
+                    categories => \@categories,
+                },
+                return_output => 0,
+            }
+        ]
+    );       
+
+
+}
+
+sub category_tab : Local {
+    my ( $self, $c ) = @_;    
+    
+    my $category = $c->model('DBIC::Item_Category')->find(
+        {
+            'item_category_id' => $c->req->param('category_id'),
+        },
+        {
+            prefetch => 'item_variable_names',
         }
     );
-
+    
+    my @upgrade_variables = $category->variables_in_property_category('Upgrade', 1);
+    my @repair_variables = $category->variables_in_property_category('Durability', 1);
+    
     my @items = $c->model('DBIC::Items')->search(
         {
             'belongs_to_character.party_id'   => $c->stash->{party}->id,
-            'item_type.item_category_id' => [keys %categories],
-
+            'item_type.item_category_id' => $c->req->param('category_id'),
         },
         {
             prefetch => [ 
@@ -49,24 +86,23 @@ sub main : Local {
         'RPG::V::TT',
         [
             {
-                template => 'town/blacksmith.html',
+                template => 'town/blacksmith/category_tab.html',
                 params   => {
-                    town  => $c->stash->{party_location}->town,
                     items => \@items,
-                    error => $c->flash->{error},
-                    message => $c->flash->{message},
-                    gold => $c->stash->{party}->gold,
-                    categories => \%categories,
+                    upgrade_variables => \@upgrade_variables,
+                    repair_variables => \@repair_variables,
+                    town => $c->stash->{party_location}->town,
+                    category => $category,
                 },
                 return_output => 0,
             }
         ]
-    );
+    );   
 }
 
-sub upgrade : Local {
+sub item_valid_check : Private {
     my ( $self, $c ) = @_;
-
+    
     my $town = $c->stash->{party_location}->town;
 
     if ( $town->blacksmith_age == 0 ) {
@@ -77,7 +113,20 @@ sub upgrade : Local {
 
     if ( $item->belongs_to_character->party_id != $c->stash->{party}->id ) {
         croak "Attempting to upgrade weapon from different party\n";
-    }
+    }   
+    
+    return $item;
+}
+
+
+sub upgrade : Local {
+    my ( $self, $c ) = @_;
+
+    $c->flash->{current_tab} = $c->req->param('current_tab');
+    
+    my $item = $c->forward('item_valid_check');
+    
+    my $town = $c->stash->{party_location}->town;
 
     my $variable = $c->model('DBIC::Item_Variable_Name')->find(
         {
@@ -92,14 +141,14 @@ sub upgrade : Local {
         croak "Item variable doesn't exist for this item type\n";
     }
 
-    if ( $item->upgrade_cost($variable) > $c->stash->{party}->gold ) {
+    if ( $item->upgrade_cost($variable->item_variable_name) > $c->stash->{party}->gold ) {
         $c->log->debug("Not enough gold for upgrade");
         $c->flash->{error} = "You don't have enough gold for that upgrade";
         $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
         return;
     }
     
-    $c->stash->{party}->gold($c->stash->{party}->gold - $item->upgrade_cost($variable));
+    $c->stash->{party}->gold($c->stash->{party}->gold - $item->upgrade_cost($variable->item_variable_name));
     $c->stash->{party}->update;
 
     my $item_variable = $item->variable_row( $variable->item_variable_name );
@@ -157,9 +206,41 @@ sub upgrade : Local {
             }
         ]
     );
-    
+ 
     $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
 
+}
+
+sub repair : Local {
+    my ( $self, $c ) = @_;
+
+    $c->flash->{current_tab} = $c->req->param('current_tab');    
+    
+    my $item = $c->forward('item_valid_check');
+    
+    my $town = $c->stash->{party_location}->town;
+    
+    if ($item->repair_cost($town) == 0) {
+        $c->flash->{error} = "That item doesn't need repairing";
+        $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+        return;
+    }
+    
+    if ( $item->repair_cost($town) > $c->stash->{party}->gold ) {
+        $c->flash->{error} = "You don't have enough gold for that upgrade";
+        $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+        return;
+    }
+    
+    $c->stash->{party}->gold($c->stash->{party}->gold - $item->repair_cost($town));
+    $c->stash->{party}->update;
+    
+    my $variable_rec = $item->variable_row('Durability');
+    $variable_rec->item_variable_value($variable_rec->max_value);
+    $variable_rec->update;
+    
+    $c->flash->{message} = "Repair complete"; 
+    $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
 }
 
 1;

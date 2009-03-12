@@ -229,7 +229,7 @@ sub attack_factor {
             unless $self->in_front_rank;
 
         # Add in upgrade bonus
-        $attack_factor += $item->variable("Attack Factor Upgrade");
+        $attack_factor += $item->variable("Attack Factor Upgrade") || 0;
     }
 
     # Apply effects

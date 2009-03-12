@@ -5,11 +5,13 @@
 [% END %]
 
 [%
-	sector_width = 48;
-	sector_height = 40;
+	sector_width = 96 / zoom_level;
+	sector_height = 80 / zoom_level;
 %]
 
 <div style="position: relative; width: [% x_size * sector_width %]px; height: [% y_size * sector_height %]px; margin: 1px auto">
+	
+	
 [% FOREACH y IN y_range %]
 
 	[% FOREACH x IN x_range %]
@@ -24,12 +26,12 @@
 		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
         		<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')"">
         	[% ELSIF ! click_to_move %]
-        		<a href="?center_x=[% x %]&center_y=[% y %]">
+        		<a href="?center_x=[% x %]&center_y=[% y %]&zoom_level=[% zoom_level %]">
         	[% END %]
         	
 			<div style="			
-					width: 48px; 
-					height: 40px; 
+					width: [% sector_width %]px; 
+					height: [% sector_height %]px; 
 					position: absolute;
 					left: [% (x - min_x) * sector_width %]px; 
 					top: [% (y - min_y) * sector_height %]px;					
@@ -39,7 +41,13 @@
 					"					
 					>
 					[% IF position %]
-						<img src="[% c.config.static_path %][% image_path %][% position.image %]" border=0 title="[% sector_title(position) %]">
+						<img 
+							src="[% c.config.static_path %][% image_path %][% position.image %]" 
+							border=0 
+							title="[% sector_title(position) %]" 
+							width="[% sector_width %]"
+							height="[% sector_height %]"
+						>
 					[% END %]
 					</div>
 			[% IF ! click_to_move || position.next_to_centre %]

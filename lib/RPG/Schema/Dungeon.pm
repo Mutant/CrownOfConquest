@@ -16,6 +16,8 @@ __PACKAGE__->set_primary_key('dungeon_id');
 
 __PACKAGE__->has_many( 'sectors', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_id' => 'self.dungeon_id' } );
 
+__PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );
+
 sub party_can_enter {
     my $self  = shift;
     my $party = shift;

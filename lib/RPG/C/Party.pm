@@ -25,8 +25,6 @@ sub main : Local {
                 params   => {
                     party  => $c->stash->{party},
                     panels => $panels,
-
-                    #party_messages => $party_messages,
                 },
             }
         ]

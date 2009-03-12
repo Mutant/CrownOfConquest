@@ -27,6 +27,8 @@ sub view : Local {
 
 sub party : Local {
     my ( $self, $c ) = @_;
+    
+    my $zoom_level = $c->req->param('zoom_level') || 2; 
 
     my ( $centre_x, $centre_y );
 
@@ -36,15 +38,18 @@ sub party : Local {
     else {
         my $party_location = $c->stash->{party_location};
 
-        $centre_x = $party_location->x + $c->req->param('x_offset');
-        $centre_y = $party_location->y + $c->req->param('y_offset');
+        $centre_x = $party_location->x + ($c->req->param('x_offset') || 0);
+        $centre_y = $party_location->y + ($c->req->param('y_offset') || 0);
     }
+    
+    my $grid_size = $zoom_level * 10 + 1;
 
-    my $grid_params = $c->forward( 'generate_grid', [ 21, 21, $centre_x, $centre_y, ], );
+    my $grid_params = $c->forward( 'generate_grid', [ $grid_size, $grid_size, $centre_x, $centre_y, ], );
 
     $grid_params->{click_to_move} = 0;    
-    $grid_params->{x_size} = 21;
-    $grid_params->{y_size} = 21;
+    $grid_params->{x_size} = $grid_size;
+    $grid_params->{y_size} = $grid_size;
+    $grid_params->{zoom_level} = $zoom_level;
 
     my $map = $c->forward( 'render_grid', [ $grid_params, ] );
 
@@ -69,6 +74,33 @@ sub party : Local {
             }
         ]
     );
+}
+
+sub known_dungeons : Local {
+    my ( $self, $c ) = @_;
+    
+    my @known_dungeons = $c->model('DBIC::Dungeon')->search(
+        { 'mapped_sector.party_id' => $c->stash->{party}->id, },
+        {
+            prefetch => { 'location' => 'mapped_sector' },
+            order_by => 'location.x, location.y',
+        },
+    );
+    
+    @known_dungeons = grep { $_->party_can_enter($c->stash->{party}) } @known_dungeons;
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'map/known_dungeons.html',
+                params   => {
+                    known_dungeons => \@known_dungeons,
+                },
+            }
+        ]
+    );    
+    
 }
 
 sub generate_grid : Private {
@@ -142,6 +174,8 @@ sub render_grid : Private {
     $params->{party_in_combat}  = $c->stash->{party}->in_combat_with;
     $params->{min_x} = $params->{start_point}{x};
     $params->{min_y} = $params->{start_point}{y};
+    $params->{zoom_level} ||= 2;
+    $params->{zoom_level} = 8 if $params->{zoom_level} > 8;
 
 
     return $c->forward(

@@ -12,7 +12,7 @@ sub build_item {
 
     my $item_cat = $schema->resultset('Item_Category')->create(
         {
-            item_category     => 'SubCat1',
+            item_category     => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
         }
     );

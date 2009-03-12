@@ -14,13 +14,10 @@ use Test::RPG::Builder::Item;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
-    
-	$self->{dice} = Test::MockObject->fake_module( 
-		'Games::Dice::Advanced',
-		roll => sub { $self->{roll_result} || 0 }, 
-	);
-	
-	use_ok('RPG::Schema::Character');
+
+    $self->{dice} = Test::MockObject->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
+
+    use_ok('RPG::Schema::Character');
 }
 
 sub test_get_equipped_item : Tests(2) {
@@ -45,11 +42,7 @@ sub test_defence_factor : Tests(1) {
     my $self = shift;
 
     # Given
-    my $char = $self->{schema}->resultset('Character')->create(
-        {
-            agility => 2,
-        }
-    );
+    my $char = $self->{schema}->resultset('Character')->create( { agility => 2, } );
 
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
@@ -68,7 +61,7 @@ sub test_defence_factor : Tests(1) {
             }
         ],
     );
-    
+
     my $item2 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
         char_id             => $char->id,
@@ -85,25 +78,25 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
-    );    
-    
+    );
+
     my $item3 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
         char_id             => $char->id,
         super_category_name => 'Armour',
-        attributes => [
+        attributes          => [
             {
                 item_attribute_name  => 'Defence Factor',
                 item_attribute_value => 3,
             }
         ],
     );
-    
+
     # WHEN
     my $df = $char->defence_factor;
-    
+
     # THEN
-    is($df, 8, "Includes all equipped armour except the one that's damaged"); 
+    is( $df, 8, "Includes all equipped armour except the one that's damaged" );
 }
 
 sub test_number_of_attacks : Tests(12) {
@@ -154,35 +147,29 @@ sub test_number_of_attacks : Tests(12) {
 }
 
 sub test_execute_defence_basic : Tests(1) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my $char = $self->{schema}->resultset('Character')->create(
-        {
-        }
-    );
+    my $char = $self->{schema}->resultset('Character')->create( {} );
 
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
         char_id             => $char->id,
         super_category_name => 'Armour',
     );
-    
+
     # WHEN
     my $result = $char->execute_defence;
-    
+
     # THEN
-    is($result, undef, "Does nothing if armour has no durability");
+    is( $result, undef, "Does nothing if armour has no durability" );
 }
 
 sub test_execute_defence_decrement_durability : Tests(2) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my $char = $self->{schema}->resultset('Character')->create(
-        {
-        }
-    );
+    my $char = $self->{schema}->resultset('Character')->create( {} );
 
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
@@ -193,29 +180,26 @@ sub test_execute_defence_decrement_durability : Tests(2) {
                 item_variable_name  => 'Durability',
                 item_variable_value => 5,
             },
-        ],        
+        ],
     );
-    
+
     # Force decrement
     $self->{roll_result} = 1;
-    
+
     # WHEN
     my $result = $char->execute_defence;
-    
+
     # THEN
-    is($result, undef, "No message returned");
+    is( $result, undef, "No message returned" );
     $item1->discard_changes;
-    is($item1->variable('Durability'), 4, "Durability decremented");
+    is( $item1->variable('Durability'), 4, "Durability decremented" );
 }
 
 sub test_execute_defence_armour_broken : Tests(2) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my $char = $self->{schema}->resultset('Character')->create(
-        {
-        }
-    );
+    my $char = $self->{schema}->resultset('Character')->create( {} );
 
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
@@ -226,19 +210,116 @@ sub test_execute_defence_armour_broken : Tests(2) {
                 item_variable_name  => 'Durability',
                 item_variable_value => 1,
             },
-        ],        
+        ],
     );
-    
+
     # Force decrement
     $self->{roll_result} = 1;
-    
+
     # WHEN
     my $result = $char->execute_defence;
-    
+
     # THEN
-    is_deeply($result, {armour_broken => 1}, "Message returned to indicate broken armour");
+    is_deeply( $result, { armour_broken => 1 }, "Message returned to indicate broken armour" );
     $item1->discard_changes;
-    is($item1->variable('Durability'), 0, "Durability now 0");
+    is( $item1->variable('Durability'), 0, "Durability now 0" );
+}
+
+sub test_attack_factor_melee_weapon : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $char = $self->{schema}->resultset('Character')->create( { strength => 5, } );
+
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Melee Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 3,
+            },
+            {
+                item_attribute_name  => 'Back Rank Penalty',
+                item_attribute_value => 3,
+            }
+        ],
+    );
+
+    # WHEN
+    my $af = $char->attack_factor;
+
+    # THEN
+    is( $af, 8, "Attack factor set correctly" );
+
+}
+
+sub test_attack_factor_ranged_weapon_with_upgrade : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $char = $self->{schema}->resultset('Character')->create( { strength => 5, agility => 3 } );
+
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Ranged Weapon',
+        variables           => [
+            {
+                item_variable_name  => 'Attack Factor Upgrade',
+                item_variable_value => 3,
+            },
+        ],
+        attributes => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+
+    # WHEN
+    my $af = $char->attack_factor;
+
+    # THEN
+    is( $af, 8, "Attack factor set correctly" );
+
+}
+
+sub test_attack_factor_melee_weapon_from_back_rank : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $char = $self->{schema}->resultset('Character')->create( { strength => 5, } );
+    my $mock_char = Test::MockObject::Extends->new($char);
+    $mock_char->set_false('in_front_rank');
+
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $mock_char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Melee Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 3,
+            },
+            {
+                item_attribute_name  => 'Back Rank Penalty',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+
+    # WHEN
+    my $af = $mock_char->attack_factor;
+
+    # THEN
+    is( $af, 6, "Attack factor set correctly" );
+
 }
 
 1;

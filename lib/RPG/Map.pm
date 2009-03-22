@@ -13,10 +13,11 @@ sub surrounds {
     my $y_base = shift || croak 'y base not supplied';
     my $x_size = shift || croak 'x size not supplied';
     my $y_size = shift || croak 'y size not supplied';
+    my $allow_negative = shift || 0;
     
     # XXX: x_size and y_size must both be odd numbers;
-    my ($x_start, $y_start) = (_coord_diff($x_base, $x_size, 0), _coord_diff($y_base, $y_size, 0));
-    my ($x_end,   $y_end)   = (_coord_diff($x_base, $x_size, 1), _coord_diff($y_base, $y_size, 1));    
+    my ($x_start, $y_start) = (_coord_diff($x_base, $x_size, 0, $allow_negative), _coord_diff($y_base, $y_size, 0, $allow_negative));
+    my ($x_end,   $y_end)   = (_coord_diff($x_base, $x_size, 1, $allow_negative), _coord_diff($y_base, $y_size, 1, $allow_negative));    
     
     return (
         {
@@ -51,6 +52,7 @@ sub _coord_diff {
     my $coord = shift || croak 'coord value not supplied';
     my $size  = shift || croak 'size not supplied';
     my $direction = shift; # 0 = down, 1 = up;
+    my $allow_negative = shift;
     
     my $factor = (($size-1) / 2);
     
@@ -61,7 +63,11 @@ sub _coord_diff {
     else {
     	$diff = $coord - $factor;
     }
-    $diff = 1 if $diff <= 0;
+    
+    
+    if (! $allow_negative && $diff <= 0) { 
+    	$diff = 1;
+    }
     
     return $diff;
 }

@@ -1,5 +1,3 @@
-ALTER TABLE `game`.`Town` ADD COLUMN `blacksmith_age` INTEGER  NOT NULL DEFAULT 0 AFTER `prosperity`,
- ADD COLUMN `blacksmith_skill` INTEGER  NOT NULL DEFAULT 0 AFTER `blacksmith_age`;
 
 ALTER TABLE `game`.`Item_Variable` ADD COLUMN `item_variable_name_id` INTEGER  NOT NULL DEFAULT 0;
 

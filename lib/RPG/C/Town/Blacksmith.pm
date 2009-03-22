@@ -125,6 +125,12 @@ sub upgrade : Local {
     $c->flash->{current_tab} = $c->req->param('current_tab');
 
     my $item = $c->forward('item_valid_check');
+    
+    if ($item->variable('Durability') < $c->config->{min_upgrade_durability}) {
+        $c->flash->{error} = "The item is too fragile to upgrade";
+        $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+        return;    		
+    }
 
     my $town = $c->stash->{party_location}->town;
 
@@ -188,6 +194,17 @@ sub upgrade : Local {
 
     $item_variable->item_variable_value( $item_variable->item_variable_value + $upgrade_increase );
     $item_variable->update;
+    
+    # Reduce Durability
+    my $durability_decrease = 0;
+    if ($upgrade_increase > 0) {
+    	$durability_decrease = Games::Dice::Advanced->roll('1d20') - int ($town->blacksmith_skill / 3);
+    	$durability_decrease = 0 if $durability_decrease < 0;
+    
+    	my $durabilty_variable = $item->variable_row('Durability');
+    	$durabilty_variable->item_variable_value( $durabilty_variable->item_variable_value - $durability_decrease);
+    	$durabilty_variable->update;
+    }
 
     # TODO: bit of a hack getting the name of the upgraded attribute with a regex...
     my ($upgraded_attribute) = ( $variable->item_variable_name =~ /(.+) Upgrade$/ );
@@ -201,6 +218,7 @@ sub upgrade : Local {
                     item               => $item,
                     upgrade_increase   => $upgrade_increase,
                     upgraded_attribute => $upgraded_attribute,
+                    durability_drecrease => $durability_decrease,
                 },
                 return_output => 1,
             }

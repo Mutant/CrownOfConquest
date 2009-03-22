@@ -110,7 +110,7 @@ sub generate_grid : Private {
 
     $c->stats->profile("Got party's location");
 
-    my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, );
+    my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1);
 
     $c->stats->profile("Got start and end point");
 
@@ -148,6 +148,9 @@ sub generate_grid : Private {
             $grid[ $location->{x} ][ $location->{y} ] = "";
         }
     }
+    
+    # Check if we got enough sqaures, and if not add some dummy ones (i.e. outside the edge of the map)
+    #if (
 
     $c->stats->profile("Built grid");
 
@@ -176,7 +179,6 @@ sub render_grid : Private {
     $params->{min_y} = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;
     $params->{zoom_level} = 8 if $params->{zoom_level} > 8;
-
 
     return $c->forward(
         'RPG::V::TT',

@@ -1,4 +1,3 @@
-
 package RPG::C::Root;
 
 use strict;

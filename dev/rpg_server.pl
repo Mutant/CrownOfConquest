@@ -13,7 +13,7 @@ use Pod::Usage;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 
-$ENV{ RPG_HOME } = '/home/sam/workspace/RPG2/';
+$ENV{ RPG_HOME } = '/home/sam/workspace/RPG/';
 
 my $debug             = 0;
 my $fork              = 0;

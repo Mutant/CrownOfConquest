@@ -4,7 +4,7 @@
 	dojo.require("dijit.layout.TabContainer");
 </script>
 
-<div style="background: #898E73; position: relative">
+<div style="background: #898E73; position: relative; width: 100%">
 	[% FILTER collapse %]
 	<div style="position: absolute; left: 20px; top: 45%">
 		[% 
@@ -28,9 +28,12 @@
 			label="Centre on Party"></div>
 	</div>
 	[% END %]
+	
 
+		[% map %]
+	</div>
 
-[% map %]</div>
+</div>
 
 <center>Click on a sqaure to centre the map there</center>
 

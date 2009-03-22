@@ -4,24 +4,37 @@
 	dojo.require("dijit.layout.TabContainer");
 </script>
 
-<div style="background: #898E73; position: relative; width: 100%">
+<div style="background: #898E73; position: relative">
 	[% FILTER collapse %]
-	<div style="position: absolute; left: 20px; top: 45%">
+	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black">
 		[% 
 			max_zoom = 8
 			zoom_link = 2
 		%]
 		[% WHILE zoom_link <= max_zoom %]
 			[% IF zoom_link == zoom_level %]
-				-
+				<img src="[% c.config.static_path %]/images/zoom_sel.gif">
 			[% ELSE %]
-			   <a href="?zoom_level=[% zoom_link %]&center_x=[% center_x %]&center_y=[% center_y %]" style="text-decoration: none">|</a>
+				[% message = 'Zoom In' %]
+				[% IF zoom_link > zoom_level %]
+					[% message = 'Zoom Out' %]
+				[% END %]
+				<div 
+					dojoType="dijit.Tooltip" 
+					connectId="zoom_link_[% zoom_link %]"
+					label="[% message %]"
+					style="display: none"></div>
+			
+			   <a href="?zoom_level=[% zoom_link %]&center_x=[% center_x %]&center_y=[% center_y %]" style="text-decoration: none"><img src="[% c.config.static_path %]/images/zoom.gif" id="zoom_link_[% zoom_link %]"></a>
 			[% END %]
 			<br>
 			[% zoom_link = zoom_link + 1 %] 
 		[% END %] 
+
+
+			
 		<br>
-		<span id="party_center">[ <a href="?zoom_level=[% zoom_level %]">P</a> ]</span>
+		<span id="party_center"><a href="?zoom_level=[% zoom_level %]"><img src="[% c.config.static_path %]/images/center.gif"></a></span>
 		<div 
 			dojoType="dijit.Tooltip" 
 			connectId="party_center"
@@ -29,17 +42,17 @@
 	</div>
 	[% END %]
 	
-
-		[% map %]
-	</div>
+	[% map %]
 
 </div>
+
+<br><br>
 
 <center>Click on a sqaure to centre the map there</center>
 
 <h2>Landmarks</h2>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 70%">
     <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
 		<h3>Known Towns</h3>
 		

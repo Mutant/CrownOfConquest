@@ -9,10 +9,10 @@
 	sector_height = 80 / zoom_level;
 %]
 
-<div align="center" style="width: 100%">
+<div align="center" style="min-width: [% (sector_width + 2) * grid_size %]px; min-height: [% (sector_height + 2) * grid_size %]px;">
 	
 [% FOREACH y IN y_range %]
-
+	<div style="clear: left;">
 	[% FOREACH x IN x_range %]
 		[% position = undef %]
 		[% IF x > 0 && y > 0 %]
@@ -32,11 +32,12 @@
 	       	[% END %]
     
         	
-			<div style="			
+			<span style="			
 					width: [% sector_width %]px; 
 					height: [% sector_height %]px;
 					float: left; 			
 					text-align: center;
+					display: inline;
 					border: 1px solid [% border_colour %];
 					[% IF position.town_id %]background: lightgrey;[% END %]
 					"					
@@ -50,13 +51,13 @@
 							height="[% sector_height %]"
 						>
 					[% END %]
-					</div>
+					</span>
 			[% IF ! click_to_move || position.next_to_centre %]
 				</a>
         	[% END %]
         [% END %]
 	[% END %]
-	<br style="clear: left; font-size: 0px;"/>
+	</div>
 [% END %]
 
 </div>

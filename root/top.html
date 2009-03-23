@@ -18,7 +18,7 @@
     
 [% IF error %]
 function error_init() {
-	dojo.byId('error-message').innerHTML = "[% error %]";
+	dojo.byId('error-message').innerHTML = "[% error | html_entity | collapse %]";
 	dijit.byId('error').show();
 }
 dojo.addOnLoad( error_init );
@@ -26,7 +26,7 @@ dojo.addOnLoad( error_init );
 
 [% IF message %]
 function message_init() {
-	dojo.byId('message-span').innerHTML = "[% message | html_entity | trim %]";
+	dojo.byId('message-span').innerHTML = "[% message | html_entity | collapse %]";
 	dijit.byId('main-message-diag').show();
 }
 dojo.addOnLoad( message_init );

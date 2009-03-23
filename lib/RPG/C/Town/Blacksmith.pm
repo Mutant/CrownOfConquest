@@ -28,9 +28,7 @@ sub main : Local {
         }
     );
 
-    my @items = $c->model('DBIC::Items')->party_items_requiring_repair(
-        $c->stash->{party}->id,
-    );
+    my @items = $c->model('DBIC::Items')->party_items_requiring_repair( $c->stash->{party}->id, );
 
     my ( $full_repair_cost, $equipped_repair_cost );
     foreach my $item (@items) {
@@ -125,11 +123,11 @@ sub upgrade : Local {
     $c->flash->{current_tab} = $c->req->param('current_tab');
 
     my $item = $c->forward('item_valid_check');
-    
-    if ($item->variable('Durability') < $c->config->{min_upgrade_durability}) {
+
+    if ( $item->variable('Durability') < $c->config->{min_upgrade_durability} ) {
         $c->flash->{error} = "The item is too fragile to upgrade";
         $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
-        return;    		
+        return;
     }
 
     my $town = $c->stash->{party_location}->town;
@@ -194,16 +192,18 @@ sub upgrade : Local {
 
     $item_variable->item_variable_value( $item_variable->item_variable_value + $upgrade_increase );
     $item_variable->update;
-    
+
     # Reduce Durability
     my $durability_decrease = 0;
-    if ($upgrade_increase > 0) {
-    	$durability_decrease = Games::Dice::Advanced->roll('1d20') - int ($town->blacksmith_skill / 3);
-    	$durability_decrease = 0 if $durability_decrease < 0;
-    
-    	my $durabilty_variable = $item->variable_row('Durability');
-    	$durabilty_variable->item_variable_value( $durabilty_variable->item_variable_value - $durability_decrease);
-    	$durabilty_variable->update;
+    if ( $upgrade_increase > 0 ) {
+        $durability_decrease = Games::Dice::Advanced->roll('1d20') - int( $town->blacksmith_skill / 3 );
+        $durability_decrease = 0 if $durability_decrease < 0;
+
+        my $durabilty_variable = $item->variable_row('Durability');
+        $durabilty_variable->max_value( $durabilty_variable->max_value - $durability_decrease );
+        $durabilty_variable->item_variable_value( $durabilty_variable->max_value )
+            if $durabilty_variable->item_variable_value > $durabilty_variable->max_value;
+        $durabilty_variable->update;
     }
 
     # TODO: bit of a hack getting the name of the upgraded attribute with a regex...
@@ -215,10 +215,10 @@ sub upgrade : Local {
             {
                 template => 'town/blacksmith/upgrade_message.html',
                 params   => {
-                    item               => $item,
-                    upgrade_increase   => $upgrade_increase,
-                    upgraded_attribute => $upgraded_attribute,
-                    durability_drecrease => $durability_decrease,
+                    item                 => $item,
+                    upgrade_increase     => $upgrade_increase,
+                    upgraded_attribute   => $upgraded_attribute,
+                    durability_decrease => $durability_decrease,
                 },
                 return_output => 1,
             }
@@ -264,46 +264,43 @@ sub repair : Local {
 sub full_repair : Local {
     my ( $self, $c ) = @_;
 
-    my $town = $c->stash->{party_location}->town;
+    my $town  = $c->stash->{party_location}->town;
     my $party = $c->stash->{party};
-    
+
     if ( $town->blacksmith_age == 0 ) {
         croak "No blacksmith in this town\n";
     }
-  
-    my @items = $c->model('DBIC::Items')->party_items_requiring_repair(
-        $party->id,
-        $c->req->param('equipped_only') || 0,
-    );
-    
+
+    my @items = $c->model('DBIC::Items')->party_items_requiring_repair( $party->id, $c->req->param('equipped_only') || 0, );
+
     my $repaired = 0;
     foreach my $item (@items) {
-        if ($party->gold >= $item->repair_cost($town)) {
+        if ( $party->gold >= $item->repair_cost($town) ) {
             $repaired++;
-            
-            $party->gold($party->gold - $item->repair_cost($town));
-            
+
+            $party->gold( $party->gold - $item->repair_cost($town) );
+
             my $variable_rec = $item->variable_row('Durability');
             $variable_rec->item_variable_value( $variable_rec->max_value );
             $variable_rec->update;
         }
         else {
-            last;   
+            last;
         }
     }
-    
+
     $party->update;
-    
-    if ($repaired == 0) {
-        $c->flash->{error} = "You don't have enough gold to repair any items";   
+
+    if ( $repaired == 0 ) {
+        $c->flash->{error} = "You don't have enough gold to repair any items";
     }
-    elsif ($repaired < scalar @items) {
+    elsif ( $repaired < scalar @items ) {
         $c->flash->{error} = "You don't have enough gold to repair all those items. Only the first $repaired items were repaired.";
     }
     else {
         $c->flash->{message} = "$repaired items repaired";
     }
-    
+
     $c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
 }
 

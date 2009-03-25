@@ -29,6 +29,8 @@ __PACKAGE__->has_many( 'mapped_dungeon_grid', 'RPG::Schema::Mapped_Dungeon_Grid'
 
 __PACKAGE__->might_have( 'creature_group', 'RPG::Schema::CreatureGroup', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
 sub sides_with_walls {
     my $self = shift;
 

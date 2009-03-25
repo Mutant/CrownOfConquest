@@ -11,7 +11,7 @@ use List::Util qw(shuffle);
 sub main : Local {
     my ( $self, $c, $return_output ) = @_;
 
-    my $parties_in_sector = $c->forward('/party/parties_in_sector');
+    my $parties_in_sector = $c->forward('/party/parties_in_sector', $c->stash->{party_location}->id);
     
     $c->forward('/party/party_messages_check');
 

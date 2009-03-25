@@ -84,6 +84,7 @@ sub creature_summary {
 		$summary{$creature->type->creature_type}++;
 	}
 	
+	
 	return \%summary;
 }
 

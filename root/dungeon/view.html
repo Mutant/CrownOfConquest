@@ -70,12 +70,16 @@
 							<span id="m_[% x _ y %]">M</span>
 						    <div 
 								dojoType="dijit.Tooltip" 
-								connectId="m_[% x _ y %]"
+								connectId="m_[% x _ y %]"								
 								label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
+						[% ELSIF parties.$x.$y %]
+							<span id="p_[% x _ y %]">P</span>
+						    <div 
+								dojoType="dijit.Tooltip" 
+								connectId="p_[% x _ y %]"
+								label="[% INCLUDE party/summary.html party=parties.$x.$y %]"></div>
 						[% ELSIF can_move_to_sector %]
 						    .
-						[% ELSE %]
-							<!--[% sector.x %], [% sector.y %]-->
 						[% END %]
 					</div>
 					

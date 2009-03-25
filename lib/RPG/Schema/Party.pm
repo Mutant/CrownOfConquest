@@ -285,4 +285,20 @@ sub adjust_order {
         $character->update;
     }
 }
+
+sub summary {
+	my $self = shift;
+	my $include_dead_characters = shift || 0;
+	my @characters = $self->characters;
+		
+	my %summary;
+	
+	foreach my $character (@characters) {
+	    next if ! $include_dead_characters && $character->is_dead;
+		$summary{$character->class->class_name}++;
+	}
+	
+	return \%summary;
+}
+
 1;

@@ -47,15 +47,15 @@ sub sector_menu : Local {
     my $confirm_attack = 0;
 
     if ($creature_group) {
-        $confirm_attack = $creature_group->level > $c->stash->{party}->level && $creature_group->party_within_level_range($c->stash->{party});
+        $confirm_attack = $creature_group->level > $c->stash->{party}->level && $creature_group->party_within_level_range( $c->stash->{party} );
     }
 
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
-    
-    my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
-    $dungeon = undef if $dungeon && ! $dungeon->party_can_enter($c->stash->{party});
 
-    my $parties_in_sector = $c->forward('parties_in_sector');
+    my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
+    $dungeon = undef if $dungeon && !$dungeon->party_can_enter( $c->stash->{party} );
+
+    my $parties_in_sector = $c->forward('parties_in_sector', [$c->stash->{party_location}->id]);
 
     $c->forward('/party/party_messages_check');
 
@@ -82,14 +82,22 @@ sub sector_menu : Local {
 }
 
 sub parties_in_sector : Private {
-    my ( $self, $c ) = @_;
+    my ( $self, $c, $land_id, $dungeon_grid_id ) = @_;
+
+    my %query_params = (
+        party_id => { '!=', $c->stash->{party}->id },
+        defunct  => undef,
+    );
+    
+    if ($land_id) {
+        $query_params{land_id} = $land_id;   
+    }
+    else {
+        $query_params{dungeon_grid_id} = $dungeon_grid_id;
+    }
 
     my @parties = $c->model('DBIC::Party')->search(
-        {
-            party_id => { '!=', $c->stash->{party}->id },
-            land_id  => $c->stash->{party_location}->id,
-            defunct  => undef,
-        },
+        \%query_params,
         {},
     );
 
@@ -143,31 +151,26 @@ sub list : Local {
             order_by => 'party_order',
         },
     );
-    
+
     # See if any chars have broken weapons equipped
     my @broken_equipped_items = $c->model('DBIC::Items')->search(
         {
             'belongs_to_character.party_id' => $c->stash->{party}->id,
-            'equip_place_id' => {'!=', undef},
-            -and => [
-                'item_variables.item_variable_value' => '0',
+            'equip_place_id'                => { '!=', undef },
+            -and                            => [
+                'item_variables.item_variable_value'    => '0',
                 'item_variable_name.item_variable_name' => 'Durability',
             ],
         },
         {
-            join => [
-                'belongs_to_character',
-                {
-                    'item_variables' => 'item_variable_name',
-                }
-            ],
+            join     => [ 'belongs_to_character', { 'item_variables' => 'item_variable_name', } ],
             prefetch => 'item_type',
         }
     );
-    
+
     my %broken_items_by_char_id;
     foreach my $broken_item (@broken_equipped_items) {
-        push @{ $broken_items_by_char_id{$broken_item->character_id} }, $broken_item;   
+        push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
     }
 
     my %spells;
@@ -185,7 +188,6 @@ sub list : Local {
         my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
 
         $spells{ $character->id } = \@spells if @spells;
-        
 
     }
 
@@ -240,7 +242,7 @@ sub swap_chars : Local {
     # Moved char moves to the position of the target char
     my $moved_char_destination = $characters{ $c->req->param('target') }->party_order;
     my $moved_char_origin      = $characters{ $c->req->param('moved') }->party_order;
-    
+
     # Is the moved char moving up or down?
     my $moving_up = $characters{ $c->req->param('moved') }->party_order > $moved_char_destination ? 1 : 0;
 
@@ -253,7 +255,7 @@ sub swap_chars : Local {
         $c->stash->{party}->rank_separator_position( $sep_pos + 1 );
         $c->stash->{party}->update;
     }
-    elsif ( !$moving_up && $moved_char_destination > $sep_pos && $moved_char_origin <= $sep_pos  ) {
+    elsif ( !$moving_up && $moved_char_destination > $sep_pos && $moved_char_origin <= $sep_pos ) {
         $c->stash->{party}->rank_separator_position( $sep_pos - 1 );
         $c->stash->{party}->update;
     }
@@ -263,7 +265,6 @@ sub swap_chars : Local {
 
     # If the char was dropped before the destination and we're moving down, the destination is incremented
     $moved_char_destination-- if !$moving_up && $c->req->param('drop_pos') eq 'before';
-
 
     # Adjust all the chars' positions
     foreach my $character ( values %characters ) {
@@ -510,7 +511,7 @@ sub destroy_orb : Local {
 
     $c->stash->{party_location}->discard_changes;
 
-    unless ( $orb->can_destroy( $party->level ) ) {        
+    unless ( $orb->can_destroy( $party->level ) ) {
         $c->stash->{messages} = "It's not good - you're just not powerful enough to destroy this Orb of " . $orb->name;
         $c->forward( '/panel/refresh', ['messages'] );
         return;
@@ -545,27 +546,25 @@ sub destroy_orb : Local {
 }
 
 sub enter_dungeon : Local {
-    my ( $self, $c ) = @_;    
-    
+    my ( $self, $c ) = @_;
+
     my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
-    
-    unless ($dungeon->party_can_enter($c->stash->{party})) {
+
+    unless ( $dungeon->party_can_enter( $c->stash->{party} ) ) {
         croak "Party not allowed to enter this dungeon";
     }
-    
+
     my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
         {
             'dungeon_room.dungeon_id' => $dungeon->id,
-            'stairs_up' => 1,
+            'stairs_up'               => 1,
         },
-        {
-            join => 'dungeon_room',
-        }
+        { join => 'dungeon_room', }
     );
-    
-    $c->stash->{party}->dungeon_grid_id($start_sector->id);
+
+    $c->stash->{party}->dungeon_grid_id( $start_sector->id );
     $c->stash->{party}->update;
-    
+
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }
 

@@ -1,10 +1,10 @@
 <h3>Known Dungeons</h3>
 		
-<table class="main" cellpadding="5" cellspacing="5">
+<table class="main" cellpadding="5" cellspacing="10">
 	<tr>
 	[% FOREACH town IN known_dungeons %]
 		<td>[% town.location.x %], [% town.location.y %]</td>
-		[% IF loop.count % 5 == 0 %]
+		[% IF loop.count % 20 == 0 %]
 			</tr><tr>
 		[% END %]
 	[% END %]

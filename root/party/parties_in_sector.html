@@ -1,6 +1,7 @@
 [% IF parties.0 %]
-Other parties here: 
+Other parties here:<br><br>
 [% FOREACH party IN parties %]
-	[% party.name %][% UNLESS loop.last %], [% END %]
+	[% INCLUDE party/summary.html party=party %]
+	[% UNLESS loop.last %]<br><br>[% END %]
 [% END %]
 [% END %]

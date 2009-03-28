@@ -30,6 +30,9 @@ sub party : Local {
     my ( $self, $c ) = @_;
     
     my $zoom_level = $c->req->param('zoom_level') || 2; 
+    if ($zoom_level < 2 || $zoom_level > 7) {
+        $zoom_level = 2;   
+    }
 
     my ( $centre_x, $centre_y );
 
@@ -181,7 +184,6 @@ sub render_grid : Private {
     $params->{min_x} = $params->{start_point}{x};
     $params->{min_y} = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;
-    $params->{zoom_level} = 8 if $params->{zoom_level} > 8;
 
     return $c->forward(
         'RPG::V::TT',

@@ -64,7 +64,7 @@ function setPanel(panel, url) {
 }
 
 function displayPopupMessages() {
-	if (dojo.byId('popup-messages-pane').innerHTML) {
+	if (dojo.trim(dojo.byId('popup-messages-pane').innerHTML)) {
 		show_message(dojo.byId('popup-messages-pane').innerHTML);
 		dojo.byId('popup-messages-pane').innerHTML = '';
 	}

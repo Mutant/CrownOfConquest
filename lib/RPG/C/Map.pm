@@ -86,7 +86,7 @@ sub known_dungeons : Local {
         { 'mapped_sector.party_id' => $c->stash->{party}->id, },
         {
             prefetch => { 'location' => 'mapped_sector' },
-            order_by => 'location.x, location.y',
+            order_by => 'level, location.x, location.y',
         },
     );
     

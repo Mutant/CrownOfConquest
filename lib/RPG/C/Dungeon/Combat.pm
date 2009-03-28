@@ -136,6 +136,7 @@ sub get_sector_to_flee_to : Private {
 
     my @sectors_to_flee_to;
     my $range = 3;
+    my $max_range = 10;
 
     while ( !@sectors_to_flee_to ) {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $current_location->x, $current_location->y, $range, $range, );
@@ -162,6 +163,7 @@ sub get_sector_to_flee_to : Private {
         }
 
         $range++;
+        last if $range == $max_range;
     }
 
     @sectors_to_flee_to = shuffle @sectors_to_flee_to;

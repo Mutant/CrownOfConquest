@@ -359,10 +359,17 @@ sub character_action : Private {
 
         # If we don't have a target, choose one randomly
         unless ($creature) {
-            do {
-                my @ids = shuffle keys %creatures;
-                $creature = $creatures{ $ids[0] };
-            } while ( $creature->is_dead );
+            for my $id (shuffle keys %creatures) {
+                unless ($creatures{$id}->is_dead) {
+                    $creature = $creatures{$id};
+                    last;   
+                }
+            }
+            
+            unless ($creature) {
+                # No living creature found, something weird has happened
+                croak "Couldn't find a creature to attack!\n";
+            }
         }
 
         $damage = $c->forward( 'attack', [ $character, $creature ] );
@@ -393,13 +400,21 @@ sub character_action : Private {
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.
         my $target = $c->session->{combat_action_param}{ $character->id }[1];
-        
-        $c->forward('refresh_factor_cache', [ $target ]);
+
+        $c->forward( 'refresh_factor_cache', [$target] );
 
         $character->last_combat_action('Defend');
         $character->update;
 
         $c->stash->{combat_log}->spells_cast( $c->stash->{combat_log}->spells_cast + 1 );
+
+        # Check for all creatures dead
+        if ( $creature_group->number_alive == 0 ) {
+            $c->stash->{combat_log}->outcome('party_won');
+            $c->stash->{combat_log}->encounter_ended( DateTime->now() );
+
+            $c->stash->{combat_complete} = 1;
+        }
 
         return $message;
     }
@@ -431,10 +446,16 @@ sub creature_action : Private {
     @characters = $party->characters unless scalar @characters > 0;
 
     my $character;
-    do {
-        my $rand = int rand( $#characters + 1 );
-        $character = $characters[$rand];
-    } while ( $character->is_dead );
+    foreach my $char_to_check (@characters) {
+        unless ($char_to_check->is_dead) {
+            $character = $char_to_check;
+            last;   
+        }
+    }
+    
+    unless ($character) {
+        croak "Couldn't find a character to attack!\n";   
+    }
 
     my $defending = $character->last_combat_action eq 'Defend' ? 1 : 0;
 
@@ -505,8 +526,9 @@ sub attack : Private {
 
     if ( my $defence_message = $defender->execute_defence ) {
         if ( $defence_message->{armour_broken} ) {
+
             # Armour has broken, clear out this character's factor cache
-            $c->forward('refresh_factor_cache', [ $defender->id ]);
+            $c->forward( 'refresh_factor_cache', [ $defender->id ] );
         }
     }
 
@@ -654,6 +676,7 @@ sub get_sector_to_flee_to : Private {
 
     my @sectors_to_flee_to;
     my $range = 3;
+    my $max_range = 10;
 
     while ( !@sectors_to_flee_to ) {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $party_location->x, $party_location->y, $range, $range, );
@@ -674,6 +697,8 @@ sub get_sector_to_flee_to : Private {
         );
 
         $range++;
+        
+        last if $range == $max_range;
     }
 
     @sectors_to_flee_to = shuffle @sectors_to_flee_to;
@@ -785,8 +810,11 @@ sub check_for_item_found : Private {
 
         # Choose a random character to find it
         my $finder;
-        while ( !$finder || $finder->is_dead ) {
-            $finder = ( shuffle @$characters )[0];
+        foreach my $character ( shuffle @$characters ) {
+            unless ($character->is_dead ) {
+                $finder = $character;
+                last;
+            }
         }
 
         # Create the item

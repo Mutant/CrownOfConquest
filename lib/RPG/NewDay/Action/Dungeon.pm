@@ -47,7 +47,19 @@ sub run {
     my %positions = map { $_->position => $_->position_id } $c->schema->resultset('Dungeon_Position')->search;
 
     for ( 1 .. $dungeons_to_create ) {
-        my $sector_to_use = $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created );
+        my $sector_to_use;
+        eval {
+            $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created );
+        };
+        if ($@) {
+            if ($@ =~ /Couldn't find sector to return/) {
+                $c->logger->warning("Couldn't find a sector to create more dungeons - not enough space");
+                last;
+            }
+            else {
+                die $@;
+            }
+        }
 
         $dungeons_created->[ $sector_to_use->x ][ $sector_to_use->y ] = 1;
 

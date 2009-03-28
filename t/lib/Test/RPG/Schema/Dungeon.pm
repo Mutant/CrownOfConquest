@@ -14,12 +14,13 @@ use Data::Dumper;
 
 use RPG::Schema::Dungeon;
 
-sub test_party_can_enter : Test(3) {
+sub test_party_can_enter_instance : Test(3) {
     my $self = shift;
     
     # GIVEN
     my $mock_party = Test::MockObject->new();
     my $mock_dungeon = Test::MockObject->new();
+    $mock_dungeon->set_isa('RPG::Schema::Dungeon');
     
     my %tests = (
         low_level_party_allowed_to_enter_level_1_dungeon => {
@@ -44,13 +45,26 @@ sub test_party_can_enter : Test(3) {
     while (my ($test_name, $test_data) = each %tests) {        
         $mock_party->set_always('level',$test_data->{party_level});
         $mock_dungeon->set_always('level',$test_data->{dungeon_level});    
-        $results{$test_name} = RPG::Schema::Dungeon::party_can_enter($mock_dungeon, $mock_party) ? 1 : 0;
+        $results{$test_name} = RPG::Schema::Dungeon::party_can_enter($mock_dungeon, $mock_party);
     }
     
     # THEN
     while (my ($test_name, $test_data) = each %tests) {
         is($results{$test_name}, $tests{$test_name}->{expected_result}, "Got expected result for: $test_name");
     }
+}
+
+sub test_party_can_enter_class : Test(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $mock_party = Test::MockObject->new();
+    $mock_party->set_always('level',10);
+    
+    # WHEN
+    my $result = RPG::Schema::Dungeon->party_can_enter(4, $mock_party);
+    
+    is($result, 0, "Successfully called party_can_enter as class method");
 }
 
 1;

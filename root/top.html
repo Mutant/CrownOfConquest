@@ -31,6 +31,11 @@ function message_init() {
 }
 dojo.addOnLoad( message_init );
 [% END %]
+
+function show_message(message) {
+	dojo.byId('message-span').innerHTML = message;
+	dijit.byId('main-message-diag').show();		
+}
 </script>
 
 <div dojoType="dijit.Dialog" id="error" style="display: none" title="Error">

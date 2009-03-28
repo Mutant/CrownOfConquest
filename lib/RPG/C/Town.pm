@@ -7,12 +7,13 @@ use base 'Catalyst::Controller';
 use Math::Round qw(round);
 use JSON;
 use List::Util qw(shuffle);
+use Carp;
 
 sub main : Local {
     my ( $self, $c, $return_output ) = @_;
 
-    my $parties_in_sector = $c->forward('/party/parties_in_sector', $c->stash->{party_location}->id);
-    
+    my $parties_in_sector = $c->forward( '/party/parties_in_sector', $c->stash->{party_location}->id );
+
     $c->forward('/party/party_messages_check');
 
     $c->forward(
@@ -125,7 +126,7 @@ sub heal_party : Local {
         }
     }
     else {
-        if ($c->req->param('gold')) {
+        if ( $c->req->param('gold') ) {
             $c->stash->{error} = "You only have " . $c->stash->{party}->gold . " gold. You can't heal for more gold than you have!";
         }
         else {
@@ -161,8 +162,11 @@ sub resurrect : Local {
             my $xp_to_lose = int( $char_to_res->xp * RPG->config->{ressurection_percent_xp_to_lose} / 100 );
             $char_to_res->xp( $char_to_res->xp - $xp_to_lose );
             $char_to_res->update;
-            
-            my $message = $char_to_res->character_name . " was ressurected by the healer in the town of " . $town->town_name 
+
+            my $message =
+                  $char_to_res->character_name
+                . " was ressurected by the healer in the town of "
+                . $town->town_name
                 . " and has risen from the dead. He lost $xp_to_lose xp.";
 
             $c->model('DBIC::Character_History')->create(
@@ -241,7 +245,7 @@ sub town_hall : Local {
         {
             town_id  => $c->stash->{party_location}->town->id,
             party_id => $c->stash->{party}->id,
-            status => 'In Progress',
+            status   => 'In Progress',
         },
     );
 
@@ -256,7 +260,7 @@ sub town_hall : Local {
     my $party_quests_rs = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            status => 'In Progress',
+            status   => 'In Progress',
         },
     );
 
@@ -272,9 +276,9 @@ sub town_hall : Local {
     if ( !$party_quest && $allowed_more_quests ) {
         @quests = shuffle $c->model('DBIC::Quest')->search(
             {
-                town_id  => $c->stash->{party_location}->town->id,
-                party_id => undef,
-                'me.min_level' => {'<=', $c->stash->{party}->level},
+                town_id        => $c->stash->{party_location}->town->id,
+                party_id       => undef,
+                'me.min_level' => { '<=', $c->stash->{party}->level },
             },
             { prefetch => 'type', },
         );
@@ -313,25 +317,34 @@ sub sage : Local {
         },
     );
 
+    my @dungeon_levels_allowed_to_enter;
+    for my $level ( 1 .. $c->config->{dungeon_max_level} ) {
+        if ( RPG::Schema::Dungeon->party_can_enter( $level, $c->stash->{party} ) ) {
+            push @dungeon_levels_allowed_to_enter, $level;
+        }
+    }
+
     my $panel = $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'town/sage.html',
                 params   => {
-                    direction_cost => $c->config->{sage_direction_cost},
-                    distance_cost  => $c->config->{sage_distance_cost},
-                    location_cost  => $c->config->{sage_location_cost},
-                    item_types     => \@item_types,
-                    item_find_cost => $c->config->{sage_item_find_cost},
-                    messages       => $c->stash->{messages},
+                    direction_cost                   => $c->config->{sage_direction_cost},
+                    distance_cost                    => $c->config->{sage_distance_cost},
+                    location_cost                    => $c->config->{sage_location_cost},
+                    item_types                       => \@item_types,
+                    item_find_cost                   => $c->config->{sage_item_find_cost},
+                    dungeon_levels_allowed_to_enter  => \@dungeon_levels_allowed_to_enter,
+                    sage_find_dungeon_cost_per_level => $c->config->{sage_find_dungeon_cost_per_level},
                 },
                 return_output => 1,
             }
         ]
     );
 
-    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+    push @{ $c->stash->{refresh_panels} }, [ 'messages',       $panel ];
+    push @{ $c->stash->{refresh_panels} }, [ 'popup-messages', $c->stash->{messages} ];
 
     $c->forward('/panel/refresh');
 }
@@ -506,23 +519,105 @@ sub find_item : Local {
     $c->forward('/town/sage');
 }
 
+sub find_dungeon : Local {
+    my ( $self, $c ) = @_;
+
+    my $party          = $c->stash->{party};
+    my $party_location = $c->stash->{party_location};
+
+    unless ( $party_location->town ) {
+        $c->error("Not in a town!");
+        return;
+    }
+
+    my $message = eval {
+        my $level = $c->req->param('find_level') || croak "Level not defined";
+
+        unless ( RPG::Schema::Dungeon->party_can_enter( $level, $party ) ) {
+            return "You're not high enough level to find a dungeon of that level";
+        }
+
+        my $cost = $c->config->{sage_find_dungeon_cost_per_level} * $level;
+
+        if ( $party->gold < $cost ) {
+            return "You don't have enough gold to do that!";
+        }
+
+        # Find a dungeon within range
+        my ( $top, $bottom ) = RPG::Map->surrounds_by_range(
+            $party_location->town->location->x,
+            $party_location->town->location->y,
+            $c->config->{sage_dungeon_find_range}
+        );
+
+        my @dungeons = $c->model('DBIC::Dungeon')->search(
+            {
+                'location.x'             => { '>=', $top->{x}, '<=', $bottom->{x} },
+                'location.y'             => { '>=', $top->{y}, '<=', $bottom->{y} },
+                level                    => $level,
+            },
+            { prefetch => ['location'] }
+        );
+
+        unless (@dungeons) {
+            return "Sorry, I don't know of any nearby dungeons of that level";
+        }
+
+        # See if any of these dungeons are unknown to the party
+        my $dungeon_to_find;
+        foreach my $dungeon (shuffle @dungeons) {
+            my $mapped_sector = $c->model('DBIC::Mapped_Sector')->find(
+                party_id => $party->id,
+                land_id => $dungeon->land_id,
+            );
+            
+            unless ($mapped_sector) {
+                $dungeon_to_find = $dungeon;
+                last;   
+            }
+        }
+
+        unless ($dungeon_to_find) {
+            return "Sorry, you already know about all the nearby dungeons of that level";
+        }
+        # Add to mapped sectors
+        $c->model('DBIC::Mapped_Sectors')->create(
+            {
+                land_id  => $dungeon_to_find->land_id,
+                party_id => $party->id,
+            }
+        );
+
+        # Deduct money
+        $party->gold( $c->stash->{party}->gold - $cost );
+        $party->update;
+
+        return "A level " . $c->req->param('find_level') . " dungeon can be found at " . $dungeon_to_find->location->x . ", " . $dungeon_to_find->location->y;
+    };
+    if ($@) {
+
+        # Rethrow execptions
+        die $@;
+    }
+
+    $c->stash->{messages} = $message;
+
+    push @{ $c->stash->{refresh_panels} }, ('party_status');
+
+    $c->forward('/town/sage');
+}
+
 sub cemetry : Local {
     my ( $self, $c ) = @_;
-        
-    my @graves = $c->model('DBIC::Grave')->search(
-        {
-            land_id => $c->stash->{party_location}->id,
-        },
-    );
-    
+
+    my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
+
     my $panel = $c->forward(
         'RPG::V::TT',
         [
             {
-                template => 'town/cemetery.html',
-                params   => {
-                    graves => \@graves,
-                },
+                template      => 'town/cemetery.html',
+                params        => { graves => \@graves, },
                 return_output => 1,
             }
         ]

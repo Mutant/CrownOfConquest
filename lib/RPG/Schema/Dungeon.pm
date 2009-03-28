@@ -20,9 +20,21 @@ __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' =>
 
 sub party_can_enter {
     my $self  = shift;
-    my $party = shift;
-
-    return ( $self->level - 1 ) * 5 <= $party->level;
+        
+    my $level;
+    if (ref $self && $self->isa('RPG::Schema::Dungeon')) {
+        $level = $self->level;
+    }
+    else {
+        # Called as a class method
+        $level = shift;   
+    }
+    
+    croak "Level not supplied" unless $level;
+    
+    my $party = shift || croak "Party not supplied";
+    
+    return ( $level - 1 ) * 5 <= $party->level ? 1 : 0;
 }
 
 1;

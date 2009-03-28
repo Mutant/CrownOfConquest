@@ -31,6 +31,8 @@ function getPanels(url) {
 			refreshPanels(responseObject);
 			
 			dungeonScroll();
+			
+			displayPopupMessages();
 		},
         
         error: function(err) {
@@ -59,6 +61,13 @@ function refreshPanels(panelData) {
 function setPanel(panel, url) {
 	dijit.byId(panel+'-pane').href = url;
 	dijit.byId(panel+'-pane').refresh();
+}
+
+function displayPopupMessages() {
+	if (dojo.byId('popup-messages-pane').innerHTML) {
+		show_message(dojo.byId('popup-messages-pane').innerHTML);
+		dojo.byId('popup-messages-pane').innerHTML = '';
+	}
 }
 
 [%# TODO: maybe better with a closure, rather than globals? %]
@@ -165,6 +174,10 @@ function findItem(dialogFields) {
 	getPanels("/town/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
 }
 
+function findDungeon(dialogFields) {
+	getPanels("/town/find_dungeon?find_level=" + dialogFields.find_level);
+}
+
 function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {
 	if (confirmAttack == 1) {
 		dojo.byId('creature-group-id').value = creatureGroupId;
@@ -253,6 +266,10 @@ function bury(dialogFields) {
 
 <div dojoType="dijit.layout.ContentPane" id="party-pane" style="margin:0px auto; width: 60%; overflow: visible;">
 
+</div>
+
+<div id="popup-messages-pane" style="display: none" dojoType="dijit.layout.ContentPane">
+	
 </div>
 
 

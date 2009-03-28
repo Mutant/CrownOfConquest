@@ -1,14 +1,9 @@
-[% UNLESS messages %]
 The Sage of [% town.town_name %] welcomes you. He offers the following services:
-[% ELSE %]
-[% messages %]
-<br><br>
-Do you require any further services?
-[% END %]
 
 <ul>
 	<li><a href="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
 	<li><a href="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
+	<li><a href="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
 </ul>
 
 <div dojoType="dijit.Dialog" id="sage-town-diag" style="display: none" title="Find A Town" execute="findTown(arguments[0]);">
@@ -41,6 +36,22 @@ Do you require any further services?
 	                [% FOREACH item_type IN item_types %]
 	                	<option value="[% item_type.id %]">[% item_type.item_type %]</option>
 	                [% END %]
+			</select>
+		    </td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-dungeon-diag" style="display: none" title="Find A Dungeon" execute="findDungeon(arguments[0]);">
+	<table>
+	    <tr>
+		    <td>What dungeon level would you like to find?</td>
+		    <td>
+		    	<select dojoType="dijit.form.FilteringSelect" name="find_level" autocomplete="false">
+		    		[% FOREACH level IN dungeon_levels_allowed_to_enter %]
+	                	<option value="[% level %]">Level [% level %] ([% level * sage_find_dungeon_cost_per_level %] gold)</option>
+					[% END %]
 			</select>
 		    </td>
 		</tr>

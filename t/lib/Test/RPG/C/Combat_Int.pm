@@ -12,10 +12,20 @@ use Test::More;
 
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Party;
-
-use RPG::C::Combat;
+use Test::RPG::Builder::Item;
 
 use Data::Dumper;
+
+sub dungeon_startup : Test(startup => 1) {
+    my $self = shift;
+
+	$self->{dice} = Test::MockObject->fake_module( 
+		'Games::Dice::Advanced',
+		roll => sub { $self->{roll_result} || 0 }, 
+	);
+    
+    use_ok('RPG::C::Combat');
+}
 
 sub test_process_effects_refreshes_stash : Tests(no_plan) {
     my $self = shift;
@@ -81,5 +91,172 @@ sub test_process_effects_refreshes_stash : Tests(no_plan) {
 	
 	is(scalar @effects, 0, "No effects on character, as it has been deleted");
 }
+
+sub test_check_character_attack : Tests(4) {
+    my $self = shift;
+    
+    # GIVEN
+    my $attacker = Test::MockObject->new();
+    $attacker->set_always('id',1);
+
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value  => 1,
+            }
+        ]
+    );
+    
+    is($item->variable('Durability'), 1, "Created item's durability set");
+    
+    $self->{session}{character_weapons}{1}{id} = $item->id;
+    $self->{session}{character_weapons}{1}{durability} = 1;
+    
+    $self->{roll_result} = 1;
+  
+    # WHEN
+    my $ret = RPG::C::Combat->check_character_attack($self->{c}, $attacker);
+    
+    # THEN
+    is_deeply($ret, {weapon_broken => 1}, "Weapon broken message returned");
+    
+    $item->discard_changes;
+    is($item->variable('Durability'), 0, "Item's durability updated");
+    
+    is($self->{session}{character_weapons}{1}{durability}, 0, "Session updated");    
+        
+}
+
+sub test_check_character_attack_with_ammo : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $attacker = Test::MockObject->new();
+    $attacker->set_always('id',2);
+
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => 2,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 5,
+            
+            },
+        ]
+    );
+        
+    $self->{session}{character_weapons}{2}{id} = 1;
+    $self->{session}{character_weapons}{2}{durability} = 1;
+    $self->{session}{character_weapons}{2}{ammunition} = [
+        {
+            id => $ammo1->id,
+            quantity => 5,
+        },
+        # Non-existant ammo should not be read (will die if it is)
+        {
+            id => 55,
+            quantity => 99,
+        }
+    ];
+    
+    $self->{roll_result} = 2;
+  
+    # WHEN
+    my $ret = RPG::C::Combat->check_character_attack($self->{c}, $attacker);
+    
+    # THEN
+    is($ret, undef, "No messages returned");
+    
+    $ammo1->discard_changes;
+    is($ammo1->variable('Quantity'), 4, "Quantity of ammo updated");
+    
+    is($self->{session}{character_weapons}{2}{ammunition}[0]{quantity}, 4, "Session updated");    
+        
+}
+
+sub test_check_character_attack_with_ammo_run_out : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $attacker = Test::MockObject->new();
+    $attacker->set_always('id',2);
+
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => 2,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 0,
+            
+            },
+        ]
+    );
+            
+    $self->{session}{character_weapons}{2}{id} = 1;
+    $self->{session}{character_weapons}{2}{durability} = 1;
+    $self->{session}{character_weapons}{2}{ammunition} = [
+        {
+            id => $ammo1->id,
+            quantity => 0,
+        },
+    ];
+    
+    $self->{roll_result} = 2;
+  
+    # WHEN
+    my $ret = RPG::C::Combat->check_character_attack($self->{c}, $attacker);
+    
+    # THEN
+    is_deeply($ret, { no_ammo => 1 }, "No messages returned");
+    
+    $ammo1->discard_changes;
+    is($ammo1->in_storage, 0, "Quantity of ammo updated");
+    
+    is($self->{session}{character_weapons}{2}{ammunition}[0], undef, "Session updated");    
+        
+}
+
+sub test_calculate_factors : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});   
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value  => 5,
+            }
+        ],
+        attributes => [
+            {
+                item_attribute_name => 'Attack Factor',
+                item_attribute_value => 5,
+            }
+        ],
+        super_category_name => 'Weapon',
+    );
+    $item->character_id($character->id);
+    $item->update;
+        
+    # WHEN
+    RPG::C::Combat->calculate_factors($self->{c}, [ $character ]);
+    
+    # THEN
+    is($self->{session}{character_weapons}{$character->id}{id}, $item->id, "Item id saved in session");
+    is($self->{session}{character_weapons}{$character->id}{durability}, 5, "Item durability saved in session");
+    is($self->{session}{character_weapons}{$character->id}{ammunition}, undef, "No ammo");
+    
+}
+
 
 1;

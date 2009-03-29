@@ -9,6 +9,8 @@ use Carp;
 use Data::Dumper;
 use List::Util qw(sum);
 
+use DBIx::Class::ResultClass::HashRefInflator;
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
@@ -305,14 +307,26 @@ sub get_equipped_item {
 
     return @{ $self->{equipped_item}{$category} } if ref $self->{equipped_item}{$category} eq 'ARRAY';
 
+=comment
+    my @items;
+    foreach my $item ($self->items) {
+        if ($item->equipped_in && $item->item_type->category->super_category->super_category_name eq $category) {
+            push @items, $item;
+        }
+    }
+=cut
+
     my @items = $self->result_source->schema->resultset('Items')->search(
         {
             'character_id'                       => $self->id,
             'super_category.super_category_name' => $category,
         },
         {
-            'join'     => [ 'equipped_in', ],
-            'prefetch' => [ { item_type => { 'item_attributes' => 'item_attribute_name' } }, { 'item_type' => { 'category' => 'super_category' } }, ],
+            'join' => { 'item_type' => { 'category' => 'super_category' } },
+            'prefetch' => [ 
+                { item_type => { 'item_attributes' => 'item_attribute_name' } },
+                {'item_variables' => 'item_variable_name'},
+            ],
         },
     );
 
@@ -385,51 +399,41 @@ sub is_character {
     return 1;
 }
 
-# Execute an attack, make sure there is ammo for ranged weapons, and deduct one from quantity, and handle durability of items
-sub execute_attack {
+
+sub ammunition_for_item {
     my $self = shift;
-
-    my @items = $self->get_equipped_item('Weapon');
-
-    # TODO: we're looping, but no really dealing with multiple weapons as we return from the loop
-    foreach my $item (@items) {
-
-        # Check durability
-        my $durability_rec = $item->variable_row('Durability');
-        if ($durability_rec) {
-            my $new_durability = $self->_check_damage_to_item($durability_rec);
-
-            if ( !defined $new_durability ) {
-                return { weapon_broken => 1 };
-            }
-        }
-
-        # Check for ammunition
-        if ( $item->item_type->category->item_category eq 'Ranged Weapon' ) {
-            my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
-
-            # Get all appropriate ammunition this character has
-            my @ammo = $self->search_related( 'items', { 'me.item_type_id' => $ammunition_item_type_id, }, { prefetch => 'item_variables', }, );
-
-            return { no_ammo => 1 } unless @ammo;    # Didn't find anything, so return - they can't attack!
-
-            # Find the first ammo item and decrement
-            foreach my $ammo (@ammo) {
-                my $quantity = $ammo->variable('Quantity');
-
-                if ( $quantity - 1 == 0 ) {
-
-                    # None left, delete this item
-                    $ammo->delete;
-                }
-                else {
-                    $ammo->variable( 'Quantity', $quantity - 1 );
-                }
-
-                last;
-            }
-        }
+    my $item = shift;
+    
+    unless ( $item->item_type->category->item_category eq 'Ranged Weapon' ) {
+        return;
     }
+    
+    my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
+
+    # Get all appropriate ammunition this character has
+    my $ammo_rs = $self->search_related( 
+        'items', 
+        { 
+            'me.item_type_id' => $ammunition_item_type_id,
+            'item_variable_name.item_variable_name' => 'Quantity',             
+        }, 
+        { 
+            prefetch => {'item_variables' => 'item_variable_name'}, 
+        }, 
+    );
+    $ammo_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+    
+    my @ammo;
+    while (my $ammo_rec = $ammo_rs->next) {
+        my $quantity = $ammo_rec->{item_variables}[0]{item_variable_value};
+        
+        push @ammo, {
+            id => $ammo_rec->{item_id},
+            quantity => $quantity,
+        };   
+    }
+    
+    return \@ammo;
 }
 
 # Called when character is attacked. Used to take damage to armour

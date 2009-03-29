@@ -316,6 +316,14 @@ sub calculate_factors : Private {
             $c->session->{combat_factors}{$type}{ $combatant->id }{df} = $combatant->defence_factor;
             $c->log->debug( "Calculating defence factor for " . $combatant->name . " - " . $combatant->id );
         }
+
+        # Store character's weapons
+        if ( $type eq 'character' && !defined $c->session->{ $type . '_weapons' }{ $combatant->id } ) {
+            my ($weapon) = $combatant->get_equipped_item('Weapon');
+            $c->session->{ $type . '_weapons' }{ $combatant->id }{id}         = $weapon->id;
+            $c->session->{ $type . '_weapons' }{ $combatant->id }{durability} = $weapon->variable('Durability');
+            $c->session->{ $type . '_weapons' }{ $combatant->id }{ammunition} = $combatant->ammunition_for_item($weapon);
+        }
     }
 }
 
@@ -359,14 +367,15 @@ sub character_action : Private {
 
         # If we don't have a target, choose one randomly
         unless ($creature) {
-            for my $id (shuffle keys %creatures) {
-                unless ($creatures{$id}->is_dead) {
+            for my $id ( shuffle keys %creatures ) {
+                unless ( $creatures{$id}->is_dead ) {
                     $creature = $creatures{$id};
-                    last;   
+                    last;
                 }
             }
-            
+
             unless ($creature) {
+
                 # No living creature found, something weird has happened
                 croak "Couldn't find a creature to attack!\n";
             }
@@ -446,15 +455,15 @@ sub creature_action : Private {
     @characters = $party->characters unless scalar @characters > 0;
 
     my $character;
-    foreach my $char_to_check (@characters) {
-        unless ($char_to_check->is_dead) {
+    foreach my $char_to_check ( shuffle @characters ) {
+        unless ( $char_to_check->is_dead ) {
             $character = $char_to_check;
-            last;   
+            last;
         }
     }
-    
+
     unless ($character) {
-        croak "Couldn't find a character to attack!\n";   
+        croak "Couldn't find a character to attack!\n";
     }
 
     my $defending = $character->last_combat_action eq 'Defend' ? 1 : 0;
@@ -472,7 +481,6 @@ sub creature_action : Private {
         $party->defunct( DateTime->now() );
         $party->update;
 
-        #$c->stash->{party_dead} = 1;
     }
 
     return [ $character, $damage ];
@@ -519,10 +527,17 @@ sub get_combatant_list : Private {
 sub attack : Private {
     my ( $self, $c, $attacker, $defender, $defending ) = @_;
 
-    if ( my $attack_error = $attacker->execute_attack ) {
-        $c->log->debug( "Attacker " . $attacker->name . " wasn't able to attack defender " . $defender->name . " Error:" . Dumper $attack_error);
-        return $attack_error;
+    my $attacker_type = $attacker->is_character ? 'character' : 'creature';
+
+    $c->log->debug("About to check attack");
+
+    if ( $attacker_type eq 'character' ) {        
+        my $attack_error = $c->forward( 'check_character_attack', [$attacker] );
+        $c->log->debug("Got attack error: " . Dumper $attack_error);
+        return $attack_error if $attack_error;
     }
+    
+    $c->log->debug("About to execute defence");
 
     if ( my $defence_message = $defender->execute_defence ) {
         if ( $defence_message->{armour_broken} ) {
@@ -580,6 +595,63 @@ sub attack : Private {
     }
 
     return $damage;
+}
+
+sub check_character_attack : Local {
+    my ( $self, $c, $attacker ) = @_;
+
+    my $weapon_durability  = $c->session->{'character_weapons'}{ $attacker->id }{durability};
+    my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
+
+    if ( $weapon_damage_roll == 1 ) {
+        $c->log->debug('Reducing durability of weapon');
+        $weapon_durability--;
+
+        $c->model('DBIC::Item_Variable')->find(
+            {
+                item_id                                 => $c->session->{'character_weapons'}{ $attacker->id }{id},
+                'item_variable_name.item_variable_name' => 'Durability',
+            },
+            { join => 'item_variable_name', }
+        )->update( { item_variable_value => $weapon_durability, } );
+        $c->session->{'character_weapons'}{ $attacker->id }{durability} = $weapon_durability;
+    }
+
+    if ( $weapon_durability <= 0 ) {
+        # TODO: clear factor cache?
+        return { weapon_broken => 1 };
+    }
+
+    if ( ref $c->session->{'character_weapons'}{ $attacker->id }{ammunition} eq 'ARRAY' ) {
+        $c->log->debug('Checking for ammo');
+        my $ammo_found = 0;
+        foreach my $ammo ( @{ $c->session->{'character_weapons'}{ $attacker->id }{ammunition} } ) {
+            next unless $ammo;
+            if ( $ammo->{quantity} == 0 ) {
+                $c->model('DBIC::Items')->find( { item_id => $ammo->{id}, }, )->delete;
+                $ammo = undef;
+                next;
+            }
+
+            $ammo->{quantity}--;
+            $c->model('DBIC::Item_Variable')->find(
+                {
+                    item_id                                 => $ammo->{id},
+                    'item_variable_name.item_variable_name' => 'Quantity',
+                },
+                { join => 'item_variable_name', }
+            )->update( { item_variable_value => $ammo->{quantity}, } );
+
+            $ammo_found = 1;
+            last;
+        }
+
+        if ( !$ammo_found ) {
+            return { no_ammo => 1 };
+        }
+    }
+
+    return;
 }
 
 sub flee : Local {
@@ -675,7 +747,7 @@ sub get_sector_to_flee_to : Private {
     my $party_location = $c->stash->{party}->location;
 
     my @sectors_to_flee_to;
-    my $range = 3;
+    my $range     = 3;
     my $max_range = 10;
 
     while ( !@sectors_to_flee_to ) {
@@ -697,7 +769,7 @@ sub get_sector_to_flee_to : Private {
         );
 
         $range++;
-        
+
         last if $range == $max_range;
     }
 
@@ -770,6 +842,8 @@ sub end_of_combat_cleanup : Private {
     undef $c->session->{rounds_since_last_double_attack};
     undef $c->session->{attack_history};
     undef $c->session->{unsuccessful_flee_attempts};
+    undef $c->session->{character_weapons};
+    undef $c->session->{combat_factors};
 
     foreach my $character ( $c->stash->{party}->characters ) {
 
@@ -811,7 +885,7 @@ sub check_for_item_found : Private {
         # Choose a random character to find it
         my $finder;
         foreach my $character ( shuffle @$characters ) {
-            unless ($character->is_dead ) {
+            unless ( $character->is_dead ) {
                 $finder = $character;
                 last;
             }

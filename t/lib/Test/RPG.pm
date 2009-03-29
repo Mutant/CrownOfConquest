@@ -63,6 +63,11 @@ sub setup_context : Test(setup) {
 	$self->{mock_response}->set_true('redirect');
 	$self->{c}->set_always('res',$self->{mock_response});
 	
+	$self->{mock_logger} = Test::MockObject->new();
+	$self->{mock_logger}->set_true('debug');
+	$self->{c}->set_always('log',$self->{mock_logger});
+	
+	
 		
 }
 

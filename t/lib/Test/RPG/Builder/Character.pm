@@ -20,6 +20,8 @@ sub build_character {
             hit_points => $params{hit_points} || 10,
             max_hit_points => $params{max_hit_points} || 10,
             party_order => $params{party_order} || 1,
+            character_name => 'test',
+            agility => 5,
         }
     );
         

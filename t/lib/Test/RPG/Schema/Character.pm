@@ -10,6 +10,7 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 use Test::MockObject;
 
+use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 
 sub character_startup : Tests(startup => 1) {
@@ -320,6 +321,72 @@ sub test_attack_factor_melee_weapon_from_back_rank : Tests(1) {
     # THEN
     is( $af, 6, "Attack factor set correctly" );
 
+}
+
+sub test_ammunition_for_item : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 5,
+            
+            },
+        ]
+    );
+    
+    my $ammo2 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 20,
+            },
+        ],        
+    );
+    
+    $ammo2->update({item_type_id => $ammo1->item_type_id});
+    
+    my $weapon = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Ranged Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Ammunition',
+                item_attribute_value => $ammo1->item_type_id,
+            },
+        ],
+    );
+    
+    # WHEN
+    my $ammo = $char->ammunition_for_item($weapon);
+    
+    # THEN
+    my $expected = [
+        {   
+            id => $ammo1->id,
+            quantity => 5,
+        },
+        {
+            id => $ammo2->id,
+            quantity => 20,            
+        }
+    ];
+    
+    is_deeply($ammo, $expected, "Expected result returned");
 }
 
 1;

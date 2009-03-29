@@ -320,9 +320,12 @@ sub calculate_factors : Private {
         # Store character's weapons
         if ( $type eq 'character' && !defined $c->session->{ $type . '_weapons' }{ $combatant->id } ) {
             my ($weapon) = $combatant->get_equipped_item('Weapon');
-            $c->session->{ $type . '_weapons' }{ $combatant->id }{id}         = $weapon->id;
-            $c->session->{ $type . '_weapons' }{ $combatant->id }{durability} = $weapon->variable('Durability');
-            $c->session->{ $type . '_weapons' }{ $combatant->id }{ammunition} = $combatant->ammunition_for_item($weapon);
+            
+            if ($weapon) {
+                $c->session->{ $type . '_weapons' }{ $combatant->id }{id}         = $weapon->id;
+                $c->session->{ $type . '_weapons' }{ $combatant->id }{durability} = $weapon->variable('Durability');
+                $c->session->{ $type . '_weapons' }{ $combatant->id }{ammunition} = $combatant->ammunition_for_item($weapon);
+            }
         }
     }
 }

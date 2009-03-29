@@ -49,7 +49,7 @@ sub run {
     for ( 1 .. $dungeons_to_create ) {
         my $sector_to_use;
         eval {
-            $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created );
+            $sector_to_use = $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created );
         };
         if ($@) {
             if ($@ =~ /Couldn't find sector to return/) {

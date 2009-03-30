@@ -1,0 +1,5 @@
+---
+[% FILTER collapse %]
+This email was sent from the game "Kingdoms" ([% c.config.url_root %]). If you feel you have received this email in error, 
+please contact [% c.config.send_email_from %] with the details.
+[% END %]

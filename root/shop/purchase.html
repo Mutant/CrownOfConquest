@@ -3,21 +3,8 @@
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
-
-	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
-        onDndDrop: function(source, nodes, copy){
-				if(this.containerState == "Over"){ // dropping on us
-					source.delItem('dojoUnique1'); // delete the copied item
-			    }
-			    this.onDndCancel();  // cleanup the drop state
-		},
-			 
-		markupFactory: function(params, node){
-		    params._skipStartup = true;
-		    return new rpg.dnd.Target(node, params);
-		}
-		
-    });
+	dojo.registerModulePath("rpg","[% c.config.static_path %]/dojo_cust/rpg");
+	dojo.require("rpg.dnd.Target");
 	
 function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){

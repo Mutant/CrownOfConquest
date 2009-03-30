@@ -1,27 +1,31 @@
-[% INCLUDE layout/guest_top.html %]
+[% INCLUDE top.html, guest_screen = 1 %]
 
-<div class="outer">
-<div class="content">
+<h1>Register For Kingdoms</h1>
+
+<p>To register to play kingdoms, fill in the form below. It's free!</p>
+
+<p>Make sure your email address is valid, as you'll need to verify it.</p>
+
 <form method="POST" action="[% base %]/player/register">
 <table>
 	<tr>
-		<td nowrap>Username:</td>
+		<td nowrap><b>Username:</b></td>
 		<td><input type="text" name="player_name" style="width: 300px"></td>
 	</tr>
 	<tr>
-		<td nowrap>Email Address:</td>
+		<td nowrap><b>Email Address:</b></td>
 		<td><input type="text" name="email" style="width: 300px"></td>
 	</tr>
 	<tr>
-		<td>Password:</td>
+		<td><b>Password:</b></td>
 		<td><input type="password" name="password1" style="width: 300px"></td>
 	</tr>
 	<tr>
-		<td>Retype Password:</td>
+		<td><b>Retype Password:</td>
 		<td><input type="password" name="password2" style="width: 300px"></td>
 	</tr>
 	<tr>
-		<td>Captcha:</td>
+		<td><b>CAPTCHA Code:</b><br>(Type the code in the picture to<br>the right to verify you're not<br>a robot)</td>		
 		<td><img src="[% base %]/player/captcha"><br>
 		    <input type="text" name="captcha" style="width: 300px">
 		</td>
@@ -32,8 +36,5 @@
 	</tr>
 </table>
 </form>
-<div align="center">
-	<div style="font-weight: bold">[% IF message %][% message %][% END %]</div>
-</div>
-</div>
-</div>
+
+[% INCLUDE bottom.html %]

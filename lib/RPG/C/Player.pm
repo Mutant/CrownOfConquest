@@ -8,7 +8,7 @@ use MIME::Lite;
 use DateTime;
 use Carp;
 
-#use String::Random;
+use String::Random;
 
 sub login : Local {
     my ( $self, $c ) = @_;
@@ -111,18 +111,25 @@ sub register : Local {
                     croak $@;
                 }
             }
+            
+            my $message = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template      => 'player/email/verfication_code.txt',
+                        params        => { verification_code => $verification_code, },
+                        return_output => 1,
+                    }
+                ]
+            );
 
             my $msg = MIME::Lite->new(
                 From    => $c->config->{send_email_from},
                 To      => $c->req->param('email'),
                 Subject => 'Verification code',
-                Data    => "Your verification code is: $verification_code\n",
+                Data    => $message,
             );
-            $msg->send(
-                'smtp',
-                $c->config->{smtp_server},
-                Debug    => 0,
-            );
+            $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
 
             $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
         };
@@ -152,12 +159,11 @@ sub register : Local {
 sub forgot_password : Local {
     my ( $self, $c ) = @_;
 
-    my $message = 'Enter your email address below, and a reset password will be mailed to you.';
+    my $message;
 
     if ( $c->req->param('email') ) {
 
-        #my $new_password = String::Random::random_regex('\w{8}');
-        my $new_password = ( int rand 100000000 + int rand 100000000 );    #work around String::Random not being available
+        my $new_password = String::Random::random_regex('\w{8}');
 
         my $player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
 
@@ -165,11 +171,22 @@ sub forgot_password : Local {
             $player->password($new_password);
             $player->update;
 
+            my $message = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template      => 'player/email/new_password.txt',
+                        params        => { new_password => $new_password, },
+                        return_output => 1,
+                    }
+                ]
+            );
+            
             my $msg = MIME::Lite->new(
                 From    => $c->config->{send_email_from},
                 To      => $c->req->param('email'),
                 Subject => 'Reset Password',
-                Data    => "Your password has been reset. It's now: $new_password\n",
+                Data    => $message,
             );
             $msg->send(
                 'smtp',

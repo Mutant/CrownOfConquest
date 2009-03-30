@@ -51,6 +51,8 @@ function show_message(message) {
 <div class="nav">
 	[% IF admin_screen %]
 		[% INCLUDE admin/left_hand_nav.html %]
+	[% ELSIF guest_screen %]	
+		[% INCLUDE player/left_hand_nav.html %]
 	[% ELSE %]
 		[% INCLUDE layout/left_hand_nav.html %]
 	[% END %]

@@ -1,8 +1,19 @@
-[% INCLUDE layout/guest_top.html %]
+[% INCLUDE top.html, guest_screen = 1 %]
 
+<h1>Welcome to Kingdoms</h1>
 
-<div class="outer">
-<div class="content">
+<p>Kingdoms is an online "persistent world" role-playing game. It's 100% web-based, meaning there's no download, Flash, Silverlight, etc. And it's free!</p>
+
+<p>In Kingdoms, you control a party of characters, adventuring around a grid-based world, discovering new towns, exploring dungeons, and fighting all manner of
+foul creatures. For more on the game, see the <a href="[% base %]/player/about">About</a> page.</p>
+
+<p>Kingdoms is currently in "pre-beta", meaning that - while it's playable - many of the planned features are missing. the <a href="[% base %]/player/about">About</a>
+page has more info on the pre-beta.</p>
+
+<br>
+<hr size=1 width=70% align=center/>
+
+<h2>Login</h2>
 <form method="POST" action="[% base %]/player/login">
 <table>
 	<tr>
@@ -19,9 +30,9 @@
 	</tr>
 </table>
 </form>
-<div align="center">
-	[% IF message %][% message %]<br>[% END %]
-	<a href="[% base %]/player/register">Register</a> | <a href="[% base %]/player/forgot_password">Forgot Password</a>
-</div>
-</div>
-</div>
+
+<p>Don't have an account? <strong><a href="[% base %]/player/register">Register</a></strong></p>
+
+<p>Forgot Your Password? <strong><a href="[% base %]/player/forgot_password">Reset Password</a></strong></p>
+
+[% INCLUDE bottom.html %]

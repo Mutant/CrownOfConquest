@@ -23,6 +23,8 @@ sub auto : Private {
     $c->req->base( $c->config->{url_root} );
 
     $c->model('DBIC')->schema->config( RPG->config );
+    
+    $c->model('DBIC')->storage->txn_begin;
 
     if ( !$c->session->{player} ) {
         if ( $c->action !~ m|^player| ) {
@@ -42,6 +44,7 @@ sub auto : Private {
             'order_by' => 'day_number desc'
         },
     );
+ 
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         $c->stash->{party_location} = $c->stash->{party}->location;
@@ -102,8 +105,6 @@ sub end : Private {
     $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
     $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
 
-    my $dbh = $c->model('DBIC')->schema->storage->dbh;
-
     if ( scalar @{ $c->error } ) {
 
         # Log error message
@@ -117,14 +118,8 @@ sub end : Private {
             $c->log->error($err_str);
         }
 
-        my $db_err;
-        if ( $dbh->err ) {
-            $db_err = "[" . $dbh->err . "] " . $dbh->err_str;
-        }
-
-        $c->log->error( "DB Err: " . $db_err );
-
-        $dbh->rollback unless $dbh->{AutoCommit};
+        $c->model('DBIC')->storage->txn_rollback;
+        #$dbh->rollback unless $dbh->{AutoCommit};
 
         # Display error page
         $c->forward(
@@ -134,7 +129,6 @@ sub end : Private {
                     template => 'error.html',
                     params   => {
                         error_msgs => $c->error,
-                        db_err     => $db_err,
                     },
                 }
             ]
@@ -143,7 +137,8 @@ sub end : Private {
         $c->error(0);
     }
     else {
-        $dbh->commit unless $dbh->{AutoCommit};
+        $c->model('DBIC')->storage->txn_commit;
+        #$dbh->commit unless $dbh->{AutoCommit};
     }
 
     return 1 if $c->response->status =~ /^3\d\d$/;

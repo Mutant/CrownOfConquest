@@ -9,28 +9,25 @@ sub build_cg {
     my %params  = @_;
 
     my %cg_params;
-    $cg_params{land_id} = $params{land_id} if defined $params{land_id}; 
+    $cg_params{land_id} = $params{land_id} if defined $params{land_id};
 
-    my $cg = $schema->resultset('CreatureGroup')->create( 
-        { 
-            %cg_params
-        } 
-    );
-    my $type = $schema->resultset('CreatureType')->create({});
-    
+    my $cg = $schema->resultset('CreatureGroup')->create( {%cg_params} );
+    my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
+
     my $creature_count = $params{creature_count} || 3;
-    for (1 .. $creature_count) {    
+    for ( 1 .. $creature_count ) {
         my %creature_params;
         $creature_params{hit_points_current} = defined $params{creature_hit_points_current} ? $params{creature_hit_points_current} : 5;
-        $schema->resultset('Creature')->create(      
-            { 
-                creature_group_id => $cg->id,                
-                creature_type_id => $type->id,
-                %creature_params, 
-            } 
+        $schema->resultset('Creature')->create(
+            {
+                creature_group_id => $cg->id,
+                creature_type_id  => $type->id,
+
+                %creature_params,
+            }
         );
     }
-    
+
     return $cg;
 }
 

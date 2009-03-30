@@ -13,6 +13,7 @@ use Test::More;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
 
@@ -258,5 +259,78 @@ sub test_calculate_factors : Tests(3) {
     
 }
 
+
+sub test_roll_flee_attempt : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    $self->{config}{base_flee_chance} = 50;
+    $self->{config}{flee_chance_level_modifier} = 5;
+    $self->{config}{flee_chance_attempt_modifier} = 5;
+    $self->{config}{flee_chance_low_level_bonus} = 10;
+    
+    my %tests = (
+        basic_test_success => {
+            cg_level => 2,
+            party_level => 2,
+            roll => 50,
+            expected_result => 1,
+            previous_flee_attempts => 0,
+        },
+        basic_test_fail => {
+            cg_level => 2,
+            party_level => 2,
+            roll => 51,
+            expected_result => 0,
+            previous_flee_attempts => 0,
+        },        
+        party_low_level => {
+            cg_level => 6,
+            party_level => 2,
+            roll => 70,
+            expected_result => 1,
+            previous_flee_attempts => 0,
+        },
+        previous_attempts => {
+            cg_level => 4,
+            party_level => 2,
+            roll => 70,
+            expected_result => 1,
+            previous_flee_attempts => 2,
+        }, 
+        level_1_party => {
+            cg_level => 1,
+            party_level => 1,
+            roll => 60,
+            expected_result => 1,
+            previous_flee_attempts => 0,
+        },               
+    );
+  
+    # WHEN
+    my %results;
+    while (my ($test_name, $test_data) = each %tests) { 
+        my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => $test_data->{cg_level});
+    
+        $self->{roll_result} = $test_data->{roll};
+        
+        $self->{session}{unsuccessful_flee_attempts} = $test_data->{previous_flee_attempts};
+        
+        my $party = Test::MockObject->new();
+        $party->set_always('in_combat_with', $cg->id);
+        $party->set_always('level', $test_data->{party_level});
+        
+        $self->{stash}{party} = $party;
+        
+        $results{$test_name} = RPG::C::Combat->roll_flee_attempt($self->{c});
+    }   
+    
+    
+    # THEN
+    while (my ($test_name, $test_data) = each %tests) { 
+        is($results{$test_name}, $test_data->{expected_result}, "Flee result as expected for test: $test_name");   
+    }
+
+}
 
 1;

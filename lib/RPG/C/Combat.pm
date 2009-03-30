@@ -663,6 +663,8 @@ sub flee : Local {
     my $party = $c->stash->{party};
 
     return unless $party->in_combat_with;
+    
+    $c->stash->{combat_log}->flee_attempts($c->stash->{combat_log}->flee_attempts+1);
 
     my $flee_successful = $c->forward('roll_flee_attempt');
 
@@ -710,6 +712,11 @@ sub roll_flee_attempt : Private {
     my $level_difference = $creature_group->level - $party->level;
     my $flee_chance =
         $c->config->{base_flee_chance} + ( $c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+        
+    if ($party->level == 1) {
+        # Bonus chance for being low level
+        $flee_chance += $c->config->{flee_chance_low_level_bonus};
+    }
 
     $flee_chance += ( $c->config->{flee_chance_attempt_modifier} * $c->session->{unsuccessful_flee_attempts} );
 
@@ -718,7 +725,7 @@ sub roll_flee_attempt : Private {
     $c->log->debug("Flee roll: $rand");
     $c->log->debug( "Flee chance: " . $flee_chance );
 
-    return $rand < $flee_chance;
+    return $rand <= $flee_chance ? 1 : 0;
 }
 
 sub creatures_flee : Private {

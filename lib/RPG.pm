@@ -45,11 +45,11 @@ BEGIN {
     __PACKAGE__->config->{home} = $ENV{RPG_HOME} || '/home/sam/RPG';
 
     __PACKAGE__->config->{session} = {
-        storage => __PACKAGE__->path_to('session'),
-        #session => {
-        #    dbic_class => 'DBIC::Session',    # Assuming MyApp::Model::DBIC
-        #    expires    => 3600,
-        #},
+        #storage => __PACKAGE__->path_to('session'),
+        session => {
+            dbic_class => 'DBIC::Session',
+            expires    => 3600,
+        },
     };
 
     __PACKAGE__->config(
@@ -64,7 +64,7 @@ __PACKAGE__->setup(
         -Stats
         ConfigLoader
         Session 
-        Session::Store::File
+        Session::Store::DBIC
         Session::State::Cookie
         DBIC::Schema::Profiler
         Captcha

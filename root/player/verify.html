@@ -1,9 +1,10 @@
 [% INCLUDE top.html, guest_screen = 1 %]
 
-<h1>Verify You Account</h1>
+<h1>Verify Your Account</h1>
 
 <p>You must verify your email address. You should have received a verification code via email. Enter it below to activate your account.</p>
 
+<div align="center">
 <form method="POST" action="[% base %]/player/verify">
 <table>
 	<tr>
@@ -20,5 +21,6 @@
 	</tr>
 </table>
 </form>
+</div>
 
 [% INCLUDE bottom.html %]

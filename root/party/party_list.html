@@ -1,6 +1,12 @@
-<h3>Party Members</h3>
+<div style=""> 
 
-<table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main">
+
+<table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main" align="center">
+<tr>
+	<td colspan="8">
+		<h3>Party Members</h3>
+	</td>
+</tr>
 <tr>
 	<th></th>
     <th>Name</th>
@@ -136,3 +142,4 @@
 </tr>
 [% END %]
 </table>
+</div>

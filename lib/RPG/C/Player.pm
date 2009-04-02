@@ -299,4 +299,17 @@ sub verify : Local {
     );
 }
 
+sub about : Local {
+    my ( $self, $c ) = @_;    
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'player/about.html',
+            }
+        ]
+    );   
+}
+
 1;

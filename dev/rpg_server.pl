@@ -13,7 +13,7 @@ use Pod::Usage;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 
-$SIG{INT} = sub { warn "Exiting...\n"; DB::_finish(); exit };
+#$SIG{INT} = sub { warn "Exiting...\n"; DB::_finish(); exit };
 
 $ENV{ RPG_HOME } = '/home/sam/RPG/';
 
@@ -56,7 +56,7 @@ if ( $debug ) {
 # variables can be set at runtime.
 require RPG;
 
-DB::enable_profile();
+#DB::enable_profile();
 
 RPG->run( $port, $host, {
     argv              => \@argv,
@@ -68,7 +68,7 @@ RPG->run( $port, $host, {
     restart_directory => $restart_directory,
 } );
 
-DB::disable_profile();
+#DB::disable_profile();
 
 1;
 

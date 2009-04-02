@@ -6,7 +6,7 @@
 
 <div style="background: #898E73; position: relative">
 	[% FILTER collapse %]
-	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black">
+	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black; z-index: 5">
 		[% 
 			max_zoom = 7
 			zoom_link = 2
@@ -52,7 +52,7 @@
 
 <h2>Landmarks</h2>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 70%">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; overflow: auto">
     <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
 		<h3>Known Towns</h3>
 		

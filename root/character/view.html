@@ -4,21 +4,7 @@
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.Tooltip");
 	dojo.require("dijit.layout.TabContainer");
-	
-	dojo.declare("rpg.dnd.Target", dojo.dnd.Target, {
-        onDndDrop: function(source, nodes, copy){
-				if(this.containerState == "Over"){ // dropping on us
-					source.delItem('dojoUnique1'); // delete the copied item
-			    }
-			    this.onDndCancel();  // cleanup the drop state
-		},
-			 
-		markupFactory: function(params, node){
-		    params._skipStartup = true;
-		    return new rpg.dnd.Target(node, params);
-		}
-		
-    });
+	dojo.require("rpg.dnd.Target");
     
     function init() {	
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
@@ -237,7 +223,13 @@ function calculateSpellPoints() {
 
 <br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+<style>
+	#mainTabContainer {height: 100%}
+	
+	* html #mainTabContainer {height: 700px; overflow: auto}
+</style>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
       <div dojoType="dijit.layout.ContentPane" title="Stats" style="display: none">
 		<div class="aligned" id="character">
 		

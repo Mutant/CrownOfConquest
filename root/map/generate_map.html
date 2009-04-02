@@ -5,12 +5,25 @@
 [% END %]
 
 [%
-	sector_width = 96 / zoom_level;
-	sector_height = 80 / zoom_level;
+	image_width = 96 / zoom_level
+	image_height = 80 / zoom_level
+	sector_width = image_width + 2;
+	sector_height = image_height + 2;
+	min_width = (sector_width + 3) * grid_size;
+	min_height = (sector_height + 2) * grid_size;
 %]
 
-<div style="min-width: [% (sector_width + 2) * grid_size %]px; min-height: [% (sector_height + 2) * grid_size %]px;">
-	
+<style>
+.container2 {position:relative; min-width:[% min_width %]px; min-height: [% min_height %]}
+.holder2 {display:block; color:#000;}
+
+* html .container2 {border-right:[% min_width %]px solid #fff;}
+* html .holder2 {float:left; position:relative; margin-right:-[% min_width %]px;}
+</style>
+
+<div class="container2">
+<div class="holder2">
+
 [% FOREACH y IN y_range %]
 	<div style="clear: left;">
 	[% FOREACH x IN x_range %]
@@ -39,6 +52,7 @@
 					text-align: center;
 					display: inline;
 					border: 1px solid [% border_colour %];
+					font-size: 1px;
 					[% IF position.town_id %]background: lightgrey;[% END %]
 					"					
 					>
@@ -47,8 +61,8 @@
 							src="[% c.config.static_path %][% image_path %][% position.image %]" 
 							border=0 
 							title="[% sector_title(position) %]" 
-							width="[% sector_width %]"
-							height="[% sector_height %]"
+							width="[% image_width %]"
+							height="[% image_height %]"
 						>
 					[% END %]
 					</span>
@@ -59,5 +73,5 @@
 	[% END %]
 	</div>
 [% END %]
-
+</div>
 </div>

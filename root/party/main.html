@@ -129,7 +129,7 @@ function selectAction(action, char_id, action_param, action_param2, action_label
 
 	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
 
-	getPanels("party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+	getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
 		        "&action_param=" + (action_param2 || ''));
 	        
 	return false;

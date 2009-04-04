@@ -6,7 +6,9 @@ dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
 
 var parsed_urls = Array();
-function getPanels(url) {    
+function getPanels(url) {
+	//console.profile();
+	    
 	var originalContent = dojo.byId('messages-pane').innerHTML;
 	
 	dijit.byId('messages-pane').setContent('Loading...');	
@@ -45,6 +47,8 @@ function getPanels(url) {
 
 	    timeout: 15000 // Time in milliseconds	
     });
+	
+	//console.profileEnd();
 }
 
 function refreshPanels(panelData, parseMessages) {    
@@ -83,12 +87,10 @@ var panel_messages;
 var displayCount = 0;	
 function displayMessages(messages_passed) {
 	if (messages_passed) {
-		console.log("messages passed");
 		panel_messages = messages_passed;
 	}
 	
 	if (! panel_messages) {
-		console.log("no panel messages");
 		return;
 	}
 	

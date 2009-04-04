@@ -33,7 +33,6 @@
 	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
 	        handleAs: "json",
 	        load: function(responseObject, ioArgs) {
-	        	console.log(responseObject);
 	        	if (responseObject.error) {
        	          	dojo.byId('error-message').innerHTML = responseObject.error;
 			      	dijit.byId('error').show();
@@ -54,7 +53,6 @@
 	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-				console.log(responseObject);
 	        	if (responseObject.message) {
        	          	dojo.byId('message-text').innerHTML = responseObject.message;
        	          	dojo.byId('item-row-' + item_id).style.display = 'none';
@@ -124,7 +122,6 @@ function changeName(arguments) {
 		      	dijit.byId('message').show();			
         	}
         	else {
-				console.log(arguments.character_name);
         	    dojo.byId('name-header').innerHTML = new_name;
         	}
         }
@@ -133,10 +130,7 @@ function changeName(arguments) {
 
 function calculateSpellPoints() {
 	inputs = dojo.byId('spells-form').getElementsByTagName('input');
-	
-	console.log("inputs: " + inputs.length);
-	
-	
+
 	var points_used = 0;
 	
 	spell_id_regex = /^mem_tomorrow_(\d+)$/;

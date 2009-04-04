@@ -304,17 +304,17 @@ Returns a list of any equipped item records for a specified super category.
 sub get_equipped_item {
     my $self = shift;
     my $category = shift || croak 'Category not supplied';
+    my $variables_only = shift // 0;
 
     return @{ $self->{equipped_item}{$category} } if ref $self->{equipped_item}{$category} eq 'ARRAY';
-
-=comment
-    my @items;
-    foreach my $item ($self->items) {
-        if ($item->equipped_in && $item->item_type->category->super_category->super_category_name eq $category) {
-            push @items, $item;
-        }
+    
+    my $prefetch = [
+        {'item_variables' => 'item_variable_name'},
+    ];
+    
+    unless ($variables_only) {
+        push @$prefetch, { item_type => { 'item_attributes' => 'item_attribute_name' } };        
     }
-=cut
 
     my @items = $self->result_source->schema->resultset('Items')->search(
         {
@@ -323,10 +323,7 @@ sub get_equipped_item {
         },
         {
             'join' => { 'item_type' => { 'category' => 'super_category' } },
-            'prefetch' => [ 
-                { item_type => { 'item_attributes' => 'item_attribute_name' } },
-                {'item_variables' => 'item_variable_name'},
-            ],
+            'prefetch' => $prefetch,
         },
     );
 
@@ -440,7 +437,7 @@ sub ammunition_for_item {
 sub execute_defence {
     my $self = shift;
 
-    my @items = $self->get_equipped_item('Armour');
+    my @items = $self->get_equipped_item('Armour', 1);
 
     my $armour_now_broken = 0;
     foreach my $item (@items) {

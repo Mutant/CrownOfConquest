@@ -316,6 +316,11 @@ sub calculate_factors : Private {
             $c->session->{combat_factors}{$type}{ $combatant->id }{df} = $combatant->defence_factor;
             $c->log->debug( "Calculating defence factor for " . $combatant->name . " - " . $combatant->id );
         }
+        
+        unless ( defined $c->session->{combat_factors}{$type}{ $combatant->id }{dam} ) {
+            $c->session->{combat_factors}{$type}{ $combatant->id }{dam} = $combatant->damage;
+            $c->log->debug( "Calculating damage for " . $combatant->name . " - " . $combatant->id );
+        }        
 
         # Store character's weapons
         if ( $type eq 'character' && !defined $c->session->{ $type . '_weapons' }{ $combatant->id } ) {
@@ -571,7 +576,8 @@ sub attack : Private {
     if ( $aq > $dq ) {
 
         # Attack hits
-        $damage = ( int rand $attacker->damage ) + 1;
+        my $dam_max = $c->session->{combat_factors}{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{dam};
+        $damage = ( int rand $dam_max ) + 1;
 
         $defender->hit($damage);
 

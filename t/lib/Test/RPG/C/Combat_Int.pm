@@ -242,7 +242,11 @@ sub test_calculate_factors : Tests(3) {
             {
                 item_attribute_name => 'Attack Factor',
                 item_attribute_value => 5,
-            }
+            },
+            {
+                item_attribute_name => 'Damage',
+                item_attribute_value => 5,
+            }            
         ],
         super_category_name => 'Weapon',
     );

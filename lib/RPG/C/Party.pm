@@ -37,7 +37,7 @@ sub refresh_messages : Local {
     $c->forward( '/panel/refresh', ['messages'] );
 }
 
-sub sector_menu : Local {
+sub sector_menu : Private {
     my ( $self, $c ) = @_;
 
     my $creature_group = $c->stash->{creature_group};
@@ -136,7 +136,7 @@ sub party_messages_check : Private {
     }
 }
 
-sub list : Local {
+sub list : Private {
     my ( $self, $c ) = @_;
 
     my $party = $c->stash->{party};
@@ -193,7 +193,7 @@ sub list : Local {
 
     my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
 
-    return $c->forward(
+    $c->forward(
         'RPG::V::TT',
         [
             {
@@ -212,7 +212,7 @@ sub list : Local {
     );
 }
 
-sub status : Local {
+sub status : Private {
     my ( $self, $c ) = @_;
 
     my $party = $c->stash->{party};

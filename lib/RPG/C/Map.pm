@@ -10,7 +10,7 @@ use JSON;
 use RPG::Schema::Land;
 use RPG::Map;
 
-sub view : Local {
+sub view : Private {
     my ( $self, $c ) = @_;
 
     my $party_location = $c->stash->{party_location};
@@ -23,7 +23,7 @@ sub view : Local {
     $grid_params->{y_size} = $c->config->{map_y_size};
     $grid_params->{grid_size} = $c->config->{map_x_size};    
 
-    return $c->forward( 'render_grid', [ $grid_params, ] );
+    $c->forward( 'render_grid', [ $grid_params, ] );
 }
 
 sub party : Local {

@@ -1,5 +1,156 @@
 <div style=""> 
 
+<script>
+	function createMenus() {
+		[% FOREACH char IN characters %]
+			[% NEXT IF character.is_dead %]
+			[% char_id = char.id %]
+			if (dijit.byId('char_action_button_[% char_id %]') != undefined) {
+				dijit.byId('char_action_button_[% char_id %]').destroyRecursive();			
+			}
+			
+			if (dijit.byId('actionMenu_[% char_id %]') ) {
+				dijit.byId('actionMenu_[% char_id %]').destroyRecursive();
+			}
+			
+
+			var params = {id:"actionMenu_[% char_id %]"};
+			var menu = new dijit.Menu(params,document.createElement("div"));
+			
+			[% IF party.in_combat_with %]
+				params = {
+					label: "Attack",
+					onClick: function() {
+						selectAction('Attack','[% char.id %]');
+					}
+				};			
+				var attackItem = new dijit.MenuItem(params,document.createElement("div"));
+				menu.addChild(attackItem);			
+	
+				params = {
+					label: "Defend",
+					onClick: function() {
+						selectAction('Defend','[% char.id %]');
+					}
+				};			
+				var defendItem = new dijit.MenuItem(params,document.createElement("div"));
+				menu.addChild(defendItem);	
+				
+				var targetSubMenu = new dijit.Menu({label: "Target"}); 
+			
+				[% FOREACH creature IN creatures %]
+					[% UNLESS creature.is_dead %]
+						params = {
+							label: "[% creature.name %]",
+							onClick: function() {
+								selectAction('Attack','[% char.id %]', '', '[% creature.id %]','Targetting: [% creature.name %]');
+							}
+						};
+						
+						var item = new dijit.MenuItem(params,document.createElement("div"));
+						targetSubMenu.addChild(item);
+						
+					[% END %]
+				[% END %]	
+				
+				params = {
+					label: "Target",
+					popup:targetSubMenu,
+					iconClass:"dijitMenuExpandEnabled"
+				};			
+				var targetPopupMenu = new dijit.PopupMenuItem(params);
+				menu.addChild(targetPopupMenu);
+				
+			[% END %]  
+
+			[% character_spells = spells.$char_id %]
+			
+			[% IF character_spells %]
+				var castSubMenu = new dijit.Menu();
+			
+				[% FOREACH memorised_spell IN character_spells %]
+					[% spell = memorised_spell.spell %]
+					if (dijit.byId("spellMenu_[% memorised_spell.id %]")) {
+						dijit.byId("spellMenu_[% memorised_spell.id %]").destroyRecursive();
+					}
+				
+					var spellSubMenu = new dijit.Menu({id:"spellMenu_[% memorised_spell.id %]"}); 
+					
+					[% IF spell.target == 'creature' %]
+						[% FOREACH creature IN creatures %]
+							[% UNLESS creature.is_dead %]
+								params = {
+									label: "[% creature.name %]",
+									onClick: function() {
+										selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% creature.id %]','Casting [% spell.spell_name %] on: [% creature.name %]');
+									}
+								};
+								
+								var creatureItem = new dijit.MenuItem(params,document.createElement("div"));
+								spellSubMenu.addChild(creatureItem);
+								
+							[% END %]
+						[% END %]
+					[% END %]
+	
+					[% IF spell.target == 'character' %]
+						[% FOREACH character IN characters %]
+							[% UNLESS character.is_dead %]
+								params = {
+									label: "[% character.name %]",
+									onClick: function(){
+										selectAction('Cast', '[% char.id %]', '[% spell.id %]', '[% character.id %]', 'Casting [% spell.spell_name %] on: [% character.name %]')
+									}
+								};
+								var item = new dijit.MenuItem(params,document.createElement("div"));
+								spellSubMenu.addChild(item);
+							[% END %]
+						[% END %]
+					[% END %]
+					
+					if (dijit.byId("spellPopupMenu_[% memorised_spell.id %]")) {
+						dijit.byId("spellPopupMenu_[% memorised_spell.id %]").destroyRecursive();
+					}
+					
+					var spellPopupMenu = new dijit.PopupMenuItem(
+						{
+							label: "[% spell.spell_name %] ([% memorised_spell.casts_left_today %])", 
+							popup:spellSubMenu, 
+							id:"spellPopupMenu_[% memorised_spell.id %]",
+							iconClass:"dijitMenuExpandEnabled"
+						}
+					);			
+					
+
+					castSubMenu.addChild(spellPopupMenu) 		
+							
+				[% END %]
+				
+
+				
+				params = {
+					label: "Cast",
+					popup:castSubMenu,
+					iconClass:"dijitMenuExpandEnabled"
+				};			
+				var castPopupMenu = new dijit.PopupMenuItem(params);
+				menu.addChild(castPopupMenu);				
+			[% END %]
+
+		[% IF party.in_combat_with %]
+        	[% label = char.last_combat_action %]
+		[% ELSE %]
+         	[% label = "Action" %]
+		[% END %]
+		
+		var dropDown = new dijit.form.DropDownButton({id: 'char_action_button_[% char_id %]', label: '[% label %]'}, dojo.byId('char_action_holder_[% char_id %]'));
+		dropDown.dropDown = menu;
+		
+		[% END %]
+	}
+	dojo.addOnLoad( createMenus );
+</script>
+
 
 <table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main" align="center">
 <tr>
@@ -21,6 +172,7 @@
 
 [% FOREACH char IN characters %]
 [% char_id = char.id %]
+
 <tr 
 	[% UNLESS party.in_combat_with %]class="dojoDndItem"[% END %] 
 	dndType="character" 
@@ -54,85 +206,18 @@
     <td nowrap="nowrap">[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
     <td nowrap="nowrap">[% char.xp %]</td>
     <td nowrap="nowrap">[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %][% END %]</td>
-    
+
 	<td align="center">
-    [% UNLESS char.is_dead %]    
-        <div dojoType="dijit.form.DropDownButton" id="char_action_button_[% char.id %]">
-        	 [% IF party.in_combat_with %]
-        	 	[% label = char.last_combat_action %]
-        	 [% ELSE %]
-        	 	[% label = "Action" %]
-        	 [% END %]
-
-             <span>[% label %]</span>
-    	     <div dojoType="dijit.Menu" style="display: none">
-
-
-			[% IF party.in_combat_with %]
-		         <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]');">Attack</div>
-		         <div dojoType="dijit.MenuItem" onClick="selectAction('Defend', '[% char.id %]');">Defend</div>	        
-	             <div dojoType="dijit.PopupMenuItem">
-		             <span>Target</span>
-		              <div dojoType="dijit.Menu">
-						 [% FOREACH creature IN creatures %]
-						 	[% UNLESS creature.is_dead %]
-				            <div dojoType="dijit.MenuItem" onClick="selectAction('Attack', '[% char.id %]', '[% creature.id %]', '', 'Targetting: [% creature.name %]')">[% creature.name %]</div>
-				            [% END %]
-				         [% END %]
-				    </div>
-		        </div>
-		    [% END %]
-		        
-		        [% IF spells.$char_id %]
-		        [% character_spells = spells.$char_id %]
-	             <div dojoType="dijit.PopupMenuItem">
-		             <span>Cast</span>
-		             <div dojoType="dijit.Menu">
-						 [% FOREACH memorised_spell IN character_spells %]
-						    [% spell = memorised_spell.spell %]
-						 	[% IF spell.target == 'character' || spell.target == 'creature' %]
-						    	<div dojoType="dijit.PopupMenuItem">
-  					             <span>[% spell.spell_name %] ([% memorised_spell.casts_left_today %])</span>
-					             <div dojoType="dijit.Menu">
-  					             [% IF spell.target == 'creature' %]
-									 [% FOREACH creature IN creatures %]
-									 	[% UNLESS creature.is_dead %]
-							            <div dojoType="dijit.MenuItem" 
-							            	onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% creature.id %]', 
-							            		'Casting [% spell.spell_name %] on: [% creature.name %]')">[% creature.name %]</div>
-							            [% END %]
-							         [% END %]
-								 [% ELSE %]
-    								 [% FOREACH character IN characters %]
-									 	[% UNLESS character.is_dead %]
-							            <div dojoType="dijit.MenuItem" 
-							            	onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% character.id %]', 
-							            		'Casting [% spell.spell_name %] on: [% character.name %]')">[% character.name %]</div>
-							            [% END %]
-							         [% END %]
-								 [% END %]
-						 	     </div>
-						 	     </div>
-  					             
-						 	[% ELSE %]
-				            <div dojoType="dijit.MenuItem" onClick="selectAction('Cast','[% char.id %]', '[% spell.id %]', '', 
-							            		'Casting [% spell.spell_name %]">[% spell.spell_name %]</div>
-				            [% END %]
-			             [% END %]
-		            </div>
-		        </div>
-		        [% END %]
-
-            </div>            
-            
-        </div>
+    [% UNLESS char.is_dead %]
+		<div id="char_action_holder_[% char.id %]"></div>    
 	[% ELSE %]
 		[% UNLESS party.in_combat_with %]
 			<button dojoType="dijit.form.Button" onclick="buryDiag('[% char.character_name %]', '[% char.character_id %]')">Bury</button>
 		[% END %]
     [% END %]
+
+
 	</td>
-    
     [% IF party.rank_separator_position == char.party_order %]
     	</tr>
     	<tr>
@@ -141,5 +226,6 @@
     [% END %]
 </tr>
 [% END %]
+
 </table>
 </div>

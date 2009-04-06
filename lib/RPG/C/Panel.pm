@@ -45,9 +45,11 @@ sub refresh : Private {
 	if ($c->stash->{panel_messages}) {
 		$response{panel_messages} = $c->stash->{panel_messages};
 	}
-
 	
-	$c->res->body(to_json \%response);
+    my $resp = to_json \%response;
+    $resp =~ s|script>|scri"+"pt>|g; # Nasty hack
+
+    $c->res->body( $resp );
 }
 
 sub find_panel_path : Private {

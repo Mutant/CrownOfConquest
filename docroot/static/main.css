@@ -48,17 +48,44 @@ br {
 .main {
 	font-size: 10pt;
 	font-family: verdana, kalimati, helvetica;	
+
 }
 
-#content {
-	border: 3px gray ridge;
+#content-outer {
 	width: 83%;
 	height: auto;
 	min-height: 400px;
 	float: left;
 	margin-left: 15px;
-	background: #9FB7FF;
-	padding: 2px;
+	background: #9F8D77;
+}
+
+#content-inner {
+	padding: 20px;
+}
+
+#border-left {
+	background: 
+		url(/static/images/vertical1.gif) 
+   		top left repeat-y;	
+}
+
+#border-right {
+	background: 
+		url(/static/images/vertical1.gif) 
+    	top right repeat-y;
+}
+
+#border-bottom {
+	background: 
+		url(/static/images/horizontal1.gif) 
+    	bottom left repeat-x;
+}
+
+#border-top {	
+	background:		 
+		url(/static/images/horizontal1.gif) 
+   		top left repeat-x;			
 }
 
 #content a {

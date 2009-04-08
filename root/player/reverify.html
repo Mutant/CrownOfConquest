@@ -1,0 +1,27 @@
+[% INCLUDE top.html, guest_screen = 1 %]
+
+<h1>Reverify Your Account</h1>
+
+<p>If you've registered, but never received your verification code (be sure to check your spam filter), 
+use this from to generate a new one (which will be emailed to you).</p>
+
+<p>If the email address you registered with isn't working for some reason, <a href="[% base %]/player/register">Register</a> again with a new email address.</p>
+
+<p>If you're still stuck, please post in the [% INCLUDE layout/forum_link.html %].</p>
+
+<div align="center">
+<form method="POST" action="[% base %]/player/reverify">
+<table>
+	<tr>
+		<td nowrap>Email Address You Registered With:</td>
+		<td><input type="text" name="email" style="width: 300px"></td>
+	</tr>	
+	<tr>
+		<td></td>
+		<td><input type="submit" name="submit" value="Re-Verify Account"></td>
+	</tr>
+</table>
+</form>
+</div>
+
+[% INCLUDE bottom.html %]

@@ -616,14 +616,18 @@ sub check_character_attack : Local {
         $c->log->debug('Reducing durability of weapon');
         $weapon_durability--;
 
-        $c->model('DBIC::Item_Variable')->find(
+        my $var = $c->model('DBIC::Item_Variable')->find(
             {
                 item_id                                 => $c->session->{'character_weapons'}{ $attacker->id }{id},
                 'item_variable_name.item_variable_name' => 'Durability',
             },
             { join => 'item_variable_name', }
-        )->update( { item_variable_value => $weapon_durability, } );
-        $c->session->{'character_weapons'}{ $attacker->id }{durability} = $weapon_durability;
+        );
+        
+        if ($var) {
+            $var->update( { item_variable_value => $weapon_durability, } );
+            $c->session->{'character_weapons'}{ $attacker->id }{durability} = $weapon_durability;
+        }
     }
 
     if ( $weapon_durability <= 0 ) {

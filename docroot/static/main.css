@@ -57,7 +57,7 @@ br {
 	min-height: 250px;
 	float: left;
 	margin-left: 15px;
-	background: #9F8D77;
+	background: #9F8D77;	
 }
 
 #content-inner {
@@ -90,8 +90,12 @@ br {
    		top left repeat-x;			
 }
 
-#content a {
-	color: #2A31FF;
+a {
+	color: #2F2620;
+}
+
+a:visited {
+	color: #2F2620;
 }
 
 #body {
@@ -103,7 +107,6 @@ br {
 .nav {
 	font-size: 10pt;
 	font-family: verdana;
-
 
 	width: 130px;
 	float: left;
@@ -125,6 +128,10 @@ html>body .nav a {width: auto}
 .nav a:hover {
 	background: #9FB7FF;
 	color: white;
+}
+
+.main-nav a:hover {
+	background: #D3D3D3;
 }
 
 /* DnD */

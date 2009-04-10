@@ -46,7 +46,7 @@ sub party : Local {
         $centre_y = $party_location->y + ($c->req->param('y_offset') || 0);
     }
     
-    my $grid_size = $zoom_level * 10 + 1;
+    my $grid_size = $zoom_level * 9 + 1;
 
     my $grid_params = $c->forward( 'generate_grid', [ $grid_size, $grid_size, $centre_x, $centre_y, ], );
 

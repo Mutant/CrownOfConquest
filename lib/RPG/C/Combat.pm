@@ -610,6 +610,9 @@ sub check_character_attack : Local {
     my ( $self, $c, $attacker ) = @_;
 
     my $weapon_durability  = $c->session->{'character_weapons'}{ $attacker->id }{durability};
+    
+    return { weapon_broken => 1 } if $weapon_durability == 0;
+    
     my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
 
     if ( $weapon_damage_roll == 1 ) {
@@ -632,6 +635,7 @@ sub check_character_attack : Local {
 
     if ( $weapon_durability <= 0 ) {
         # TODO: clear factor cache?
+        push @{$c->stash->{refresh_panels}}, 'party';
         return { weapon_broken => 1 };
     }
 

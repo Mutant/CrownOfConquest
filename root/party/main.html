@@ -5,7 +5,6 @@ dojo.require('dijit.layout.BorderContainer');
 dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
 
-var parsed_urls = Array();
 function getPanels(url) {
 	//console.profile();
 	    
@@ -30,13 +29,11 @@ function getPanels(url) {
 	    		dijit.byId('messages-pane').setContent(originalContent);
 			}		
 			
-			refreshPanels(responseObject, parsed_urls[url] ? false : true);
+			refreshPanels(responseObject);
 			
 			dungeonScroll();
 			
-			displayPopupMessages();
-			
-			parsed_urls[url] = true;
+			displayPopupMessages();			
 		},
         
         error: function(err) {
@@ -51,21 +48,16 @@ function getPanels(url) {
 	//console.profileEnd();
 }
 
-function refreshPanels(panelData, parseMessages) {    
+function refreshPanels(panelData) {    
 	if (panelData.panel_messages) {
 		displayMessages(panelData.panel_messages);
 	}				
 				
     if (panelData.refresh_panels) {
 		for (var panel in panelData.refresh_panels) {
-			[%# Get around the fact that messages could define the same dijit item twice by turning off parsing if it's already been loaded %]
-			if (! parseMessages && panel === 'messages') {
-				dijit.byId(panel+'-pane').parseOnLoad = false;
-			}
-			
 			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
 			dijit.byId(panel+'-pane').refresh();
-			dijit.byId(panel+'-pane').parseOnLoad = true;
+			//dijit.byId(panel+'-pane').parseOnLoad = true;
 		}
 	}
 }

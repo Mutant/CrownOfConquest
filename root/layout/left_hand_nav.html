@@ -1,11 +1,61 @@
-<a href="[% base %]">Main</a>
-<a href="[% base %]/party/details">Party</a>
-<a href="[% base %]/map/party">Map</a>
-<a href="[% base %]/quest/list">Quests</a>
-<a href="[% base %]/leaderboards">Stats</a>
-[% INCLUDE layout/forum_link.html %]
-<a href="[% base %]/help">Help</a>
-<a href="[% base %]/player/logout">Logout</a>
+<div align="center" class="main-nav">
+	
+[%
+	menu_images = [
+		{name => 'main', link => base},
+		{name => 'party', link => base _ '/party/details'},
+		{name => 'map', link => base _ '/map/party'},
+		{name => 'quests', link => base _ '/quest/list'},
+		{name => 'stats', link => base _ '/leaderboards'},
+		{name => 'forum', link => c.config.forum_url, target="_new"},
+		{name => 'help', link => base _ '/help'},
+		{name => 'logout', link => base _ '/player/logout'},
+	];
+%]
+	
+<script>
+	images = new Array()
+  
+	[% FOREACH image IN menu_images %]
+  		images['[% image.name %]-unsel'] = new Image();
+		images['[% image.name %]-unsel'].src = "[% c.config.static_path %]/images/menu_[% image.name %]_unsel.PNG";
+		images['[% image.name %]-sel'] = new Image();
+		images['[% image.name %]-sel'].src = "[% c.config.static_path %]/images/menu_[% image.name %]_sel.PNG";
+	[% END %]
+
+  function selectImage(name){
+    document[name].src = images[name + "-sel"].src;
+    return true;
+  }
+
+  function unselectImage(name){
+    document[name].src = images[name + "-unsel"].src;
+    return true;
+  }
+	
+	
+	
+</script>
+
+<img src="[% c.config.static_path %]/images/menu_TOP.PNG">
+
+[% FOREACH image IN menu_images %]
+	[% FILTER collapse %]
+	<a href="[% image.link %]" [% IF image.target %]"target=[% image.target %]"[% END %]>
+			<img 
+				src="[% c.config.static_path %]/images/menu_[% image.name %]_unsel.PNG" 
+				name="[% image.name %]" 
+				border=0
+				onMouseOver="selectImage('[% image.name %]')"
+				onMouseOut="unselectImage('[% image.name %]')"
+			>
+	</a>
+	[% END %]
+[% END %]
+
+<img src="[% c.config.static_path %]/images/menu_BOTTOM.PNG">
+</div>
+
 <br><br>
 <div class="login-info">
 	Logged in as: <b>[% c.session.player.player_name %]</b><br>

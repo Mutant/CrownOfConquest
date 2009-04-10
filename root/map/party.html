@@ -1,10 +1,10 @@
 [% INCLUDE top.html %]
 
 <script>
-	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.layout.TabContainer");	
 </script>
 
-<div style="background: #898E73; position: relative">
+<div style="background: #898E73; position: relative; overflow: auto; min-height: 800px;">
 	[% FILTER collapse %]
 	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black; z-index: 5">
 		[% 
@@ -52,7 +52,7 @@
 
 <h2>Landmarks</h2>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; overflow: auto">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; min-height: 400px">
     <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
 		<h3>Known Towns</h3>
 		

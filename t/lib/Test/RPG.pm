@@ -77,6 +77,7 @@ sub clear_data : Test(teardown) {
 	undef $self->{stash};
 	undef $self->{session};
 	undef $self->{config};
+	undef $self->{params};
 }
 
 

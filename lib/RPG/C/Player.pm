@@ -16,16 +16,24 @@ sub login : Local {
     my $message;
 
     if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), password => $c->req->param('password'), deleted => 0 } );
+        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), password => $c->req->param('password') } );
 
         if ($user) {
             $user->last_login( DateTime->now() );
             $user->warned_for_deletion(0);
+            my $was_deleted = $user->deleted;
+            $user->deleted(0);
             $user->update;
 
             if ( $user->verified ) {
                 $c->session->{player} = $user;
-                $c->res->redirect( $c->config->{url_root} );
+
+                if ($was_deleted) {
+                    $c->res->redirect( $c->config->{url_root} . "/player/reactivate" );
+                }
+                else {
+                    $c->res->redirect( $c->config->{url_root} );
+                }
             }
             else {
                 $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
@@ -65,7 +73,7 @@ sub register : Local {
     my $message;
 
     if ( $c->req->param('submit') ) {
-        eval {
+        $message = eval {
             unless ( $c->req->param('email')
                 && $c->req->param('player_name')
                 && $c->req->param('password1')
@@ -73,21 +81,30 @@ sub register : Local {
                 && $c->validate_captcha( $c->req->param('captcha') ) )
             {
 
-                croak { message => "Please enter your email address, name, password and the CAPTCHA code" };
+                return "Please enter your email address, name, password and the CAPTCHA code";
 
             }
 
             if ( length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
-                croak { message => "Password must be at least " . $c->config->{minimum_password_length} . " characters" };
+                return "Password must be at least " . $c->config->{minimum_password_length} . " characters";
             }
 
-            my $existing_player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), deleted => 0 }, );
+            my $existing_player = $c->model('DBIC::Player')->find( { email => $c->req->param('email') }, );
 
             if ($existing_player) {
-                croak { message => "The email address " . $c->req->param('email') . " has already been registered." };
+                return $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'player/already_exists.html',
+                            params        => { email => $c->req->param('email'), },
+                            return_output => 1,
+                        }
+                    ]
+                );
             }
 
-            my $verification_code = _generate_and_send_verification_code($c, $c->req->param('email'));
+            my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
 
             my $player;
 
@@ -104,7 +121,7 @@ sub register : Local {
             };
             if ($@) {
                 if ( $@ =~ /Duplicate entry '.+' for key 2/ ) {
-                    croak { message => "A player with the name '" . $c->req->param('player_name') . "' is already registered" };
+                    return "A player with the name '" . $c->req->param('player_name') . "' is already registered";
                 }
                 else {
                     croak $@;
@@ -112,16 +129,15 @@ sub register : Local {
             }
 
             $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
+
+            return;
         };
+
+        return unless $message;
     }
     if ($@) {
         my $error = $@;
-        if ( ref $error && $error->{message} ) {
-            $message = $error->{message};
-        }
-        else {
-            croak $error;
-        }
+        croak $error;
     }
 
     $c->forward(
@@ -137,54 +153,54 @@ sub register : Local {
 }
 
 sub _generate_and_send_verification_code {
-    my $c = shift;
+    my $c          = shift;
     my $to_address = shift;
-    
-    my $verification_code = ( int rand 100000000 + int rand 100000000 );
-    
-            my $email_message = $c->forward(
-                'RPG::V::TT',
-                [
-                    {
-                        template      => 'player/email/verfication.txt',
-                        params        => { verification_code => $verification_code, },
-                        return_output => 1,
-                    }
-                ]
-            );
 
-            my $msg = MIME::Lite->new(
-                From    => $c->config->{send_email_from},
-                To      => $to_address,
-                Subject => 'Verification code',
-                Data    => $email_message,
-            );
-            $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );   
-            
-    return $verification_code;            
+    my $verification_code = ( int rand 100000000 + int rand 100000000 );
+
+    my $email_message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template      => 'player/email/verfication.txt',
+                params        => { verification_code => $verification_code, },
+                return_output => 1,
+            }
+        ]
+    );
+
+    my $msg = MIME::Lite->new(
+        From    => $c->config->{send_email_from},
+        To      => $to_address,
+        Subject => 'Verification code',
+        Data    => $email_message,
+    );
+    $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
+
+    return $verification_code;
 }
 
 sub reverify : Local {
-    my ( $self, $c ) = @_;    
-    
+    my ( $self, $c ) = @_;
+
     my $message;
-    
+
     if ( $c->req->param('email') ) {
         $message = eval {
-            my $player = $c->model('DBIC::Player')->find({ email => $c->req->param('email'), });
-            
+            my $player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
+
             return "Your email address is not registered. Please register first" unless defined $player;
-    
+
             if ($player) {
-                if ($player->verified == 1) {
-                    return "You're already verified! Please login to play.";   
+                if ( $player->verified == 1 ) {
+                    return "You're already verified! Please login to play.";
                 }
-                
-                my $verification_code = _generate_and_send_verification_code($c, $c->req->param('email'));
-                
+
+                my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
+
                 $player->verification_code($verification_code);
                 $player->update;
-                
+
                 return "A new verification code has been sent to you. If you continue to have problems, please post about it in the Forum";
             }
         };
@@ -192,7 +208,7 @@ sub reverify : Local {
             croak $@;
         }
     }
-    
+
     $c->forward(
         'RPG::V::TT',
         [
@@ -202,8 +218,33 @@ sub reverify : Local {
                 fill_in_form => 1,
             }
         ]
-    )    
-    
+    );
+
+}
+
+sub reactivate : Local {
+    my ( $self, $c ) = @_;
+
+    if ( $c->req->param('reform_party') ) {
+        my $old_party = $c->model('DBIC::Party')->find(
+            { player_id => $c->session->{player}->id, },
+            {
+                order_by => 'defunct desc',
+                rows     => 1,
+            },
+        );
+
+        croak "Old party not found\n" unless $old_party;
+
+        $old_party->defunct(undef);
+        $old_party->update;
+
+        $c->res->redirect( $c->config->{url_root} );
+
+        return;
+    }
+
+    $c->forward( 'RPG::V::TT', [ { template => 'player/reactivate.html', } ] );
 }
 
 sub forgot_password : Local {
@@ -231,7 +272,7 @@ sub forgot_password : Local {
                     }
                 ]
             );
-            
+
             my $msg = MIME::Lite->new(
                 From    => $c->config->{send_email_from},
                 To      => $c->req->param('email'),
@@ -313,7 +354,7 @@ sub verify : Local {
     my $message;
 
     if ( $c->req->param('verification_code') ) {
-        my $player = $c->model('DBIC::Player')->find({ email => $c->req->param('email'), });
+        my $player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
 
         if ($player) {
             if ( $player->verification_code eq $c->req->param('verification_code') ) {
@@ -350,16 +391,9 @@ sub verify : Local {
 }
 
 sub about : Local {
-    my ( $self, $c ) = @_;    
-    
-    $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'player/about.html',
-            }
-        ]
-    );   
+    my ( $self, $c ) = @_;
+
+    $c->forward( 'RPG::V::TT', [ { template => 'player/about.html', } ] );
 }
 
 1;

@@ -10,16 +10,22 @@ sub build_party {
 
     my $location = $schema->resultset('Land')->create( {} );
     
-    my $player = $schema->resultset('Player')->create( 
-        {
-            player_name => int rand 100000000,        
-        } 
-    );
+    my $player_id;
+    
+    if (! $params{player_id}) {
+        my $player = $schema->resultset('Player')->create( 
+            {
+                player_name => int rand 100000000,        
+            }
+        );
+        
+        $params{player_id} = $player->id;
+    };
     
     my $party = $schema->resultset('Party')->create( 
         {
             land_id => $location->id,
-            player_id => $player->id,        
+            player_id => $params{player_id},        
         } 
     );
     

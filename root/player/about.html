@@ -1,4 +1,12 @@
-[% INCLUDE top.html, guest_screen = 1 %]
+[% UNLESS c.session.player %]
+	[% guest = 1 %]
+[% END %]
+
+[% INCLUDE top.html, guest_screen = guest %]
+
+[% UNLESS guest %]
+	[% INCLUDE help/subnav.html %]
+[% END %]
 
 <h1>About Kingdoms</h1>
 

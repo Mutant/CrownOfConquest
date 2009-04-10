@@ -47,8 +47,22 @@ br {
 
 .main {
 	font-size: 10pt;
-	font-family: verdana, kalimati, helvetica;	
+	font-family: verdana, kalimati, helvetica;
+}
 
+.tundra .dijitSplitContainer-dijitContentPane, .tundra .dijitBorderContainer-dijitContentPane, .content-background {
+	background: #9F8D77;
+	border: 0px;		
+}
+
+.tundra .dijitSplitterV, .tundra .dijitGutterV {
+	background: #9F8D77;
+	border: 0px;	
+}
+
+.tundra .dijitBorderContainer {
+	background: #9F8D77;
+	border: 0px;
 }
 
 #content-outer {
@@ -56,8 +70,8 @@ br {
 	height: auto;
 	min-height: 250px;
 	float: left;
-	margin-left: 15px;
-	background: #9F8D77;	
+	margin-left: 15px;	
+	background: #9F8D77;			
 }
 
 #content-inner {

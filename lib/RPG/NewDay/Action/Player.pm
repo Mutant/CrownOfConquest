@@ -37,10 +37,16 @@ sub run {
             From    => $context->config->{send_email_from},
             To      => $player->email,
             Subject => 'Game Inactivity',
-            Data    => "Hi,\n\nYou signed up to the game at game.mutant.dj, but you haven't logged in in over "
+            # TODO: template me :|
+            Data    => "Hi,\n\nYou signed up to Kingdoms (" . $context->config->{url_root} . "), but you haven't logged in in over "
                 . $context->config->{inactivity_warning_days}
-                . " days. If you don't log in within the next $grace days, your account will be deleted.\n\nIf you're having technical difficulties in logging"
-                . " in, etc. please reply to this email. I'd love to hear about it, since we're still in alpha testing.",
+                . " days. If you don't log in within the next $grace days, your account will be disabled.\n\nYou'll be able to re-enable your"
+                . " account by logging back in, although you may lose some standing in the game in the mean time.\n\nAlso, there is a maximum"
+                . " number of active players allowed, so if that number has been reached, you won't be able to re-activate your account"
+                . " until some other players go inactive (or the maximum number of players is increased).\n\n"
+                . " If you have an questions, or are having technical difficulties, please don't hesitate to post in our forum: "
+                . $context->config->{forum_url}, 
+                 
         );
         $msg->send(
             'smtp',

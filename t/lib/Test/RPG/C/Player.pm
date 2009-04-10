@@ -31,6 +31,7 @@ sub test_reactivate_form : Tests(1) {
     # GIVEN
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
+    $self->{config}->{max_number_of_players} = 1;
 
     # WHEN
     RPG::C::Player->reactivate( $self->{c} );
@@ -45,6 +46,7 @@ sub test_reactivate_reform_party : Tests(4) {
     # GIVEN
     my $player = $self->{schema}->resultset('Player')->create( {} );
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, player_id => $player->id, );
+    $self->{config}->{max_number_of_players} = 2;
 
     $party1->defunct( DateTime->now() );
     $party1->update;
@@ -472,6 +474,8 @@ sub test_login_was_deleted : Tests(5) {
     $self->{params}{password} = 'pass'; 
 
     $self->{config}->{url_root} = 'url_root';
+    
+    $self->{config}->{max_number_of_players} = 1;
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -484,6 +488,42 @@ sub test_login_was_deleted : Tests(5) {
     $player->discard_changes;
     is($player->warned_for_deletion, 0, "Warned for deletion flag cleared");
     is($player->deleted, 0, "Deleted flag cleared");
+}
+
+sub test_login_was_deleted_but_game_now_full : Tests(3) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( 
+        { 
+            player_name => 'name', 
+            email => 'foo@bar.com', 
+            password => 'pass', 
+            verified => 1,
+            warned_for_deletion => 1,
+            deleted => 1, 
+        } 
+    );
+    
+    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{password} = 'pass'; 
+
+    $self->{config}->{url_root} = 'url_root';
+    
+    $self->{config}->{max_number_of_players} = 0;
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
+    
+
+    # WHEN
+    RPG::C::Player->login( $self->{c} );
+
+    # THEN
+    is ($template_args->[0][0]{template}, 'player/full.html', "Forwarded to game full template");
+    $player->discard_changes;
+    is($player->warned_for_deletion, 1, "Warned for deletion flag still set");
+    is($player->deleted, 1, "Player still deleted");
 }
 
 1;

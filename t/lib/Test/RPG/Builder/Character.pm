@@ -22,6 +22,7 @@ sub build_character {
             party_order => $params{party_order} || 1,
             character_name => 'test',
             agility => 5,
+            level => $params{level} || 1,
         }
     );
         

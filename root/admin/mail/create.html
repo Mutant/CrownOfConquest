@@ -1,12 +1,20 @@
 [% INCLUDE top.html admin_screen=1 %]
 
-<p>Send mail to all players</p>
+<p>Send mail to selected players</p>
 
 <form method="POST" action="[% base %]/admin/mail/send">
 <table>
 	<tr>
 		<td>Subject:</td>
 		<td><input type="text" name="subject" size="100"></td>
+	</tr>
+	<tr>
+		<td>Send To:</td>
+		<td>
+			<input type="checkbox" name="active_players" value="1" checked>Active Players<br>
+			<input type="checkbox" name="unverified_players" value="1">Unverified Players<br>
+			<input type="checkbox" name="inactive_players" value="1">Inactive Players<br>
+		</td>
 	</tr>
 	<tr>
 		<td valign="top">Body:</td>

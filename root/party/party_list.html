@@ -13,6 +13,10 @@
 				dijit.byId('actionMenu_[% char_id %]').destroyRecursive();
 			}
 			
+			[% action_function = 'selectActionNonCombat' %]
+			[% IF party.in_combat_with %]
+				[% action_function = 'selectActionCombat' %]
+			[% END %]
 
 			var params = {id:"actionMenu_[% char_id %]"};
 			var menu = new dijit.Menu(params,document.createElement("div"));
@@ -21,7 +25,7 @@
 				params = {
 					label: "Attack",
 					onClick: function() {
-						selectAction('Attack','[% char.id %]');
+						[% action_function %]('Attack','[% char.id %]');
 					}
 				};			
 				var attackItem = new dijit.MenuItem(params,document.createElement("div"));
@@ -30,7 +34,7 @@
 				params = {
 					label: "Defend",
 					onClick: function() {
-						selectAction('Defend','[% char.id %]');
+						[% action_function %]('Defend','[% char.id %]');
 					}
 				};			
 				var defendItem = new dijit.MenuItem(params,document.createElement("div"));
@@ -43,7 +47,7 @@
 						params = {
 							label: "[% creature.name %]",
 							onClick: function() {
-								selectAction('Attack','[% char.id %]', '', '[% creature.id %]','Targetting: [% creature.name %]');
+								[% action_function %]('Attack','[% char.id %]', '', '[% creature.id %]','Targetting: [% creature.name %]');
 							}
 						};
 						
@@ -82,7 +86,7 @@
 								params = {
 									label: "[% creature.name %]",
 									onClick: function() {
-										selectAction('Cast','[% char.id %]', '[% spell.id %]', '[% creature.id %]','Casting [% spell.spell_name %] on: [% creature.name %]');
+										[% action_function %]('Cast','[% char.id %]', '[% spell.id %]', '[% creature.id %]','Casting [% spell.spell_name %] on: [% creature.name %]');
 									}
 								};
 								
@@ -99,7 +103,7 @@
 								params = {
 									label: "[% character.name %]",
 									onClick: function(){
-										selectAction('Cast', '[% char.id %]', '[% spell.id %]', '[% character.id %]', 'Casting [% spell.spell_name %] on: [% character.name %]')
+										[% action_function %]('Cast', '[% char.id %]', '[% spell.id %]', '[% character.id %]', 'Casting [% spell.spell_name %] on: [% character.name %]')
 									}
 								};
 								var item = new dijit.MenuItem(params,document.createElement("div"));

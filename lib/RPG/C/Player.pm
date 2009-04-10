@@ -28,7 +28,22 @@ sub login : Local {
             if ( $user->verified ) {
                 $c->session->{player} = $user;
 
-                if ($was_deleted) {
+                if ($was_deleted) {                        
+                    if ( $c->model('DBIC::Player')->count( { deleted => 0 } ) > $c->config->{max_number_of_players} ) {
+                        
+                        $user->warned_for_deletion(1);
+                        $user->deleted(1);
+                        $user->update;
+                        
+                        $c->forward( 'RPG::V::TT', [ 
+                            {
+                                 template => 'player/full.html', 
+                                 params => { inactive => 1 } 
+                            } 
+                        ] );
+                        return;
+                    }  
+                    
                     $c->res->redirect( $c->config->{url_root} . "/player/reactivate" );
                 }
                 else {

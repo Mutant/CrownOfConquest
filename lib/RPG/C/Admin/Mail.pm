@@ -35,7 +35,26 @@ sub send : Local {
         $c->detach('create');
     }
 
-    my @players = $c->model('DBIC::Player')->search;
+    my $message;
+
+    my %params;
+    if ( !$c->req->param('active_players') && !$c->req->param('inactive_players') ) {
+        $c->stash->{error} = "Must select active or inactive players (or both)";
+        $c->detach('create');
+    }
+    
+    if ( $c->req->param('active_players') && !$c->req->param('inactive_players') ) {
+        $params{deleted} = 0;
+    }
+    elsif ( $c->req->param('inactive_players') && !$c->req->param('active_players') ) {
+        $params{deleted} = 1;
+    }
+
+    if ( !$c->req->param('unverified_players') ) {
+        $params{verified} = 1;
+    }
+
+    my @players = $c->model('DBIC::Player')->search( \%params );
 
     my $emails = join ', ', ( map { $_->email } @players );
 
@@ -46,20 +65,14 @@ sub send : Local {
         Data    => $c->req->param('body'),
     );
 
-    $msg->send(
-        'smtp',
-        $c->config->{smtp_server},
-        Debug    => 1,
-    );
+    $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
 
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'admin/mail/confirmation.html',
-                params   => {
-                    emails => $emails,
-                },
+                params   => { emails => $emails, },
             }
         ]
     );

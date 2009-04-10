@@ -27,7 +27,7 @@
 		<td>[% spell.spell_name %]</td>
 		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
 		<td>
-		 <span id="mem_spell_[% spell.id %]">(?)</span>
+		 <span dojoType="dijit.form.Button" id="mem_spell_[% spell.id %]">?</span>
 			<div dojoType="dijit.Tooltip"
                    connectId="mem_spell_[% spell.id %]"
                    label="[% spell.description %]"></div>

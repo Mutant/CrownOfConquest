@@ -47,7 +47,7 @@ sub sector_menu : Private {
     my $confirm_attack = 0;
 
     if ($creature_group) {
-        $confirm_attack = $creature_group->level > $c->stash->{party}->level && $creature_group->party_within_level_range( $c->stash->{party} );
+        $confirm_attack = $creature_group->level > $c->stash->{party}->level && ! $creature_group->party_within_level_range( $c->stash->{party} );
     }
 
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
@@ -66,7 +66,7 @@ sub sector_menu : Private {
                 template => 'party/sector_menu.html',
                 params   => {
                     creature_group    => $creature_group,
-                    confirm_attack    => $confirm_attack,
+                    confirm_attack    => $confirm_attack || 0,
                     messages          => $c->stash->{messages},
                     day_logs          => $c->stash->{day_logs},
                     location          => $c->stash->{party_location},

@@ -88,6 +88,60 @@ sub test_initiate_combat : Test(6) {
     $self->{roll_result} = 30; 
     
     is( RPG::Schema::CreatureGroup::initiate_combat( $creature_group, $party ), 1, "Combat initiated, roll less than chance" );
-
 }
+
+sub test_party_within_level_range : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    $self->{config}->{cg_attack_max_level_above_party} = 2;
+    $self->{config}->{cg_attack_max_level_below_party} = 4;
+    
+    my @tests = (
+        {
+            party_level => 1,
+            creature_group_level => 1,
+            expected_result => 1,
+        },
+        {
+            party_level => 1,
+            creature_group_level => 4,
+            expected_result => 0,
+        },     
+        {
+            party_level => 1,
+            creature_group_level => 3,
+            expected_result => 1,
+        },          
+        {
+            party_level => 6,
+            creature_group_level => 1,
+            expected_result => 0,
+        },    
+        {
+            party_level => 5,
+            creature_group_level => 1,
+            expected_result => 1,
+        },                
+    ); 
+    
+    # WHEN
+    my @results;
+    foreach my $test (@tests) {
+        my $mock_cg = Test::MockObject->new();
+        $mock_cg->set_always('level', $test->{creature_group_level});
+        
+        my $mock_party = Test::MockObject->new();
+        $mock_party->set_always('level', $test->{party_level});
+        
+        push @results, RPG::Schema::CreatureGroup::party_within_level_range($mock_cg, $mock_party);        
+    }
+    
+    my $count = 0;
+    foreach my $test (@tests) {
+        is($results[$count], $test->{expected_result}, "Result ok for test $count");
+        $count++;   
+    }
+}
+
 1;

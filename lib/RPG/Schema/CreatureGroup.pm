@@ -63,11 +63,15 @@ sub party_within_level_range {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
 	
-	return 0
-		if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_above_party};
-		
-	return 0
-	   if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
+	if ($self->level > $party->level) {
+	   return 0
+		  if $self->level - $party->level > RPG::Schema->config->{cg_attack_max_level_above_party};
+	}
+	
+	if ($self->level < $party->level) {	
+	   return 0
+	       if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
+	}
 	   
 	return 1; 
 }

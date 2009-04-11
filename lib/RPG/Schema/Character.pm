@@ -14,6 +14,8 @@ use DBIx::Class::ResultClass::HashRefInflator;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('`Character`');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Character');
+
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id/
@@ -90,7 +92,7 @@ sub roll_hit_points {
 
     if ( ref $self ) {
         my $points = $self->_roll_points( 'constitution', $point_max );
-        $self->max_hit_points( $self->max_hit_points + $points );
+        $self->max_hit_points( ($self->max_hit_points || 0) + $points );
 
         if ( $self->level == 1 ) {
             $self->hit_points($points);
@@ -118,7 +120,7 @@ sub roll_spell_points {
 
         my $points = $self->_roll_points( $stat, $point_max, $point_min );
 
-        $self->spell_points( $self->spell_points + $points );
+        $self->spell_points( ($self->spell_points || 0) + $points );
 
         return $points;
     }
@@ -144,7 +146,7 @@ sub _roll_points {
         $stat  = shift || croak 'Stat not supplied';
     }
 
-    my $point_max = shift || croak 'point_max not supplied';
+    my $point_max = shift || confess 'point_max not supplied';
     my $point_min = shift || 1;
 
     if ( $point_max < $point_min ) {
@@ -196,8 +198,8 @@ sub set_default_spells {
                 },
             );
 
-            $memorised_spell->memorise_count( $memorised_spell->memorise_count + 1 );
-            $memorised_spell->memorise_count_tomorrow( $memorised_spell->memorise_count_tomorrow + 1 );
+            $memorised_spell->memorise_count( ($memorised_spell->memorise_count || 0) + 1 );
+            $memorised_spell->memorise_count_tomorrow( ($memorised_spell->memorise_count_tomorrow || 0) + 1 );
             $memorised_spell->update;
 
             $spell_points_used += $spell->points;

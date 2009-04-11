@@ -12,8 +12,7 @@ use RPG::Maths;
 use Math::Round qw(round);
 use List::Util qw(shuffle);
 
-my $dbh = DBI->connect("dbi:mysql:game:mutant.dj","root","***REMOVED***");
-#my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
+my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
 $dbh->{RaiseError} = 1;
 
 my $towns = 70;

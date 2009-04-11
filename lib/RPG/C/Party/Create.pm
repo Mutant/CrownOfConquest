@@ -53,6 +53,11 @@ sub create : Local {
 
 sub save_party : Local {
     my ( $self, $c ) = @_;
+    
+    unless ($c->req->param('name')) {
+        $c->stash->{error} = "You must enter a party name!";
+        $c->detach('create');           
+    }
 
     # Check there's not already a party with this name
     my $dupe_party = $c->model('DBIC::Party')->find(
@@ -288,6 +293,30 @@ sub calculate_values : Local {
     }
 
     $c->res->body($return);
+}
+
+sub autogenerate : Local {
+    my ( $self, $c ) = @_;
+    
+    # Delete any characters that already exist
+    $c->stash->{party}->characters->delete;
+    
+    my @CLASSES_TO_CREATE = qw(Warrior Warrior Archer Priest Mage);
+    
+    my $order = 1;
+    foreach my $class_name (@CLASSES_TO_CREATE) {
+        my $class = $c->model('DBIC::Class')->find({'class_name' => $class_name});
+        my $race  = $c->model('DBIC::Race')->random;
+        
+        my $character = $c->model('DBIC::Character')->generate_character($race, $class, 1, 0, 0);
+        $character->party_id($c->stash->{party}->id);
+        $character->party_order($order);
+        $character->update;
+        
+        $order++;
+    }
+    
+    $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
 }
 
 1;

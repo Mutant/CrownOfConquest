@@ -1,5 +1,39 @@
 [% INCLUDE top.html %]
 
+<script>
+	[% IF characters.size == 0 %]
+	dojo.addOnLoad(function(){
+		dijit.byId('autogen-diag').show()
+	});
+	[% END %]
+	
+	function autogenerate() {
+		document.location = '[% base %]/party/create/autogenerate';
+	}
+</script>
+
+<div dojoType="dijit.Dialog" id="autogen-diag" style="display: none" title="Autogenerate Party" execute="autogenerate(arguments[0]);">
+	Do you want to auto-generate your party?
+	<br><br>
+	This will give you a reasonable starting party, which is useful if this is your first time playing Kingdoms.
+	<br><br>
+	You'll still be able to tweak your party afterwards, or even start again.
+	<div align="center">
+		<button dojoType=dijit.form.Button type="submit">Yes</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('autogen-diag').hide()">No</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="regen-diag" style="display: none" title="Regenerate Party" execute="autogenerate(arguments[0]);">
+	This will delete any characters you currently have, and auto-generate a new party for you.
+	<br><br>
+	Are you sure you want to do this?
+	<div align="center">
+		<button dojoType=dijit.form.Button type="submit">Yes</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('regen-diag').hide()">No</button>
+	</div>
+</div>
+
 <h1>Create Party</h1>
 
 <form name="form" method="post" action="[% base %]/party/create/save_party">
@@ -15,9 +49,13 @@ Party Name: <input type="text" name="name" value="[% party.name %]" size="50">
 
 You've created [% characters.size %] of [% num_characters_to_create %] characters.
 
+<br><br>
+
+<button dojoType=dijit.form.Button type="submit" onClick="dijit.byId('regen-diag').show(); return false">Regenerate Party</button>
+
 [% IF characters %]
 <br><br>
-<table class="main">
+<table class="main" cellspacing="0" cellpadding="5">
 	<tr>
 		<th>Name</th>
 		<th>Class</th>
@@ -29,7 +67,7 @@ You've created [% characters.size %] of [% num_characters_to_create %] character
 		<th>Con</th>
 	</tr>
 	[% FOREACH char IN characters %]
-	<tr>
+	<tr [% IF loop.count % 2 == 0 %]style="background: lightgrey"[% END %]>
 		<td>[% char.character_name %]</td>
 	    <td>[% char.race.race_name %]</td>
 	    <td>[% char.class.class_name %]</td>

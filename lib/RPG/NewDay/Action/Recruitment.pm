@@ -14,7 +14,7 @@ use File::Slurp;
 
 sub run {
     my $self = shift;
-    
+
     my $c = $self->context;
 
     my $town_rs = $c->schema->resultset('Town')->search( {}, { prefetch => { 'characters' => 'items' }, }, );
@@ -25,9 +25,9 @@ sub run {
         my $ideal_number_of_characters = int( $town->prosperity / $c->config->{characters_per_prosperity} );
         $ideal_number_of_characters = 1 if $ideal_number_of_characters < 1;
 
-        $c->logger->debug( 'Town id: ' . $town->id . " has " . scalar @characters . " characters, but should have $ideal_number_of_characters" );
-
         if ( scalar @characters < $ideal_number_of_characters ) {
+            $c->logger->debug( 'Town id: ' . $town->id . " has " . scalar @characters . " characters, but should have $ideal_number_of_characters" );
+            
             my $number_of_chars_to_create = $ideal_number_of_characters - scalar @characters;
 
             for ( 1 .. $number_of_chars_to_create ) {
@@ -39,8 +39,8 @@ sub run {
 
 sub generate_character {
     my $self = shift;
-    my $town    = shift;
-    
+    my $town = shift;
+
     my $c = $self->context;
 
     my $race  = $c->schema->resultset('Race')->random;
@@ -54,50 +54,13 @@ sub generate_character {
     my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
     my $xp = $levels{$level} + int rand( $xp_for_next_level - $levels{$level} );
 
-    my %stats = (
-        'strength'     => $race->base_str,
-        'agility'      => $race->base_agl,
-        'intelligence' => $race->base_int,
-        'divinity'     => $race->base_div,
-        'constitution' => $race->base_con,
-    );
-
-    my $stat_pool = $c->config->{stats_pool};
-    my $stat_max  = $c->config->{stat_max};
-
-    # Initial allocation of stat points
-    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
-
-    my $character = $c->schema->resultset('Character')->create(
-        {
-            character_name => _generate_name(),
-            class_id       => $class->id,
-            race_id        => $race->id,
-            town_id        => $town->id,
-            level          => $level,
-            xp             => $xp,
-            party_order    => undef,
-            %stats,
-        }
-    );
-
-    for ( 1 .. $level ) {
-        $character->roll_all;
-
-        %stats = $self->_allocate_stat_points( $c->config->{stat_points_per_level}, undef, $class->primary_stat, \%stats );
-
-        for my $stat ( keys %stats ) {
-            $character->set_column( $stat, $stats{$stat} );
-        }
-
-        $character->update;
-    }
-
-    $character->hit_points( $character->max_hit_points );
-    $character->update;
-
+    my $character = $c->schema->resultset('Character')->generate_character($race, $class, $level, $xp);
+    
     $character->set_default_spells;
-
+    
+    $character->town_id($town->id);
+    $character->update;
+    
     $self->_allocate_equipment($character);
 
     $c->schema->resultset('Character_History')->create(
@@ -105,52 +68,14 @@ sub generate_character {
             character_id => $character->id,
             day_id       => $c->current_day->id,
             event        => $character->character_name . " arrived at the town of " . $town->town_name . " and began looking for a party to join",
-        },        
+        },
     );
 }
 
-sub _allocate_stat_points {
-    my $self = shift;
-    my $stat_pool    = shift;
-    my $stat_max     = shift;
-    my $primary_stat = shift;
-    my $stats        = shift;
-    
-    my @stats = keys %$stats;
-    push @stats, $primary_stat;    # Primary stat goes in twice to make it more likely to get added
-
-    # Allocate 1 point to a random stat until the pool is used
-    while ( $stat_pool > 0 ) {
-        my $stat = ( shuffle @stats )[0];
-
-        # Make sure we dont exceed the stat max (if one was supplied)
-        next if defined $stat_max && $stats->{$stat} == $stat_max;
-
-        $stats->{$stat}++;
-
-        $stat_pool--;
-    }
-
-    return %$stats;
-}
-
-my @names;
-
-sub _generate_name {
-    unless (@names) {
-        @names = read_file( $ENV{RPG_HOME} . '/script/data/character_names.txt' );
-    }
-
-    chomp @names;
-    @names = shuffle @names;
-
-    return $names[0];
-}
-
 sub _allocate_equipment {
-    my $self   = shift;
+    my $self      = shift;
     my $character = shift;
-    
+
     my $c = $self->context;
 
     my %weapon = (

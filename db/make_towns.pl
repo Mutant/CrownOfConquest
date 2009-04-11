@@ -8,18 +8,19 @@ use Data::Dumper;
 use DBI;
 use Games::Dice::Advanced;
 use RPG::Map;
+use RPG::Maths;
 use Math::Round qw(round);
 use List::Util qw(shuffle);
 
-my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
-#my $dbh = DBI->connect("dbi:mysql:game-test","root","root");
+my $dbh = DBI->connect("dbi:mysql:game:mutant.dj","root","***REMOVED***");
+#my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
 $dbh->{RaiseError} = 1;
 
-my $towns = 30;
+my $towns = 70;
 
 # Min distance a town can be from another one
-my $town_dist_x = 21;
-my $town_dist_y = 21;
+my $town_dist_x = 17;
+my $town_dist_y = 17;
 
 my $min_x = 1;
 my $min_y = 1;
@@ -43,7 +44,13 @@ my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain wh
 
 $dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
 
-#$dbh->do('delete from Town');
+$dbh->do('delete from Town');
+$dbh->do('delete from Shop');
+$dbh->do('delete from Items where shop_id is not null');
+$dbh->do('delete from Items_Made');
+$dbh->do('delete from `Character` where town_id is not null');
+$dbh->do('delete from Quest');
+$dbh->do('delete from Quest_Param');
 
 print "\nCreating $towns towns\n";
 
@@ -60,14 +67,10 @@ for (1 .. $towns) {
 		$town_x = Games::Dice::Advanced->roll("1d$x_range") + $min_x - 1;
 		$town_y = Games::Dice::Advanced->roll("1d$y_range") + $min_y - 1;
 
-		warn "creating town #$_ at: $town_x, $town_y\n"; 
+		warn "trying to creating town #$_ at: $town_x, $town_y\n"; 
 		
-		$town_name = generate_name();
-	    
-	    my @dupe_town = $dbh->selectrow_array("select * from Town where town_name = '$town_name'");
-	    
-	    $close_town = 1, next if @dupe_town;
-		
+		$town_name = generate_name();	    
+	        		
 		my @surrounds = RPG::Map->surrounds($town_x, $town_y, $town_dist_x, $town_dist_y);		
 		
 		#warn 'select * from Land join Terrain using (terrain_id) where terrain_name = "town" and x >= ' . $surrounds[0]->{x}
@@ -91,11 +94,19 @@ for (1 .. $towns) {
 	
 	$dbh->do("update Land set terrain_id = $town_terrain_id, creature_threat = 0 where land_id = $land_id"); 
 	
+	$dbh->do("delete from Dungeon where land_id = $land_id");
+	$dbh->do("delete from Creature_Group where land_id = $land_id");
+	$dbh->do("delete from Creature_Orb where land_id = $land_id");	
+	
+	my $prosp = RPG::Maths->weighted_random_number(1..100);
+	
 	$dbh->do(
 		'insert into Town(town_name, land_id, prosperity) values (?,?,?)',
 		{},
-		$town_name, $land_id, generate_prosperity(),
+		$town_name, $land_id, $prosp,
 	);
+	
+    warn "Sucessfully created town #$_ at: $town_x, $town_y\n";
 }
 
 sub generate_name {
@@ -106,7 +117,20 @@ sub generate_name {
 	chomp @names;
 	my @shuffled = shuffle @names;
 	
-	return $shuffled[0];
+	my $name_to_use;
+	
+	foreach my $name (@shuffled) {
+	   my @dupe_town = $dbh->selectrow_array("select * from Town where town_name = '$name'");
+	   
+	   unless (@dupe_town) {
+	       $name_to_use = $name;
+	       last;
+	   }	
+	}
+	
+	die "No available names" unless $name_to_use;
+	
+	return $name_to_use;
 }
 
 sub generate_prosperity {

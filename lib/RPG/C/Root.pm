@@ -54,6 +54,7 @@ sub auto : Private {
             {
                 last_action => { '>=', DateTime->now()->subtract( minutes => 10 ) },
                 defunct     => undef,
+                name  => {'!=',''},
             }
         );
         $c->stash->{parties_online} = \@parties_online;

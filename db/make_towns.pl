@@ -15,11 +15,11 @@ use List::Util qw(shuffle);
 my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
 $dbh->{RaiseError} = 1;
 
-my $towns = 70;
+my $towns = 30;
 
 # Min distance a town can be from another one
-my $town_dist_x = 17;
-my $town_dist_y = 17;
+my $town_dist_x = 13;
+my $town_dist_y = 13;
 
 my $min_x = 1;
 my $min_y = 1;
@@ -43,13 +43,13 @@ my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain wh
 
 $dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
 
-$dbh->do('delete from Town');
-$dbh->do('delete from Shop');
-$dbh->do('delete from Items where shop_id is not null');
-$dbh->do('delete from Items_Made');
-$dbh->do('delete from `Character` where town_id is not null');
-$dbh->do('delete from Quest');
-$dbh->do('delete from Quest_Param');
+#$dbh->do('delete from Town');
+#$dbh->do('delete from Shop');
+#$dbh->do('delete from Items where shop_id is not null');
+#$dbh->do('delete from Items_Made');
+#$dbh->do('delete from `Character` where town_id is not null');
+#$dbh->do('delete from Quest');
+#$dbh->do('delete from Quest_Param');
 
 print "\nCreating $towns towns\n";
 
@@ -75,7 +75,7 @@ for (1 .. $towns) {
 		#warn 'select * from Land join Terrain using (terrain_id) where terrain_name = "town" and x >= ' . $surrounds[0]->{x}
 		#	. ' and x <= ' . $surrounds[1]->{x} . ' and y >= ' . $surrounds[0]->{y} . ' and y <= ' . $surrounds[1]->{y};
 		
-		my @close_town = $dbh->selectrow_array('select * from Land join Terrain using (terrain_id) where terrain_name = "town" and x >= ' . $surrounds[0]->{x}
+		my @close_town = $dbh->selectrow_array('select * from Town join Land using (land_id) where x >= ' . $surrounds[0]->{x}
 			. ' and x <= ' . $surrounds[1]->{x} . ' and y >= ' . $surrounds[0]->{y} . ' and y <= ' . $surrounds[1]->{y});
 		
 		#warn Dumper \@close_town;

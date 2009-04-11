@@ -45,7 +45,7 @@ br {
 
 /* Main Layout */
 
-.main {
+.main, .dijitMenuItemLabel {
 	font-size: 10pt;
 	font-family: verdana, kalimati, helvetica;
 }
@@ -218,4 +218,10 @@ html>body .nav a {width: auto}
 
 .login-info {
 	font-size: 7pt;
+}
+
+.menuExpandIcon {
+	   background-image:
+	      url(http://ajax.googleapis.com/ajax/libs/dojo/1.1.1/dijit/themes/tundra/images/arrowRight.gif);
+		  background-position: 5px 5px;
 }

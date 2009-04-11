@@ -47,6 +47,7 @@ sub party : Local {
     }
     
     my $grid_size = $zoom_level * 9 + 1;
+    $grid_size-- if $zoom_level % 2 == 1; # Odd numbers cause us problems
 
     my $grid_params = $c->forward( 'generate_grid', [ $grid_size, $grid_size, $centre_x, $centre_y, ], );
 

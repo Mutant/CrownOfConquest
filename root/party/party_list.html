@@ -60,7 +60,7 @@
 				params = {
 					label: "Target",
 					popup:targetSubMenu,
-					iconClass:"dijitMenuExpandEnabled"
+					iconClass: "menuExpandIcon"
 				};			
 				var targetPopupMenu = new dijit.PopupMenuItem(params);
 				menu.addChild(targetPopupMenu);
@@ -121,7 +121,7 @@
 							label: "[% spell.spell_name %] ([% memorised_spell.casts_left_today %])", 
 							popup:spellSubMenu, 
 							id:"spellPopupMenu_[% memorised_spell.id %]",
-							iconClass:"dijitMenuExpandEnabled"
+							iconClass: "menuExpandIcon"
 						}
 					);			
 					
@@ -135,7 +135,7 @@
 				params = {
 					label: "Cast",
 					popup:castSubMenu,
-					iconClass:"dijitMenuExpandEnabled"
+					iconClass: "menuExpandIcon"
 				};			
 				var castPopupMenu = new dijit.PopupMenuItem(params);
 				menu.addChild(castPopupMenu);				
@@ -156,7 +156,8 @@
 </script>
 
 
-<table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true" class="main" align="center">
+<table [% UNLESS party.in_combat_with %]dojoType="dojo.dnd.Source"[% END %] 
+	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2>
 <tr>
 	<td colspan="8">
 		<h3>Party Members</h3>
@@ -213,7 +214,7 @@
 
 	<td align="center">
     [% UNLESS char.is_dead %]
-		<div id="char_action_holder_[% char.id %]"></div>    
+		<div id="char_action_holder_[% char.id %]" class="main"></div>    
 	[% ELSE %]
 		[% UNLESS party.in_combat_with %]
 			<button dojoType="dijit.form.Button" onclick="buryDiag('[% char.character_name %]', '[% char.character_id %]')">Bury</button>

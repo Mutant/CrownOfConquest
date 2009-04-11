@@ -164,6 +164,9 @@ sub _create_jewels_in_range {
    	}
    	else {
    		my @shops = $town_to_create_in->shops;
+   		
+   		return unless @shops; # Could happen
+   		
    		for (1..$self->{_config}{jewels_to_create}) {
    			@shops = shuffle @shops;
    			$self->result_source->schema->resultset('Items')->create(

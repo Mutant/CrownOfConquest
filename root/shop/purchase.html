@@ -96,53 +96,6 @@ function saveQuantityPurchase(dialogFields) {
 	return true;
 }
 
-function sellItemConfirm(item_type, item_id, sell_price, equip_place_id) {
-	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
-
-	if (equip_place_id != "" && equip_place_id != 0) {
-		message += "<br>(Note, this item is currently equipped)";
-	}
-	
-	dojo.byId('confirm-sale-message').innerHTML = message;
-	dojo.byId('item-to-sell').value = item_id;
-	dijit.byId('confirm-sale').show();
-}
-
-function sellItem(dialogFields) {
-	dojo.xhrGet( {
-        url: "[% base %]/shop/sell_item?item_id=" + dialogFields.item_id + "&shop_id=[% shop.id %]", 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) {
-          if (responseObject.error) {
-          	dojo.byId('error-message').innerHTML = responseObject.error;
-          	dijit.byId('error').show();
-          }
-          else {
-          	if (responseObject.gold) {
-			  dojo.byId('current-gold').innerHTML = responseObject.gold;
-			}
-			if (responseObject.messages) {
-				var messages = responseObject.messages;
-				var message = "";
-				for ( var i in messages ) {
-					if (messages[i]) {
-						message += messages[i] + '<br>';
-					}
-				}
-				if (message) {
-					dojo.byId('message-text').innerHTML = message;
-					dijit.byId('message-diag').show();
-				}
-			}
-		  }
-          return responseObject;
-        },
-
-	    timeout: 5000 // Time in milliseconds	
-    });
-}
-
 dojo.addOnLoad( init );
 	
 </script>
@@ -178,91 +131,40 @@ dojo.addOnLoad( init );
 	</div>
 </div>
 
-<div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
-    <span id="confirm-sale-message"></span>
-    <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <button dojoType=dijit.form.Button type="submit">OK</button>
-</div>
-
 <div dojoType="dijit.Dialog" id="message-diag" style="display: none" title="Message">
     <span id="message-text"></span>
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<h1>[% shop.shop_name %]</h1>
+[% INCLUDE shop/header.html shop_link='shop/purchase' %]
 
-<br><br>
-
-Shops in [% town.town_name %]: 
-[% FOREACH other_shop IN shops_in_town %]
-	[% IF shop.id == other_shop.id %]
-		<span id="current-selection">[% other_shop.shop_name %]</span>
-	[% ELSE %]
-		<a href="[% base %]/shop/purchase?shop_id=[% other_shop.id %]">[% other_shop.shop_name %]</a>
-	[% END %]
-	&nbsp;
-[% END %]
-<br><br>
-
-[% IF shop.status == 'Open' %]
-	[% shop.shop_owner_name %] welcomes you to his humble store. "I hope you find what you're looking for!"
-[% ELSIF shop.status == 'Opening' %]
-	[% shop.shop_owner_name %] greets you. "My brand bew shop is only just opening! Come back soon for a fine selection of equipment"
-[% ELSIF shop.status == 'Closing' %]
-	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
-	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
-[% ELSIF shop.status == 'Closed' %]
-	There doesn't seem to be anyone here. The shop appears to be closed.
-[% END %]
-<br><br>
-
-<!-- Yes this layout is *really* messed up. Will fix it one day -->
-<div align="center">Drag an item from the right onto a character's name to purchase it</div>
-<div align="center">Party Gold: <span id="current-gold">[% gold %]</span></div>
-<table class="main" border="0" align="center">
-<tr><td valign="top">
-<table class="main" border="0">
-[%  FOREACH char = characters %]
-<tr><td>
-<div id="char_[% char.character_id %]">
-<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" 
-	class="target" accept="item" style="width: 70%;">
-		[% char.character_name %]
-</span>
-</td><td>
-
-<span dojoType="dijit.form.DropDownButton">
-        <span>Equipment</span>
-        <div dojoType="dijit.TooltipDialog" id="equip_[% char.character_id %]" style="display: none" refreshOnShow="true"
-        	href="[% base %]/character/equipment_list?character_id=[% char.id %]&shop_id=[% shop_id %]">
-        </div>
-</span>
-<span id="char_items_[% char.character_id %]" style="visibility: hidden; border: 1px dotted black"><span>
-
-</div>
-</td></tr>
-
-[% END %]
-</table>
-
-</td><td width="40">&nbsp;</td><td valign="top">
-
-[% MACRO item_details(item_type) BLOCK %]
-<td>
-	<span dojoType="dijit.form.DropDownButton">
-	        <span>?</span>
-	        <div dojoType="dijit.TooltipDialog" style="display: none"
-	        	href="[% base %]/item/tooltip?item_type_id=[% item_type.id %]">
-	        </div>
+<div align="center">
+<h3>Buy Items</h3>
+	
+[% FOREACH char = characters %]
+<span style="padding: 5px">
+	<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_name %]-[% char.character_id %]" 
+		class="target" accept="item" style="width: 70%;">
+			[% char.character_name %]
 	</span>
-</td>
+</span>
+[% END %]
+</div>
+
+<br><br>
+<div align="center">Drag an item below onto a character's name to purchase it</div>
+<br>
+
+[% MACRO item_details(item_type, sell_type) BLOCK %]
+	[% INCLUDE item/tooltip.html item_type=item_type, item=undef %]
 [% END %]
 
-<table id="main" border="0" cellpadding="6">
+<div style="min-height: 700px; height: 700px;">
 [% last_category = '' %]
 [% FOREACH category IN items %]
 	[% IF last_category != category.key %]
-		<tr><td colspan="2"><b>[% category.key %]</b></td></tr>
+		[% IF last_category != '' %]</div>[% END %]
+		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h3 style="text-align: center">[% category.key %]</h3>
 		[% last_category = category.key %]
 	[% END %]
 	
@@ -275,22 +177,33 @@ Shops in [% town.town_name %]:
 				[% item_type = item %]
 			[% END %]
 		
-			<tr>
-				<td>
+			<div style="float: left; padding: 10px; height: 125px" id="item_type_[% item_type.id %]">
 				
-					[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
-					<span dojoType="dojo.dnd.Source" class="source" copyOnly="true" id="[% sell_type %]-source-[% item_type.id %]">
-						<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">[% item_type.item_type %]</span>
-					</span>	
-					([% item_type.modified_cost(shop) %] gold[% IF sell_type == 'quantity' %] each[% END %])
-				</td>
-				[% item_details(item_type) %]
-			</tr>
+					<div style="text-align: center">
+						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
+						<span dojoType="dojo.dnd.Source" copyOnly="true" id="[% sell_type %]-source-[% item_type.id %]">
+							<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">
+								[% IF item_type.image %]
+									<img src="[% c.config.static_path %]/images/items/[% item_type.image %]">
+								[% ELSE %]
+									[% item_type.item_type %]
+								[% END %]
+							</span>
+						</span>
+					</div>
+					<div style="text-align: center">([% item_type.modified_cost(shop) %] gold[% IF sell_type=='quantity' %] each[% END %])</div>
+					
+				
+					<div dojoType="dijit.Tooltip"
+                   		connectId="item_type_[% item_type.id %]"
+                   		label="[% item_details(item_type, sell_type) | collapse %]"
+						style="display: none">
+                   </div>
+			</div>
 		[% END %]
 	[% END %]				
 [% END %]	
-</table>
-
-</td></tr></table>
+</div>
+</div>
 
 [% INCLUDE bottom.html %]

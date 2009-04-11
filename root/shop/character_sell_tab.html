@@ -1,0 +1,40 @@
+<div style="min-height: 500px; height: 500px;">
+[% last_category = '' %]
+[% FOREACH item IN items %]
+	[% IF last_category != item.item_type.category.category_name %]
+		[% IF last_category != '' %]</div>[% END %]
+		<div style="float: left; padding: 20px;"><h3 style="text-align: center">[% item.item_type.category.category_name %]</h3>
+		[% last_category = item.item_type.category.category_name %]
+	[% END %]
+		
+	<div style="float: left; padding: 10px; height: 125px" id="item_[% item.id %]" onClick="sellItemConfirm(
+		'[% item.item_type.item_type %]',
+		'[% item.id %]', 
+		'[% item.sell_price(shop) %]', 
+		'[% item.equip_place_id %]',
+		'[% item.character_id %]'
+	)">
+				
+		<div style="text-align: center">
+			[% IF item.item_type.image %]
+				<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+			[% ELSE %]
+				[% item.item_type.item_type %]
+			[% END %]
+		</div>
+		<div style="text-align: center">
+			([% item.sell_price(shop) %] gold)
+			[% IF item.equip_place_id %]
+				<br>(Equipped)
+			[% END %]
+		</div>
+				
+		<div dojoType="dijit.Tooltip"
+        	connectId="item_[% item.id %]"
+            label="[% INCLUDE item/tooltip_specific.html item_type=item.item_type, item=item | collapse %]"
+			style="display: none">
+		</div>
+	</div>					
+[% END %]	
+</div>
+</div>

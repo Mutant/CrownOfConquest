@@ -1,0 +1,32 @@
+<h1>[% shop.shop_name %]</h1>
+
+Shops in [% town.town_name %]: 
+[% FOREACH other_shop IN shops_in_town %]
+	[% IF shop.id == other_shop.id %]
+		<span id="current-selection">[% other_shop.shop_name %]</span>
+	[% ELSE %]
+		<a href="[% base %]/[% shop_link %]?shop_id=[% other_shop.id %]">[% other_shop.shop_name %]</a>
+	[% END %]
+	&nbsp;
+[% END %]
+<br><br>
+
+[% IF shop.status == 'Open' %]
+	[% shop.shop_owner_name %] welcomes you to his humble store. "I hope you find what you're looking for!"
+[% ELSIF shop.status == 'Opening' %]
+	[% shop.shop_owner_name %] greets you. "My brand bew shop is only just opening! Come back soon for a fine selection of equipment"
+[% ELSIF shop.status == 'Closing' %]
+	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
+	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
+[% ELSIF shop.status == 'Closed' %]
+	There doesn't seem to be anyone here. The shop appears to be closed.
+[% END %]
+<br><br>
+
+<div align="center">Party Gold: <span id="current-gold">[% gold %]</span></div>
+
+<div align="center">
+	<a href="[% base %]/shop/purchase?shop_id=[% shop.id %]">Buy Items</a> |
+	<a href="[% base %]/shop/sell?shop_id=[% shop.id %]">Sell Items</a> |
+	<a href="[% base %]">Back To Town</a>
+</div> 

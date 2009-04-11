@@ -6,7 +6,7 @@ use warnings;
 use RPG::Schema;
 use Games::Dice::Advanced;
 
-my $schema = RPG::Schema->connect( "dbi:mysql:game:mutant.dj", "root", "***REMOVED***", { AutoCommit => 1 }, );
+my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "root", { AutoCommit => 1 }, );
 
 my @towns = $schema->resultset('Town')->search();
 

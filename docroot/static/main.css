@@ -225,3 +225,8 @@ html>body .nav a {width: auto}
 	      url(http://ajax.googleapis.com/ajax/libs/dojo/1.1.1/dijit/themes/tundra/images/arrowRight.gif);
 		  background-position: 5px 5px;
 }
+
+.dojoDndItemOver {
+	border: 0px;
+	background: inherit;
+}

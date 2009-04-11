@@ -1,0 +1,91 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE shop/header.html shop_link='shop/sell' %]
+
+<script>
+	dojo.require("dijit.layout.TabContainer");
+	
+function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id) {
+	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
+
+	if (equip_place_id != "" && equip_place_id != 0) {
+		message += "<br>(Note, this item is currently equipped)";
+	}
+	
+	dojo.byId('confirm-sale-message').innerHTML = message;
+	dojo.byId('item-to-sell').value = item_id;
+	dojo.byId('character-id').value = char_id;
+	dijit.byId('confirm-sale').show();
+}
+
+function sellItem(dialogFields) {
+	dojo.xhrGet( {
+        url: "[% base %]/shop/sell_item?item_id=" + dialogFields.item_id + "&shop_id=[% shop.id %]", 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('error-message').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else {
+          	if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;
+			  dijit.byId('chartab_' + dialogFields.character_id).refresh();
+			}
+			if (responseObject.messages) {
+				var messages = responseObject.messages;
+				var message = "";
+				for ( var i in messages ) {
+					if (messages[i]) {
+						message += messages[i] + '<br>';
+					}
+				}
+				if (message) {
+					dojo.byId('message-text').innerHTML = message;
+					dijit.byId('message-diag').show();
+				}
+			}
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000 // Time in milliseconds	
+    });
+}	
+</script>
+
+
+<div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
+    <span id="confirm-sale-message"></span>
+    <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<input id="character-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-sale').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="message-diag" style="display: none" title="Message">
+    <span id="message-text"></span>
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+<h3 style="text-align: center">Sell Items</h3>
+
+<div align="center">Click on an item to sell it to the shop for the indicated price</div>
+
+<br>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+[% FOREACH char = characters %]
+	[% FILTER collapse %]
+   		<div id="chartab_[% char.id %]" dojoType="dijit.layout.ContentPane" title="[% char.character_name %]" style="display: none;" 
+			href="[% base %]/shop/character_sell_tab?character_id=[% char.id %]&shop_id=[% shop.id %]"
+				[% IF current_tab == char.id %]selected=true[% END %]>
+      	</div>
+	[% END %]	
+[% END %]
+</div>
+
+[% INCLUDE bottom.html %]

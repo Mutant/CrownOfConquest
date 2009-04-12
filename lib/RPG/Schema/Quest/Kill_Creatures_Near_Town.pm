@@ -21,6 +21,9 @@ sub set_quest_params {
 	
 	$self->gold_value($self->{_config}{gold_per_cg} * $self->param_start_value('Number Of Creatures To Kill'));
 	$self->xp_value($self->{_config}{xp_per_cg} * $self->param_start_value('Number Of Creatures To Kill'));
+	my $days_to_complete = int $self->param_start_value('Number Of Creatures To Kill') / 2;
+	$days_to_complete = 3 if $days_to_complete < 3;
+	$self->days_to_complete($days_to_complete);
 	$self->update;	
 }
 

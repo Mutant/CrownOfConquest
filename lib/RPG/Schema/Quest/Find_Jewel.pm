@@ -48,6 +48,11 @@ sub set_quest_params {
     
     $self->gold_value($self->{_config}{gold_value});
 	$self->xp_value($self->{_config}{xp_value});
+	
+    my $days_to_complete = Games::Dice::Advanced->roll('1d16') + 4;
+
+    $self->days_to_complete($days_to_complete);	
+	
 	$self->update;
 }
  

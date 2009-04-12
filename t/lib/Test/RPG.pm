@@ -80,6 +80,46 @@ sub clear_data : Test(teardown) {
 	undef $self->{params};
 }
 
+sub clear_dice_data : Tests(shutdown) {
+    my $self = shift;
+
+    # These could probably go in teardown, but some tests (wrongly) rely on them persisting
+	undef $self->{counter};
+	undef $self->{rolls};
+	undef $self->{roll_result};
+
+    no warnings;	
+    delete $INC{'Games/Dice/Advanced.pm'};
+    require 'Games/Dice/Advanced.pm';
+    $INC{'Games/Dice/Advanced.pm'} = 1;
+}
+
+
+# Convenience method to Mock Games::Dice::Advanced
+sub mock_dice {
+    my $self = shift;   
+
+    my $dice = Test::MockObject->new();
+
+    $dice->fake_module(
+        'Games::Dice::Advanced',
+        roll => sub {
+            $self->{counter} ||= 0;
+            if ( $self->{rolls} ) {
+                my $ret = $self->{rolls}[ $self->{counter} ];
+                $self->{counter}++;
+                return $ret;
+            }
+            else {
+                return $self->{roll_result} || 0;
+            }
+        }
+    );
+    
+    return $dice;
+
+}
+
 
 
 1;

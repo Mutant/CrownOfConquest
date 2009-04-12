@@ -15,11 +15,11 @@ use List::Util qw(shuffle);
 my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
 $dbh->{RaiseError} = 1;
 
-my $towns = 30;
+my $towns = 50;
 
 # Min distance a town can be from another one
-my $town_dist_x = 13;
-my $town_dist_y = 13;
+my $town_dist_x = 11;
+my $town_dist_y = 11;
 
 my $min_x = 1;
 my $min_y = 1;
@@ -41,8 +41,7 @@ my %prosp_limits = (
 
 my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain where terrain_name = "town"');
 
-$dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
-
+#$dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
 #$dbh->do('delete from Town');
 #$dbh->do('delete from Shop');
 #$dbh->do('delete from Items where shop_id is not null');

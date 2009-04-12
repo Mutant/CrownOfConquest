@@ -13,13 +13,16 @@ function acceptQuest(quest_id) {
 }
 </script>
 
-<h1>Quest</h1>
+[% PROCESS quest/description.html %]
+
+<h2>[% short_description(quest) %]</h2>
 
 <p>The towns people of [% town.town_name %] have offered you the following quest:</p>
 
-[% PROCESS quest/description.html %]
-
 [% long_description(quest) %]
+
+Reward: [% quest.gold_value %] gold<br>
+Days To Complete: [% quest.days_to_complete %]<br> 
 
 <p>Do you want to accept this quest?</p>
 

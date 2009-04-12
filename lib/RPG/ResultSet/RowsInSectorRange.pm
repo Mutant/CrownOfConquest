@@ -6,6 +6,7 @@ use warnings;
 package RPG::ResultSet::RowsInSectorRange;
 
 use RPG::Map;
+use RPG::Exception;
 
 use Data::Dumper;
 
@@ -15,6 +16,8 @@ use Data::Dumper;
 # * base_point - a hashref containing the x and y coords to base the search
 # * search_range - the range to search on (initially)
 # * increment_search_by - amount to increment the range by if no rows were found in that range (set to 0 to prevent search incrementing)
+# * max_range - (optional) maximum range to search.. if not passed, searches infinitely (which could result in an infintite loop)
+#                 throws an exception if the maximum range is reached
 sub find_in_range {
     my $package             = shift;
     my $resultset           = shift;
@@ -22,6 +25,7 @@ sub find_in_range {
     my $base_point          = shift;
     my $search_range        = shift;
     my $increment_search_by = shift;
+    my $max_range           = shift;
 
     my @rows_in_range;
 
@@ -42,6 +46,14 @@ sub find_in_range {
 
         # Increase the search range (if we haven't found anything)
         $search_range += $increment_search_by;
+        
+        if (defined $max_range && ! @rows_in_range && $search_range >= $max_range) {
+            die RPG::Exception->new(
+                message => "Can't find any rows in the sector range",
+                type    => 'find_in_range_error',
+            );
+        }        
+        
     }
 
     return @rows_in_range;

@@ -1,6 +1,20 @@
-<h4>Recent New Day Messages</h4>
-[% FOREACH day_log IN day_logs %]
-	<b>Day [% day_log.day.day_number %] of Year [% day_log.day.game_year %]</b><br>
-	[% day_log.log | html_line_break %]
-	<br><br>
+<h4>Recent Messages</h4>
+<table class="main">
+[% day_count = today.day_number %]
+[% counter = 1 %] 
+[% WHILE counter < history_length %]
+	<tr>
+		<td valign="top" nowrap><b>Day [% day_count %]</b></td>
+		<td>
+			[% day_logs.${day_count}.log | html_line_break %]<br>
+			<hr size=1>
+			[% FOREACH message IN message_logs.${day_count} %]
+				[% message %]<br>
+				<hr size=1>
+			[% END %]
+		</td>
+	</tr>
+	[% day_count = day_count - 1 %]
+	[% counter = counter + 1 %]
 [% END %]
+</table>

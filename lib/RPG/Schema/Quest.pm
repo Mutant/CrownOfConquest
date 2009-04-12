@@ -11,7 +11,7 @@ __PACKAGE__->table('Quest');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Quest');
 
-__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete gold_value xp_value min_level status/);
+__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete gold_value xp_value min_level status days_to_complete/);
 __PACKAGE__->set_primary_key('quest_id');
 
 __PACKAGE__->belongs_to( 'type', 'RPG::Schema::Quest_Type', { 'foreign.quest_type_id' => 'self.quest_type_id' } );

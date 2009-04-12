@@ -24,7 +24,7 @@ sub history : Local {
     my ( $self, $c ) = @_;
 
     # Check if new day message should be displayed
-    my @day_logs = $c->model('DBIC::DayLog')->search(
+    my %day_logs = map { $_->day->day_number => $_ } $c->model('DBIC::DayLog')->search(
         { 'party_id' => $c->stash->{party}->id, },
         {
             order_by => 'day.date_started desc',
@@ -33,12 +33,31 @@ sub history : Local {
         },
     );
 
+    my @messages = $c->model('DBIC::Party_Messages')->search(
+        { 'party_id' => $c->stash->{party}->id, },
+        {
+            order_by => 'day.date_started desc',
+            prefetch => 'day',
+            rows     => 7,                         # TODO: config me
+        },
+    );
+
+    my %message_logs;
+    foreach my $message (@messages) {
+        push @{ $message_logs{ $message->day->day_number } }, $message->message;
+    }
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'party/details/history.html',
-                params   => { day_logs => \@day_logs, },
+                params   => {
+                    day_logs       => \%day_logs,
+                    message_logs   => \%message_logs,
+                    today          => $c->stash->{today},
+                    history_length => 7,
+                },
             }
         ]
     );
@@ -47,13 +66,13 @@ sub history : Local {
 
 sub options : Local {
     my ( $self, $c ) = @_;
-        
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'party/details/options.html',
-                params   => {  },
+                params   => {},
             }
         ]
     );

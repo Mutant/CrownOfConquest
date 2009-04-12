@@ -45,7 +45,6 @@ BEGIN {
     __PACKAGE__->config->{home} = $ENV{RPG_HOME} || '/home/sam/RPG';
 
     __PACKAGE__->config->{session} = {
-        #storage => __PACKAGE__->path_to('session'),
         session => {
             dbic_class => 'DBIC::Session',
             expires    => 3600,

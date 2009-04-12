@@ -10,13 +10,13 @@
 		[% current_x=current_x+1 %]
 		[% sector = grid.$current_x.$current_y %]
 		[% IF sector.creature_orb_id %]
-			[% color = 'blue' %]
+			[% color = 'grey' %]
 		[% ELSIF sector.creature_group_id %]
-			[% color = 'red' %]
+			[% color = 'grey' %]
 		[% ELSIF sector.town_id %]
-			[% color = 'black' %]
-		[% ELSE %]
 			[% color = 'white' %]
+		[% ELSE %]
+			[% color = 'grey' %]
 		[% END %]
 		<td style="height: 6px; width: 6px; font-size: 6px; background-color: [% color %];">
 			[% IF sector.orb_level %]
@@ -26,6 +26,8 @@
 			[% ELSE %]&nbsp;[% END %]</td>
 	[% END %]
 	[% current_x = 0 %]
+	</tr>
 [% END %]
+</table>
 
 [% INCLUDE bottom.html %]

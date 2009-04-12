@@ -128,6 +128,7 @@ sub test_create_character_level_5 : Tests(7) {
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    5,          "Character is level 5" );
     is( $character->xp,       100,        "Character has 100 xp" );
+    warn $character->max_hit_points;
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );

@@ -10,6 +10,7 @@
 			<b>[% short_description(quest) %]</b><br>
 			Offered by: [% quest.town.town_name %] ([% quest.town.location.x %], [% quest.town.location.y %])<br>
 			Reward: [% quest.gold_value %] gold<br>
+			Days left: [% quest.days_to_complete %]<br>
 			[% list_quest(quest) %]
 		</p>
 	[% END %]

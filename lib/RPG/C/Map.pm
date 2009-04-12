@@ -19,19 +19,19 @@ sub view : Private {
         $c->forward( 'generate_grid', [ $c->config->{map_x_size}, $c->config->{map_y_size}, $party_location->x, $party_location->y, 1, ], );
 
     $grid_params->{click_to_move} = 1;
-    $grid_params->{x_size} = $c->config->{map_x_size};
-    $grid_params->{y_size} = $c->config->{map_y_size};
-    $grid_params->{grid_size} = $c->config->{map_x_size};    
+    $grid_params->{x_size}        = $c->config->{map_x_size};
+    $grid_params->{y_size}        = $c->config->{map_y_size};
+    $grid_params->{grid_size}     = $c->config->{map_x_size};
 
     $c->forward( 'render_grid', [ $grid_params, ] );
 }
 
 sub party : Local {
     my ( $self, $c ) = @_;
-    
-    my $zoom_level = $c->req->param('zoom_level') || 2; 
-    if ($zoom_level < 2 || $zoom_level > 7) {
-        $zoom_level = 2;   
+
+    my $zoom_level = $c->req->param('zoom_level') || 2;
+    if ( $zoom_level < 2 || $zoom_level > 7 ) {
+        $zoom_level = 2;
     }
 
     my ( $centre_x, $centre_y );
@@ -42,20 +42,20 @@ sub party : Local {
     else {
         my $party_location = $c->stash->{party_location};
 
-        $centre_x = $party_location->x + ($c->req->param('x_offset') || 0);
-        $centre_y = $party_location->y + ($c->req->param('y_offset') || 0);
+        $centre_x = $party_location->x + ( $c->req->param('x_offset') || 0 );
+        $centre_y = $party_location->y + ( $c->req->param('y_offset') || 0 );
     }
-    
+
     my $grid_size = $zoom_level * 9 + 1;
-    $grid_size-- if $zoom_level % 2 == 1; # Odd numbers cause us problems
+    $grid_size-- if $zoom_level % 2 == 1;    # Odd numbers cause us problems
 
     my $grid_params = $c->forward( 'generate_grid', [ $grid_size, $grid_size, $centre_x, $centre_y, ], );
 
-    $grid_params->{click_to_move} = 0;    
-    $grid_params->{x_size} = $grid_size;
-    $grid_params->{y_size} = $grid_size;
-    $grid_params->{zoom_level} = $zoom_level;
-    $grid_params->{grid_size} = $grid_size;
+    $grid_params->{click_to_move} = 0;
+    $grid_params->{x_size}        = $grid_size;
+    $grid_params->{y_size}        = $grid_size;
+    $grid_params->{zoom_level}    = $zoom_level;
+    $grid_params->{grid_size}     = $grid_size;
 
     my $map = $c->forward( 'render_grid', [ $grid_params, ] );
 
@@ -76,7 +76,7 @@ sub party : Local {
                     map         => $map,
                     move_amount => 12,
                     known_towns => \@known_towns,
-                    zoom_level => $zoom_level,
+                    zoom_level  => $zoom_level,
                 },
             }
         ]
@@ -85,7 +85,7 @@ sub party : Local {
 
 sub known_dungeons : Local {
     my ( $self, $c ) = @_;
-    
+
     my @known_dungeons = $c->model('DBIC::Dungeon')->search(
         { 'mapped_sector.party_id' => $c->stash->{party}->id, },
         {
@@ -93,21 +93,19 @@ sub known_dungeons : Local {
             order_by => 'level, location.x, location.y',
         },
     );
-    
-    @known_dungeons = grep { $_->party_can_enter($c->stash->{party}) } @known_dungeons;
-    
+
+    @known_dungeons = grep { $_->party_can_enter( $c->stash->{party} ) } @known_dungeons;
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'map/known_dungeons.html',
-                params   => {
-                    known_dungeons => \@known_dungeons,
-                },
+                params   => { known_dungeons => \@known_dungeons, },
             }
         ]
-    );    
-    
+    );
+
 }
 
 sub generate_grid : Private {
@@ -117,7 +115,7 @@ sub generate_grid : Private {
 
     $c->stats->profile("Got party's location");
 
-    my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1);
+    my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1 );
 
     $c->stats->profile("Got start and end point");
 
@@ -155,9 +153,6 @@ sub generate_grid : Private {
             $grid[ $location->{x} ][ $location->{y} ] = "";
         }
     }
-    
-    # Check if we got enough sqaures, and if not add some dummy ones (i.e. outside the edge of the map)
-    #if (
 
     $c->stats->profile("Built grid");
 
@@ -182,9 +177,24 @@ sub render_grid : Private {
     $params->{image_path}       = RPG->config->{map_image_path};
     $params->{current_position} = $c->stash->{party_location};
     $params->{party_in_combat}  = $c->stash->{party}->in_combat_with;
-    $params->{min_x} = $params->{start_point}{x};
-    $params->{min_y} = $params->{start_point}{y};
+    $params->{min_x}            = $params->{start_point}{x};
+    $params->{min_y}            = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;
+
+    # Find any towns and calculate their tax costs
+    my %town_costs;
+    foreach my $row ( @{ $params->{grid} } ) {
+        foreach my $sector (@$row) {
+            next unless $sector;
+            if ( $sector->{town_id} ) {
+                my $town = $c->model('DBIC::Town')->find({town_id => $sector->{town_id}});
+                
+                $town_costs{ $sector->{town_id} } = $town->tax_cost( $c->stash->{party} );
+            }
+        }
+    }
+        
+    $params->{town_costs} = \%town_costs;
 
     return $c->forward(
         'RPG::V::TT',

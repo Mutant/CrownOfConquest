@@ -628,4 +628,39 @@ sub cemetry : Local {
     $c->forward('/panel/refresh');
 }
 
+sub enter : Local {
+    my ( $self, $c ) = @_;
+    
+    my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
+    my $cost = $town->tax_cost($c->stash->{party});
+    
+    if ($c->req->param('payment_method') eq 'gold') {
+        if ($cost->{gold} > $c->stash->{party}->gold) {
+            $c->stash->{error} = "You don't have enough gold to pay the tax";  
+            $c->detach('/panel/refresh'); 
+        }
+        
+        $c->stash->{party}->gold($c->stash->{party}->gold - $cost->{gold});        
+    }
+    else {
+       if ($cost->{turns} > $c->stash->{party}->turns) {
+            $c->stash->{error} = "You don't have enough turns to pay the tax";  
+            $c->detach('/panel/refresh');           
+       }
+       
+       $c->stash->{party}->turns($c->stash->{party}->turns - $cost->{turns});
+    }
+    
+    # Record payment
+    $c->model('Party_Town')->find_or_create(
+        {
+            party_id => $c->stash->{party}->id,
+            town_id => $town->id,
+            tax_amount_paid_today => $cost->{gold}, # Always recorded in gold
+        },
+    );
+    
+    $c->forward('/map/move_to');
+}
+
 1;

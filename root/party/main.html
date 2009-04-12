@@ -231,6 +231,18 @@ function bury(dialogFields) {
 	getPanels('/character/bury?character_id=' + dialogFields.char_id + '&epitaph=' + dialogFields.epitaph);
 }
 
+function enterTown(land_id, gold_cost, turn_cost) {
+	dojo.byId('enter-town-text').innerHTML = "You must pay the daily tax to enter this town.<br><br>You can either pay " + gold_cost 
+		+ " gold, or work for the town for " + turn_cost + " turns.";
+	dojo.byId('land-id').value = land_id;
+	dijit.byId('town-tax').show();
+}
+
+function enterTownSubmit(land_id, paymentMethod){
+	getPanels('/town/enter?land_id=' + land_id + "&payment_method=" + paymentMethod);
+	dijit.byId('town-tax').hide();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
@@ -265,6 +277,17 @@ function bury(dialogFields) {
     <br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="town-tax" style="display: none" title="Enter Town" execute="">
+	<input id="land-id" name="land_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <span id="enter-town-text"></span>
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'gold')">Pay Gold</button>
+		<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'work')">Work</button>
+		<button dojoType=dijit.form.Button onClick="dijit.byId('town-tax').hide()">Cancel</button>
 	</div>
 </div>
 

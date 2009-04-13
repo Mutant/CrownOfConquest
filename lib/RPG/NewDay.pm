@@ -46,20 +46,33 @@ sub run {
         ),
     );
     
-    $logger->info( "Running ticker script as at: " . $dt->datetime() );
-
-    eval { $self->do_new_day( $config, $logger, $dt ); };
-    if ($@) {
-        $logger->error("Error running new day script: $@");
-    }
-    
-    $logger->info( "Successfully completed ticker script run" );
+    while (1) {
+        eval { $self->do_new_day( $config, $logger, $dt ); };
+        if ($@) {
+            $logger->error("Error running new day script: $@");
+            return $@;
+        }
+        
+        # If more than a minute has elapsed, run again with an incremented time to avoid missing any actions
+        unless ($date_to_run_at) {
+            my $elapsed = $dt->delta_ms(DateTime->now());
+            if ($elapsed->minutes > 0) {
+                $dt->add(minutes => 1);
+                next;   
+            }
+        }
+        
+        last;
+        
+    }   
 
 }
 
 sub do_new_day {
     my $self = shift;
     my ( $config, $logger, $dt ) = @_;
+    
+    $logger->info( "Running ticker script as at: " . $dt->datetime() );
 
     my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
 
@@ -69,7 +82,7 @@ sub do_new_day {
         logger      => $logger,
         datetime    => $dt,
     );
-
+    
     foreach my $action ( $self->plugins( context => $context ) ) {
         my $cron = DateTime::Cron::Simple->new( $action->cron_string );
 
@@ -78,6 +91,10 @@ sub do_new_day {
             $action->run();
         }
     }
+    
+    $logger->info( "Successfully completed ticker script run for: " . $dt->datetime() );
+    
+
 }
 
 1;

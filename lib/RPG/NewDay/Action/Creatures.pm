@@ -116,7 +116,7 @@ sub spawn_monsters {
 sub spawn_dungeon_monsters {
     my $self = shift;
     my $c    = $self->context;
-
+    
     my $dungeon_rs = $c->schema->resultset('Dungeon')->search();
 
     $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');

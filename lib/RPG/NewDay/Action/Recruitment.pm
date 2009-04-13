@@ -12,6 +12,8 @@ use Games::Dice::Advanced;
 use RPG::Maths;
 use File::Slurp;
 
+sub depends { qw/RPG::NewDay::Action::CreateDay/ };
+
 sub run {
     my $self = shift;
 

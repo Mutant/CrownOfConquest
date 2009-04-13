@@ -7,13 +7,25 @@ use RPG::NewDay::Context;
 
 use YAML;
 use DateTime;
+use DateTime::Cron::Simple;
+use DateTime::Format::DateParse;
 use Log::Dispatch;
 use Log::Dispatch::File;
 
-use Module::Pluggable search_path => ['RPG::NewDay::Action'], instantiate => 'new', sub_name => 'actions';
+use Module::Pluggable::Dependency search_path => ['RPG::NewDay::Action'], instantiate => 'new';
 
 sub run {
     my $self = shift;
+    my $date_to_run_at = shift;
+
+    my $dt;
+    
+    if ($date_to_run_at) {
+        $dt = DateTime::Format::DateParse->parse_datetime( $date_to_run_at );        
+    }
+    else {
+        $dt = DateTime->now();
+    }
 
     my $home = $ENV{RPG_HOME};
 
@@ -23,7 +35,7 @@ sub run {
         $config = { %$config, %$local_config };
     }
 
-    my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$]" . $_[1] . "\n" } );
+    my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$] " . $_[1] . "\n" } );
     $logger->add(
         Log::Dispatch::File->new(
             name      => 'file1',
@@ -33,56 +45,39 @@ sub run {
             stamp_fmt => '%Y%m%d',
         ),
     );
+    
+    $logger->info( "Running ticker script as at: " . $dt->datetime() );
 
-    eval { $self->do_new_day( $config, $logger ); };
+    eval { $self->do_new_day( $config, $logger, $dt ); };
     if ($@) {
         $logger->error("Error running new day script: $@");
     }
+    
+    $logger->info( "Successfully completed ticker script run" );
 
 }
 
 sub do_new_day {
     my $self = shift;
-    my ( $config, $logger ) = @_;
+    my ( $config, $logger, $dt ) = @_;
 
     my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
-
-    # Create a new day
-    my $yesterday = $schema->resultset('Day')->find(
-        {},
-        {
-            'select' => { max => 'day_number' },
-            'as'     => 'day_number'
-        },
-        )->day_number
-        || 1;
-
-    my $new_day = $schema->resultset('Day')->create(
-        {
-            'day_number'   => $yesterday + 1,
-            'game_year'    => 100,               # TODO: generate game year as well
-            'date_started' => DateTime->now(),
-        },
-    );
-
-    $logger->info( "Beginning new day script for day: " . $new_day->day_number );
 
     my $context = RPG::NewDay::Context->new(
         config      => $config,
         schema      => $schema,
         logger      => $logger,
-        current_day => $new_day,
+        datetime    => $dt,
     );
 
-    foreach my $action ( $self->actions(context => $context) ) {
-        $logger->info("Running action: " . $action->meta->name);
-        $action->run();
+    foreach my $action ( $self->plugins( context => $context ) ) {
+        my $cron = DateTime::Cron::Simple->new( $action->cron_string );
+
+        if ( $cron->validate_time($dt) ) {
+            $logger->info( "Running action: " . $action->meta->name );
+            $action->run();
+        }
     }
-
-    $schema->storage->dbh->commit unless $schema->storage->dbh->{AutoCommit};
-
-    $logger->info( "Successfully completed new day script for day: " . $new_day->day_number );
-
 }
 
 1;

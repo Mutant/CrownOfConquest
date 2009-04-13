@@ -65,6 +65,8 @@ sub setup_context : Test(setup) {
 	
 	$self->{mock_logger} = Test::MockObject->new();
 	$self->{mock_logger}->set_true('debug');
+	$self->{mock_logger}->set_true('info');
+	$self->{mock_logger}->set_isa('Log::Dispatch');
 	$self->{c}->set_always('log',$self->{mock_logger});
 	
 	

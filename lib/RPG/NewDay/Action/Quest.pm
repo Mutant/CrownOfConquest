@@ -12,6 +12,8 @@ use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use Scalar::Util qw(blessed);
 
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Shop/ };
+
 sub run {
     my $self = shift;
 

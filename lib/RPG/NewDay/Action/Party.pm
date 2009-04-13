@@ -4,6 +4,8 @@ use Mouse;
 
 extends 'RPG::NewDay::Base';
 
+sub depends { qw/RPG::NewDay::Action::CreateDay/ };
+
 sub run {
     my $self = shift;
     my $context = $self->context;

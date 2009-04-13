@@ -24,7 +24,10 @@ sub get_sectors_within_range {
     my $start_point = shift;
     my $end_point   = shift;
 
+    confess "Invalid start or end point" unless ref $start_point && ref $end_point;
+
     my @sectors;
+
     for my $x ( $start_point->{x} .. $end_point->{x} ) {
         for my $y ( $start_point->{y} .. $end_point->{y} ) {
             my $sector = $self->get_land_at_location( $x, $y );

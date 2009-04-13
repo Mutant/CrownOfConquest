@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Ticker_Int;
+package Test::RPG::NewDay::Creature;
 
 use base qw(Test::RPG::DB);
 
@@ -12,12 +12,9 @@ use Data::Dumper;
 use Test::MockObject;
 use Test::More;
 
-use Test::RPG::Builder::Character;
-
-use RPG::Ticker;
 use RPG::Ticker::LandGrid;
 
-sub setup_data : Test(startup) {
+sub setup_creature_data : Test(startup=>1) {
     my $self = shift;
 
     my $logger = Test::MockObject->new();
@@ -32,20 +29,21 @@ sub setup_data : Test(startup) {
     $self->{context}->set_always( 'schema', $self->{schema} );
     $self->{context}->mock( 'config', sub { $self->{config} } );
     $self->{context}->mock( 'land_grid', sub { $self->{land_grid} } );
+    $self->{context}->set_isa('RPG::NewDay::Context');
+    
+    use_ok('RPG::NewDay::Action::Creatures');
+
+    $self->{creature_action} = RPG::NewDay::Action::Creatures->new( context => $self->{context} );
 }
 
-sub setup : Test(setup) {
+sub setup_creature_config : Test(setup) {
     my $self = shift;
 
     $self->{config} = {
-        land_per_orb                     => 4,
-        orb_distance_from_town_per_level => 1,
         creature_groups_to_parties       => 5,
         max_creature_groups_per_sector   => 1,
         min_creature_groups_per_sector   => 0,
         max_hops                         => 2,
-        max_orb_level                    => 1,
-        orb_distance_from_other_orb      => 1,
     };
 
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
@@ -70,157 +68,6 @@ sub setup : Test(setup) {
     );
 }
 
-sub test_spawn_orbs_successful_run : Tests(7) {
-    my $self = shift;
-
-    my @land = $self->_create_land();
-
-    # Towns on top left and bottom right corners
-    for my $idx ( 0, 8 ) {
-        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
-    }
-
-    $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
-
-    RPG::Ticker->spawn_orbs( $self->{context} );
-
-    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
-        {},
-        {
-            order_by => 'x,y',
-            prefetch => 'land',
-        }
-    );
-
-    is( scalar @orbs,                           2, "Should be two orbs" );
-    is( $orbs[0]->land->x,                      1, "First orb should be at x=1" );
-    is( $orbs[0]->land->y,                      3, "First orb should be at y=3" );
-    is( defined $orbs[0]->land->creature_group, 1, "Creature group spawned at first orb" );
-
-    is( $orbs[1]->land->x,                      3, "Second orb should be at x=3" );
-    is( $orbs[1]->land->y,                      1, "Second orb should be at y=1" );
-    is( defined $orbs[1]->land->creature_group, 1, "Creature group spawned at second orb" );
-}
-
-sub test_spawn_orb_successful_run_with_existing_orb : Test(2) {
-    my $self = shift;
-    
-    return "Test fails periodically - needs a rewrite";
-
-    my @land = $self->_create_land();
-
-    # Town on top left corner
-    $self->{schema}->resultset('Town')->create( { 'land_id' => $land[0]->id } );
-
-    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[2]->id, } );
-
-    $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
-    
-    RPG::Ticker->spawn_orbs( $self->{context} );
-
-    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
-        {},
-        {
-            order_by => 'x,y',
-            prefetch => 'land',
-        }
-    );
-
-    is( scalar @orbs,      2, "Should be two orbs" );
-    is( $orbs[1]->land->x, 3, "Second orb created on bottom row" );
-
-}
-
-sub test_spawn_orbs_successful_run_with_existing_cg : Tests(8) {
-    my $self = shift;
-
-    my @land = $self->_create_land();
-
-    # Towns on top left and bottom right corners
-    for my $idx ( 0, 8 ) {
-        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
-    }
-
-    my $existing_cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[2]->id, }, );
-
-    $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
-
-    RPG::Ticker->spawn_orbs( $self->{context} );
-
-    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
-        {},
-        {
-            order_by => 'x,y',
-            prefetch => 'land',
-        }
-    );
-
-    is( scalar @orbs,      2, "Should be two orbs" );
-    is( $orbs[0]->land->x, 1, "First orb should be at x=1" );
-    is( $orbs[0]->land->y, 3, "First orb should be at y=3" );
-
-    my @spawned_cgs = $orbs[0]->land->search_related('creature_group');
-
-    is( scalar @spawned_cgs, 1, "Creature group spawned at first orb" );
-    is( $spawned_cgs[0]->id, $existing_cg->id, "Didn't spawn a new cg, as one already there" );
-
-    is( $orbs[1]->land->x, 3, "Second orb should be at x=3" );
-    is( $orbs[1]->land->y, 1, "Second orb should be at y=1" );
-
-    @spawned_cgs = $orbs[1]->land->search_related('creature_group');
-    is( scalar @spawned_cgs, 1, "Creature group spawned at first orb" );
-}
-
-sub test_spawn_orb_with_town_search_smaller_than_orb_search : Test(1) {
-    my $self = shift;
-
-    my @land = $self->_create_land( 5, 5 );
-
-    $self->{schema}->resultset('Creature_Orb')->create( { land_id => $land[12]->id, } );
-
-    $self->{config}->{orb_distance_from_other_orb} = 3;
-
-    $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
-
-    RPG::Ticker->spawn_orbs( $self->{context} );
-
-    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
-        {},
-        {
-            order_by => 'x,y',
-            prefetch => 'land',
-        }
-    );
-
-    is( scalar @orbs, 1, "Should only be one orb" );
-
-}
-
-sub test_spawn_orb_no_room_for_new_orb : Test(2) {
-    my $self = shift;
-
-    my @land = $self->_create_land();
-
-    for my $idx ( 0, 4, 8 ) {
-        $self->{schema}->resultset('Town')->create( { 'land_id' => $land[$idx]->id } );
-    }
-
-    $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
-
-    RPG::Ticker->spawn_orbs( $self->{context} );
-
-    my @orbs = $self->{schema}->resultset('Creature_Orb')->search(
-        {},
-        {
-            order_by => 'x,y',
-            prefetch => 'land',
-        }
-    );
-
-    is( scalar @orbs, 0, "Should be no orbs" );
-    $self->{logger}->called_ok( 'warning', "Warning should be written to log file" );
-}
-
 sub test_spawn_monsters : Tests(4) {
     my $self = shift;
 
@@ -234,7 +81,7 @@ sub test_spawn_monsters : Tests(4) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    RPG::Ticker->spawn_monsters( $self->{context} );
+        $self->{creature_action}->spawn_monsters;
 
     my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
     is( scalar @cgs, 5, "Five groups generated" );
@@ -279,7 +126,7 @@ sub test_spawn_monsters_multiple_orbs : Tests(9) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    RPG::Ticker->spawn_monsters( $self->{context} );
+        $self->{creature_action}->spawn_monsters;
 
     my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
     is( scalar @cgs, 4, "4 groups generated" );
@@ -340,7 +187,7 @@ sub test_spawn_monsters_with_towns : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    RPG::Ticker->spawn_monsters( $self->{context} );
+        $self->{creature_action}->spawn_monsters;
 
     my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
     is( scalar @cgs, 3, "3 groups generated" );
@@ -366,7 +213,7 @@ sub test_move_cg_no_other_cgs : Tests(3) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
     is( $moved, 1, "Creature group was moved" );
 
@@ -399,7 +246,7 @@ sub test_move_cg_some_other_cgs : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg1 );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg1 );
 
     is( $moved, 1, "Creature group was moved" );
 
@@ -419,7 +266,7 @@ sub test_move_cg_other_cgs_blocking : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg1 );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg1 );
 
     is( $moved, 0, "Creature group was not moved" );
 
@@ -446,7 +293,7 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
     is( $moved, 1, "Creature group was moved" );
 
@@ -469,7 +316,7 @@ sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
     is( $moved, 0, "Creature group was not moved" );
 
@@ -496,7 +343,7 @@ sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 2, $cg );
+    my $moved = $self->{creature_action}->_move_cg( 2, $cg );
 
     is( $moved, 1, "Creature group was moved" );
 
@@ -530,14 +377,14 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 2, $cg1 );
+    my $moved = $self->{creature_action}->_move_cg( 2, $cg1 );
 
     is( $moved, 1, "First creature group was moved" );
 
     $cg1->discard_changes;
     is( $cg1->land_id, $land[0]->id, "Moved to available sqaure" );
 
-    $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg2 );
+    $moved = $self->{creature_action}->_move_cg( 1, $cg2 );
 
     is( $moved, 0, "Second creature group was not moved" );
 
@@ -559,7 +406,7 @@ sub test_move_cg_town_blocks_some_squares : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    my $moved = RPG::Ticker->_move_cg( $self->{context}, 1, $cg );
+    my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
     is( $moved, 0, "Creature group couldn't be moved" );
 
@@ -599,7 +446,7 @@ sub test_move_monsters : Tests(4) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-    RPG::Ticker->move_monsters( $self->{context} );
+    $self->{creature_action}->move_monsters( );
 
     $cg1->discard_changes;
     $cg2->discard_changes;
@@ -608,21 +455,6 @@ sub test_move_monsters : Tests(4) {
     is( $cg2->location->x, $land[15]->x, "Second cg moved to x available square" );
     is( $cg2->location->y, $land[15]->y, "Second cg moved to y available square" );
 
-}
-
-sub test_create_group_simple : Tests(2) {
-    my $self = shift;
-    
-    # GIVEN
-    my ($sector) = $self->_create_land(1, 1);
-    
-    # WHEN
-    my $cg = RPG::Ticker->_create_group($self->{schema}, $sector, 1, 3);
-    
-    # THEN
-    isa_ok($cg, 'RPG::Schema::CreatureGroup', "Creature Group created");
-    ok(scalar $cg->creatures >= 3, "3 or more creatures in the group");  
-    
 }
 
 sub _create_land {

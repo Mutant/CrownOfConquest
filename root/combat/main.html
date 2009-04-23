@@ -9,13 +9,24 @@
 [% END %]
 
 [% UNLESS combat_complete || party_dead %]
-<a href="javascript:getPanels('[% IF in_dungeon %]/dungeon[% END %]/combat/fight')"><img src="[% c.config.static_path %]/images/fightunsel.png" border="0"></a> 
-<a href="javascript:getPanels('[% IF in_dungeon %]/dungeon[% END %]/combat/flee')"><img src="[% c.config.static_path %]/images/fleeunsel.png" border="0"></a>
+[% prefix = '' %]
+[% IF in_dungeon %]
+	[% prefix = '/dungeon' %]
+[% ELSIF opposing_party %]
+	[% prefix = '/party' %]
+[% END %]	
+
+<a href="javascript:getPanels('[% prefix %]/combat/fight')"><img src="[% c.config.static_path %]/images/fightunsel.png" border="0"></a> 
+<a href="javascript:getPanels('[% prefix %]/combat/flee')"><img src="[% c.config.static_path %]/images/fleeunsel.png" border="0"></a>
 
 <br><br>
 [% END %]
 
-[% INCLUDE combat/creature_group.html %]
+[% IF opposing_party %]
+	[% INCLUDE combat/opposing_party.html %]
+[% ELSE %]
+	[% INCLUDE combat/creature_group.html %]
+[% END %]
 
 [% IF combat_messages %]
 <b>Last Round</b>:

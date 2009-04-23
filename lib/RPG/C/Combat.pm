@@ -167,20 +167,13 @@ sub select_action : Local {
     my $character = $c->model('DBIC::Character')->find( $c->req->param('character_id') );
 
     $character->last_combat_action( $c->req->param('action') );
-    $character->update;
 
     # Remove empty strings
     my @action_params = grep { $_ ne '' } $c->req->param('action_param');
 
-    if ( !@action_params ) {
-        delete $c->session->{combat_action_param}{ $c->req->param('character_id') };
-    }
-    elsif ( scalar @action_params == 1 ) {
-        $c->session->{combat_action_param}{ $c->req->param('character_id') } = $action_params[0];
-    }
-    else {
-        $c->session->{combat_action_param}{ $c->req->param('character_id') } = \@action_params;
-    }
+    $character->last_action_param1($action_params[0] || '');
+    $character->last_action_param2($action_params[1] || '');
+    $character->update;
 
     $c->forward( '/panel/refresh', ['messages'] );
 }
@@ -276,8 +269,7 @@ sub execute_round : Private {
         }
     }
 
-    push @{ $c->stash->{combat_messages} },
-        $c->forward(
+    push @{ $c->stash->{combat_messages} }, $c->forward(
         'RPG::V::TT',
         [
             {
@@ -289,7 +281,7 @@ sub execute_round : Private {
                 return_output => 1,
             }
         ]
-        );
+    );
 
     $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
     $c->stash->{party}->update;
@@ -316,16 +308,16 @@ sub calculate_factors : Private {
             $c->session->{combat_factors}{$type}{ $combatant->id }{df} = $combatant->defence_factor;
             $c->log->debug( "Calculating defence factor for " . $combatant->name . " - " . $combatant->id );
         }
-        
+
         unless ( defined $c->session->{combat_factors}{$type}{ $combatant->id }{dam} ) {
             $c->session->{combat_factors}{$type}{ $combatant->id }{dam} = $combatant->damage;
             $c->log->debug( "Calculating damage for " . $combatant->name . " - " . $combatant->id );
-        }        
+        }
 
         # Store character's weapons
         if ( $type eq 'character' && !defined $c->session->{ $type . '_weapons' }{ $combatant->id } ) {
             my ($weapon) = $combatant->get_equipped_item('Weapon');
-            
+
             if ($weapon) {
                 $c->session->{ $type . '_weapons' }{ $combatant->id }{id}         = $weapon->id;
                 $c->session->{ $type . '_weapons' }{ $combatant->id }{durability} = $weapon->variable('Durability');
@@ -539,12 +531,12 @@ sub attack : Private {
 
     $c->log->debug("About to check attack");
 
-    if ( $attacker_type eq 'character' ) {        
+    if ( $attacker_type eq 'character' ) {
         my $attack_error = $c->forward( 'check_character_attack', [$attacker] );
-        $c->log->debug("Got attack error: " . Dumper $attack_error);
+        $c->log->debug( "Got attack error: " . Dumper $attack_error);
         return $attack_error if $attack_error;
     }
-    
+
     $c->log->debug("About to execute defence");
 
     if ( my $defence_message = $defender->execute_defence ) {
@@ -609,10 +601,10 @@ sub attack : Private {
 sub check_character_attack : Local {
     my ( $self, $c, $attacker ) = @_;
 
-    my $weapon_durability  = $c->session->{'character_weapons'}{ $attacker->id }{durability};
-    
+    my $weapon_durability = $c->session->{'character_weapons'}{ $attacker->id }{durability};
+
     return { weapon_broken => 1 } if $weapon_durability == 0;
-    
+
     my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
 
     if ( $weapon_damage_roll == 1 ) {
@@ -626,7 +618,7 @@ sub check_character_attack : Local {
             },
             { join => 'item_variable_name', }
         );
-        
+
         if ($var) {
             $var->update( { item_variable_value => $weapon_durability, } );
             $c->session->{'character_weapons'}{ $attacker->id }{durability} = $weapon_durability;
@@ -634,8 +626,9 @@ sub check_character_attack : Local {
     }
 
     if ( $weapon_durability <= 0 ) {
+
         # TODO: clear factor cache?
-        push @{$c->stash->{refresh_panels}}, 'party';
+        push @{ $c->stash->{refresh_panels} }, 'party';
         return { weapon_broken => 1 };
     }
 
@@ -677,8 +670,8 @@ sub flee : Local {
     my $party = $c->stash->{party};
 
     return unless $party->in_combat_with;
-    
-    $c->stash->{combat_log}->flee_attempts($c->stash->{combat_log}->flee_attempts+1);
+
+    $c->stash->{combat_log}->flee_attempts( $c->stash->{combat_log}->flee_attempts + 1 );
 
     my $flee_successful = $c->forward('roll_flee_attempt');
 
@@ -726,8 +719,9 @@ sub roll_flee_attempt : Private {
     my $level_difference = $creature_group->level - $party->level;
     my $flee_chance =
         $c->config->{base_flee_chance} + ( $c->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
-        
-    if ($party->level == 1) {
+
+    if ( $party->level == 1 ) {
+
         # Bonus chance for being low level
         $flee_chance += $c->config->{flee_chance_low_level_bonus};
     }

@@ -10,6 +10,8 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 use Test::MockObject;
 
+use Test::RPG::Builder::Party;
+
 use Data::Dumper;
 
 sub startup : Tests(startup=>1) {
@@ -59,6 +61,42 @@ sub test_new_day : Tests(6) {
     ( $name, $args ) = $mock_party->next_call();
     is( $name, 'update', "Party updated" );
 
+}
+
+sub test_in_party_battle_with : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});
+    
+    my $battle = $self->{schema}->resultset('Party_Battle')->create(
+        {
+            complete => undef,
+        }
+    );
+    
+    $self->{schema}->resultset('Battle_Participant')->create(
+        {
+            party_id => $party1->id,
+            battle_id => $battle->id,
+        }
+    );
+    
+    $self->{schema}->resultset('Battle_Participant')->create(
+        {
+            party_id => $party2->id,
+            battle_id => $battle->id,
+        }
+    );
+    
+    # WHEN
+    my $p1_opp = $party1->in_party_battle_with;
+    my $p2_opp = $party2->in_party_battle_with;
+    
+    # THEN
+    is($p1_opp->id, $party2->id, "Party 1 in combat with party 2");
+    is($p2_opp->id, $party1->id, "Party 2 in combat with party 1");
 }
 
 1;

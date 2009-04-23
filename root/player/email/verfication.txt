@@ -1,5 +1,5 @@
 Your verification code for Kingdoms is: [% verification_code %].
 
-You can verify your account by going to this URL: [% base %]/player/verify?verification_code=[% verification_code %]
+You can verify your account by going to this URL: [% base %]/player/verify?verification_code=[% verification_code %]&email=[% email %]
 
 [% INCLUDE player/email/email_footer.txt %] 

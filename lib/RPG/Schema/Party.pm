@@ -1,7 +1,10 @@
 package RPG::Schema::Party;
-use base 'DBIx::Class';
-use strict;
-use warnings;
+
+use Mouse;
+
+extends 'DBIx::Class';
+
+with 'RPG::Schema::Role::BeingGroup';
 
 use Data::Dumper;
 use List::Util qw(sum);
@@ -149,7 +152,7 @@ __PACKAGE__->add_columns(
         'name'              => 'dungeon_grid_id',
         'is_nullable'       => 0,
         'size'              => 0,
-    },    
+    },
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -164,6 +167,14 @@ __PACKAGE__->might_have( 'cg_opponent', 'RPG::Schema::CreatureGroup', { 'foreign
 __PACKAGE__->belongs_to( 'player', 'RPG::Schema::Player', { 'foreign.player_id' => 'self.player_id' } );
 
 __PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'party_id', );
+
+__PACKAGE__->has_many( 'party_battles', 'RPG::Schema::Battle_Participant', 'party_id', );
+
+sub members {
+    my $self = shift;
+    
+    return $self->characters;   
+}
 
 sub movement_factor {
     my $self = shift;
@@ -276,10 +287,10 @@ sub adjust_order {
     my $self = shift;
 
     my $count = 0;
-    foreach my $character ($self->characters) {
+    foreach my $character ( $self->characters ) {
         $character->discard_changes;
         next unless $character->in_storage && $character->party_id == $self->id;
-        
+
         $count++;
         $character->party_order($count);
         $character->update;
@@ -287,18 +298,58 @@ sub adjust_order {
 }
 
 sub summary {
-	my $self = shift;
-	my $include_dead_characters = shift || 0;
-	my @characters = $self->characters;
-		
-	my %summary;
-	
-	foreach my $character (@characters) {
-	    next if ! $include_dead_characters && $character->is_dead;
-		$summary{$character->class->class_name}++;
-	}
-	
-	return \%summary;
+    my $self                    = shift;
+    my $include_dead_characters = shift || 0;
+    my @characters              = $self->characters;
+
+    my %summary;
+
+    foreach my $character (@characters) {
+        next if !$include_dead_characters && $character->is_dead;
+        $summary{ $character->class->class_name }++;
+    }
+
+    return \%summary;
+}
+
+sub in_party_battle {
+    my $self = shift;
+
+    return $self->_get_party_battle ? 1 : 0;
+}
+
+sub in_party_battle_with {
+    my $self = shift;
+
+    my $battle = $self->_get_party_battle;
+
+    if ($battle) {
+        my $battle_participant = $self->result_source->schema->resultset('Battle_Participant')->find(
+            {
+                party_id  => { '!=', $self->id },
+                battle_id => $battle->battle->battle_id,
+            },
+            {
+                prefetch => {'party' => {'characters' => 'character_effects'}},  
+            },
+        );
+        
+        return $battle_participant->party;
+    }
+    
+    return;
+}
+
+sub _get_party_battle {
+    my $self = shift;
+
+    return $self->{_party_battle} if defined $self->{_party_battle};
+
+    my $battle = $self->find_related( 'party_battles', { 'battle.complete' => undef, }, { prefetch => 'battle', } );
+
+    $self->{_party_battle} = $battle;
+
+    return $battle;
 }
 
 1;

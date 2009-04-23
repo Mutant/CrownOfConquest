@@ -178,7 +178,10 @@ sub _generate_and_send_verification_code {
         [
             {
                 template      => 'player/email/verfication.txt',
-                params        => { verification_code => $verification_code, },
+                params        => { 
+                    verification_code => $verification_code,
+                    email => $c->req->param('email'), 
+                },
                 return_output => 1,
             }
         ]
@@ -409,6 +412,12 @@ sub about : Local {
     my ( $self, $c ) = @_;
 
     $c->forward( 'RPG::V::TT', [ { template => 'player/about.html', } ] );
+}
+
+sub screenshots : Local {
+    my ( $self, $c ) = @_;
+
+    $c->forward( 'RPG::V::TT', [ { template => 'player/screenshots.html', } ] );
 }
 
 1;

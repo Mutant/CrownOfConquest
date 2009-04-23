@@ -1,7 +1,8 @@
-use strict;
-use warnings;
-
 package RPG::Schema::Creature;
+
+use Mouse;
+
+with 'RPG::Schema::Role::Being';
 
 use Data::Dumper;
 use List::MoreUtils qw(true);
@@ -34,32 +35,6 @@ __PACKAGE__->has_many(
     'RPG::Schema::Creature_Effect',
     { 'foreign.creature_id' => 'self.creature_id' },
 );
-
-sub health {
-	my $self = shift;
-	
-	my $ratio = $self->hit_points_current / $self->hit_points_max;
-	
-	# TODO: hmm, maybe this belongs in the view
-	if ($ratio == 1) {
-		return 'In Perfect Health';
-	}
-	elsif ($ratio > 0.75) {
-		return 'Slightly Wounded';
-	}
-	elsif ($ratio > 0.5) {
-		return 'Wounded';
-	}
-	elsif ($ratio > 0.1) {
-		return 'Severely Wounded';
-	}
-	elsif ($ratio > 0) {
-		return 'Mortally Wounded';
-	}
-	else {
-		return 'Dead';
-	}
-}
 
 sub hit {
 	my $self = shift;
@@ -165,7 +140,7 @@ sub change_hit_points {
 	return;	
 }
 
-sub is_attack_allowed {
+sub number_of_attacks {
 	my $self = shift;
 	my @attack_history = @_;
 	

@@ -79,6 +79,11 @@ sub save_party : Local {
         $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
     }
     else {
+        if ($c->stash->{party}->characters->count < $c->config->{new_party_characters}) {
+            $c->stash->{error} = "You still have more character's to create!";
+            $c->detach('create');
+        }
+        
         $c->stash->{party}->turns( $c->config->{starting_turns} );
         $c->stash->{party}->gold( $c->config->{start_gold} );
         $c->stash->{party}->created( DateTime->now() );

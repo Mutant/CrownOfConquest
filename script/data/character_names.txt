@@ -9,7 +9,7 @@ Egor the Leopard
 Distiratsu of the Bloody Body
 Prasutagus Coolling
 Arian Mantonson
-Shurik the Coon
+Shurik the Goon
 Verner Greenman
 Daudi Nadav
 Thorarin Lizardtrainer
@@ -194,9 +194,9 @@ Yervant of the Three Rings
 Aslak Haretooth
 Ogmund Cathunter
 Shurik the Dog
-Bellinus Coonhunter
+Bellinus Goonhunter
 Karolek the Lizard
-Coon Govannonson
+Goon Govannonson
 Julian Readicuts
 Zeroun of the Nine Fires
 Levka the Boar
@@ -252,7 +252,7 @@ Konrad Graywood
 Rashid Siddeeq
 Igor of the Evening Spirit
 Fermin the Laughing Magician
-Coon Govannonson
+Goon Govannonson
 Bayard Slythoughts
 Bodvar Pikewielder
 Raven Fyrenson
@@ -290,7 +290,7 @@ Rognvald the Mace
 Aner the Blue Wizard
 Fredek of Jaroslaw
 Alvar Moonseed
-Vanechka the Coon
+Vanechka the Goon
 Dima of Bylev
 Hrafn Axebreaker
 Xarles Smoothmover
@@ -331,7 +331,7 @@ Knut the Sword
 Ingi Arrowthrower
 Vladik the Crafty
 Baraxil of the Peaceful Keep
-Herjolf Coonskinner
+Herjolf Goonskinner
 Arib Abdul
 Valfrid Yellowworm
 Adon the Middle Warlock
@@ -438,7 +438,7 @@ Alik the Eagle
 Karayan of the Eight Fingers
 Cadmon Spearthruster
 Oxa Birchson
-Bergthor the Coon
+Bergthor the Goon
 Faran Starring
 Deer Cynricson
 Gest Pikebreaker

@@ -1,7 +1,8 @@
-use strict;
-use warnings;
-
 package RPG::Schema::Character;
+
+use Mouse;
+
+with 'RPG::Schema::Role::Being';
 
 use base 'DBIx::Class';
 
@@ -18,7 +19,8 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
-        level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id/
+        level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
+        last_combat_param1 last_combat_param2/
 );
 
 __PACKAGE__->add_columns( xp => { accessor => '_xp' } );
@@ -44,6 +46,19 @@ __PACKAGE__->many_to_many( 'spells' => 'memorised_spells', 'spell' );
 __PACKAGE__->has_many( 'character_effects', 'RPG::Schema::Character_Effect', { 'foreign.character_id' => 'self.character_id' }, );
 
 our @STATS = qw(str con int div agl);
+
+# These allow us to use the 'Being' role
+sub hit_points_current {
+    my $self = shift;
+    
+    return $self->hit_points;
+}
+
+sub hit_points_max {
+    my $self = shift;
+    
+    return $self->max_hit_points   
+}
 
 sub roll_all {
     my $self = shift;

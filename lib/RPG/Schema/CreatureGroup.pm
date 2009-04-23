@@ -1,9 +1,10 @@
-use strict;
-use warnings;
-
 package RPG::Schema::CreatureGroup;
 
-use base 'DBIx::Class';
+use Mouse;
+
+extends 'DBIx::Class';
+
+with 'RPG::Schema::Role::BeingGroup';
 
 use Carp;
 use Data::Dumper;
@@ -40,6 +41,12 @@ __PACKAGE__->has_many(
     'RPG::Schema::Creature',
     { 'foreign.creature_group_id' => 'self.creature_group_id' },
 );
+
+sub members {
+    my $self = shift;
+    
+    return $self->creatures;   
+}
 
 sub initiate_combat {
 	my $self = shift;

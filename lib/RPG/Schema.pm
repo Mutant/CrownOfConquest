@@ -15,7 +15,7 @@ __PACKAGE__->load_classes(qw/
     Spell Memorised_Spells Effect Creature_Effect Character_Effect Mapped_Sectors Day DayLog Combat_Log
     Quest Quest_Param Quest_Param_Name Quest_Type Character_History Grave Creature_Orb Party_Messages
     Dungeon Dungeon_Grid Dungeon_Wall Dungeon_Position Door Dungeon_Room Mapped_Dungeon_Grid Session
-    Item_Property_Category Party_Town
+    Item_Property_Category Party_Town Party_Battle Battle_Participant
 /);
 
 my $config;

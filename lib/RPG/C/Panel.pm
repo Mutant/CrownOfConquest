@@ -35,6 +35,7 @@ sub refresh : Private {
 			}
 			
 			my $panel_path = $c->forward('find_panel_path', [$panel]);
+			$c->log->debug("Path for $panel: " . $panel_path);
 			$response{refresh_panels}{$panel} = $c->forward($panel_path);
 		}
 		else {
@@ -70,6 +71,9 @@ sub find_panel_path : Private {
     	elsif ($party->in_combat_with) {
     		return '/combat/main';
     	}
+    	elsif ($party->in_party_battle) {
+    		return '/combat/party/main';
+    	}    	
     	elsif ($party->dungeon_grid_id) {
     	    return '/dungeon/sector_menu';
     	}

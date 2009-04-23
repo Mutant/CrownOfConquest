@@ -7,3 +7,16 @@ CREATE TABLE `Party_Town` (
     town_id        INT NOT NULL,
     tax_amount_paid_today INT NOT NULL DEFAULT 0,
 PRIMARY KEY (party_id,town_id)) TYPE=INNODB;
+
+CREATE TABLE `Party_Battle` (
+    battle_id      INT NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (battle_id)) TYPE=INNODB;
+
+CREATE TABLE `Battle_Participant` (
+    party_id       INT NOT NULL,
+    battle_id      INT NOT NULL,
+    last_submitted_round INT NOT NULL,
+PRIMARY KEY (party_id,battle_id)) TYPE=INNODB;
+
+ALTER TABLE `Character` ADD COLUMN `last_combat_param1` VARCHAR(255)  NOT NULL AFTER `town_id`,
+ ADD COLUMN `last_combat_param2` VARCHAR(255)  NOT NULL AFTER `last_combat_param1`;

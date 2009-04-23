@@ -17,7 +17,7 @@ use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
 
-sub dungeon_startup : Test(startup => 1) {
+sub combat_startup : Test(startup => 1) {
     my $self = shift;
 
 	$self->{dice} = Test::MockObject->fake_module( 

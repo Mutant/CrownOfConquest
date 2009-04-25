@@ -7,40 +7,19 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use Carp;
 
+use RPG::Combat::CreatureBattle;
+
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use DateTime;
-
-sub auto : Private {
-    my ( $self, $c ) = @_;
-
-    # Load combat_log into stash (if we're in combat)
-    if ( $c->stash->{party}->in_combat_with ) {
-        $c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->find(
-            {
-                party_id          => $c->stash->{party}->id,
-                creature_group_id => $c->stash->{party}->in_combat_with,
-                land_id           => $c->stash->{party_location}->id,
-                encounter_ended   => undef,
-            },
-        );
-
-        unless ( $c->stash->{combat_log} ) {
-            $c->error('No combat log found for in progress combat');
-            return 0;
-        }
-    }
-
-    return 1;
-}
 
 sub end : Private {
     my ( $self, $c ) = @_;
 
     # Save any changes to the combat log
-    $c->stash->{combat_log}->update if $c->stash->{combat_log};
+    #$c->stash->{combat_log}->update if $c->stash->{combat_log};
 
-    $c->forward('/end');    # TODO: can chaining take care of this?
+    #$c->forward('/end');    # TODO: can chaining take care of this?
 }
 
 # Check to see if creatures attack party (if there are any in their current sector)
@@ -59,7 +38,7 @@ sub check_for_attack : Local {
             $c->stash->{party}->update;
             $c->stash->{creatures_initiated} = 1;
 
-            $c->forward( 'create_combat_log', [ $creature_group, 'creatures' ] );
+            #$c->forward( 'create_combat_log', [ $creature_group, 'creatures' ] );
 
             return $creature_group;
         }
@@ -86,7 +65,7 @@ sub execute_attack : Private {
         $c->stash->{party}->in_combat_with( $creature_group->id );
         $c->stash->{party}->update;
 
-        $c->forward( 'create_combat_log', [ $creature_group, 'party' ] );
+        #$c->forward( 'create_combat_log', [ $creature_group, 'party' ] );
 
         $c->forward( '/panel/refresh', [ 'messages', 'party' ] );
     }
@@ -95,31 +74,6 @@ sub execute_attack : Private {
         $c->forward( '/panel/refresh', ['messages'] );
     }
 
-}
-
-sub create_combat_log : Private {
-    my ( $self, $c, $creature_group, $initiated_by ) = @_;
-
-    my $current_day = $c->model('DBIC::Day')->find(
-        {},
-        {
-            select => { max => 'day_number' },
-            as     => 'current_day'
-        },
-    )->get_column('current_day');
-
-    $c->stash->{combat_log} = $c->model('DBIC::Combat_Log')->create(
-        {
-            party_id             => $c->stash->{party}->id,
-            creature_group_id    => $creature_group->id,
-            land_id              => $c->stash->{party_location}->id,
-            encounter_started    => DateTime->now(),
-            combat_initiated_by  => $initiated_by,
-            party_level          => $c->stash->{party}->level,
-            creature_group_level => $creature_group->level,
-            game_day             => $current_day,
-        },
-    );
 }
 
 sub main : Local {
@@ -184,11 +138,21 @@ sub fight : Local {
     $c->stash->{creature_group} = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 
     # Never flee if there's an orb here...
-    if ( !$c->stash->{party_location}->orb && $c->forward('check_for_creature_flee') ) {
-        $c->detach('creatures_flee');
-    }
+    #if ( !$c->stash->{party_location}->orb && $c->forward('check_for_creature_flee') ) {
+    #    $c->detach('creatures_flee');
+    #}
 
-    $c->forward('execute_round');
+    my $battle = RPG::Combat::CreatureBattle->new(
+        creature_group => $c->stash->{creature_group},
+        party => $c->stash->{party},
+        schema => $c->model('DBIC')->schema,       
+        config => $c->config, 
+    );
+    
+    $battle->execute_round;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status' ] );
+    #$c->forward('execute_round');
 
 }
 
@@ -198,7 +162,7 @@ sub check_for_creature_flee : Private {
     # See if the creatures want to flee... check this every 3 rounds
     #  Only flee if cg level is lower than party
     $c->log->debug("Checking for creature flee");
-    $c->log->debug( "Round: " . $c->stash->{combat_log}->rounds );
+    #$c->log->debug( "Round: " . $c->stash->{combat_log}->rounds );
     $c->log->debug( "CG level: " . $c->stash->{creature_group}->level );
     $c->log->debug( "Party level: " . $c->stash->{party}->level );
 

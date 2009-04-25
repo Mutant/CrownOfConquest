@@ -9,6 +9,7 @@ use Carp;
 use Data::Dumper;
 
 use RPG::Map;
+use RPG::ResultSet::RowsInSectorRange;
 
 sub get_x_y_range {
     my ($self) = @_;
@@ -26,6 +27,38 @@ sub get_x_y_range {
         min_y => $range_rec->get_column('min_y'),
         max_x => $range_rec->get_column('max_x'),
         max_y => $range_rec->get_column('max_y'),
+    );
+}
+
+sub search_for_adjacent_sectors {
+    my $self = shift;
+    my $x    = shift;
+    my $y    = shift;
+    my $search_range = shift;
+    my $max_range = shift;
+    my $exclude_cgs_and_towns = shift // 0;
+
+    my %params;
+    my %attrs;
+    if ($exclude_cgs_and_towns) {
+        $params{'creature_group.creature_group_id'} = undef;
+        $params{'town.town_id'}                     = undef;
+        $attrs{join} = ['creature_group','town'];
+    }
+    
+    
+    return RPG::ResultSet::RowsInSectorRange->find_in_range(
+        $self,
+        'me',
+        {
+            x => $x,
+            y => $y,
+        },
+        $search_range,
+        1,
+        $max_range,
+        \%params,
+        \%attrs,
     );
 }
 

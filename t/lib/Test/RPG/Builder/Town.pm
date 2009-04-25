@@ -8,11 +8,14 @@ sub build_town {
     my $schema = shift;
     my %params = @_;
     
-    my $location = $schema->resultset('Land')->create( {} );
+    unless ($params{land_id}) {
+        my $location = $schema->resultset('Land')->create( {} );
+        $params{land_id} = $location->id;
+    }
     
     my $town = $schema->resultset('Town')->create(
         {
-            land_id => $location->id,            
+            land_id => $params{land_id},            
         }   
     );
     

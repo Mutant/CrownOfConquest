@@ -18,6 +18,8 @@ use Data::Dumper;
 # * increment_search_by - amount to increment the range by if no rows were found in that range (set to 0 to prevent search incrementing)
 # * max_range - (optional) maximum range to search.. if not passed, searches infinitely (which could result in an infintite loop)
 #                 throws an exception if the maximum range is reached
+# * criteria - (optional) hashref extra critiera to include in the search
+# * attrs - (optional) hashref extra attrs to include in the search
 sub find_in_range {
     my $package             = shift;
     my $resultset           = shift;
@@ -26,19 +28,29 @@ sub find_in_range {
     my $search_range        = shift;
     my $increment_search_by = shift;
     my $max_range           = shift;
+    my $criteria = shift // {};
+    my $attrs = shift // {};
 
     my @rows_in_range;
 
     while ( !@rows_in_range ) {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $base_point->{x}, $base_point->{y}, $search_range, $search_range, );
 
+        # TOOD: should check this isn't already set
+        $attrs->{prefetch} = $relationship unless $relationship eq 'me';
+
         @rows_in_range = $resultset->search(
             {
-                $relationship . '.x' => { '>=', $start_point->{x}, '<=', $end_point->{x}, '!=', $base_point->{x} },
-                $relationship . '.y' => { '>=', $start_point->{y}, '<=', $end_point->{y}, '!=', $base_point->{y} },
+                %$criteria,
+                $relationship . '.x' => { '>=', $start_point->{x}, '<=', $end_point->{x},},
+                $relationship . '.y' => { '>=', $start_point->{y}, '<=', $end_point->{y}, },
+                -nest => [
+                    $relationship . '.x' => {'!=', $base_point->{x}},
+                    $relationship . '.y' => {'!=', $base_point->{y}},
+                ],
             },
             {
-                prefetch => $relationship,
+                %$attrs
             },
         );
 

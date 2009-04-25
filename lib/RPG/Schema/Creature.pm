@@ -52,8 +52,8 @@ sub attack_factor {
 	
 	my $base = $self->_calculate_factor(
 		$self->type->level,
-		RPG->config->{creature_attack_base}, 
-		RPG->config->{create_attack_factor_increment},
+		RPG::Schema->config->{creature_attack_base}, 
+		RPG::Schema->config->{create_attack_factor_increment},
 	);
 	
     # Apply effects
@@ -68,8 +68,8 @@ sub defence_factor {
 	
 	my $base = $self->_calculate_factor(
 		$self->type->level,
-		RPG->config->{creature_defence_base}, 
-		RPG->config->{create_defence_factor_increment},
+		RPG::Schema->config->{creature_defence_base}, 
+		RPG::Schema->config->{create_defence_factor_increment},
 	);
 
     # Apply effects

@@ -1,35 +1,35 @@
 package RPG::Combat::Battle;
 
-use Mouse::Role;
+use Moose::Role;
 
 use List::Util qw(shuffle);
 use Carp;
 use Storable qw(freeze thaw);
 use DateTime;
 
-requires qw/combatants process_effects opponents_of opponents check_for_flee/;
+requires qw/combatants process_effects opponents_of opponents check_for_flee party_flees_to roll_flee_attempt/;
 
-has 'schema'             => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
-has 'combat_complete'    => ( is => 'rw', isa => 'Bool',        default  => 0 );
-has 'config'             => ( is => 'ro', isa => 'HashRef',     required => 0 );
+has 'schema'          => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
+has 'combat_complete' => ( is => 'rw', isa => 'Bool',        default  => 0 );
+has 'config'          => ( is => 'ro', isa => 'HashRef',     required => 0 );
 
 # Private
 has 'session'           => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_session',           lazy => 1 );
 has 'combat_log'        => ( is => 'ro', isa => 'RPG::Schema::Combat_Log', init_arg => undef, builder => '_build_combat_log',        lazy => 1 );
 has 'combat_factors'    => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_combat_factors',    lazy => 1, );
 has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_character_weapons', lazy => 1, );
+has 'result'            => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, default => sub { {} } );
 
 sub execute_round {
     my $self = shift;
-    
-    if ($self->check_for_flee) {
-        # One opponent has fled, end of the battle
-        # TODO: need to return something here?
-        #$c->forward('end_of_combat_cleanup');
 
-        #$c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status', 'map' ] );
-        
-        return;
+    # TODO: return this by updating result attr instead
+    if ( my $result = $self->check_for_flee ) {
+
+        # One opponent has fled, end of the battle
+        $self->end_of_combat_cleanup;
+
+        return $result;
     }
 
     # Process magical effects
@@ -69,50 +69,41 @@ sub execute_round {
                 push @combat_messages, $action_result;
             }
         }
-
-        # TODO: Need to return
-        #  * number of attacks
-        #  * damage done
-        #  * deaths
-        #  * whether armour / weapon was broken
-
-        # TODO: not sure where this goes...
-
-=comment        
-        if ( $self->combat_complete || $c->stash->{party}->defunct ) {
-            push @{ $c->stash->{refresh_panels} }, ' map ';
-            last;
-        }
-=cut
-
+        
+        $self->check_end_for_combat($combatant);
     }
 
-=comment
-    push @{ $c->stash->{combat_messages} },
-        $c->forward(
-        ' RPG::V::TT ',
-        [
-            {
-                template => ' combat / message . html ',
-                params   => {
-                    combat_messages => \@combat_messages,
-                    combat_complete => $c->stash->{combat_complete},
-                },
-                return_output => 1,
-            }
-        ]
-        );
-
-    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
-    $c->stash->{party}->update;
-
-    
-
-    
-=cut
+    $self->party->turns( $self->party->turns - 1 );
+    $self->party->update;
 
     $self->combat_log->rounds( $self->combat_log->rounds + 1 );
 
+    $self->result->{messages}        = \@combat_messages;
+    $self->result->{combat_complete} = $self->combat_complete;
+
+    return $self->result;
+}
+
+sub check_end_for_combat {
+    my $self = shift;
+    my $last_combatant = shift;
+    
+    my $opponents = $self->opponents_of($last_combatant);
+    if ($opponents->number_alive == 0) {   
+        my $oppponent1 = ($self->opponents)[0];     
+        my $opp = $opponents->id == $oppponent1->id && $opponents->isa($oppponent1->meta->name) ? 'opp2' : 'opp1';
+        $self->combat_log->outcome($opp . "_won");
+        $self->combat_log->encounter_ended( DateTime->now() );
+        $self->result->{combat_complete} = 1;        
+        
+        # TODO: best way to find if opponents are a party?
+        if ($opponents->isa('RPG::Schema::Party')) {
+            $opponents->defunct( DateTime->now() );
+            $opponents->update;
+        }
+    }
+
+       
 }
 
 # TODO: needs a better name
@@ -202,18 +193,6 @@ sub character_action {
         # Store damage done for XP purposes
         $self->{damage_done}{ $character->id } = $damage unless ref $damage;
 
-        # If creature is now dead, see if any other creatures are left alive.
-        #  If not, combat is over.
-        if ( $opponent->is_dead && $opp_group->number_alive == 0 ) {
-
-            # We don't actually do any of the stuff to complete the combat here, so a
-            #  later action can still display monsters, messages, etc.
-            $self->combat_log->outcome('party_won');
-            $self->combat_log->encounter_ended( DateTime->now() );
-
-            $self->combat_complete(1);
-        }
-
         return [ $opponent, $damage ];
     }
     elsif ( $character->last_combat_action eq 'Cast' ) {
@@ -236,14 +215,6 @@ sub character_action {
         $character->update;
 
         $c->stash->{combat_log}->spells_cast( $c->stash->{combat_log}->spells_cast + 1 );
-
-        # Check for all creatures dead
-        if ( $creature_group->number_alive == 0 ) {
-            $c->stash->{combat_log}->outcome('party_won');
-            $c->stash->{combat_log}->encounter_ended( DateTime->now() );
-
-            $c->stash->{combat_complete} = 1;
-        }
 
         return $message;
 =cut
@@ -297,17 +268,6 @@ sub creature_action {
     $self->session->{attack_count}{ $character->id }++;
 
     my $damage = $self->attack( $creature, $character );
-
-    # Check for wiped out party
-    if ( $character->is_dead && $party->number_alive == 0 ) {
-
-        $self->combat_log->outcome('creatures_won');
-        $self->combat_log->encounter_ended( DateTime->now() );
-
-        $party->defunct( DateTime->now() );
-        $party->update;
-
-    }
 
     return [ $character, $damage ];
 }
@@ -372,12 +332,12 @@ sub attack {
 
         # Record damage in combat log
         my $damage_col = $attacker->is_character ? 'total_character_damage' : 'total_creature_damage';
-        $self->combat_log->set_column( $damage_col, ($self->combat_log->get_column($damage_col) || 0) + $damage );
+        $self->combat_log->set_column( $damage_col, ( $self->combat_log->get_column($damage_col) || 0 ) + $damage );
 
         if ( $defender->is_dead ) {
 
             my $death_col = $defender->is_character ? 'character_deaths' : 'creature_deaths';
-            $self->combat_log->set_column( $death_col, ($self->combat_log->get_column($death_col) || 0) + 1 );
+            $self->combat_log->set_column( $death_col, ( $self->combat_log->get_column($death_col) || 0 ) + 1 );
 
             if ( $defender->is_character ) {
                 $self->schema('Character_History')->create(
@@ -464,7 +424,191 @@ sub check_character_attack {
     return;
 }
 
+sub party_flee {
+    my $self = shift;
 
+    $self->combat_log->flee_attempts( ( $self->combat_log->flee_attempts || 0 ) + 1 );
+
+    my $flee_successful = $self->roll_flee_attempt;
+
+    if ($flee_successful) {
+        my $land = $self->get_sector_to_flee_to;
+
+        $self->party_flees_to($land);
+
+        # Still costs them turns to move (but they can do it even if they don't have enough turns left)
+        $self->party->turns( $self->party->turns - $land->movement_cost( $self->party->movement_factor ) );
+        $self->party->turns(0) if $self->party->turns < 0;
+
+        $self->party->update;
+
+        $self->combat_log->outcome('party_fled');
+        $self->combat_log->encounter_ended( DateTime->now() );
+
+        return 1;
+    }
+    else {
+        $self->session->{unsuccessful_flee_attempts}++;
+
+        return 0;
+    }
+}
+
+sub end_of_combat_cleanup {
+    my $self = shift;
+
+    foreach my $character ( $self->party->characters ) {
+
+        # Remove character effects from this combat
+        foreach my $effect ( $character->character_effects ) {
+            $effect->delete if $effect->effect->combat;
+        }
+
+        # Remove last_combat_actions that can't be carried between combats
+        #  (currently just 'cast')
+        if ( $character->last_combat_action eq 'Cast' ) {
+            $character->last_combat_action('Defend');
+            $character->update;
+        }
+    }
+}
+
+sub finish {
+    my $self = shift;
+
+    my @creatures = $self->creature_group->creatures;
+
+    my $xp;
+
+    foreach my $creature (@creatures) {
+
+        # Generate random modifier between 0.6 and 1.5
+        my $rand = ( Games::Dice::Advanced->roll('1d10') / 10 ) + 0.5;
+        $xp += int( $creature->type->level * $rand * $self->config->{xp_multiplier} );
+    }
+
+    my $avg_creature_level = $self->creature_group->level;
+
+    my @characters = $self->party->characters;
+
+    $self->result->{awarded_xp} = $self->distribute_xp( $xp, [ map { $_->is_dead ? () : $_->id } @characters ] );
+
+    my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
+    $self->result->{gold} = $gold;
+
+    $self->check_for_item_found( \@characters, $avg_creature_level );
+
+    $self->party->in_combat_with(undef);
+    $self->party->gold( $self->party->gold + $gold );
+    $self->party->update;
+
+    $self->combat_log->gold_found($gold);
+    $self->combat_log->xp_awarded($xp);
+    $self->combat_log->encounter_ended( DateTime->now() );
+
+    # Don't delete creature group, since it's needed by news
+    $self->creature_group->land_id(undef);
+    $self->creature_group->dungeon_grid_id(undef);
+    $self->creature_group->update;
+
+    $self->location->creature_threat( $self->location->creature_threat - 5 );
+    $self->location->update;
+
+    $self->end_of_combat_cleanup;
+}
+
+sub check_for_item_found {
+    my $self = shift;
+    my ( $characters, $avg_creature_level ) = @_;
+
+    # See if party find an item
+    if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $self->config->{chance_to_find_item} ) {
+        my $max_prevalence = $avg_creature_level * $self->config->{prevalence_per_creature_level_to_find};
+
+        # Get item_types within the prevalance roll
+        my @item_types = shuffle $self->schema->resultset('Item_Type')->search(
+            {
+                prevalence        => { '<=', $max_prevalence },
+                'category.hidden' => 0,
+            },
+            { join => 'category', },
+        );
+
+        my $item_type = shift @item_types;
+
+        croak "Couldn't find item to give to party under prevalence $max_prevalence\n"
+            unless $item_type;
+
+        # Choose a random character to find it
+        my $finder;
+        foreach my $character ( shuffle @$characters ) {
+            unless ( $character->is_dead ) {
+                $finder = $character;
+                last;
+            }
+        }
+
+        # Create the item
+        my $item = $self->schema->resultset('Items')->create( { item_type_id => $item_type->id, }, );
+
+        $item->add_to_characters_inventory($finder);
+
+        $self->result->{found_items} = [
+            {
+                finder => $finder,
+                item   => $item,
+            }
+        ];
+    }
+}
+
+sub distribute_xp {
+    my ( $self, $xp, $char_ids ) = @_;
+
+    my %awarded_xp;
+
+    # Everyone gets 10% to start with
+    my $min_xp = int $xp * 0.10;
+    @awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
+    $xp -= $min_xp * scalar @$char_ids;
+
+    # Work out total damage, and total attacks made
+    my ( $total_damage, $total_attacks );
+    map { $total_damage  += $_ } values %{ $self->session->{damage_done} };
+    map { $total_attacks += $_ } values %{ $self->session->{attack_count} };
+
+    # Assign each character XP points, up to a max of 30% of the pool
+    # (note, they can actually get up to 35%, but we've already given them 5% above)
+    # Damage done vs attacks recieved is weighted at 60/40
+    my $total_awarded = 0;
+    foreach my $char_id (@$char_ids) {
+        my ( $damage_percent, $attacked_percent ) = ( 0, 0 );
+
+        $damage_percent = ( ( $self->session->{damage_done}{$char_id} || 0 ) / $total_damage ) * 0.6
+            if $total_damage > 0;
+        $attacked_percent = ( ( $self->session->{attack_count}{$char_id} || 0 ) / $total_attacks ) * 0.4
+            if $total_attacks > 0;
+
+        my $total_percent = $damage_percent + $attacked_percent;
+        $total_percent = 0.35 if $total_percent > 0.35;
+
+        my $xp_awarded = int $xp * $total_percent;
+
+        $awarded_xp{$char_id} += $xp_awarded;
+        $total_awarded += $xp_awarded;
+    }
+
+    # Figure out how much is left, if any
+    $xp -= $total_awarded;
+
+    # If there's any XP left, divide it up amongst the party. We round down, so some could be lost
+    if ( $xp > 0 ) {
+        my $spare_xp = int( $xp / scalar @$char_ids );
+        map { $awarded_xp{$_} += $spare_xp } keys %awarded_xp;
+    }
+
+    return \%awarded_xp;
+}
 
 sub _build_session {
     my $self = shift;
@@ -495,12 +639,13 @@ sub _build_combat_log {
                 opponent_1_id => $opp1->id,
                 opponent_2_id => $opp2->id,
 
-                #land_id              => $c->stash->{party_location}->id,
+                land_id           => $self->location->id,
                 encounter_started => DateTime->now(),
 
                 #combat_initiated_by  => $initiated_by,
-                #party_level          => $c->stash->{party}->level,
-                #creature_group_level => $creature_group->level,
+                party_level          => $self->party->level,
+                creature_group_level => $self->creature_group->level,
+
                 #game_day             => $current_day,
             },
         );

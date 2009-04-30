@@ -172,7 +172,7 @@ function calculateSpellPoints() {
 
 
 <h1><span id="name-header">[% character.character_name %]</span> 
-	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
+	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
 
 [% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
 

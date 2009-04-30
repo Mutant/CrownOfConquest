@@ -1,32 +1,50 @@
 package RPG::Combat::InWilderness;
 
-use Mouse::Role;
+use Moose::Role;
 
-requires qw/combat_log schema/;
+# Can't require these as they're attributes, not methods (missing Moose functionality)
+#requires qw/schema creature_group party/;
 
 use List::Util qw(shuffle);
+
+has 'location' => ( is => 'ro', isa => 'RPG::Schema::Land',                 required => 0,     builder => '_build_location', lazy => 1, );
 
 sub get_sector_to_flee_to {
     my $self = shift;
     my $exclude_towns_and_cgs = shift // 0;
     
-    # TODO: best way to get this?
-    my $combat_location = $self->combat_log->land;
-    
-    my @sectors_to_flee_to = $self->schema->resultset('Land')->search_for_adjacent_sectors(
-        $combat_location->x,
-        $combat_location->y,
-        3,
-        10,
-        $exclude_towns_and_cgs,
-    );
-    
+    my @sectors_to_flee_to =
+        $self->schema->resultset('Land')->search_for_adjacent_sectors( $self->location->x, $self->location->y, 3, 10, $exclude_towns_and_cgs, );
+
     @sectors_to_flee_to = shuffle @sectors_to_flee_to;
     my $land = shift @sectors_to_flee_to;
 
     #$c->log->debug( "Fleeing to " . $land->x . ", " . $land->y );
 
     return $land;
+}
+
+# TODO: these shouldn't be here?
+sub creatures_flee_to {
+    my $self = shift;
+    my $land = shift;
+
+    $self->creature_group->land_id( $land->id );
+    $self->creature_group->update;
+}
+
+sub party_flees_to {
+    my $self = shift;
+    my $land = shift;
+
+    $self->party->land_id( $land->id );
+    $self->party->in_combat_with(undef);
+}
+
+sub _build_location {
+    my $self = shift;
+    
+    return $self->party->location;
 }
 
 1;

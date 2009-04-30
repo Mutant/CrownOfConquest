@@ -290,34 +290,34 @@ sub test_check_for_flee_successful_flee : Tests(7) {
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-    $party->in_combat_with($cg->id);
+    $party->in_combat_with( $cg->id );
     $party->update;
-    
+
     $party = Test::MockObject::Extends->new($party);
-    $party->set_always('level', 10);
+    $party->set_always( 'level', 10 );
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema             => $self->{schema},
         party              => $party,
         creature_group     => $cg,
         creatures_can_flee => 1,
-        config => {chance_creatures_flee_per_level_diff => 1},
+        config             => { chance_creatures_flee_per_level_diff => 1 },
     );
-    
+
     my $combat_log = Test::MockObject->new();
-    $combat_log->set_always('rounds', 3);
+    $combat_log->set_always( 'rounds', 3 );
     $combat_log->set_true('outcome');
     $combat_log->set_true('encounter_ended');
     $combat_log->set_true('update');
-    
+
     my $land = Test::MockObject->new();
-    $land->set_always('id',1);
-    
+    $land->set_always( 'id', 1 );
+
     $battle = Test::MockObject::Extends->new($battle);
-    $battle->set_always('combat_log', $combat_log);
-    $battle->set_always('get_sector_to_flee_to', $land);
+    $battle->set_always( 'combat_log',            $combat_log );
+    $battle->set_always( 'get_sector_to_flee_to', $land );
     $battle->set_true('session');
-    
+
     $self->mock_dice;
     undef $self->{rolls};
     $self->{roll_result} = 1;
@@ -327,21 +327,103 @@ sub test_check_for_flee_successful_flee : Tests(7) {
 
     # THEN
     is( $result, 1, "Creatures fled" );
-    
-    $cg->discard_changes;
-    is($cg->land_id, 1, "Fled to correct land");
-    
-    $party->discard_changes;
-    is($party->in_combat_with, undef, "party no longer in combat");
-    
-    my ($name, $args) = $combat_log->next_call(3);
-    is($name, "outcome", "outcome of combat log set");
-    is($args->[1], 'creatures_fled', "outcome set correctly");
-    
-    ($name, $args) = $combat_log->next_call();
-    is($name, "encounter_ended", "encounter ended of combat log set");
-    isa_ok($args->[1], 'DateTime', "encounted ended set correctly");    
 
+    $cg->discard_changes;
+    is( $cg->land_id, 1, "Fled to correct land" );
+
+    $party->discard_changes;
+    is( $party->in_combat_with, undef, "party no longer in combat" );
+
+    my ( $name, $args ) = $combat_log->next_call(3);
+    is( $name,      "outcome",        "outcome of combat log set" );
+    is( $args->[1], 'creatures_fled', "outcome set correctly" );
+
+    ( $name, $args ) = $combat_log->next_call();
+    is( $name, "encounter_ended", "encounter ended of combat log set" );
+    isa_ok( $args->[1], 'DateTime', "encounted ended set correctly" );
+
+}
+
+sub test_roll_flee_attempt : Tests(5) {
+    my $self = shift;
+
+    # GIVEN
+    $self->{config}{base_flee_chance}             = 50;
+    $self->{config}{flee_chance_level_modifier}   = 5;
+    $self->{config}{flee_chance_attempt_modifier} = 5;
+    $self->{config}{flee_chance_low_level_bonus}  = 10;
+
+    my %tests = (
+        basic_test_success => {
+            cg_level               => 2,
+            party_level            => 2,
+            roll                   => 50,
+            expected_result        => 1,
+            previous_flee_attempts => 0,
+        },
+        basic_test_fail => {
+            cg_level               => 2,
+            party_level            => 2,
+            roll                   => 51,
+            expected_result        => 0,
+            previous_flee_attempts => 0,
+        },
+        party_low_level => {
+            cg_level               => 6,
+            party_level            => 2,
+            roll                   => 70,
+            expected_result        => 1,
+            previous_flee_attempts => 0,
+        },
+        previous_attempts => {
+            cg_level               => 4,
+            party_level            => 2,
+            roll                   => 70,
+            expected_result        => 1,
+            previous_flee_attempts => 2,
+        },
+        level_1_party => {
+            cg_level               => 1,
+            party_level            => 1,
+            roll                   => 60,
+            expected_result        => 1,
+            previous_flee_attempts => 0,
+        },
+    );
+    
+    $self->mock_dice;
+
+    # WHEN
+    my %results;
+    while ( my ( $test_name, $test_data ) = each %tests ) {
+        my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => $test_data->{cg_level} );
+
+        $self->{roll_result} = $test_data->{roll};
+
+        $self->{session}{unsuccessful_flee_attempts} = $test_data->{previous_flee_attempts};
+
+        my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_level => $test_data->{party_level}, character_count => 2 );
+        $party->in_combat_with( $cg->id );
+        $party->update;
+
+        my $battle = RPG::Combat::CreatureWildernessBattle->new(
+            schema             => $self->{schema},
+            party              => $party,
+            creature_group     => $cg,
+            creatures_can_flee => 1,
+            config             => $self->{config},
+        );
+        
+        $battle = Test::MockObject::Extends->new($battle);
+        $battle->set_always('session', {unsuccessful_flee_attempts => $test_data->{previous_flee_attempts}} );
+
+        $results{$test_name} = $battle->roll_flee_attempt( );
+    }
+
+    # THEN
+    while ( my ( $test_name, $test_data ) = each %tests ) {
+        is( $results{$test_name}, $test_data->{expected_result}, "Flee result as expected for test: $test_name" );
+    }
 }
 
 1;

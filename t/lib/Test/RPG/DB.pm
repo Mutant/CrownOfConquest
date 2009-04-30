@@ -31,6 +31,13 @@ sub setup_context : Test(setup) {
     $self->{c}->mock(
         model => sub {
             my $resultset = $_[1];
+            
+            if ($resultset eq 'DBIC') {
+                my $mock_model = Test::MockObject->new();
+                $mock_model->set_always('schema', $self->{schema});
+                return $mock_model;
+            }
+            
             $resultset =~ s/^DBIC:://;
             return $self->{schema}->resultset( $resultset );
         }

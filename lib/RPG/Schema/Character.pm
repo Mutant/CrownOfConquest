@@ -1,6 +1,6 @@
 package RPG::Schema::Character;
 
-use Mouse;
+use Moose;
 
 with 'RPG::Schema::Role::Being';
 

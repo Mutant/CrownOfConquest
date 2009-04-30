@@ -1,6 +1,6 @@
 package RPG::Schema::Role::BeingGroup;
 
-use Mouse::Role;
+use Moose::Role;
 
 requires qw/members number_alive/;
 

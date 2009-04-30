@@ -1,6 +1,6 @@
 package RPG::Schema::Role::Being;
 
-use Mouse::Role;
+use Moose::Role;
 
 sub health {
 	my $self = shift;

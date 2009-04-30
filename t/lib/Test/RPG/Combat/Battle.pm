@@ -233,4 +233,294 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
         
 }
 
+sub test_finish : Tests(12) {
+	my $self = shift;
+	
+	# GIVEN
+	my @creatures;
+	for (1..5) {
+		my $mock_creature_type = Test::MockObject->new();
+		$mock_creature_type->set_always('level', 1);
+		my $mock_creature = Test::MockObject->new();
+		$mock_creature->set_always('type', $mock_creature_type);
+		push @creatures, $mock_creature;
+	}
+	my $mock_cg = Test::MockObject->new();
+	$mock_cg->set_bound('creatures', \@creatures);
+	$mock_cg->set_true('land_id');
+	$mock_cg->set_true('dungeon_grid_id');
+	$mock_cg->set_true('update');
+	$mock_cg->set_always('level', 1);
+
+	my @characters;
+	for (1..5) {
+		my $mock_character = Test::MockObject->new();
+		$mock_character->set_always('id', $_);
+		$mock_character->set_always('character_name', "char$_");
+		$mock_character->set_always('xp', 50);
+		$mock_character->set_true('update');
+		$mock_character->mock('character_effects', sub {return ()});
+		$mock_character->set_false('is_dead');
+		push @characters, $mock_character;
+	}
+	my $mock_party = Test::MockObject->new();
+	$mock_party->set_bound('characters', \@characters);
+	$mock_party->set_always('gold', 100);
+	$mock_party->set_true('update');
+	$mock_party->set_true('in_combat_with');
+	
+	my $mock_party_location = Test::MockObject->new();
+	$mock_party_location->set_always('creature_threat', 5);
+	$mock_party_location->set_always('update');
+	
+	my $mock_combat_log = Test::MockObject->new();
+	$mock_combat_log->set_true('gold_found');
+	$mock_combat_log->set_true('xp_awarded');
+	$mock_combat_log->set_true('encounter_ended');
+	
+	my $battle = Test::MockObject->new();
+    $battle->set_always('creature_group', $mock_cg);
+    $battle->set_always('party', $mock_party);
+    $battle->set_always('combat_log', $mock_combat_log);
+    $battle->set_always('distribute_xp', {1 => 10, 2 => 10, 3 => 8, 4 => 10, 5 => 14});
+    $battle->set_true('check_for_item_found');
+    $battle->set_true('end_of_combat_cleanup');
+    $battle->set_always('config', {xp_multiplier => 10});
+    $battle->set_always('location', $mock_party_location);
+    my $result = {};
+    $battle->mock('result', sub { $result });
+    
+    $self->mock_dice;	
+	$self->{roll_result} = 5;
+	
+	# WHEN
+	RPG::Combat::Battle::finish($battle);
+	
+	# THEN
+    is(defined $result->{awarded_xp}, 1, "Awarded xp returned"); 
+	is($result->{gold}, 25, "Gold returned in result correctly");
+	
+	my @args;	
+	
+	is($mock_party->call_pos(2), 'in_combat_with', "in_combat_with set to new value");
+	@args = $mock_party->call_args(2);
+	is($args[1], undef, "No longer in combat");	
+	
+	is($mock_party->call_pos(4), 'gold', "Gold set to new value");
+	@args = $mock_party->call_args(4);
+	is($args[1], 125, "Gold set to correct value");
+	
+	$mock_party->called_ok('update', 'Party updated');
+	
+	is($mock_cg->call_pos(3), 'land_id', 'Creature group land id changed');
+	is($mock_cg->call_pos(5), 'update', 'Creature group updated');
+	
+	is($mock_party_location->call_pos(2), 'creature_threat', "Create threat modified");
+	@args = $mock_party_location->call_args(2);	
+	is($args[1], 0, "Reduced by 5");
+	
+	$mock_party_location->called_ok('update', "Location updated");
+
+}
+
+sub test_distribute_xp : Tests(12) {
+	my $self = shift;
+	
+	my @tests = (
+		{
+			xp => 100,
+			characters => {
+				'1' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+				'2' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+			},
+			result => {
+				1 => 50,
+				2 => 50,	
+			},
+			description => 'Two chars, take 50% each',
+		},
+	
+		{
+			xp => 100,
+			characters => {
+				'1' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+				'2' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+				'3' => {
+					damage_done => 10,
+					attack_count => 5,
+				},	
+				'4' => {
+					damage_done => 0,
+					attack_count => 0,
+				},	
+				'5' => {
+					damage_done => 0,
+					attack_count => 0,
+				},											
+			},
+			result => {
+				1 => 26,
+				2 => 26,
+				3 => 26,
+				4 => 10,
+				5 => 10,	
+			},
+			description => 'Two chars take minimum, three chars, take 30% each',
+		},
+		
+		{
+			xp => 100,
+			characters => {
+				'1' => {
+					damage_done => 75,
+					attack_count => 0,
+				},
+				'2' => {
+					damage_done => 0,
+					attack_count => 75,
+				},	
+				'3' => {
+					damage_done => 25,
+					attack_count => 25,
+				},															
+			},
+			result => {
+				1 => 36,
+				2 => 33,
+				3 => 29,	
+			},
+			description => 'Three chars get different shares because of weighting between damange_done / attack_count',
+		},				
+		
+		{
+			xp => 103,
+			characters => {
+				'1' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+				'2' => {
+					damage_done => 10,
+					attack_count => 5,
+				},
+			},
+			result => {
+				1 => 51,
+				2 => 51,	
+			},
+			description => 'Two chars, take 50% each, odd number of xp',
+		},		
+		
+	);
+	
+	foreach my $test (@tests) {
+		my @char_ids;
+		my %damage;
+		my %attacks;
+
+		foreach my $char_id (keys %{$test->{characters}}) {
+			push @char_ids, $char_id;
+			$damage{$char_id}  = $test->{characters}{$char_id}{damage_done};
+			$attacks{$char_id} = $test->{characters}{$char_id}{attack_count};
+		}
+		
+		# Setup session		
+		my $session = {damage_done => \%damage, attack_count => \%attacks};
+		my $battle = Test::MockObject->new();
+		$battle->set_always('session', $session);
+		
+		my $dist_xp = RPG::Combat::Battle::distribute_xp($battle, $test->{xp}, \@char_ids);
+		is_deeply($dist_xp, $test->{result}, $test->{description});
+		
+		is($self->{session}{damage_done},  undef, "Damage done cleared");
+		is($self->{session}{attack_count}, undef, "Attack count cleared");
+	}	
+}
+
+sub test_check_end_for_combat_cg_defeated : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_hit_points_current => 0 );
+    my $combatant = Test::MockObject->new();
+    
+    my $combat_log = Test::MockObject->new();
+    $combat_log->set_true('outcome');
+    $combat_log->set_true('encounter_ended');
+    
+    my $result = {};
+        
+	my $battle = Test::MockObject->new();
+	$battle->set_always('opponents_of', $cg);
+	$battle->set_list('opponents', $party, $cg);
+	$battle->set_always('combat_log', $combat_log);
+	$battle->mock('result', sub { $result } );	
+	
+	# WHEN
+	RPG::Combat::Battle::check_end_for_combat($battle, $combatant);
+	
+	# THEN
+	my ($method, $args) = $combat_log->next_call();
+	is($method, 'outcome', "outcome set on combat log");
+	is($args->[1], 'opp1_won', "outcome set correctly");
+
+	($method, $args) = $combat_log->next_call(1);
+	is($method, 'encounter_ended', "encounter_ended set on combat log");
+	isa_ok($args->[1], 'DateTime', "encounter_ended set to a datetime");
+	
+	is($result->{combat_complete}, 1, "Combat complete set");   
+}
+
+sub test_check_end_for_combat_party_defeated : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, );
+    my $combatant = Test::MockObject->new();
+    
+    my $combat_log = Test::MockObject->new();
+    $combat_log->set_true('outcome');
+    $combat_log->set_true('encounter_ended');
+    
+    my $result = {};
+        
+	my $battle = Test::MockObject->new();
+	$battle->set_always('opponents_of', $party);
+	$battle->set_list('opponents', $party, $cg);
+	$battle->set_always('combat_log', $combat_log);
+	$battle->mock('result', sub { $result } );	
+	
+	# WHEN
+	RPG::Combat::Battle::check_end_for_combat($battle, $combatant);
+	
+	# THEN
+	my ($method, $args) = $combat_log->next_call();
+	is($method, 'outcome', "outcome set on combat log");
+	is($args->[1], 'opp2_won', "outcome set correctly");
+
+	($method, $args) = $combat_log->next_call(1);
+	is($method, 'encounter_ended', "encounter_ended set on combat log");
+	isa_ok($args->[1], 'DateTime', "encounter_ended set to a datetime");
+	
+	is($result->{combat_complete}, 1, "Combat complete set");
+	
+	$party->discard_changes;
+	is(defined $party->defunct, 1, "Party now marked as defunct"); 
+}
+
+
 1;

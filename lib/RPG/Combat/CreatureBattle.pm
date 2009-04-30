@@ -1,15 +1,16 @@
 package RPG::Combat::CreatureBattle;
 
-use Mouse::Role;
+use Moose::Role;
 
 use Data::Dumper;
 use Games::Dice::Advanced;
 
-with 'RPG::Combat::Battle';
+requires qw/creatures_flee_to/;
 
 has 'party'              => ( is => 'rw', isa => 'RPG::Schema::Party',         required => 1 );
 has 'creature_group'     => ( is => 'rw', isa => 'RPG::Schema::CreatureGroup', required => 1 );
 has 'creatures_can_flee' => ( is => 'ro', isa => 'Bool',                       default  => 1 );
+has 'party_flee_attempt' => ( is => 'ro', isa => 'Bool',                       default  => 0 );
 
 sub combatants {
     my $self = shift;
@@ -69,9 +70,13 @@ sub process_effects {
 
 sub check_for_flee {
     my $self = shift;
+
+    if ($self->party_flee_attempt && $self->party_flee) {
+        return {party_fled => 1};
+    }
     
     return 0 unless $self->creatures_can_flee;
-
+    
     # See if the creatures want to flee... check this every 3 rounds
     #  Only flee if cg level is lower than party
     #$c->log->debug("Checking for creature flee");
@@ -89,9 +94,8 @@ sub check_for_flee {
             if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
                 # Creatures flee
                 my $land = $self->get_sector_to_flee_to(1);
-
-                $self->creature_group->land_id( $land->id );
-                $self->creature_group->update;
+                
+                $self->creatures_flee_to( $land );
 
                 $self->party->in_combat_with(undef);
                 $self->party->update;
@@ -101,12 +105,35 @@ sub check_for_flee {
                 $self->combat_log->outcome('creatures_fled');
                 $self->combat_log->encounter_ended( DateTime->now() );
                 
-                return 1;
+                return {creatures_fled => 1};
             }
         }
     }
 
-    return 0;
+    return;
+}
+
+sub roll_flee_attempt {
+    my $self = shift;
+
+    my $level_difference = $self->creature_group->level - $self->party->level;
+    my $flee_chance =
+        $self->config->{base_flee_chance} + ( $self->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+
+    if ( $self->party->level == 1 ) {
+
+        # Bonus chance for being low level
+        $flee_chance += $self->config->{flee_chance_low_level_bonus};
+    }
+
+    $flee_chance += ( $self->config->{flee_chance_attempt_modifier} * $self->session->{unsuccessful_flee_attempts} );
+
+    my $rand = Games::Dice::Advanced->roll("1d100");
+
+    #$c->log->debug("Flee roll: $rand");
+    #$c->log->debug( "Flee chance: " . $flee_chance );
+
+    return $rand <= $flee_chance ? 1 : 0;
 }
 
 1;

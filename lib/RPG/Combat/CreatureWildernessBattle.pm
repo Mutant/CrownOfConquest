@@ -1,8 +1,11 @@
 package RPG::Combat::CreatureWildernessBattle;
 
-use Mouse;
+use Moose;
 
-with 'RPG::Combat::CreatureBattle';
-with 'RPG::Combat::InWilderness';
+with qw/
+    RPG::Combat::Battle
+    RPG::Combat::CreatureBattle 
+    RPG::Combat::InWilderness
+/;
 
 1;

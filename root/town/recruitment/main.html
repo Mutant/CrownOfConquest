@@ -80,7 +80,7 @@ The town of [% town.town_name %] has the following characters available for recr
 		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
 		<td>[% character.spell_points %]</td>		
 		<td>[% IF ! party_full && party.gold >= character.value %]
-				<a href="javascript:confirmPurchase('[% character.character_name %]', '[% character.id %]', '[% character.value %]')">Buy</a>
+				<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a>
 			[% END %]
 		</td>
 	</tr>
@@ -121,7 +121,7 @@ The town of [% town.town_name %] has the following characters available for recr
 		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
 		<td>[% character.spell_points %]</td>		
 		<td>[% UNLESS character.is_dead %]
-				<a href="javascript:confirmSale('[% character.character_name %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
+				<a href="javascript:confirmSale('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
 			[% END %]
 		</td>
 	</tr>

@@ -1,6 +1,6 @@
 package RPG::Schema::Party;
 
-use Mouse;
+use Moose;
 
 extends 'DBIx::Class';
 

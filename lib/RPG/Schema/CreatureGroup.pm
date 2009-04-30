@@ -1,6 +1,6 @@
 package RPG::Schema::CreatureGroup;
 
-use Mouse;
+use Moose;
 
 extends 'DBIx::Class';
 

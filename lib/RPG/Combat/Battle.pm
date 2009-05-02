@@ -6,19 +6,20 @@ use List::Util qw(shuffle);
 use Carp;
 use Storable qw(freeze thaw);
 use DateTime;
+use Data::Dumper;
 
 requires qw/combatants process_effects opponents_of opponents check_for_flee party_flees_to roll_flee_attempt/;
 
-has 'schema'          => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
-has 'combat_complete' => ( is => 'rw', isa => 'Bool',        default  => 0 );
-has 'config'          => ( is => 'ro', isa => 'HashRef',     required => 0 );
+has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
+has 'config' => ( is => 'ro', isa => 'HashRef',     required => 0 );
+has 'log'    => ( is => 'ro', isa => 'Object',      required => 1 );
 
 # Private
 has 'session'           => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_session',           lazy => 1 );
 has 'combat_log'        => ( is => 'ro', isa => 'RPG::Schema::Combat_Log', init_arg => undef, builder => '_build_combat_log',        lazy => 1 );
-has 'combat_factors'    => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_combat_factors',    lazy => 1, );
+has 'combat_factors'    => ( is => 'rw', isa => 'HashRef',                 required => 0,     builder => '_build_combat_factors',    lazy => 1, );
 has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_character_weapons', lazy => 1, );
-has 'result'            => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, default => sub { {} } );
+has 'result' => ( is => 'ro', isa => 'HashRef', init_arg => undef, default => sub { {} } );
 
 sub execute_round {
     my $self = shift;
@@ -54,7 +55,8 @@ sub execute_round {
         }
 
         if ($action_result) {
-            if ( ref $action_result ) {
+            # TODO: might be nice to clean up the way action results are returned
+            if ( ref $action_result eq 'ARRAY' ) {
                 my ( $target, $damage ) = @$action_result;
 
                 push @combat_messages,
@@ -69,41 +71,45 @@ sub execute_round {
                 push @combat_messages, $action_result;
             }
         }
-        
-        $self->check_end_for_combat($combatant);
+
+        if ($self->check_for_end_of_combat($combatant)) {
+            $self->finish;
+            $self->end_of_combat_cleanup;
+            last;   
+        }
     }
 
     $self->party->turns( $self->party->turns - 1 );
     $self->party->update;
 
-    $self->combat_log->rounds( $self->combat_log->rounds + 1 );
+    $self->combat_log->rounds( ($self->combat_log->rounds || 0) + 1 );
 
-    $self->result->{messages}        = \@combat_messages;
-    $self->result->{combat_complete} = $self->combat_complete;
+    $self->result->{messages} = \@combat_messages;
 
     return $self->result;
 }
 
-sub check_end_for_combat {
-    my $self = shift;
+sub check_for_end_of_combat {
+    my $self           = shift;
     my $last_combatant = shift;
-    
+
     my $opponents = $self->opponents_of($last_combatant);
-    if ($opponents->number_alive == 0) {   
-        my $oppponent1 = ($self->opponents)[0];     
-        my $opp = $opponents->id == $oppponent1->id && $opponents->isa($oppponent1->meta->name) ? 'opp2' : 'opp1';
-        $self->combat_log->outcome($opp . "_won");
+    if ( $opponents->number_alive == 0 ) {
+        my $oppponent1 = ( $self->opponents )[0];
+        my $opp = $opponents->id == $oppponent1->id && $opponents->isa( $oppponent1->meta->name ) ? 'opp2' : 'opp1';
+        $self->combat_log->outcome( $opp . "_won" );
         $self->combat_log->encounter_ended( DateTime->now() );
-        $self->result->{combat_complete} = 1;        
-        
+        $self->result->{combat_complete} = 1;
+
         # TODO: best way to find if opponents are a party?
-        if ($opponents->isa('RPG::Schema::Party')) {
+        if ( $opponents->isa('RPG::Schema::Party') ) {
             $opponents->defunct( DateTime->now() );
             $opponents->update;
-        }
+        }       
+
+        return 1;
     }
 
-       
 }
 
 # TODO: needs a better name
@@ -182,7 +188,6 @@ sub character_action {
             }
 
             unless ($opponent) {
-
                 # No living opponent found, something weird has happened
                 croak "Couldn't find an opponent to attack!\n";
             }
@@ -191,33 +196,25 @@ sub character_action {
         $damage = $self->attack( $character, $opponent );
 
         # Store damage done for XP purposes
-        $self->{damage_done}{ $character->id } = $damage unless ref $damage;
+        $self->session->{damage_done}{ $character->id } = $damage unless ref $damage;
 
         return [ $opponent, $damage ];
     }
     elsif ( $character->last_combat_action eq 'Cast' ) {
-
-        # TODO: spells would be nice
-
-=comment
-        my $message =
-            $c->forward( '/magic/cast',
-            [ $character, $c->session->{combat_action_param}{ $character->id }[0], $c->session->{combat_action_param}{ $character->id }[1], ],
-            );
+        my $spell = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
+        
+        my $result = $spell->cast( $character, $character->last_combat_param2 );
 
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.
-        my $target = $c->session->{combat_action_param}{ $character->id }[1];
-
-        $c->forward( 'refresh_factor_cache', [$target] );
+        $self->refresh_factor_cache($character->last_combat_param2 );
 
         $character->last_combat_action('Defend');
         $character->update;
 
-        $c->stash->{combat_log}->spells_cast( $c->stash->{combat_log}->spells_cast + 1 );
+        $self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
 
-        return $message;
-=cut
+        return $result;
 
     }
 }
@@ -278,12 +275,12 @@ sub attack {
 
     my $attacker_type = $attacker->is_character ? 'character' : 'creature';
 
-    #$c->log->debug("About to check attack");
+    $self->log->debug("About to check attack");
 
     if ( $attacker_type eq 'character' ) {
         my $attack_error = $self->check_character_attack($attacker);
 
-        #$c->log->debug( "Got attack error: " . Dumper $attack_error);
+        $self->log->debug( "Got attack error: " . Dumper $attack_error);
         return $attack_error if $attack_error;
     }
 
@@ -292,14 +289,13 @@ sub attack {
         $defending = 1;
     }
 
-    #$c->log->debug("About to execute defence");
+    $self->log->debug("About to execute defence");
 
     if ( my $defence_message = $defender->execute_defence ) {
         if ( $defence_message->{armour_broken} ) {
 
-            # TODO: figure out how to deal with this
             # Armour has broken, clear out this character's factor cache
-            #$c->forward( 'refresh_factor_cache', [ $defender->id ] );
+            $self->refresh_factor_cache( $attacker->id );
         }
     }
 
@@ -314,10 +310,10 @@ sub attack {
     my $aq = $af - $a_roll;
     my $dq = $df + $defence_bonus - $d_roll;
 
-    #$c->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );
+    $self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );
 
-    #$c->log->debug("Attack:  Factor: $af Roll: $a_roll  Quotient: $aq");
-    #$c->log->debug("Defence: Factor: $df Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
+    $self->log->debug("Attack:  Factor: $af Roll: $a_roll  Quotient: $aq");
+    $self->log->debug("Defence: Factor: $df Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
 
     my $damage = 0;
 
@@ -350,7 +346,7 @@ sub attack {
             }
         }
 
-        #$c->log->debug("Damage: $damage");
+        $self->log->debug("Damage: $damage");
     }
 
     return $damage;
@@ -359,7 +355,7 @@ sub attack {
 sub check_character_attack {
     my ( $self, $attacker ) = @_;
 
-    my $weapon_durability = $self->character_weapons->{ $attacker->id }{durability};
+    my $weapon_durability = $self->character_weapons->{ $attacker->id }{durability} || 0;
 
     return { weapon_broken => 1 } if $weapon_durability == 0;
 
@@ -367,7 +363,7 @@ sub check_character_attack {
 
     if ( $weapon_damage_roll == 1 ) {
 
-        #$c->log->debug('Reducing durability of weapon');
+        $self->log->debug('Reducing durability of weapon');
         $weapon_durability--;
 
         my $var = $self->schema->resultset('Item_Variable')->find(
@@ -386,14 +382,14 @@ sub check_character_attack {
 
     if ( $weapon_durability <= 0 ) {
 
-        # TODO: clear factor cache?
+        # TODO: need to refresh party list
         #push @{ $c->stash->{refresh_panels} }, 'party';
         return { weapon_broken => 1 };
     }
 
     if ( ref $self->character_weapons->{ $attacker->id }{ammunition} eq 'ARRAY' ) {
 
-        #$c->log->debug('Checking for ammo');
+        $self->log->debug('Checking for ammo');
         my $ammo_found = 0;
         foreach my $ammo ( @{ $self->character_weapons->{ $attacker->id }{ammunition} } ) {
             next unless $ammo;
@@ -573,7 +569,7 @@ sub distribute_xp {
     $xp -= $min_xp * scalar @$char_ids;
 
     # Work out total damage, and total attacks made
-    my ( $total_damage, $total_attacks );
+    my ( $total_damage, $total_attacks ) = (0,0);
     map { $total_damage  += $_ } values %{ $self->session->{damage_done} };
     map { $total_attacks += $_ } values %{ $self->session->{attack_count} };
 
@@ -654,22 +650,44 @@ sub _build_combat_log {
     return $combat_log;
 }
 
+# Refresh a combatant's details in the factor cache
+# Note, we're only passed in a combatant id, which could be a creature or character. It's possible that we could have
+#  a creature *and* a character with the same id. If that happens, we'll just end up refreshing both of them in the cache. Oh well.
+# We only have the id as this is all we have when casting a spell, and we don't know whether it's a creature or character
+sub refresh_factor_cache {
+    my ( $self, $combatant_id_to_refresh ) = @_;
+
+    my @cached_combatant_ids = ( keys %{ $self->session->{combat_factors}{character} }, keys %{ $self->session->{combat_factors}{creature} }, );
+
+    $self->log->debug("Deleting combat factor cache for target id $combatant_id_to_refresh");
+
+    foreach my $combatant_id (@cached_combatant_ids) {
+        delete $self->session->{combat_factors}{character}{$combatant_id}
+            if $combatant_id == $combatant_id_to_refresh;
+        delete $self->session->{combat_factors}{creature}{$combatant_id}
+            if $combatant_id == $combatant_id_to_refresh;
+    }
+
+    $self->combat_factors( $self->_build_combat_factors );
+}
+
 sub _build_combat_factors {
     my $self = shift;
 
     my %combat_factors;
 
-    return $self->session->{combat_factors} if defined $self->session->{combat_factors};
+    %combat_factors = %{ $self->session->{combat_factors} } if defined $self->session->{combat_factors};
 
     foreach my $combatant ( $self->combatants ) {
         next if $combatant->is_dead;
 
         my $type = $combatant->is_character ? 'character' : 'creature';
 
+        next if defined $combat_factors{$type}{ $combatant->id };
+        
         $combat_factors{$type}{ $combatant->id }{af}  = $combatant->attack_factor;
         $combat_factors{$type}{ $combatant->id }{df}  = $combatant->defence_factor;
         $combat_factors{$type}{ $combatant->id }{dam} = $combatant->damage;
-
     }
 
     $self->session->{combat_factors} = \%combat_factors;

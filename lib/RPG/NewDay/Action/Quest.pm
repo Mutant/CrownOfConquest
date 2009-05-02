@@ -6,7 +6,7 @@ extends 'RPG::NewDay::Base';
 use Data::Dumper;
 
 use RPG::Exception;
-use RPG::NewDay::Template;
+use RPG::Template;
 
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
@@ -99,8 +99,8 @@ sub update_days_left {
             # Time's up!
             $quest->status('Terminated');
             
-            my $message = RPG::NewDay::Template->process(
-                $c,
+            my $message = RPG::Template->process(
+                $c->config,
                 'newday/quest/time_run_out.html',
                 {
                     quest => $quest,   

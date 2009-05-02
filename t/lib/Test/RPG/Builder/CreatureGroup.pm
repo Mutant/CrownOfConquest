@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::CreatureGroup;
 
+use Test::RPG::Builder::Creature;
+
 sub build_cg {
     my $package = shift;
     my $schema  = shift;
@@ -16,15 +18,11 @@ sub build_cg {
 
     my $creature_count = $params{creature_count} || 3;
     for ( 1 .. $creature_count ) {
-        my %creature_params;
-        $creature_params{hit_points_current} = defined $params{creature_hit_points_current} ? $params{creature_hit_points_current} : 5;
-        $schema->resultset('Creature')->create(
-            {
-                creature_group_id => $cg->id,
-                creature_type_id  => $type->id,
-
-                %creature_params,
-            }
+        Test::RPG::Builder::Creature->build_creature(
+            $schema,
+            %params,
+            type_id => $type->id,
+            cg_id => $cg->id,
         );
     }
 

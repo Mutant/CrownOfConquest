@@ -75,21 +75,16 @@ sub check_for_flee {
         return {party_fled => 1};
     }
     
-    return 0 unless $self->creatures_can_flee;
+    return unless $self->creatures_can_flee;
     
     # See if the creatures want to flee... check this every 3 rounds
     #  Only flee if cg level is lower than party
-    #$c->log->debug("Checking for creature flee");
-    #$c->log->debug( "Round: " . $c->stash->{combat_log}->rounds );
-    #$c->log->debug( "CG level: " . $c->stash->{creature_group}->level );
-    #$c->log->debug( "Party level: " . $c->stash->{party}->level );
-
     if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 3 == 0 ) {
         if ( $self->creature_group->level < $self->party->level - 2 ) {
             my $chance_of_fleeing =
                 ( $self->party->level - $self->creature_group->level ) * $self->config->{chance_creatures_flee_per_level_diff};
 
-            #$c->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
+            $self->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 
             if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
                 # Creatures flee
@@ -99,8 +94,6 @@ sub check_for_flee {
 
                 $self->party->in_combat_with(undef);
                 $self->party->update;
-
-                #$c->stash->{messages} = "The creatures have fled!";
 
                 $self->combat_log->outcome('creatures_fled');
                 $self->combat_log->encounter_ended( DateTime->now() );
@@ -130,8 +123,8 @@ sub roll_flee_attempt {
 
     my $rand = Games::Dice::Advanced->roll("1d100");
 
-    #$c->log->debug("Flee roll: $rand");
-    #$c->log->debug( "Flee chance: " . $flee_chance );
+    $self->log->debug("Flee roll: $rand");
+    $self->log->debug( "Flee chance: " . $flee_chance );
 
     return $rand <= $flee_chance ? 1 : 0;
 }

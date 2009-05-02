@@ -1,19 +1,19 @@
 use strict;
 use warnings;
 
-package RPG::NewDay::Template;
+package RPG::Template;
 
 use Template;
 
 sub process {
     my $self     = shift;
-    my $context  = shift;
+    my $config  = shift;
     my $template = shift;
     my $params   = shift;
 
     my $tt = Template->new(
         {
-            INCLUDE_PATH       => $context->config->{home} . '/root',
+            INCLUDE_PATH       => $config->{home} . '/root',
             EVAL_PERL          => 0,
             TEMPLATE_EXTENSION => '',
         }

@@ -116,6 +116,7 @@ sub test_check_character_attack : Tests(3) {
     my $battle = Test::MockObject->new();
     $battle->set_always('character_weapons', $character_weapons);    
     $battle->set_always('schema', $self->{schema});
+    $battle->set_always('log', $self->{mock_logger});
     
     $self->mock_dice;
     $self->{roll_result} = 1;
@@ -170,6 +171,7 @@ sub test_check_character_attack_with_ammo : Tests(2) {
     my $battle = Test::MockObject->new();
     $battle->set_always('character_weapons', $character_weapons);    
     $battle->set_always('schema', $self->{schema});    
+    $battle->set_always('log', $self->{mock_logger});
     
     $self->mock_dice;
     $self->{roll_result} = 2;
@@ -218,6 +220,7 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
     my $battle = Test::MockObject->new();
     $battle->set_always('character_weapons', $character_weapons);    
     $battle->set_always('schema', $self->{schema});    
+    $battle->set_always('log', $self->{mock_logger});
     
     $self->mock_dice;    
     $self->{roll_result} = 2;
@@ -449,7 +452,7 @@ sub test_distribute_xp : Tests(12) {
 	}	
 }
 
-sub test_check_end_for_combat_cg_defeated : Tests(5) {
+sub test_check_for_end_of_combat_cg_defeated : Tests(5) {
     my $self = shift;
     
     # GIVEN
@@ -470,7 +473,7 @@ sub test_check_end_for_combat_cg_defeated : Tests(5) {
 	$battle->mock('result', sub { $result } );	
 	
 	# WHEN
-	RPG::Combat::Battle::check_end_for_combat($battle, $combatant);
+	RPG::Combat::Battle::check_for_end_of_combat($battle, $combatant);
 	
 	# THEN
 	my ($method, $args) = $combat_log->next_call();
@@ -484,7 +487,7 @@ sub test_check_end_for_combat_cg_defeated : Tests(5) {
 	is($result->{combat_complete}, 1, "Combat complete set");   
 }
 
-sub test_check_end_for_combat_party_defeated : Tests(6) {
+sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     my $self = shift;
     
     # GIVEN
@@ -505,7 +508,7 @@ sub test_check_end_for_combat_party_defeated : Tests(6) {
 	$battle->mock('result', sub { $result } );	
 	
 	# WHEN
-	RPG::Combat::Battle::check_end_for_combat($battle, $combatant);
+	RPG::Combat::Battle::check_for_end_of_combat($battle, $combatant);
 	
 	# THEN
 	my ($method, $args) = $combat_log->next_call();

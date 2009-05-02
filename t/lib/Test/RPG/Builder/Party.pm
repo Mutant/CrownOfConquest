@@ -30,6 +30,8 @@ sub build_party {
             land_id                 => $location->id,
             player_id               => $params{player_id},
             rank_separator_position => 2,
+            turns                   => 100,
+            gold                    => 100,
         }
     );
 
@@ -37,8 +39,8 @@ sub build_party {
         for ( 1 .. $params{character_count} ) {
             Test::RPG::Builder::Character->build_character(
                 $schema,
-                party_id => $party->id,
-                level    => $params{character_level},
+                party_id   => $party->id,
+                level      => $params{character_level},
                 hit_points => $params{hit_points} // 5,
             );
         }

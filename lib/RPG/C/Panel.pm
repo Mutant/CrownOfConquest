@@ -64,8 +64,11 @@ sub find_panel_path : Private {
 	
     my $party = $c->stash->{party};
     
-    if ($panel eq 'messages') {	
-    	if ($c->stash->{party_location}->town) {
+    if ($panel eq 'messages') {
+        if ($c->stash->{messages_path}) {
+            return $c->stash->{messages_path};
+        }	
+    	elsif ($c->stash->{party_location}->town) {
     		return '/town/main';
     	}
     	elsif ($party->in_combat_with) {

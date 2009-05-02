@@ -11,8 +11,8 @@
 		%]
 	[% END %]	
 
-	[% IF ! message.attacker %]
-		[% message %]
+	[% IF message.spell_name %]
+		[% INCLUDE magic/spell_result.html, message=message %]
 	[% ELSIF message.damage.no_ammo %]
 		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span>!</span>

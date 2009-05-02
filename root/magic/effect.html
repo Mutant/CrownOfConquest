@@ -1,12 +1,12 @@
-	[% IF target.is_character %]
+	[% IF message.target.is_character %]
 		[% 
-			target_class  = "combat-party-attacker"
+			message.target_class  = "combat-party-attacker"
 		%]
 	[% ELSE %]
 		[% 
-			target_class  = "combat-creature-attacker"
+			message.target_class  = "combat-creature-attacker"
 		%]
 	[% END %]	
 
-<span class="combat-party-attacker">[% caster.character_name %]</span> cast <span class="combat-weapon">[% spell_name %]</span> on 
-<span class="[% target_class %]">[% target.name %]</span> [% effect %] for [% duration %] rounds.
+<span class="combat-party-attacker">[% message.caster.character_name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span> on 
+<span class="[% target_class %]">[% message.target.name %]</span> [% message.effect %] for [% message.duration %] rounds.

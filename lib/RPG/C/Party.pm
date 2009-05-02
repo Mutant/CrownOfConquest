@@ -47,7 +47,7 @@ sub sector_menu : Private {
     my $confirm_attack = 0;
 
     if ($creature_group) {
-        $confirm_attack = $creature_group->level > $c->stash->{party}->level && ! $creature_group->party_within_level_range( $c->stash->{party} );
+        $confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
     }
 
     my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
@@ -55,7 +55,7 @@ sub sector_menu : Private {
     my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
     $dungeon = undef if $dungeon && !$dungeon->party_can_enter( $c->stash->{party} );
 
-    my $parties_in_sector = $c->forward('parties_in_sector', [$c->stash->{party_location}->id]);
+    my $parties_in_sector = $c->forward( 'parties_in_sector', [ $c->stash->{party_location}->id ] );
 
     $c->forward('/party/party_messages_check');
 
@@ -88,18 +88,15 @@ sub parties_in_sector : Private {
         party_id => { '!=', $c->stash->{party}->id },
         defunct  => undef,
     );
-    
+
     if ($land_id) {
-        $query_params{land_id} = $land_id;   
+        $query_params{land_id} = $land_id;
     }
     else {
         $query_params{dungeon_grid_id} = $dungeon_grid_id;
     }
 
-    my @parties = $c->model('DBIC::Party')->search(
-        \%query_params,
-        {},
-    );
+    my @parties = $c->model('DBIC::Party')->search( \%query_params, {}, );
 
     return unless @parties;
 
@@ -340,7 +337,20 @@ sub select_action : Local {
             }
         );
 
-        my $message = $c->forward( '/magic/cast', [ $character, $c->req->param('action_param'), ], );
+        my ( $spell_id, $target_id ) = $c->req->param('action_param');
+        my $spell = $c->model('DBIC::Spell')->find($spell_id);
+        my $result = $spell->cast( $character, $target_id );
+
+        my $message = $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => 'magic/spell_result.html',
+                    params        => { message => $result, },
+                    return_output => 1,
+                }
+            ]
+        );
 
         $c->stash->{messages} = $message;
 

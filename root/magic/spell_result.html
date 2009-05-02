@@ -1,0 +1,5 @@
+[% IF message.type == 'damage' %]
+	[% INCLUDE magic/damage.html, message=message %]
+[% ELSIF message.type == 'effect' %]
+	[% INCLUDE magic/effect.html, message=message %]
+[% END %]

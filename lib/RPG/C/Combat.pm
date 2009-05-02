@@ -108,8 +108,8 @@ sub select_action : Local {
     # Remove empty strings
     my @action_params = grep { $_ ne '' } $c->req->param('action_param');
 
-    $character->last_action_param1( $action_params[0] || '' );
-    $character->last_action_param2( $action_params[1] || '' );
+    $character->last_combat_param1( $action_params[0] || '' );
+    $character->last_combat_param2( $action_params[1] || '' );
     $character->update;
 
     $c->forward( '/panel/refresh', ['messages'] );
@@ -125,6 +125,7 @@ sub fight : Local {
         party              => $c->stash->{party},
         schema             => $c->model('DBIC')->schema,
         config             => $c->config,
+        log => $c->log,
         creatures_can_flee => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
     );
 
@@ -138,7 +139,7 @@ sub fight : Local {
                 template => 'combat/message.html',
                 params   => {
                     combat_messages => $result->{messages},
-                    combat_complete => $c->stash->{combat_complete},
+                    combat_complete => $result->{combat_complete},
                 },
                 return_output => 1,
             }
@@ -155,20 +156,29 @@ sub fight : Local {
 
         push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
         
-        # TODO: get these from results
-        foreach my $item_found (@{ $result->{items_found} }) {
-            push @{ $c->stash->{combat_messages} }, $item_found->finder->character_name . " found a " . $item_found->item->display_name;
+        foreach my $item_found (@{ $result->{found_items} }) {
+            push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
         }
 
         # Check for state of quests
         my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
         push @{ $c->stash->{combat_messages} }, @$messages;
-
+        
+        # Force combat main to display final time
+        $c->stash->{messages_path} = '/combat/main';
+        
+    }
+    if ($result->{creatures_fled}) {
+          push @panels_to_refesh, 'map';
+          
+          undef $c->stash->{creature_group};
+          
+          $c->stash->{messages} = "The creatures have fled!"; 
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};
 
-    $c->forward( '/panel/refresh', [ 'messages', 'party', 'party_status' ] );
+    $c->forward( '/panel/refresh', \@panels_to_refesh );
 
 }
 
@@ -182,6 +192,7 @@ sub flee : Local {
         party              => $c->stash->{party},
         schema             => $c->model('DBIC')->schema,
         config             => $c->config,
+        log => $c->log,
         creatures_can_flee => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
         party_flee_attempt => 1,
     );

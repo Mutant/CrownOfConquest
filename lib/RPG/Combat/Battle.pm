@@ -10,9 +10,10 @@ use Data::Dumper;
 
 requires qw/combatants process_effects opponents_of opponents check_for_flee party_flees_to roll_flee_attempt/;
 
-has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
-has 'config' => ( is => 'ro', isa => 'HashRef',     required => 0 );
-has 'log'    => ( is => 'ro', isa => 'Object',      required => 1 );
+has 'schema'              => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
+has 'config'              => ( is => 'ro', isa => 'HashRef',     required => 0 );
+has 'log'                 => ( is => 'ro', isa => 'Object',      required => 1 );
+has 'creatures_initiated' => ( is => 'ro', isa => 'Bool',        default  => 0 );
 
 # Private
 has 'session'           => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_session',           lazy => 1 );
@@ -55,6 +56,7 @@ sub execute_round {
         }
 
         if ($action_result) {
+
             # TODO: might be nice to clean up the way action results are returned
             if ( ref $action_result eq 'ARRAY' ) {
                 my ( $target, $damage ) = @$action_result;
@@ -72,17 +74,17 @@ sub execute_round {
             }
         }
 
-        if ($self->check_for_end_of_combat($combatant)) {
+        if ( $self->check_for_end_of_combat($combatant) ) {
             $self->finish;
             $self->end_of_combat_cleanup;
-            last;   
+            last;
         }
     }
 
     $self->party->turns( $self->party->turns - 1 );
     $self->party->update;
 
-    $self->combat_log->rounds( ($self->combat_log->rounds || 0) + 1 );
+    $self->combat_log->rounds( ( $self->combat_log->rounds || 0 ) + 1 );
 
     $self->result->{messages} = \@combat_messages;
 
@@ -105,7 +107,7 @@ sub check_for_end_of_combat {
         if ( $opponents->isa('RPG::Schema::Party') ) {
             $opponents->defunct( DateTime->now() );
             $opponents->update;
-        }       
+        }
 
         return 1;
     }
@@ -188,6 +190,7 @@ sub character_action {
             }
 
             unless ($opponent) {
+
                 # No living opponent found, something weird has happened
                 croak "Couldn't find an opponent to attack!\n";
             }
@@ -202,12 +205,12 @@ sub character_action {
     }
     elsif ( $character->last_combat_action eq 'Cast' ) {
         my $spell = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
-        
+
         my $result = $spell->cast( $character, $character->last_combat_param2 );
 
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.
-        $self->refresh_factor_cache($character->last_combat_param2 );
+        $self->refresh_factor_cache( $character->last_combat_param2 );
 
         $character->last_combat_action('Defend');
         $character->update;
@@ -432,13 +435,9 @@ sub party_flee {
 
         $self->party_flees_to($land);
 
-        # Still costs them turns to move (but they can do it even if they don't have enough turns left)
-        $self->party->turns( $self->party->turns - $land->movement_cost( $self->party->movement_factor ) );
-        $self->party->turns(0) if $self->party->turns < 0;
-
         $self->party->update;
 
-        $self->combat_log->outcome('party_fled');
+        $self->combat_log->outcome('opp1_fled');
         $self->combat_log->encounter_ended( DateTime->now() );
 
         return 1;
@@ -507,8 +506,11 @@ sub finish {
     $self->creature_group->dungeon_grid_id(undef);
     $self->creature_group->update;
 
-    $self->location->creature_threat( $self->location->creature_threat - 5 );
-    $self->location->update;
+    # TODO: nasty
+    if ( $self->location->isa('RPG::Schema::Land') ) {
+        $self->location->creature_threat( $self->location->creature_threat - 5 );
+        $self->location->update;
+    }
 
     $self->end_of_combat_cleanup;
 }
@@ -569,7 +571,7 @@ sub distribute_xp {
     $xp -= $min_xp * scalar @$char_ids;
 
     # Work out total damage, and total attacks made
-    my ( $total_damage, $total_attacks ) = (0,0);
+    my ( $total_damage, $total_attacks ) = ( 0, 0 );
     map { $total_damage  += $_ } values %{ $self->session->{damage_done} };
     map { $total_attacks += $_ } values %{ $self->session->{attack_count} };
 
@@ -619,30 +621,33 @@ sub _build_combat_log {
 
     my ( $opp1, $opp2 ) = $self->opponents;
 
+    my $opp1_type = $opp1->isa('RPG::Schema::Party') ? 'party' : 'creature_group';
+    my $opp2_type = $opp2->isa('RPG::Schema::Party') ? 'party' : 'creature_group';
+
     my $combat_log = $self->schema->resultset('Combat_Log')->find(
         {
             opponent_1_id   => $opp1->id,
+            opponent_1_type => $opp1_type,
             opponent_2_id   => $opp2->id,
+            opponent_2_type => $opp2_type,
             encounter_ended => undef,
         },
     );
 
     if ( !$combat_log ) {
-
-        # TODO: fill in the blanks
         $combat_log = $self->schema->resultset('Combat_Log')->create(
             {
-                opponent_1_id => $opp1->id,
-                opponent_2_id => $opp2->id,
-
-                land_id           => $self->location->id,
-                encounter_started => DateTime->now(),
-
-                #combat_initiated_by  => $initiated_by,
+                opponent_1_id        => $opp1->id,
+                opponent_1_type      => $opp1_type,
+                opponent_2_id        => $opp2->id,
+                opponent_2_type      => $opp2_type,
+                land_id              => $self->location->id,
+                encounter_started    => DateTime->now(),
+                combat_initiated_by  => $self->creatures_initiated ? 'opp2' : 'opp1',
                 party_level          => $self->party->level,
                 creature_group_level => $self->creature_group->level,
-
-                #game_day             => $current_day,
+                game_day             => $self->schema->resultset('Day')->find_today->id,
+                spells_cast          => 0,
             },
         );
     }
@@ -684,7 +689,7 @@ sub _build_combat_factors {
         my $type = $combatant->is_character ? 'character' : 'creature';
 
         next if defined $combat_factors{$type}{ $combatant->id };
-        
+
         $combat_factors{$type}{ $combatant->id }{af}  = $combatant->attack_factor;
         $combat_factors{$type}{ $combatant->id }{df}  = $combatant->defence_factor;
         $combat_factors{$type}{ $combatant->id }{dam} = $combatant->damage;

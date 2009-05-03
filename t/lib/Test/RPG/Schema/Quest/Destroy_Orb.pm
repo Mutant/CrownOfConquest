@@ -19,7 +19,7 @@ use Scalar::Util 'blessed';
 sub setup_orb_quest : Tests(setup) {
     my $self = shift;
 
-    $self->{dice} = $self->mock_dice;
+    $self->{dice} = $self->mock_dice;    
 }
 
 sub test_check_action_from_another_party_deletes_not_started_quest : Tests(2) {

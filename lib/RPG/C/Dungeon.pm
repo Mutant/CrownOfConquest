@@ -218,8 +218,10 @@ sub check_for_creature_move : Private {
 
         my $sector_to_move_to = shift @possible_sectors;
 
-        $cg->dungeon_grid_id( $sector_to_move_to->id );
-        $cg->update;
+        if ($sector_to_move_to) {
+            $cg->dungeon_grid_id( $sector_to_move_to->id );
+            $cg->update;
+        }
     }
 }
 

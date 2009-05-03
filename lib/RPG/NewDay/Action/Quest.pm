@@ -86,7 +86,7 @@ sub update_days_left {
             party_id => { '!=', undef },
             status   => 'In Progress',
         },
-        { prefetch => 'type', 'town' },
+        { prefetch => ['type', 'town'] },
     );
 
     foreach my $quest (@quests) {

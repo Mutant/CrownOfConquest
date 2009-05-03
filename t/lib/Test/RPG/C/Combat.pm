@@ -55,6 +55,7 @@ sub test_fight : Tests(5) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     $self->{mock_forward}->{'/panel/refresh'} = sub { };
+    $self->{mock_forward}->{'/combat/process_round_result'} = sub { RPG::C::Combat->process_round_result($self->{c}, $_[0]->[0]) };
 
     # WHEN
     RPG::C::Combat->fight( $self->{c} );
@@ -105,6 +106,7 @@ sub test_flee_flee_successful : Tests(7) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     $self->{mock_forward}->{'/panel/refresh'} = sub { };
+    $self->{mock_forward}->{'/combat/process_flee_result'} = sub { RPG::C::Combat->process_flee_result($self->{c}, $_[0]->[0]) };
 
     # WHEN
     RPG::C::Combat->flee( $self->{c} );

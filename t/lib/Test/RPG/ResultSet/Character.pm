@@ -12,7 +12,13 @@ use Test::Resub;
 
 use Data::Dumper;
 
-use RPG::ResultSet::Character;
+sub startup : Tests(startup=>1) {
+    my $self = shift;
+    
+    use_ok 'RPG::ResultSet::Character';
+    
+    $self->mock_dice;    
+}
 
 sub test_allocate_stat_points_doesnt_exceed_max : Tests(5) {
     my $self = shift;
@@ -28,9 +34,11 @@ sub test_allocate_stat_points_doesnt_exceed_max : Tests(5) {
     my $stat_pool    = 25;
     my $stat_max     = 10;
     my $primary_stat = 'strength';
+    
+    $self->{roll_result} = 5;
 
     # WHEN
-    my %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, \%stats );
+    %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, \%stats );
 
     # THEN
     is( $stats{strength},     10, "Strength at max" );
@@ -54,6 +62,8 @@ sub test_create_character_level_1 : Tests(12) {
     $self->{config}->{level_hit_points_max}{Mage} = 4;
     $self->{config}->{level_spell_points_max}     = 5;
     $self->{config}->{point_dividend}             = 10;
+    
+    $self->{roll_result} = 5;
 
     # WHEN
     my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 1, 0, );
@@ -86,6 +96,8 @@ sub test_create_character_level_1_points_not_rolled : Tests(12) {
     $self->{config}->{level_hit_points_max}{Mage} = 4;
     $self->{config}->{level_spell_points_max}     = 5;
     $self->{config}->{point_dividend}             = 10;
+    
+    $self->{roll_result} = 5;
 
     # WHEN
     my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 1, 0, 0, );
@@ -119,6 +131,8 @@ sub test_create_character_level_5 : Tests(7) {
     $self->{config}->{level_spell_points_max}     = 5;
     $self->{config}->{point_dividend}             = 10;
     $self->{config}->{stat_points_per_level}      = 3;
+    
+    $self->{roll_result} = 5;
 
     # WHEN
     my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 5, 100, );
@@ -128,7 +142,6 @@ sub test_create_character_level_5 : Tests(7) {
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    5,          "Character is level 5" );
     is( $character->xp,       100,        "Character has 100 xp" );
-    warn $character->max_hit_points;
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );

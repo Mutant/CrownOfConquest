@@ -86,7 +86,11 @@ sub check_for_flee {
 
             $self->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 
-            if ( $chance_of_fleeing >= Games::Dice::Advanced->roll('1d100') ) {
+            my $roll = Games::Dice::Advanced->roll('1d100');
+            
+            $self->log->debug("Flee roll: $roll");
+            
+            if ( $chance_of_fleeing >= $roll) {
                 # Creatures flee
                 my $land = $self->get_sector_to_flee_to(1);
                 
@@ -95,7 +99,7 @@ sub check_for_flee {
                 $self->party->in_combat_with(undef);
                 $self->party->update;
 
-                $self->combat_log->outcome('creatures_fled');
+                $self->combat_log->outcome('opp2_fled');
                 $self->combat_log->encounter_ended( DateTime->now() );
                 
                 return {creatures_fled => 1};

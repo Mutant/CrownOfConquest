@@ -236,7 +236,7 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
         
 }
 
-sub test_finish : Tests(12) {
+sub test_finish : Tests(9) {
 	my $self = shift;
 	
 	# GIVEN
@@ -317,12 +317,6 @@ sub test_finish : Tests(12) {
 	
 	is($mock_cg->call_pos(3), 'land_id', 'Creature group land id changed');
 	is($mock_cg->call_pos(5), 'update', 'Creature group updated');
-	
-	is($mock_party_location->call_pos(2), 'creature_threat', "Create threat modified");
-	@args = $mock_party_location->call_args(2);	
-	is($args[1], 0, "Reduced by 5");
-	
-	$mock_party_location->called_ok('update', "Location updated");
 
 }
 

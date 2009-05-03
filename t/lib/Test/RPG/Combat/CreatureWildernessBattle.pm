@@ -14,12 +14,19 @@ use Test::More;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Day;
 
 use Storable qw(thaw);
 use Data::Dumper;
 
 sub startup : Tests(startup => 1) {
     use_ok 'RPG::Combat::CreatureWildernessBattle';
+}
+
+sub setup : Tests(setup) {
+    my $self = shift;
+    
+    Test::RPG::Builder::Day->build_day($self->{schema});   
 }
 
 sub test_process_effects_one_char_effect : Tests(2) {
@@ -346,7 +353,7 @@ sub test_check_for_flee_successful_flee : Tests(7) {
 
     my ( $name, $args ) = $combat_log->next_call(3);
     is( $name,      "outcome",        "outcome of combat log set" );
-    is( $args->[1], 'creatures_fled', "outcome set correctly" );
+    is( $args->[1], 'opp2_fled', "outcome set correctly" );
 
     ( $name, $args ) = $combat_log->next_call();
     is( $name, "encounter_ended", "encounter ended of combat log set" );

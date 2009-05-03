@@ -11,7 +11,8 @@ sub build_cg {
     my %params  = @_;
 
     my %cg_params;
-    $cg_params{land_id} = $params{land_id} if defined $params{land_id};
+    $cg_params{land_id}         = $params{land_id}         if defined $params{land_id};
+    $cg_params{dungeon_grid_id} = $params{dungeon_grid_id} if defined $params{dungeon_grid_id};
 
     my $cg = $schema->resultset('CreatureGroup')->create( {%cg_params} );
     my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
@@ -22,7 +23,7 @@ sub build_cg {
             $schema,
             %params,
             type_id => $type->id,
-            cg_id => $cg->id,
+            cg_id   => $cg->id,
         );
     }
 

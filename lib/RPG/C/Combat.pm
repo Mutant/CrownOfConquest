@@ -121,15 +121,43 @@ sub fight : Local {
     $c->stash->{creature_group} ||= $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        creature_group      => $c->stash->{creature_group},
+        party               => $c->stash->{party},
+        schema              => $c->model('DBIC')->schema,
+        config              => $c->config,
+        creatures_initiated => $c->stash->{creatures_initiated},
+        log                 => $c->log,
+        creatures_can_flee  => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
+    );
+
+    my $result = $battle->execute_round;
+
+    $c->forward( '/combat/process_round_result', [$result] );
+}
+
+sub flee : Local {
+    my ( $self, $c ) = @_;
+
+    $c->stash->{creature_group} ||= $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
         creature_group     => $c->stash->{creature_group},
         party              => $c->stash->{party},
         schema             => $c->model('DBIC')->schema,
         config             => $c->config,
-        log => $c->log,
+        log                => $c->log,
         creatures_can_flee => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
+        party_flee_attempt => 1,
     );
 
     my $result = $battle->execute_round;
+
+    $c->forward( '/combat/process_flee_result', [$result] );
+
+}
+
+sub process_round_result : Private {
+    my ( $self, $c, $result ) = @_;
 
     push @{ $c->stash->{combat_messages} },
         $c->forward(
@@ -150,54 +178,39 @@ sub fight : Local {
     if ( $result->{combat_complete} ) {
         push @panels_to_refesh, 'map';
 
-        my $xp_messages = $c->forward( '/party/xp_gain', [$result->{awarded_xp}] );
-        
+        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
+
         push @{ $c->stash->{combat_messages} }, @$xp_messages;
 
         push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
-        
-        foreach my $item_found (@{ $result->{found_items} }) {
+
+        foreach my $item_found ( @{ $result->{found_items} } ) {
             push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
         }
 
         # Check for state of quests
         my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
         push @{ $c->stash->{combat_messages} }, @$messages;
-        
+
         # Force combat main to display final time
         $c->stash->{messages_path} = '/combat/main';
-        
+
     }
-    if ($result->{creatures_fled}) {
-          push @panels_to_refesh, 'map';
-          
-          undef $c->stash->{creature_group};
-          
-          $c->stash->{messages} = "The creatures have fled!"; 
+    if ( $result->{creatures_fled} ) {
+        push @panels_to_refesh, 'map';
+
+        undef $c->stash->{creature_group};
+
+        $c->stash->{messages} = "The creatures have fled!";
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};
 
     $c->forward( '/panel/refresh', \@panels_to_refesh );
-
 }
 
-sub flee : Local {
-    my ( $self, $c ) = @_;
-
-    $c->stash->{creature_group} ||= $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
-
-    my $battle = RPG::Combat::CreatureWildernessBattle->new(
-        creature_group     => $c->stash->{creature_group},
-        party              => $c->stash->{party},
-        schema             => $c->model('DBIC')->schema,
-        config             => $c->config,
-        log => $c->log,
-        creatures_can_flee => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
-        party_flee_attempt => 1,
-    );
-
-    my $result = $battle->execute_round;
+sub process_flee_result : Private {
+    my ( $self, $c, $result ) = @_;
 
     my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
 
@@ -230,63 +243,6 @@ sub flee : Local {
     }
 
     $c->forward( '/panel/refresh', \@panels_to_refesh );
-}
-
-sub calculate_factors : Private {
-    my ( $self, $c, $characters, $creatures ) = @_;
-
-    foreach my $combatant ( @$characters, @$creatures ) {
-        next if $combatant->is_dead;
-
-        my $type = $combatant->is_character ? 'character' : 'creature';
-
-        unless ( defined $c->session->{combat_factors}{$type}{ $combatant->id }{af} ) {
-            $c->session->{combat_factors}{$type}{ $combatant->id }{af} = $combatant->attack_factor;
-            $c->log->debug( "Calculating attack factor for " . $combatant->name . " - " . $combatant->id );
-        }
-
-        unless ( defined $c->session->{combat_factors}{$type}{ $combatant->id }{df} ) {
-            $c->session->{combat_factors}{$type}{ $combatant->id }{df} = $combatant->defence_factor;
-            $c->log->debug( "Calculating defence factor for " . $combatant->name . " - " . $combatant->id );
-        }
-
-        unless ( defined $c->session->{combat_factors}{$type}{ $combatant->id }{dam} ) {
-            $c->session->{combat_factors}{$type}{ $combatant->id }{dam} = $combatant->damage;
-            $c->log->debug( "Calculating damage for " . $combatant->name . " - " . $combatant->id );
-        }
-
-        # Store character's weapons
-        if ( $type eq 'character' && !defined $c->session->{ $type . '_weapons' }{ $combatant->id } ) {
-            my ($weapon) = $combatant->get_equipped_item('Weapon');
-
-            if ($weapon) {
-                $c->session->{ $type . '_weapons' }{ $combatant->id }{id}         = $weapon->id;
-                $c->session->{ $type . '_weapons' }{ $combatant->id }{durability} = $weapon->variable('Durability');
-                $c->session->{ $type . '_weapons' }{ $combatant->id }{ammunition} = $combatant->ammunition_for_item($weapon);
-            }
-        }
-    }
-}
-
-# Refresh a combatant's details in the factor cache
-# Note, we're only passed in a combatant id, which could be a creature or character. It's possible that we could have
-#  a creature *and* a character with the same id. If that happens, we'll just end up refreshing both of them in the cache. Oh well.
-# We only have the id as this is all we have when casting a spell, and we don't know whether it's a creature or character
-sub refresh_factor_cache : Private {
-    my ( $self, $c, $combatant_id_to_refresh ) = @_;
-
-    my @cached_combatant_ids = ( keys %{ $c->session->{combat_factors}{character} }, keys %{ $c->session->{combat_factors}{creature} }, );
-
-    $c->log->debug("Deleting combat factor cache for target id $combatant_id_to_refresh");
-
-    foreach my $combatant_id (@cached_combatant_ids) {
-        delete $c->session->{combat_factors}{character}{$combatant_id}
-            if $combatant_id == $combatant_id_to_refresh;
-        delete $c->session->{combat_factors}{creature}{$combatant_id}
-            if $combatant_id == $combatant_id_to_refresh;
-    }
-
-    $c->forward( 'calculate_factors', [ [ $c->stash->{party}->characters ], [ $c->stash->{creature_group}->creatures ] ] );
 }
 
 1;

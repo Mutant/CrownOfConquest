@@ -29,6 +29,7 @@ sub test_update_spells : Tests(14) {
             points   => 1,
             class_id => $character->class_id,
             hidden   => 0,
+            spell_name => 'Energy Beam', 
         }
     );
 
@@ -37,6 +38,7 @@ sub test_update_spells : Tests(14) {
             points   => 5,
             class_id => $character->class_id,
             hidden   => 0,
+            spell_name => 'Shield',
         }
     );
 
@@ -45,6 +47,7 @@ sub test_update_spells : Tests(14) {
             points   => 3,
             class_id => $character->class_id,
             hidden   => 0,
+            spell_name => 'Bless',
         }
     );
 

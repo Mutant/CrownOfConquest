@@ -27,7 +27,7 @@ sub setup_context : Test(setup) {
 			my $package = shift;
 			my $path = shift;
 			my $args = shift;
-			
+						
 			my $sub = $self->{mock_forward}{$path};
 			
 			croak "Forward to $path called, but no mock sub defined" unless ref $sub eq 'CODE';
@@ -80,20 +80,23 @@ sub clear_data : Test(teardown) {
 	undef $self->{session};
 	undef $self->{config};
 	undef $self->{params};
+    undef $self->{counter};
 }
 
 sub clear_dice_data : Tests(shutdown) {
     my $self = shift;
 
     # These could probably go in teardown, but some tests (wrongly) rely on them persisting
-	undef $self->{counter};
 	undef $self->{rolls};
 	undef $self->{roll_result};
 
+=comment
     no warnings;	
     delete $INC{'Games/Dice/Advanced.pm'};
+  
     require 'Games/Dice/Advanced.pm';
     $INC{'Games/Dice/Advanced.pm'} = 1;
+=cut    
 }
 
 

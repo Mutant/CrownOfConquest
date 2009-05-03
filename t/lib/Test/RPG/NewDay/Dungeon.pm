@@ -35,10 +35,14 @@ sub dungeon_startup : Test(startup => 1) {
     use_ok 'RPG::NewDay::Action::Dungeon';
 
     my $logger = Test::MockObject->new();
-    #$logger->set_always('debug');
-    $logger->mock('debug', sub { warn @_->[1] . "\n" } );
+    $logger->set_always('debug');
 
     $self->{context} = Test::MockObject->new();
+
+    $self->{config} = {
+        max_x_dungeon_room_size => 6,
+        max_y_dungeon_room_size => 6,
+    };
 
     $self->{context}->set_always( 'logger', $logger );
     $self->{context}->set_always( 'schema', $self->{schema} );

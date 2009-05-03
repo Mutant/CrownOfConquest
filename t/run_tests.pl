@@ -5,7 +5,7 @@ use warnings;
 
 use lib '../lib','lib';
 
-use Test::Class::Load './lib/';
+use Test::Harness;
 
 if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 	shift @ARGV;
@@ -17,4 +17,4 @@ if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 	`mysql -u root game-test < /tmp/db_dump; rm /tmp/db_dump`;
 }
 
-Test::Class->runtests(@ARGV);
+runtests('run_test_classes.pl');

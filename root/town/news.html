@@ -7,17 +7,17 @@ News for the town of [% town.town_name %]:
 			[% current_day = log.game_day %]
 			<b>Day [% current_day %]</b><br>
 		[% END %]
-		[% log.party.name %] were spotted in combat with a group of 
-			[% INCLUDE combat/creature_group_summary.html creature_group=log.creature_group include_dead_creatures=1 %] 
+		[% log.opponent_1.name %] were spotted in combat with a group of 
+			[% INCLUDE combat/creature_group_summary.html creature_group=log.opponent_2 include_dead_creatures=1 %] 
 		at [% log.land.x %], [% log.land.y %]. Witnesses say 
-		[% IF log.outcome == 'party_won' %]
-			[% log.party.name %] crushed their opponents.
-		[% ELSIF log.outcome == 'party_fled' %]
-			[% log.party.name %] fled in disgrace.
-		[% ELSIF log.outcome == 'creatures_fled' %]
+		[% IF log.outcome == 'opp1_won' %]
+			[% log.opponent_1.name %] crushed their opponents.
+		[% ELSIF log.outcome == 'opp1_fled' %]
+			[% log.opponent_1.name %] fled in disgrace.
+		[% ELSIF log.outcome == 'opp2_fled' %]
 			the cowardly creatures fled with some of their number in tact.
-		[% ELSIF log.outcome == 'creatures_won' %]
-			[% log.party.name %] were destroyed by the creatures.
+		[% ELSIF log.outcome == 'opp2_won' %]
+			[% log.opponent_1.name %] were destroyed by the creatures.
 		[% END %]
 		<br><br>
 	[% END %]

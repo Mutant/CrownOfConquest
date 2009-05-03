@@ -20,7 +20,7 @@ sub get_logs_around_sector {
             'game_day' => { '>=', $start_day },
         },
         {
-            prefetch => [ 'land', 'party', { 'creature_group' => { 'creatures' => 'type' } } ],
+            prefetch => [ 'land' ],
             order_by => 'encounter_ended desc',
         },
     );

@@ -12,11 +12,17 @@ use Test::MockObject;
 use Test::Exception;
 
 sub startup : Tests(startup=>1) {
+    my $self = shift;
+    
+    $self->mock_dice;
+    
     use_ok('RPG::Schema::Items');
 }
 
 sub setup_data : Tests(setup) {
     my $self = shift;
+    
+    $self->{rolls} = [5, 2];
 
     $self->{item_category} = $self->{schema}->resultset('Item_Category')->create( {} );
 
@@ -102,7 +108,8 @@ sub test_variable_params_created : Tests(5) {
     my @item_variables = $self->{item}->item_variables;
 
     my $val1 = $self->{item}->variable_row('Var1');
-    ok( $val1->item_variable_value >= 1 && $val1->item_variable_value <= 10, "Var1 in correct range" );
+    ok( $val1->item_variable_value >= 1 && $val1->item_variable_value <= 10, "Var1 in correct range" )
+        or diag("Actual value: " . $val1->item_variable_value . " (expected in range 1 - 10)");
     is( $val1->max_value, undef, "Max value not set for var1" );
 
     my $val2 = $self->{item}->variable_row('Var2');

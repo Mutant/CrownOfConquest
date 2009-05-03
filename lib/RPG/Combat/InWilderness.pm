@@ -39,6 +39,10 @@ sub party_flees_to {
 
     $self->party->land_id( $land->id );
     $self->party->in_combat_with(undef);
+    
+    # Still costs them turns to move (but they can do it even if they don't have enough turns left)
+    $self->party->turns( $self->party->turns - $land->movement_cost( $self->party->movement_factor ) );
+    $self->party->turns(0) if $self->party->turns < 0;    
 }
 
 sub _build_location {

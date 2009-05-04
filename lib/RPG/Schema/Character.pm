@@ -60,6 +60,12 @@ sub hit_points_max {
     return $self->max_hit_points   
 }
 
+sub name {
+    my $self = shift;
+    
+    return $self->character_name;   
+}
+
 sub roll_all {
     my $self = shift;
 
@@ -297,7 +303,7 @@ sub damage {
     map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
     return 2 + $effect_dam unless $weapon;    # nothing equipped, assume bare hands
 
-    return $weapon->attribute('Damage')->item_attribute_value + $weapon->variable('Damage Upgrade') + $effect_dam;
+    return $weapon->attribute('Damage')->item_attribute_value + ($weapon->variable('Damage Upgrade') || 0) + $effect_dam;
 }
 
 sub weapon {
@@ -358,11 +364,6 @@ sub hit {
 
     $self->hit_points($new_hp_total);
     $self->update;
-}
-
-sub name {
-    my $self = shift;
-    return $self->character_name;
 }
 
 sub is_dead {

@@ -111,8 +111,6 @@ sub select_action : Local {
     $character->last_combat_param1( $action_params[0] || '' );
     $character->last_combat_param2( $action_params[1] || '' );
     $character->update;
-
-    $c->forward( '/panel/refresh', ['messages'] );
 }
 
 sub fight : Local {
@@ -176,21 +174,29 @@ sub process_round_result : Private {
 
     my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
     if ( $result->{combat_complete} ) {
+        
         push @panels_to_refesh, 'map';
-
-        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
-
-        push @{ $c->stash->{combat_messages} }, @$xp_messages;
-
-        push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
-
-        foreach my $item_found ( @{ $result->{found_items} } ) {
-            push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
+        
+        if (! $c->stash->{party}->defunct) {
+            my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
+    
+            push @{ $c->stash->{combat_messages} }, @$xp_messages;
+    
+            push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
+    
+            foreach my $item_found ( @{ $result->{found_items} } ) {
+                push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
+            }
+    
+            # Check for state of quests
+            my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
+            push @{ $c->stash->{combat_messages} }, @$messages;
+            
+            push @{ $c->stash->{combat_messages} }, "The creatures have been killed";
         }
-
-        # Check for state of quests
-        my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
-        push @{ $c->stash->{combat_messages} }, @$messages;
+        else {
+            push @{ $c->stash->{combat_messages} }, "Your party has been wiped out!";
+        }
 
         # Force combat main to display final time
         $c->stash->{messages_path} = '/combat/main';
@@ -223,26 +229,14 @@ sub process_flee_result : Private {
 
         undef $c->stash->{creature_group};
         push @panels_to_refesh, 'map';
+        
+        $c->forward( '/panel/refresh', \@panels_to_refesh );
     }
     else {
         push @{ $c->stash->{combat_messages} }, "You were unable to flee";
-        push @{ $c->stash->{combat_messages} },
-            $c->forward(
-            'RPG::V::TT',
-            [
-                {
-                    template => 'combat/message.html',
-                    params   => {
-                        combat_messages => $result->{messages},
-                        combat_complete => $c->stash->{combat_complete},
-                    },
-                    return_output => 1,
-                }
-            ]
-            );
-    }
-
-    $c->forward( '/panel/refresh', \@panels_to_refesh );
+        
+        $c->forward( '/combat/process_round_result', [$result] );
+    }    
 }
 
 1;

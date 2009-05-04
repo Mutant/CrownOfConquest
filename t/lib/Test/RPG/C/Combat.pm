@@ -16,6 +16,7 @@ use Test::RPG::Builder::Item;
 use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
+use DateTime;
 
 sub combat_startup : Test(startup => 1) {
     my $self = shift;
@@ -142,7 +143,37 @@ sub test_select_action : Tests(3) {
 	is($character->last_combat_action, 'Attack', "Last combat action set correctly");
 	is($character->last_combat_param1, '1', "Last action param 1 set correctly");
 	is($character->last_combat_param2, '2', "Last action param 2 set correctly");
-	 
+}
+
+sub process_round_result_party_wiped_out : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    $party->defunct(DateTime->now());
+    $party->update;
+        
+    my $result = {
+        messages => ['some message'],
+        combat_complete => 1,
+    };
+    
+    my $params;
+    $self->{mock_forward}{'/panel/refresh'} = sub { $params = $_[0]; };
+    
+    $self->{mock_forward}{'RPG::V::TT'} = sub {  'foo' };
+    $self->{stash}{party} = $party;
+    
+    # WHEN
+    RPG::C::Combat->process_round_result($self->{c}, $result);
+    
+    # THEN
+    is($self->{stash}{messages_path}, '/combat/main', "Messages path set to main");
+    is(scalar @{$self->{stash}{combat_messages}}, 2, "Two messages added");
+    is($self->{stash}{combat_messages}[1], "Your party has been wiped out!", "Party wiped out message given");
+    is($self->{stash}{combat_complete}, 1, "Combat complete recorded in stash"); 
+    is_deeply($params, ['messages', 'party', 'party_status', 'map'], "Correct panels refreshed");
+    
        
 }
 

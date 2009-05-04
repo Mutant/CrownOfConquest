@@ -58,23 +58,6 @@ sub get_sector_to_flee_to {
     return $land;
 }
 
-# TODO: these shouldn't be here?
-sub creatures_flee_to {
-    my $self = shift;
-    my $land = shift;
-
-    $self->creature_group->dungeon_grid_id( $land->id );
-    $self->creature_group->update;
-}
-
-sub party_flees_to {
-    my $self = shift;
-    my $land = shift;
-
-    $self->party->dungeon_grid_id( $land->id );
-    $self->party->in_combat_with(undef);
-}
-
 sub _build_location {
     my $self = shift;
 

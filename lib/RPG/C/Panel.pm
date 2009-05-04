@@ -75,7 +75,7 @@ sub find_panel_path : Private {
     		return '/combat/main';
     	}
     	elsif ($party->in_party_battle) {
-    		return '/combat/party/main';
+    		return '/party/combat/main';
     	}    	
     	elsif ($party->dungeon_grid_id) {
     	    return '/dungeon/sector_menu';

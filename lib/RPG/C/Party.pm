@@ -169,7 +169,7 @@ sub list : Private {
     foreach my $broken_item (@broken_equipped_items) {
         push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
     }
-
+    
     my %spells;
     foreach my $character (@characters) {
         next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
@@ -180,7 +180,7 @@ sub list : Private {
             character_id      => $character->id,
         );
 
-        $party->in_combat_with ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
+        $party->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
 
         my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
 
@@ -188,7 +188,16 @@ sub list : Private {
 
     }
 
-    my @creatures = $c->stash->{creature_group} ? $c->stash->{creature_group}->creatures : ();
+    my @opponents;
+    if ($c->stash->{creature_group}) {
+        @opponents = $c->stash->{creature_group}->creatures;
+    }
+    elsif (my $opponent_party = $party->in_party_battle_with) {
+        @opponents = $opponent_party->characters;   
+    }
+
+warn scalar @opponents;
+
 
     $c->forward(
         'RPG::V::TT',
@@ -199,7 +208,7 @@ sub list : Private {
                     party          => $party,
                     characters     => \@characters,
                     combat_actions => $c->session->{combat_action},
-                    creatures      => \@creatures,
+                    opponents      => \@opponents,
                     spells         => \%spells,
                     broken_items   => \%broken_items_by_char_id,
                 },
@@ -325,7 +334,7 @@ sub select_action : Local {
     my ( $self, $c ) = @_;
 
     # If we're in combat, we don't handle the action here
-    if ( $c->stash->{party}->in_combat_with ) {
+    if ( $c->stash->{party}->in_combat ) {
         $c->detach('/combat/select_action');
     }
 
@@ -467,6 +476,7 @@ sub xp_gain : Private {
     foreach my $character (@characters) {
         next if $character->is_dead;
 
+        # TODO: shouldn't be doing the level up here, should be in the schema class (probably)
         my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
 
         my $level_up_details = $character->xp( $character->xp + $xp_gained );

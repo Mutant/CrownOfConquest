@@ -4,6 +4,7 @@ use Moose::Role;
 
 # Can't require these as they're attributes, not methods (missing Moose functionality?)
 #requires qw/schema creature_group party/;
+requires qw/opponents/;
 
 use List::Util qw(shuffle);
 
@@ -24,31 +25,14 @@ sub get_sector_to_flee_to {
     return $land;
 }
 
-# TODO: these shouldn't be here?
-sub creatures_flee_to {
-    my $self = shift;
-    my $land = shift;
-
-    $self->creature_group->land_id( $land->id );
-    $self->creature_group->update;
-}
-
-sub party_flees_to {
-    my $self = shift;
-    my $land = shift;
-
-    $self->party->land_id( $land->id );
-    $self->party->in_combat_with(undef);
-    
-    # Still costs them turns to move (but they can do it even if they don't have enough turns left)
-    $self->party->turns( $self->party->turns - $land->movement_cost( $self->party->movement_factor ) );
-    $self->party->turns(0) if $self->party->turns < 0;    
-}
-
 sub _build_location {
     my $self = shift;
 
-    return $self->party->location;
+    foreach my $opponent ($self->opponents) {
+        if ($opponent->isa('RPG::Schema::Party')) {
+            return $opponent->location;
+        }
+    }
 }
 
 1;

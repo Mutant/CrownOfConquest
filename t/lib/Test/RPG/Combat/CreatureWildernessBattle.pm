@@ -329,6 +329,7 @@ sub test_check_for_flee_successful_flee : Tests(7) {
 
     my $land = Test::MockObject->new();
     $land->set_always( 'id', 1 );
+    $land->set_isa('RPG::Schema::Land');
 
     $battle = Test::MockObject::Extends->new($battle);
     $battle->set_always( 'combat_log',            $combat_log );
@@ -435,7 +436,7 @@ sub test_roll_flee_attempt : Tests(5) {
         $battle = Test::MockObject::Extends->new($battle);
         $battle->set_always( 'session', { unsuccessful_flee_attempts => $test_data->{previous_flee_attempts} } );
 
-        $results{$test_name} = $battle->roll_flee_attempt();
+        $results{$test_name} = $battle->roll_flee_attempt($party, $cg);
     }
 
     # THEN

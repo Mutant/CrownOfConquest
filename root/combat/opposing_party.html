@@ -1,7 +1,7 @@
 <table class="main">
 [% FOREACH character IN opposing_party.characters %]
 	<tr>
-		<td>[% character.name %]</td>
+		<td>[% character.name %] ([% character.class.class_name %])</td>
 		<td>[% character.health %]</td>		
 		[% IF character.character_effects %]
 			<td>(

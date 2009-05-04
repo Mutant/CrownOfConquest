@@ -236,8 +236,7 @@ sub move_to : Local {
     }
 
     else {
-        $c->stash->{party}->land_id( $c->req->param('land_id') );
-        $c->stash->{party}->turns( $c->stash->{party}->turns - $new_land->movement_cost($movement_factor) );
+        $c->stash->{party}->move_to( $new_land );
 
         $c->stash->{party}->update;
 

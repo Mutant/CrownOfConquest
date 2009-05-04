@@ -196,6 +196,13 @@ sub _median {
     sum( ( sort { $a <=> $b } @_ )[ int( $#_ / 2 ), ceil( $#_ / 2 ) ] ) / 2;
 }
 
+sub after_land_move {
+    my $self = shift;
+    my $land = shift;
+    
+    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor ) );    
+};
+
 # Record turns used whenever number of turns are decreased
 sub turns {
     my $self      = shift;
@@ -312,6 +319,12 @@ sub summary {
     return \%summary;
 }
 
+sub in_combat {
+    my $self = shift;
+    
+    return $self->in_combat_with || $self->in_party_battle;   
+}
+
 sub in_party_battle {
     my $self = shift;
 
@@ -350,6 +363,19 @@ sub _get_party_battle {
     $self->{_party_battle} = $battle;
 
     return $battle;
+}
+
+sub end_combat {
+    my $self = shift;
+    
+    $self->in_combat_with(undef);
+    
+    my $party_battle = $self->_get_party_battle->battle;
+    
+    if ($party_battle) {
+        $party_battle->complete(DateTime->now());
+        $party_battle->update;
+    }
 }
 
 1;

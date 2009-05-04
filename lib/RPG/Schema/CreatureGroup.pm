@@ -48,6 +48,10 @@ sub members {
     return $self->creatures;   
 }
 
+sub after_land_move {
+    
+}
+
 sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";

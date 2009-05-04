@@ -4,8 +4,11 @@ use Moose::Role;
 
 use Data::Dumper;
 use Games::Dice::Advanced;
+use Carp;
+use List::Util qw/shuffle/;
+use DateTime;
 
-requires qw/creatures_flee_to/;
+requires qw/party_flee/;
 
 has 'party'              => ( is => 'rw', isa => 'RPG::Schema::Party',         required => 1 );
 has 'creature_group'     => ( is => 'rw', isa => 'RPG::Schema::CreatureGroup', required => 1 );
@@ -35,6 +38,13 @@ sub opponents_of {
         return $self->party;
     }
 }
+
+after 'execute_round' => sub {
+    my $self = shift;
+    
+    $self->party->turns( $self->party->turns - 1 );
+    $self->party->update;    
+};
 
 sub process_effects {
     my $self = shift;
@@ -71,7 +81,7 @@ sub process_effects {
 sub check_for_flee {
     my $self = shift;
 
-    if ($self->party_flee_attempt && $self->party_flee) {
+    if ($self->party_flee_attempt && $self->party_flee(1)) {
         return {party_fled => 1};
     }
     
@@ -94,7 +104,8 @@ sub check_for_flee {
                 # Creatures flee
                 my $land = $self->get_sector_to_flee_to(1);
                 
-                $self->creatures_flee_to( $land );
+                $self->creature_group->move_to( $land );
+                $self->creature_group->update;
 
                 $self->party->in_combat_with(undef);
                 $self->party->update;
@@ -110,27 +121,94 @@ sub check_for_flee {
     return;
 }
 
-sub roll_flee_attempt {
+sub finish {
     my $self = shift;
+    my $losers = shift;
+    
+    # Only do stuff if the party won
+    return if $losers->isa('RPG::Schema::Party');
 
-    my $level_difference = $self->creature_group->level - $self->party->level;
-    my $flee_chance =
-        $self->config->{base_flee_chance} + ( $self->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+    my @creatures = $self->creature_group->creatures;
 
-    if ( $self->party->level == 1 ) {
+    my $xp;
 
-        # Bonus chance for being low level
-        $flee_chance += $self->config->{flee_chance_low_level_bonus};
+    foreach my $creature (@creatures) {
+
+        # Generate random modifier between 0.6 and 1.5
+        my $rand = ( Games::Dice::Advanced->roll('1d10') / 10 ) + 0.5;
+        $xp += int( $creature->type->level * $rand * $self->config->{xp_multiplier} );
     }
 
-    $flee_chance += ( $self->config->{flee_chance_attempt_modifier} * $self->session->{unsuccessful_flee_attempts} );
+    my $avg_creature_level = $self->creature_group->level;
 
-    my $rand = Games::Dice::Advanced->roll("1d100");
+    my @characters = $self->party->characters;
 
-    $self->log->debug("Flee roll: $rand");
-    $self->log->debug( "Flee chance: " . $flee_chance );
+    $self->result->{awarded_xp} = $self->distribute_xp( $xp, [ map { $_->is_dead ? () : $_->id } @characters ] );
 
-    return $rand <= $flee_chance ? 1 : 0;
+    my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
+    $self->result->{gold} = $gold;
+
+    $self->check_for_item_found( \@characters, $avg_creature_level );
+
+    $self->party->in_combat_with(undef);
+    $self->party->gold( $self->party->gold + $gold );
+    $self->party->update;
+
+    $self->combat_log->gold_found($gold);
+    $self->combat_log->xp_awarded($xp);
+    $self->combat_log->encounter_ended( DateTime->now() );
+
+    # Don't delete creature group, since it's needed by news
+    $self->creature_group->land_id(undef);
+    $self->creature_group->dungeon_grid_id(undef);
+    $self->creature_group->update;
+
+    $self->end_of_combat_cleanup;
+}
+
+sub check_for_item_found {
+    my $self = shift;
+    my ( $characters, $avg_creature_level ) = @_;
+
+    # See if party find an item
+    if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $self->config->{chance_to_find_item} ) {
+        my $max_prevalence = $avg_creature_level * $self->config->{prevalence_per_creature_level_to_find};
+
+        # Get item_types within the prevalance roll
+        my @item_types = shuffle $self->schema->resultset('Item_Type')->search(
+            {
+                prevalence        => { '<=', $max_prevalence },
+                'category.hidden' => 0,
+            },
+            { join => 'category', },
+        );
+
+        my $item_type = shift @item_types;
+
+        croak "Couldn't find item to give to party under prevalence $max_prevalence\n"
+            unless $item_type;
+
+        # Choose a random character to find it
+        my $finder;
+        foreach my $character ( shuffle @$characters ) {
+            unless ( $character->is_dead ) {
+                $finder = $character;
+                last;
+            }
+        }
+
+        # Create the item
+        my $item = $self->schema->resultset('Items')->create( { item_type_id => $item_type->id, }, );
+
+        $item->add_to_characters_inventory($finder);
+
+        $self->result->{found_items} = [
+            {
+                finder => $finder,
+                item   => $item,
+            }
+        ];
+    }
 }
 
 1;

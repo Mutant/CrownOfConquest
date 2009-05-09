@@ -37,23 +37,6 @@ sub auto : Private {
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
-    # Get recent combat count if party has been offline
-    if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
-        my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
-        if ( $offline_combat_count > 0 ) {
-            $c->stash->{messages} = $c->forward(
-                'RPG::V::TT',
-                [
-                    {
-                        template      => 'party/offline_combat_message.html',
-                        params        => { offline_combat_count => $offline_combat_count },
-                        return_output => 1,
-                    }
-                ]
-            );
-        }
-    }
-
     $c->stash->{today} = $c->model('DBIC::Day')->find(
         {},
         {
@@ -63,6 +46,24 @@ sub auto : Private {
     );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
+
+        # Get recent combat count if party has been offline
+        if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
+            my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
+            if ( $offline_combat_count > 0 ) {
+                $c->stash->{messages} = $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'party/offline_combat_message.html',
+                            params        => { offline_combat_count => $offline_combat_count },
+                            return_output => 1,
+                        }
+                    ]
+                );
+            }
+        }
+
         $c->stash->{party_location} = $c->stash->{party}->location;
 
         # Get parties online
@@ -81,7 +82,7 @@ sub auto : Private {
             && $c->action ne 'party/main'
             && $c->action !~ m{^((dungeon|party)/)?combat}
             && $c->action ne 'party/select_action'
-            && $c->action ne '/'
+            && $c->action ne 'default'
             && $c->action ne 'player/logout' )
         {
             $c->debug('Forwarding to /party/main since party is in combat');

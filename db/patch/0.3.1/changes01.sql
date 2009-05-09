@@ -16,6 +16,7 @@ CREATE TABLE `Battle_Participant` (
     party_id       INT NOT NULL,
     battle_id      INT NOT NULL,
     last_submitted_round INT NOT NULL,
+    online  TINYINT NOT NULL DEFAULT 0,
 PRIMARY KEY (party_id,battle_id)) TYPE=INNODB;
 
 ALTER TABLE `Character` ADD COLUMN `last_combat_param1` VARCHAR(255)  NOT NULL AFTER `town_id`,

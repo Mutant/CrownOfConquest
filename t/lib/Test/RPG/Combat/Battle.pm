@@ -303,7 +303,7 @@ sub test_distribute_xp : Tests(12) {
 				'2' => {
 					damage_done => 0,
 					attack_count => 75,
-				},	
+				},
 				'3' => {
 					damage_done => 25,
 					attack_count => 25,

@@ -398,7 +398,7 @@ sub is_over_flee_threshold {
    );
                
    my $percentage = int (($rec->get_column('current_hps') / $rec->get_column('total_hps')) * 100);
-   
+      
    return $percentage < $self->flee_threshold ? 1 : 0;
     
 }

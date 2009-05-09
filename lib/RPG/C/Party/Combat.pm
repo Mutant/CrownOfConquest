@@ -13,17 +13,38 @@ sub attack : Local {
 
     my $battle = $c->model('DBIC::Party_Battle')->create( {} );
 
-    $battle->add_to_participants( { party_id => $c->stash->{party}->id, } );
+    $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
 
     $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
-    
-    $c->stash->{initiated} = 1; 
+
+    $c->stash->{initiated} = 1;
 
     $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
 }
 
 sub main : Private {
     my ( $self, $c ) = @_;
+
+    # Check this is the online party
+    my $participant = $c->model('DBIC::Battle_Participant')->find(
+        {
+            party_id          => $c->stash->{party}->id,
+            'battle.complete' => undef,
+        },
+        { join => 'battle', }
+    );
+
+    unless ( $participant->online ) {
+        return $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => 'combat/other_party_online.html',
+                    return_output => 1,
+                }
+            ],
+        );
+    }
 
     return $c->forward(
         'RPG::V::TT',

@@ -118,7 +118,6 @@ sub _award_xp_for_characters_killed {
     my $xp;
 
     foreach my $character ( @characters_killed ) {
-
         # Generate random modifier between 0.6 and 1.5
         my $rand = ( Games::Dice::Advanced->roll('1d10') / 10 ) + 0.5;
         $xp += int( $character->level * $rand * $self->config->{xp_multiplier_character} );

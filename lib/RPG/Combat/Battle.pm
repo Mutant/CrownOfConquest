@@ -207,12 +207,19 @@ sub character_action {
         $damage = $self->attack( $character, $opponent );
 
         # Store damage done for XP purposes
-        $self->session->{damage_done}{ $character->id } = $damage unless ref $damage;
+        my %action_params;
+        if (ref $damage) {
+            %action_params = %$damage;
+        }
+        else {
+            $self->session->{damage_done}{ $character->id } = $damage;
+            $action_params{damage} = $damage;
+        }
 
         return RPG::Combat::ActionResult->new(
             attacker => $character,
             defender => $opponent,
-            damage   => $damage,
+            %action_params,
         );
     }
     elsif ( $character->last_combat_action eq 'Cast' ) {
@@ -472,8 +479,10 @@ sub party_flee {
         $party->update;
         
         # TODO: probably doing this more than once
-        $opponent->end_combat();
-        $opponent->update;
+        if ($opponent->can('end_combat')) {
+            $opponent->end_combat();
+            $opponent->update;
+        }
 
         $self->combat_log->outcome( 'opp' . $opp_number . '_fled' );
         $self->combat_log->encounter_ended( DateTime->now() );

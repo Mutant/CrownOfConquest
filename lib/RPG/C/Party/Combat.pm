@@ -11,25 +11,23 @@ use Carp;
 sub attack : Local {
     my ( $self, $c ) = @_;
 
-    my $party_attacked = $c->model('DBIC::Party')->find($c->req->param('party_id'));
-    
+    my $party_attacked = $c->model('DBIC::Party')->find( $c->req->param('party_id') );
+
     croak "Opponent party not found" unless defined $party_attacked;
-    
-    if ($party_attacked->in_combat) {
+
+    if ( $party_attacked->in_combat ) {
         $c->stash->{error} = 'That party is already in combat';
     }
-    elsif ($c->stash->{party}->level - $party_attacked->level > $c->config->{max_party_level_diff_for_attack}) {
+    elsif ( $c->stash->{party}->level - $party_attacked->level > $c->config->{max_party_level_diff_for_attack} ) {
         $c->stash->{error} = 'The party is too low level to attack';
     }
     else {
-    
+
         my $battle = $c->model('DBIC::Party_Battle')->create( {} );
-    
+
         $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
-    
+
         $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
-    
-        $c->stash->{initiated} = 1;
     }
 
     $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
@@ -80,13 +78,13 @@ sub fight : Local {
     my ( $party_battle, $party1, $party2, $active_participant ) = _get_participants($c);
 
     my $battle = RPG::Combat::PartyWildernessBattle->new(
-        party_1       => $party1,
-        party_2       => $party2,
-        schema        => $c->model('DBIC')->schema,
-        config        => $c->config,
-        log           => $c->log,
-        battle_record => $party_battle,
-        initated_by   => $c->stash->{initiated} ? $active_participant : undef,
+        party_1                 => $party1,
+        party_2                 => $party2,
+        schema                  => $c->model('DBIC')->schema,
+        config                  => $c->config,
+        log                     => $c->log,
+        battle_record           => $party_battle,
+        initiated_by_opp_number => $active_participant, # Assume it's the active party who initiated (for now)
     );
 
     my $result = $battle->execute_round;

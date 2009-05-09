@@ -13,10 +13,10 @@
 
 	[% IF message.spell_name %]
 		[% INCLUDE magic/spell_result.html, message=message %]
-	[% ELSIF message.damage.no_ammo %]
+	[% ELSIF message.no_ammo %]
 		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span>!</span>
-	[% ELSIF message.damage.weapon_broken %]
+	[% ELSIF message.weapon_broken %]
 		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because his 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span> is broken and needs to be repaired!</span>
 	[% ELSE %]	

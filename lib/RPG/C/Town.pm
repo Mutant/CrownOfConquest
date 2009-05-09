@@ -633,7 +633,7 @@ sub enter : Local {
     
     my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
     my $cost = $town->tax_cost($c->stash->{party});
-    
+        
     if ($c->req->param('payment_method') eq 'gold') {
         if ($cost->{gold} > $c->stash->{party}->gold) {
             $c->stash->{error} = "You don't have enough gold to pay the tax";  
@@ -650,7 +650,7 @@ sub enter : Local {
        
        $c->stash->{party}->turns($c->stash->{party}->turns - $cost->{turns});
     }
-    
+        
     # Record payment
     $c->model('Party_Town')->find_or_create(
         {

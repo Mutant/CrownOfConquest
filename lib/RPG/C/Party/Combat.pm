@@ -6,18 +6,31 @@ use base 'Catalyst::Controller';
 
 use RPG::Combat::PartyWildernessBattle;
 
+use Carp;
+
 sub attack : Local {
     my ( $self, $c ) = @_;
 
-    # TODO: validate party being attacked
-
-    my $battle = $c->model('DBIC::Party_Battle')->create( {} );
-
-    $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
-
-    $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
-
-    $c->stash->{initiated} = 1;
+    my $party_attacked = $c->model('DBIC::Party')->find($c->req->param('party_id'));
+    
+    croak "Opponent party not found" unless defined $party_attacked;
+    
+    if ($party_attacked->in_combat) {
+        $c->stash->{error} = 'That party is already in combat';
+    }
+    elsif ($c->stash->{party}->level - $party_attacked->level > $c->config->{max_party_level_diff_for_attack}) {
+        $c->stash->{error} = 'The party is too low level to attack';
+    }
+    else {
+    
+        my $battle = $c->model('DBIC::Party_Battle')->create( {} );
+    
+        $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
+    
+        $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
+    
+        $c->stash->{initiated} = 1;
+    }
 
     $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
 }

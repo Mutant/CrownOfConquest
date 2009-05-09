@@ -470,6 +470,10 @@ sub party_flee {
         $party->move_to($sector);
         $party->end_combat();
         $party->update;
+        
+        # TODO: probably doing this more than once
+        $opponent->end_combat();
+        $opponent->update;
 
         $self->combat_log->outcome( 'opp' . $opp_number . '_fled' );
         $self->combat_log->encounter_ended( DateTime->now() );

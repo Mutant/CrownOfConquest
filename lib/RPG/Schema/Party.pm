@@ -357,7 +357,7 @@ sub _get_party_battle {
     my $self = shift;
 
     return $self->{_party_battle} if defined $self->{_party_battle};
-
+   
     my $battle = $self->find_related( 'party_battles', { 'battle.complete' => undef, }, { prefetch => 'battle', } );
 
     $self->{_party_battle} = $battle;
@@ -373,7 +373,8 @@ sub end_combat {
     my $party_battle = $self->_get_party_battle;
     
     if ($party_battle) {
-        $party_battle->battle->update({complete => DateTime->now()});
+        $party_battle->battle->update({complete => DateTime->now()});        
+        undef $self->{_party_battle};
     }
 }
 

@@ -230,11 +230,6 @@ sub process_round_result : Private {
         my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
 
         push @{$c->stash->{messages}}, @$xp_messages;
-        
-        # TODO: bit of a hack, because the party battle is cached, the panel won't pick up that it's been marked as
-        #  complete, and so will display the battle soon. We should really be a bit smarter about caching... (or not
-        #   cache at all)
-        $c->stash->{messages_path} = '/party/sector_menu';
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};

@@ -1,12 +1,17 @@
-[% IF messages %]
-[% messages %]
-<br><br>
-[% END %]
+[% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
+
+[% position_map = {
+	bottom => 'south',
+	top => 'north',
+	left => 'west',
+	right => 'east',
+}
+%]
 
 [% IF doors.0 %]
 	Open Doors: 
 	[% FOREACH door IN doors %]
-		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% door.position.position %]</a>&nbsp;
+		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% position_map.${door.position.position} %]</a>&nbsp;
 	[% END %]
 	<br>
 [% END %]

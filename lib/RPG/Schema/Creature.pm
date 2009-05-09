@@ -36,6 +36,12 @@ __PACKAGE__->has_many(
     { 'foreign.creature_id' => 'self.creature_id' },
 );
 
+sub group_id {
+    my $self = shift;
+    
+    return $self->creature_group_id;   
+}
+
 sub hit {
 	my $self = shift;
 	my $damage = shift;

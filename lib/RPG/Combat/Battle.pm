@@ -7,31 +7,52 @@ use Carp;
 use Storable qw(freeze thaw);
 use DateTime;
 use Data::Dumper;
+use Math::Round qw(round);
 
-requires qw/combatants process_effects opponents_of opponents check_for_flee finish/;
+use RPG::Combat::ActionResult;
 
-has 'schema'              => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
-has 'config'              => ( is => 'ro', isa => 'HashRef',     required => 0 );
-has 'log'                 => ( is => 'ro', isa => 'Object',      required => 1 );
-has 'creatures_initiated' => ( is => 'ro', isa => 'Bool',        default  => 0 );
+requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by/;
+
+has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
+has 'config' => ( is => 'ro', isa => 'HashRef',     required => 0 );
+has 'log'    => ( is => 'ro', isa => 'Object',      required => 1 );
 
 # Private
 has 'session'           => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_session',           lazy => 1 );
 has 'combat_log'        => ( is => 'ro', isa => 'RPG::Schema::Combat_Log', init_arg => undef, builder => '_build_combat_log',        lazy => 1 );
 has 'combat_factors'    => ( is => 'rw', isa => 'HashRef',                 required => 0,     builder => '_build_combat_factors',    lazy => 1, );
 has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_character_weapons', lazy => 1, );
+has 'combatants_by_id'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_by_id',  lazy => 1, );
 has 'result' => ( is => 'ro', isa => 'HashRef', init_arg => undef, default => sub { {} } );
+
+sub opponent_number_of_being {
+    my $self  = shift;
+    my $being = shift;
+
+    my ($opp1) = ( $self->opponents )[0];
+
+    if (
+        $being->group_id == $opp1->id
+        && (   $being->isa('RPG::Schema::Character') && $opp1->isa('RPG::Schema::Party')
+            || $being->isa('RPG::Schema::Creature') && $opp1->isa('RPG::Schema::CreatureGroup') )
+        )
+    {
+
+        return 1;
+    }
+    else {
+        return 2;
+    }
+}
 
 sub execute_round {
     my $self = shift;
 
-    # TODO: return this by updating result attr instead
-    if ( my $result = $self->check_for_flee ) {
-
+    if ( $self->check_for_flee ) {
         # One opponent has fled, end of the battle
         $self->end_of_combat_cleanup;
 
-        return $result;
+        return $self->result;
     }
 
     # Process magical effects
@@ -56,28 +77,18 @@ sub execute_round {
         }
 
         if ($action_result) {
-
-            # TODO: might be nice to clean up the way action results are returned
-            if ( ref $action_result eq 'ARRAY' ) {
-                my ( $target, $damage ) = @$action_result;
-
-                push @combat_messages,
-                    {
-                    attacker        => $combatant,
-                    defender        => $target,
-                    defender_killed => $target->is_dead,
-                    damage          => $damage || 0,
-                    };
+            push @combat_messages, $action_result;
+            
+            if ($action_result->defender_killed) {
+                my $type = $action_result->defender->is_character ? 'character' : 'creature';
+                push @{$self->session->{killed}{$type}}, $action_result->defender->id;
             }
-            else {
-                push @combat_messages, $action_result;
+    
+            if ( my $losers = $self->check_for_end_of_combat($combatant) ) {
+                $self->finish($losers);
+                $self->end_of_combat_cleanup;
+                last;
             }
-        }
-
-        if ( my $losers = $self->check_for_end_of_combat($combatant) ) {
-            $self->finish($losers);
-            $self->end_of_combat_cleanup;
-            last;
         }
     }
 
@@ -198,12 +209,24 @@ sub character_action {
         # Store damage done for XP purposes
         $self->session->{damage_done}{ $character->id } = $damage unless ref $damage;
 
-        return [ $opponent, $damage ];
+        return RPG::Combat::ActionResult->new(
+            attacker => $character,
+            defender => $opponent,
+            damage   => $damage,
+        );
     }
     elsif ( $character->last_combat_action eq 'Cast' ) {
         my $spell = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
 
-        my $result = $spell->cast( $character, $character->last_combat_param2 );
+        my $target;
+        if ($spell->target eq 'character') {
+            $target = $self->combatants_by_id->{'character'}{$character->last_combat_param2};   
+        }
+        else {
+            $target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
+        }
+
+        my $result = $spell->cast( $character, $target );
 
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.
@@ -215,7 +238,6 @@ sub character_action {
         $self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
 
         return $result;
-
     }
 }
 
@@ -266,7 +288,11 @@ sub creature_action {
 
     my $damage = $self->attack( $creature, $character );
 
-    return [ $character, $damage ];
+    return RPG::Combat::ActionResult->new(
+        attacker => $creature,
+        defender => $character,
+        damage   => $damage,
+    );
 }
 
 sub attack {
@@ -327,17 +353,17 @@ sub attack {
         $defender->hit($damage);
 
         # Record damage in combat log
-        my $damage_col = $attacker->is_character ? 'total_character_damage' : 'total_creature_damage';
+        my $damage_col = 'total_opponent_' . $self->opponent_number_of_being($attacker) . '_damage';
         $self->combat_log->set_column( $damage_col, ( $self->combat_log->get_column($damage_col) || 0 ) + $damage );
 
         if ( $defender->is_dead ) {
 
-            my $death_col = $defender->is_character ? 'character_deaths' : 'creature_deaths';
+            my $death_col = 'opponent_' . $self->opponent_number_of_being($defender) . '_deaths';
             $self->combat_log->set_column( $death_col, ( $self->combat_log->get_column($death_col) || 0 ) + 1 );
 
             if ( $defender->is_character ) {
-                my $attacker_type = $attacker->is_character ? $attacker->class->class_name : $attacker->type->creature_type; 
-                                
+                my $attacker_type = $attacker->is_character ? $attacker->class->class_name : $attacker->type->creature_type;
+
                 $self->schema->resultset('Character_History')->create(
                     {
                         character_id => $defender->id,
@@ -356,7 +382,7 @@ sub attack {
 
 sub check_character_attack {
     my ( $self, $attacker ) = @_;
-    
+
     return unless defined $self->character_weapons->{ $attacker->id }{id};
 
     my $weapon_durability = $self->character_weapons->{ $attacker->id }{durability} || 0;
@@ -425,17 +451,18 @@ sub check_character_attack {
 }
 
 sub party_flee {
-    my $self = shift;
+    my $self       = shift;
     my $opp_number = shift;
-    
-    my @opponents = $self->opponents; 
-    
-    my $party = $opponents[$opp_number-1];
-    my $opponent = $opponents[$opp_number == 1 ? 1 : 0]; 
 
-    $self->combat_log->flee_attempts( ( $self->combat_log->flee_attempts || 0 ) + 1 );
+    my @opponents = $self->opponents;
 
-    my $flee_successful = $self->roll_flee_attempt($party, $opponent);
+    my $party = $opponents[ $opp_number - 1 ];
+    my $opponent = $opponents[ $opp_number == 1 ? 1 : 0 ];
+
+    my $flee_attempts_column = 'opponent_' . $opp_number . '_flee_attempts';
+    $self->combat_log->set_column( $flee_attempts_column, ( $self->combat_log->get_column($flee_attempts_column) || 0 ) + 1 );
+
+    my $flee_successful = $self->roll_flee_attempt( $party, $opponent, $opp_number );
 
     if ($flee_successful) {
         my $sector = $self->get_sector_to_flee_to;
@@ -444,33 +471,31 @@ sub party_flee {
         $party->end_combat();
         $party->update;
 
-        $self->combat_log->outcome('opp' . $opp_number . '_fled');
+        $self->combat_log->outcome( 'opp' . $opp_number . '_fled' );
         $self->combat_log->encounter_ended( DateTime->now() );
 
         return 1;
     }
-    else {
-        $self->session->{unsuccessful_flee_attempts}++;
-
-        return 0;
-    }
 }
 
 sub roll_flee_attempt {
-    my $self = shift;
-    my $fleers = shift;
-    my $opponents = shift;
+    my $self             = shift;
+    my $fleers           = shift;
+    my $opponents        = shift;
+    my $fleer_opp_number = shift;
 
     my $level_difference = $opponents->level - $fleers->level;
     my $flee_chance =
         $self->config->{base_flee_chance} + ( $self->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
 
     if ( $fleers->level == 1 ) {
+
         # Bonus chance for being low level
         $flee_chance += $self->config->{flee_chance_low_level_bonus};
     }
 
-    $flee_chance += ( $self->config->{flee_chance_attempt_modifier} * $self->session->{unsuccessful_flee_attempts} );
+    my $flee_attempts_column = 'opponent_' . $fleer_opp_number . '_flee_attempts';
+    $flee_chance += ( $self->config->{flee_chance_attempt_modifier} * ( $self->combat_log->get_column($flee_attempts_column) || 0 ) );
 
     my $rand = Games::Dice::Advanced->roll("1d100");
 
@@ -484,7 +509,7 @@ sub end_of_combat_cleanup {
     my $self = shift;
 
     foreach my $combatant ( $self->combatants ) {
-        next unless $combatant->is_character;        
+        next unless $combatant->is_character;
 
         # Remove character effects from this combat
         foreach my $effect ( $combatant->character_effects ) {
@@ -530,7 +555,7 @@ sub distribute_xp {
         my $total_percent = $damage_percent + $attacked_percent;
         $total_percent = 0.35 if $total_percent > 0.35;
 
-        my $xp_awarded = int $xp * $total_percent;
+        my $xp_awarded = round $xp * $total_percent;
 
         $awarded_xp{$char_id} += $xp_awarded;
         $total_awarded += $xp_awarded;
@@ -577,17 +602,17 @@ sub _build_combat_log {
     if ( !$combat_log ) {
         $combat_log = $self->schema->resultset('Combat_Log')->create(
             {
-                opponent_1_id        => $opp1->id,
-                opponent_1_type      => $opp1_type,
-                opponent_2_id        => $opp2->id,
-                opponent_2_type      => $opp2_type,
-                land_id              => $self->location->id,
-                encounter_started    => DateTime->now(),
-                combat_initiated_by  => $self->creatures_initiated ? 'opp2' : 'opp1',
-                party_level          => $opp1->level,
-                creature_group_level => $opp2->level,
-                game_day             => $self->schema->resultset('Day')->find_today->id,
-                spells_cast          => 0,
+                opponent_1_id       => $opp1->id,
+                opponent_1_type     => $opp1_type,
+                opponent_2_id       => $opp2->id,
+                opponent_2_type     => $opp2_type,
+                land_id             => $self->location->id,
+                encounter_started   => DateTime->now(),
+                combat_initiated_by => $self->initiated_by,
+                opponent_1_level    => $opp1->level,
+                opponent_2_level    => $opp2->level,
+                game_day            => $self->schema->resultset('Day')->find_today->id,
+                spells_cast         => 0,
             },
         );
     }
@@ -599,6 +624,7 @@ sub _build_combat_log {
 # Note, we're only passed in a combatant id, which could be a creature or character. It's possible that we could have
 #  a creature *and* a character with the same id. If that happens, we'll just end up refreshing both of them in the cache. Oh well.
 # We only have the id as this is all we have when casting a spell, and we don't know whether it's a creature or character
+# TODO: this could be fixed, as spell casting now have the actual target
 sub refresh_factor_cache {
     my ( $self, $combatant_id_to_refresh ) = @_;
 
@@ -665,6 +691,19 @@ sub _build_character_weapons {
     $self->session->{character_weapons} = \%character_weapons;
 
     return \%character_weapons;
+}
+
+sub _build_combatants_by_id {
+    my $self = shift;
+
+    my %combatants_by_id;
+
+    foreach my $combatant ( $self->combatants ) {
+        my $type = $combatant->is_character ? 'character' : 'creature';
+        $combatants_by_id{$type}{ $combatant->id } = $combatant;
+    }
+
+    return \%combatants_by_id;
 }
 
 sub DEMOLISH {

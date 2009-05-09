@@ -196,9 +196,6 @@ sub list : Private {
         @opponents = $opponent_party->characters;   
     }
 
-warn scalar @opponents;
-
-
     $c->forward(
         'RPG::V::TT',
         [
@@ -586,6 +583,18 @@ sub enter_dungeon : Local {
     $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+}
+
+sub update_options : Local {
+    my ( $self, $c ) = @_;
+    
+    if ($c->req->param('save')) {
+        $c->stash->{party}->flee_threshold($c->req->param('flee_threshold'));
+        $c->stash->{party}->update;
+        $c->flash->{messages} = 'Changes Saved';
+    }
+    
+    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
 }
 
 1;

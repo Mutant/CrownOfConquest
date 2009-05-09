@@ -75,18 +75,18 @@ sub test_cast_damage_spells : Tests(27) {
         );
 
         # WHEN
-        my $result = $spell->cast( $character, $target->id );
+        my $result = $spell->cast( $character, $target );
 
         # THEN
-        isa_ok( $result->{caster}, 'RPG::Schema::Character' );
-        is( $result->{caster}->id, $character->id, 'Caster set as character in result' );
+        isa_ok( $result->attacker, 'RPG::Schema::Character' );
+        is( $result->attacker->id, $character->id, 'Caster set as character in result' );
 
-        isa_ok( $result->{target}, 'RPG::Schema::' . $test->{target} );
-        is( $result->{target}->id, $target->id, 'Target set correctly in result' );
+        isa_ok( $result->defender, 'RPG::Schema::' . $test->{target} );
+        is( $result->defender->id, $target->id, 'Target set correctly in result' );
 
-        is( $result->{damage}, 3,               "Damage set in result" );
-        is( $result->{effect}, $test->{effect}, "Effect set correctly" );
-        is( $result->{type},   'damage',        "Type set correctly" );
+        is( $result->damage, 3,               "Damage set in result" );
+        is( $result->effect, $test->{effect}, "Effect set correctly" );
+        is( $result->type,   'damage',        "Type set correctly" );
 
         $mem_spell->discard_changes;
         is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
@@ -184,18 +184,18 @@ sub test_cast_effect_spells : Tests(117) {
         );
 
         # WHEN
-        my $result = $spell->cast( $caster, $target->id );
+        my $result = $spell->cast( $caster, $target );
 
         # THEN
-        isa_ok( $result->{caster}, 'RPG::Schema::Character' );
-        is( $result->{caster}->id, $caster->id, 'Caster set as character in result' );
+        isa_ok( $result->attacker, 'RPG::Schema::Character' );
+        is( $result->attacker->id, $caster->id, 'Caster set as character in result' );
 
-        isa_ok( $result->{target}, 'RPG::Schema::' . $test->{target} );
-        is( $result->{target}->id, $target->id, 'Target set as character in result' );
+        isa_ok( $result->defender, 'RPG::Schema::' . $test->{target} );
+        is( $result->defender->id, $target->id, 'Target set as character in result' );
 
-        is( $result->{duration} > 1, 1,               "Duration set in result" );
-        is( $result->{effect},       $test->{effect}, "Effect set correctly" );
-        is( $result->{type},         'effect',        "Type set correctly" );
+        is( $result->duration > 1, 1,               "Duration set in result" );
+        is( $result->effect,       $test->{effect}, "Effect set correctly" );
+        is( $result->type,         'effect',        "Type set correctly" );
 
         $mem_spell->discard_changes;
         is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );

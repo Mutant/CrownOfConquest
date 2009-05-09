@@ -14,7 +14,11 @@ sub default : Path {
         [
             {
                 template => 'party/details.html',
-                params   => { party => $c->stash->{party}, },
+                params   => {
+                    party   => $c->stash->{party},
+                    tab     => $c->req->param('tab') || '',
+                    message => $c->flash->{messages},
+                },
             }
         ]
     );
@@ -61,7 +65,25 @@ sub history : Local {
             }
         ]
     );
+}
 
+sub combat_log : Local {
+    my ( $self, $c ) = @_;
+
+    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_party( $c->stash->{party}, 20 );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/combat_log.html',
+                params   => {
+                    logs  => \@logs,
+                    party => $c->stash->{party},
+                },
+            }
+        ]
+    );
 }
 
 sub options : Local {
@@ -71,8 +93,9 @@ sub options : Local {
         'RPG::V::TT',
         [
             {
-                template => 'party/details/options.html',
-                params   => {},
+                template     => 'party/details/options.html',
+                params       => { flee_threshold => $c->stash->{party}->flee_threshold, },
+                fill_in_form => 1,
             }
         ]
     );

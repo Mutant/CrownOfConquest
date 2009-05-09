@@ -1,8 +1,4 @@
-[% IF messages %]
-[% messages %]
-<br><br>
-[% END %]
-[% day_logs %]
+[% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]

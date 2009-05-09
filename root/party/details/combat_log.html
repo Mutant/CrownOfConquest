@@ -1,0 +1,60 @@
+[% USE infl = Lingua.EN.Inflect; %]
+
+<h4>Recent Battles</h4>
+
+<table class="main">
+[% last_day = 0 %]
+[% FOREACH battle IN logs %]
+	<tr>
+		<td valign="top" nowrap="nowrap">
+		[% IF last_day != battle.day.day_number %]
+			[% last_day = battle.day.day_number %]
+			<b>Day [% last_day %]</b>
+		[% END %]
+		</td>
+		<td>
+			[% party_num = battle.party_opponent_number(party) %]
+			[% opp_num = party_num == 1 ? 2 : 1 %]
+			
+			[% opp_stats = battle.opponent_stats %]
+			
+			[% IF battle.was_initiated_by_party(party) %]
+				We attacked a
+			[% ELSE %]
+				We were attacked by a
+			[% END %]
+			[% IF opp_stats.$opp_num.type == 'creature_group' %]
+				group of [% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+			[% ELSE %]
+				party known as [% battle.opponent(opp_num).name %]
+			[% END %]
+			[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
+				and crushed them like the maggots they are!
+			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
+				and were wiped out completely!
+			[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
+			    and ran from the battle without shame.
+			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
+				and were thawrted as the cowards retreated.
+			[% END %]
+			
+			[% foo = 'bar' %]
+			<br>
+			<li>The battle lasted [% FILTER inflect %]NO(round, [% battle.rounds %])[% END %], 
+					and [% FILTER inflect %]NO(spell, [% battle.spells_cast %])[% END %] were cast.
+			<br>
+			<li>We dealt out [% opp_stats.$party_num.damage_inflicted %] in damage, and sustained 
+				[% FILTER inflect %]NO(death, [% opp_stats.$party_num.deaths %])[% END %].
+			<br>
+			<li>In return, we took [% opp_stats.$opp_num.damage_inflicted %] in damage, and inflicted
+				[% FILTER inflect %]NO(death, [% opp_stats.$opp_num.deaths %])[% END %].	
+			[% IF battle.outcome == 'opp' _ party_num _ '_won' or battle.outcome == 'opp' _ opp_num _ '_fled' %]
+				[% IF battle.xp_awarded > 0 %]
+					<li>We gained a total of [% battle.xp_awarded %] xp from the battle</li>
+				[% END %]
+			[% END %]
+			<hr size=1>
+		</td>
+	</tr>
+[% END %]
+</table>

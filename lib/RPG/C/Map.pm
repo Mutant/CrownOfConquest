@@ -176,7 +176,7 @@ sub render_grid : Private {
     $params->{y_range}          = [ $params->{start_point}{y} .. $params->{end_point}{y} ];
     $params->{image_path}       = RPG->config->{map_image_path};
     $params->{current_position} = $c->stash->{party_location};
-    $params->{party_in_combat}  = $c->stash->{party}->in_combat_with;
+    $params->{party_in_combat}  = $c->stash->{party}->in_combat;
     $params->{min_x}            = $params->{start_point}{x};
     $params->{min_y}            = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;

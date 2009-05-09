@@ -23,7 +23,7 @@ sub auto : Private {
     $c->req->base( $c->config->{url_root} );
 
     $c->model('DBIC')->schema->config( RPG->config );
-    
+
     $c->model('DBIC')->storage->txn_begin;
 
     if ( !$c->session->{player} ) {
@@ -37,6 +37,23 @@ sub auto : Private {
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
+    # Get recent combat count if party has been offline
+    if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
+        my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
+        if ( $offline_combat_count > 0 ) {
+            $c->stash->{messages} = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template      => 'party/offline_combat_message.html',
+                        params        => { offline_combat_count => $offline_combat_count },
+                        return_output => 1,
+                    }
+                ]
+            );
+        }
+    }
+
     $c->stash->{today} = $c->model('DBIC::Day')->find(
         {},
         {
@@ -44,7 +61,6 @@ sub auto : Private {
             'order_by' => 'day_number desc'
         },
     );
- 
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         $c->stash->{party_location} = $c->stash->{party}->location;
@@ -52,34 +68,27 @@ sub auto : Private {
         # Get parties online
         my @parties_online = $c->model('DBIC::Party')->search(
             {
-                last_action => { '>=', DateTime->now()->subtract( minutes => 10 ) },
+                last_action => { '>=', DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) },
                 defunct     => undef,
-                name  => {'!=',''},
+                name => { '!=', '' },
             }
         );
         $c->stash->{parties_online} = \@parties_online;
 
         # If the party is currently in combat, they must stay on the combat screen
         # TODO: clean up this logic!
-        if (   $c->stash->{party}->in_combat_with
+        if (   $c->stash->{party}->in_combat
             && $c->action ne 'party/main'
-            && $c->action !~ m|^(dungeon/)?combat|
+            && $c->action !~ m{^((dungeon|party)/)?combat}
             && $c->action ne 'party/select_action'
             && $c->action ne '/'
-            && $c->action ne 'player/logout'
-            )
+            && $c->action ne 'player/logout' )
         {
             $c->debug('Forwarding to /party/main since party is in combat');
             $c->stash->{error} = "You must flee before trying to move away!";
             $c->forward('/party/main');
             return 0;
         }
-
-        # Check if they're due a new day
-        if ( !$c->stash->{party}->in_combat_with && $c->stash->{party}->new_day_due ) {
-            $c->forward('/party/process_new_day');
-        }
-
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
         $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
@@ -99,7 +108,7 @@ sub default : Private {
 sub end : Private {
     my ( $self, $c ) = @_;
 
-    if ($c->stash->{party}) {
+    if ( $c->stash->{party} ) {
         $c->stash->{party}->last_action( DateTime->now() );
         $c->stash->{party}->update;
     }
@@ -121,6 +130,7 @@ sub end : Private {
         }
 
         $c->model('DBIC')->storage->txn_rollback;
+
         #$dbh->rollback unless $dbh->{AutoCommit};
 
         # Display error page
@@ -129,9 +139,7 @@ sub end : Private {
             [
                 {
                     template => 'error.html',
-                    params   => {
-                        error_msgs => $c->error,
-                    },
+                    params   => { error_msgs => $c->error, },
                 }
             ]
         );
@@ -140,6 +148,7 @@ sub end : Private {
     }
     else {
         $c->model('DBIC')->storage->txn_commit;
+
         #$dbh->commit unless $dbh->{AutoCommit};
     }
 

@@ -3,17 +3,19 @@
 [% day_count = today.day_number %]
 [% counter = 1 %] 
 [% WHILE counter < history_length %]
-	<tr>
-		<td valign="top" nowrap><b>Day [% day_count %]</b></td>
-		<td>
-			[% day_logs.${day_count}.log | html_line_break %]<br>
-			<hr size=1>
-			[% FOREACH message IN message_logs.${day_count} %]
-				[% message %]<br>
+	[% IF message_logs.${day_count} %]
+		<tr>
+			<td valign="top" nowrap><b>Day [% day_count %]</b></td>
+			<td>
+				[% day_logs.${day_count}.log | html_line_break %]<br>
 				<hr size=1>
-			[% END %]
-		</td>
-	</tr>
+				[% FOREACH message IN message_logs.${day_count} %]
+					[% message %]<br>
+					<hr size=1>
+				[% END %]
+			</td>
+		</tr>
+	[% END %]
 	[% day_count = day_count - 1 %]
 	[% counter = counter + 1 %]
 [% END %]

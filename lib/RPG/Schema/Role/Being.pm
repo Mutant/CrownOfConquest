@@ -2,6 +2,8 @@ package RPG::Schema::Role::Being;
 
 use Moose::Role;
 
+requires 'group_id';
+
 sub health {
 	my $self = shift;
 

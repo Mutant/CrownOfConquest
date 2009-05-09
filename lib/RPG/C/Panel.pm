@@ -101,7 +101,7 @@ sub day_logs_check : Private {
 	my ($self, $c) = @_;
 	
 	# Don't check if the party is currently in combat
-	return if $c->stash->{party}->in_combat_with;
+	return if $c->stash->{party}->in_combat;
 	
     # Check if new day message should be displayed
     my @day_logs = $c->model('DBIC::DayLog')->search(

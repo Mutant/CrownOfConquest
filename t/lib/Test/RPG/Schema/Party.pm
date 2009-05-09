@@ -13,6 +13,7 @@ use Test::MockObject;
 use Test::RPG::Builder::Party;
 
 use Data::Dumper;
+use DateTime;
 
 sub startup : Tests(startup=>1) {
     my $self = shift;
@@ -26,7 +27,7 @@ sub startup : Tests(startup=>1) {
     use_ok 'RPG::Schema::Party';
 }
 
-sub test_new_day : Tests(6) {
+sub test_new_day : Tests(5) {
     my $self = shift;
 
     my $mock_party = Test::MockObject->new();
@@ -97,6 +98,85 @@ sub test_in_party_battle_with : Tests(2) {
     # THEN
     is($p1_opp->id, $party2->id, "Party 1 in combat with party 2");
     is($p2_opp->id, $party1->id, "Party 2 in combat with party 1");
+}
+
+sub test_over_flee_threshold_no_damage : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, hit_points => 10, max_hit_points => 10);
+    $party->flee_threshold(70);
+    $party->update;
+    
+    # WHEN
+    my $over = $party->is_over_flee_threshold;
+    
+    # THEN
+    is($over, 0, "Party not over threshold");    
+}
+
+sub test_over_flee_threshold_on_threshold : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, hit_points => 7, max_hit_points => 10);
+    $party->flee_threshold(70);
+    $party->update;
+    
+    # WHEN
+    my $over = $party->is_over_flee_threshold;
+    
+    # THEN
+    is($over, 0, "Party not over threshold");    
+}
+
+sub test_over_flee_threshold_below_threshold : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, hit_points => 69, max_hit_points => 100);
+    $party->flee_threshold(70);
+    $party->update;
+    
+    # WHEN
+    my $over = $party->is_over_flee_threshold;
+    
+    # THEN
+    is($over, 1, "Party over threshold");    
+}
+
+sub test_is_online_party_online : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, hit_points => 69, max_hit_points => 100);
+    $party->last_action(DateTime->now());
+    $party->update;
+    
+    $self->{config}{online_threshold} = 100;
+    
+    # WHEN
+    my $online = $party->is_online;
+    
+    # THEN
+    is($online, 1, "Party is online");    
+}
+
+sub test_is_online_party_offline : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, hit_points => 69, max_hit_points => 100);
+    $party->last_action(DateTime->now()->subtract( minutes => 2 ));
+    $party->update;
+    
+    $self->{config}{online_threshold} = 1;
+    
+    # WHEN
+    my $online = $party->is_online;
+    
+    # THEN
+    is($online, 0, "Party is offline");    
 }
 
 1;

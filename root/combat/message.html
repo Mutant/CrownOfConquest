@@ -1,5 +1,5 @@
 [% FOREACH message IN combat_messages %]
-	[% IF message.attacker.is_character %]
+	[% IF message.attacker.is_character && message.attacker.party_id == party.id %]
 		[% 
 			attacker_class  = "combat-party-attacker"
 			defender_class  = "combat-creature-defender"

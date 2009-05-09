@@ -3,8 +3,8 @@ News for the town of [% town.town_name %]:
 [% IF combat_logs.0 %]
 	[% current_day = '' %]
 	[% FOREACH log IN combat_logs %]
-		[% IF log.game_day != current_day %]
-			[% current_day = log.game_day %]
+		[% IF log.day.day_number != current_day %]
+			[% current_day = log.day.day_number %]
 			<b>Day [% current_day %]</b><br>
 		[% END %]
 		[% log.opponent_1.name %] were spotted in combat with a group of 

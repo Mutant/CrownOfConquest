@@ -117,15 +117,6 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 1,
         'size'              => 0,
     },
-    'new_day_due' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'new_day_due',
-        'is_nullable'       => 0,
-        'size'              => 0,
-    },
     'defunct' => {
         'data_type'         => 'datetime',
         'is_auto_increment' => 0,
@@ -153,6 +144,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => 0,
     },
+    'flee_threshold' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => '0',
+        'is_foreign_key'    => 0,
+        'name'              => 'flee_threshold',
+        'is_nullable'       => 0,
+        'size'              => 0,
+    },    
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -370,12 +370,37 @@ sub end_combat {
     
     $self->in_combat_with(undef);
     
-    my $party_battle = $self->_get_party_battle->battle;
+    my $party_battle = $self->_get_party_battle;
     
     if ($party_battle) {
-        $party_battle->complete(DateTime->now());
-        $party_battle->update;
+        $party_battle->battle->update({complete => DateTime->now()});
     }
+}
+
+sub is_online {
+    my $self = shift;
+    
+    return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;   
+}
+
+sub is_over_flee_threshold {
+    my $self = shift;
+    
+    my $rec = $self->find_related('characters', 
+        {},
+        {
+            select => [
+                { sum => 'max_hit_points' },
+                { sum => 'hit_points' },
+            ],
+            'as' => ['total_hps', 'current_hps'],
+        }        
+   );
+               
+   my $percentage = int (($rec->get_column('current_hps') / $rec->get_column('total_hps')) * 100);
+   
+   return $percentage < $self->flee_threshold ? 1 : 0;
+    
 }
 
 1;

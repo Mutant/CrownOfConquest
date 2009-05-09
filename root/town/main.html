@@ -1,7 +1,6 @@
 Welcome to the Town of [% town.town_name %]! (Prosperity: [% town.prosperity %])
 <br><br>
-[% IF day_logs %][% day_logs %][% END %]
-[% IF messages %]<p>[% messages %]</p>[% END %]
+[% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 <b>Shops & Services</b>
 <ul>
 <li><a href="javascript:getPanels('town/shop_list')">Equipment Shops</a></li>

@@ -27,3 +27,19 @@ ALTER TABLE `Combat_Log` CHANGE COLUMN `party_id` `opponent_1_id` INTEGER  NOT N
  ADD COLUMN `opponent_2_type` VARCHAR(50)  NOT NULL DEFAULT 'creature_group' AFTER `opponent_1_type`,
  ADD COLUMN `session` TEXT  DEFAULT NULL AFTER `opponent_2_type`;
  
+ALTER TABLE `Party` ADD COLUMN `flee_threshold` INTEGER  NOT NULL DEFAULT 70 AFTER `dungeon_grid_id`;
+
+ALTER TABLE `Combat_Log` CHANGE COLUMN `creature_deaths` `opponent_2_deaths` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `character_deaths` `opponent_1_deaths` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `total_creature_damage` `total_opponent_2_damage` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `total_character_damage` `total_opponent_1_damage` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `party_level` `opponent_1_level` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `creature_group_level` `opponent_2_level` INTEGER  NOT NULL DEFAULT 0,
+ CHANGE COLUMN `flee_attempts` `opponent_1_flee_attempts` INTEGER  DEFAULT NULL,
+ ADD COLUMN `opponent_2_flee_attempts` INTEGER  DEFAULT NULL AFTER `game_day`;
+
+ALTER TABLE `Party` DROP COLUMN `new_day_due`;
+
+UPDATE `Combat_Log` SET combat_initiated_by = 'opp1' where combat_initiated_by = 'party';
+UPDATE `Combat_Log` SET combat_initiated_by = 'opp2' where combat_initiated_by = 'creatures';
+ 

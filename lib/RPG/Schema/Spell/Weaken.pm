@@ -15,8 +15,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target_type    => 'creature',
-            target_id      => $target->id,
+            target      => $target,
             effect_name    => 'Weakened',
             duration       => $duration,
             modifier       => $modifier,

@@ -16,6 +16,8 @@ sub attack : Local {
     $battle->add_to_participants( { party_id => $c->stash->{party}->id, } );
 
     $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
+    
+    $c->stash->{initiated} = 1; 
 
     $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
 }
@@ -41,7 +43,7 @@ sub main : Private {
 sub fight : Local {
     my ( $self, $c ) = @_;
 
-    my ( $party_battle, $party1, $party2 ) = _get_participants($c);
+    my ( $party_battle, $party1, $party2, $active_participant ) = _get_participants($c);
 
     my $battle = RPG::Combat::PartyWildernessBattle->new(
         party_1       => $party1,
@@ -50,6 +52,7 @@ sub fight : Local {
         config        => $c->config,
         log           => $c->log,
         battle_record => $party_battle,
+        initated_by   => $c->stash->{initiated} ? $active_participant : undef,
     );
 
     my $result = $battle->execute_round;

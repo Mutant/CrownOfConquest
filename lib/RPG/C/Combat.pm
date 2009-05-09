@@ -166,6 +166,7 @@ sub process_round_result : Private {
                 params   => {
                     combat_messages => $result->{messages},
                     combat_complete => $result->{combat_complete},
+                    party           => $c->stash->{party},
                 },
                 return_output => 1,
             }
@@ -174,25 +175,32 @@ sub process_round_result : Private {
 
     my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
     if ( $result->{combat_complete} ) {
-        
+
         push @panels_to_refesh, 'map';
-        
-        if (! $c->stash->{party}->defunct) {
+
+        if ( !$c->stash->{party}->defunct ) {
+
+            # TODO: needs to be templated
             my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
-    
+
             push @{ $c->stash->{combat_messages} }, @$xp_messages;
-    
+
             push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
-    
+
             foreach my $item_found ( @{ $result->{found_items} } ) {
                 push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
             }
-    
+
             # Check for state of quests
             my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
             push @{ $c->stash->{combat_messages} }, @$messages;
-            
-            push @{ $c->stash->{combat_messages} }, "The creatures have been killed";
+
+            if ( $result->{creature_battle} ) {
+                push @{ $c->stash->{combat_messages} }, "The creatures have been killed";
+            }
+            else {
+                push @{ $c->stash->{combat_messages} }, "The party has been killed";
+            }
         }
         else {
             push @{ $c->stash->{combat_messages} }, "Your party has been wiped out!";
@@ -207,7 +215,26 @@ sub process_round_result : Private {
 
         undef $c->stash->{creature_group};
 
-        $c->stash->{messages} = "The creatures have fled!";
+        push @{$c->stash->{messages}}, "The creatures have fled!";
+        
+        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
+
+        push @{$c->stash->{messages}}, @$xp_messages;
+        
+    }
+    if ( $result->{offline_party_fled} ) {
+        push @panels_to_refesh, 'map';
+
+        push @{$c->stash->{messages}}, "The party has fled!";
+        
+        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
+
+        push @{$c->stash->{messages}}, @$xp_messages;
+        
+        # TODO: bit of a hack, because the party battle is cached, the panel won't pick up that it's been marked as
+        #  complete, and so will display the battle soon. We should really be a bit smarter about caching... (or not
+        #   cache at all)
+        $c->stash->{messages_path} = '/party/sector_menu';
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};
@@ -229,14 +256,14 @@ sub process_flee_result : Private {
 
         undef $c->stash->{creature_group};
         push @panels_to_refesh, 'map';
-        
+
         $c->forward( '/panel/refresh', \@panels_to_refesh );
     }
     else {
         push @{ $c->stash->{combat_messages} }, "You were unable to flee";
-        
+
         $c->forward( '/combat/process_round_result', [$result] );
-    }    
+    }
 }
 
 1;

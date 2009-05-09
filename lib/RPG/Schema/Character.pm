@@ -66,6 +66,12 @@ sub name {
     return $self->character_name;   
 }
 
+sub group_id {
+    my $self = shift;
+    
+    return $self->party_id;   
+}
+
 sub roll_all {
     my $self = shift;
 

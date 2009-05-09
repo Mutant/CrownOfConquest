@@ -41,7 +41,7 @@ sub build_party {
                 $schema,
                 party_id   => $party->id,
                 level      => $params{character_level},
-                hit_points => $params{hit_points} // 5,
+                %params,
             );
         }
     }

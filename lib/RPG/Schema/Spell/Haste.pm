@@ -14,8 +14,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target_type    => 'character',
-            target_id      => $target->id,
+            target      => $target,
             effect_name    => 'Haste',
             duration       => $duration,
             modifier       => 0.5,

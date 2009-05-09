@@ -10,14 +10,14 @@ sub build_item {
 
     my $super_cat = $schema->resultset('Super_Category')->create( { super_category_name => $params{super_category_name} || 'Test1', } );
 
-    my $item_cat = $schema->resultset('Item_Category')->create(
+    my $item_cat = $schema->resultset('Item_Category')->find_or_create(
         {
             item_category     => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
         }
     );
 
-    my $item_type = $schema->resultset('Item_Type')->create(
+    my $item_type = $schema->resultset('Item_Type')->find_or_create(
         {
             item_type        => 'Test1',
             item_category_id => $item_cat->id,

@@ -50,26 +50,26 @@ our @STATS = qw(str con int div agl);
 # These allow us to use the 'Being' role
 sub hit_points_current {
     my $self = shift;
-    
+
     return $self->hit_points;
 }
 
 sub hit_points_max {
     my $self = shift;
-    
-    return $self->max_hit_points   
+
+    return $self->max_hit_points;
 }
 
 sub name {
     my $self = shift;
-    
-    return $self->character_name;   
+
+    return $self->character_name;
 }
 
 sub group_id {
     my $self = shift;
-    
-    return $self->party_id;   
+
+    return $self->party_id;
 }
 
 sub roll_all {
@@ -119,7 +119,7 @@ sub roll_hit_points {
 
     if ( ref $self ) {
         my $points = $self->_roll_points( 'constitution', $point_max );
-        $self->max_hit_points( ($self->max_hit_points || 0) + $points );
+        $self->max_hit_points( ( $self->max_hit_points || 0 ) + $points );
 
         if ( $self->level == 1 ) {
             $self->hit_points($points);
@@ -147,7 +147,7 @@ sub roll_spell_points {
 
         my $points = $self->_roll_points( $stat, $point_max, $point_min );
 
-        $self->spell_points( ($self->spell_points || 0) + $points );
+        $self->spell_points( ( $self->spell_points || 0 ) + $points );
 
         return $points;
     }
@@ -225,8 +225,8 @@ sub set_default_spells {
                 },
             );
 
-            $memorised_spell->memorise_count( ($memorised_spell->memorise_count || 0) + 1 );
-            $memorised_spell->memorise_count_tomorrow( ($memorised_spell->memorise_count_tomorrow || 0) + 1 );
+            $memorised_spell->memorise_count(          ( $memorised_spell->memorise_count          || 0 ) + 1 );
+            $memorised_spell->memorise_count_tomorrow( ( $memorised_spell->memorise_count_tomorrow || 0 ) + 1 );
             $memorised_spell->update;
 
             $spell_points_used += $spell->points;
@@ -275,9 +275,9 @@ sub defence_factor {
     my $self = shift;
 
     my @items = $self->get_equipped_item('Armour');
-    
+
     # Get rid of broken items (items without a durability (i.e. not defined) are ok)
-    @items = grep { my $dur = $_->variable('Durability'); ! defined $dur || $dur > 0 } @items;
+    @items = grep { my $dur = $_->variable('Durability'); !defined $dur || $dur > 0 } @items;
 
     my $armour_df = 0;
     map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ( $_->variable('Defence Factor Upgrade') || 0 ) } @items;
@@ -309,7 +309,7 @@ sub damage {
     map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
     return 2 + $effect_dam unless $weapon;    # nothing equipped, assume bare hands
 
-    return $weapon->attribute('Damage')->item_attribute_value + ($weapon->variable('Damage Upgrade') || 0) + $effect_dam;
+    return $weapon->attribute('Damage')->item_attribute_value + ( $weapon->variable('Damage Upgrade') || 0 ) + $effect_dam;
 }
 
 sub weapon {
@@ -331,27 +331,26 @@ Returns a list of any equipped item records for a specified super category.
 =cut
 
 sub get_equipped_item {
-    my $self = shift;
-    my $category = shift || croak 'Category not supplied';
+    my $self           = shift;
+    my $category       = shift || croak 'Category not supplied';
     my $variables_only = shift // 0;
 
     return @{ $self->{equipped_item}{$category} } if ref $self->{equipped_item}{$category} eq 'ARRAY';
-    
-    my $prefetch = [
-        {'item_variables' => 'item_variable_name'},
-    ];
-    
+
+    my $prefetch = [ { 'item_variables' => 'item_variable_name' }, ];
+
     unless ($variables_only) {
-        push @$prefetch, { item_type => { 'item_attributes' => 'item_attribute_name' } };        
+        push @$prefetch, { item_type => { 'item_attributes' => 'item_attribute_name' } };
     }
 
     my @items = $self->result_source->schema->resultset('Items')->search(
         {
             'character_id'                       => $self->id,
             'super_category.super_category_name' => $category,
+            'equip_place_id'                     => { '!=', undef },
         },
         {
-            'join' => { 'item_type' => { 'category' => 'super_category' } },
+            'join' => [ { 'item_type' => { 'category' => 'super_category' }, }, ],
             'prefetch' => $prefetch,
         },
     );
@@ -420,40 +419,38 @@ sub is_character {
     return 1;
 }
 
-
 sub ammunition_for_item {
     my $self = shift;
     my $item = shift;
-    
+
     unless ( $item->item_type->category->item_category eq 'Ranged Weapon' ) {
         return;
     }
-    
+
     my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
 
     # Get all appropriate ammunition this character has
-    my $ammo_rs = $self->search_related( 
-        'items', 
-        { 
-            'me.item_type_id' => $ammunition_item_type_id,
-            'item_variable_name.item_variable_name' => 'Quantity',             
-        }, 
-        { 
-            prefetch => {'item_variables' => 'item_variable_name'}, 
-        }, 
+    my $ammo_rs = $self->search_related(
+        'items',
+        {
+            'me.item_type_id'                       => $ammunition_item_type_id,
+            'item_variable_name.item_variable_name' => 'Quantity',
+        },
+        { prefetch => { 'item_variables' => 'item_variable_name' }, },
     );
     $ammo_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-    
+
     my @ammo;
-    while (my $ammo_rec = $ammo_rs->next) {
+    while ( my $ammo_rec = $ammo_rs->next ) {
         my $quantity = $ammo_rec->{item_variables}[0]{item_variable_value};
-        
-        push @ammo, {
-            id => $ammo_rec->{item_id},
+
+        push @ammo,
+            {
+            id       => $ammo_rec->{item_id},
             quantity => $quantity,
-        };   
+            };
     }
-    
+
     return \@ammo;
 }
 
@@ -461,24 +458,24 @@ sub ammunition_for_item {
 sub execute_defence {
     my $self = shift;
 
-    my @items = $self->get_equipped_item('Armour', 1);
+    my @items = $self->get_equipped_item( 'Armour', 1 );
 
     my $armour_now_broken = 0;
     foreach my $item (@items) {
         my $durability_rec = $item->variable_row('Durability');
         if ($durability_rec) {
             return if $durability_rec->item_variable_value == 0;
-    
+
             my $new_durability = $self->_check_damage_to_item($durability_rec);
-    
+
             if ( $new_durability == 0 ) {
-    
+
                 # Armour is now broken
-                $armour_now_broken = 1;                
+                $armour_now_broken = 1;
             }
         }
     }
-    
+
     return $armour_now_broken ? { armour_broken => 1 } : undef;
 
 }
@@ -731,7 +728,7 @@ sub set_starting_equipment {
         $item->add_to_characters_inventory($self);
 
         if ( $item->variable('Quantity') ) {
-            $item->variable( 'Quantity', 20 );
+            $item->variable( 'Quantity', 50 );
         }
     }
 }

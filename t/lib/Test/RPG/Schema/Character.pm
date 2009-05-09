@@ -39,6 +39,27 @@ sub test_get_equipped_item : Tests(2) {
 
 }
 
+sub test_get_equipped_item_multiple_items : Tests(2) {
+    my $self = shift;
+
+    my $char = $self->{schema}->resultset('Character')->create(
+        {
+
+        }
+    );
+
+    my $item1 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $char->id, );
+    $item1->equip_place_id(undef);
+    $item1->update;
+    my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $char->id, );
+
+    my ($equipped_item) = $char->get_equipped_item('Test1');
+
+    isa_ok( $equipped_item, 'RPG::Schema::Items', "Item record returned" );
+    is( $equipped_item->id, $item2->id, "Correct item returned" );
+
+}
+
 sub test_defence_factor : Tests(1) {
     my $self = shift;
 

@@ -227,6 +227,7 @@ sub status : Private {
                 template => 'party/status.html',
                 params   => {
                     party      => $party,
+                    location   => $c->stash->{party_location},
                     day_number => $c->stash->{today}->day_number,
                 },
                 return_output => 1,

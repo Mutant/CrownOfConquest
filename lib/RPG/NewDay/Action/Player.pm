@@ -44,7 +44,7 @@ sub run {
                 . " account by logging back in, although you may lose some standing in the game in the mean time.\n\nAlso, there is a maximum"
                 . " number of active players allowed, so if that number has been reached, you won't be able to re-activate your account"
                 . " until some other players go inactive (or the maximum number of players is increased).\n\n"
-                . " If you have an questions, or are having technical difficulties, please don't hesitate to post in our forum: "
+                . " If you have any questions, or are having technical difficulties, please don't hesitate to reply to this email, or post in our forum: "
                 . $context->config->{forum_url}, 
                  
         );

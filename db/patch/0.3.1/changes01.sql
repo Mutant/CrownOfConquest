@@ -43,4 +43,12 @@ ALTER TABLE `Party` DROP COLUMN `new_day_due`;
 
 UPDATE `Combat_Log` SET combat_initiated_by = 'opp1' where combat_initiated_by = 'party';
 UPDATE `Combat_Log` SET combat_initiated_by = 'opp2' where combat_initiated_by = 'creatures';
+
+UPDATE `Item_Type` SET image = '26-steelheadcap.PNG' where item_type_id = 26;
+UPDATE `Item_Type` SET image = '32-broadsword.PNG' where item_type_id = 32;
+UPDATE `Item_Type` SET image = '35-scalemail.PNG' where item_type_id = 35;
+UPDATE `Item_Type` SET image = '36-fullplatemail.PNG' where item_type_id = 36;
+UPDATE `Item_Type` SET image = '37-mediumsteelshield.PNG' where item_type_id = 37;
+UPDATE `Item_Type` SET image = '38-largesteelshield.PNG' where item_type_id = 38;
+UPDATE `Item_Type` SET image = '39-smallsteelshield.PNG' where item_type_id = 39;
  

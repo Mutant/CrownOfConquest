@@ -1,7 +1,8 @@
 [% IF parties.0 %]
 Other parties here:<br><br>
 [% FOREACH party IN parties %]
-	[% INCLUDE party/summary.html party=party, attack=1 %]
+	[% attack = party.dungeon_grid_id ? 0 : 1 %]
+	[% INCLUDE party/summary.html party=party, attack=attack %]
 	[% UNLESS loop.last %]<br><br>[% END %]
 [% END %]
 [% END %]

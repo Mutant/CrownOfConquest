@@ -15,6 +15,9 @@ sub attack : Local {
 
     croak "Opponent party not found" unless defined $party_attacked;
 
+    if ($party_attacked->dungeon_grid_id) {
+        $c->stash->{error} = "Can't attack a party in a dungeon";           
+    }
     if ( $party_attacked->in_combat ) {
         $c->stash->{error} = 'That party is already in combat';
     }

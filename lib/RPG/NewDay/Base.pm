@@ -2,7 +2,7 @@
 
 package RPG::NewDay::Base;
 
-use Mouse;
+use Moose;
 
 has 'context' => (is => 'rw', isa => 'RPG::NewDay::Context');
 

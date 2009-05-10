@@ -1,6 +1,6 @@
 package RPG::Ticker::BaseGrid;
 
-use Mouse;
+use Moose;
 
 use Games::Dice::Advanced;
 use Data::Dumper;

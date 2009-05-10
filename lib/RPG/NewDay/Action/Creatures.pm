@@ -1,5 +1,5 @@
 package RPG::NewDay::Action::Creatures;
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

@@ -1,6 +1,6 @@
 package RPG::Ticker::LandGrid;
 
-use Mouse;
+use Moose;
 
 extends 'RPG::Ticker::BaseGrid';
 

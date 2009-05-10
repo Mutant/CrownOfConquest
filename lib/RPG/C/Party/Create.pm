@@ -84,7 +84,7 @@ sub save_party : Local {
             $c->detach('create');
         }
         
-        $c->stash->{party}->turns( $c->config->{starting_turns} );
+        $c->stash->{party}->increase_turns( $c->config->{starting_turns} );
         $c->stash->{party}->gold( $c->config->{start_gold} );
         $c->stash->{party}->created( DateTime->now() );
 

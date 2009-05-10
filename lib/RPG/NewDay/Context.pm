@@ -1,6 +1,6 @@
 package RPG::NewDay::Context;
 
-use Mouse;
+use Moose;
 
 use RPG::Ticker::LandGrid;
 

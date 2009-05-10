@@ -11,6 +11,8 @@ use List::Util qw(sum);
 use Math::Round qw(round);
 use POSIX;
 
+use RPG::Exception;
+
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Party');
 
@@ -152,7 +154,7 @@ __PACKAGE__->add_columns(
         'name'              => 'flee_threshold',
         'is_nullable'       => 0,
         'size'              => 0,
-    },    
+    },
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -172,8 +174,8 @@ __PACKAGE__->has_many( 'party_battles', 'RPG::Schema::Battle_Participant', 'part
 
 sub members {
     my $self = shift;
-    
-    return $self->characters;   
+
+    return $self->characters;
 }
 
 sub movement_factor {
@@ -199,9 +201,9 @@ sub _median {
 sub after_land_move {
     my $self = shift;
     my $land = shift;
-    
-    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor ) );    
-};
+
+    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor ) );
+}
 
 # Record turns used whenever number of turns are decreased
 sub turns {
@@ -210,14 +212,34 @@ sub turns {
 
     return $self->_turns unless defined $new_turns;
 
-    # only do it if turns are decreased, and it's not getting reduced to the maximum number of turns allowed
-    #  (since those turns that are getting decreased couldn't have possibly been used)
-    if ( $new_turns < $self->_turns && $new_turns != RPG::Schema->config->{maximum_turns} ) {
-        $self->turns_used( ($self->turns_used || 0) + ( $self->_turns - $new_turns ) );
-
-        # No need to call update, since something else will call it to update the new turns value
+    if ( $new_turns > $self->_turns ) {
+        die RPG::Exception->new(
+            message => "Turns must be increased by calling increase_turns() method",
+            type    => 'increase_turns_error',
+        );
     }
 
+    # No need to call update, since something else will call it to update the new turns value
+    $self->turns_used( ( $self->turns_used || 0 ) + ( $self->_turns - $new_turns ) );
+
+    $self->_turns($new_turns);
+}
+
+sub increase_turns {
+    my $self      = shift;
+    my $new_turns = shift;
+
+    return unless defined $new_turns;
+
+    if ( $new_turns < $self->_turns ) {
+        die RPG::Exception->new(
+            message => "Turns must be decreased by calling turns() method",
+            type    => 'increase_turns_error',
+        );
+    }
+    
+    $new_turns = RPG::Schema->config->{maximum_turns} if $new_turns > RPG::Schema->config->{maximum_turns};
+    
     $self->_turns($new_turns);
 }
 
@@ -234,12 +256,11 @@ sub new_day {
 
     my @log;    # TODO: should be a template
 
-    $self->turns( $self->turns + RPG::Schema->config->{daily_turns} );
-    $self->turns( RPG::Schema->config->{maximum_turns} ) if $self->turns > RPG::Schema->config->{maximum_turns};
+    $self->increase_turns( $self->turns + RPG::Schema->config->{daily_turns} );
 
     push @log, "You now have " . $self->turns . " turns.";
 
-    my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $self->rest * RPG::Schema->config->{max_heal_percentage} / 10;
+    my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + ( $self->rest || 0 ) * RPG::Schema->config->{max_heal_percentage} / 10;
 
     foreach my $character ( $self->characters ) {
         next if $character->is_dead;
@@ -321,8 +342,8 @@ sub summary {
 
 sub in_combat {
     my $self = shift;
-    
-    return $self->in_combat_with || $self->in_party_battle;   
+
+    return $self->in_combat_with || $self->in_party_battle;
 }
 
 sub in_party_battle {
@@ -342,14 +363,12 @@ sub in_party_battle_with {
                 party_id  => { '!=', $self->id },
                 battle_id => $battle->battle->battle_id,
             },
-            {
-                prefetch => {'party' => {'characters' => 'character_effects'}},  
-            },
+            { prefetch => { 'party' => { 'characters' => 'character_effects' } }, },
         );
-        
+
         return $battle_participant->party;
     }
-    
+
     return;
 }
 
@@ -357,7 +376,7 @@ sub _get_party_battle {
     my $self = shift;
 
     return $self->{_party_battle} if defined $self->{_party_battle};
-   
+
     my $battle = $self->find_related( 'party_battles', { 'battle.complete' => undef, }, { prefetch => 'battle', } );
 
     $self->{_party_battle} = $battle;
@@ -367,41 +386,39 @@ sub _get_party_battle {
 
 sub end_combat {
     my $self = shift;
-    
+
     $self->in_combat_with(undef);
-    
+
     my $party_battle = $self->_get_party_battle;
-    
+
     if ($party_battle) {
-        $party_battle->battle->update({complete => DateTime->now()});        
+        $party_battle->battle->update( { complete => DateTime->now() } );
         undef $self->{_party_battle};
     }
 }
 
 sub is_online {
     my $self = shift;
-    
-    return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;   
+
+    return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;
 }
 
 sub is_over_flee_threshold {
     my $self = shift;
-    
-    my $rec = $self->find_related('characters', 
+
+    my $rec = $self->find_related(
+        'characters',
         {},
         {
-            select => [
-                { sum => 'max_hit_points' },
-                { sum => 'hit_points' },
-            ],
-            'as' => ['total_hps', 'current_hps'],
-        }        
-   );
-               
-   my $percentage = int (($rec->get_column('current_hps') / $rec->get_column('total_hps')) * 100);
-      
-   return $percentage < $self->flee_threshold ? 1 : 0;
-    
+            select => [              { sum => 'max_hit_points' }, { sum => 'hit_points' }, ],
+            'as'   => [ 'total_hps', 'current_hps' ],
+        }
+    );
+
+    my $percentage = int( ( $rec->get_column('current_hps') / $rec->get_column('total_hps') ) * 100 );
+
+    return $percentage < $self->flee_threshold ? 1 : 0;
+
 }
 
 1;

@@ -27,9 +27,11 @@ sub startup : Tests(startup=>1) {
     use_ok 'RPG::Schema::Party';
 }
 
-sub test_new_day : Tests(5) {
+sub test_new_day : Tests(2) {
     my $self = shift;
 
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
     my $mock_party = Test::MockObject->new();
     $mock_party->set_always( 'turns', 100 );
     $mock_party->mock( 'characters', sub { () } );
@@ -47,20 +49,13 @@ sub test_new_day : Tests(5) {
     my $mock_new_day = Test::MockObject->new();
     $mock_new_day->set_always( 'id', 5 );
 
-    RPG::Schema::Party::new_day( $mock_party, $mock_new_day );
+    # WHEN
+    RPG::Schema::Party::new_day( $party, $mock_new_day );
 
-    my ( $name, $args );
-
-    ( $name, $args ) = $mock_party->next_call(2);
-    is( $name,      'turns', "Turns method accessed" );
-    is( $args->[1], 110,     "Daily turns added" );
-
-    ( $name, $args ) = $mock_party->next_call(5);
-    is( $name,      'rest', "Rest method accessed" );
-    is( $args->[1], 0,      "Rest set to 0" );
-
-    ( $name, $args ) = $mock_party->next_call();
-    is( $name, 'update', "Party updated" );
+    # THEN
+    $party->discard_changes;
+    is($party->turns, 110, "Party turns incremented");
+    is($party->rest, 0, "Rest is set to 0");
 
 }
 
@@ -177,6 +172,143 @@ sub test_is_online_party_offline : Tests(1) {
     
     # THEN
     is($online, 0, "Party is offline");    
+}
+
+sub test_turns_used_incremented : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 100;
+    
+    # WHEN
+    $party->turns(50);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns_used, 50, "Correct number of turns used recorded");
+}
+
+sub test_turns_used_party_above_maximum_turns : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    # Party has 100, but max is 99... this could happen if e.g. the max turns was reduced
+    $self->{config}{maximum_turns} = 99;
+    
+    # WHEN
+    $party->turns(99);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns_used, 1, "Correct number of turns used recorded");
+}
+
+sub test_turns_used_not_increased_when_adding_turns : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 101;
+    
+    # WHEN
+    $party->increase_turns(102);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns_used, 0, "Correct number of turns used recorded");
+}
+
+sub test_turns_not_lost_if_above_maximum : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    # Party has 100, but max is 99... this could happen if e.g. the max turns was reduced
+    $self->{config}{maximum_turns} = 98;
+    
+    # WHEN
+    $party->turns(99);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns, 99, "Turns allowed to remain above maximum");
+}
+
+sub test_turns_cant_by_increased_by_calling_turns_method : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 100;
+    
+    # WHEN
+    my $e;
+    eval {
+        $party->turns(101);
+        $party->update;
+    };
+    if ($@) {
+        $e = $@;        
+    }    
+    
+    # THEN
+    isa_ok($e, 'RPG::Exception', "Exception thrown");
+    is($e->type, 'increase_turns_error', "Exception is correct type");
+    $party->discard_changes;
+    is($party->turns, 100, "Turns not changed");
+}
+
+sub test_turns_cant_by_decreased_by_calling_increase_turns_method : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 100;
+    
+    # WHEN
+    my $e;
+    eval {
+        $party->increase_turns(99);
+        $party->update;
+    };
+    if ($@) {
+        $e = $@;        
+    }    
+    
+    # THEN
+    isa_ok($e, 'RPG::Exception', "Exception thrown");
+    is($e->type, 'increase_turns_error', "Exception is correct type");
+    $party->discard_changes;
+    is($party->turns, 100, "Turns not changed");
+}
+
+sub test_turns_cant_be_increased_above_maximum : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 105;
+    
+    # WHEN
+    $party->increase_turns(110);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns, 105, "Turns set to maximum");
 }
 
 1;

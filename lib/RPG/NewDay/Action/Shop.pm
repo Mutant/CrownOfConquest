@@ -1,6 +1,6 @@
 package RPG::NewDay::Action::Shop;
 
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

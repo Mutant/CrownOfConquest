@@ -1,6 +1,6 @@
 package RPG::NewDay::Action::Recruitment;
 
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

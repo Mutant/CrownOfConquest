@@ -1,6 +1,6 @@
 package RPG::Ticker::DungeonGrid;
 
-use Mouse;
+use Moose;
 
 # TODO: refactor so we can have some common fuctionality between this and the base grid
 #  Main complication is that we need to index everything by dungeon id, as well as x and y

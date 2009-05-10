@@ -1,5 +1,5 @@
 package RPG::NewDay::Action::CreateDay;
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

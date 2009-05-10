@@ -1,5 +1,5 @@
 package RPG::NewDay::Action::Quest;
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

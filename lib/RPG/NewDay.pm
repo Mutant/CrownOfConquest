@@ -1,6 +1,6 @@
 package RPG::NewDay;
 
-use Mouse;
+use Moose;
 
 use RPG::Schema;
 use RPG::NewDay::Context;

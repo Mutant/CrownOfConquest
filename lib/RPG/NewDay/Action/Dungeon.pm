@@ -1,6 +1,6 @@
 package RPG::NewDay::Action::Dungeon;
 
-use Mouse;
+use Moose;
 
 extends 'RPG::NewDay::Base';
 

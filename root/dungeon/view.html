@@ -60,24 +60,24 @@
 					position: absolute;
 					left: [% (sector.x - min_x) * size %]; 
 					top: [% (sector.y - min_y) * size %];
-					background-image: url('[% c.config.static_path %]images/dungeon/[% background_image %]');
+					background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
 					font-size: [% size / 2 %]px;
 					text-align: center"
 					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
 					>
 							
 						[% IF sector.stairs_up %]
-							<img src="[% c.config.static_path %]images/dungeon/stairs.PNG" border=0>
+							<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0>
 						[% ELSIF cgs.$x.$y %]
 							[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
 						
-							<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]images/dungeon/[% monster_image %]" border=0></span>
+							<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0></span>
 						    <div 
 								dojoType="dijit.Tooltip" 
 								connectId="m_[% x _ y %]"								
 								label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
 						[% ELSIF parties.$x.$y %]
-							<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]images/dungeon/party.PNG" border=0></span>
+							<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0></span>
 						    <div 
 								dojoType="dijit.Tooltip" 
 								connectId="p_[% x _ y %]"

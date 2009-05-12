@@ -9,6 +9,7 @@ use Carp;
 use Data::Dumper;
 
 use Clone qw(clone);
+use List::MoreUtils qw/any/;
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Grid');
@@ -53,7 +54,7 @@ sub has_wall {
     my $self      = shift;
     my $wall_side = shift;
 
-    return grep { $wall_side eq $_ } $self->sides_with_walls;
+    return (any { $wall_side eq $_ } $self->sides_with_walls) ? 1 : 0;
 }
 
 sub sides_with_doors {

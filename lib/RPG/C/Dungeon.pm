@@ -70,7 +70,9 @@ sub view : Local {
         },
     );
     foreach my $cg_rec (@cg_recs) {
-        $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg_rec->creature_group;
+        my $cg = $cg_rec->creature_group;
+        $cg->{group_size} = scalar $cg->creatures if $cg;
+        $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
     }
     
     my $parties;

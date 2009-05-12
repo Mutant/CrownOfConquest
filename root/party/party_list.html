@@ -14,14 +14,14 @@
 			}
 			
 			[% action_function = 'selectActionNonCombat' %]
-			[% IF party.in_combat %]
+			[% IF in_combat %]
 				[% action_function = 'selectActionCombat' %]
 			[% END %]
 
 			var params = {id:"actionMenu_[% char_id %]"};
 			var menu = new dijit.Menu(params,document.createElement("div"));
 			
-			[% IF party.in_combat %]
+			[% IF in_combat %]
 				params = {
 					label: "Attack",
 					onClick: function() {
@@ -141,7 +141,7 @@
 				menu.addChild(castPopupMenu);				
 			[% END %]
 
-		[% IF party.in_combat %]
+		[% IF in_combat %]
         	[% label = char.last_combat_action %]
 		[% ELSE %]
          	[% label = "Action" %]
@@ -156,7 +156,7 @@
 </script>
 
 
-<table [% UNLESS party.in_combat %]dojoType="dojo.dnd.Source"[% END %] 
+<table [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] 
 	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2>
 <tr>
 	<td colspan="8">
@@ -180,7 +180,7 @@
 [% char_id = char.id %]
 
 <tr 
-	[% UNLESS party.in_combat %]class="dojoDndItem"[% END %] 
+	[% UNLESS in_combat %]class="dojoDndItem"[% END %] 
 	dndType="character" 
 	accept="character"
 	id="char-[% char.id %]" 
@@ -218,7 +218,7 @@
     [% UNLESS char.is_dead %]
 		<div id="char_action_holder_[% char.id %]" class="main"></div>    
 	[% ELSE %]
-		[% UNLESS party.in_combat %]
+		[% UNLESS in_combat %]
 			<button dojoType="dijit.form.Button" onclick="buryDiag('[% char.character_name | replace("'","\\'") %]', '[% char.character_id %]')">Bury</button>
 		[% END %]
     [% END %]
@@ -228,7 +228,7 @@
     [% IF party.rank_separator_position == char.party_order %]
     	</tr>
     	<tr>
-    		<tr [% UNLESS party.in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
+    		<tr [% UNLESS in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
     			<td colspan="10"></td>
     [% END %]
 </tr>

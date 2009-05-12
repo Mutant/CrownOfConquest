@@ -231,4 +231,50 @@ sub test_sector_menu_confirm_attack_set : Tests {
     
 }
 
+sub test_select_action : Tests(7) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    my $char1 = ($party->characters)[0];
+    my $char2 = ($party->characters)[0];
+    
+    $self->{params}{character_id} = $char2->id;
+    
+    $self->{stash}{party} = $party;
+    $self->{params}{'action'} = 'Cast';
+    
+    my $spell = Test::MockObject->new();
+    $spell->set_always('cast', 'mock_cast_result');
+    
+    my $spell_rs = Test::MockObject->new();
+    $spell_rs->set_always('find', $spell);
+    
+    $self->{mock_resultset}{Spell} = $spell_rs;
+    
+    $self->{params}{action_param} = ['spell_id',  $char2->id];
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_; return 'spell message' };
+    
+    $self->{mock_forward}->{'/panel/refresh'} = sub {};    
+       
+    # WHEN
+    RPG::C::Party->select_action($self->{c});
+    
+    # THEN
+    my ($method, $args) = $spell->next_call();
+    is($method, 'cast', "Cast called on spell");
+    
+    isa_ok($args->[1], 'RPG::Schema::Character', "Character passed as first arg to cast");
+    is($args->[1]->id, $char1->id, "Correct char is caster of spell");
+
+    isa_ok($args->[2], 'RPG::Schema::Character', "Character passed as second arg to cast");
+    is($args->[2]->id, $char2->id, "Correct char is target of spell");
+    
+    is($template_args->[0][0]{params}{message}, "mock_cast_result", "Cast result passed to template");
+    
+    is($self->{stash}{messages}, 'spell message', "Messages set correctly");
+}
+
 1;

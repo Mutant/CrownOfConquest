@@ -129,10 +129,18 @@ sub _process_effects {
 
     foreach my $effect (@effects) {
         $effect->effect->time_left( $effect->effect->time_left - 1 );
-
+        
         if ( $effect->effect->time_left == 0 ) {
             $effect->effect->delete;
             $effect->delete;
+            
+            # Reload the combatant who has this effect, to make sure it's now gone
+            if ($effect->can('character_id')) {
+                $self->combatants_by_id->{character}{$effect->character_id}->discard_changes;   
+            }
+            else {
+                $self->combatants_by_id->{creature}{$effect->creature_id}->discard_changes;                
+            }
         }
         else {
             $effect->effect->update;

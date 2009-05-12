@@ -72,6 +72,52 @@ sub test_process_effects_one_char_effect : Tests(2) {
     is( $effects[0]->effect->time_left, 1, "Time left has been reduced" );
 }
 
+sub test_process_effects_one_creature_effect : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    my $creature = ($cg->creatures)[0];
+    
+
+    my $effect = $self->{schema}->resultset('Effect')->create(
+        {
+            effect_name => 'Foo',
+            time_left   => 1,
+            combat      => 1,
+            modifier => 2,
+            modified_stat => 'attack_frequency',
+        },
+    );
+
+    $self->{schema}->resultset('Creature_Effect')->create(
+        {
+            creature_id => $creature->id,
+            effect_id    => $effect->id,
+        }
+    );
+    
+    $cg = $self->{schema}->resultset('CreatureGroup')->get_by_id($cg->id);
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        log            => $self->{mock_logger},
+    );
+
+    # WHEN
+    $battle->process_effects;
+
+    # THEN
+    my @effects = $creature->creature_effects;
+    is( scalar @effects,                0, "Effect has been deleted" );
+            
+    ($creature) = grep { $_->id == $creature->id } $battle->creature_group->creatures;
+    is($creature->number_of_attacks, 1, "Number of attacks back to normal");
+}
+
 sub test_character_action_no_target : Tests(4) {
     my $self = shift;
 

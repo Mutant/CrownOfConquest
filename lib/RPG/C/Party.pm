@@ -169,7 +169,7 @@ sub list : Private {
     foreach my $broken_item (@broken_equipped_items) {
         push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
     }
-    
+
     my %spells;
     foreach my $character (@characters) {
         next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
@@ -189,11 +189,11 @@ sub list : Private {
     }
 
     my @opponents;
-    if ($c->stash->{creature_group}) {
+    if ( $c->stash->{creature_group} ) {
         @opponents = $c->stash->{creature_group}->creatures;
     }
-    elsif (my $opponent_party = $party->in_party_battle_with) {
-        @opponents = $opponent_party->characters;   
+    elsif ( my $opponent_party = $party->in_party_battle_with ) {
+        @opponents = $opponent_party->characters;
     }
 
     $c->forward(
@@ -203,6 +203,7 @@ sub list : Private {
                 template => 'party/party_list.html',
                 params   => {
                     party          => $party,
+                    in_combat      => $party->in_combat,
                     characters     => \@characters,
                     combat_actions => $c->session->{combat_action},
                     opponents      => \@opponents,
@@ -346,7 +347,15 @@ sub select_action : Local {
 
         my ( $spell_id, $target_id ) = $c->req->param('action_param');
         my $spell = $c->model('DBIC::Spell')->find($spell_id);
-        my $result = $spell->cast( $character, $target_id );
+
+        my $target = $c->model('DBIC::Character')->find(
+            {
+                character_id => $target_id,
+                party_id     => $c->stash->{party}->id,
+            }
+        );
+
+        my $result = $spell->cast( $character, $target );
 
         my $message = $c->forward(
             'RPG::V::TT',
@@ -588,13 +597,13 @@ sub enter_dungeon : Local {
 
 sub update_options : Local {
     my ( $self, $c ) = @_;
-    
-    if ($c->req->param('save')) {
-        $c->stash->{party}->flee_threshold($c->req->param('flee_threshold'));
+
+    if ( $c->req->param('save') ) {
+        $c->stash->{party}->flee_threshold( $c->req->param('flee_threshold') );
         $c->stash->{party}->update;
         $c->flash->{messages} = 'Changes Saved';
     }
-    
+
     $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
 }
 

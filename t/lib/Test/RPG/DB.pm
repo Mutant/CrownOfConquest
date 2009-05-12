@@ -39,6 +39,9 @@ sub setup_context : Test(setup) {
             }
             
             $resultset =~ s/^DBIC:://;
+            
+            return $self->{mock_resultset}{$resultset} if $self->{mock_resultset}{$resultset};
+            
             return $self->{schema}->resultset( $resultset );
         }
     );

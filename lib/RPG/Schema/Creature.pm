@@ -55,32 +55,44 @@ sub hit {
 
 sub attack_factor {
 	my $self = shift;
+	my $level = shift;
+	
+	$level ||= $self->type->level;
 	
 	my $base = $self->_calculate_factor(
-		$self->type->level,
+		$level,
 		RPG::Schema->config->{creature_attack_base}, 
 		RPG::Schema->config->{create_attack_factor_increment},
 	);
 	
     # Apply effects
 	my $effect_af = 0;
-	map { $effect_af += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->creature_effects;
+	
+	if (ref $self && $self->isa('RPG::Schema::Creature')) {
+	   map { $effect_af += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->creature_effects;
+	}
 	
 	return $base + $effect_af;
 }
 
 sub defence_factor {
 	my $self = shift;
+	my $level = shift;
+	
+	$level ||= $self->type->level;
 	
 	my $base = $self->_calculate_factor(
-		$self->type->level,
+		$level,
 		RPG::Schema->config->{creature_defence_base}, 
 		RPG::Schema->config->{create_defence_factor_increment},
 	);
 
     # Apply effects
 	my $effect_df = 0;
-	map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->creature_effects;
+	
+	if (ref $self && $self->isa('RPG::Schema::Creature')) {
+	   map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->creature_effects;
+	}
 	
 	return $base + $effect_df;
 }
@@ -108,11 +120,16 @@ sub is_dead {
 
 sub damage {
 	my $self = shift;
+	my $level = shift;
+	
+	$level ||= $self->type->level;	
 	
 	my $effect_dam = 0;
-	map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
+	if (ref $self && $self->isa('RPG::Schema::Creature')) {
+	   map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
+	}
 	
-	return $self->type->level * 2 + $effect_dam;	
+	return $level * 2 + $effect_dam;	
 }
 
 sub weapon {

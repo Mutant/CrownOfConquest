@@ -37,11 +37,22 @@ sub combat_factors : Local {
 
     my %averages;
     my %creature_vals;
+    
     for my $level ( 1 .. $max_level ) {
         $averages{$level}{attack_factor}  = average( $factors{$level}{attack_factor} );
         $averages{$level}{defence_factor} = average( $factors{$level}{defence_factor} );
         $averages{$level}{damage}         = average( $factors{$level}{damage} );
+    }
+    
+    my $creature_max_level = $c->model('DBIC::CreatureType')->find(
+        {},
+        {
+            select=>{max=>'level'},
+            as=>'max_level',  
+        },
+    )->get_column('max_level');
 
+    for my $level ( 1 .. $creature_max_level ) {
         $creature_vals{$level}{attack_factor}  = RPG::Schema::Creature->attack_factor($level);
         $creature_vals{$level}{defence_factor} = RPG::Schema::Creature->defence_factor($level);
         $creature_vals{$level}{damage}         = RPG::Schema::Creature->damage($level);
@@ -53,7 +64,7 @@ sub combat_factors : Local {
             {
                 template => 'admin/stats/combat_factors.html',
                 params   => {
-                    max_level     => $max_level,
+                    max_level     => $max_level > $creature_max_level ? $max_level : $creature_max_level,
                     averages      => \%averages,
                     creature_vals => \%creature_vals,
                 },

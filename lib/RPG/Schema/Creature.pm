@@ -103,7 +103,23 @@ sub _calculate_factor {
 	my $base = shift;
 	my $increment = shift;
 	
-	return $base + ($level-1 * $increment);	
+	
+	my $additional = 0;
+    my $step = RPG::Schema->config->{creature_factor_level_increase_step} || 5;
+        
+	my $step_counter = 0;
+	
+	while ($level > ($step_counter * $step)) {
+	   my $levels_to_add = $level - ($step_counter * $step); 
+	   $levels_to_add = $levels_to_add > $step ? $step : $levels_to_add;	   
+	   $levels_to_add-- if $step_counter == 0;
+	   
+	   $additional+=int ($levels_to_add * ($increment + $step_counter));
+	   $step_counter++;
+	}
+	
+	
+	return $base + $additional;	
 }
 
 sub name {
@@ -129,7 +145,7 @@ sub damage {
 	   map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
 	}
 	
-	return $level * 2 + $effect_dam;	
+	return int ($level * 1.5 + $effect_dam);	
 }
 
 sub weapon {

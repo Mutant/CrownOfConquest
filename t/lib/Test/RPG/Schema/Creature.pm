@@ -3,7 +3,7 @@ package Test::RPG::Schema::Creature;
 use strict;
 use warnings;
 
-use base qw(Test::RPG);
+use base qw(Test::RPG::DB);
 
 __PACKAGE__->runtests() unless caller();
 
@@ -56,6 +56,19 @@ sub test_is_attack_allowed : Tests(5) {
 		'Allowed to attack if not attacked in recent rounds',
 	);
 
+}
+
+sub test_calculate_factor : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    $self->{config}{creature_factor_level_increase_step} = 5;
+    
+    # WHEN
+    my $factor = RPG::Schema::Creature->_calculate_factor(6, 10, 1);
+    
+    # THEN
+    is($factor, 16, "Factor calculated correctly");   
 }
 
 1;

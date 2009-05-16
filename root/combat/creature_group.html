@@ -3,12 +3,12 @@
 	<tr>
 		<td>[% creature.name %]</td>
 		<td>[% creature.health %]</td>		
-		[% IF creature.creature_effects %]
-			<td>(
-			[% FOREACH effect IN creature.creature_effects %]
-				[% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %]
+		[% IF creature_effects_by_id.${creature.id} %]
+			<td>[
+			[% FOREACH effect IN creature_effects_by_id.${creature.id} %]
+				[% effect.effect.effect_name %] ([% effect.effect.time_left %])[% UNLESS loop.last() %],[% END %]
 			[% END %]				
-			)</td>
+			]</td>
 		[% END %]
 	</tr>
 [% END %]

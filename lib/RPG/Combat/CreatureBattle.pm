@@ -76,13 +76,8 @@ sub process_effects {
         { prefetch => 'effect', },
     );
 
-    my @creature_effects = $self->schema->resultset('Creature_Effect')->search(
-        {
-            creature_id     => [ map { $_->id } $self->creature_group->creatures ],
-            'effect.combat' => 1,
-        },
-        { prefetch => 'effect', },
-    );
+    my @creature_effects = map { $_->creature_effects } $self->creature_group->creatures;
+    @creature_effects = grep { $_->effect->combat == 1 } @creature_effects;
 
     $self->_process_effects( @character_effects, @creature_effects );
 }

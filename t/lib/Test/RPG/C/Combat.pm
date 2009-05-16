@@ -14,6 +14,7 @@ use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Effect;
 
 use Data::Dumper;
 use DateTime;
@@ -173,8 +174,32 @@ sub process_round_result_party_wiped_out : Tests(5) {
     is($self->{stash}{combat_messages}[1], "Your party has been wiped out!", "Party wiped out message given");
     is($self->{stash}{combat_complete}, 1, "Combat complete recorded in stash"); 
     is_deeply($params, ['messages', 'party', 'party_status', 'map'], "Correct panels refreshed");
+}
+
+sub test_main_already_loaded_cg_picked_up_new_effects : Tests(2) {
+    my $self = shift;
     
-       
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    
+    my $creature = ($cg->creatures)[0];
+    
+    my $effect = Test::RPG::Builder::Effect->build_effect( $self->{schema}, creature_id => $creature->id );
+    
+    $self->{stash}->{creature_group} = $cg;
+    $self->{stash}->{party} = $party;
+
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
+    
+    # WHEN
+    RPG::C::Combat->main($self->{c});
+    
+    # THEN
+    my %creature_effects_by_id = %{$template_args->[0][0]{params}{creature_effects_by_id}};
+    is(scalar @{$creature_effects_by_id{$creature->id}}, 1, "One effect found for creature");
+    is($creature_effects_by_id{$creature->id}->[0]->effect->id, $effect->id, "Correct effect found");    
 }
 
 1;

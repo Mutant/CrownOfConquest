@@ -73,6 +73,20 @@ sub main : Local {
             ->find( { creature_group_id => $c->stash->{party}->in_combat_with, }, { prefetch => { 'creatures' => 'type' }, }, );
     }
 
+    # Load effects, to make sure they're current (i.e. include current round)
+    my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
+        {
+            creature_id     => [ map { $_->id } $creature_group->creatures ],
+            'effect.combat' => 1,
+        },
+        { prefetch => 'effect', },
+    );
+
+    my %creature_effects_by_id;
+    foreach my $effect (@creature_effects) {
+        push @{$creature_effects_by_id{$effect->creature_id}}, $effect;
+    }
+
     my $orb;
     if ( $c->stash->{creatures_initiated} && !$c->stash->{party}->dungeon_grid_id ) {
         $orb = $c->stash->{party_location}->orb;
@@ -84,13 +98,14 @@ sub main : Local {
             {
                 template => 'combat/main.html',
                 params   => {
-                    creature_group      => $creature_group,
-                    creatures_initiated => $c->stash->{creatures_initiated},
-                    combat_messages     => $c->stash->{combat_messages},
-                    combat_complete     => $c->stash->{combat_complete},
-                    party_dead          => $c->stash->{party}->defunct ? 1 : 0,
-                    orb                 => $orb,
-                    in_dungeon          => $c->stash->{party}->dungeon_grid_id ? 1 : 0,
+                    creature_group         => $creature_group,
+                    creatures_initiated    => $c->stash->{creatures_initiated},
+                    combat_messages        => $c->stash->{combat_messages},
+                    combat_complete        => $c->stash->{combat_complete},
+                    party_dead             => $c->stash->{party}->defunct ? 1 : 0,
+                    orb                    => $orb,
+                    in_dungeon             => $c->stash->{party}->dungeon_grid_id ? 1 : 0,
+                    creature_effects_by_id => \%creature_effects_by_id,
                 },
                 return_output => 1,
             }
@@ -215,21 +230,21 @@ sub process_round_result : Private {
 
         undef $c->stash->{creature_group};
 
-        push @{$c->stash->{messages}}, "The creatures have fled!";
-        
+        push @{ $c->stash->{messages} }, "The creatures have fled!";
+
         my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
 
-        push @{$c->stash->{messages}}, @$xp_messages;
-        
+        push @{ $c->stash->{messages} }, @$xp_messages;
+
     }
     if ( $result->{offline_party_fled} ) {
         push @panels_to_refesh, 'map';
 
-        push @{$c->stash->{messages}}, "The party has fled!";
-        
+        push @{ $c->stash->{messages} }, "The party has fled!";
+
         my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
 
-        push @{$c->stash->{messages}}, @$xp_messages;
+        push @{ $c->stash->{messages} }, @$xp_messages;
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};

@@ -27,7 +27,7 @@ sub _cast {
     return {
         type     => 'effect',
         duration => $duration,
-        effect   => 'enhancing his weapon',
+        effect   => 'enhancing ' . $target->pronoun('posessive-subjective') . ' weapon',
     };
 }
 

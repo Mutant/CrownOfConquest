@@ -8,6 +8,7 @@ use base 'DBIx::Class::ResultSet';
 use Carp;
 use List::Util qw(shuffle);
 use File::Slurp;
+use Games::Dice::Advanced;
 
 sub generate_character {
     my $self        = shift;
@@ -34,15 +35,19 @@ sub generate_character {
 
     # Initial allocation of stat points
     %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
+    
+    # Yes, we're quite sexist
+    my $gender = Games::Dice::Advanced->roll('1d3') > 1 ? 'male' : 'female';
 
     my $character = $self->create(
         {
-            character_name => _generate_name(),
+            character_name => _generate_name($gender),
             class_id       => $class->id,
             race_id        => $race->id,
             level          => $level,
             xp             => $xp,
             party_order    => undef,
+            gender         => $gender,
             %stats,
         }
     );
@@ -97,12 +102,18 @@ sub _allocate_stat_points {
     return %$stats;
 }
 
-my @names;
+my %names;
 
 sub _generate_name {
-    unless (@names) {
-        @names = read_file( RPG::Schema->config->{data_file_path} . '/character_names.txt' );
+    my $gender = shift;
+    
+    my $file_prefix = $gender eq 'male' ? '' : 'female_';
+    
+    unless ($names{$gender}) {
+        @{$names{$gender}} = read_file( RPG::Schema->config->{data_file_path} . "/${file_prefix}character_names.txt" );
     }
+    
+    my @names = @{$names{$gender}};
 
     chomp @names;
     @names = shuffle @names;

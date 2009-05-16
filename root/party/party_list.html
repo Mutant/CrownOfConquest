@@ -208,7 +208,7 @@
 			[% END %]
 			[% IF char_out_of_ammo %]
 				[% IF label != '' %][% label = label _ '<br>' %][% END %]
-				[% label = label _ char.name _ ' has run out of ammo for his ' _ char.weapon %]
+				[% label = label _ char.name _ ' has run out of ammo for ' _ char.pronoun('posessive-subjective') _ ' ' _ char.weapon %]
 			[% END %]
 		
 			<span id="brokenItems-[% char.character_id %]">[!]</span>

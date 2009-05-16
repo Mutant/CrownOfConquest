@@ -14,14 +14,15 @@
 	[% IF message.spell_name %]
 		[% INCLUDE magic/spell_result.html, message=message %]
 	[% ELSIF message.no_ammo %]
-		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because he had no ammo left for his 
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because [% message.attacker.pronoun('subjective') %] had no ammo left for 
+			[% message.attacker.pronoun('posessive-subjective') %] 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span>!</span>
 	[% ELSIF message.weapon_broken %]
-		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because his 
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because [% message.attacker.pronoun('posessive-subjective') %] 
 			<span class="combat-weapon">[% message.attacker.weapon %]</span> is broken and needs to be repaired!</span>
 	[% ELSE %]	
 		<span class="[% attacker_class %]">[% message.attacker.name %]</span> attacked <span class="[% defender_class %]">[% message.defender.name %]</span> 
-			with <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
+			with [% message.attacker.pronoun('posessive-subjective') %] <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		
 		[% IF message.damage > 0 %]
 			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of damage.

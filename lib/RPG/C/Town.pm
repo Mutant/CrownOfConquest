@@ -167,7 +167,7 @@ sub resurrect : Local {
                   $char_to_res->character_name
                 . " was ressurected by the healer in the town of "
                 . $town->town_name
-                . " and has risen from the dead. He lost $xp_to_lose xp.";
+                . " and has risen from the dead. " . $char_to_res->pronoun('subjective') . " lost $xp_to_lose xp.";
 
             $c->model('DBIC::Character_History')->create(
                 {

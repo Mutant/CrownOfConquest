@@ -2,6 +2,8 @@ package RPG::Schema::Role::Being;
 
 use Moose::Role;
 
+use Lingua::EN::Gender qw();
+
 requires 'group_id';
 
 sub health {
@@ -31,5 +33,16 @@ sub health {
 		return 'Dead';
 	}
 }
+
+sub pronoun {
+    my $self = shift;
+    
+    my $pronoun_type = shift;
+    
+    return Lingua::EN::Gender::pronoun($pronoun_type, $self->gender);
+    
+    
+}
+
 
 1;

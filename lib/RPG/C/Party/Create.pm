@@ -156,6 +156,7 @@ sub edit_character : Local {
         mod_div      => $character->divinity - $character->race->base_div,
         mod_con      => $character->constitution - $character->race->base_con,
         character_id => $character->id,
+        gender       => $character->gender,
     );
 
     $c->forward( 'new_character_form', [ \%params ] );
@@ -192,6 +193,11 @@ sub create_character : Local {
         $c->stash->{error} = 'Please choose a name, race and class';
         $c->detach('new_character');
     }
+    
+    unless ( $c->req->param('gender') eq 'male' || $c->req->param('gender') eq 'female' ) {
+        $c->stash->{error} = 'Please choose a gender';
+        $c->detach('new_character');
+    }    
 
     my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
     if ( ! $c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
@@ -230,6 +236,7 @@ sub create_character : Local {
         divinity       => $race->base_div + $c->req->param('mod_div') || 0,
         constitution   => $race->base_con + $c->req->param('mod_con') || 0,
         party_id       => $c->stash->{party}->id,
+        gender         => $c->req->param('gender'),
         level          => 1,        
     );
 

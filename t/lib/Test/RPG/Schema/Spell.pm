@@ -107,7 +107,7 @@ sub test_cast_effect_spells : Tests(117) {
             spell_name  => 'Shield',
             effect_name => 'Shield',
             target      => 'Character',
-            effect      => 'protecting',
+            effect      => 'protecting him',
         },
         {
             spell_name  => 'Blades',
@@ -119,7 +119,7 @@ sub test_cast_effect_spells : Tests(117) {
             spell_name  => 'Bless',
             effect_name => 'Bless',
             target      => 'Character',
-            effect      => 'blessing',
+            effect      => 'blessing him',
         },
         {
             spell_name  => 'Haste',
@@ -131,31 +131,31 @@ sub test_cast_effect_spells : Tests(117) {
             spell_name  => 'Weaken',
             effect_name => 'Weakened',
             target      => 'Creature',
-            effect      => 'weakening',
+            effect      => 'weakening it',
         },
         {
             spell_name  => 'Confuse',
             effect_name => 'Confused',
             target      => 'Creature',
-            effect      => 'confusing',
+            effect      => 'confusing it',
         },
         {
             spell_name  => 'Curse',
             effect_name => 'Cursed',
             target      => 'Creature',
-            effect      => 'cursing',
+            effect      => 'cursing it',
         },
         {
             spell_name  => 'Entangle',
             effect_name => 'Entangled',
             target      => 'Creature',
-            effect      => 'entangling',
+            effect      => 'entangling it',
         },        
         {
             spell_name  => 'Slow',
             effect_name => 'Slowed',
             target      => 'Creature',
-            effect      => 'slowing',
+            effect      => 'slowing it',
         },        
     );
 

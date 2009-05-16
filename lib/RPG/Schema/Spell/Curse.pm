@@ -27,7 +27,7 @@ sub _cast {
     return {
         type     => 'effect',
         duration => $duration,
-        effect   => 'cursing',
+        effect   => 'cursing ' . $target->pronoun('objective'),
     };
 }
 

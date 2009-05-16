@@ -42,6 +42,10 @@ sub group_id {
     return $self->creature_group_id;   
 }
 
+sub gender {
+    return 'neuter';   
+}
+
 sub hit {
 	my $self = shift;
 	my $damage = shift;

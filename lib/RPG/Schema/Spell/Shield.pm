@@ -27,7 +27,7 @@ sub _cast {
     return {
         type     => 'effect',
         duration => $duration,
-        effect   => 'protecting',
+        effect   => 'protecting ' . $target->pronoun('objective'),
     };
 }
 

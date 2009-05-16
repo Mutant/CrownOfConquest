@@ -337,6 +337,7 @@ sub sage : Local {
                     item_find_cost                   => $c->config->{sage_item_find_cost},
                     dungeon_levels_allowed_to_enter  => \@dungeon_levels_allowed_to_enter,
                     sage_find_dungeon_cost_per_level => $c->config->{sage_find_dungeon_cost_per_level},
+                    town                             => $c->stash->{party_location}->town,
                 },
                 return_output => 1,
             }
@@ -552,9 +553,9 @@ sub find_dungeon : Local {
 
         my @dungeons = $c->model('DBIC::Dungeon')->search(
             {
-                'location.x'             => { '>=', $top->{x}, '<=', $bottom->{x} },
-                'location.y'             => { '>=', $top->{y}, '<=', $bottom->{y} },
-                level                    => $level,
+                'location.x' => { '>=', $top->{x}, '<=', $bottom->{x} },
+                'location.y' => { '>=', $top->{y}, '<=', $bottom->{y} },
+                level        => $level,
             },
             { prefetch => ['location'] }
         );
@@ -565,21 +566,22 @@ sub find_dungeon : Local {
 
         # See if any of these dungeons are unknown to the party
         my $dungeon_to_find;
-        foreach my $dungeon (shuffle @dungeons) {
+        foreach my $dungeon ( shuffle @dungeons ) {
             my $mapped_sector = $c->model('DBIC::Mapped_Sector')->find(
                 party_id => $party->id,
-                land_id => $dungeon->land_id,
+                land_id  => $dungeon->land_id,
             );
-            
+
             unless ($mapped_sector) {
                 $dungeon_to_find = $dungeon;
-                last;   
+                last;
             }
         }
 
         unless ($dungeon_to_find) {
             return "Sorry, you already know about all the nearby dungeons of that level";
         }
+
         # Add to mapped sectors
         $c->model('DBIC::Mapped_Sectors')->create(
             {
@@ -592,7 +594,12 @@ sub find_dungeon : Local {
         $party->gold( $c->stash->{party}->gold - $cost );
         $party->update;
 
-        return "A level " . $c->req->param('find_level') . " dungeon can be found at " . $dungeon_to_find->location->x . ", " . $dungeon_to_find->location->y;
+        return
+              "A level "
+            . $c->req->param('find_level')
+            . " dungeon can be found at "
+            . $dungeon_to_find->location->x . ", "
+            . $dungeon_to_find->location->y;
     };
     if ($@) {
 
@@ -630,36 +637,36 @@ sub cemetry : Local {
 
 sub enter : Local {
     my ( $self, $c ) = @_;
-    
+
     my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
-    my $cost = $town->tax_cost($c->stash->{party});
-        
-    if ($c->req->param('payment_method') eq 'gold') {
-        if ($cost->{gold} > $c->stash->{party}->gold) {
-            $c->stash->{error} = "You don't have enough gold to pay the tax";  
-            $c->detach('/panel/refresh'); 
+    my $cost = $town->tax_cost( $c->stash->{party} );
+
+    if ( $c->req->param('payment_method') eq 'gold' ) {
+        if ( $cost->{gold} > $c->stash->{party}->gold ) {
+            $c->stash->{error} = "You don't have enough gold to pay the tax";
+            $c->detach('/panel/refresh');
         }
-        
-        $c->stash->{party}->gold($c->stash->{party}->gold - $cost->{gold});        
+
+        $c->stash->{party}->gold( $c->stash->{party}->gold - $cost->{gold} );
     }
     else {
-       if ($cost->{turns} > $c->stash->{party}->turns) {
-            $c->stash->{error} = "You don't have enough turns to pay the tax";  
-            $c->detach('/panel/refresh');           
-       }
-       
-       $c->stash->{party}->turns($c->stash->{party}->turns - $cost->{turns});
+        if ( $cost->{turns} > $c->stash->{party}->turns ) {
+            $c->stash->{error} = "You don't have enough turns to pay the tax";
+            $c->detach('/panel/refresh');
+        }
+
+        $c->stash->{party}->turns( $c->stash->{party}->turns - $cost->{turns} );
     }
-        
+
     # Record payment
     $c->model('Party_Town')->find_or_create(
         {
-            party_id => $c->stash->{party}->id,
-            town_id => $town->id,
-            tax_amount_paid_today => $cost->{gold}, # Always recorded in gold
+            party_id              => $c->stash->{party}->id,
+            town_id               => $town->id,
+            tax_amount_paid_today => $cost->{gold},            # Always recorded in gold
         },
     );
-    
+
     $c->forward('/map/move_to');
 }
 

@@ -451,7 +451,33 @@ sub ammunition_for_item {
             };
     }
 
-    return \@ammo;
+    return wantarray ? @ammo : \@ammo;
+}
+
+sub run_out_of_ammo {
+    my $self = shift;
+    
+    my ($weapon) = $self->get_equipped_item('Weapon');
+    
+    return unless $weapon;
+    
+    unless ( $weapon->item_type->category->item_category eq 'Ranged Weapon' ) {
+        return;
+    }
+    
+    my @ammo = $self->ammunition_for_item($weapon);
+    
+    my $run_out = 1;
+    
+    foreach my $ammo (@ammo) {
+        next unless $ammo;
+        if ($ammo->{quantity} >= 1) {
+           $run_out = 0;
+           last;
+        }
+    }
+    
+    return $run_out;
 }
 
 # Called when character is attacked. Used to take damage to armour

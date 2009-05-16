@@ -410,4 +410,86 @@ sub test_ammunition_for_item : Tests(1) {
     is_deeply($ammo, $expected, "Expected result returned");
 }
 
+sub test_run_out_of_ammo_has_run_out : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 0,
+            
+            },
+        ]
+    );
+    
+    my $weapon = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Ranged Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Ammunition',
+                item_attribute_value => $ammo1->item_type_id,
+            },
+        ],
+    );    
+    
+    # WHEN
+    my $run_out = $char->run_out_of_ammo;    
+    
+    # THEN
+    is($run_out, 1, "Character has run out");
+    
+}
+
+sub test_run_out_of_ammo_hasnt_run_out : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 1,
+            
+            },
+        ]
+    );
+    
+    my $weapon = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Ranged Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Ammunition',
+                item_attribute_value => $ammo1->item_type_id,
+            },
+        ],
+    );    
+    
+    # WHEN
+    my $run_out = $char->run_out_of_ammo;    
+    
+    # THEN
+    is($run_out, 0, "Character has not run out");
+    
+}
+
 1;

@@ -196,11 +196,25 @@
             </div>
 			</span>
 		[% END %]
-		[% IF broken_items.${char.id} %]
+		[% char_out_of_ammo = char.run_out_of_ammo %]
+		[% IF broken_items.${char.id} || char_out_of_ammo %]
+			[% label = '' %]
+			[% IF broken_items.${char.id} %]
+				[% label = 'These equipped items need to be repaired: ' %]
+				[% FOREACH item IN broken_items.${char.id} %]
+					[% label = label _ item.display_name %]
+					[% UNLESS loop.last %][% label = ',' %][% END %]
+				[% END %]
+			[% END %]
+			[% IF char_out_of_ammo %]
+				[% IF label != '' %][% label = label _ '<br>' %][% END %]
+				[% label = label _ char.name _ ' has run out of ammo for his ' _ char.weapon %]
+			[% END %]
+		
 			<span id="brokenItems-[% char.character_id %]">[!]</span>
 			<div dojoType="dijit.Tooltip"
                    connectId="brokenItems-[% char.character_id %]"
-                   label="These equipped items need to be repaired: [% FOREACH item IN broken_items.${char.id} %][% item.display_name %][% UNLESS loop.last %], [% END %][% END %]">
+                   label="[% label %]">
             </div>
 			</span>
 		[% END %]

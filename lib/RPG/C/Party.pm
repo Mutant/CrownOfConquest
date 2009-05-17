@@ -59,21 +59,24 @@ sub sector_menu : Private {
 
     $c->forward('/party/party_messages_check');
 
+    my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
+
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'party/sector_menu.html',
                 params   => {
-                    creature_group    => $creature_group,
-                    confirm_attack    => $confirm_attack || 0,
-                    messages          => $c->stash->{messages},
-                    day_logs          => $c->stash->{day_logs},
-                    location          => $c->stash->{party_location},
-                    orb               => $c->stash->{party_location}->orb || undef,
-                    parties_in_sector => $parties_in_sector,
-                    graves            => \@graves,
-                    dungeon           => $dungeon,
+                    creature_group_display => $creature_group_display,
+                    creature_group         => $creature_group,
+                    confirm_attack         => $confirm_attack || 0,
+                    messages               => $c->stash->{messages},
+                    day_logs               => $c->stash->{day_logs},
+                    location               => $c->stash->{party_location},
+                    orb                    => $c->stash->{party_location}->orb || undef,
+                    parties_in_sector      => $parties_in_sector,
+                    graves                 => \@graves,
+                    dungeon                => $dungeon,
                 },
                 return_output => 1,
             }
@@ -99,7 +102,7 @@ sub parties_in_sector : Private {
     my @parties = $c->model('DBIC::Party')->search( \%query_params, {}, );
 
     return unless @parties;
-    
+
     my $attack_allowed = $dungeon_grid_id ? 0 : 1;
     $attack_allowed = 0 if $c->stash->{party_location}->town;
 
@@ -107,10 +110,10 @@ sub parties_in_sector : Private {
         'RPG::V::TT',
         [
             {
-                template      => 'party/parties_in_sector.html',
-                params        => { 
-                    parties => \@parties,
-                    attack_allowed => $attack_allowed, 
+                template => 'party/parties_in_sector.html',
+                params   => {
+                    parties        => \@parties,
+                    attack_allowed => $attack_allowed,
                 },
                 return_output => 1,
             }
@@ -353,13 +356,20 @@ sub select_action : Local {
 
         my ( $spell_id, $target_id ) = $c->req->param('action_param');
         my $spell = $c->model('DBIC::Spell')->find($spell_id);
-
-        my $target = $c->model('DBIC::Character')->find(
-            {
-                character_id => $target_id,
-                party_id     => $c->stash->{party}->id,
-            }
-        );
+        
+        my $target;
+        
+        if ($spell->target eq 'character') {
+            $target = $c->model('DBIC::Character')->find(
+                {
+                    character_id => $target_id,
+                    party_id     => $c->stash->{party}->id,
+                }
+            );
+        }
+        else {
+            $target = $c->stash->{party};
+        }
 
         my $result = $spell->cast( $character, $target );
 

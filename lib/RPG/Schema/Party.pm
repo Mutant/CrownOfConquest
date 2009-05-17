@@ -172,6 +172,8 @@ __PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'party_id', );
 
 __PACKAGE__->has_many( 'party_battles', 'RPG::Schema::Battle_Participant', 'party_id', );
 
+__PACKAGE__->has_many( 'party_effects', 'RPG::Schema::Party_Effect', 'party_id', );
+
 sub members {
     my $self = shift;
 
@@ -237,9 +239,9 @@ sub increase_turns {
             type    => 'increase_turns_error',
         );
     }
-    
+
     $new_turns = RPG::Schema->config->{maximum_turns} if $new_turns > RPG::Schema->config->{maximum_turns};
-    
+
     $self->_turns($new_turns);
 }
 
@@ -423,12 +425,8 @@ sub is_over_flee_threshold {
 
 sub quests_in_progress {
     my $self = shift;
-    
-    return $self->search_related('quests',
-        {
-            status => 'In Progress',
-        }
-    );
+
+    return $self->search_related( 'quests', { status => 'In Progress', } );
 }
 
 1;

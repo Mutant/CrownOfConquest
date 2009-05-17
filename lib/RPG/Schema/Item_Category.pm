@@ -19,25 +19,29 @@ __PACKAGE__->belongs_to( 'super_category', 'RPG::Schema::Super_Category', { 'for
 
 # Get a list of variable names in a property_category
 my %variables_in_property_category;
+
 sub variables_in_property_category {
     my $self                   = shift;
     my $property_category_name = shift;
     my $return_records         = shift // 0;
 
     my @variables;
-   
-    if (ref $variables_in_property_category{$property_category_name}{$self->id} eq 'ARRAY') {
-        @variables = @{ $variables_in_property_category{$property_category_name}{$self->id} }
+
+    if ( ref $variables_in_property_category{$property_category_name}{ $self->id } eq 'ARRAY' ) {
+        @variables = @{ $variables_in_property_category{$property_category_name}{ $self->id } };
     }
     else {
         @variables = $self->search_related(
             'item_variable_names',
             { 'property_category.category_name' => $property_category_name, },
-            { join                              => ['property_category'], }
+            {
+                join     => 'property_category',
+                order_by => 'item_variable_name',
+            }
         );
     }
 
-    $variables_in_property_category{$property_category_name}{$self->id} = \@variables;
+    $variables_in_property_category{$property_category_name}{ $self->id } = \@variables;
 
     return $return_records ? @variables : map { $_->item_variable_name } @variables;
 }

@@ -12,6 +12,7 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Creature;
 use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Party;
 
 sub startup : Tests(startup=>1) {
     use_ok('RPG::Schema::Spell');
@@ -36,18 +37,18 @@ sub test_cast_damage_spells : Tests(27) {
         {
             spell_name => 'Flame',
             effect     => 'frying',
-            target      => 'Creature',
+            target     => 'Creature',
         },
         {
             spell_name => 'Energy Beam',
             effect     => 'zapping',
-            target      => 'Creature',
+            target     => 'Creature',
         },
         {
             spell_name => 'Heal',
             effect     => 'healing',
-            target      => 'Character',
-        },        
+            target     => 'Character',
+        },
     );
 
     $self->mock_dice;
@@ -56,7 +57,7 @@ sub test_cast_damage_spells : Tests(27) {
     # GIVEN
     foreach my $test (@tests) {
         my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => $test->{spell_name}, } );
-                my $target;
+        my $target;
         if ( $test->{target} eq 'Character' ) {
             $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
         }
@@ -150,13 +151,13 @@ sub test_cast_effect_spells : Tests(117) {
             effect_name => 'Entangled',
             target      => 'Creature',
             effect      => 'entangling it',
-        },        
+        },
         {
             spell_name  => 'Slow',
             effect_name => 'Slowed',
             target      => 'Creature',
             effect      => 'slowing it',
-        },        
+        },
     );
 
     # GIVEN
@@ -205,6 +206,64 @@ sub test_cast_effect_spells : Tests(117) {
         is( $effects[0]->effect->effect_name,   $test->{effect_name}, "Effect name set correctly" );
         is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
         is( $effects[0]->effect->combat,        1,                    "combat set correctly" );
+    }
+
+}
+
+sub test_cast_party_effect_spells : Tests(14) {
+    my $self = shift;
+
+    my @tests = (
+        {
+            spell_name  => 'Watcher',
+            effect_name => 'Watcher',
+            effect      => 'watching the party',
+            combat      => 0,
+            time_type   => 'day',
+        },
+    );
+
+    # GIVEN
+    foreach my $test (@tests) {
+        my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => $test->{spell_name}, } );
+
+        isa_ok( $spell, 'RPG::Schema::Spell::' . $test->{spell_name} );
+        my $caster = Test::RPG::Builder::Character->build_character( $self->{schema} );
+
+        my $target = Test::RPG::Builder::Party->build_party( $self->{schema} );
+
+        my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+            {
+                character_id      => $caster->id,
+                spell_id          => $spell->id,
+                memorise_count    => 1,
+                number_cast_today => 0,
+            }
+        );
+
+        # WHEN
+        my $result = $spell->cast( $caster, $target );
+
+        # THEN
+        isa_ok( $result->attacker, 'RPG::Schema::Character' );
+        is( $result->attacker->id, $caster->id, 'Caster set as character in result' );
+
+        isa_ok( $result->defender, 'RPG::Schema::Party' );
+        is( $result->defender->id, $target->id, 'Target set as party in result' );
+
+        is( $result->duration > 1, 1,               "Duration set in result" );
+        is( $result->effect,       $test->{effect}, "Effect set correctly" );
+        is( $result->type,         'party_effect',  "Type set correctly" );
+
+        $mem_spell->discard_changes;
+        is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
+
+        my @effects = $target->party_effects;
+        is( scalar @effects,                    1,                    "Target has an effect" );
+        is( $effects[0]->effect->effect_name,   $test->{effect_name}, "Effect name set correctly" );
+        is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
+        is( $effects[0]->effect->combat,        $test->{combat},      "combat set correctly" );
+        is( $effects[0]->effect->time_type,     $test->{time_type},   "time type set correctly" );
     }
 
 }

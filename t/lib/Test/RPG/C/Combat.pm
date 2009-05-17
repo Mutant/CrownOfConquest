@@ -58,6 +58,7 @@ sub test_fight : Tests(5) {
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     $self->{mock_forward}->{'/panel/refresh'} = sub { };
     $self->{mock_forward}->{'/combat/process_round_result'} = sub { RPG::C::Combat->process_round_result($self->{c}, $_[0]->[0]) };
+    $self->{mock_forward}->{'/combat/display_cg'} = sub {};
 
     # WHEN
     RPG::C::Combat->fight( $self->{c} );
@@ -194,7 +195,7 @@ sub test_main_already_loaded_cg_picked_up_new_effects : Tests(2) {
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
     # WHEN
-    RPG::C::Combat->main($self->{c});
+    RPG::C::Combat->display_cg($self->{c}, $cg);
     
     # THEN
     my %creature_effects_by_id = %{$template_args->[0][0]{params}{creature_effects_by_id}};

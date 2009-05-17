@@ -160,30 +160,33 @@ sub test_swap_chars : Tests(65) {
 	}
 }
 
-sub test_sector_menu_confirm_attack_set : Tests {
+sub test_sector_menu_confirm_attack_set : Tests(3) {
     my $self = shift;
     
     # GIVEN    
-    $self->{config}->{cg_attack_max_level_above_party} = 2;
+    $self->{config}->{cg_attack_max_factor_difference} = 2;
     $self->{config}->{cg_attack_max_level_below_party} = 4;
     
     my @tests = (
         {
             cg_level => 1,
             party_level => 1,
-            expected_result => 0,   
+            expected_result => 0,
+            factor_comparison => 3,
             name => 'cg and party level the same',
         },
         {
             cg_level => 3,
             party_level => 1,
+            factor_comparison => 2,
             expected_result => 0,   
             name => 'cg level on the threshold',
         },    
         {
             cg_level => 4,
             party_level => 1,
-            expected_result => 1,   
+            expected_result => 1,
+            factor_comparison => 1,   
             name => 'cg level above the threshold',
         },            
     );
@@ -193,6 +196,7 @@ sub test_sector_menu_confirm_attack_set : Tests {
     
     $self->{mock_forward}->{'parties_in_sector'} = sub {};
     $self->{mock_forward}->{'/party/party_messages_check'} = sub {};
+    $self->{mock_forward}->{'/combat/display_cg'} = sub {};
     
     my $mock_location = Test::MockObject->new();
     $mock_location->set_always('orb');
@@ -208,6 +212,9 @@ sub test_sector_menu_confirm_attack_set : Tests {
             $self->{schema},
             creature_level => $test->{cg_level},
         );
+        
+        $creature_group = Test::MockObject::Extends->new($creature_group);
+        $creature_group->set_always('compare_to_party', $test->{factor_comparison});
         
         $self->{c}->stash->{creature_group} = $creature_group;
         
@@ -246,6 +253,7 @@ sub test_select_action : Tests(7) {
     
     my $spell = Test::MockObject->new();
     $spell->set_always('cast', 'mock_cast_result');
+    $spell->set_always('target', 'character');
     
     my $spell_rs = Test::MockObject->new();
     $spell_rs->set_always('find', $spell);
@@ -263,7 +271,7 @@ sub test_select_action : Tests(7) {
     RPG::C::Party->select_action($self->{c});
     
     # THEN
-    my ($method, $args) = $spell->next_call();
+    my ($method, $args) = $spell->next_call(2);
     is($method, 'cast', "Cast called on spell");
     
     isa_ok($args->[1], 'RPG::Schema::Character', "Character passed as first arg to cast");

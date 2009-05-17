@@ -37,12 +37,7 @@ sub view : Local {
             'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
         },
         {
-            prefetch => [
-                'dungeon_room',
-                { 'doors'          => 'position' },
-                { 'walls'          => 'position' },
-                { 'party'          => { 'characters' => 'class' } },
-            ],
+            prefetch => [ 'dungeon_room', { 'doors' => 'position' }, { 'walls' => 'position' }, { 'party' => { 'characters' => 'class' } }, ],
 
         },
     );
@@ -58,15 +53,13 @@ sub view : Local {
     my $cgs;
     my @cg_recs = $c->model('DBIC::Dungeon_Grid')->search(
         {
-            x                         => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
-            y                         => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
+            x                              => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
+            y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
         },
         {
-            prefetch => [            
-                { 'creature_group' => { 'creatures' => 'type' } },
-            ],
-            join => 'dungeon_room',
+            prefetch => [ { 'creature_group' => { 'creatures' => 'type' } }, ],
+            join     => 'dungeon_room',
         },
     );
     foreach my $cg_rec (@cg_recs) {
@@ -74,7 +67,7 @@ sub view : Local {
         $cg->{group_size} = scalar $cg->creatures if $cg;
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
     }
-    
+
     my $parties;
 
     my @viewable_sectors;
@@ -261,17 +254,20 @@ sub sector_menu : Local {
 
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
 
+    my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
+
     return $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'dungeon/sector.html',
                 params   => {
-                    doors             => \@doors,
-                    current_location  => $current_location,
-                    creature_group    => $creature_group,
-                    messages          => $c->stash->{messages},
-                    parties_in_sector => $parties_in_sector,
+                    doors                  => \@doors,
+                    current_location       => $current_location,
+                    creature_group_display => $creature_group_display,
+                    creature_group         => $creature_group,
+                    messages               => $c->stash->{messages},
+                    parties_in_sector      => $parties_in_sector,
                 },
                 return_output => 1,
             }

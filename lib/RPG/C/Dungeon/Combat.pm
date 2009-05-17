@@ -25,6 +25,8 @@ sub check_for_attack : Local {
             $c->stash->{party}->in_combat_with( $creature_group->id );
             $c->stash->{party}->update;
             $c->stash->{creatures_initiated} = 1;
+            
+            $c->stash->{factor_comparison} = $creature_group->compare_to_party( $c->stash->{party} );
 
             return $creature_group;
         }

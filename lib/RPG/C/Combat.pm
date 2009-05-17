@@ -73,6 +73,59 @@ sub main : Local {
             ->find( { creature_group_id => $c->stash->{party}->in_combat_with, }, { prefetch => { 'creatures' => 'type' }, }, );
     }
 
+    my $orb;
+    if ( $c->stash->{creatures_initiated} && !$c->stash->{party}->dungeon_grid_id ) {
+        $orb = $c->stash->{party_location}->orb;
+    }
+
+    my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, $c->stash->{creatures_initiated} ] );
+
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'combat/main.html',
+                params   => {
+                    creature_group_display => $creature_group_display,
+                    creature_group         => $creature_group,
+                    creatures_initiated    => $c->stash->{creatures_initiated},
+                    combat_messages        => $c->stash->{combat_messages},
+                    combat_complete        => $c->stash->{combat_complete},
+                    party_dead             => $c->stash->{party}->defunct ? 1 : 0,
+                    orb                    => $orb,
+                    in_dungeon             => $c->stash->{party}->dungeon_grid_id ? 1 : 0,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+}
+
+sub display_cg : Private {
+    my ( $self, $c, $creature_group, $display_factor_comparison ) = @_;
+
+    return unless $creature_group;
+
+    my $factor_comparison;
+
+    if ($display_factor_comparison) {
+
+        # Check for a watcher effect
+        my @effects = $c->stash->{party}->party_effects;
+
+        my $has_watcher = 0;
+        foreach my $effect (@effects) {
+            if ( $effect->effect->effect_name eq 'Watcher' && $effect->effect->time_left > 0 ) {
+                $has_watcher = 1;
+                last;
+            }
+        }
+
+        if ($has_watcher) {
+            $factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
+        }
+    }
+
     # Load effects, to make sure they're current (i.e. include current round)
     my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
         {
@@ -84,27 +137,17 @@ sub main : Local {
 
     my %creature_effects_by_id;
     foreach my $effect (@creature_effects) {
-        push @{$creature_effects_by_id{$effect->creature_id}}, $effect;
-    }
-
-    my $orb;
-    if ( $c->stash->{creatures_initiated} && !$c->stash->{party}->dungeon_grid_id ) {
-        $orb = $c->stash->{party_location}->orb;
+        push @{ $creature_effects_by_id{ $effect->creature_id } }, $effect;
     }
 
     return $c->forward(
         'RPG::V::TT',
         [
             {
-                template => 'combat/main.html',
+                template => 'combat/creature_group.html',
                 params   => {
                     creature_group         => $creature_group,
-                    creatures_initiated    => $c->stash->{creatures_initiated},
-                    combat_messages        => $c->stash->{combat_messages},
-                    combat_complete        => $c->stash->{combat_complete},
-                    party_dead             => $c->stash->{party}->defunct ? 1 : 0,
-                    orb                    => $orb,
-                    in_dungeon             => $c->stash->{party}->dungeon_grid_id ? 1 : 0,
+                    factor_comparison      => $factor_comparison,
                     creature_effects_by_id => \%creature_effects_by_id,
                 },
                 return_output => 1,

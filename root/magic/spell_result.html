@@ -2,4 +2,6 @@
 	[% INCLUDE magic/damage.html, message=message %]
 [% ELSIF message.type == 'effect' %]
 	[% INCLUDE magic/effect.html, message=message %]
+[% ELSIF message.type == 'party_effect' %]
+	[% INCLUDE magic/party_effect.html, message=message %]
 [% END %]

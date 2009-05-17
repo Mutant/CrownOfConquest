@@ -159,6 +159,7 @@ sub resurrect : Local {
             $c->stash->{party}->update;
 
             $char_to_res->hit_points( round $char_to_res->max_hit_points * 0.1 );
+            $char_to_res->hit_points( 1 ) if $char_to_res->hit_points < 1;
             my $xp_to_lose = int( $char_to_res->xp * RPG->config->{ressurection_percent_xp_to_lose} / 100 );
             $char_to_res->xp( $char_to_res->xp - $xp_to_lose );
             $char_to_res->update;

@@ -53,10 +53,10 @@ sub create : Local {
 
 sub save_party : Local {
     my ( $self, $c ) = @_;
-    
-    unless ($c->req->param('name')) {
+
+    unless ( $c->req->param('name') ) {
         $c->stash->{error} = "You must enter a party name!";
-        $c->detach('create');           
+        $c->detach('create');
     }
 
     # Check there's not already a party with this name
@@ -79,11 +79,11 @@ sub save_party : Local {
         $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
     }
     else {
-        if ($c->stash->{party}->characters->count < $c->config->{new_party_characters}) {
+        if ( $c->stash->{party}->characters->count < $c->config->{new_party_characters} ) {
             $c->stash->{error} = "You still have more character's to create!";
             $c->detach('create');
         }
-        
+
         $c->stash->{party}->increase_turns( $c->config->{starting_turns} );
         $c->stash->{party}->gold( $c->config->{start_gold} );
         $c->stash->{party}->created( DateTime->now() );
@@ -92,9 +92,9 @@ sub save_party : Local {
             $character->roll_all;
 
             $character->set_default_spells;
-            
+
             $character->set_starting_equipment;
-            
+
             $c->model('DBIC::Character_History')->create(
                 {
                     character_id => $character->id,
@@ -115,6 +115,23 @@ sub save_party : Local {
         $c->stash->{party}->land_id( $town->land_id );
 
         $c->stash->{party}->update;
+
+        # Create Watcher effect
+        my $effect = $c->model('DBIC::Effect')->create(
+            {
+                effect_name => 'Watcher',
+                time_left   => $c->config->{new_party_watcher_days},
+                time_type   => 'day',
+                combat      => 0,
+            },
+        );
+
+        $c->model('DBIC::Party_Effect')->create(
+            {
+                party_id  => $c->stash->{party}->id,
+                effect_id => $effect->id,
+            }
+        );
 
         $c->res->redirect( $c->config->{url_root} . '/party/new_party_message' );
     }
@@ -165,7 +182,7 @@ sub edit_character : Local {
 
 sub new_character_form : Private {
     my ( $self, $c, $params ) = @_;
-    
+
     $params ||= {};
 
     $c->forward(
@@ -193,14 +210,14 @@ sub create_character : Local {
         $c->stash->{error} = 'Please choose a name, race and class';
         $c->detach('new_character');
     }
-    
+
     unless ( $c->req->param('gender') eq 'male' || $c->req->param('gender') eq 'female' ) {
         $c->stash->{error} = 'Please choose a gender';
         $c->detach('new_character');
-    }    
+    }
 
     my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
-    if ( ! $c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
+    if ( !$c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
         $c->stash->{error} = 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
         $c->detach('create');
     }
@@ -237,26 +254,21 @@ sub create_character : Local {
         constitution   => $race->base_con + $c->req->param('mod_con') || 0,
         party_id       => $c->stash->{party}->id,
         gender         => $c->req->param('gender'),
-        level          => 1,        
+        level          => 1,
     );
 
     if ( $c->req->param('character_id') ) {
         my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), } );
-        
+
         croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
-        
-        while (my ($field, $value) = each %char_params) {
-            $character->set_column($field, $value);
+
+        while ( my ( $field, $value ) = each %char_params ) {
+            $character->set_column( $field, $value );
         }
         $character->update;
     }
     else {
-        my $character = $c->model('DBIC::Character')->create( 
-            { 
-                %char_params, 
-                party_order    => $char_count + 1, 
-            },
-        );
+        my $character = $c->model('DBIC::Character')->create( { %char_params, party_order => $char_count + 1, }, );
     }
 
     $c->res->redirect( $c->config->{url_root} . '/party/create' );
@@ -268,12 +280,11 @@ sub delete_character : Local {
     my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class' ] } );
 
     croak "Invalid character" unless $character && $character->party_id == $c->stash->{party}->id;
-    
+
     $character->delete;
-    
+
     $c->res->redirect( $c->config->{url_root} . '/party/create' );
 }
-    
 
 =head2 calculate_values
 
@@ -309,25 +320,25 @@ sub calculate_values : Local {
 
 sub autogenerate : Local {
     my ( $self, $c ) = @_;
-    
+
     # Delete any characters that already exist
     $c->stash->{party}->characters->delete;
-    
+
     my @CLASSES_TO_CREATE = qw(Warrior Warrior Archer Priest Mage);
-    
+
     my $order = 1;
     foreach my $class_name (@CLASSES_TO_CREATE) {
-        my $class = $c->model('DBIC::Class')->find({'class_name' => $class_name});
-        my $race  = $c->model('DBIC::Race')->random;
-        
-        my $character = $c->model('DBIC::Character')->generate_character($race, $class, 1, 0, 0);
-        $character->party_id($c->stash->{party}->id);
+        my $class = $c->model('DBIC::Class')->find( { 'class_name' => $class_name } );
+        my $race = $c->model('DBIC::Race')->random;
+
+        my $character = $c->model('DBIC::Character')->generate_character( $race, $class, 1, 0, 0 );
+        $character->party_id( $c->stash->{party}->id );
         $character->party_order($order);
         $character->update;
-        
+
         $order++;
     }
-    
+
     $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
 }
 

@@ -1,4 +1,39 @@
+[% USE infl = Lingua.EN.Inflect; %]
+
 <div style=""> 
+
+[% MACRO spell_target_list(caster, spell, casts_left_today, targets) BLOCK %]
+	var spellSubMenu = new dijit.Menu({id:"spellMenu_[% memorised_spell.id %]"});						
+	[% FOREACH target IN targets %]
+		[% UNLESS target.is_dead %]
+			params = {
+				label: "[% target.name %]",
+				onClick: function() {
+					[% action_function %]('Cast','[% caster.id %]', '[% spell.id %]', '[% target.id %]','Casting [% spell.spell_name %] on: [% opponent.name | replace("'","\\'") %]');
+				}
+			};
+			
+			var item = new dijit.MenuItem(params,document.createElement("div"));
+			spellSubMenu.addChild(item);			
+		[% END %]
+	[% END %]
+	
+	if (dijit.byId("spellPopupMenu_[% caster.id %]_[% spell.id %]")) {
+		dijit.byId("spellPopupMenu_[% caster.id %]_[% spell.id %]").destroyRecursive();
+	}
+	
+	var spellPopupMenu = new dijit.PopupMenuItem(
+		{
+			label: "[% spell.spell_name %] ([% casts_left_today %])", 
+			popup:spellSubMenu, 
+			id:"spellPopupMenu_[% caster.id %]_[% spell.id %]",
+			iconClass: "menuExpandIcon"
+		}
+	);		
+	
+	castSubMenu.addChild(spellPopupMenu); 	
+
+[% END %]
 
 <script>
 	function createMenus() {
@@ -77,60 +112,24 @@
 					if (dijit.byId("spellMenu_[% memorised_spell.id %]")) {
 						dijit.byId("spellMenu_[% memorised_spell.id %]").destroyRecursive();
 					}
-				
-					var spellSubMenu = new dijit.Menu({id:"spellMenu_[% memorised_spell.id %]"}); 
 					
-					[% IF spell.target == 'creature' %]
-						[% FOREACH opponent IN opponents %]
-							[% UNLESS creature.is_dead %]
-								params = {
-									label: "[% opponent.name %]",
-									onClick: function() {
-										[% action_function %]('Cast','[% char.id %]', '[% spell.id %]', '[% opponent.id %]','Casting [% spell.spell_name %] on: [% opponent.name | replace("'","\\'") %]');
-									}
-								};
-								
-								var creatureItem = new dijit.MenuItem(params,document.createElement("div"));
-								spellSubMenu.addChild(creatureItem);
-								
-							[% END %]
-						[% END %]
-					[% END %]
-	
-					[% IF spell.target == 'character' %]
-						[% FOREACH character IN characters %]
-							[% UNLESS character.is_dead %]
-								params = {
-									label: "[% character.name %]",
-									onClick: function(){
-										[% action_function %]('Cast', '[% char.id %]', '[% spell.id %]', '[% character.id %]', 'Casting [% spell.spell_name %] on: [% character.name | replace("'","\\'") %]')
-									}
-								};
-								var item = new dijit.MenuItem(params,document.createElement("div"));
-								spellSubMenu.addChild(item);
-							[% END %]
-						[% END %]
+					[% IF spell.target == 'creature' || spell.target == 'character' %]
+						[% targets = spell.target == 'creature' ? opponents : characters %]
+						[% spell_target_list(char, spell, memorised_spell.casts_left_today, targets) %]
 					[% END %]
 					
-					if (dijit.byId("spellPopupMenu_[% memorised_spell.id %]")) {
-						dijit.byId("spellPopupMenu_[% memorised_spell.id %]").destroyRecursive();
-					}
-					
-					var spellPopupMenu = new dijit.PopupMenuItem(
-						{
-							label: "[% spell.spell_name %] ([% memorised_spell.casts_left_today %])", 
-							popup:spellSubMenu, 
-							id:"spellPopupMenu_[% memorised_spell.id %]",
-							iconClass: "menuExpandIcon"
-						}
-					);			
-					
-
-					castSubMenu.addChild(spellPopupMenu) 		
-							
+					[% IF spell.target == 'party' %]
+						params = {
+							label: "[% spell.spell_name %] ([% memorised_spell.casts_left_today %])",
+							onClick: function(){
+								[% action_function %]('Cast', '[% char.id %]', '[% spell.id %]', '[% party.id %]', 'Casting [% spell.spell_name %]')
+							}
+						};
+						var item = new dijit.MenuItem(params,document.createElement("div"));
+						
+						castSubMenu.addChild(item);
+					[% END %]							
 				[% END %]
-				
-
 				
 				params = {
 					label: "Cast",
@@ -155,9 +154,24 @@
 	dojo.addOnLoad( createMenus );
 </script>
 
-
 <table [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] 
 	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2>
+
+	<tr>
+		<td colspan="8">
+		[% IF party.party_effects %]
+		Party Effects: 
+			[% FOREACH effect IN party.party_effects %]
+				[% effect.effect.effect_name %] ([% FILTER inflect %]NO([% effect.effect.time_type %], [% effect.effect.time_left %])[% END %] left )
+				[% UNLESS loop.last %],[% END %]
+			[% END %]
+		<br>
+		[% END %] 
+		<br>
+		</td>
+	</tr>
+		
+	
 <tr>
 	<td colspan="8">
 		<h3>Party Members</h3>

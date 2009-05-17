@@ -91,7 +91,14 @@ sub create_effect {
         $relationship_name = 'creature_effect';
         $joining_table     = 'Creature_Effect';
     }
+    
+    $self->_create_effect($search_field, $relationship_name, $joining_table, $params);
+}
 
+sub _create_effect {
+    my $self = shift;
+    my ($search_field, $relationship_name, $joining_table, $params) = @_;
+    
     my $schema = $self->result_source->schema;
 
     my $effect = $schema->resultset('Effect')->find_or_new(
@@ -116,7 +123,14 @@ sub create_effect {
     $effect->modifier( $params->{modifier} );
     $effect->modified_stat( $params->{modified_state} );
     $effect->combat( $params->{combat} );
-    $effect->update;
+    $effect->time_type( $params->{time_type} );
+    $effect->update;   
+}
+
+sub create_party_effect {
+    my ( $self, $params ) = @_;
+
+    $self->_create_effect('party_id', 'party_effect', "Party_Effect", $params);
 }
 
 1;

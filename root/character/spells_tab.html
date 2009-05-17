@@ -30,7 +30,7 @@
 		 <span dojoType="dijit.form.Button" id="mem_spell_[% spell.id %]">?</span>
 			<div dojoType="dijit.Tooltip"
                    connectId="mem_spell_[% spell.id %]"
-                   label="[% spell.description %]"></div>
+                   label="[% spell.description | html_entity %]"></div>
 		</td>
 		<td>			
 			<input type="text" size="3" name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"

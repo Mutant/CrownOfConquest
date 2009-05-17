@@ -9,7 +9,7 @@
 			params = {
 				label: "[% target.name %]",
 				onClick: function() {
-					[% action_function %]('Cast','[% caster.id %]', '[% spell.id %]', '[% target.id %]','Casting [% spell.spell_name %] on: [% opponent.name | replace("'","\\'") %]');
+					[% action_function %]('Cast','[% caster.id %]', '[% spell.id %]', '[% target.id %]','Casting [% spell.spell_name %] on: [% target.name | replace("'","\\'") %]');
 				}
 			};
 			

@@ -211,10 +211,10 @@ sub process_round_result : Private {
             push @{ $c->stash->{combat_messages} }, @$messages;
 
             if ( $result->{creature_battle} ) {
-                push @{ $c->stash->{combat_messages} }, "The creatures have been killed";
+                push @{ $c->stash->{combat_messages} }, "You've killed the creatures";
             }
             else {
-                push @{ $c->stash->{combat_messages} }, "The party has been killed";
+                push @{ $c->stash->{combat_messages} }, "You've wiped out the party";
             }
         }
         else {

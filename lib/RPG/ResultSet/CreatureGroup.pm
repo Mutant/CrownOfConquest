@@ -6,6 +6,7 @@ package RPG::ResultSet::CreatureGroup;
 use base 'DBIx::Class::ResultSet';
 
 use RPG::Maths;
+use RPG::Exception;
 use List::Util qw(shuffle);
 use Math::Round qw(round);
 
@@ -50,37 +51,45 @@ sub _create_group {
 
     return if $sector->creature_group;
 
-    unless ($self->{creature_types_by_level}) {
+    unless ( $self->{creature_types_by_level} ) {
         my @creature_types = $self->result_source->schema->resultset('CreatureType')->search();
 
         croak "No types found\n" unless @creature_types;
-        
+
         my @creature_types_by_level;
         foreach my $creature_type (@creature_types) {
-            push @{$creature_types_by_level[$creature_type->level]}, $creature_type;
+            push @{ $creature_types_by_level[ $creature_type->level ] }, $creature_type;
         }
-        
+
         $self->{creature_types_by_level} = \@creature_types_by_level;
-    }   
+    }
 
     my $cg = $self->create( {} );
-    
+
     my $number_of_types = RPG::Maths->weighted_random_number( 1 .. 3 );
 
     my $number_in_group = int( rand 7 ) + 3;
-        
-    for (1 .. $number_of_types) {
+
+    my %types_used;
+
+    for ( 1 .. $number_of_types ) {
         my $level = RPG::Maths->weighted_random_number( $min_level .. $max_level );
-    
-        my $type = (shuffle @{$self->{creature_types_by_level}->[$level]})[0];
-        
-        croak "No types found for level: $level\n" unless $type;
-       
-        my $number_of_type = round $number_in_group / $number_of_types;    
-   
+
+        my $type;
+        foreach my $available_type ( shuffle @{ $self->{creature_types_by_level}->[$level] } ) {
+            next if $types_used{$available_type->id};
+            $type = $available_type;
+        }
+
+        next unless $type;
+
+        $types_used{ $type->id } = 1;
+
+        my $number_of_type = round $number_in_group / $number_of_types;
+
         for my $creature ( 1 .. $number_of_type ) {
             my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
-    
+
             $cg->add_to_creatures(
                 {
                     creature_type_id   => $type->id,
@@ -90,6 +99,14 @@ sub _create_group {
                 }
             );
         }
+    }
+
+    # Check if we found some valid creature types
+    if ( $cg->creatures->count == 0 ) {
+        die RPG::Exception->new(
+            message => "Couldn't find any valid creature types for level range: $min_level .. $max_level",
+            type    => 'creature_type_error',
+        );
     }
 
     return $cg;

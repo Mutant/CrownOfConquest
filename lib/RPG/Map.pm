@@ -9,10 +9,10 @@ use Math::Round qw(round);
 
 sub surrounds {
     my $self = shift;
-    my $x_base = shift || croak 'x base not supplied';
-    my $y_base = shift || croak 'y base not supplied';
-    my $x_size = shift || croak 'x size not supplied';
-    my $y_size = shift || croak 'y size not supplied';
+    my $x_base = shift || confess 'x base not supplied';
+    my $y_base = shift || confess 'y base not supplied';
+    my $x_size = shift || confess 'x size not supplied';
+    my $y_size = shift || confess 'y size not supplied';
     my $allow_negative = shift || 0;
     
     # XXX: x_size and y_size must both be odd numbers;
@@ -36,10 +36,10 @@ sub surrounds {
 # If only one param is passed in as range, it's assumed to be the same for both x and y 
 sub surrounds_by_range {
     my $self = shift;
-    my $x_base = shift || croak 'x base not supplied';
-    my $y_base = shift || croak 'y base not supplied';
+    my $x_base = shift || confess 'x base not supplied';
+    my $y_base = shift || confess 'y base not supplied';
     my $x_range = shift;
-    croak 'x size not supplied' unless defined $x_range;
+    confess 'x size not supplied' unless defined $x_range;
     my $y_range = shift || $x_range;
     
     $x_range = $x_range * 2 + 1;
@@ -49,8 +49,8 @@ sub surrounds_by_range {
 }
 
 sub _coord_diff {
-    my $coord = shift || croak 'coord value not supplied';
-    my $size  = shift || croak 'size not supplied';
+    my $coord = shift || confess 'coord value not supplied';
+    my $size  = shift || confess 'size not supplied';
     my $direction = shift; # 0 = down, 1 = up;
     my $allow_negative = shift;
     

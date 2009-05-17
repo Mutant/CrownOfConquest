@@ -237,9 +237,9 @@ sub test_select_action : Tests(7) {
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
     my $char1 = ($party->characters)[0];
-    my $char2 = ($party->characters)[0];
+    my $char2 = ($party->characters)[1];
     
-    $self->{params}{character_id} = $char2->id;
+    $self->{params}{character_id} = $char1->id;
     
     $self->{stash}{party} = $party;
     $self->{params}{'action'} = 'Cast';

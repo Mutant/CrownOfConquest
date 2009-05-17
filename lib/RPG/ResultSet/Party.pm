@@ -39,6 +39,5 @@ sub average_stat {
 	
 	return $rec->get_column('avg');
 }
-	
-	
+
 1;

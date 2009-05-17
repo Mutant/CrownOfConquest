@@ -87,7 +87,7 @@ sub check_action : Private {
 
     my @messages;
 
-    foreach my $quest ( $c->stash->{party}->quests ) {
+    foreach my $quest ( $c->stash->{party}->quests_in_progress ) {
         if ( $quest->check_action( $c->stash->{party}, $action, @params ) ) {
 
             my $message = $c->forward(

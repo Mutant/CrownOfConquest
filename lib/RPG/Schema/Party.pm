@@ -421,4 +421,14 @@ sub is_over_flee_threshold {
 
 }
 
+sub quests_in_progress {
+    my $self = shift;
+    
+    return $self->search_related('quests',
+        {
+            status => 'In Progress',
+        }
+    );
+}
+
 1;

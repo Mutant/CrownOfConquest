@@ -9,6 +9,7 @@ use RPG::Map;
 use RPG::Exception;
 
 use Data::Dumper;
+use Carp;
 
 # Find a rows in range of sectors from a specified base point (excluding a row at the base point). Params are:
 # * resultset - the result set to use for searching
@@ -22,11 +23,11 @@ use Data::Dumper;
 # * attrs - (optional) hashref extra attrs to include in the search
 sub find_in_range {
     my $package             = shift;
-    my $resultset           = shift;
-    my $relationship        = shift;
-    my $base_point          = shift;
-    my $search_range        = shift;
-    my $increment_search_by = shift;
+    my $resultset           = shift || confess "Resultset not supplied";
+    my $relationship        = shift || confess "Relationship not supplied";
+    my $base_point          = shift || confess "Base point not supplied";
+    my $search_range        = shift // confess "Search range not supplied";
+    my $increment_search_by = shift // confess "Increment search by not supplied";
     my $max_range           = shift;
     my $criteria = shift // {};
     my $attrs = shift // {};

@@ -8,6 +8,7 @@ use Test::RPG::Builder::Land;
 sub build_quest {
     my $self   = shift;
     my $schema = shift;
+    my %params = @_;
 
     my @land = Test::RPG::Builder::Land->build_land($schema);
 
@@ -22,10 +23,17 @@ sub build_quest {
         }
     );
 
+    my %create_params;
+    if ( $params{party_id} ) {
+        $create_params{party_id} = $params{party_id};
+    }
+
     my $quest = $schema->resultset('Quest')->create(
         {
             town_id       => $town->id,
             quest_type_id => $quest_type->id,
+            status        => $params{status} || 'Not Started',
+            %create_params,
         }
     );
 

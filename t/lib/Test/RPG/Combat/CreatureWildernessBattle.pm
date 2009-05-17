@@ -15,6 +15,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Item_Type;
 
 use Storable qw(thaw);
 use Data::Dumper;
@@ -76,17 +77,16 @@ sub test_process_effects_one_creature_effect : Tests(2) {
     my $self = shift;
 
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-    my $creature = ($cg->creatures)[0];
-    
+    my $party    = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg       = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    my $creature = ( $cg->creatures )[0];
 
     my $effect = $self->{schema}->resultset('Effect')->create(
         {
-            effect_name => 'Foo',
-            time_left   => 1,
-            combat      => 1,
-            modifier => 2,
+            effect_name   => 'Foo',
+            time_left     => 1,
+            combat        => 1,
+            modifier      => 2,
             modified_stat => 'attack_frequency',
         },
     );
@@ -94,11 +94,11 @@ sub test_process_effects_one_creature_effect : Tests(2) {
     $self->{schema}->resultset('Creature_Effect')->create(
         {
             creature_id => $creature->id,
-            effect_id    => $effect->id,
+            effect_id   => $effect->id,
         }
     );
-    
-    $cg = $self->{schema}->resultset('CreatureGroup')->get_by_id($cg->id);
+
+    $cg = $self->{schema}->resultset('CreatureGroup')->get_by_id( $cg->id );
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -112,10 +112,10 @@ sub test_process_effects_one_creature_effect : Tests(2) {
 
     # THEN
     my @effects = $creature->creature_effects;
-    is( scalar @effects,                0, "Effect has been deleted" );
-            
+    is( scalar @effects, 0, "Effect has been deleted" );
+
     ($creature) = grep { $_->id == $creature->id } $battle->creature_group->creatures;
-    is($creature->number_of_attacks, 1, "Number of attacks back to normal");
+    is( $creature->number_of_attacks, 1, "Number of attacks back to normal" );
 }
 
 sub test_character_action_no_target : Tests(4) {
@@ -702,7 +702,7 @@ sub test_finish : Tests(6) {
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-    $party->in_combat_with($cg->id);
+    $party->in_combat_with( $cg->id );
     $party->update;
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -712,26 +712,62 @@ sub test_finish : Tests(6) {
         config         => $self->{config},
         log            => $self->{mock_logger},
     );
-    
+
     $self->mock_dice;
     $self->{roll_result} = 10;
-    
+
     # WHEN
     $battle->finish($cg);
-    
+
     # THEN
     is( defined $battle->result->{awarded_xp}, 1,  "Awarded xp returned" );
     is( $battle->result->{gold},               30, "Gold returned in result correctly" );
 
     $party->discard_changes;
-    is($party->in_combat_with, undef, "No longer in combat");
-    is($party->gold, 130, "Gold added to party");
-    
+    is( $party->in_combat_with, undef, "No longer in combat" );
+    is( $party->gold,           130,   "Gold added to party" );
+
     $cg->discard_changes;
-    is($cg->land_id, undef, "CG no longer in land");
-    
-    is(defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended");
-        
+    is( $cg->land_id, undef, "CG no longer in land" );
+
+    is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
+}
+
+sub test_check_for_item_found_correct_prevalence_used : Tests(5) {
+    my $self = shift;
+
+    # GIVEN
+    my $party     = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+    my $character = ( $party->characters )[0];
+    my $cg        = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => 1 );
+
+    $self->{config}{chance_to_find_item}                   = 10;
+    $self->{config}{prevalence_per_creature_level_to_find} = 10;
+
+    my $item_type_1 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, prevalence => 90 );
+    my $item_type_2 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, prevalence => 89 );
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );
+
+    $self->mock_dice;
+    $self->{roll_result} = 1;
+
+    # WHEN
+    $battle->check_for_item_found( [ $party->characters ], $cg->level );
+
+    # THEN
+    my @found_items = @{ $battle->result->{found_items} };
+    is( scalar @found_items, 1, "One item found" );
+    isa_ok( $found_items[0]->{finder}, 'RPG::Schema::Character', "Character set as finder" );
+    is( $found_items[0]->{finder}->id, $character->id, "Correct character is finder" );
+    isa_ok( $found_items[0]->{item}, 'RPG::Schema::Items', "Item set in result" );
+    is( $found_items[0]->{item}->item_type_id, $item_type_1->id, "Item is of correct type" );
 
 }
 

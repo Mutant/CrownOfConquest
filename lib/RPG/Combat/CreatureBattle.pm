@@ -196,12 +196,12 @@ sub check_for_item_found {
 
     # See if party find an item
     if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $self->config->{chance_to_find_item} ) {
-        my $max_prevalence = $avg_creature_level * $self->config->{prevalence_per_creature_level_to_find};
+        my $min_prevalence = 100 - ($avg_creature_level * $self->config->{prevalence_per_creature_level_to_find});
 
         # Get item_types within the prevalance roll
         my @item_types = shuffle $self->schema->resultset('Item_Type')->search(
             {
-                prevalence        => { '<=', $max_prevalence },
+                prevalence        => { '>=', $min_prevalence },
                 'category.hidden' => 0,
             },
             { join => 'category', },
@@ -209,8 +209,10 @@ sub check_for_item_found {
 
         my $item_type = shift @item_types;
 
-        croak "Couldn't find item to give to party under prevalence $max_prevalence\n"
-            unless $item_type;
+        unless ($item_type) {
+            $self->log->warn("Couldn't find item to give to party under prevalence $min_prevalence");
+            return;
+        }
 
         # Choose a random character to find it
         my $finder;

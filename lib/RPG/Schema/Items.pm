@@ -326,7 +326,7 @@ sub add_to_characters_inventory {
     my %equipped_items = %{ $character->equipped_items() };
 
     # Try equipping the item in each empty equip place (without removing any existing items)
-    foreach my $equip_place (%equipped_items) {
+    foreach my $equip_place (keys %equipped_items) {
         if ( !$equipped_items{$equip_place} ) {
             eval {
                 if ( $self->equip_item( $equip_place, 0 ) )

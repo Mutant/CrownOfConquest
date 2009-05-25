@@ -24,8 +24,10 @@ sub run {
         $dt = DateTime::Format::DateParse->parse_datetime( $date_to_run_at );        
     }
     else {
-        $dt = DateTime->now();
+        $dt = DateTime->now();       
     }
+    
+    $dt->set_time_zone('local');
 
     my $home = $ENV{RPG_HOME};
 

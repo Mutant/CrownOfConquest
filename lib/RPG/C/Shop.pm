@@ -17,6 +17,22 @@ sub purchase : Local {
 
     my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
 
+    if ( $shop->status eq 'Closed' || $shop->status eq 'Opening' ) {
+        $c->detach(
+            'RPG::V::TT',
+            [
+                {
+                    template => 'shop/not_open.html',
+                    params   => {
+                        shop          => $shop,
+                        shops_in_town => \@shops_in_town,
+                        gold          => $party->gold,
+                    }
+                }
+            ]
+        );
+    }
+
     my @characters = $party->characters;
 
     my @items = $shop->grouped_items_in_shop;
@@ -90,16 +106,16 @@ sub sell : Local {
 sub character_sell_tab : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find({ character_id => $c->req->param('character_id') });
+    my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id') } );
 
     croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
-    
-    my $shop = $c->model('DBIC::Shop')->find({ shop_id => $c->req->param('shop_id') });
-    
+
+    my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id') } );
+
     if ( $shop->town_id != $c->stash->{party}->location->town->id ) {
         croak "Invalid shop";
     }
-    
+
     $c->session->{sell_active_tab} = $character->id;
 
     my @items = $c->model('DBIC::Items')->search(
@@ -109,7 +125,7 @@ sub character_sell_tab : Local {
             order_by => 'item_category',
         },
     );
-    
+
     $c->forward(
         'RPG::V::TT',
         [
@@ -117,11 +133,11 @@ sub character_sell_tab : Local {
                 template => 'shop/character_sell_tab.html',
                 params   => {
                     items => \@items,
-                    shop => $shop,
+                    shop  => $shop,
                 }
             }
         ]
-    );    
+    );
 }
 
 sub buy_item : Local {

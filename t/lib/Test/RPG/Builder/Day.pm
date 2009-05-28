@@ -8,7 +8,12 @@ sub build_day {
     my $schema  = shift;
     my %params  = @_;
 
-    my $day = $schema->resultset('Day')->create( { day_number => $params{day_number} || int rand 1000, } );
+    my $day = $schema->resultset('Day')->create( 
+        { 
+            day_number => $params{day_number} || int rand 1000,
+            turns_used => $params{turns_used} || 100, 
+        } 
+    );
 
     return $day;
 }

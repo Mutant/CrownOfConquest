@@ -77,7 +77,7 @@ sub _create_group {
 
         my $type;
         foreach my $available_type ( shuffle @{ $self->{creature_types_by_level}->[$level] } ) {
-            next if $types_used{$available_type->id};
+            next if $types_used{ $available_type->id };
             $type = $available_type;
         }
 
@@ -87,8 +87,20 @@ sub _create_group {
 
         my $number_of_type = round $number_in_group / $number_of_types;
 
+        my @melee_weapons =
+            $self->result_source->schema->resultset('Item_Type')->search( { 'category.item_category' => 'Melee Weapon', }, { join => 'category', } );
+
         for my $creature ( 1 .. $number_of_type ) {
             my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
+
+            my $weapon = 'Claws';
+            if ( $type->weapon eq 'Melee Weapon' ) {
+                my $weapon_rec = ( shuffle @melee_weapons )[0];
+                $weapon = $weapon_rec->item_type;
+            }
+            else {
+                $weapon = $type->weapon;
+            }
 
             $cg->add_to_creatures(
                 {
@@ -96,6 +108,7 @@ sub _create_group {
                     hit_points_current => $hps,
                     hit_points_max     => $hps,
                     group_order        => $creature,
+                    weapon             => $weapon,
                 }
             );
         }

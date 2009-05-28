@@ -10,6 +10,8 @@ use Games::Dice::Advanced;
 use Params::Validate qw(:types validate);
 use List::Util qw(shuffle);
 
+sub depends { qw/RPG::NewDay::Action::Town/ }
+
 sub run {
     my $self = shift;
 
@@ -131,36 +133,41 @@ sub _alter_statuses_of_shops {
             shops_by_status  => { type => HASHREF },
         }
     );
-
     my %params = @_;
 
     my $number_to_change = $params{number_to_change};
     my $open_or_close    = $params{open_or_close};
     my %shops_by_status  = %{ $params{shops_by_status} };
 
-    my @order;
+    my %next_status;
+    my @order_to_check;
     if ( $open_or_close eq 'Open' ) {
-        @order = qw/Closing Opening Open/;
+        %next_status = (
+            'Closed'  => 'Opening',
+            'Closing' => 'Opening',
+            'Opening' => 'Open',
+        );
+        @order_to_check = qw/Opening Closing Closed/;
     }
     else {
-        @order = qw/Open Closing Closed/;
-
-        # For our purposes, Opening and Open shops are the same
-        #  (altho Opening shops are dealt to first)
-        $shops_by_status{Open} = [ @{ $shops_by_status{Opening} || [] }, @{ $shops_by_status{Open} || [] } ];
+        %next_status = (
+            'Closing' => 'Closed',
+            'Opening' => 'Closing',
+            'Open'    => 'Closing',
+        );
+        @order_to_check = qw/Closing Opening Open/;
     }
 
-    my $order_index = 0;
-    OUTER: foreach my $status_to_change (@order) {
+    OUTER: foreach my $status_to_change (@order_to_check) {
 
-        #warn "Changing status from: $status_to_change to: $order[$order_index+1]";
+        #warn "Changing status from: $status_to_change to: $next_status{$status_to_change}";
 
         if ( $shops_by_status{$status_to_change} ) {
             foreach my $shop_to_change ( @{ $shops_by_status{$status_to_change} } ) {
 
                 #warn "Changing status for: " . $shop_to_change->id . "\n";
 
-                $shop_to_change->status( $order[ $order_index + 1 ] );
+                $shop_to_change->status( $next_status{$status_to_change} );
                 $shop_to_change->update;
 
                 $number_to_change--;
@@ -168,10 +175,6 @@ sub _alter_statuses_of_shops {
                 last OUTER if $number_to_change == 0;
             }
         }
-
-        # We don't change the last item in the list
-        $order_index++;
-        last if $order_index == ( scalar @order ) - 1;
     }
 
     return $number_to_change;
@@ -226,6 +229,7 @@ sub _adjust_number_of_shops {
 
     my $open_shops_count = defined $shops_by_status{Open} ? scalar @{ $shops_by_status{Open} } : 0;
 
+    #warn "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count";
     $c->logger->info( "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count" );
 
     if ( $ideal_number_of_shops > $open_shops_count ) {
@@ -249,7 +253,7 @@ sub _adjust_number_of_shops {
                 {
                     shop_owner_name => $shop_owner_name,
                     shop_suffix     => $suffix,
-                    status          => 'Open',
+                    status          => 'Opening',
                     shop_size       => Games::Dice::Advanced->roll('1d10'),
                 }
             );
@@ -265,6 +269,15 @@ sub _adjust_number_of_shops {
             open_or_close    => 'Close',
             shops_by_status  => \%shops_by_status
         );
+    }
+    else {
+        # Check there are no closing shops, these should close now
+        foreach my $shop (@shops) {
+            if ($shop->status eq 'Closing') {
+                $shop->status('Closed');
+                $shop->update;   
+            }   
+        } 
     }
 
     return @shops;

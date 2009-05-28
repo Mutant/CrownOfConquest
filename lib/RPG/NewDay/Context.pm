@@ -8,6 +8,7 @@ has 'config'      => ( isa => 'HashRef',               is => 'ro', required => 1
 has 'schema'      => ( isa => 'RPG::Schema',           is => 'ro', required => 1 );
 has 'logger'      => ( isa => 'Log::Dispatch',         is => 'ro', required => 1 );
 has 'current_day' => ( isa => 'RPG::Schema::Day',      is => 'rw', required => 0 );
+has 'yesterday'   => ( isa => 'RPG::Schema::Day',      is => 'rw', required => 0 );
 has 'datetime'    => ( isa => 'DateTime',              is => 'ro', required => 1 );
 has 'land_grid'   => ( isa => 'RPG::Ticker::LandGrid', is => 'ro', required => 0, lazy => 1, builder => '_build_land_grid' );
 

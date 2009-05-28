@@ -109,7 +109,14 @@ sub save_party : Local {
         }
 
         # Find starting town
-        my @towns = shuffle $c->model('DBIC::Town')->search( { prosperity => { '<=', $c->config->{max_starting_prosperity} }, } );
+        my @towns = shuffle $c->model('DBIC::Town')->search( 
+            { 
+                prosperity => { 
+                    '<=', $c->config->{max_starting_prosperity},
+                    '>=', $c->config->{min_starting_prosperity},
+                }, 
+            } 
+        );
 
         my $town = shift @towns;
         $c->stash->{party}->land_id( $town->land_id );

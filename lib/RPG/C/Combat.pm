@@ -115,7 +115,7 @@ sub display_cg : Private {
 
         my $has_watcher = 0;
         foreach my $effect (@effects) {
-            if ( $effect->effect->effect_name eq 'Watcher' && $effect->effect->time_left > 0 ) {
+            if ( $effect->effect && $effect->effect->effect_name eq 'Watcher' && $effect->effect->time_left > 0 ) {
                 $has_watcher = 1;
                 last;
             }

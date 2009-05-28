@@ -11,6 +11,7 @@ use Test::More;
 use Test::MockObject;
 
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Day;
 
 use Data::Dumper;
 use DateTime;
@@ -179,6 +180,7 @@ sub test_turns_used_incremented : Tests(1) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     $self->{config}{maximum_turns} = 100;
     
@@ -196,6 +198,7 @@ sub test_turns_used_party_above_maximum_turns : Tests(1) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     # Party has 100, but max is 99... this could happen if e.g. the max turns was reduced
     $self->{config}{maximum_turns} = 99;
@@ -214,6 +217,7 @@ sub test_turns_used_not_increased_when_adding_turns : Tests(1) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     $self->{config}{maximum_turns} = 101;
     
@@ -231,6 +235,7 @@ sub test_turns_not_lost_if_above_maximum : Tests(1) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     # Party has 100, but max is 99... this could happen if e.g. the max turns was reduced
     $self->{config}{maximum_turns} = 98;
@@ -249,6 +254,7 @@ sub test_turns_cant_by_increased_by_calling_turns_method : Tests(3) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     $self->{config}{maximum_turns} = 100;
     
@@ -274,6 +280,7 @@ sub test_turns_cant_by_decreased_by_calling_increase_turns_method : Tests(3) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     $self->{config}{maximum_turns} = 100;
     
@@ -299,6 +306,7 @@ sub test_turns_cant_be_increased_above_maximum : Tests(1) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
     
     $self->{config}{maximum_turns} = 105;
     

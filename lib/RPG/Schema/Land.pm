@@ -5,6 +5,9 @@ use warnings;
 
 use Carp qw(cluck croak);
 
+use RPG::ResultSet::RowsInSectorRange;
+use Statistics::Basic qw(average);
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Land');
 
@@ -148,6 +151,20 @@ sub available_creature_group {
 	return $creature_group if $creature_group->number_alive > 0;
 	
 	return;
+}
+
+sub get_surrounding_ctr_average {
+    my $self = shift;
+    my $search_range = shift;
+    
+    my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range($self->result_source->resultset, 'me', {x=>$self->x, y=>$self->y}, $search_range, 0);
+    
+    my @ctrs;
+    foreach my $land_rec (@land_rec) {
+        push @ctrs, $land_rec->creature_threat;   
+    }
+    
+    return average(@ctrs);    
 }
 
 1;

@@ -15,7 +15,8 @@ sub build_town {
     
     my $town = $schema->resultset('Town')->create(
         {
-            land_id => $params{land_id},            
+            land_id => $params{land_id},
+            prosperity => $params{prosperity} || 50,
         }   
     );
     

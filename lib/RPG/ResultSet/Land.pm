@@ -44,8 +44,7 @@ sub search_for_adjacent_sectors {
         $params{'creature_group.creature_group_id'} = undef;
         $params{'town.town_id'}                     = undef;
         $attrs{join} = ['creature_group','town'];
-    }
-    
+    }    
     
     return RPG::ResultSet::RowsInSectorRange->find_in_range(
         $self,

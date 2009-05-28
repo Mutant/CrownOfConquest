@@ -14,7 +14,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Creature');
 
-__PACKAGE__->add_columns(qw/creature_id creature_group_id creature_type_id hit_points_current hit_points_max group_order/);
+__PACKAGE__->add_columns(qw/creature_id creature_group_id creature_type_id hit_points_current hit_points_max group_order weapon/);
 
 __PACKAGE__->set_primary_key('creature_id');
 
@@ -150,12 +150,6 @@ sub damage {
 	}
 	
 	return int ($level * 1.5 + $effect_dam);	
-}
-
-sub weapon {
-	my $self = shift;
-	
-	return $self->type->weapon || 'Claws';
 }
 
 sub is_character {

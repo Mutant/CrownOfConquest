@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
+use feature qw(switch);
+
 use Math::Round qw(round);
 use JSON;
 use List::Util qw(shuffle);
@@ -12,7 +14,7 @@ use Carp;
 sub main : Local {
     my ( $self, $c, $return_output ) = @_;
 
-    my $parties_in_sector = $c->forward( '/party/parties_in_sector', [$c->stash->{party_location}->id] );
+    my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ $c->stash->{party_location}->id ] );
 
     $c->forward('/party/party_messages_check');
 
@@ -159,7 +161,7 @@ sub resurrect : Local {
             $c->stash->{party}->update;
 
             $char_to_res->hit_points( round $char_to_res->max_hit_points * 0.1 );
-            $char_to_res->hit_points( 1 ) if $char_to_res->hit_points < 1;
+            $char_to_res->hit_points(1) if $char_to_res->hit_points < 1;
             my $xp_to_lose = int( $char_to_res->xp * RPG->config->{ressurection_percent_xp_to_lose} / 100 );
             $char_to_res->xp( $char_to_res->xp - $xp_to_lose );
             $char_to_res->update;
@@ -168,7 +170,9 @@ sub resurrect : Local {
                   $char_to_res->character_name
                 . " was ressurected by the healer in the town of "
                 . $town->town_name
-                . " and has risen from the dead. " . $char_to_res->pronoun('subjective') . " lost $xp_to_lose xp.";
+                . " and has risen from the dead. "
+                . $char_to_res->pronoun('subjective')
+                . " lost $xp_to_lose xp.";
 
             $c->model('DBIC::Character_History')->create(
                 {
@@ -669,6 +673,97 @@ sub enter : Local {
     );
 
     $c->forward('/map/move_to');
+}
+
+sub raid : Local {
+    my ( $self, $c ) = @_;
+
+    croak "Not high enough level for that" unless $c->stash->{party}->level >= $c->config->{minimum_raid_level};
+
+    my $town = $c->model('DBIC::Town')->find( { town_id => $c->req->param('town_id') } );
+
+    croak "Invalid town id" unless $town;
+
+    croak "Not next to that town" unless $c->stash->{party_location}->next_to( $town->location );
+
+    my $turn_cost = round $town->prosperity / 4;
+
+    if ( $turn_cost > $c->stash->{party}->turns ) {
+        $c->stash->{error} = "You need at least $turn_cost turns to raid this town";
+        $c->detach('/panel/refresh');
+    }
+
+    my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
+        {
+            town_id  => $town->id,
+            party_id => $c->stash->{party}->id,
+        }
+    );
+
+    my $party_raid_factor =
+        ( $c->stash->{party}->average_stat('intelligence') / 2 ) +
+        $c->stash->{party}->average_stat('agility') +
+        ( $c->stash->{party}->average_stat('divinity') / 2 );
+
+    my $town_raid_factor = $town->prosperity + (($town->prosperity / 4) * ($party_town->raids_today || 0)); 
+
+    my $raid_factor = round $town_raid_factor - round $party_raid_factor;
+    my $raid_roll   = Games::Dice::Advanced->roll('1d100');
+
+    my $raid_quotient = $raid_factor - $raid_roll;
+
+    my $base_gold    = $town->prosperity * 6;
+    my $gold_to_gain = $base_gold + Games::Dice::Advanced->roll( '1d' . $base_gold );
+
+    $c->log->debug( "Town Prosp: "
+            . $town->prosperity
+            . " Town Raid Factor: $town_raid_factor, Party Raid Factor: $party_raid_factor, Raid Factor: $raid_factor, Raid Roll: $raid_roll, "
+            . "Raid Qiotient: $raid_quotient, Gold To Gain: $gold_to_gain" );
+
+    given ($raid_quotient) {
+        when ( $_ < -60 ) {
+
+            # Success, no consequence
+            $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
+            $c->stash->{panel_messages} =
+                ["You charge past the guards without anyone ever noticing you. You steal $gold_to_gain gold from the treasury"];
+        }
+        when ( $_ < -40 ) {
+
+            # Success, but prestige reduced
+            $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
+            $c->stash->{panel_messages} =
+                [     "You make it to the treasury and steal $gold_to_gain gold. On the way out, a guard spots you, and gives chase. You get "
+                    . "away, but this will surely affect your prestige with the town." ];
+        }
+        when ( $_ < -20 ) {
+
+            # Failure, prestige reduced
+            $c->stash->{panel_messages} =
+                [     "You get halfway to the treasury only to run into a squard of guards. You turn on your heels, and run your hearts out, making "
+                    . " it out of the gates before the guards can catch you. It's not too likely they'll want to see you back there any time soon" ];
+        }
+        default {
+
+            # Failure and imprisonment
+            my $turns_lost = round $town->prosperity / 4;
+            $turns_lost = 2 if $turns_lost < 2;
+
+            $c->stash->{panel_messages} =
+                [     "You're just loading up on sacks of gold when the guards burst through the door. You've been caught red-handed! "
+                    . "You're imprisoned for $turns_lost turns" ];
+
+            $c->stash->{party}->turns( $c->stash->{party}->turns - $turns_lost );
+        }
+    }
+
+    $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
+    $c->stash->{party}->update;
+    
+    $party_town->raids_today(($party_town->raids_today||0)+1);
+    $party_town->update;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
 1;

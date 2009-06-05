@@ -14,7 +14,7 @@ sub aa_init_params : Test(startup) {
     $self->{config} = {};
 }
 
-sub setup_context : Test(setup) {
+sub aa_setup_context : Test(setup) {
 	my $self = shift;
 	
 	my $mock_context = Test::MockObject->new;
@@ -66,6 +66,7 @@ sub setup_context : Test(setup) {
 	$self->{mock_logger} = Test::MockObject->new();
 	$self->{mock_logger}->set_true('debug');
 	$self->{mock_logger}->set_true('info');
+	$self->{mock_logger}->mock('warning', sub { warn $_[1] });
 	$self->{mock_logger}->set_isa('Log::Dispatch');
 	$self->{c}->set_always('log',$self->{mock_logger});
 	

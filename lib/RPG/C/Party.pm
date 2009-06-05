@@ -60,7 +60,12 @@ sub sector_menu : Private {
     $c->forward('/party/party_messages_check');
 
     my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
-
+       
+    my @adjacent_towns;
+    if ($c->stash->{party}->level >= $c->config->{minimum_raid_level}) {
+        @adjacent_towns = $c->stash->{party_location}->get_adjacent_towns;
+    }
+    
     $c->forward(
         'RPG::V::TT',
         [
@@ -77,6 +82,7 @@ sub sector_menu : Private {
                     parties_in_sector      => $parties_in_sector,
                     graves                 => \@graves,
                     dungeon                => $dungeon,
+                    adjacent_towns         => \@adjacent_towns,
                 },
                 return_output => 1,
             }

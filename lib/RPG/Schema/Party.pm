@@ -227,6 +227,9 @@ sub turns {
     # XXX: the turns used might not be 100% accurate, because two separate parties could read the same value from the day table, and commit their
     #  changes separately.
     my $day = $self->result_source->schema->resultset('Day')->find_today;
+    
+    confess "Can't find today" unless $day;
+    
     $day->turns_used( ( $day->turns_used || 0 ) + $turns_used );
     $day->update;
 

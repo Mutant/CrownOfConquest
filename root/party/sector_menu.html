@@ -15,6 +15,11 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 	[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
 	[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
 	[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
+	[% IF adjacent_towns %]
+		[% FOREACH town IN adjacent_towns %]
+			| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
+		[% END %]
+	[% END %]
 <br>
 
 [% IF creature_group %]

@@ -23,10 +23,10 @@ sub db_startup : Test(startup) {
     $self->{schema} = $schema;
 }
 
-sub setup_context : Test(setup) {
+sub aa_setup_context : Test(setup) {
     my $self = shift;
 
-    $self->SUPER::setup_context(@_);
+    $self->SUPER::aa_setup_context(@_);
 
     $self->{c}->mock(
         model => sub {

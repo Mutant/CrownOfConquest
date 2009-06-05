@@ -12,6 +12,8 @@ use Test::MockObject;
 use Test::Exception;
 
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 use RPG::Schema::Land;
 
@@ -130,6 +132,34 @@ sub test_available_creature_group_cg_in_combat : Tests(1) {
     my $cg_found = $land->available_creature_group;
 
     is( $cg_found, undef, "No cg found, since it's in combat" );
+}
+
+sub test_get_adjacent_towns_none_nearby : Tests(9) {
+    my $self = shift;
+    
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    foreach my $land (@land) {
+        is($land->get_adjacent_towns, 0, "No towns near by");   
+    }   
+}
+
+sub test_get_adjacent_towns_one_nearby : Tests(12) {
+    my $self = shift;
+    
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+    
+    foreach my $idx (0,2,5,6,7,8) {
+        is($land[$idx]->get_adjacent_towns, 0, "No towns near by (idx: $idx)");   
+    }
+
+    foreach my $idx (1,3,4) {
+        my @towns = $land[$idx]->get_adjacent_towns;
+        is(scalar @towns, 1, "Correct number of towns");
+        is($towns[0]->id, $town->id, "Town near by (idx: $idx)");   
+    }
 }
 
 1;

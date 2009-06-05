@@ -243,6 +243,16 @@ function enterTownSubmit(land_id, paymentMethod){
 	dijit.byId('town-tax').hide();
 }
 
+function confirmRaidTown(town_name, town_id) {
+	dojo.byId('raid-town-text').innerHTML = "Are you sure you want to raid " + town_name + "?";
+	dojo.byId('town-id').value = town_id;
+	dijit.byId('town-raid').show();	
+}
+
+function raidTown(dialogFields){
+	getPanels('/town/raid?town_id=' + dialogFields.town_id);
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
@@ -288,6 +298,16 @@ function enterTownSubmit(land_id, paymentMethod){
     	<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'gold')">Pay Gold</button>
 		<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'work')">Work</button>
 		<button dojoType=dijit.form.Button onClick="dijit.byId('town-tax').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="town-raid" style="display: none" title="Raid Town" execute="raidTown(arguments[0])">
+	<input id="town-id" name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <span id="raid-town-text"></span>
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">Yes</button>
+		<button dojoType=dijit.form.Button onClick="dijit.byId('town-raid').hide()">No</button>
 	</div>
 </div>
 

@@ -48,3 +48,5 @@ UPDATE `Creature_Type` set weapon = 'Fire Breath' where creature_type = 'Silver 
 UPDATE `Creature_Type` set weapon = 'Icy Breath' where creature_type = 'Ice Dragon';
 UPDATE `Creature_Type` set weapon = 'Fire Breath' where creature_type = 'Fire Dragon';
 UPDATE `Creature_Type` set weapon = 'Claws' where creature_type = 'Wyvern';
+
+ALTER TABLE `Party_Town` ADD COLUMN `raids_today` INTEGER  NOT NULL DEFAULT 0 AFTER `tax_amount_paid_today`;

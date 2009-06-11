@@ -664,7 +664,7 @@ sub enter : Local {
     }
 
     # Record payment
-    $c->model('Party_Town')->find_or_create(
+    my $party_town = $c->model('Party_Town')->update_or_create(
         {
             party_id              => $c->stash->{party}->id,
             town_id               => $town->id,
@@ -720,26 +720,30 @@ sub raid : Local {
             . " Town Raid Factor: $town_raid_factor, Party Raid Factor: $party_raid_factor, Raid Factor: $raid_factor, Raid Roll: $raid_roll, "
             . "Raid Qiotient: $raid_quotient, Gold To Gain: $gold_to_gain" );
 
+    my $raid_successful = 0;
+
     given ($raid_quotient) {
         when ( $_ < -60 ) {
 
             # Success, no consequence
             $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
-            $c->stash->{panel_messages} =
+            $c->stash->{messages} =
                 ["You charge past the guards without anyone ever noticing you. You steal $gold_to_gain gold from the treasury"];
+            $raid_successful = 1;
         }
         when ( $_ < -40 ) {
 
             # Success, but prestige reduced
             $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
-            $c->stash->{panel_messages} =
+            $c->stash->{messages} =
                 [     "You make it to the treasury and steal $gold_to_gain gold. On the way out, a guard spots you, and gives chase. You get "
                     . "away, but this will surely affect your prestige with the town." ];
+            $raid_successful = 1;                    
         }
         when ( $_ < -20 ) {
 
             # Failure, prestige reduced
-            $c->stash->{panel_messages} =
+            $c->stash->{messages} =
                 [     "You get halfway to the treasury only to run into a squard of guards. You turn on your heels, and run your hearts out, making "
                     . " it out of the gates before the guards can catch you. It's not too likely they'll want to see you back there any time soon" ];
         }
@@ -749,11 +753,19 @@ sub raid : Local {
             my $turns_lost = round $town->prosperity / 4;
             $turns_lost = 2 if $turns_lost < 2;
 
-            $c->stash->{panel_messages} =
+            $c->stash->{messages} =
                 [     "You're just loading up on sacks of gold when the guards burst through the door. You've been caught red-handed! "
                     . "You're imprisoned for $turns_lost turns" ];
 
             $c->stash->{party}->turns( $c->stash->{party}->turns - $turns_lost );
+        }
+    }
+    
+    if ($raid_successful) {
+        my $quest_messages = $c->forward( '/quest/check_action', ['town_raid', $town->id] );
+        
+        if ($quest_messages) {
+            push @{ $c->stash->{messages} }, @$quest_messages;
         }
     }
 

@@ -27,6 +27,7 @@ my %QUEST_TYPE_TO_CLASS_MAP = (
     find_jewel               => 'RPG::Schema::Quest::Find_Jewel',
     msg_to_town              => 'RPG::Schema::Quest::Msg_To_Town',
     destroy_orb              => 'RPG::Schema::Quest::Destroy_Orb',
+    raid_town                => 'RPG::Schema::Quest::Raid_Town',
 );
 
 # Inflate the result as a class based on quest type

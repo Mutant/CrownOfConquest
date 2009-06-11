@@ -75,6 +75,45 @@ sub test_enter : Tests(2) {
 
 }
 
+sub test_enter_previously_entered : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    $town->land_id(5555);
+    $town->prosperity(50);
+    $town->update;
+
+    $self->{stash}{party}           = $party;
+    $self->{params}{land_id}        = $town->land_id;
+    $self->{params}{payment_method} = 'gold';
+
+    $self->{config} = {
+        tax_per_prosperity => 0.5,
+        tax_level_modifier => 0.5,
+        tax_turn_divisor   => 10,
+    };
+
+    $self->{mock_forward}{'/map/move_to'} = sub { };
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->create(
+        {
+            party_id => $party->id,
+            town_id  => $town->id,
+        }
+    );    
+
+    # WHEN
+    RPG::C::Town->enter( $self->{c} );
+
+    # THEN
+    $party_town->discard_changes;
+    is( defined $party_town,                1,  "party town record created" );
+    is( $party_town->tax_amount_paid_today, 12, "Gold amount recorded" );
+
+}
+
 sub test_raid_party_not_next_to_town : Tests(1) {
     my $self = shift;
 
@@ -125,6 +164,7 @@ sub test_raid_party_raid_succeeds : Tests(3) {
     $self->{rolls} = [50, 1];
     
     $self->{mock_forward}{'/panel/refresh'} = sub { };
+    $self->{mock_forward}{'/quest/check_action'} = sub { };
     
     # WHEN
     RPG::C::Town->raid( $self->{c} );   

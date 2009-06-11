@@ -1,4 +1,4 @@
-package RPG::Schema::Quest::Msg_To_Town;
+package RPG::Schema::Quest::Raid_Town;
 
 use base 'RPG::Schema::Quest';
 
@@ -25,14 +25,23 @@ sub set_quest_params {
         2,
     );
 
+    if ( scalar @towns_in_range < 1 ) {
+        $self->delete;
+        die RPG::Exception->new(
+            message => "Can't create raid town quest - no suitable towns to raid within range of town",
+            type    => 'quest_creation_error',
+        );
+    }
+
     @towns_in_range = shuffle @towns_in_range;
-    
+    my $town_to_raid = $towns_in_range[0];
+
     # Check for existing quests in this town to raid or send a message to the target town
     my $existing_quest_count = $self->result_source->schema->resultset('Quest')->search(
         {
             town_id            => $town->id,
             'quest_param_name' => [ 'Town To Raid', 'Town To Take Msg To' ],
-            'start_value'      => $towns_in_range[0]->id,
+            'start_value'      => $town_to_raid->id,
         },
         { join => [ 'type', { 'quest_params' => 'quest_param_name', } ], }
     )->count;
@@ -43,10 +52,10 @@ sub set_quest_params {
             message => "Target town is already targetted in another quest",
             type    => 'quest_creation_error',
         );
-    }    
+    }
 
-    $self->define_quest_param( 'Town To Take Msg To', $towns_in_range[0]->id );
-    $self->define_quest_param( 'Been To Town',        0 );
+    $self->define_quest_param( 'Town To Raid', $town_to_raid->id );
+    $self->define_quest_param( 'Raided Town',  0 );
 
     my $distance = RPG::Map->get_distance_between_points(
         {
@@ -54,8 +63,8 @@ sub set_quest_params {
             y => $town_location->y,
         },
         {
-            x => $towns_in_range[0]->location->x,
-            y => $towns_in_range[0]->location->y,
+            x => $town_to_raid->location->x,
+            y => $town_to_raid->location->y,
         },
     );
 
@@ -66,6 +75,7 @@ sub set_quest_params {
 
     $self->gold_value($gold_value);
     $self->xp_value( $self->{_config}{xp_per_distance} * $distance );
+    $self->min_level( $self->{_config}{min_level} );
 
     my $days_to_complete = $distance;
     $days_to_complete += Games::Dice::Advanced->roll('1d4') - 2;
@@ -78,17 +88,18 @@ sub set_quest_params {
 }
 
 sub check_action {
-    my $self   = shift;
-    my $party  = shift;
-    my $action = shift;
+    my $self        = shift;
+    my $party       = shift;
+    my $action      = shift;
+    my $town_raided = shift;
 
-    return 0 unless $action eq 'townhall_visit';
+    return 0 unless $action eq 'town_raid';
 
-    return 0 if $self->param_current_value('Been To Town') == 1;
+    return 0 if $self->param_current_value('Raided Town') == 1;
 
-    return 0 unless $party->location->town->id == $self->param_start_value('Town To Take Msg To');
+    return 0 unless $town_raided == $self->param_start_value('Town To Raid');
 
-    my $quest_param = $self->param_record('Been To Town');
+    my $quest_param = $self->param_record('Raided Town');
     $quest_param->current_value(1);
     $quest_param->update;
 
@@ -98,13 +109,13 @@ sub check_action {
 sub ready_to_complete {
     my $self = shift;
 
-    return $self->param_current_value('Been To Town');
+    return $self->param_current_value('Raided Town');
 }
 
-sub town_to_take_msg_to {
+sub town_to_raid {
     my $self = shift;
 
-    return $self->result_source->schema->resultset('Town')->find( $self->param_start_value('Town To Take Msg To') );
+    return $self->result_source->schema->resultset('Town')->find( $self->param_start_value('Town To Raid') );
 }
 
 1;

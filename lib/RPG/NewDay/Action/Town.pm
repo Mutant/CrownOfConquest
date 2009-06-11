@@ -14,9 +14,17 @@ sub run {
     my $context = $self->context;
 
     my @towns = $context->schema->resultset('Town')->search( {}, { prefetch => 'location', } );
+    
+    my $ctr_avg = $context->schema->resultset('Land')->find(
+        {},
+        {
+            'select' => {avg => 'creature_threat'},
+            'as' => 'avg_ctr',
+        },
+    )->get_column('avg_ctr');
 
     foreach my $town (@towns) {
-        $self->calculate_prosperity($town);
+        $self->calculate_prosperity($town, $ctr_avg);
     }
 
     $self->scale_prosperity(@towns);
@@ -28,26 +36,33 @@ sub run {
 sub calculate_prosperity {
     my $self = shift;
     my $town = shift;
+    my $global_avg_ctr = shift;
 
     my $context = $self->context;
 
-    my $tax_collected = $context->schema->resultset('Party_Town')->find(
+    my $party_town_rec = $context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => { sum => 'tax_amount_paid_today' },
-            as     => 'tax_collected',
+            select => [{ sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }],
+            as     => ['tax_collected', 'raids_today'],
         }
-        )->get_column('tax_collected')
-        || 0;
-
+    );
+    
     my $ctr_avg = $town->location->get_surrounding_ctr_average( $context->config->{prosperity_calc_ctr_range} );
 
-    my $prosp_change = ( ( $tax_collected / 10 ) - ( $ctr_avg / 20 ) );
+    my $ctr_diff = $global_avg_ctr - $ctr_avg;
+    $ctr_diff = 0 if $ctr_diff < 0;
 
-    return if $prosp_change == 0;
+    my $prosp_change = ( ($party_town_rec->get_column('tax_collected') || 0) / 10 ) + ( $ctr_diff / 20 ) 
+        - (($party_town_rec->get_column('raids_today') || 0) / 4);
 
     $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};
-    $prosp_change = -$context->config->{max_prosp_change} if $prosp_change < -$context->config->{max_prosp_change};
+
+    if ($prosp_change == 0) {
+        if (Games::Dice::Advanced->roll('1d3') == 1) {
+            $prosp_change = -1;   
+        }   
+    }
 
     $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change" );
 

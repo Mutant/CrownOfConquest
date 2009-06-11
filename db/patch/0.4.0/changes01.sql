@@ -50,3 +50,22 @@ UPDATE `Creature_Type` set weapon = 'Fire Breath' where creature_type = 'Fire Dr
 UPDATE `Creature_Type` set weapon = 'Claws' where creature_type = 'Wyvern';
 
 ALTER TABLE `Party_Town` ADD COLUMN `raids_today` INTEGER  NOT NULL DEFAULT 0 AFTER `tax_amount_paid_today`;
+
+ALTER TABLE `Quest_Type` DROP COLUMN `xp_value`,
+ DROP COLUMN `gold_value`,
+ DROP COLUMN `min_level`;
+
+ALTER TABLE `Quest_Type` ADD COLUMN `prevalence` INTEGER  NOT NULL DEFAULT 50 AFTER `hidden`;
+
+UPDATE `Quest_Type` set prevalence = 100 where quest_type = 'msg_to_town';
+UPDATE `Quest_Type` set prevalence = 100 where quest_type = 'kill_creatures_near_town';
+UPDATE `Quest_Type` set prevalence = 80 where quest_type = 'find_jewel';
+UPDATE `Quest_Type` set prevalence = 70 where quest_type = 'destroy_orb';
+
+INSERT INTO `Quest_Type` (quest_type, hidden, prevalence) values ('raid_town', 0, 50);
+
+INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Town To Raid', 5);
+INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Raided Town', 5);
+
+
+

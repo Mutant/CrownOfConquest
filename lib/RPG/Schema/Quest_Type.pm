@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Quest_Type');
 
-__PACKAGE__->add_columns(qw/quest_type_id quest_type xp_value gold_value min_level/);
+__PACKAGE__->add_columns(qw/quest_type_id quest_type hidden/);
 __PACKAGE__->set_primary_key('quest_type_id');
 
 __PACKAGE__->has_many(

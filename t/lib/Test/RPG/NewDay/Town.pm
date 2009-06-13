@@ -142,7 +142,7 @@ sub test_select_town_from_category_zero_category : Tests(1) {
     is( $town->prosperity, 1, "Selected correct town" );
 }
 
-sub test_change_prosperity_as_needed : Tests(11) {
+sub test_change_prosperity_as_needed : Tests(14) {
     my $self = shift;
 
     # GIVEN
@@ -154,6 +154,11 @@ sub test_change_prosperity_as_needed : Tests(11) {
     }
 
     my %actual_prosp = ( 40 => 1, );
+    
+    my $prosp_changes = {
+        $towns[3]->id => {prosp_change => 1},
+        $towns[8]->id => {prosp_change => -2},
+    };
 
     my %changes_needed = (
         50 => 1,
@@ -165,7 +170,7 @@ sub test_change_prosperity_as_needed : Tests(11) {
     my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
 
     # WHEN
-    $town_action->_change_prosperity_as_needed( \%actual_prosp, \@towns, %changes_needed );
+    $town_action->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );
 
     # THEN
     map { $_->discard_changes } @towns;
@@ -180,6 +185,10 @@ sub test_change_prosperity_as_needed : Tests(11) {
     is( $towns[8]->prosperity,  91,  "Prosperity increase" );
     is( $towns[9]->prosperity,  90,  "Prosperity unchanged" );
     is( $towns[10]->prosperity, 100, "Prosperity unchanged" );
+    
+    is($prosp_changes->{$towns[3]->id}{prosp_change}, -2, "Prosp change recorded");
+    is($prosp_changes->{$towns[4]->id}{prosp_change}, 3, "Prosp change recorded");
+    is($prosp_changes->{$towns[8]->id}{prosp_change}, 1, "Prosp change recorded");
 }
 
 sub test_calculate_changes_needed : Tests(10) {

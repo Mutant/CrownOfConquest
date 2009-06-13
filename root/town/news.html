@@ -1,31 +1,16 @@
 News for the town of [% town.town_name %]:
 <br><br>
-[% IF combat_logs.0 %]
+[% IF logs.0 %]
 	[% current_day = '' %]
-	[% FOREACH log IN combat_logs %]
+	[% FOREACH log IN logs %]
 		[% IF log.day.day_number != current_day %]
 			[% current_day = log.day.day_number %]
 			<b>Day [% current_day %]</b><br>
 		[% END %]
-		[% log.opponent_1.name %] were spotted in combat with
-			[% IF log.opponent_2_type == 'creature_group' %] 
-				a group of [% INCLUDE combat/creature_group_summary.html creature_group=log.opponent_2 include_dead_creatures=1 %]
-			[% ELSE %]
-				[% log.opponent_2.name %]
-			[% END %] 
-		at [% log.land.x %], [% log.land.y %]. Witnesses say 
-		[% IF log.outcome == 'opp1_won' %]
-			[% log.opponent_1.name %] crushed their opponents.
-		[% ELSIF log.outcome == 'opp1_fled' %]
-			[% log.opponent_1.name %] fled in disgrace.
-		[% ELSIF log.outcome == 'opp2_fled' %]
-			[% IF log.opponent_2.type == 'creature_group' %]the cowardly creatures[% ELSE %][% log.opponent_2.name %][% END %]
-				 fled with some of their number in tact.
-		[% ELSIF log.outcome == 'opp2_won' %]
-			[% log.opponent_1.name %] were destroyed by [% IF log.opponent_2.type == 'creature_group' %]the creatures[% ELSE %][% log.opponent_2.name %][% END %].
-		[% END %]
-		<br><br>
+		[% log.message %]<br><br>
 	[% END %]
+[% ELSE %]
+	Nothing of interest has occured in days!<br><br>
 [% END %]
 
 [% INCLUDE town/town_footer.html %]

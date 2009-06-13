@@ -67,5 +67,16 @@ INSERT INTO `Quest_Type` (quest_type, hidden, prevalence) values ('raid_town', 0
 INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Town To Raid', 5);
 INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Raided Town', 5);
 
+CREATE TABLE `Town_History` (
+  `town_history_id` INTEGER  NOT NULL auto_increment,
+  `message` VARCHAR(4000)  NOT NULL,
+  `town_id` INTEGER  NOT NULL,
+  `day_id` INTEGER  NOT NULL,
+  `date_recorded` TIMESTAMP NOT NULL,
+  PRIMARY KEY (`town_history_id`)
+)
+ENGINE = InnoDB;
+
+ALTER TABLE `Town_History` ADD INDEX `town_day_idx`(`town_id`, `day_id`);
 
 

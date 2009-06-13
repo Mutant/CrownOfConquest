@@ -10,7 +10,10 @@ sub build_party {
     my $schema  = shift;
     my %params  = @_;
 
-    my $location = $schema->resultset('Land')->create( {} );
+    unless ($params{land_id}) {
+        my $location = $schema->resultset('Land')->create( {x=>1, y=>1} );
+        $params{land_id} = $location->id;
+    }
 
     my $player_id;
 
@@ -27,7 +30,7 @@ sub build_party {
 
     my $party = $schema->resultset('Party')->create(
         {
-            land_id                 => $location->id,
+            land_id                 => $params{land_id},
             player_id               => $params{player_id},
             rank_separator_position => 2,
             turns                   => 100,

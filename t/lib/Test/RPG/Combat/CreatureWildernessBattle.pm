@@ -16,6 +16,8 @@ use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 use Storable qw(thaw);
 use Data::Dumper;
@@ -676,6 +678,7 @@ sub test_execute_round_creature_group_wiped_out : Tests(1) {
         xp_multiplier                         => 10,
         chance_to_find_item                   => 0,
         prevalence_per_creature_level_to_find => 1,
+        combat_news_size                      => 5
     };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -713,6 +716,8 @@ sub test_finish : Tests(6) {
         log            => $self->{mock_logger},
     );
 
+    $self->{config}{combat_news_size} = 5;
+
     $self->mock_dice;
     $self->{roll_result} = 10;
 
@@ -731,6 +736,44 @@ sub test_finish : Tests(6) {
     is( $cg->land_id, undef, "CG no longer in land" );
 
     is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
+}
+
+sub test_finish_creates_town_history : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[0]->id );
+
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[8]->id );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, land_id => $land[8]->id );
+    $party->in_combat_with( $cg->id );
+    $party->update;
+
+    $self->{config}{combat_news_size} = 5;
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );
+
+    my $mock_template = Test::MockObject->new();
+    $mock_template->fake_module( 'RPG::Template', process => sub { 'combat_log_message' }, );
+
+    $self->mock_dice;
+    $self->{roll_result} = 10;
+
+    # WHEN
+    $battle->finish($cg);
+
+    # THEN
+    my @history = $self->{schema}->resultset('Town_History')->search( town_id => $town->id, );
+
+    is( scalar @history, 1, "One history item recorded" );
+    is( $history[0]->message, 'combat_log_message', "Message set correctly" );
 }
 
 sub test_check_for_item_found_correct_prevalence_used : Tests(5) {

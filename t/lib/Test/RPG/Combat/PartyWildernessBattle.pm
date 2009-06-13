@@ -71,13 +71,16 @@ sub test_finish : Tests(3) {
         party_2 => $party2,
     );
 
+    $self->{config}{combat_news_size}        = 5;
+    $self->{config}{xp_multiplier_character} = 10;
+
     my $battle = RPG::Combat::PartyWildernessBattle->new(
         schema        => $self->{schema},
         party_1       => $party1,
         party_2       => $party2,
         log           => $self->{mock_logger},
         battle_record => $battle_record,
-        config        => { xp_multiplier_character => 10 },
+        config        => $self->{config},
     );
 
     $self->mock_dice;

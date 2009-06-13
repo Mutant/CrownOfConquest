@@ -2,6 +2,8 @@ package RPG::Combat::InWilderness;
 
 use Moose::Role;
 
+use RPG::Template;
+
 # Can't require these as they're attributes, not methods (missing Moose functionality?)
 #requires qw/schema creature_group party/;
 requires qw/opponents/;
@@ -28,11 +30,45 @@ sub get_sector_to_flee_to {
 sub _build_location {
     my $self = shift;
 
-    foreach my $opponent ($self->opponents) {
-        if ($opponent->isa('RPG::Schema::Party')) {
+    foreach my $opponent ( $self->opponents ) {
+        if ( $opponent->isa('RPG::Schema::Party') ) {
             return $opponent->location;
         }
     }
 }
+
+after 'finish' => sub {
+    my $self = shift;
+
+    my @towns = $self->schema->resultset('Town')->find_in_range(
+        {
+            x => $self->location->x,
+            y => $self->location->y,
+        },
+        $self->config->{combat_news_size},
+    );
+
+    if (@towns) {
+        my $message = RPG::Template->process(
+            $self->config,
+            'combat/town_news_message.html',
+            {
+                log => $self->combat_log,
+            },
+        );
+        
+        my $day_id = $self->schema->resultset('Day')->find_today->id;
+        
+        foreach my $town (@towns) {
+            $self->schema->resultset('Town_History')->create(
+                {
+                    town_id => $town->id,
+                    day_id => $day_id,
+                    message => $message,
+                }
+            );
+        }
+    }
+};
 
 1;

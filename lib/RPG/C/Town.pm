@@ -214,13 +214,17 @@ sub news : Local {
     my ( $self, $c ) = @_;
 
     my $current_day = $c->stash->{today}->day_number;
+    my $town = $c->stash->{party_location}->town;
 
-    my @logs = $c->model('DBIC::Combat_Log')->get_logs_around_sector(
-        $c->stash->{party_location}->x,
-        $c->stash->{party_location}->y,
-        $c->config->{combat_news_x_size},
-        $c->config->{combat_news_y_size},
-        $current_day - $c->config->{combat_news_day_range},
+    my @logs = $c->model('DBIC::Town_History')->search(
+        {
+            town_id => $town->id,
+            'day.day_number' => {'<=', $current_day,'>=', $current_day - $c->config->{news_day_range}},
+        },
+        {
+            prefetch => 'day',
+            order_by => 'day_number desc, date_recorded',
+        }        
     );
 
     my $panel = $c->forward(
@@ -229,8 +233,8 @@ sub news : Local {
             {
                 template => 'town/news.html',
                 params   => {
-                    town        => $c->stash->{party_location}->town,
-                    combat_logs => \@logs,
+                    town        => $town,
+                    logs => \@logs,
                 },
                 return_output => 1,
             }

@@ -678,7 +678,7 @@ sub test_execute_round_creature_group_wiped_out : Tests(1) {
         xp_multiplier                         => 10,
         chance_to_find_item                   => 0,
         prevalence_per_creature_level_to_find => 1,
-        combat_news_size                      => 5
+        nearby_town_range                     => 5
     };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -716,7 +716,7 @@ sub test_finish : Tests(6) {
         log            => $self->{mock_logger},
     );
 
-    $self->{config}{combat_news_size} = 5;
+    $self->{config}{nearby_town_range} = 5;
 
     $self->mock_dice;
     $self->{roll_result} = 10;
@@ -738,7 +738,7 @@ sub test_finish : Tests(6) {
     is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
 }
 
-sub test_finish_creates_town_history : Tests(2) {
+sub test_finish_creates_town_history : Tests(3) {
     my $self = shift;
 
     # GIVEN
@@ -750,7 +750,7 @@ sub test_finish_creates_town_history : Tests(2) {
     $party->in_combat_with( $cg->id );
     $party->update;
 
-    $self->{config}{combat_news_size} = 5;
+    $self->{config}{nearby_town_range} = 5;
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -774,6 +774,15 @@ sub test_finish_creates_town_history : Tests(2) {
 
     is( scalar @history, 1, "One history item recorded" );
     is( $history[0]->message, 'combat_log_message', "Message set correctly" );
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->find(
+        {
+            party_id => $party->id,
+            town_id => $town->id,
+        }
+    );
+    
+    is($party_town->prestige, 1, "Prestige increased");
 }
 
 sub test_check_for_item_found_correct_prevalence_used : Tests(5) {

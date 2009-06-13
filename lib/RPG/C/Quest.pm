@@ -135,6 +135,15 @@ sub complete_quest : Private {
     my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
+    
+    my $party_town = $c->model('Party_Town')->find_or_create(
+        {
+            party_id => $c->stash->{party}->id,
+            town_id  => $party_quest->town->id,
+        },
+    );
+    $party_town->prestige($party_town->prestige+3);
+    $party_town->update;
 
     my $panel = $c->forward(
         'RPG::V::TT',

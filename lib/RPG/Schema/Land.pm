@@ -96,7 +96,7 @@ sub next_to {
 sub movement_cost {
     my $self = shift;
 
-    my $movement_factor = shift || croak 'movement factor not supplied';
+    my $movement_factor = shift // croak 'movement factor not supplied';
     my $terrain_modifier = shift;
     $terrain_modifier = $self->terrain->modifier unless defined $terrain_modifier;
 

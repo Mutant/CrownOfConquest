@@ -35,6 +35,9 @@ sub run {
 
     $self->record_prosp_changes($prosp_changes);
 
+    # Update prestige ratings
+    $self->update_prestige;
+    
     # Clear all tax paid / raids today
     $context->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0 } );
 }
@@ -287,6 +290,34 @@ sub record_prosp_changes {
             );   
         }   
     }   
+}
+
+sub update_prestige {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my $party_town_rs = $c->schema->resultset('Party_Town')->search(
+        {
+            prestige => {'!=',0},
+            'party.defunct' => undef,   
+        },
+        {
+            join => 'party',
+        },        
+    );
+    
+    while (my $party_town = $party_town_rs->next) {
+        if (Games::Dice::Advanced->roll('1d3') == 1) {
+            if ($party_town->prestige > 0) {
+                $party_town->prestige($party_town->prestige-1);
+            }   
+            else {
+                $party_town->prestige($party_town->prestige+1);
+            }
+            $party_town->update;
+        }   
+    }
 }
 
 1;

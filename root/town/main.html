@@ -1,5 +1,30 @@
 Welcome to the Town of [% town.town_name %]! (Prosperity: [% town.prosperity %])
 <br><br>
+Your prestige here: 	
+    [% IF prestige < -25 %]
+		you're about to be lynched.
+	[% ELSIF prestige < -20 %]
+		awful.
+	[% ELSIF prestige < -15 %]
+		very poor.
+	[% ELSIF prestige < -10 %]
+		poor.
+	[% ELSIF prestige < -5 %]
+		below average.
+	[% ELSIF prestige < 5 %]
+		neutral.
+	[% ELSIF prestige < 10 %]
+		above average.
+	[% ELSIF prestige < 15 %]
+		good.
+	[% ELSIF prestige < 20 %]
+		very good.
+	[% ELSIF prestige < 25 %]
+		exceptional.
+	[% ELSE %]
+		the mayor wants to marry you.
+	[% END %]
+<br><br>
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 <b>Shops & Services</b>
 <ul>

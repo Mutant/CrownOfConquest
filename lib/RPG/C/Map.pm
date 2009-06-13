@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use JSON;
+use Carp;
 
 use RPG::Schema::Land;
 use RPG::Map;
@@ -217,7 +218,7 @@ Move the party to a new location
 sub move_to : Local {
     my ( $self, $c ) = @_;
 
-    my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => 'terrain', }, );
+    my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => ['terrain','town'] }, );
 
     my $movement_factor = $c->stash->{party}->movement_factor;
 
@@ -234,17 +235,22 @@ sub move_to : Local {
     elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor) ) {
         $c->stash->{error} = 'You do not have enough turns to move there';
     }
+    
+    # If there's a town, check that they've gone in via /town/enter
+    elsif ( $new_land->town && ! $c->stash->{entered_town}) {
+        croak 'Invalid town entrance';
+    }
 
     else {
         $c->stash->{party}->move_to( $new_land );
 
         $c->stash->{party}->update;
 
-        $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
-        $c->stash->{party_location}->update;
-
         # Fetch from the DB, since it may have changed recently
         $c->stash->{party_location} = $c->model('DBIC::Land')->find( { land_id => $c->stash->{party}->land_id, } );
+
+        $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
+        $c->stash->{party_location}->update;
 
         my $creature_group = $c->forward( '/combat/check_for_attack', [$new_land] );
 

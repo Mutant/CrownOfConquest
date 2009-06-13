@@ -110,6 +110,15 @@ sub update_days_left {
                     day_id      => $c->current_day->id,
                 }
             );
+            
+            my $party_town = $c->schema->resultset('Party_Town')->find_or_create(
+                {
+                    town_id => $quest->town_id,
+                    party_id => $quest->party_id,
+                },
+            );
+            $party_town->prestige($party_town->prestige-3);
+            $party_town->update;
         }
         
         $quest->update;

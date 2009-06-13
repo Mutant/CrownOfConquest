@@ -2,8 +2,6 @@ ALTER TABLE `Day` ADD COLUMN `turns_used` BIGINT  NOT NULL DEFAULT 0 AFTER `date
 
 ALTER TABLE `Creature` ADD COLUMN `weapon` VARCHAR(255)  NOT NULL AFTER `group_order`;
 
-ALTER TABLE `Creature_Type` ADD COLUMN `weapon` VARCHAR(255)  NOT NULL;
-
 UPDATE `Creature_Type` set weapon = 'Melee Weapon' where creature_type = 'Troll';
 UPDATE `Creature_Type` set weapon = 'Melee Weapon' where creature_type = 'Goblin';
 UPDATE `Creature_Type` set weapon = 'Melee Weapon' where creature_type = 'Orc Grunt';
@@ -64,8 +62,8 @@ UPDATE `Quest_Type` set prevalence = 70 where quest_type = 'destroy_orb';
 
 INSERT INTO `Quest_Type` (quest_type, hidden, prevalence) values ('raid_town', 0, 50);
 
-INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Town To Raid', 5);
-INSERT INTO `Quest_Param` (quest_param_name, quest_type_id) values ('Raided Town', 5);
+INSERT INTO `Quest_Param_Name` (quest_param_name, quest_type_id) values ('Town To Raid', 5);
+INSERT INTO `Quest_Param_Name` (quest_param_name, quest_type_id) values ('Raided Town', 5);
 
 CREATE TABLE `Town_History` (
   `town_history_id` INTEGER  NOT NULL auto_increment,
@@ -79,4 +77,4 @@ ENGINE = InnoDB;
 
 ALTER TABLE `Town_History` ADD INDEX `town_day_idx`(`town_id`, `day_id`);
 
-
+ALTER TABLE `Party_Town` ADD COLUMN `prestige` INTEGER  NOT NULL DEFAULT 0 AFTER `raids_today`;

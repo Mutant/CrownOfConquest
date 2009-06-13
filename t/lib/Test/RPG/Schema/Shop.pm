@@ -5,6 +5,8 @@ package Test::RPG::Schema::Shop;
 
 use base qw(Test::RPG::DB);
 
+__PACKAGE__->runtests() unless caller();
+
 use Test::More;
 
 use RPG::Schema::Shop;

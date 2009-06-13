@@ -17,8 +17,6 @@ Prosperity: [% position.prosperity %]<br>
 [% END %] 
 [% END %]
 
-
-
 [%
 	image_width = 96 / zoom_level
 	image_height = 80 / zoom_level
@@ -54,8 +52,12 @@ Prosperity: [% position.prosperity %]<br>
         	[% END %]
 	
 		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
-				[% IF position.town_id && ! town_costs.${position.town_id}.paid %]
-					<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
+				[% IF position.town_id %]
+					[% IF ! town_costs.${position.town_id}.paid %]
+						<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
+					[% ELSE %]
+						<a href="#" onclick="getPanels('/town/enter?land_id=[% position.land_id %]')">
+					[% END %]
 				[% ELSE %]
 	       			<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')">
 				[% END %]

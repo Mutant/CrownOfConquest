@@ -13,6 +13,9 @@ use Test::More;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Party;
+
+use DateTime;
 
 sub startup : Test(startup => 1) {
     my $self = shift;
@@ -239,6 +242,67 @@ sub test_calculate_changes_needed : Tests(10) {
     is( $changes_needed{20}, 8,     "8 more needed for 20" );
     is( $changes_needed{10}, undef, "No changes needed for 10" );
     is( $changes_needed{0},  undef, "No changes needed for 00" );
+}
+
+sub test_update_prestige : Tests(4) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, defunct => DateTime->now());
+    
+    my $party_town1 = $self->{schema}->resultset('Party_Town')->create(
+        {
+            party_id => $party1->id,
+            town_id => 1,
+            prestige => 0,
+        }
+    );
+
+    my $party_town2 = $self->{schema}->resultset('Party_Town')->create(
+        {
+            party_id => $party1->id,
+            town_id => 2,
+            prestige => 2,
+        }
+    );
+
+    my $party_town3 = $self->{schema}->resultset('Party_Town')->create(
+        {
+            party_id => $party1->id,
+            town_id => 3,
+            prestige => -2,
+        }
+    );
+
+    my $party_town4 = $self->{schema}->resultset('Party_Town')->create(
+        {
+            party_id => $party2->id,
+            town_id => 3,
+            prestige => -2,
+        }
+    );
+    
+    $self->mock_dice;
+    $self->{roll_result} = 1;
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $town_action->update_prestige();
+    
+    # THEN
+    $party_town1->discard_changes;
+    is($party_town1->prestige, 0, "Prestige unchanged");
+    
+    $party_town2->discard_changes;
+    is($party_town2->prestige, 1, "Prestige reduced");    
+
+    $party_town3->discard_changes;
+    is($party_town3->prestige, -1, "Prestige increased");
+
+    $party_town4->discard_changes;
+    is($party_town4->prestige, -2, "Prestige unchanged (party defunct)");
 
 }
 

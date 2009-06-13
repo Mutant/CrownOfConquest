@@ -71,7 +71,7 @@ sub test_finish : Tests(3) {
         party_2 => $party2,
     );
 
-    $self->{config}{combat_news_size}        = 5;
+    $self->{config}{nearby_town_range}       = 5;
     $self->{config}{xp_multiplier_character} = 10;
 
     my $battle = RPG::Combat::PartyWildernessBattle->new(

@@ -21,24 +21,7 @@ use Test::MockObject::Extends;
 
 use RPG::C::Town;
 
-sub test_town_hall : Tests(0) {
-    my $self = shift;
-
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
-
-    my @characters;
-    for my $count ( 1 .. 5 ) {
-        push @characters, Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id, party_order => $count );
-    }
-
-    my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
-
-    $self->{stash}{party}          = $party;
-    $self->{stash}{party_location} = $town->location;
-
-}
-
-sub test_enter : Tests(2) {
+sub test_enter : Tests(4) {
     my $self = shift;
 
     # GIVEN
@@ -70,12 +53,15 @@ sub test_enter : Tests(2) {
             town_id  => $town->id,
         }
     );
+    $party->discard_changes;
+    is($party->gold, 87, "Party gold reduced");
     is( defined $party_town,                1,  "party town record created" );
-    is( $party_town->tax_amount_paid_today, 12, "Gold amount recorded" );
+    is( $party_town->tax_amount_paid_today, 13, "Gold amount recorded" );
+    is( $party_town->prestige, 1, "Prestige increased");
 
 }
 
-sub test_enter_previously_entered : Tests(2) {
+sub test_enter_previously_entered : Tests(4) {
     my $self = shift;
 
     # GIVEN
@@ -101,6 +87,7 @@ sub test_enter_previously_entered : Tests(2) {
         {
             party_id => $party->id,
             town_id  => $town->id,
+            tax_amount_paid_today => 1,
         }
     );    
 
@@ -108,9 +95,14 @@ sub test_enter_previously_entered : Tests(2) {
     RPG::C::Town->enter( $self->{c} );
 
     # THEN
+    $party->discard_changes;
+    is($party->gold, 100, "Party gold unchanged");
+    is($party->turns, 100, "Party turns unchanged");
+   
+    is( $self->{stash}->{entered_town}, 1, "Entered town recorded" );
+    
     $party_town->discard_changes;
-    is( defined $party_town,                1,  "party town record created" );
-    is( $party_town->tax_amount_paid_today, 12, "Gold amount recorded" );
+    is( $party_town->prestige, 0, "Prestige not increased");
 
 }
 
@@ -181,6 +173,52 @@ sub test_raid_party_raid_succeeds : Tests(3) {
         },
     );
     is($party_town->raids_today, 1, "Number of raids today recorded");
+}
+
+sub test_raid_failure : Tests(4) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50 );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    $party->land_id($land[0]->id);
+    $party->update;
+    $town->land_id($land[1]->id);
+    $town->update;
+    
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema});
+    
+    $self->{config}{minimum_raid_level} = 1;
+    
+    $party = Test::MockObject::Extends->new($party);
+    $party->set_series('average_stat', 30,20,30);
+    
+    $self->{stash}{party} = $party;
+    $self->{stash}{party_location} = $party->location;
+    $self->{params}{town_id} = $town->id;
+    
+    $self->mock_dice;
+    $self->{rolls} = [21, 1];
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub { };
+    
+    # WHEN
+    RPG::C::Town->raid( $self->{c} );   
+    
+    # THEN
+    $party->discard_changes;
+    is($party->gold, 100, "Party gold not increased");
+    is($party->turns, 87, "Party turns decreased");
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->find(
+        {
+            party_id => $party->id,
+            town_id => $town->id,
+        },
+    );
+    is($party_town->raids_today, 1, "Number of raids today recorded");
+    is($party_town->prestige, -8, "Prestige reduced");
 }
 
 1;

@@ -20,7 +20,7 @@ sub startup : Test(startup => 1) {
     use_ok 'RPG::NewDay::Action::Quest';
 }
 
-sub test_update_days_left : Tests(5) {
+sub test_update_days_left : Tests(6) {
     my $self = shift;
 
     # GIVEN
@@ -62,7 +62,15 @@ sub test_update_days_left : Tests(5) {
     $quest2->discard_changes;
     is( $quest2->days_to_complete, 0,            "Quest 2 days to complete is 0" );
     is( $quest2->status,           'Terminated', "Quest 2 terminated" );
-
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->find(
+        {
+            party_id => $party->id,
+            town_id  => $quest2->town->id,
+        }
+    );
+    is($party_town->prestige, -3, "Prestige reduced");
+    
     my $message = $self->{schema}->resultset('Party_Messages')->find( { party_id => $party->id, } );
     is( $message->day_id, $mock_context->current_day->id, "Message created for party with correct day" );
 

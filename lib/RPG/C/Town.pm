@@ -18,6 +18,13 @@ sub main : Local {
 
     $c->forward('/party/party_messages_check');
 
+    my $party_town = $c->model('Party_Town')->find_or_create(
+        {
+            party_id => $c->stash->{party}->id,
+            town_id  => $c->stash->{party_location}->town->id,
+        },
+    );
+
     $c->forward(
         'RPG::V::TT',
         [
@@ -28,6 +35,7 @@ sub main : Local {
                     day_logs          => $c->stash->{day_logs},
                     party_messages    => $c->stash->{party_messages},
                     parties_in_sector => $parties_in_sector,
+                    prestige          => $party_town->prestige,
                 },
                 return_output => $return_output || 0,
             }
@@ -214,17 +222,17 @@ sub news : Local {
     my ( $self, $c ) = @_;
 
     my $current_day = $c->stash->{today}->day_number;
-    my $town = $c->stash->{party_location}->town;
+    my $town        = $c->stash->{party_location}->town;
 
     my @logs = $c->model('DBIC::Town_History')->search(
         {
-            town_id => $town->id,
-            'day.day_number' => {'<=', $current_day,'>=', $current_day - $c->config->{news_day_range}},
+            town_id          => $town->id,
+            'day.day_number' => { '<=', $current_day, '>=', $current_day - $c->config->{news_day_range} },
         },
         {
             prefetch => 'day',
             order_by => 'day_number desc, date_recorded',
-        }        
+        }
     );
 
     my $panel = $c->forward(
@@ -233,7 +241,7 @@ sub news : Local {
             {
                 template => 'town/news.html',
                 params   => {
-                    town        => $town,
+                    town => $town,
                     logs => \@logs,
                 },
                 return_output => 1,
@@ -648,33 +656,55 @@ sub enter : Local {
     my ( $self, $c ) = @_;
 
     my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
-    my $cost = $town->tax_cost( $c->stash->{party} );
 
-    if ( $c->req->param('payment_method') eq 'gold' ) {
-        if ( $cost->{gold} > $c->stash->{party}->gold ) {
-            $c->stash->{error} = "You don't have enough gold to pay the tax";
-            $c->detach('/panel/refresh');
-        }
-
-        $c->stash->{party}->gold( $c->stash->{party}->gold - $cost->{gold} );
-    }
-    else {
-        if ( $cost->{turns} > $c->stash->{party}->turns ) {
-            $c->stash->{error} = "You don't have enough turns to pay the tax";
-            $c->detach('/panel/refresh');
-        }
-
-        $c->stash->{party}->turns( $c->stash->{party}->turns - $cost->{turns} );
-    }
-
-    # Record payment
-    my $party_town = $c->model('Party_Town')->update_or_create(
+    my $party_town = $c->model('Party_Town')->find_or_create(
         {
-            party_id              => $c->stash->{party}->id,
-            town_id               => $town->id,
-            tax_amount_paid_today => $cost->{gold},            # Always recorded in gold
+            party_id => $c->stash->{party}->id,
+            town_id  => $town->id,
         },
     );
+    
+    # Check if they have really low prestige, and need to be refused.
+    my $prestige_threshold = -30 + round ($town->prosperity / 25);
+    if ($party_town->prestige <= $prestige_threshold) {
+        $c->stash->{panel_messages} = ["You've been refused entry to " . $town->town_name . 
+            ". You'll need to wait until your prestige improves before coming back"];
+        $c->detach('/panel/refresh', ['messages']);
+    }
+
+    # Pay tax, if necessary
+    if ( !$party_town->tax_amount_paid_today ) {
+        croak "Payment method not specified" unless $c->req->param('payment_method');
+        
+        my $cost = $town->tax_cost( $c->stash->{party} );
+
+        if ( $c->req->param('payment_method') eq 'gold' ) {
+            if ( $cost->{gold} > $c->stash->{party}->gold ) {
+                $c->stash->{panel_messages} = "You don't have enough gold to pay the tax";
+                $c->detach('/panel/refresh', ['messages']);
+            }
+
+            $c->stash->{party}->gold( $c->stash->{party}->gold - $cost->{gold} );
+        }
+        else {
+            if ( $cost->{turns} > $c->stash->{party}->turns ) {
+                $c->stash->{panel_messages} = "You don't have enough turns to pay the tax";
+                $c->detach('/panel/refresh', ['messages']);
+            }
+
+            $c->stash->{party}->turns( $c->stash->{party}->turns - $cost->{turns} );
+        }
+        
+        $c->stash->{party}->update;
+
+        # Record payment (Always recorded in gold)
+        $party_town->tax_amount_paid_today( $cost->{gold} );
+        
+        $party_town->prestige( $party_town->prestige + 1 );
+        $party_town->update;        
+    }
+
+    $c->stash->{entered_town} = 1;
 
     $c->forward('/map/move_to');
 }
@@ -709,7 +739,7 @@ sub raid : Local {
         $c->stash->{party}->average_stat('agility') +
         ( $c->stash->{party}->average_stat('divinity') / 2 );
 
-    my $town_raid_factor = $town->prosperity + (($town->prosperity / 4) * ($party_town->raids_today || 0)); 
+    my $town_raid_factor = $town->prosperity + ( ( $town->prosperity / 4 ) * ( $party_town->raids_today || 0 ) );
 
     my $raid_factor = round $town_raid_factor - round $party_raid_factor;
     my $raid_roll   = Games::Dice::Advanced->roll('1d100');
@@ -725,14 +755,14 @@ sub raid : Local {
             . "Raid Qiotient: $raid_quotient, Gold To Gain: $gold_to_gain" );
 
     my $raid_successful = 0;
+    my $prestige_change = 0;
 
     given ($raid_quotient) {
         when ( $_ < -60 ) {
 
             # Success, no consequence
             $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
-            $c->stash->{messages} =
-                ["You charge past the guards without anyone ever noticing you. You steal $gold_to_gain gold from the treasury"];
+            $c->stash->{messages} = ["You charge past the guards without anyone ever noticing you. You steal $gold_to_gain gold from the treasury"];
             $raid_successful = 1;
         }
         when ( $_ < -40 ) {
@@ -742,7 +772,8 @@ sub raid : Local {
             $c->stash->{messages} =
                 [     "You make it to the treasury and steal $gold_to_gain gold. On the way out, a guard spots you, and gives chase. You get "
                     . "away, but this will surely affect your prestige with the town." ];
-            $raid_successful = 1;                    
+            $raid_successful = 1;
+            $prestige_change = -8;
         }
         when ( $_ < -20 ) {
 
@@ -750,6 +781,7 @@ sub raid : Local {
             $c->stash->{messages} =
                 [     "You get halfway to the treasury only to run into a squard of guards. You turn on your heels, and run your hearts out, making "
                     . " it out of the gates before the guards can catch you. It's not too likely they'll want to see you back there any time soon" ];
+            $prestige_change = -8;
         }
         default {
 
@@ -762,12 +794,14 @@ sub raid : Local {
                     . "You're imprisoned for $turns_lost turns" ];
 
             $c->stash->{party}->turns( $c->stash->{party}->turns - $turns_lost );
+
+            $prestige_change = -8;
         }
     }
-    
+
     if ($raid_successful) {
-        my $quest_messages = $c->forward( '/quest/check_action', ['town_raid', $town->id] );
-        
+        my $quest_messages = $c->forward( '/quest/check_action', [ 'town_raid', $town->id ] );
+
         if ($quest_messages) {
             push @{ $c->stash->{messages} }, @$quest_messages;
         }
@@ -775,8 +809,9 @@ sub raid : Local {
 
     $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
     $c->stash->{party}->update;
-    
-    $party_town->raids_today(($party_town->raids_today||0)+1);
+
+    $party_town->raids_today( ( $party_town->raids_today || 0 ) + 1 );
+    $party_town->prestige( $party_town->prestige + $prestige_change );
     $party_town->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );

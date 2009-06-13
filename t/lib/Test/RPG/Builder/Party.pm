@@ -35,6 +35,7 @@ sub build_party {
             rank_separator_position => 2,
             turns                   => 100,
             gold                    => 100,
+            defunct                 => $params{defunct} || undef,
         }
     );
 

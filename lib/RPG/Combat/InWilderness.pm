@@ -8,6 +8,8 @@ use RPG::Template;
 #requires qw/schema creature_group party/;
 requires qw/opponents/;
 
+has 'nearby_towns' => ( is => 'ro', isa => 'ArrayRef', init_arg => undef, builder => '_build_nearby_towns', lazy => 1, auto_deref => 1 );
+
 use List::Util qw(shuffle);
 
 has 'location' => ( is => 'ro', isa => 'RPG::Schema::Land', required => 0, builder => '_build_location', lazy => 1, );
@@ -37,33 +39,33 @@ sub _build_location {
     }
 }
 
-after 'finish' => sub {
+sub _build_nearby_towns {
     my $self = shift;
-
+    
     my @towns = $self->schema->resultset('Town')->find_in_range(
         {
             x => $self->location->x,
             y => $self->location->y,
         },
-        $self->config->{combat_news_size},
+        $self->config->{nearby_town_range},
     );
+    
+    return \@towns;
+}
 
-    if (@towns) {
-        my $message = RPG::Template->process(
-            $self->config,
-            'combat/town_news_message.html',
-            {
-                log => $self->combat_log,
-            },
-        );
-        
+after 'finish' => sub {
+    my $self = shift;
+
+    if (defined @{$self->nearby_towns}) {
+        my $message = RPG::Template->process( $self->config, 'combat/town_news_message.html', { log => $self->combat_log, }, );
+
         my $day_id = $self->schema->resultset('Day')->find_today->id;
-        
-        foreach my $town (@towns) {
+
+        foreach my $town ($self->nearby_towns) {
             $self->schema->resultset('Town_History')->create(
                 {
                     town_id => $town->id,
-                    day_id => $day_id,
+                    day_id  => $day_id,
                     message => $message,
                 }
             );

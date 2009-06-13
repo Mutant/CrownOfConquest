@@ -7,6 +7,8 @@ use base 'DBIx::Class';
 
 use Carp;
 
+use Math::Round qw(round);
+
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Town');
 
@@ -35,14 +37,20 @@ sub tax_cost {
     if ( $party_town_rec && $party_town_rec->tax_amount_paid_today > 0 ) {
         return { paid => 1 };
     }
+    
+    my $prestige = 0;
+    $prestige = $party_town_rec->prestige if $party_town_rec;
 
     my $base_cost = $self->prosperity * RPG::Schema->config->{tax_per_prosperity};
 
     my $multiplier = 1 + ( RPG::Schema->config->{tax_level_modifier} * ( $party->level - 1 ) );
+    
+    my $prestige_modifier = (0-$prestige) / 15;
 
-    my $gold_cost = int $base_cost * $multiplier;
+    my $gold_cost = round $base_cost * ($multiplier + $prestige_modifier); 
+    $gold_cost = 1 if $gold_cost < 1;
 
-    my $turn_cost = int $gold_cost / RPG::Schema->config->{tax_turn_divisor};
+    my $turn_cost = round $gold_cost / RPG::Schema->config->{tax_turn_divisor};
 
     $turn_cost = 1 if $turn_cost < 1;
 

@@ -188,13 +188,13 @@ sub test_change_prosperity_as_needed : Tests(14) {
     is( $towns[5]->prosperity,  55,  "Prosperity unchanged" );
     is( $towns[6]->prosperity,  66,  "Prosperity unchanged" );
     is( $towns[7]->prosperity,  77,  "Prosperity unchanged" );
-    is( $towns[8]->prosperity,  91,  "Prosperity increase" );
+    is( $towns[8]->prosperity,  85,  "Prosperity reduced" );
     is( $towns[9]->prosperity,  90,  "Prosperity unchanged" );
     is( $towns[10]->prosperity, 100, "Prosperity unchanged" );
     
     is($prosp_changes->{$towns[3]->id}{prosp_change}, -2, "Prosp change recorded");
     is($prosp_changes->{$towns[4]->id}{prosp_change}, 3, "Prosp change recorded");
-    is($prosp_changes->{$towns[8]->id}{prosp_change}, 1, "Prosp change recorded");
+    is($prosp_changes->{$towns[8]->id}{prosp_change}, -5, "Prosp change recorded");
 }
 
 sub test_calculate_changes_needed : Tests(10) {

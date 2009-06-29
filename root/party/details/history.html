@@ -1,17 +1,19 @@
 <h4>Recent Messages</h4>
-<table class="main">
+<table class="main" border=0 width=70%>
 [% day_count = today.day_number %]
 [% counter = 1 %] 
 [% WHILE counter < history_length %]
-	[% IF message_logs.${day_count} %]
+	[% IF message_logs.${day_count} || day_logs.${day_count} %]
 		<tr>
 			<td valign="top" nowrap><b>Day [% day_count %]</b></td>
-			<td>
+			<td valign="top">
 				[% day_logs.${day_count}.log | html_line_break %]<br>
 				<hr size=1>
-				[% FOREACH message IN message_logs.${day_count} %]
-					[% message %]<br>
-					<hr size=1>
+				[% IF message_logs.${day_count} %]					
+					[% FOREACH message IN message_logs.${day_count} %]
+						[% message | html_line_break %]<br>
+						<hr size=1>
+					[% END %]
 				[% END %]
 			</td>
 		</tr>

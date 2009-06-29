@@ -389,7 +389,17 @@ sub repair_cost {
     my $per_durability_point_cost =
         round( RPG::Schema->config->{min_repair_cost} + ( 100 - $repair_factor ) / 100 * RPG::Schema->config->{max_repair_cost} );
 
-    return ( $variable_rec->max_value - $variable_rec->item_variable_value ) * $per_durability_point_cost;
+    my $cost = ( $variable_rec->max_value - $variable_rec->item_variable_value ) * $per_durability_point_cost;
+    
+    my $character = $self->belongs_to_character;
+    my $party;
+    $party = $character->party if $character;
+        
+    if ($party && $town->discount_type eq 'blacksmith' && $party->prestige_for_town($town) >= $town->discount_threshold ) {
+        $cost = round ($cost * ( 100 - $town->discount_value) / 100 );   
+    }
+    
+    return $cost;
 }
 
 1;

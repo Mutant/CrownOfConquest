@@ -26,20 +26,22 @@ sub run {
     my $prosp_changes = {};
 
     foreach my $town (@towns) {
-        $prosp_changes->{ $town->id }{town} = $town;
+        $prosp_changes->{ $town->id }{town}           = $town;
         $prosp_changes->{ $town->id }{original_prosp} = $town->prosperity;
-        $prosp_changes->{ $town->id }{prosp_change} = $self->calculate_prosperity( $town, $ctr_avg );
+        $prosp_changes->{ $town->id }{prosp_change}   = $self->calculate_prosperity( $town, $ctr_avg );
     }
 
-    $self->scale_prosperity($prosp_changes, @towns);
+    $self->scale_prosperity( $prosp_changes, @towns );
 
     $self->record_prosp_changes($prosp_changes);
 
     # Update prestige ratings
     $self->update_prestige;
-    
+
     # Clear all tax paid / raids today
     $context->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0 } );
+
+    $self->set_discount(@towns);
 }
 
 sub calculate_prosperity {
@@ -80,7 +82,7 @@ sub calculate_prosperity {
     $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change" );
 
     $town->prosperity( $town->prosperity + $prosp_change );
-    $town->prosperity(1) if $town->prosperity < 1;
+    $town->prosperity(1)   if $town->prosperity < 1;
     $town->prosperity(100) if $town->prosperity > 100;
     $town->update;
 
@@ -88,9 +90,9 @@ sub calculate_prosperity {
 }
 
 sub scale_prosperity {
-    my $self  = shift;
+    my $self          = shift;
     my $prosp_changes = shift;
-    my @towns = @_;
+    my @towns         = @_;
 
     # Needs to add up to 100
     # TODO: config this
@@ -130,7 +132,7 @@ sub _calculate_changes_needed {
         $actual_prosp->{$category} ||= 0;
         if ( $target_prosp->{$category} < $actual_prosp->{$category} - 2 ) {
             my $diff = $actual_prosp->{$category} - $target_prosp->{$category};
-            $changes_needed{$category} = - round( $town_count * ( $diff / 100 ) );
+            $changes_needed{$category} = -round( $town_count * ( $diff / 100 ) );
         }
         if ( $target_prosp->{$category} > $actual_prosp->{$category} + 2 ) {
             my $diff = $target_prosp->{$category} - $actual_prosp->{$category};
@@ -193,7 +195,7 @@ sub _change_prosperity_as_needed {
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
 
-                $prosp_changes->{$town_to_change->id}{prosp_change}+=$modifier;
+                $prosp_changes->{ $town_to_change->id }{prosp_change} += $modifier;
 
                 $town_to_change->prosperity( $town_to_change->prosperity + $modifier );
                 $town_to_change->update;
@@ -228,7 +230,7 @@ sub _change_prosperity_as_needed {
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
 
-                $prosp_changes->{$town_to_change->id}{prosp_change}+=$modifier;
+                $prosp_changes->{ $town_to_change->id }{prosp_change} += $modifier;
 
                 $town_to_change->prosperity( $town_to_change->prosperity + $modifier );
                 $town_to_change->update;
@@ -266,57 +268,89 @@ sub _get_prosperty_percentages {
 }
 
 sub record_prosp_changes {
-    my $self = shift;
+    my $self          = shift;
     my $prosp_changes = shift;
-    
+
     my $c = $self->context;
-    
-    foreach my $town_id (keys %$prosp_changes) {
-        if ($prosp_changes->{$town_id}{prosp_change} != 0) {
-            my $message = RPG::Template->process(
-                $c->config,
-                'newday/town/prosp_change.html',
-                {
-                    %{ $prosp_changes->{$town_id} }
-                },
-            );            
-            
+
+    foreach my $town_id ( keys %$prosp_changes ) {
+        if ( $prosp_changes->{$town_id}{prosp_change} != 0 ) {
+            my $message = RPG::Template->process( $c->config, 'newday/town/prosp_change.html', { %{ $prosp_changes->{$town_id} } }, );
+
             $c->schema->resultset('Town_History')->create(
                 {
                     message => $message,
                     town_id => $town_id,
-                    day_id => $c->current_day->id,
+                    day_id  => $c->current_day->id,
                 }
-            );   
-        }   
-    }   
+            );
+        }
+    }
 }
 
 sub update_prestige {
     my $self = shift;
-    
+
     my $c = $self->context;
-    
+
     my $party_town_rs = $c->schema->resultset('Party_Town')->search(
         {
-            prestige => {'!=',0},
-            'party.defunct' => undef,   
+            prestige        => { '!=', 0 },
+            'party.defunct' => undef,
         },
-        {
-            join => 'party',
-        },        
+        { join => 'party', },
     );
-    
-    while (my $party_town = $party_town_rs->next) {
-        if (Games::Dice::Advanced->roll('1d3') == 1) {
-            if ($party_town->prestige > 0) {
-                $party_town->prestige($party_town->prestige-1);
-            }   
+
+    while ( my $party_town = $party_town_rs->next ) {
+        if ( Games::Dice::Advanced->roll('1d3') == 1 ) {
+            if ( $party_town->prestige > 0 ) {
+                $party_town->prestige( $party_town->prestige - 1 );
+            }
             else {
-                $party_town->prestige($party_town->prestige+1);
+                $party_town->prestige( $party_town->prestige + 1 );
             }
             $party_town->update;
-        }   
+        }
+    }
+}
+
+sub set_discount {
+    my $self  = shift;
+    my @towns = @_;
+
+    my $c = $self->context;
+
+    my @discount_types = @{ $c->config->{discount_types} };
+
+    my $discount_range = $c->config->{max_discount_value} - $c->config->{min_discount_value};
+    my $discount_steps = $discount_range / 5 + 1;
+
+    foreach my $town (@towns) {
+        my $chance_for_discount = $town->prosperity / 2;
+        $chance_for_discount = 20 if $chance_for_discount < 20;
+
+        my $discount_roll = Games::Dice::Advanced->roll('1d100');
+        
+        my @available_discount_types = @discount_types;
+        if ($town->blacksmith_age == 0) {
+            # Get rid of blacksmith type if there's no blacksmith
+            @available_discount_types = grep { $_ ne 'blacksmith' } @available_discount_types;
+        }
+
+        if ( $chance_for_discount <= $discount_roll ) {
+            my $discount_type      = ( shuffle @available_discount_types )[0];
+            my $discount_value     = ( Games::Dice::Advanced->roll( '1d' . $discount_steps ) - 1 ) * 5 + $c->config->{min_discount_value};
+            my $discount_threshold = Games::Dice::Advanced->roll('1d4') * 5 + 5;
+
+            $town->discount_type($discount_type);
+            $town->discount_value($discount_value);
+            $town->discount_threshold($discount_threshold);
+        }
+        else {
+            $town->discount_type(undef);
+        }
+
+        $town->update;
     }
 }
 

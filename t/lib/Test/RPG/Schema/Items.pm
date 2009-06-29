@@ -11,6 +11,10 @@ use Test::More;
 use Test::MockObject;
 use Test::Exception;
 
+use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Town;
+use Test::RPG::Builder::Party;
+
 sub startup : Tests(startup=>1) {
     my $self = shift;
     
@@ -159,6 +163,52 @@ sub test_equip_item_with_non_exististant_equip_place : Tests(2) {
     );    
 
     is($item->equip_place_id, undef, "Item has not been moved into equip place");   
+}
+
+sub test_repair_cost : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value  => 5,
+                max_value => 10,
+            }
+        ]
+    );
+    
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $town->discount_type('blacksmith');
+    $town->discount_threshold(10);
+    $town->discount_value(30);
+    $town->blacksmith_skill(5);
+    $town->update;
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    $item->character_id(($party->characters)[0]->id);
+    $item->update;
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->find_or_create(
+        {
+            party_id => $party->id,
+            town_id  => $town->id,
+            prestige => 10,
+        },
+    );    
+    
+    $self->{config}{min_repair_cost} = 1;
+    $self->{config}{max_repair_cost} = 6; 
+    
+    # WHEN
+    my $repair_cost = $item->repair_cost($town);
+    
+    # THEN
+    is($repair_cost, 14, "Repair cost correct");
+    
+    
 }
 
 1;

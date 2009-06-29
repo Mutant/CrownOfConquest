@@ -25,6 +25,12 @@ Your prestige here:
 		the mayor wants to marry you.
 	[% END %]
 <br><br>
+[% IF allowed_discount %]
+	The town mayor would like to thank you for your service, and offers you a [% town.discount_value %]% discount at the town [% town.discount_type %]
+	 for today only.<br><br>
+[% END %]
+	  
+
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 <b>Shops & Services</b>
 <ul>

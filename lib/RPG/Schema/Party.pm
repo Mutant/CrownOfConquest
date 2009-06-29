@@ -174,6 +174,8 @@ __PACKAGE__->has_many( 'party_battles', 'RPG::Schema::Battle_Participant', 'part
 
 __PACKAGE__->has_many( 'party_effects', 'RPG::Schema::Party_Effect', 'party_id', );
 
+__PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
+
 sub members {
     my $self = shift;
 
@@ -439,6 +441,21 @@ sub quests_in_progress {
     my $self = shift;
 
     return $self->search_related( 'quests', { status => 'In Progress', } );
+}
+
+sub prestige_for_town {
+    my $self = shift;
+    my $town = shift;
+    
+    my $party_town = $self->find_related(
+        'party_towns',
+        {
+
+            town_id  => $town->id,
+        },
+    );
+    
+    return $party_town ? $party_town->prestige : 0;    
 }
 
 1;

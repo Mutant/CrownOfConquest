@@ -45,6 +45,7 @@ sub main : Local {
                 template => 'town/blacksmith.html',
                 params   => {
                     town                 => $c->stash->{party_location}->town,
+                    party                => $c->stash->{party},
                     error                => $c->flash->{error},
                     message              => $c->flash->{message},
                     current_tab          => $c->flash->{current_tab},
@@ -215,9 +216,9 @@ sub upgrade : Local {
             {
                 template => 'town/blacksmith/upgrade_message.html',
                 params   => {
-                    item                 => $item,
-                    upgrade_increase     => $upgrade_increase,
-                    upgraded_attribute   => $upgraded_attribute,
+                    item                => $item,
+                    upgrade_increase    => $upgrade_increase,
+                    upgraded_attribute  => $upgraded_attribute,
                     durability_decrease => $durability_decrease,
                 },
                 return_output => 1,

@@ -191,15 +191,15 @@ function healParty(dialogFields) {
 }
 
 function findTown(dialogFields) {
-	getPanels("/town/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
+	getPanels("/town/sage/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
 }
 
 function findItem(dialogFields) {
-	getPanels("/town/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
+	getPanels("/town/sage/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
 }
 
 function findDungeon(dialogFields) {
-	getPanels("/town/find_dungeon?find_level=" + dialogFields.find_level);
+	getPanels("/town/sage/find_dungeon?find_level=" + dialogFields.find_level);
 }
 
 function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {

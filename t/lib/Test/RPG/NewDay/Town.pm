@@ -37,6 +37,9 @@ sub setup : Test(setup) {
     $mock_context->set_isa('RPG::NewDay::Context');
 
     $self->{mock_context} = $mock_context;
+    
+    $self->{rolls} = undef;
+    $self->{roll_result} = undef;
 }
 
 sub test_calculate_prosperity : Tests {
@@ -251,10 +254,14 @@ sub test_update_prestige : Tests(4) {
     my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
     my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, defunct => DateTime->now());
     
+    my $town1= Test::RPG::Builder::Town->build_town($self->{schema});
+    my $town2= Test::RPG::Builder::Town->build_town($self->{schema});
+    my $town3= Test::RPG::Builder::Town->build_town($self->{schema});
+    
     my $party_town1 = $self->{schema}->resultset('Party_Town')->create(
         {
             party_id => $party1->id,
-            town_id => 1,
+            town_id => $town1->id,
             prestige => 0,
         }
     );
@@ -262,7 +269,7 @@ sub test_update_prestige : Tests(4) {
     my $party_town2 = $self->{schema}->resultset('Party_Town')->create(
         {
             party_id => $party1->id,
-            town_id => 2,
+            town_id => $town2->id,
             prestige => 2,
         }
     );
@@ -270,7 +277,7 @@ sub test_update_prestige : Tests(4) {
     my $party_town3 = $self->{schema}->resultset('Party_Town')->create(
         {
             party_id => $party1->id,
-            town_id => 3,
+            town_id => $town3->id,
             prestige => -2,
         }
     );
@@ -278,7 +285,7 @@ sub test_update_prestige : Tests(4) {
     my $party_town4 = $self->{schema}->resultset('Party_Town')->create(
         {
             party_id => $party2->id,
-            town_id => 3,
+            town_id => $town3->id,
             prestige => -2,
         }
     );
@@ -304,6 +311,57 @@ sub test_update_prestige : Tests(4) {
     $party_town4->discard_changes;
     is($party_town4->prestige, -2, "Prestige unchanged (party defunct)");
 
+}
+
+sub test_set_discount : Test(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+    
+    $self->{config}{discount_types} = ['sage','healer','blacksmith'];
+    $self->{config}{max_discount_value} = 30;
+    $self->{config}{min_discount_value} = 10;
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    $self->mock_dice;
+    $self->{rolls} = [25,5,1];
+    
+    # WHEN
+    $town_action->set_discount($town);
+    
+    # THEN
+    $town->discard_changes;
+    is(grep({$_ eq $town->discount_type} ('sage','healer','blacksmith')), 1, "Discount type set correctly");
+    is($town->discount_value, 30, "Discount value set correctly");
+    is($town->discount_threshold, 10, "Discount threshold set correectly");
+}
+
+sub test_set_discount_doesnt_use_blacksmith_type_if_no_blacksmith : Test(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+    
+    # TODO: need to mock out shuffle, currently test will give false positives 50% of the time
+    $self->{config}{discount_types} = ['healer','blacksmith'];
+    $self->{config}{max_discount_value} = 30;
+    $self->{config}{min_discount_value} = 10;
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    $self->mock_dice;
+    $self->{rolls} = [25,5,1];
+    
+    # WHEN
+    $town_action->set_discount($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->discount_type, 'healer', "Discount type set correctly");
+    is($town->discount_value, 30, "Discount value set correctly");
+    is($town->discount_threshold, 10, "Discount threshold set correectly");
 }
 
 1;

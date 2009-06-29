@@ -14,7 +14,7 @@ __PACKAGE__->table('Town');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Town');
 
-__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill/);
+__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill discount_type discount_value discount_threshold/);
 
 __PACKAGE__->set_primary_key('town_id');
 

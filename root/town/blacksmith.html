@@ -67,6 +67,7 @@
 	[% IF full_repair_cost %]<a href="[% base %]/town/blacksmith/full_repair">Repair All Items</a> ([% full_repair_cost %] gold) 
 	[% IF equipped_repair_cost && equipped_repair_cost != full_repair_cost %]| <a href="[% base %]/town/blacksmith/full_repair?equipped_only=1">Repair Equipped Items</a> ([% equipped_repair_cost %] gold)[% END %]  
 	<br><br>
+	[% INCLUDE town/discount_message.html shop_type='blacksmith' %]
 	[% END %]
 	Select individual items to upgrade or repair:
 	

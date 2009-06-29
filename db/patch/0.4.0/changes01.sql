@@ -78,3 +78,7 @@ ENGINE = InnoDB;
 ALTER TABLE `Town_History` ADD INDEX `town_day_idx`(`town_id`, `day_id`);
 
 ALTER TABLE `Party_Town` ADD COLUMN `prestige` INTEGER  NOT NULL DEFAULT 0 AFTER `raids_today`;
+
+ALTER TABLE `Town` ADD COLUMN `discount_type` VARCHAR(50)  DEFAULT NULL AFTER `blacksmith_skill`,
+ ADD COLUMN `discount_value` INTEGER  NOT NULL DEFAULT 0 AFTER `discount_type`,
+ ADD COLUMN `discount_threshold` INTEGER  NOT NULL DEFAULT 0 AFTER `discount_value`;

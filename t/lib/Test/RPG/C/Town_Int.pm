@@ -221,4 +221,59 @@ sub test_raid_failure : Tests(4) {
     is($party_town->prestige, -8, "Prestige reduced");
 }
 
+sub test_calculate_heal_cost_simple : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, hit_points => 5);
+    
+    
+    $self->{config}{min_healer_cost} = 1;
+    $self->{config}{max_healer_cost} = 6;
+    
+    $self->{stash}{party} = $party;
+    
+    # WHEN
+    my $cost_to_heal = RPG::C::Town->calculate_heal_cost($self->{c}, $town);
+    
+    # THEN
+    is($cost_to_heal, 40, "Cost to heal returned correctly");
+       
+}
+
+sub test_calculate_heal_cost_discount_available : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $town->discount_type('healer');
+    $town->discount_threshold(10);
+    $town->discount_value(30);
+    $town->update;
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, hit_points => 5);
+    
+    my $party_town = $self->{schema}->resultset('Party_Town')->find_or_create(
+        {
+            party_id => $party->id,
+            town_id  => $town->id,
+            prestige => 10,
+        },
+    );
+    
+    $self->{config}{min_healer_cost} = 1;
+    $self->{config}{max_healer_cost} = 6;
+    
+    $self->{stash}{party} = $party;
+    
+    # WHEN
+    my $cost_to_heal = RPG::C::Town->calculate_heal_cost($self->{c}, $town);
+    
+    # THEN
+    is($cost_to_heal, 28, "Cost to heal returned correctly");
+       
+}
+
 1;

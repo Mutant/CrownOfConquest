@@ -50,7 +50,7 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 		    <td>
 		    	<select dojoType="dijit.form.FilteringSelect" name="find_level" autocomplete="false">
 		    		[% FOREACH level IN dungeon_levels_allowed_to_enter %]
-	                	<option value="[% level %]">Level [% level %] ([% level * sage_find_dungeon_cost_per_level %] gold)</option>
+	                	<option value="[% level %]">Level [% level %] ([% level * find_dungeon_cost_per_level %] gold)</option>
 					[% END %]
 			</select>
 		    </td>
@@ -58,5 +58,7 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	</table>
 	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
+
+[% INCLUDE town/discount_message.html shop_type='sage' %] 
 
 [% INCLUDE town/town_footer.html %]

@@ -144,6 +144,29 @@ sub complete_quest : Private {
     );
     $party_town->prestige($party_town->prestige+3);
     $party_town->update;
+    
+    
+    my $news_message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template      => 'quest/completed_quest_news_message.html',
+                params        => { 
+                    party => $c->stash->{party},
+                    quest => $party_quest, 
+                },
+                return_output => 1,
+            }
+        ]
+    );
+    
+    $c->model('DBIC::Town_History')->create(
+        {
+            town_id => $party_quest->town_id,
+            day_id  => $c->stash->{today}->id,
+            message => $news_message,
+        }
+    );    
 
     my $panel = $c->forward(
         'RPG::V::TT',

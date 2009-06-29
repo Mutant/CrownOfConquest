@@ -274,7 +274,7 @@ sub record_prosp_changes {
     my $c = $self->context;
 
     foreach my $town_id ( keys %$prosp_changes ) {
-        if ( $prosp_changes->{$town_id}{prosp_change} != 0 ) {
+        if ( $prosp_changes->{$town_id}{prosp_change} != 0 && $prosp_changes->{$town_id}{original_prosp} != $prosp_changes->{$town_id}->prosperity ) {
             my $message = RPG::Template->process( $c->config, 'newday/town/prosp_change.html', { %{ $prosp_changes->{$town_id} } }, );
 
             $c->schema->resultset('Town_History')->create(

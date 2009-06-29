@@ -455,6 +455,7 @@ sub raid : Local {
 
     my $raid_successful = 0;
     my $prestige_change = 0;
+    my $turns_lost;
 
     given ($raid_quotient) {
         when ( $_ < -60 ) {
@@ -485,7 +486,7 @@ sub raid : Local {
         default {
 
             # Failure and imprisonment
-            my $turns_lost = round $town->prosperity / 4;
+            $turns_lost = round $town->prosperity / 4;
             $turns_lost = 2 if $turns_lost < 2;
 
             $c->stash->{messages} =
@@ -498,13 +499,47 @@ sub raid : Local {
         }
     }
 
+    my $news_message;
+
     if ($raid_successful) {
         my $quest_messages = $c->forward( '/quest/check_action', [ 'town_raid', $town->id ] );
 
         if ($quest_messages) {
             push @{ $c->stash->{messages} }, @$quest_messages;
         }
+
+        $news_message =
+              'The party known as '
+            . $c->stash->{party}->name
+            . ' sucessfully raided the town of '
+            . $town->town_name
+            . " and got away with $gold_to_gain gold";
     }
+    elsif ($turns_lost) {
+        $news_message =
+              'The party known as '
+            . $c->stash->{party}->name
+            . ' tried to raid the town of '
+            . $town->town_name
+            . " but were caught, and imprisioned!";
+    }
+    else {
+        $news_message =
+              'The party known as '
+            . $c->stash->{party}->name
+            . ' tried to raid the town of '
+            . $town->town_name
+            . ' but were intercepted by the '
+            . 'guards and fled empty-handed';
+    }
+
+    $c->model('DBIC::Town_History')->create(
+        {
+            town_id => $town->id,
+            day_id  => $c->stash->{today}->id,
+            message => $news_message,
+        }
+    );
 
     $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
     $c->stash->{party}->update;

@@ -149,6 +149,7 @@ sub test_raid_party_raid_succeeds : Tests(3) {
     $party->set_series('average_stat', 30,20,30);
     
     $self->{stash}{party} = $party;
+    $self->{stash}{today} = $day;
     $self->{stash}{party_location} = $party->location;
     $self->{params}{town_id} = $town->id;
     
@@ -179,6 +180,8 @@ sub test_raid_failure : Tests(4) {
     my $self = shift;
 
     # GIVEN
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema});
+    
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
     my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50 );
     my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
@@ -186,15 +189,14 @@ sub test_raid_failure : Tests(4) {
     $party->update;
     $town->land_id($land[1]->id);
     $town->update;
-    
-    my $day = Test::RPG::Builder::Day->build_day($self->{schema});
-    
+        
     $self->{config}{minimum_raid_level} = 1;
     
     $party = Test::MockObject::Extends->new($party);
     $party->set_series('average_stat', 30,20,30);
     
     $self->{stash}{party} = $party;
+    $self->{stash}{today} = $day;
     $self->{stash}{party_location} = $party->location;
     $self->{params}{town_id} = $town->id;
     

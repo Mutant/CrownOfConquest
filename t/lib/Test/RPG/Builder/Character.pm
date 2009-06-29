@@ -8,9 +8,9 @@ sub build_character {
     my $schema = shift;
     my %params = @_;
 
-    my $race = $schema->resultset('Race')->create( {} );
+    my $race = $schema->resultset('Race')->create( { 'race_name' => 'test_race'} );
 
-    my $class = $schema->resultset('Class')->create( {} );
+    my $class = $schema->resultset('Class')->create( { 'class_name' => 'test_class'}  );
 
     my $character = $schema->resultset('Character')->create(
         {

@@ -15,8 +15,10 @@ use Data::Dumper;
 sub run {
     my $self = shift;
 
-    my $c = $self->context;
+    $self->check_for_dungeon_deletion();
 
+    my $c = $self->context;
+    
     my $dungeons_rs = $c->schema->resultset('Dungeon')->search();
 
     my $land_rs = $c->schema->resultset('Land')->search(
@@ -393,6 +395,54 @@ sub _find_wall_to_join {
 
     return $wall_to_join;
 
+}
+
+sub check_for_dungeon_deletion {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my @dungeons = $c->schema->resultset('Dungeon')->search(
+        {},
+        {
+            prefetch => 'location',
+        },
+    );
+    
+    foreach my $dungeon (@dungeons) {
+        if (Games::Dice::Advanced->roll('1d200') <= 10) {
+            # Make sure no parties are in the dungeon
+            my $party_rs = $c->schema->resultset('Party')->search(
+                {
+                    'dungeon.dungeon_id' => $dungeon->id,
+                },
+                {
+                    join => {'dungeon_location' => {'dungeon_room' => 'dungeon'}},
+                },
+            );
+            
+            if ($party_rs->count > 0) {
+                $c->logger->info('Note deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside");  
+                next;
+            }            
+            
+            $c->logger->info('Deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y);
+            
+            # Record "phantom" dungeons
+            my $rs = $c->schema->resultset('Mapped_Sectors')->search(
+                {
+                    'location.x' => $dungeon->location->x,
+                    'location.y' => $dungeon->location->y,
+                },
+                {
+                    join => 'location', 
+                }, 
+            )->update({ phantom_dungeon => $dungeon->level }, { join => 'location', } );
+            
+            # Delete the dungeon
+            $dungeon->delete;
+        }
+    }       
 }
 
 1;

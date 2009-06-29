@@ -103,4 +103,58 @@ sub test_move_to_successful_town_entrance : Tests(4) {
     is($self->{stash}{party_location}->id, $land[0]->id, "Stash party location updated correctly");
 }
 
+sub test_known_dungeons : Tests(7) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $dungeon1 = $self->{schema}->resultset('Dungeon')->create(
+        {
+            level => 1,
+            land_id => $land[5]->id,
+        }
+    );
+    
+    my $dungeon2 = $self->{schema}->resultset('Dungeon')->create(
+        {
+            level => 1,
+            land_id => $land[8]->id,
+        }
+    );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, character_level => 10 );
+    
+    $self->{stash}{party} = $party;
+  
+    # All but 1 sector mapped
+    my @mapped_sectors;
+    for my $id (0..7) {
+        push @mapped_sectors, $self->{schema}->resultset('Mapped_Sectors')->create(
+            {
+                land_id => $land[$id]->id,
+                party_id => $party->id,
+            }
+        );   
+    }
+    $mapped_sectors[2]->phantom_dungeon(2);
+    $mapped_sectors[2]->update;
+    
+    # WHEN
+    RPG::C::Map->known_dungeons($self->{c});
+    
+    # THEN
+    my @known_dungeons = @{$self->template_params->{known_dungeons}};
+    is(scalar @known_dungeons, 2, "2 known dungeons");
+    
+    is($known_dungeons[0]->{level}, 1, "First known dungeon level returned");
+    is($known_dungeons[0]->{x}, $land[5]->x, "First known dungeon x returned");
+    is($known_dungeons[0]->{y}, $land[5]->y, "First known dungeon y returned"); 
+    
+    is($known_dungeons[1]->{level}, 2, "First known dungeon level returned");
+    is($known_dungeons[1]->{x}, $land[2]->x, "First known dungeon x returned");
+    is($known_dungeons[1]->{y}, $land[2]->y, "First known dungeon y returned");    
+    
+}
+
 1;

@@ -70,6 +70,8 @@ sub aa_setup_context : Test(setup) {
 	$self->{mock_logger}->set_isa('Log::Dispatch');
 	$self->{c}->set_always('log',$self->{mock_logger});
 	
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $self->{template_args} = \@_ };
+	
 	
 		
 }
@@ -123,9 +125,14 @@ sub mock_dice {
     );
     
     return $dice;
-
 }
 
+# Returns any template params that have been captured as a hashref
+sub template_params {
+    my $self = shift;
+    
+    return $self->{template_args}[0][0]{params};   
+}
 
 
 1;

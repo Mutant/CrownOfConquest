@@ -49,9 +49,14 @@ sub aa_setup_context : Test(setup) {
 
 sub roll_back : Test(teardown) {
     my $self = shift;
-        
-    $self->{schema}->storage->dbh->rollback;    
-    #$self->{schema}->storage->dbh->commit;
+    
+    if ($ENV{TEST_COMMIT}) {
+        $self->{schema}->storage->dbh->commit;
+    }
+    else {    
+        $self->{schema}->storage->dbh->rollback;
+    }    
+    
 }
 
 1;

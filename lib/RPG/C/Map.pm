@@ -11,6 +11,8 @@ use Carp;
 use RPG::Schema::Land;
 use RPG::Map;
 
+use DBIx::Class::ResultClass::HashRefInflator;
+
 sub view : Private {
     my ( $self, $c ) = @_;
 
@@ -87,15 +89,34 @@ sub party : Local {
 sub known_dungeons : Local {
     my ( $self, $c ) = @_;
 
-    my @known_dungeons = $c->model('DBIC::Dungeon')->search(
-        { 'mapped_sector.party_id' => $c->stash->{party}->id, },
+    my $rs = $c->model('DBIC::Mapped_Sectors')->search(
+        { 'party_id' => $c->stash->{party}->id, },
         {
-            prefetch => { 'location' => 'mapped_sector' },
-            order_by => 'level, location.x, location.y',
+            prefetch => { 'location' => 'dungeon' },
+
+            #order_by => 'level, location.x, location.y',
         },
     );
 
-    @known_dungeons = grep { $_->party_can_enter( $c->stash->{party} ) } @known_dungeons;
+    $rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
+    my @known_dungeons;
+
+    while ( my $mapped_sector = $rs->next ) {
+        my $level = $mapped_sector->{phantom_dungeon} || $mapped_sector->{location}{dungeon}{level};
+
+        if ( $level && RPG::Schema::Dungeon->party_can_enter( $level, $c->stash->{party} ) ) {
+
+            push @known_dungeons,
+                {
+                level => $level,
+                x     => $mapped_sector->{location}{x},
+                y     => $mapped_sector->{location}{y},
+                };
+        }
+    }
+
+    @known_dungeons = sort { $a->{level} <=> $b->{level} || $a->{x} <=> $b->{x} || $a->{y} <=> $b->{y} } @known_dungeons;
 
     $c->forward(
         'RPG::V::TT',
@@ -188,13 +209,13 @@ sub render_grid : Private {
         foreach my $sector (@$row) {
             next unless $sector;
             if ( $sector->{town_id} ) {
-                my $town = $c->model('DBIC::Town')->find({town_id => $sector->{town_id}});
-                
+                my $town = $c->model('DBIC::Town')->find( { town_id => $sector->{town_id} } );
+
                 $town_costs{ $sector->{town_id} } = $town->tax_cost( $c->stash->{party} );
             }
         }
     }
-        
+
     $params->{town_costs} = \%town_costs;
 
     return $c->forward(
@@ -218,7 +239,7 @@ Move the party to a new location
 sub move_to : Local {
     my ( $self, $c ) = @_;
 
-    my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => ['terrain','town'] }, );
+    my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => [ 'terrain', 'town' ] }, );
 
     my $movement_factor = $c->stash->{party}->movement_factor;
 
@@ -235,14 +256,14 @@ sub move_to : Local {
     elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor) ) {
         $c->stash->{error} = 'You do not have enough turns to move there';
     }
-    
+
     # If there's a town, check that they've gone in via /town/enter
-    elsif ( $new_land->town && ! $c->stash->{entered_town}) {
+    elsif ( $new_land->town && !$c->stash->{entered_town} ) {
         croak 'Invalid town entrance';
     }
 
     else {
-        $c->stash->{party}->move_to( $new_land );
+        $c->stash->{party}->move_to($new_land);
 
         $c->stash->{party}->update;
 
@@ -251,6 +272,20 @@ sub move_to : Local {
 
         $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
         $c->stash->{party_location}->update;
+
+        my $mapped_sector = $c->model('DBIC::Mapped_Sectors')->find(
+            {
+                party_id => $c->stash->{party}->id,
+                land_id  => $new_land->id,
+            }
+        );
+        
+        if ($mapped_sector && $mapped_sector->phantom_dungeon) {
+            # They know for sure if there's a dungeon here now
+            $mapped_sector->update( { phantom_dungeon => 0 } );
+            
+            $c->stash->{had_phantom_dungeon} = 1;
+        } 
 
         my $creature_group = $c->forward( '/combat/check_for_attack', [$new_land] );
 

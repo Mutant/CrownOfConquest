@@ -83,6 +83,7 @@ sub sector_menu : Private {
                     graves                 => \@graves,
                     dungeon                => $dungeon,
                     adjacent_towns         => \@adjacent_towns,
+                    had_phantom_dungeon    => $c->stash->{had_phantom_dungeon},
                 },
                 return_output => 1,
             }

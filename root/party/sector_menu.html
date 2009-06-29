@@ -3,6 +3,7 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
 [% IF dungeon %]There is an entrance to a dungeon here. (Level [% dungeon.level %])<br><br>[% END %]
+[% IF had_phantom_dungeon %]The dungeon entrance you expected to see here has mysteriously disappeared.<br><br>[% END %]
 
 [% IF graves.0 %]
 	[% INCLUDE graves/main.html %]

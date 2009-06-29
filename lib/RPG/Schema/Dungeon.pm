@@ -14,7 +14,7 @@ __PACKAGE__->add_columns(qw/dungeon_id level land_id name/);
 
 __PACKAGE__->set_primary_key('dungeon_id');
 
-__PACKAGE__->has_many( 'sectors', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_id' => 'self.dungeon_id' } );
+__PACKAGE__->has_many( 'rooms', 'RPG::Schema::Dungeon_Room', { 'foreign.dungeon_id' => 'self.dungeon_id' } );
 
 __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );
 

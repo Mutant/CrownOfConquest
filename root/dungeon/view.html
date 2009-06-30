@@ -52,7 +52,14 @@
 				[% IF can_move_to_sector %]
 					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" style="text-decoration: none;">
 				[% END %]
-				[% background_image = current_location.id == sector.dungeon_grid_id ? 'brightfloor.PNG' : 'floor.PNG' %]
+				
+				[% background_image = 'floor.PNG' %]
+				[% IF current_location.id == sector.dungeon_grid_id %]
+					[% background_image = 'partyloc.PNG' %]
+				[% ELSIF viewable_sectors.${sector.x}.${sector.y} %]
+				 	[% background_image = 'brightfloor.PNG' %]
+				[% END %]
+				
 				<div style="
 					[% border %]
 					width: [% size %]px; 
@@ -108,13 +115,13 @@
 					
 						[% IF position == 'right' %]
 							[% left_offset = 1 %]
-							[% width_offset = 0 - width %]
+							[% width_offset = 0 - width + 1 %]
 						[% ELSIF position == 'left' %]
 							[% left_offset = 0 %]
 							[% width_offset = 1 %]
 						[% ELSIF position == 'bottom' %]
 							[% top_offset = 1 %]
-							[% height_offset = 0 - height %]
+							[% height_offset = 0 - height + 1 %]
 						[% END %]
 						
 		         		<div 

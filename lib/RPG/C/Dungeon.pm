@@ -20,6 +20,7 @@ sub view : Local {
 
     $c->log->debug( "Current location: " . $current_location->x . ", " . $current_location->y );
 
+    # Get all sectors that the party has mapped
     my @mapped_sectors = $c->model('DBIC::Dungeon_Grid')->get_party_grid( $c->stash->{party}->id, $current_location->dungeon_room->dungeon_id );
 
     $c->stats->profile("Queried map sectors");
@@ -29,6 +30,7 @@ sub view : Local {
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
     }
 
+    # Find sectors the party can potentially move to
     my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $current_location->x, $current_location->y, 3 );
     my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
         {
@@ -44,12 +46,12 @@ sub view : Local {
 
     $c->stats->profile("Queried viewable sectors");
 
-    #warn "sectors: " . scalar @sectors;
-
+    # Find actual list of sectors party can move to
     my $allowed_to_move_to = $current_location->allowed_to_move_to_sectors( \@sectors, $c->config->{dungeon_move_maximum} );
 
     $c->stats->profile("Got sectors allowed to move to");
 
+    # Get cgs in viewable area
     my $cgs;
     my @cg_recs = $c->model('DBIC::Dungeon_Grid')->search(
         {
@@ -70,13 +72,14 @@ sub view : Local {
 
     my $parties;
 
-    my @viewable_sectors;
+    # Find viewable sectors, add newly discovered sectors to party's map, and get list of other parties nearby
+    my $viewable_sectors;
     foreach my $sector (@sectors) {
         next unless $sector->dungeon_room_id == $current_location->dungeon_room_id;
 
         #$c->log->debug("Adding: " . $sector->x . ", " . $sector->y . " to viewable sectors");
 
-        push @viewable_sectors, $sector;
+        $viewable_sectors->[$sector->x][$sector->y] = 1;
 
         # Save newly mapped sectors
         unless ( $mapped_sectors_by_coord->[ $sector->x ][ $sector->y ] ) {
@@ -100,11 +103,11 @@ sub view : Local {
 
     $c->stats->profile("Saved newly discovered sectors");
 
-    return $c->forward( 'render_dungeon_grid', [ \@viewable_sectors, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
+    return $c->forward( 'render_dungeon_grid', [ $viewable_sectors, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
 }
 
 sub render_dungeon_grid : Private {
-    my ( $self, $c, $sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ) = @_;
+    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ) = @_;
 
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 
@@ -129,6 +132,7 @@ sub render_dungeon_grid : Private {
                 template => 'dungeon/view.html',
                 params   => {
                     grid               => $grid,
+                    viewable_sectors   => $viewable_sectors,
                     max_x              => $max_x,
                     max_y              => $max_y,
                     min_x              => $min_x,

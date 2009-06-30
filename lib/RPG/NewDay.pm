@@ -11,13 +11,14 @@ use DateTime::Cron::Simple;
 use DateTime::Format::DateParse;
 use Log::Dispatch;
 use Log::Dispatch::File;
+use Proc::PID::File;
 
 use Module::Pluggable::Dependency search_path => ['RPG::NewDay::Action'], instantiate => 'new';
 
 sub run {
     my $self = shift;
     my $date_to_run_at = shift;
-
+    
     my $dt;
     
     if ($date_to_run_at) {
@@ -47,6 +48,12 @@ sub run {
             stamp_fmt => '%Y%m%d',
         ),
     );
+    
+    if (Proc::PID::File->running(dir => $home . '/proc')) {
+        my $message = 'Another process is already running. Not executing';
+        $logger->warning($message);
+        die "$message\n";
+    }    
     
     while (1) {
         eval { $self->do_new_day( $config, $logger, $dt ); };

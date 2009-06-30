@@ -410,7 +410,7 @@ sub check_for_dungeon_deletion {
     );
     
     foreach my $dungeon (@dungeons) {
-        if (Games::Dice::Advanced->roll('1d200') <= 10) {
+        if (Games::Dice::Advanced->roll('1d200') <= 1) {
             # Make sure no parties are in the dungeon
             my $party_rs = $c->schema->resultset('Party')->search(
                 {

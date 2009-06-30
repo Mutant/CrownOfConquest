@@ -57,6 +57,20 @@ sub run {
         $player->warned_for_deletion(1);
         $player->update;
     }
+    
+    $self->cleanup_sessions();
+}
+
+sub cleanup_sessions {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    $c->schema->resultset('Session')->search(
+        {
+            'expires' => { '<', time() },
+        }
+    )->delete;           
 }
 
 1;

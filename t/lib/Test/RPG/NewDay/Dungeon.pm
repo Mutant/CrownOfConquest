@@ -13,6 +13,8 @@ use Test::MockObject;
 use Test::More;
 use Test::Exception;
 
+use Test::RPG::Builder::Dungeon_Room;
+
 sub dungeon_startup : Test(startup => 1) {
     my $self = shift;
 
@@ -76,7 +78,7 @@ sub dungeon_setup : Tests(setup) {
     $self->{dungeon} = RPG::NewDay::Action::Dungeon->new( context => $self->{context} );
 }
 
-sub test_find_room_dimensions : Tests(no_plan) {
+sub test_find_room_dimensions : Tests(16) {
     my $self = shift;
 
     # GIVEN
@@ -133,6 +135,7 @@ sub test_create_room_simple : Test(28) {
     $mock_dungeon->set_always( 'id', 1 );
 
     $self->{roll_result} = 3;
+    undef $self->{rolls};
 
     my $expected_sectors;
     $expected_sectors->[1][1] = [ 'top', 'left' ];
@@ -607,6 +610,112 @@ sub test_has_available_path_sector_large_grid_with_row_missing_above_start_point
     # THEN
     is( $has_path, 0, "No path found as intermediate row missing" );
 
+}
+
+sub test_find_next_corridor_direction_simple : Tests(3) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @directions = qw(left right top bottom);
+    my $current_direction = 'left';
+    my ($x, $y) = (2,2);
+    
+    # WHEN
+    my ($new_direction, $next_x, $next_y) = $self->{dungeon}->_find_next_corridor_direction($current_direction, $x, $y, [], @directions);
+    
+    # THEN
+    is($new_direction, 'left', "Direction unchanged");
+    is($next_x, 1, "x decreased by 1");
+    is($next_y, 2, "y unchanged");
+}
+
+sub test_find_next_corridor_direction_direction_change_needed : Tests(3) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @directions = qw(left right top bottom);
+    my $current_direction = 'left';
+    my ($x, $y) = (2,2);
+    my $sectors_created = [];
+    $sectors_created->[1][2] = 1;
+    
+    # WHEN
+    my ($new_direction, $next_x, $next_y) = $self->{dungeon}->_find_next_corridor_direction($current_direction, $x, $y, $sectors_created, @directions);
+    
+    # THEN
+    is($new_direction, 'right', "Direction changed");
+    is($next_x, 3, "x inreased by 1");
+    is($next_y, 2, "y unchanged");
+}
+
+sub test_find_next_corridor_direction_no_available_sectors : Tests(3) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @directions = qw(left right top bottom);
+    my $current_direction = 'left';
+    my ($x, $y) = (2,2);
+    my $sectors_created = [];
+    $sectors_created->[1][2] = 1;
+    $sectors_created->[3][2] = 1;
+    $sectors_created->[2][1] = 1;
+    $sectors_created->[2][3] = 1;
+    
+    # WHEN
+    my ($new_direction, $next_x, $next_y) = $self->{dungeon}->_find_next_corridor_direction($current_direction, $x, $y, $sectors_created, @directions);
+    
+    # THEN
+    is($new_direction, undef, "No direction returned");
+    is($next_x, undef, "No x returned");
+    is($next_y, undef, "No y returned");
+}
+
+sub test_create_walls_for_room : Tests(9) {
+    my $self = shift;
+    
+    # GIVEN
+    my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1, y=>1}, bottom_right => {x=>3, y=>3});
+    
+    my $expected_walls;
+    $expected_walls->[1][1] = [qw/left top/];
+    $expected_walls->[1][2] = [qw/left/];
+    $expected_walls->[1][3] = [qw/bottom left/];
+    $expected_walls->[2][1] = [qw/top/];
+    $expected_walls->[2][2] = [];
+    $expected_walls->[2][3] = [qw/bottom/];
+    $expected_walls->[3][1] = [qw/right top/];
+    $expected_walls->[3][2] = [qw/right/];
+    $expected_walls->[3][3] = [qw/bottom right/];
+    
+    # WHEN
+    $self->{dungeon}->_create_walls_for_room($self->{positions}, $room->sectors);
+    
+    # THEN
+    my @sectors = $room->sectors;
+    foreach my $sector (@sectors) {
+        is_deeply([sort $sector->sides_with_walls], $expected_walls->[$sector->x][$sector->y], "Correct walls for sector: " . $sector->x . ', ' . $sector->y)
+            || diag explain [sort $sector->sides_with_walls];   
+    }    
+}
+
+sub test_create_corridor : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    $self->{counter} = 0;
+    $self->{rolls} = [12, 2, 2, 2, 2];
+
+    my $mock_dungeon = Test::MockObject->new();
+    $mock_dungeon->set_always( 'id', 1 );
+    
+    # WHEN
+    my @sectors = $self->{dungeon}->_create_corridor($mock_dungeon, 10, 10, [], $self->{positions});
+    
+    # THEN
+    is(scalar @sectors, 20, "Correct number of sectors created");
+
+    
+       
 }
 
 1;

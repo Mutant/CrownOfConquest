@@ -12,6 +12,8 @@ use List::Util qw(shuffle);
 use Carp;
 use Data::Dumper;
 
+use feature 'switch';
+
 sub run {
     my $self = shift;
 
@@ -161,8 +163,15 @@ sub _generate_dungeon_grid {
 
         $c->logger->debug("Creating room with start pos of $start_x, $start_y");
 
-        # Create the room
-        my @new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
+        # Create the room or corridor
+        my @new_sectors;
+        my $corridor_roll = Games::Dice::Advanced->roll('1d100');
+        if ($corridor_roll <= 15) {
+            @new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $sectors_created, $positions );            
+        }
+        else {
+            @new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
+        }
 
         croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
 
@@ -246,7 +255,7 @@ sub _create_room {
                         position_id     => $positions->{$wall}
                     }
                 );
-            }
+            }    
 
             push @sectors, $sector;
             $coords_created->[ $sector->x ][ $sector->y ] = 1;
@@ -270,6 +279,156 @@ sub _create_room {
     }
 
     return @contiguous_sectors;
+}
+
+sub _create_corridor {
+    my $self = shift;
+    my $dungeon         = shift;
+    my $start_x         = shift;
+    my $start_y         = shift;
+    my $sectors_created = shift;
+    my $positions       = shift;    
+    
+    my $c = $self->context;
+    
+    my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
+        
+    my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
+    
+    $c->logger->info("Creating corridor of size: $corridor_size");
+    
+    my $current_length = 0;
+    
+    my @directions = qw(left right top bottom);
+    
+    my ($next_x, $next_y) = ($start_x, $start_y);
+    
+    my @created_sectors;
+    my $coords_used;
+    
+    OUTER: while ($current_length < $corridor_size) {
+        my $current_direction = (shuffle(@directions))[0];
+        
+        #$c->logger->debug("Current direction: $current_direction");
+        
+        my $direction_length = Games::Dice::Advanced->roll('1d5') + 5;
+        my $length_left = $corridor_size - $current_length;
+        $direction_length = $length_left if $direction_length > $length_left;
+        
+        #$c->logger->debug("Direction length: $direction_length");
+        
+        for (1 .. $direction_length) {            
+            if (! $coords_used->[$next_x][$next_y]) {
+                my $sector = $c->schema->resultset('Dungeon_Grid')->create(
+                    {
+                        x               => $next_x,
+                        y               => $next_y,
+                        dungeon_room_id => $room->id,
+                    }
+                );
+                
+                push @created_sectors, $sector;
+                $coords_used->[$next_x][$next_y] = 1;
+            }
+            
+            #$c->logger->debug("Created sector at: $next_x, $next_y"); 
+            
+            ($current_direction, $next_x, $next_y) = $self->_find_next_corridor_direction($current_direction, $next_x, $next_y, $sectors_created, shuffle @directions);
+            
+            if (! $current_direction) {
+                $c->logger->info("Run out of room creating corridor");
+                last OUTER;   
+            }
+            
+            $current_length++;            
+
+        }   
+    }
+    
+    $self->_create_walls_for_room($positions, @created_sectors);
+    
+    $c->logger->info("Final corridor size: " . scalar @created_sectors);
+    
+    return @created_sectors;
+       
+}
+
+sub _create_walls_for_room {
+    my $self = shift;
+    my $positions = shift;     
+    my @sectors = @_; # We assume the sectors passed in are all from the room we're creating walls for
+    
+    my $c = $self->context;
+    
+    my $coords;
+    foreach my $sector (@sectors) {
+        $coords->[$sector->x][$sector->y] = 1;   
+    }
+    
+    foreach my $sector (@sectors) {
+        my @walls_to_create;
+        
+        # Create walls next to any sector that doesn't have an adjacent sector in this room
+        unless ($coords->[$sector->x-1][$sector->y]) {
+            push @walls_to_create, 'left';   
+        }
+        unless ($coords->[$sector->x+1][$sector->y]) {
+            push @walls_to_create, 'right';   
+        }
+        unless ($coords->[$sector->x][$sector->y-1]) {
+            push @walls_to_create, 'top';   
+        }            
+        unless ($coords->[$sector->x][$sector->y+1]) {
+            push @walls_to_create, 'bottom';   
+        }
+        
+        foreach my $wall (@walls_to_create) {
+            $c->schema->resultset('Dungeon_Wall')->create(
+                {
+                    dungeon_grid_id => $sector->id,
+                    position_id     => $positions->{$wall}
+                }
+            );
+        }      
+    }
+}
+
+sub _find_next_corridor_direction {
+    my $self = shift;
+    my $current_direction = shift;
+    my $next_x = shift;
+    my $next_y = shift;    
+    my $sectors_created = shift;
+    my @directions = @_;
+    
+    #$self->context->logger->debug("Finding next corridor direction, current: $current_direction, x: $next_x, y: $next_x, directions: " . join(',',@directions));
+    
+    foreach my $next_direction ($current_direction, @directions) { 
+        my ($test_x, $test_y) = ($next_x, $next_y);
+                    
+        given ($next_direction) {
+            when ('left') {
+                $test_x--;
+            }
+            when ('right') {
+                $test_x++;
+            }
+            when ('top') {
+                $test_y++;
+            }
+            when ('bottom') {
+                $test_y++;
+            }
+        }
+
+        #$self->context->logger->debug("Trying direction: $next_direction, x: $test_x, y: $test_y");
+    
+        unless ($test_x <= 0 || $test_y <= 0 || $sectors_created->[$test_x][$test_y]) {
+            return ($next_direction, $test_x, $test_y);
+        }
+    }
+    
+    return;
 }
 
 sub _has_available_path {

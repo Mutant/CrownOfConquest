@@ -21,8 +21,25 @@ sub view : Local {
             join     => 'dungeon_room',
         }
     );
+    
+    my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
+    
+    my $grid;
+    my $max_x;
+    my $max_y;
+    my $min_x;
+    my $min_y;
 
-    my $map = $c->forward( '/dungeon/render_dungeon_grid', [ [], \@sectors ] );
+    foreach my $sector (@sectors) {
+
+        #$c->log->debug( "Rendering: " . $sector->{x} . ", " . $sector->{y} );
+        $grid->[ $sector->x ][ $sector->y ] = $sector;
+
+        $max_x = $sector->x if $max_x < $sector->x;
+        $max_y = $sector->y if $max_y < $sector->y;
+        $min_x = $sector->x if $min_x > $sector->x;
+        $min_y = $sector->y if $min_y > $sector->y;
+    }
 
     return $c->forward(
         'RPG::V::TT',
@@ -30,7 +47,12 @@ sub view : Local {
             {
                 template => 'admin/dungeon/view.html',
                 params   => {
-                    map => $map,
+                    grid               => $grid,
+                    max_x              => $max_x,
+                    max_y              => $max_y,
+                    min_x              => $min_x,
+                    min_y              => $min_y,
+                    positions          => \@positions,
                 },
             }
         ]

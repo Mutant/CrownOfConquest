@@ -142,7 +142,7 @@ sub render_dungeon_grid : Private {
                     allowed_to_move_to => $allowed_to_move_to,
                     cgs                => $cgs,
                     parties            => $parties,
-                    in_combat          => $c->stash->{party}->in_combat_with,
+                    in_combat          => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
                 },
                 return_output => 1,
             }

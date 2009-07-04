@@ -11,9 +11,15 @@
 [% IF doors.0 %]
 	Open Doors: 
 	[% FOREACH door IN doors %]
-		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% position_map.${door.position.position} %]</a>&nbsp;
+		[% IF door.can_be_passed %]		
+			[% link = "javascript:getPanels('/dungeon/open_door?door_id=" _  door.id  _ "')" %]
+		[% ELSE %]
+			[% link = "javascript:unblockDoorDiag('" _ position_map.${door.position.position} _ "', '" _ door.id _ "')" %]
+		[% END %]
+			
+		<a href="[% link %]">[% position_map.${door.position.position} %]</a>&nbsp;		
 	[% END %]
-	<br>
+	<br><br>
 [% END %]
 
 [% IF current_location.stairs_up %]

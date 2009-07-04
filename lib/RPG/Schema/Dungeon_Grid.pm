@@ -59,20 +59,27 @@ sub has_wall {
 
 sub sides_with_doors {
     my $self = shift;
+    my $passable_only = shift // 0;
 
-    return @{ $self->{sides_with_doors} } if defined $self->{sides_with_doors};
+    return @{ $self->{sides_with_doors} } if defined $self->{sides_with_doors} && ! $passable_only;
+    return @{ $self->{sides_with_passable_doors} } if defined $self->{sides_with_passable_doors} && $passable_only;
 
     my @doors = $self->doors;
 
     my @sides_with_doors;
+    my @sides_with_passable_doors;
 
     foreach my $door (@doors) {
+        if ($door->can_be_passed) {
+            push @sides_with_passable_doors, $door->position->position;
+        }
         push @sides_with_doors, $door->position->position;
     }
 
     $self->{sides_with_doors} = \@sides_with_doors;
+    $self->{sides_with_passable_doors} = \@sides_with_passable_doors;
 
-    return @sides_with_doors;
+    return $passable_only ? @sides_with_passable_doors : @sides_with_doors;
 }
 
 sub has_door {
@@ -80,6 +87,13 @@ sub has_door {
     my $door_side = shift;
 
     return grep { $door_side eq $_ } $self->sides_with_doors;
+}
+
+sub has_passable_door {
+    my $self      = shift;
+    my $door_side = shift;
+    
+    return grep { $door_side eq $_ } $self->sides_with_doors(1);   
 }
 
 sub allowed_to_move_to_sectors {
@@ -241,7 +255,7 @@ sub _can_move_to {
 
     # Sector to the right
     if ( $self->x < $sector->x && $self->y == $sector->y ) {
-        if ( $sector->has_wall('left') && !$sector->has_door('left') ) {
+        if ( $sector->has_wall('left') && !$sector->has_passable_door('left') ) {
             return 0;
         }
         else {
@@ -249,9 +263,9 @@ sub _can_move_to {
         }
     }
 
-    # Sector to the left
+    # Sector to the left    
     if ( $self->x > $sector->x && $self->y == $sector->y ) {
-        if ( $sector->has_wall('right') && !$sector->has_door('right') ) {
+        if ( $sector->has_wall('right') && !$sector->has_passable_door('right') ) {
             return 0;
         }
         else {
@@ -261,7 +275,7 @@ sub _can_move_to {
 
     # Sector above
     if ( $self->y > $sector->y && $self->x == $sector->x ) {
-        if ( $sector->has_wall('bottom') && !$sector->has_door('bottom') ) {
+        if ( $sector->has_wall('bottom') && !$sector->has_passable_door('bottom') ) {
             return 0;
         }
         else {
@@ -271,7 +285,7 @@ sub _can_move_to {
 
     # Sector below
     if ( $self->y < $sector->y && $self->x == $sector->x ) {
-        if ( $sector->has_wall('top') && !$sector->has_door('top') ) {
+        if ( $sector->has_wall('top') && !$sector->has_passable_door('top') ) {
             return 0;
         }
         else {
@@ -315,19 +329,19 @@ sub _can_move_to {
     #warn "Dest corner: $dest_wall_1, $dest_wall_2\n";
     #warn "Src corner: $src_wall_1, $src_wall_2\n";
 
-    my $dest_pos1_blocked = $sector->has_wall($dest_wall_1) && ( $self->has_wall($src_wall_2) || !$sector->has_door($dest_wall_1) );
+    my $dest_pos1_blocked = $sector->has_wall($dest_wall_1) && ( $self->has_wall($src_wall_2) || !$sector->has_passable_door($dest_wall_1) );
     my $dest_pos2_blocked = $sector->has_wall($dest_wall_2) && ( $self->has_wall($src_wall_1) || !$sector->has_door($dest_wall_2) );
     
     return 0 if $dest_pos1_blocked && $dest_pos2_blocked;
 
-    my $src_pos1_blocked = $self->has_wall($src_wall_1) && ( $sector->has_wall($dest_wall_2) || !$self->has_door($src_wall_1) );
-    my $src_pos2_blocked = $self->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$self->has_door($src_wall_2) );
+    my $src_pos1_blocked = $self->has_wall($src_wall_1) && ( $sector->has_wall($dest_wall_2) || !$self->has_passable_door($src_wall_1) );
+    my $src_pos2_blocked = $self->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$self->has_passable_door($src_wall_2) );
     
     return 0 if $src_pos1_blocked && $src_pos2_blocked;
     
     # Now check if there's a horizontal or vertical blockage
-    return 0 if ($self->has_wall($src_wall_1) && ! $self->has_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_door($dest_wall_1));
-    return 0 if ($self->has_wall($src_wall_2) && ! $self->has_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_door($dest_wall_2)); 
+    return 0 if ($self->has_wall($src_wall_1) && ! $self->has_passable_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_passable_door($dest_wall_1));
+    return 0 if ($self->has_wall($src_wall_2) && ! $self->has_passable_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_passable_door($dest_wall_2)); 
     
     #warn "No blockages found\n";
     

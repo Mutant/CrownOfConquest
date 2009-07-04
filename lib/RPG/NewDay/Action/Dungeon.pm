@@ -20,7 +20,7 @@ sub run {
     $self->check_for_dungeon_deletion();
 
     my $c = $self->context;
-    
+
     my $dungeons_rs = $c->schema->resultset('Dungeon')->search();
 
     my $land_rs = $c->schema->resultset('Land')->search(
@@ -52,11 +52,9 @@ sub run {
 
     for ( 1 .. $dungeons_to_create ) {
         my $sector_to_use;
-        eval {
-            $sector_to_use = $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created );
-        };
+        eval { $sector_to_use = $self->_find_sector_to_create( \@land, $land_by_sector, $dungeons_created ); };
         if ($@) {
-            if ($@ =~ /Couldn't find sector to return/) {
+            if ( $@ =~ /Couldn't find sector to return/ ) {
                 $c->logger->warning("Couldn't find a sector to create more dungeons - not enough space");
                 last;
             }
@@ -124,6 +122,8 @@ sub _generate_dungeon_grid {
 
     my $sectors_created;
 
+    my @alternative_door_types = qw/stuck locked sealed secret/;
+
     $c->logger->debug("Creating $number_of_rooms rooms in dungeon");
 
     for my $current_room_number ( 1 .. $number_of_rooms ) {
@@ -132,6 +132,7 @@ sub _generate_dungeon_grid {
         my ( $start_x, $start_y );
 
         my $wall_to_join;
+        my $door_type = 'standard';
 
         if ( $current_room_number == 1 ) {
 
@@ -153,10 +154,15 @@ sub _generate_dungeon_grid {
             ( $start_x, $start_y ) = $wall_to_join->opposite_sector;
 
             # Create existing side of the door
+            if ( Games::Dice::Advanced->roll('1d100') <= 15 ) {
+                $door_type = ( shuffle(@alternative_door_types) )[0];
+            }
+
             my $door = $c->schema->resultset('Door')->create(
                 {
                     position_id     => $wall_to_join->position_id,
                     dungeon_grid_id => $wall_to_join->dungeon_grid_id,
+                    type            => $door_type,
                 }
             );
         }
@@ -166,8 +172,8 @@ sub _generate_dungeon_grid {
         # Create the room or corridor
         my @new_sectors;
         my $corridor_roll = Games::Dice::Advanced->roll('1d100');
-        if ($corridor_roll <= 15) {
-            @new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $sectors_created, $positions );            
+        if ( $corridor_roll <= 15 ) {
+            @new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $sectors_created, $positions );
         }
         else {
             @new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
@@ -194,6 +200,7 @@ sub _generate_dungeon_grid {
                 {
                     position_id     => $positions->{ $wall_to_join->opposite_position },
                     dungeon_grid_id => $sectors_created->[$start_x][$start_y]->id,
+                    door_type       => $door_type,
                 }
             );
         }
@@ -234,6 +241,7 @@ sub _create_room {
                 }
             );
 
+            # TODO: replace this with _create_walls_for_room()
             my @walls_to_create;
             if ( $x == $top_x || ( $sectors_created->[ $x - 1 ][$y] && $sectors_created->[ $x - 1 ][$y]->has_wall('right') ) ) {
                 push @walls_to_create, 'left';
@@ -255,7 +263,7 @@ sub _create_room {
                         position_id     => $positions->{$wall}
                     }
                 );
-            }    
+            }
 
             push @sectors, $sector;
             $coords_created->[ $sector->x ][ $sector->y ] = 1;
@@ -282,43 +290,43 @@ sub _create_room {
 }
 
 sub _create_corridor {
-    my $self = shift;
+    my $self            = shift;
     my $dungeon         = shift;
     my $start_x         = shift;
     my $start_y         = shift;
     my $sectors_created = shift;
-    my $positions       = shift;    
-    
+    my $positions       = shift;
+
     my $c = $self->context;
-    
+
     my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
-        
+
     my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
-    
+
     $c->logger->info("Creating corridor of size: $corridor_size");
-    
+
     my $current_length = 0;
-    
+
     my @directions = qw(left right top bottom);
-    
-    my ($next_x, $next_y) = ($start_x, $start_y);
-    
+
+    my ( $next_x, $next_y ) = ( $start_x, $start_y );
+
     my @created_sectors;
     my $coords_used;
-    
-    OUTER: while ($current_length < $corridor_size) {
-        my $current_direction = (shuffle(@directions))[0];
-        
+
+    OUTER: while ( $current_length < $corridor_size ) {
+        my $current_direction = ( shuffle(@directions) )[0];
+
         #$c->logger->debug("Current direction: $current_direction");
-        
+
         my $direction_length = Games::Dice::Advanced->roll('1d5') + 5;
-        my $length_left = $corridor_size - $current_length;
+        my $length_left      = $corridor_size - $current_length;
         $direction_length = $length_left if $direction_length > $length_left;
-        
+
         #$c->logger->debug("Direction length: $direction_length");
-        
-        for (1 .. $direction_length) {            
-            if (! $coords_used->[$next_x][$next_y]) {
+
+        for ( 1 .. $direction_length ) {
+            if ( !$coords_used->[$next_x][$next_y] ) {
                 my $sector = $c->schema->resultset('Dungeon_Grid')->create(
                     {
                         x               => $next_x,
@@ -326,62 +334,63 @@ sub _create_corridor {
                         dungeon_room_id => $room->id,
                     }
                 );
-                
+
                 push @created_sectors, $sector;
                 $coords_used->[$next_x][$next_y] = 1;
             }
-            
-            #$c->logger->debug("Created sector at: $next_x, $next_y"); 
-            
-            ($current_direction, $next_x, $next_y) = $self->_find_next_corridor_direction($current_direction, $next_x, $next_y, $sectors_created, shuffle @directions);
-            
-            if (! $current_direction) {
-                $c->logger->info("Run out of room creating corridor");
-                last OUTER;   
-            }
-            
-            $current_length++;            
 
-        }   
+            #$c->logger->debug("Created sector at: $next_x, $next_y");
+
+            ( $current_direction, $next_x, $next_y ) =
+                $self->_find_next_corridor_direction( $current_direction, $next_x, $next_y, $sectors_created, shuffle @directions );
+
+            if ( !$current_direction ) {
+                $c->logger->info("Run out of room creating corridor");
+                last OUTER;
+            }
+
+            $current_length++;
+
+        }
     }
-    
-    $self->_create_walls_for_room($positions, @created_sectors);
-    
-    $c->logger->info("Final corridor size: " . scalar @created_sectors);
-    
+
+    $self->_create_walls_for_room( $positions, @created_sectors );
+
+    $c->logger->info( "Final corridor size: " . scalar @created_sectors );
+
     return @created_sectors;
-       
+
 }
 
 sub _create_walls_for_room {
-    my $self = shift;
-    my $positions = shift;     
-    my @sectors = @_; # We assume the sectors passed in are all from the room we're creating walls for
-    
+    my $self      = shift;
+    my $positions = shift;
+    my @sectors   = @_;      # We assume the sectors passed in are all from the room we're creating walls for
+
     my $c = $self->context;
-    
+
     my $coords;
     foreach my $sector (@sectors) {
-        $coords->[$sector->x][$sector->y] = 1;   
+        $coords->[ $sector->x ][ $sector->y ] = 1;
     }
-    
+
     foreach my $sector (@sectors) {
         my @walls_to_create;
-        
+
         # Create walls next to any sector that doesn't have an adjacent sector in this room
-        unless ($coords->[$sector->x-1][$sector->y]) {
-            push @walls_to_create, 'left';   
+        unless ( $coords->[ $sector->x - 1 ][ $sector->y ] ) {
+            push @walls_to_create, 'left';
         }
-        unless ($coords->[$sector->x+1][$sector->y]) {
-            push @walls_to_create, 'right';   
+        unless ( $coords->[ $sector->x + 1 ][ $sector->y ] ) {
+            push @walls_to_create, 'right';
         }
-        unless ($coords->[$sector->x][$sector->y-1]) {
-            push @walls_to_create, 'top';   
-        }            
-        unless ($coords->[$sector->x][$sector->y+1]) {
-            push @walls_to_create, 'bottom';   
+        unless ( $coords->[ $sector->x ][ $sector->y - 1 ] ) {
+            push @walls_to_create, 'top';
         }
-        
+        unless ( $coords->[ $sector->x ][ $sector->y + 1 ] ) {
+            push @walls_to_create, 'bottom';
+        }
+
         foreach my $wall (@walls_to_create) {
             $c->schema->resultset('Dungeon_Wall')->create(
                 {
@@ -389,23 +398,23 @@ sub _create_walls_for_room {
                     position_id     => $positions->{$wall}
                 }
             );
-        }      
+        }
     }
 }
 
 sub _find_next_corridor_direction {
-    my $self = shift;
+    my $self              = shift;
     my $current_direction = shift;
-    my $next_x = shift;
-    my $next_y = shift;    
-    my $sectors_created = shift;
-    my @directions = @_;
-    
-    #$self->context->logger->debug("Finding next corridor direction, current: $current_direction, x: $next_x, y: $next_x, directions: " . join(',',@directions));
-    
-    foreach my $next_direction ($current_direction, @directions) { 
-        my ($test_x, $test_y) = ($next_x, $next_y);
-                    
+    my $next_x            = shift;
+    my $next_y            = shift;
+    my $sectors_created   = shift;
+    my @directions        = @_;
+
+#$self->context->logger->debug("Finding next corridor direction, current: $current_direction, x: $next_x, y: $next_x, directions: " . join(',',@directions));
+
+    foreach my $next_direction ( $current_direction, @directions ) {
+        my ( $test_x, $test_y ) = ( $next_x, $next_y );
+
         given ($next_direction) {
             when ('left') {
                 $test_x--;
@@ -422,12 +431,12 @@ sub _find_next_corridor_direction {
         }
 
         #$self->context->logger->debug("Trying direction: $next_direction, x: $test_x, y: $test_y");
-    
-        unless ($test_x <= 0 || $test_y <= 0 || $sectors_created->[$test_x][$test_y]) {
-            return ($next_direction, $test_x, $test_y);
+
+        unless ( $test_x <= 0 || $test_y <= 0 || $sectors_created->[$test_x][$test_y] ) {
+            return ( $next_direction, $test_x, $test_y );
         }
     }
-    
+
     return;
 }
 
@@ -537,7 +546,8 @@ sub _find_wall_to_join {
                     #$c->logger->debug("No sector exists opposite wall");
 
                     # Check there's no existing door
-                    unless ($sector->has_door($wall->position->position)) {
+                    unless ( $sector->has_door( $wall->position->position ) ) {
+
                         #$c->logger->debug("No door exists opposite wall");
 
                         $wall_to_join = $wall;
@@ -558,50 +568,40 @@ sub _find_wall_to_join {
 
 sub check_for_dungeon_deletion {
     my $self = shift;
-    
+
     my $c = $self->context;
-    
-    my @dungeons = $c->schema->resultset('Dungeon')->search(
-        {},
-        {
-            prefetch => 'location',
-        },
-    );
-    
+
+    my @dungeons = $c->schema->resultset('Dungeon')->search( {}, { prefetch => 'location', }, );
+
     foreach my $dungeon (@dungeons) {
-        if (Games::Dice::Advanced->roll('1d200') <= 1) {
+        if ( Games::Dice::Advanced->roll('1d200') <= 1 ) {
+
             # Make sure no parties are in the dungeon
-            my $party_rs = $c->schema->resultset('Party')->search(
-                {
-                    'dungeon.dungeon_id' => $dungeon->id,
-                },
-                {
-                    join => {'dungeon_location' => {'dungeon_room' => 'dungeon'}},
-                },
-            );
-            
-            if ($party_rs->count > 0) {
-                $c->logger->info('Note deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside");  
+            my $party_rs =
+                $c->schema->resultset('Party')
+                ->search( { 'dungeon.dungeon_id' => $dungeon->id, }, { join => { 'dungeon_location' => { 'dungeon_room' => 'dungeon' } }, }, );
+
+            if ( $party_rs->count > 0 ) {
+                $c->logger->info(
+                    'Note deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside" );
                 next;
-            }            
-            
-            $c->logger->info('Deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y);
-            
+            }
+
+            $c->logger->info( 'Deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y );
+
             # Record "phantom" dungeons
             my $rs = $c->schema->resultset('Mapped_Sectors')->search(
                 {
                     'location.x' => $dungeon->location->x,
                     'location.y' => $dungeon->location->y,
                 },
-                {
-                    join => 'location', 
-                }, 
-            )->update({ phantom_dungeon => $dungeon->level }, { join => 'location', } );
-            
+                { join => 'location', },
+            )->update( { phantom_dungeon => $dungeon->level }, { join => 'location', } );
+
             # Delete the dungeon
             $dungeon->delete;
         }
-    }       
+    }
 }
 
 1;

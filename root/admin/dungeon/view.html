@@ -25,10 +25,11 @@
 					[% FOREACH side_with_wall IN sector.sides_with_walls %]
 						[% IF side_with_wall == side %]
 							[% border_color = "black" %]
+							[% border = border _ "border-" _ side _ ": 5px solid " _  border_color _ "; " %]
 						[% END %]
 					[% END %]				
 				
-					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
+					
 				[% END %] 
 				
 				[%

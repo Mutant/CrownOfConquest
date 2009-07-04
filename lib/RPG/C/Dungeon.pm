@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use Carp;
 use List::Util qw(shuffle);
+use Statistics::Basic qw(average);
 
 use RPG::Map;
 
@@ -79,7 +80,7 @@ sub view : Local {
 
         #$c->log->debug("Adding: " . $sector->x . ", " . $sector->y . " to viewable sectors");
 
-        $viewable_sectors->[$sector->x][$sector->y] = 1;
+        $viewable_sectors->[ $sector->x ][ $sector->y ] = 1;
 
         # Save newly mapped sectors
         unless ( $mapped_sectors_by_coord->[ $sector->x ][ $sector->y ] ) {
@@ -229,6 +230,10 @@ sub open_door : Local {
 
     my $door = $c->model('DBIC::Door')->find( $c->req->param('door_id') );
 
+    if ( !$door->can_be_passed ) {
+        croak "Cannot open door";
+    }
+
     my ( $opposite_x, $opposite_y ) = $door->opposite_sector;
 
     $c->log->debug("Opening door, and moving to sector: $opposite_x, $opposite_y");
@@ -277,6 +282,83 @@ sub sector_menu : Local {
             }
         ]
     );
+}
+
+sub unblock_door : Local {
+    my ( $self, $c ) = @_;
+
+    if ($c->stash->{party}->turns <= 0) {
+        $c->stash->{error} = "You don't have enough turns to attempt that";
+        $c->detach('/panel/refresh');
+    }
+
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
+
+    my $door = $c->model('DBIC::Door')->find( { door_id => $c->req->param('door_id') } );
+
+    croak "Door not in this sector" unless $current_location->id == $door->dungeon_grid_id;
+
+    my %action_for_door = (
+        charge => 'stuck',
+        pick => 'locked',
+        break => 'sealed',
+    );
+    
+    my $success = 0;
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
+    
+    # Only attempt to unblock door if action matches door's type
+    if ($action_for_door{$c->req->param('action')} eq $door->type) {    
+    
+        my %stats = (
+            charge => [ 'strength',     'constitution' ],
+            pick   => [ 'agility',      'intelligence' ],
+            break  => [ 'intelligence', 'divinity' ],
+        );
+    
+        my $stats = $stats{ $c->req->param('action') };
+        my $stat_avg = average $character->get_column( $stats->[0] ), $character->get_column( $stats->[1] );
+    
+        my $roll_base              = 15;
+        my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 5;
+        my $roll                   = Games::Dice::Advanced->roll( '1d' . $roll_base + $dungeon_level_addition );
+    
+        if ( $roll < $stat_avg ) {
+            $success = 1;
+            $door->state('open');
+            $door->update;
+            
+            my $opposite_door = $door->opposite_door;
+            $opposite_door->state('open');
+            $opposite_door->update;
+            
+            $c->stash->{refresh_panels} = ['map'];
+        }
+    }
+
+    my $message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'dungeon/unblock_door_message.html',
+                params   => {
+                    door      => $door,
+                    success   => $success,
+                    character => $character,
+                    action    => $c->req->param('action'),
+                },
+                return_output => 1,
+            }
+        ]
+    );
+    
+    $c->stash->{messages} = $message;
+    
+    $c->stash->{party}->turns($c->stash->{party}->turns-1);
+    $c->stash->{party}->update;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
 sub take_stairs : Local {

@@ -36,7 +36,7 @@ sub dungeon_setup : Tests(setup) {
     undef $RPG::Schema::Dungeon_Grid::can_move_to;
 }
 
-sub test_can_move_to : Test(13) {
+sub test_can_move_to : Test(14) {
     my $self = shift;
 
     # GIVEN
@@ -222,7 +222,26 @@ sub test_can_move_to : Test(13) {
             },
             expected_result => 1,
         },
+        
+        'stuck_door_blocks_path' => {
+            first_sector => {
+                x     => 1,
+                y     => 1,
+                walls => ['bottom'],                
+            },
+            second_sector => {
+                x     => 1,
+                y     => 2,
+                walls => ['top'],
+                doors => [{
+                    position => 'top',
+                    type => 'stuck',
+                    state => 'closed',
+                }],
 
+            },
+            expected_result => 0,
+        },
     );
 
     # WHEN
@@ -532,6 +551,90 @@ sub test_allowed_to_move_to_sectors_3 : Tests(25) {
     # THEN
     for my $x ( 1 .. 5 ) {
         for my $y ( 1 .. 5 ) {
+            is( $allowed_to_move_to->[$x][$y], $expected_allowed_to_move_to->[$x][$y] || 0, "Allowed to move for $x, $y as expected" );
+        }
+    }
+}
+
+sub test_allowed_to_move_to_sectors_4 : Tests(9) {
+    my $self = shift;
+
+    # GIVEN
+    my @sectors;
+    for my $x ( 1 .. 3 ) {
+        for my $y ( 1 .. 3 ) {
+            my @walls;
+            my @doors;
+
+            if ( $x == 1 && $y == 1 ) {
+                @walls = ( 'bottom' );
+            }
+            if ( $x == 2 && $y == 1 ) {
+                @walls = ( 'bottom', 'right' );
+                @doors = ( 'right' );
+            }
+            
+            if ( $x == 3 && $y == 1 ) {
+                @walls = ('left');
+                @doors = ( 'left' );
+            }
+
+            if ( $x == 1 && $y == 2 ) {
+                @walls = ('top', 'bottom');
+            }
+            
+            if ( $x == 2 && $y == 2 ) {
+                @walls = ('top', 'bottom');
+                @doors = ('bottom');
+            }
+            
+            if ( $x == 3 && $y == 2 ) {
+                @walls = ('bottom');
+            }
+
+            if ( $x == 1 && $y == 3 ) {
+                @walls = ('top', 'right');
+            }
+            if ( $x == 2 && $y == 3) {
+                @walls = ( 'top', 'left' );
+                @doors = ('top');
+            }
+            if ( $x == 3 && $y == 3 ) {
+                @walls = ('top');
+            }
+
+            my $sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid(
+                $self->{schema},
+                x     => $x,
+                y     => $y,
+                walls => \@walls,
+                doors => \@doors,
+            );
+
+            push @sectors, $sector;
+        }
+    }
+
+    my $start_sector = $sectors[4]; # 2,2   
+
+    my $expected_allowed_to_move_to;
+    for my $x ( 1 .. 3 ) {
+        for my $y ( 1 .. 3 ) {
+            $expected_allowed_to_move_to->[$x][$y] = 0;
+        }
+    }
+    $expected_allowed_to_move_to->[1][2] = 1;
+    $expected_allowed_to_move_to->[3][1] = 1;
+    $expected_allowed_to_move_to->[3][2] = 1;
+    $expected_allowed_to_move_to->[2][3] = 1;
+    $expected_allowed_to_move_to->[3][3] = 1;
+
+    # WHEN
+    my $allowed_to_move_to = $start_sector->allowed_to_move_to_sectors( \@sectors, 1 );
+
+    # THEN
+    for my $x ( 1 .. 3 ) {
+        for my $y ( 1 .. 3 ) {
             is( $allowed_to_move_to->[$x][$y], $expected_allowed_to_move_to->[$x][$y] || 0, "Allowed to move for $x, $y as expected" );
         }
     }

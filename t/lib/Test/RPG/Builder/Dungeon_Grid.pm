@@ -31,10 +31,23 @@ sub build_dungeon_grid {
 
     if ( ref $params{doors} eq 'ARRAY' ) {
         foreach my $door ( @{ $params{doors} } ) {
+            my %door_params;
+            
+            if (ref $door eq 'HASH') {
+                %door_params = (
+                    type => $door->{type},
+                    state => $door->{state},
+                    position_id => $positions{$door->{position}},
+                );   
+            }
+            else {
+                $door_params{position_id} = $positions{$door};
+            }            
+            
             $schema->resultset('Door')->create(
                 {
                     dungeon_grid_id => $sector->id,
-                    position_id     => $positions{$door},
+                    %door_params,
                 }
             );
         }

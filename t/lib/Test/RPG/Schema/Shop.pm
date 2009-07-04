@@ -9,40 +9,26 @@ __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 
+use Test::RPG::Builder::Shop;
+use Test::RPG::Builder::Item;
+
 use RPG::Schema::Shop;
 
-sub test_schema_setup : Tests(7) {
-	my $self = shift;
-	
-	return "Skipped for now to removed DB stuff.. need proper test DB setup";
-	
-	my $shop;
-	ok($shop = $self->{schema}->resultset('Shop')->find(1), "finds a shop");
-	
-	is($shop->id, 1);
-	
-	my @items;
-	ok(@items = $shop->items_in_shop, "gets list of items in the shop");
-	
-	ok($shop = $self->{schema}->resultset('Shop')->search(
-	    {
-	        shop_id => 1,
-	    },
-	), "Search for a shop");
-	
-	is($shop->first->id, 1);
-	
-	my $item;
-	ok($item = $self->{schema}->resultset('Item_Type')->search(
-	    {
-	        'shop.shop_id' => 1,
-	    },
-	    {
-	        join => {'shops_with_item' => 'shop'},
-	    }
-	), "Search for item_type with shop criteria");
-	
-	is($item->first->id, 1);
+sub test_grouped_items_in_shop : Tests {
+    my $self = shift;
+    
+    # GIVEN
+    my $shop = Test::RPG::Builder::Shop->build_shop($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema});
+    $item->shop_id($shop->id);
+    $item->update;
+    
+    # WHEN
+    my @grouped_items = $shop->grouped_items_in_shop;
+    
+    # THEN
+    is(scalar @grouped_items, 1, "One item returned");
+       
 }
 
 1;

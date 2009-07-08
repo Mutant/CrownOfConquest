@@ -278,7 +278,7 @@ sub check_has_path_simple : Tests(1) {
     }
 
     # WHEN
-    my $result = $sector_grid->[1][1]->_check_has_path( $sector_grid->[3][3], $sector_grid, 2 );
+    my $result = $sector_grid->[1][1]->check_has_path( $sector_grid->[3][3], $sector_grid, 2 );
 
     is( $result, 1, "Path found, as nothing blocking sectors" );
 }
@@ -307,7 +307,7 @@ sub check_has_path_path_blocked : Tests(1) {
     }
 
     # WHEN
-    my $result = $sector_grid->[1][1]->_check_has_path( $sector_grid->[3][3], $sector_grid, 2 );
+    my $result = $sector_grid->[1][1]->check_has_path( $sector_grid->[3][3], $sector_grid, 2 );
 
     # THEN
     is( $result, 0, "Path not found, as wall blocks destination" );
@@ -346,9 +346,9 @@ sub check_has_path_walls_force_longer_path : Tests(3) {
     }
 
     # WHEN
-    my $move_up_result             = $sector_grid->[2][2]->_check_has_path( $sector_grid->[2][1], $sector_grid, 1 );
-    my $move_top_right_result      = $sector_grid->[2][2]->_check_has_path( $sector_grid->[3][1], $sector_grid, 1 );
-    my $move_up_result_longer_path = $sector_grid->[2][2]->_check_has_path( $sector_grid->[2][1], $sector_grid, 2 );
+    my $move_up_result             = $sector_grid->[2][2]->check_has_path( $sector_grid->[2][1], $sector_grid, 1 );
+    my $move_top_right_result      = $sector_grid->[2][2]->check_has_path( $sector_grid->[3][1], $sector_grid, 1 );
+    my $move_up_result_longer_path = $sector_grid->[2][2]->check_has_path( $sector_grid->[2][1], $sector_grid, 2 );
 
     # THEN
     is( $move_up_result,             0, "Couldn't move up, as path too long (via door)" );

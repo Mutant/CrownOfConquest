@@ -10,6 +10,7 @@ use List::Util qw(shuffle);
 use Statistics::Basic qw(average);
 
 use RPG::Map;
+use RPG::NewDay::Action::Dungeon;
 
 sub view : Local {
     my ( $self, $c ) = @_;
@@ -74,13 +75,14 @@ sub view : Local {
     my $parties;
 
     # Find viewable sectors, add newly discovered sectors to party's map, and get list of other parties nearby
-    my $viewable_sectors;
+    my @viewable_sectors;
     foreach my $sector (@sectors) {
         next unless $sector->dungeon_room_id == $current_location->dungeon_room_id;
 
         #$c->log->debug("Adding: " . $sector->x . ", " . $sector->y . " to viewable sectors");
 
-        $viewable_sectors->[ $sector->x ][ $sector->y ] = 1;
+        #$viewable_sectors->[ $sector->x ][ $sector->y ] = 1;
+        push @viewable_sectors, $sector;
 
         # Save newly mapped sectors
         unless ( $mapped_sectors_by_coord->[ $sector->x ][ $sector->y ] ) {
@@ -99,12 +101,28 @@ sub view : Local {
             $parties->[ $sector->x ][ $sector->y ] = $sector->party;
         }
     }
+    
+    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks in the viewable area,
+    #  avoids the problem of twisting corridors having two lighted sections)
+    # TODO: prevent light going round corners (?)
+    my $viewable_sectors_by_coord;
+    foreach my $viewable_sector (@viewable_sectors) {
+        $viewable_sectors_by_coord->[ $viewable_sector->x ][ $viewable_sector->y ] = $viewable_sector;
+    }
+    
+    my $viewable_sector_grid;
+    
+    for my $viewable_sector (@viewable_sectors) {
+        if ($viewable_sector->check_has_path($current_location, $viewable_sectors_by_coord, 3)) {
+            $viewable_sector_grid->[$viewable_sector->x][$viewable_sector->y] = 1;
+        }
+    }
 
     #warn "viewable sectors: " . scalar @viewable_sectors;
 
     $c->stats->profile("Saved newly discovered sectors");
 
-    return $c->forward( 'render_dungeon_grid', [ $viewable_sectors, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
+    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
 }
 
 sub render_dungeon_grid : Private {

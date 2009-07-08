@@ -134,13 +134,13 @@ sub allowed_to_move_to_sectors {
     # Check any sectors within range
     foreach my $sector (@sectors_to_check) {
         #warn "----- Checking path from " . $self->x . ", " . $self->y . " to " . $sector->x . ", " . $sector->y . "\n";
-        $allowed_to_move_to->[$sector->x][$sector->y] = $self->_check_has_path($sector, $sector_grid, $max_moves);
+        $allowed_to_move_to->[$sector->x][$sector->y] = $self->check_has_path($sector, $sector_grid, $max_moves);
     }
     
     return $allowed_to_move_to;
 }
 
-sub _check_has_path {
+sub check_has_path {
     my $self          = shift;
     my $sector        = shift;
     my $sector_grid   = shift;
@@ -192,7 +192,7 @@ sub _check_has_path {
                 return 1;
             }
 
-            if ( $self->_check_has_path( $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried ) ) {
+            if ( $self->check_has_path( $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried ) ) {
                 #warn "... path found";
                 return 1;
             }

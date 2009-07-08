@@ -14,10 +14,14 @@ use Data::Dumper;
 
 use feature 'switch';
 
+my @alternative_door_types = qw/stuck locked sealed secret/;
+
 sub run {
     my $self = shift;
 
     $self->check_for_dungeon_deletion();
+
+    $self->reconfigure_doors();
 
     my $c = $self->context;
 
@@ -121,8 +125,6 @@ sub _generate_dungeon_grid {
     my $number_of_rooms = Games::Dice::Advanced->roll( $dungeon->level + 1 . 'd20' ) + 20;
 
     my $sectors_created;
-
-    my @alternative_door_types = qw/stuck locked sealed secret/;
 
     $c->logger->debug("Creating $number_of_rooms rooms in dungeon");
 
@@ -601,6 +603,41 @@ sub check_for_dungeon_deletion {
             # Delete the dungeon
             $dungeon->delete;
         }
+    }
+}
+
+sub reconfigure_doors {
+    my $self = shift;
+
+    my $c = $self->context;
+
+    my @doors = $c->schema->resultset('Door')->search( {} );
+
+    my $processed_doors;
+
+    foreach my $door (@doors) {
+        unless ( $processed_doors->[ $door->id ] ) {
+            my $opp_door = $door->opposite_door;
+
+            my $door_type;
+            if ( Games::Dice::Advanced->roll('1d100') <= 15 ) {
+                $door_type = ( shuffle(@alternative_door_types) )[0];
+            }
+            else {
+                $door_type = 'standard';
+            }
+            $door->type($door_type);
+            $door->update;
+
+            if ($opp_door) {
+                $opp_door->type($door_type);
+                $opp_door->update;
+            }
+
+            $processed_doors->[ $door->id ] = 1;
+            $processed_doors->[ $opp_door->id ] = 1 if $opp_door;
+        }
+
     }
 }
 

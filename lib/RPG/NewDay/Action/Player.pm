@@ -8,12 +8,6 @@ use DateTime;
 use MIME::Lite;
 use RPG::Template;
 
-sub cron_string {
-    my $self = shift;
-     
-    return "22 * * * *";   
-}
-
 sub run {
     my $self    = shift;
     my $context = $self->context;

@@ -162,6 +162,7 @@ sub render_dungeon_grid : Private {
                     cgs                => $cgs,
                     parties            => $parties,
                     in_combat          => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
+                    zoom_level         => $c->session->{zoom_level},
                 },
                 return_output => 1,
             }
@@ -383,14 +384,17 @@ sub take_stairs : Local {
     my ( $self, $c ) = @_;
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
-
+    
     croak "No stairs here" unless $current_location->stairs_up;
+
+    # Reset zoom level
+    $c->session->{zoom_level} = 2;
 
     $c->stash->{party}->dungeon_grid_id(undef);
     $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
     $c->stash->{party}->update;
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
 }
 
 1;

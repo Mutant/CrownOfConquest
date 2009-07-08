@@ -351,15 +351,24 @@ function unblockDoor(action) {
 
 <div dojoType="dijit.layout.BorderContainer"
 				design="sidebar"                
-                style="border: 1px solid #bfbfbf; width: 98%; height: 350px; margin:0px auto;"
+                style="border: 1px solid #bfbfbf; width: 98%; height: 380px; margin:0px auto;"
 				class="content-background">
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="left" style="width: 390px; height: 330px; 
-		background: #898E73;">
-		
 
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" region="left" style="width: 430px; height: 350px;">
+		
+			<div dojoType="dijit.layout.BorderContainer"
+				design="sidebar" gutter=false
+                style="width: 420px; margin:0px auto; padding: 0px">
+					<div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px;">					
+					</div>
+
+					<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="center" style="width: 400px; background: #898E73;">					
+				</div>
+			</div>
 	</div>
 
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" region="center" style="padding-left: 5px" class="content-background">
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" region="center" 
+		style="padding-left: 5px;" class="content-background">
 
 	</div>
 </div>

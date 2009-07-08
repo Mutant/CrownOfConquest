@@ -12,6 +12,7 @@ use List::MoreUtils qw(uniq);
 my %PANEL_PATHS = (
 	party => '/party/list',
 	party_status => '/party/status',
+	zoom => '/party/zoom',
 );
 
 sub refresh : Private {

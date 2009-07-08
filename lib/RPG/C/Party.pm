@@ -15,7 +15,7 @@ use List::Util qw(shuffle);
 sub main : Local {
     my ( $self, $c ) = @_;
 
-    my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status' ] );
+    my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom' ] );
 
     $c->forward(
         'RPG::V::TT',
@@ -60,12 +60,12 @@ sub sector_menu : Private {
     $c->forward('/party/party_messages_check');
 
     my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
-       
+
     my @adjacent_towns;
-    if ($c->stash->{party}->level >= $c->config->{minimum_raid_level}) {
+    if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
         @adjacent_towns = $c->stash->{party_location}->get_adjacent_towns;
     }
-    
+
     $c->forward(
         'RPG::V::TT',
         [
@@ -363,10 +363,10 @@ sub select_action : Local {
 
         my ( $spell_id, $target_id ) = $c->req->param('action_param');
         my $spell = $c->model('DBIC::Spell')->find($spell_id);
-        
+
         my $target;
-        
-        if ($spell->target eq 'character') {
+
+        if ( $spell->target eq 'character' ) {
             $target = $c->model('DBIC::Character')->find(
                 {
                     character_id => $target_id,
@@ -604,6 +604,9 @@ sub enter_dungeon : Local {
         croak "Party not allowed to enter this dungeon";
     }
 
+    # Reset zoom level
+    $c->session->{zoom_level} = 2;
+
     my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
         {
             'dungeon_room.dungeon_id' => $dungeon->id,
@@ -615,7 +618,7 @@ sub enter_dungeon : Local {
     $c->stash->{party}->dungeon_grid_id( $start_sector->id );
     $c->stash->{party}->update;
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
 }
 
 sub update_options : Local {
@@ -628,6 +631,33 @@ sub update_options : Local {
     }
 
     $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
+}
+
+sub zoom : Private {
+    my ( $self, $c ) = @_;
+    
+    $c->session->{zoom_level} ||= 2;
+
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'map/main_screen_zoom.html',
+                params   => {
+                    zoom_level => $c->session->{zoom_level}
+                },
+                return_output => 1,
+            }
+        ]
+    );
+}
+
+sub zoom_change : Local {
+    my ( $self, $c ) = @_;   
+    
+    $c->session->{zoom_level} = $c->req->param('zoom_level');
+    
+    $c->forward( '/panel/refresh', [ 'map', 'zoom', 'messages' ] );
 }
 
 1;

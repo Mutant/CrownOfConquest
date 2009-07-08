@@ -17,14 +17,18 @@ sub view : Private {
     my ( $self, $c ) = @_;
 
     my $party_location = $c->stash->{party_location};
-
+    
+    my $grid_size = $c->config->{map_x_size} + (($c->session->{zoom_level}-2) * 3) + 1;
+    $grid_size-- if $c->session->{zoom_level} % 2 == 0;    # Odd numbers cause us problems
+    
     my $grid_params =
-        $c->forward( 'generate_grid', [ $c->config->{map_x_size}, $c->config->{map_y_size}, $party_location->x, $party_location->y, 1, ], );
+        $c->forward( 'generate_grid', [ $grid_size, $grid_size, $party_location->x, $party_location->y, 1, ], );
 
     $grid_params->{click_to_move} = 1;
     $grid_params->{x_size}        = $c->config->{map_x_size};
     $grid_params->{y_size}        = $c->config->{map_y_size};
     $grid_params->{grid_size}     = $c->config->{map_x_size};
+    $grid_params->{zoom_level}    = $c->session->{zoom_level} || 2;
 
     $c->forward( 'render_grid', [ $grid_params, ] );
 }

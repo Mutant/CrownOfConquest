@@ -7,29 +7,7 @@
 <div style="background: #898E73; position: relative; overflow: auto; min-height: 800px;">
 	[% FILTER collapse %]
 	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black; z-index: 5">
-		[% 
-			max_zoom = 7
-			zoom_link = 2
-		%]
-		[% WHILE zoom_link <= max_zoom %]
-			[% IF zoom_link == zoom_level %]
-				<img src="[% c.config.static_path %]/images/zoom_sel.gif">
-			[% ELSE %]
-				[% message = 'Zoom In' %]
-				[% IF zoom_link > zoom_level %]
-					[% message = 'Zoom Out' %]
-				[% END %]
-				<div 
-					dojoType="dijit.Tooltip" 
-					connectId="zoom_link_[% zoom_link %]"
-					label="[% message %]"
-					style="display: none"></div>
-			
-			   <a href="?zoom_level=[% zoom_link %]&center_x=[% center_x %]&center_y=[% center_y %]" style="text-decoration: none"><img src="[% c.config.static_path %]/images/zoom.gif" border=0 id="zoom_link_[% zoom_link %]"></a>
-			[% END %]
-			<br>
-			[% zoom_link = zoom_link + 1 %] 
-		[% END %] 
+		[% INCLUDE map/zoom.html max_zoom=7 %]
 
 
 			

@@ -1,7 +1,7 @@
 [%
 	x = min_x - 1;
 	y = min_y - 1;
-	size = 40;
+	size = 80 / zoom_level;
 	door_thickness = size / 10;
 	door_length = size - 4;
 	
@@ -16,8 +16,8 @@
 	[% IF scroll_to_y > max_y %]
 		[% scroll_to_y = max_y %]
 	[% END %]
-
-<div style="position: relative">
+	
+<div style="position: relative;">
 [% WHILE y <= max_y %]
 	[% y = y+1 %]
 	[% x = min_x - 1 %]
@@ -54,9 +54,7 @@
 				[% END %]
 				
 				[% background_image = 'floor.PNG' %]
-				[% IF current_location.id == sector.dungeon_grid_id %]
-					[% background_image = 'partyloc.PNG' %]
-				[% ELSIF viewable_sectors.${sector.x}.${sector.y} %]
+				[% IF viewable_sectors.${sector.x}.${sector.y} || current_location.id == sector.dungeon_grid_id %]
 				 	[% background_image = 'brightfloor.PNG' %]
 				[% END %]
 				
@@ -74,23 +72,27 @@
 					>
 							
 						[% IF sector.stairs_up %]
-							<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0>
+							<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
 						[% ELSIF cgs.$x.$y %]
 							[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
 						
-							<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0></span>
+							<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>
 						    <div 
 								dojoType="dijit.Tooltip" 
 								connectId="m_[% x _ y %]"								
 								label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
 						[% ELSIF parties.$x.$y %]
-							<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0></span>
+							<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0  width=[% size %] height=[% size %]></span>
 						    <div 
 								dojoType="dijit.Tooltip" 
 								connectId="p_[% x _ y %]"
 								label="[% INCLUDE party/summary.html party=parties.$x.$y %]"></div>
 						[% ELSIF can_move_to_sector %]
 						    .
+						[% END %]
+						
+						[% IF current_location.id == sector.dungeon_grid_id %]
+							<span style="z-index: 50; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/partyloc_t.PNG" border=0  width=[% size %] height=[% size %]></span>
 						[% END %]
 					</div>
 					
@@ -151,5 +153,4 @@
 		[% END %]
 	[% END %]	
 [% END %]
-
 </div>

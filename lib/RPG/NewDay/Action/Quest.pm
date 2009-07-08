@@ -12,12 +12,14 @@ use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use Scalar::Util qw(blessed);
 
-sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Shop/ };
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Shop/ }
 
 sub run {
     my $self = shift;
 
     my $c = $self->context;
+
+    $self->randomly_delete_quests;
 
     $self->create_quests;
 
@@ -46,14 +48,12 @@ sub create_quests {
 
         for ( $quest_count .. $ideal_number_of_quests ) {
             my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
-            
+
             my $quest_type = $c->schema->resultset('Quest_Type')->find(
-                {
-                    prevalence => {'>=', $prevalence_roll},
-                },
+                { prevalence => { '>=', $prevalence_roll }, },
                 {
                     order_by => 'rand()',
-                    rows => 1,
+                    rows     => 1,
                 },
             );
 
@@ -81,47 +81,60 @@ sub update_days_left {
             party_id => { '!=', undef },
             status   => 'In Progress',
         },
-        { prefetch => ['type', 'town'] },
+        { prefetch => [ 'type', 'town' ] },
     );
 
     foreach my $quest (@quests) {
         next if $quest->days_to_complete == 0;
-        
+
         $quest->days_to_complete( $quest->days_to_complete - 1 );
 
         if ( $quest->days_to_complete == 0 ) {
 
             # Time's up!
             $quest->status('Terminated');
-            
-            my $message = RPG::Template->process(
-                $c->config,
-                'newday/quest/time_run_out.html',
-                {
-                    quest => $quest,   
-                },
-            );
+
+            my $message = RPG::Template->process( $c->config, 'newday/quest/time_run_out.html', { quest => $quest, }, );
 
             $c->schema->resultset('Party_Messages')->create(
                 {
-                    party_id => $quest->party_id,
-                    message  => $message,
+                    party_id    => $quest->party_id,
+                    message     => $message,
                     alert_party => 1,
                     day_id      => $c->current_day->id,
                 }
             );
-            
+
             my $party_town = $c->schema->resultset('Party_Town')->find_or_create(
                 {
-                    town_id => $quest->town_id,
+                    town_id  => $quest->town_id,
                     party_id => $quest->party_id,
                 },
             );
-            $party_town->prestige($party_town->prestige-3);
+            $party_town->prestige( $party_town->prestige - 3 );
             $party_town->update;
         }
-        
+
         $quest->update;
+    }
+}
+
+sub randomly_delete_quests {
+    my $self = shift;
+
+    my $c = $self->context;
+
+    my $quest_rs = $c->schema->resultset('Quest')->search( { party_id => undef, }, { order_by => 'rand()' }, );
+    
+    my $number_of_quests = $quest_rs->count;
+    
+    my $quests_to_delete = int ($number_of_quests * 0.2);
+    
+    $c->logger->info("Deleting $quests_to_delete quests");
+    
+    for (1 .. $quests_to_delete) {
+        my $quest= $quest_rs->next;
+        $quest->delete;   
     }
 }
 

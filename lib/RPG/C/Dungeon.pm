@@ -101,7 +101,7 @@ sub view : Local {
             $parties->[ $sector->x ][ $sector->y ] = $sector->party;
         }
     }
-    
+
     # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks in the viewable area,
     #  avoids the problem of twisting corridors having two lighted sections)
     # TODO: prevent light going round corners (?)
@@ -109,12 +109,12 @@ sub view : Local {
     foreach my $viewable_sector (@viewable_sectors) {
         $viewable_sectors_by_coord->[ $viewable_sector->x ][ $viewable_sector->y ] = $viewable_sector;
     }
-    
+
     my $viewable_sector_grid;
-    
+
     for my $viewable_sector (@viewable_sectors) {
-        if ($viewable_sector->check_has_path($current_location, $viewable_sectors_by_coord, 3)) {
-            $viewable_sector_grid->[$viewable_sector->x][$viewable_sector->y] = 1;
+        if ( $viewable_sector->check_has_path( $current_location, $viewable_sectors_by_coord, 3 ) ) {
+            $viewable_sector_grid->[ $viewable_sector->x ][ $viewable_sector->y ] = 1;
         }
     }
 
@@ -162,7 +162,7 @@ sub render_dungeon_grid : Private {
                     cgs                => $cgs,
                     parties            => $parties,
                     in_combat          => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
-                    zoom_level         => $c->session->{zoom_level},
+                    zoom_level => $c->session->{zoom_level} || 2,
                 },
                 return_output => 1,
             }
@@ -278,7 +278,7 @@ sub sector_menu : Local {
 
     my $creature_group = $current_location->available_creature_group;
 
-    my @doors = $current_location->doors;
+    my @doors = $current_location->available_doors;
 
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
 
@@ -306,9 +306,9 @@ sub sector_menu : Local {
 sub unblock_door : Local {
     my ( $self, $c ) = @_;
 
-    if ($c->stash->{party}->turns <= 0) {
+    if ( $c->stash->{party}->turns <= 0 ) {
         $c->stash->{error} = "You don't have enough turns to attempt that";
-        $c->detach('/panel/refresh');
+        $c->detach('/panel/refresh', ['messages']);
     }
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
@@ -319,39 +319,39 @@ sub unblock_door : Local {
 
     my %action_for_door = (
         charge => 'stuck',
-        pick => 'locked',
-        break => 'sealed',
+        pick   => 'locked',
+        break  => 'sealed',
     );
-    
+
     my $success = 0;
-    
+
     my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
-    
+
     # Only attempt to unblock door if action matches door's type
-    if ($action_for_door{$c->req->param('action')} eq $door->type) {    
-    
+    if ( $action_for_door{ $c->req->param('action') } eq $door->type ) {
+
         my %stats = (
             charge => [ 'strength',     'constitution' ],
             pick   => [ 'agility',      'intelligence' ],
             break  => [ 'intelligence', 'divinity' ],
         );
-    
+
         my $stats = $stats{ $c->req->param('action') };
         my $stat_avg = average $character->get_column( $stats->[0] ), $character->get_column( $stats->[1] );
-    
+
         my $roll_base              = 15;
         my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 5;
         my $roll                   = Games::Dice::Advanced->roll( '1d' . $roll_base + $dungeon_level_addition );
-    
+
         if ( $roll < $stat_avg ) {
             $success = 1;
             $door->state('open');
             $door->update;
-            
+
             my $opposite_door = $door->opposite_door;
             $opposite_door->state('open');
             $opposite_door->update;
-            
+
             $c->stash->{refresh_panels} = ['map'];
         }
     }
@@ -371,10 +371,10 @@ sub unblock_door : Local {
             }
         ]
     );
-    
+
     $c->stash->{messages} = $message;
-    
-    $c->stash->{party}->turns($c->stash->{party}->turns-1);
+
+    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
     $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
@@ -384,7 +384,7 @@ sub take_stairs : Local {
     my ( $self, $c ) = @_;
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
-    
+
     croak "No stairs here" unless $current_location->stairs_up;
 
     # Reset zoom level
@@ -395,6 +395,72 @@ sub take_stairs : Local {
     $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
+}
+
+sub search_room : Local {
+    my ( $self, $c ) = @_;
+
+    if ( $c->stash->{party}->turns <= 0 ) {
+        $c->stash->{error} = "You don't have enough turns to attempt that";
+        $c->detach('/panel/refresh', ['messages']);
+    }
+
+    my $current_location =
+        $c->model('DBIC::Dungeon_Grid')
+        ->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => { 'dungeon_room' => 'dungeon' }, }, );
+
+    my $found_something = 0;
+    my @available_secret_doors    = $c->model('DBIC::Door')->get_secret_doors_in_room(
+        $current_location->dungeon_room_id
+    );
+
+    # Remove secret doors in sectors the party doesn't know about
+    my @secret_doors;
+    my %mapped_sectors_by_id = map { $_->id => 1 } $c->model('DBIC::Dungeon_Grid')->search(
+        {
+            party_id             => $c->stash->{party}->id,
+            'dungeon.dungeon_id' => $current_location->dungeon_room->dungeon_id,
+        },
+        {
+            join     => [ { 'dungeon_room' => 'dungeon' }, 'mapped_dungeon_grid' ],
+        }        
+    );   
+    
+    foreach my $secret_door (@available_secret_doors) {
+        if ($mapped_sectors_by_id{$secret_door->dungeon_grid_id}) {
+            push @secret_doors, $secret_door;   
+        }
+    }
+    
+    if (@secret_doors) {
+        my $avg_int = $c->stash->{party}->average_stat('intelligence');
+
+        my $roll = Games::Dice::Advanced->roll( '1d' . ( 15 + ($current_location->dungeon_room->dungeon->level * 5) ) );
+
+        if ( $roll <= $avg_int ) {
+            my $door_found = ( shuffle @secret_doors )[0];
+
+            $door_found->state('open');
+            $door_found->update;
+
+            my $opposite_door = $door_found->opposite_door;
+            $opposite_door->state('open');
+            $opposite_door->update;
+
+            $found_something = 1;
+
+            $c->stash->{messages} = "You find a secret door to the " . $door_found->display_position . "!";
+        }
+    }
+
+    unless ($found_something) {
+        $c->stash->{messages} = "You don't find anything of interest.";
+    }
+    
+    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
+    $c->stash->{party}->update;    
+
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }
 
 1;

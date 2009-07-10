@@ -378,9 +378,23 @@ sub get_as_hash {
         stairs_up => $self->stairs_up,
         walls => [ $self->sides_with_walls ],
         doors => [ $self->sides_with_doors ],
+        raw_doors => [ $self->doors ],
     );
     
     return %result;
+}
+
+sub available_doors {
+    my $self = shift;
+    
+    return $self->search_related('doors',
+        {
+            -or => {
+                type => {'!=', 'secret'},
+                state => 'open',
+            }
+        }
+    );
 }
 
 1;

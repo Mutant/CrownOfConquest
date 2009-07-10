@@ -1,12 +1,5 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 
-[% position_map = {
-	bottom => 'south',
-	top => 'north',
-	left => 'west',
-	right => 'east',
-}
-%]
 
 [% IF doors.0 %]
 	Open Doors: 
@@ -14,16 +7,18 @@
 		[% IF door.can_be_passed %]		
 			[% link = "javascript:getPanels('/dungeon/open_door?door_id=" _  door.id  _ "')" %]
 		[% ELSE %]
-			[% link = "javascript:unblockDoorDiag('" _ position_map.${door.position.position} _ "', '" _ door.id _ "')" %]
+			[% link = "javascript:unblockDoorDiag('" _ door.display_position _ "', '" _ door.id _ "')" %]
 		[% END %]
 			
-		<a href="[% link %]">[% position_map.${door.position.position} %]</a>&nbsp;		
+		<a href="[% link %]">[% door.display_position %]</a>&nbsp;		
 	[% END %]
 	<br><br>
 [% END %]
 
+
+<a href="javascript:getPanels('/dungeon/search_room')">Search Room</a>
 [% IF current_location.stairs_up %]
-	<a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs</a>
+	| <a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs</a>
 [% END %]
 
 [% IF creature_group_display %]

@@ -98,44 +98,47 @@
 					
 					[% IF can_move_to_sector %]</a>[% END %]
 					
-					[% FOREACH door IN sector.doors %]
-						[% left_offset = 0 %]
-						[% width_offset = 0 %]
-						[% top_offset = 0 %]
-						[% height_offset = 0 %]
-						[% position = door %]
+					[% FOREACH door IN sector.raw_doors %]
+						[% IF door.type != 'secret' || door.state == 'open' %]
 					
-						[% IF position == 'right' ||  position == 'left' %]
-							[% height = door_length %]
-							[% width = door_thickness %]
-							[% height_offset = 2 %]
-						[% ELSE %]
-							[% height = door_thickness %]
-							[% width = door_length %]
-							[% width_offset = 2 %]
-						[% END %]
-					
-						[% IF position == 'right' %]
-							[% left_offset = 1 %]
-							[% width_offset = 0 - width + 1 %]
-						[% ELSIF position == 'left' %]
 							[% left_offset = 0 %]
-							[% width_offset = 1 %]
-						[% ELSIF position == 'bottom' %]
-							[% top_offset = 1 %]
-							[% height_offset = 0 - height + 1 %]
-						[% END %]
+							[% width_offset = 0 %]
+							[% top_offset = 0 %]
+							[% height_offset = 0 %]
+							[% position = door.position.position %]
 						
-		         		<div 
-						   style="
-							position: absolute;
-							width: [% width %];
-							height: [% height %];
-							background: black;
-							left: [% ((sector.x - min_x) + left_offset) * size + width_offset %];
-							top: [% ((sector.y - min_y) + top_offset) * size + height_offset %];"
-						>							
-						</div>						
+							[% IF position == 'right' ||  position == 'left' %]
+								[% height = door_length %]
+								[% width = door_thickness %]
+								[% height_offset = 2 %]
+							[% ELSE %]
+								[% height = door_thickness %]
+								[% width = door_length %]
+								[% width_offset = 2 %]
+							[% END %]
+						
+							[% IF position == 'right' %]
+								[% left_offset = 1 %]
+								[% width_offset = 0 - width + 1 %]
+							[% ELSIF position == 'left' %]
+								[% left_offset = 0 %]
+								[% width_offset = 1 %]
+							[% ELSIF position == 'bottom' %]
+								[% top_offset = 1 %]
+								[% height_offset = 0 - height + 1 %]
+							[% END %]
+							
+			         		<div 
+							   style="
+								position: absolute;
+								width: [% width %];
+								height: [% height %];
+								background: black;
+								left: [% ((sector.x - min_x) + left_offset) * size + width_offset %];
+								top: [% ((sector.y - min_y) + top_offset) * size + height_offset %];"
+							>					
+							</div>			
+						[% END %]			
 					[% END %]
 					
 			[% ELSE %]

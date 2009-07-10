@@ -7,6 +7,8 @@ use base 'DBIx::Class::ResultSet';
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
+use Data::Dumper;
+
 sub get_party_grid {
     my $self = shift;
     my $party_id = shift;
@@ -32,7 +34,7 @@ sub get_party_grid {
         foreach my $raw_door (@{$sector->{doors}}) {
             push @doors, $raw_door->{position}{position};
         }
-        
+
         $sector->{raw_doors} = $sector->{doors};
         $sector->{doors} = \@doors;
 

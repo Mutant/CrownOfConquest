@@ -12,6 +12,8 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Door');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Door');
+
 __PACKAGE__->add_columns(qw/door_id position_id dungeon_grid_id type state/);
 
 __PACKAGE__->set_primary_key('door_id');
@@ -19,6 +21,13 @@ __PACKAGE__->set_primary_key('door_id');
 __PACKAGE__->belongs_to( 'position', 'RPG::Schema::Dungeon_Position', { 'foreign.position_id' => 'self.position_id' } );
 
 __PACKAGE__->belongs_to( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
+my %position_map = (
+	bottom => 'south',
+	top => 'north',
+	left => 'west',
+	right => 'east',
+);
 
 sub opposite_position {
     my $self = shift;
@@ -53,6 +62,12 @@ sub opposite_door {
     );
     
     return $opp_door;
+}
+
+sub display_position {
+    my $self = shift;
+    
+    return $position_map{$self->position->position};   
 }
 
 1;

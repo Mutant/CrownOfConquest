@@ -18,7 +18,9 @@ sub view : Private {
 
     my $party_location = $c->stash->{party_location};
     
-    my $grid_size = $c->config->{map_x_size} + (($c->session->{zoom_level}-2) * 3) + 1;
+    my $zoom_level = $c->session->{zoom_level} || 2;
+    
+    my $grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
     $grid_size-- if $c->session->{zoom_level} % 2 == 0;    # Odd numbers cause us problems
     
     my $grid_params =
@@ -28,7 +30,7 @@ sub view : Private {
     $grid_params->{x_size}        = $c->config->{map_x_size};
     $grid_params->{y_size}        = $c->config->{map_y_size};
     $grid_params->{grid_size}     = $c->config->{map_x_size};
-    $grid_params->{zoom_level}    = $c->session->{zoom_level} || 2;
+    $grid_params->{zoom_level}    = $zoom_level;
 
     $c->forward( 'render_grid', [ $grid_params, ] );
 }

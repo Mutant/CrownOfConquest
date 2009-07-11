@@ -420,4 +420,10 @@ sub screenshots : Local {
     $c->forward( 'RPG::V::TT', [ { template => 'player/screenshots.html', } ] );
 }
 
+sub vote : Local {
+    my ( $self, $c ) = @_;
+
+    $c->forward( 'RPG::V::TT', [ { template => 'player/vote.html', } ] );
+}
+
 1;

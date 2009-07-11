@@ -627,13 +627,14 @@ sub _build_combat_log {
                 opponent_1_type     => $opp1_type,
                 opponent_2_id       => $opp2->id,
                 opponent_2_type     => $opp2_type,
-                land_id             => $self->location->id,
                 encounter_started   => DateTime->now(),
                 combat_initiated_by => $self->initiated_by,
                 opponent_1_level    => $opp1->level,
                 opponent_2_level    => $opp2->level,
                 game_day            => $self->schema->resultset('Day')->find_today->id,
                 spells_cast         => 0,
+                
+                $self->combat_log_location_attribute  => $self->location->id,
             },
         );
     }

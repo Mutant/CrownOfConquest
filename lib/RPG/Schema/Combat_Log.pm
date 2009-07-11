@@ -12,7 +12,7 @@ __PACKAGE__->add_columns(
     qw/combat_log_id combat_initiated_by rounds opponent_1_deaths opponent_2_deaths total_opponent_1_damage
         total_opponent_2_damage xp_awarded spells_cast gold_found outcome land_id opponent_1_id opponent_2_id
         opponent_1_level opponent_2_level game_day opponent_1_flee_attempts opponent_2_flee_attempts 
-        opponent_1_type opponent_2_type session/
+        opponent_1_type opponent_2_type session dungeon_grid_id/
 );
 
 __PACKAGE__->add_columns(
@@ -131,6 +131,37 @@ sub _get_cg {
     $self->{_cg}{$id} = $cg;
 
     return $cg;
+}
+
+sub location {
+    my $self = shift;
+    
+    if ($self->land_id) {
+        my $land = $self->result_source->schema->resultset('Land')->find(
+            {
+                land_id => $self->land_id,
+            }
+        );
+        
+        return unless $land;
+        
+        return "sector " . $land->x . ", " . $land->y;
+    }
+    else {
+        my $dungeon = $self->result_source->schema->resultset('Dungeon')->find(
+            {
+                'sectors.dungeon_grid_id' => $self->dungeon_grid_id,
+            },
+            {
+                join => {'rooms' => 'sectors'},  
+                prefetch => 'location',
+            },
+        );
+        
+        return unless $dungeon;
+        
+        return "a level " . $dungeon->level . " dungeon at " . $dungeon->location->x . ", " . $dungeon->location->y;
+    }   
 }
 
 1;

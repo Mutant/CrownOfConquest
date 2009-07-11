@@ -64,4 +64,8 @@ sub _build_location {
     return $self->schema->resultset('Dungeon_Grid')->find( { dungeon_grid_id => $self->party->dungeon_grid_id, } );
 }
 
+sub combat_log_location_attribute {
+    return 'dungeon_grid_id';   
+}
+
 1;

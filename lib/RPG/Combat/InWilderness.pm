@@ -4,14 +4,13 @@ use Moose::Role;
 
 use RPG::Template;
 
+use List::Util qw(shuffle);
+
 # Can't require these as they're attributes, not methods (missing Moose functionality?)
 #requires qw/schema creature_group party/;
 requires qw/opponents/;
 
 has 'nearby_towns' => ( is => 'ro', isa => 'ArrayRef', init_arg => undef, builder => '_build_nearby_towns', lazy => 1, auto_deref => 1 );
-
-use List::Util qw(shuffle);
-
 has 'location' => ( is => 'ro', isa => 'RPG::Schema::Land', required => 0, builder => '_build_location', lazy => 1, );
 
 sub get_sector_to_flee_to {
@@ -72,5 +71,9 @@ after 'finish' => sub {
         }
     }
 };
+
+sub combat_log_location_attribute {
+    return 'land_id';   
+}
 
 1;

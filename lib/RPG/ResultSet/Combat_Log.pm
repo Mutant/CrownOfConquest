@@ -48,7 +48,7 @@ sub get_recent_logs_for_party {
             $self->_party_criteria($party),
         },
         {
-            prefetch => ['land', 'day'],
+            prefetch => 'day',
             order_by => 'encounter_ended desc',
             rows => $logs_count,
         }

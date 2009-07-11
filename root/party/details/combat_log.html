@@ -28,6 +28,10 @@
 			[% ELSE %]
 				party known as [% battle.opponent(opp_num).name %]
 			[% END %]
+			
+			[% location = battle.location %] 
+			[% IF location %] at [% location %][% END %]
+			
 			[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
 				and crushed them like the maggots they are!
 			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
@@ -35,7 +39,7 @@
 			[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
 			    and ran from the battle without shame.
 			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
-				and were thawrted as the cowards retreated.
+				and were thwarted as the cowards retreated.
 			[% END %]
 			
 			[% foo = 'bar' %]

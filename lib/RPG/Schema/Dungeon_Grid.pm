@@ -171,6 +171,8 @@ sub check_has_path {
         [ $x,     $y - 1 ],
     );
 
+    my $move_cache;
+
     foreach my $path (@paths_to_check) {
         my ( $test_x, $test_y ) = @$path;
 
@@ -181,8 +183,14 @@ sub check_has_path {
             my $sector_to_try = $sector_grid->[$test_x][$test_y];
 
             #warn "Seeing if we can move there...\n";
+            
+            my $cache_key = $sector->x . '-' . $sector->y . '-' . $sector_to_try->x . '-' . $sector_to_try->y;
+            
+            my $has_path = $move_cache->{$cache_key} // $sector->can_move_to($sector_to_try);
+            
+            $move_cache->{$cache_key} = $has_path;
 
-            next unless $sector->can_move_to($sector_to_try);
+            next unless $has_path;
 
             #warn "(we can)\n";
 
@@ -205,26 +213,7 @@ sub check_has_path {
     return 0;
 }
 
-# Wraps _can_move_to() and adds (global) caching
-# Safe enough, since dungeons shouldn't change structure (much)
-# Decalared with 'our' for testing purposes
-our $can_move_to;
 sub can_move_to {
-    my $self   = shift;
-    my $sector = shift;
-    
-    if (my $cached_result = $can_move_to->[$self->x][$self->y][$sector->x][$sector->y]) {
-        return $cached_result;
-    }
-    
-    my $result = $self->_can_move_to($sector); 
-    
-    $can_move_to->[$self->x][$self->y][$sector->x][$sector->y] = $result;
-    
-    return $result;
-}
-
-sub _can_move_to {
     my $self   = shift;
     my $sector = shift;
 

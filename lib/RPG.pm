@@ -54,7 +54,8 @@ BEGIN {
     __PACKAGE__->config(
         root       => __PACKAGE__->path_to('root'),
         'View::TT' => { INCLUDE_PATH => [ __PACKAGE__->path_to('root'), ] },
-    );
+    );    
+    
 }
 
 __PACKAGE__->setup(

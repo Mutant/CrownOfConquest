@@ -181,7 +181,7 @@ dojo.addOnLoad( init );
 				
 					<div style="text-align: center">
 						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
-						<span dojoType="dojo.dnd.Source" copyOnly="true" id="[% sell_type %]-source-[% item_type.id %]">
+						<span dojoType="dojo.dnd.Source" copyOnly="true" id="item_source_[% item_type.id %]">
 							<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">
 								[% IF item_type.image %]
 									<img src="[% c.config.static_path %]/images/items/[% item_type.image %]">
@@ -195,7 +195,7 @@ dojo.addOnLoad( init );
 					
 				
 					<div dojoType="dijit.Tooltip"
-                   		connectId="item_type_[% item_type.id %]"
+                   		connectId="item_source_[% item_type.id %]"
                    		label="[% item_details(item_type, sell_type) | collapse %]"
 						style="display: none">
                    </div>

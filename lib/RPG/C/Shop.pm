@@ -132,8 +132,9 @@ sub character_sell_tab : Local {
             {
                 template => 'shop/character_sell_tab.html',
                 params   => {
-                    items => \@items,
-                    shop  => $shop,
+                    items     => \@items,
+                    shop      => $shop,
+                    character => $character,
                 }
             }
         ]
@@ -255,6 +256,60 @@ sub sell_item : Local {
     my ( $self, $c ) = @_;
 
     my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => 'category' }, }, );
+    my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
+
+    if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
+        return;
+    }
+
+    my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
+
+    my $ret = to_json(
+        {
+            gold     => $c->stash->{party}->gold,
+            messages => $messages,
+        }
+    );
+
+    $c->res->body($ret);
+
+}
+
+sub sell_multi_item : Local {
+    my ( $self, $c ) = @_;
+
+    my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
+    my @item_ids = $c->req->param('item_id');
+    
+    my @items = $c->model('DBIC::Items')->search(
+        {
+            item_id => \@item_ids,
+        },
+        { prefetch => { 'item_type' => 'category' }, },
+    );
+
+    my @messages;
+    foreach my $item (@items) {
+        if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
+            return;
+        }
+
+        my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
+        @messages = (@messages, @$messages);
+    }
+
+    my $ret = to_json(
+        {
+            gold     => $c->stash->{party}->gold,
+            messages => \@messages,
+        }
+    );
+
+    $c->res->body($ret);
+}
+
+sub sell_single_item : Private {
+    my ( $self, $c, $item, $shop ) = @_;
 
     # Make sure this item belongs to a character in the party
     my @characters = $c->stash->{party}->characters;
@@ -268,8 +323,6 @@ sub sell_item : Local {
                 . ")" );
         return;
     }
-
-    my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
 
     # Make sure the shop they're in is in the town they're in
     if ( $shop->town_id != $c->stash->{party}->location->town->id ) {
@@ -303,17 +356,7 @@ sub sell_item : Local {
         }
     }
 
-    my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
-
-    my $ret = to_json(
-        {
-            gold     => $c->stash->{party}->gold,
-            messages => $messages,
-        }
-    );
-
-    $c->res->body($ret);
-
+    return 1;
 }
 
 1;

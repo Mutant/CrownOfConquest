@@ -32,7 +32,7 @@ sub view : Local {
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
     }
 
-    # Find sectors the party can potentially move to
+    # Find actual list of sectors party can move to
     my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $current_location->x, $current_location->y, 3 );
     my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
         {
@@ -46,10 +46,9 @@ sub view : Local {
         },
     );
 
-    $c->stats->profile("Queried viewable sectors");
-
-    # Find actual list of sectors party can move to
     my $allowed_to_move_to = $current_location->allowed_to_move_to_sectors( \@sectors, $c->config->{dungeon_move_maximum} );
+
+    $c->forward( 'store_allowed_move_hashes', [$allowed_to_move_to] );
 
     $c->stats->profile("Got sectors allowed to move to");
 
@@ -150,18 +149,19 @@ sub render_dungeon_grid : Private {
             {
                 template => 'dungeon/view.html',
                 params   => {
-                    grid               => $grid,
-                    viewable_sectors   => $viewable_sectors,
-                    max_x              => $max_x,
-                    max_y              => $max_y,
-                    min_x              => $min_x,
-                    min_y              => $min_y,
-                    positions          => \@positions,
-                    current_location   => $current_location,
-                    allowed_to_move_to => $allowed_to_move_to,
-                    cgs                => $cgs,
-                    parties            => $parties,
-                    in_combat          => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
+                    grid                => $grid,
+                    viewable_sectors    => $viewable_sectors,
+                    max_x               => $max_x,
+                    max_y               => $max_y,
+                    min_x               => $min_x,
+                    min_y               => $min_y,
+                    positions           => \@positions,
+                    current_location    => $current_location,
+                    allowed_to_move_to  => $allowed_to_move_to,
+                    cgs                 => $cgs,
+                    parties             => $parties,
+                    allowed_move_hashes => $c->flash->{allowed_move_hashes},
+                    in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
                     zoom_level => $c->session->{zoom_level} || 2,
                 },
                 return_output => 1,
@@ -171,7 +171,7 @@ sub render_dungeon_grid : Private {
 }
 
 sub move_to : Local {
-    my ( $self, $c, $sector_id ) = @_;
+    my ( $self, $c, $sector_id, $no_hash_check ) = @_;
 
     $sector_id ||= $c->req->param('sector_id');
 
@@ -189,8 +189,7 @@ sub move_to : Local {
         croak "Can't move to sector: $sector_id - in the wrong dungeon";
     }
 
-    # Check they're allowed to move to this sector
-    unless (1) {    #$current_location->can_move_to($sector) ) {
+    if (! $no_hash_check && $c->req->param('h') != $c->flash->{allowed_move_hashes}[$sector->x][$sector->y]) {
         $c->stash->{error} = "You must be in range of the sector";
     }
     elsif ( $c->stash->{party}->turns < 1 ) {
@@ -247,9 +246,14 @@ sub check_for_creature_move : Private {
 sub open_door : Local {
     my ( $self, $c ) = @_;
 
-    my $door = $c->model('DBIC::Door')->find( $c->req->param('door_id') );
+    my ($door) = $c->model('DBIC::Door')->search( 
+        {
+            door_id => $c->req->param('door_id'),
+            'dungeon_grid_id' => $c->stash->{party}->dungeon_grid_id,
+        },
+    );
 
-    if ( !$door->can_be_passed ) {
+    if ( !$door || !$door->can_be_passed ) {
         croak "Cannot open door";
     }
 
@@ -266,7 +270,7 @@ sub open_door : Local {
         { join => 'dungeon_room', }
     );
 
-    $c->forward( 'move_to', [ $sector_to_move_to->id ] );
+    $c->forward( 'move_to', [ $sector_to_move_to->id, 1 ] );
 }
 
 sub sector_menu : Local {
@@ -308,7 +312,7 @@ sub unblock_door : Local {
 
     if ( $c->stash->{party}->turns <= 0 ) {
         $c->stash->{error} = "You don't have enough turns to attempt that";
-        $c->detach('/panel/refresh', ['messages']);
+        $c->detach( '/panel/refresh', ['messages'] );
     }
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
@@ -402,17 +406,15 @@ sub search_room : Local {
 
     if ( $c->stash->{party}->turns <= 0 ) {
         $c->stash->{error} = "You don't have enough turns to attempt that";
-        $c->detach('/panel/refresh', ['messages']);
+        $c->detach( '/panel/refresh', ['messages'] );
     }
 
     my $current_location =
         $c->model('DBIC::Dungeon_Grid')
         ->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => { 'dungeon_room' => 'dungeon' }, }, );
 
-    my $found_something = 0;
-    my @available_secret_doors    = $c->model('DBIC::Door')->get_secret_doors_in_room(
-        $current_location->dungeon_room_id
-    );
+    my $found_something        = 0;
+    my @available_secret_doors = $c->model('DBIC::Door')->get_secret_doors_in_room( $current_location->dungeon_room_id );
 
     # Remove secret doors in sectors the party doesn't know about
     my @secret_doors;
@@ -421,21 +423,19 @@ sub search_room : Local {
             party_id             => $c->stash->{party}->id,
             'dungeon.dungeon_id' => $current_location->dungeon_room->dungeon_id,
         },
-        {
-            join     => [ { 'dungeon_room' => 'dungeon' }, 'mapped_dungeon_grid' ],
-        }        
-    );   
-    
+        { join => [ { 'dungeon_room' => 'dungeon' }, 'mapped_dungeon_grid' ], }
+    );
+
     foreach my $secret_door (@available_secret_doors) {
-        if ($mapped_sectors_by_id{$secret_door->dungeon_grid_id}) {
-            push @secret_doors, $secret_door;   
+        if ( $mapped_sectors_by_id{ $secret_door->dungeon_grid_id } ) {
+            push @secret_doors, $secret_door;
         }
     }
-    
+
     if (@secret_doors) {
         my $avg_int = $c->stash->{party}->average_stat('intelligence');
 
-        my $roll = Games::Dice::Advanced->roll( '1d' . ( 15 + ($current_location->dungeon_room->dungeon->level * 5) ) );
+        my $roll = Games::Dice::Advanced->roll( '1d' . ( 15 + ( $current_location->dungeon_room->dungeon->level * 5 ) ) );
 
         if ( $roll <= $avg_int ) {
             my $door_found = ( shuffle @secret_doors )[0];
@@ -456,11 +456,29 @@ sub search_room : Local {
     unless ($found_something) {
         $c->stash->{messages} = "You don't find anything of interest.";
     }
-    
+
     $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
-    $c->stash->{party}->update;    
+    $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+}
+
+# Generates hashes of allowed moves, and saves them in the flash, so we can check only allowed sectors were passed to move_to
+sub store_allowed_move_hashes : Private {
+    my ( $self, $c, $allowed_to_move_to ) = @_;
+
+    my $allowed_hashes;
+    foreach my $x ( 0 .. scalar @$allowed_to_move_to ) {
+        if ($allowed_to_move_to->[$x]) {
+            foreach my $y ( 0 .. scalar @{ $allowed_to_move_to->[$x] } ) {
+                if ( $allowed_to_move_to->[$x][$y] ) {
+                    $allowed_hashes->[$x][$y] = int rand 100000000;
+                }
+            }
+        }
+    }
+
+    $c->flash->{allowed_move_hashes} = $allowed_hashes;
 }
 
 1;

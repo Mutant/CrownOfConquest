@@ -50,7 +50,8 @@
 				[% END %]
 			
 				[% IF can_move_to_sector %]
-					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" style="text-decoration: none;">
+					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]&h=[% allowed_move_hashes.${sector.x}.${sector.y} %]')" 
+						style="text-decoration: none;">
 				[% END %]
 				
 				[% background_image = 'floor.PNG' %]

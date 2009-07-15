@@ -202,7 +202,7 @@ sub _generate_dungeon_grid {
                 {
                     position_id     => $positions->{ $wall_to_join->opposite_position },
                     dungeon_grid_id => $sectors_created->[$start_x][$start_y]->id,
-                    door_type       => $door_type,
+                    type            => $door_type,
                 }
             );
         }

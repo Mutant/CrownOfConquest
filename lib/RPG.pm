@@ -47,7 +47,7 @@ BEGIN {
     __PACKAGE__->config->{session} = {
         session => {
             dbic_class => 'DBIC::Session',
-            expires    => 3600,
+            expires    => 60 * 20,
         },
     };
 

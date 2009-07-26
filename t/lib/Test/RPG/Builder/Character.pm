@@ -24,6 +24,7 @@ sub build_character {
             agility => 5,
             level => $params{level} || 1,
             gender => $params{gender} || 'male',
+            xp => $params{xp} || 0,
         }
     );
         

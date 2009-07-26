@@ -85,11 +85,19 @@ sub process_effects {
 sub check_for_flee {
     my $self = shift;
 
-    if ( $self->party_flee_attempt && $self->party_flee(1) ) {
+    my $attempt_to_flee = 0;
+    if (! $self->party->is_online && $self->party->is_over_flee_threshold) {
+        $attempt_to_flee = 1;
+    }
+    elsif ($self->party_flee_attempt) {
+        $attempt_to_flee = 1;    
+    }
+
+    if ( $attempt_to_flee && $self->party_flee(1) ) {
         $self->result->{party_fled} = 1;
         return 1;
     }
-
+    
     return unless $self->creatures_can_flee;
 
     # See if the creatures want to flee... check this every 3 rounds

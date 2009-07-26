@@ -5,6 +5,8 @@ package Test::RPG::Builder::Party;
 
 use Test::RPG::Builder::Character;
 
+use DateTime;
+
 sub build_party {
     my $package = shift;
     my $schema  = shift;
@@ -36,6 +38,8 @@ sub build_party {
             turns                   => 100,
             gold                    => 100,
             defunct                 => $params{defunct} || undef,
+            last_action             => $params{last_action} || undef,
+            in_combat_with          => $params{in_combat_with} || undef,
         }
     );
 

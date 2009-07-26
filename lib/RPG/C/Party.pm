@@ -506,21 +506,9 @@ sub xp_gain : Private {
     foreach my $character (@characters) {
         next if $character->is_dead;
 
-        # TODO: shouldn't be doing the level up here, should be in the schema class (probably)
         my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
 
         my $level_up_details = $character->xp( $character->xp + $xp_gained );
-
-        # Record level up details in character history
-        if ($level_up_details) {
-            $c->model('DBIC::Character_History')->create(
-                {
-                    character_id => $character->id,
-                    day_id       => $c->stash->{today}->id,
-                    event        => $character->character_name . " reached level " . $character->level,
-                },
-            );
-        }
 
         push @messages,
             $c->forward(

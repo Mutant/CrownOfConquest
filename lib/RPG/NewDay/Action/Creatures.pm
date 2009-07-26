@@ -297,9 +297,9 @@ sub _move_cg {
                 {
                     x => $sector->{x},
                     y => $sector->{y},
-                }
+                },
             );
-
+            
             $cg->land_id( $sector_record->id );
             $cg->update;
 

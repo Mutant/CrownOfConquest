@@ -45,6 +45,8 @@ __PACKAGE__->many_to_many( 'spells' => 'memorised_spells', 'spell' );
 
 __PACKAGE__->has_many( 'character_effects', 'RPG::Schema::Character_Effect', { 'foreign.character_id' => 'self.character_id' }, );
 
+__PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_id' );
+
 our @STATS = qw(str con int div agl);
 
 # These allow us to use the 'Being' role
@@ -89,17 +91,6 @@ sub roll_all {
     $self->update;
 
     return %rolls;
-}
-
-# Calcuates the point bonus for a stat (e.g. hit points, magic points).
-# If called as a class method, takes the value of the stat as first parameter
-# If called as instance method, takes the name of the stat
-sub point_bonus {
-    my $self = shift;
-
-    my $stat_value = shift || $self->get_column(shift);
-
-    return int $stat_value / RPG::Schema->config->{'point_dividend'};
 }
 
 # Rolls hit points for the next level.
@@ -166,7 +157,8 @@ sub _roll_points {
 
     if ( ref $self ) {
         $level = $self->level;
-        $stat  = $self->get_column(shift);
+        my $stat_name = shift;
+        $stat  = $self->get_column($stat_name);
     }
     else {
         $level = shift || croak 'Level not supplied';
@@ -190,7 +182,7 @@ sub _roll_points {
 
     my $points = $level == 1 ? $point_max : Games::Dice::Advanced->roll( '1d' . ( $point_max - $point_min ) ) + ( $point_min - 1 );
 
-    $points += $self->point_bonus($stat);
+    $points += int ($stat / RPG::Schema->config->{'point_dividend'});
 
     return $points;
 }
@@ -350,7 +342,7 @@ sub get_equipped_item {
             'equip_place_id'                     => { '!=', undef },
         },
         {
-            'join' => [ { 'item_type' => { 'category' => 'super_category' }, }, ],
+            'join'     => [ { 'item_type' => { 'category' => 'super_category' }, }, ],
             'prefetch' => $prefetch,
         },
     );
@@ -456,27 +448,27 @@ sub ammunition_for_item {
 
 sub run_out_of_ammo {
     my $self = shift;
-    
+
     my ($weapon) = $self->get_equipped_item('Weapon');
-    
+
     return unless $weapon;
-    
+
     unless ( $weapon->item_type->category->item_category eq 'Ranged Weapon' ) {
         return;
     }
-    
+
     my @ammo = $self->ammunition_for_item($weapon);
-    
+
     my $run_out = 1;
-    
+
     foreach my $ammo (@ammo) {
         next unless $ammo;
-        if ($ammo->{quantity} >= 1) {
-           $run_out = 0;
-           last;
+        if ( $ammo->{quantity} >= 1 ) {
+            $run_out = 0;
+            last;
         }
     }
-    
+
     return $run_out;
 }
 
@@ -551,6 +543,15 @@ sub xp {
         # Add stat points
         $self->stat_points( $self->stat_points + RPG::Schema->config->{stat_points_per_level} );
         $rolls{stat_points} = RPG::Schema->config->{stat_points_per_level};
+
+        my $today = $self->result_source->schema->resultset('Day')->find_today;
+
+        $self->add_to_history(
+            {
+                day_id => $today->id,
+                event  => $self->character_name . " reached level " . $self->level,
+            },
+        );
 
         return \%rolls;
     }

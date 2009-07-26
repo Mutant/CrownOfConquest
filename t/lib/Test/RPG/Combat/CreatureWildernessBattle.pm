@@ -291,6 +291,7 @@ sub test_creature_action_basic : Tests(9) {
     # WHEN
     my $results = $battle->creature_action($creature);
 
+    # THEN
     isa_ok( $results->defender, "RPG::Schema::Character", "opponent was a character" );
     is( $results->defender->party_id,                               $party->id, ".. from the correct party" );
     is( $results->damage,                                           1,          "Damage returned correctly" );
@@ -386,6 +387,8 @@ sub test_check_for_flee_creatures_cant_flee : Tests(1) {
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    
+    $self->{config}{online_threshold} = 10;
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema             => $self->{schema},
@@ -416,6 +419,8 @@ sub test_check_for_flee_successful_flee : Tests(10) {
 
     $party = Test::MockObject::Extends->new($party);
     $party->set_always( 'level', 10 );
+    
+    $self->{config}{online_threshold} = 10;
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema             => $self->{schema},

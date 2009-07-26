@@ -52,7 +52,7 @@ sub run {
     if (Proc::PID::File->running(dir => $home . '/proc')) {
         my $message = 'Another process is already running. Not executing';
         $logger->warning($message);
-        die "$message\n";
+        exit 0;
     }    
     
     while (1) {

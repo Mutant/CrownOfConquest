@@ -472,7 +472,7 @@ sub party_flee {
     my @opponents = $self->opponents;
 
     my $party = $opponents[ $opp_number - 1 ];
-    my $opponent = $opponents[ $opp_number == 1 ? 1 : 0 ];
+    my $opponent = $opponents[ $opp_number == 1 ? 1 : 0 ];   
 
     my $flee_attempts_column = 'opponent_' . $opp_number . '_flee_attempts';
     $self->combat_log->set_column( $flee_attempts_column, ( $self->combat_log->get_column($flee_attempts_column) || 0 ) + 1 );

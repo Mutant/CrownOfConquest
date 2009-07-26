@@ -12,6 +12,7 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Day;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
@@ -490,6 +491,43 @@ sub test_run_out_of_ammo_hasnt_run_out : Tests(1) {
     # THEN
     is($run_out, 0, "Character has not run out");
     
+}
+
+sub test_level_up : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my $today = Test::RPG::Builder::Day->build_day($self->{schema});
+
+    my $next_level = $self->{schema}->resultset('Levels')->find(
+        {
+            level_number => 2,
+        }
+    );
+    
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, level => 1, xp => $next_level->xp_needed - 20);
+    
+    $self->{config}{stat_points_per_level} = 3;
+    $self->{config}{level_hit_points_max}{test_class} = 5;
+    $self->{config}{point_dividend} = 10;
+    
+    # WHEN
+    my $rolls = $character->xp($character->xp + 21);
+    $character->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->level, 2, "Character gone up a level");
+    is($character->xp, $next_level->xp_needed + 1, "Character's xp increased");
+    is($character->stat_points, 3, "Character given stat points");
+    
+    my @history = $character->history;
+    is(scalar @history, 1, "1 item recorded in character history");
+    is($history[0]->event, $character->character_name . " reached level 2", "Level up event recorded");
+    is($history[0]->day_id, $today->id, "History event recorded on correct day");
+    
+    
+
 }
 
 1;

@@ -53,6 +53,7 @@ sub test_complete_battles : Tests(5) {
     $offline_combat_action->set_always('execute_offline_battle');
     
     $self->{config}{online_threshold} = 10;
+    $self->{config}{max_offline_combat_count} = 3;
     
     # WHEN
     $offline_combat_action->complete_battles();
@@ -84,6 +85,7 @@ sub test_initiate_battles : Tests(5) {
     
     $self->{config}{online_threshold} = 10;
     $self->{config}{offline_combat_chance} = 35;
+    $self->{config}{max_offline_combat_count} = 3;
     
     $self->mock_dice;
     

@@ -63,6 +63,10 @@ sub initiate_battles {
         
         foreach my $party (shuffle @parties) {
             next if $party->is_online || $party->in_combat;
+            
+            my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party );
+            
+            next if $offline_combat_count >= $c->config->{max_offline_combat_count};
 
             if (Games::Dice::Advanced->roll('1d100') <= $c->config->{offline_combat_chance}) {
                 $self->execute_offline_battle( $party, $cg, 1 );

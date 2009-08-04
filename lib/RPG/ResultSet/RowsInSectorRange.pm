@@ -8,6 +8,8 @@ package RPG::ResultSet::RowsInSectorRange;
 use RPG::Map;
 use RPG::Exception;
 
+use DBIx::Class::ResultClass::HashRefInflator;
+
 use Data::Dumper;
 use Carp;
 
@@ -22,15 +24,20 @@ use Carp;
 # * criteria - (optional) hashref extra critiera to include in the search
 # * attrs - (optional) hashref extra attrs to include in the search
 sub find_in_range {
-    my $package             = shift;
-    my $resultset           = shift || confess "Resultset not supplied";
-    my $relationship        = shift || confess "Relationship not supplied";
-    my $base_point          = shift || confess "Base point not supplied";
-    my $search_range        = shift // confess "Search range not supplied";
-    my $increment_search_by = shift // confess "Increment search by not supplied";
-    my $max_range           = shift;
-    my $criteria = shift // {};
-    my $attrs = shift // {};
+    my $package = shift;
+
+    my %params = @_;
+    
+    my $resultset    = $params{resultset}    || confess "Resultset not supplied";
+    my $relationship = $params{relationship} || confess "Relationship not supplied";
+    my $base_point   = $params{base_point}   || confess "Base point not supplied";
+    my $search_range        = $params{search_range}        // confess "Search range not supplied";
+    my $increment_search_by = $params{increment_search_by} // confess "Increment search by not supplied";
+    my $max_range           = $params{max_range};
+    my $criteria            = $params{criteria}            // {};
+    my $attrs               = $params{attrs}               // {};
+    my $include_base_point  = $params{include_base_point}  // 0;
+    my $rows_as_hashrefs    = $params{rows_as_hashrefs}    // 0;
 
     my @rows_in_range;
 
@@ -40,33 +47,44 @@ sub find_in_range {
         # TOOD: should check this isn't already set
         $attrs->{prefetch} = $relationship unless $relationship eq 'me';
 
-        @rows_in_range = $resultset->search(
+        my %exclude_criteria;
+        unless ($include_base_point) {
+            %exclude_criteria = (
+                -nest => [
+                    $relationship . '.x' => { '!=', $base_point->{x} },
+                    $relationship . '.y' => { '!=', $base_point->{y} },
+                ],
+            );
+        }
+
+        my $rows_rs = $resultset->search(
             {
                 %$criteria,
-                $relationship . '.x' => { '>=', $start_point->{x}, '<=', $end_point->{x},},
+                $relationship . '.x' => { '>=', $start_point->{x}, '<=', $end_point->{x}, },
                 $relationship . '.y' => { '>=', $start_point->{y}, '<=', $end_point->{y}, },
-                -nest => [
-                    $relationship . '.x' => {'!=', $base_point->{x}},
-                    $relationship . '.y' => {'!=', $base_point->{y}},
-                ],
+                %exclude_criteria,
             },
-            {
-                %$attrs
-            },
+            {%$attrs},
         );
+        
+        if ($rows_as_hashrefs) {
+            $rows_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');   
+        }
+        
+        @rows_in_range = $rows_rs->all;
 
         last if $increment_search_by == 0;
 
         # Increase the search range (if we haven't found anything)
         $search_range += $increment_search_by;
-        
-        if (defined $max_range && ! @rows_in_range && $search_range >= $max_range) {
+
+        if ( defined $max_range && !@rows_in_range && $search_range >= $max_range ) {
             die RPG::Exception->new(
                 message => "Can't find any rows in the sector range",
                 type    => 'find_in_range_error',
             );
-        }        
-        
+        }
+
     }
 
     return @rows_in_range;

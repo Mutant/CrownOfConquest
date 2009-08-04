@@ -58,7 +58,50 @@ sub tax_cost {
         gold  => $gold_cost,
         turns => $turn_cost,
     };
+}
 
+sub has_road_to {
+    my $self = shift;
+    my $dest_town = shift;
+    
+    my $found_town = 0;
+    
+    return $self->_find_roads($self->location, $dest_town->location);
+}
+
+sub _find_roads {
+    my $self = shift;
+    my $start_sector = shift;
+    my $dest_sector = shift;
+    my $checked = shift || {};
+    
+    $checked->{$start_sector->id} = 1;
+        
+    my @surround_sectors = $self->result_source->schema->resultset('Land')->search_for_adjacent_sectors(
+        $start_sector->x,
+        $start_sector->y,
+        3,
+        3,        
+    );
+        
+    my @connected_sectors;
+    foreach my $sector (@surround_sectors) {
+        next if $checked->{$sector->id};
+            
+        if ($start_sector->has_road_joining_to($sector)) {            
+            if ($sector->id == $dest_sector->id) {
+                return 1;
+            }
+            
+            push @connected_sectors, $sector;   
+        }
+    }
+    
+    foreach my $connected_sector (@connected_sectors) {
+        return 1 if $self->_find_roads($connected_sector, $dest_sector, $checked);   
+    }
+    
+    return 0;
 }
 
 1;

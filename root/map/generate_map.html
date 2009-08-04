@@ -20,8 +20,8 @@ Prosperity: [% position.prosperity %]<br>
 [%
 	image_width = 96 / zoom_level
 	image_height = 80 / zoom_level
-	sector_width = image_width + 2;
-	sector_height = image_height + 2;
+	sector_width = image_width;
+	sector_height = image_height;
 	min_width = (sector_width + 3) * grid_size;
 	min_height = (sector_height + 2) * grid_size;
 %]
@@ -70,9 +70,10 @@ Prosperity: [% position.prosperity %]<br>
 					height: [% sector_height %]px;
 					float: left; 			
 					text-align: center;
-					display: inline;
-					border: 1px solid [% border_colour %];
+					display: inline;					
 					font-size: 1px;
+					position: relative;
+					border: 1px solid [% border_colour %];
 					[% IF position.town_id %]background: lightgrey;[% END %]
 					"
 					[% IF position.town_id %]id="town_[% position.town_id %]"[% END %]
@@ -85,9 +86,30 @@ Prosperity: [% position.prosperity %]<br>
 							title="[% sector_title(position) || collapse %]" 
 							width="[% image_width %]"
 							height="[% image_height %]"
+							style = "z-index: 100"
 						>
+
+						[% FOREACH road IN position.roads %]
+							[% IF road.position %]
+								<img src="[% c.config.static_path %][% image_path %]road/[% road.position | replace('\s+', '_') %].gif" style="
+									position: absolute;
+									top: 0px;
+									left: 0px;							
+								"
+								border = 0
+								width="[% image_width %]"
+								height="[% image_height %]">
+			
+							[% END %]
+						[% END %]
+
 					[% END %]
+					
+				
 					</span>
+					
+
+					
 			[% IF position.town_id %]
 				<div dojoType="dijit.Tooltip"
                    connectId="town_[% position.town_id %]"

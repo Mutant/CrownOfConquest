@@ -168,22 +168,22 @@ sub get_direction_to_point {
 	
 	my $x_diff  = $point2->{x} - $point1->{x};
 	my $y_diff	= $point2->{y} - $point1->{y};
-	
+		
 	return '' if $x_diff == 0 && $y_diff == 0;
 	
 	my ($x_dir, $y_dir);
 	
-	if ($x_diff < 1) {
+	if ($x_diff < 0) {
 		$x_dir = 'West';
 	}
-	elsif ($x_diff > 1) {
+	elsif ($x_diff > 0) {
 		$x_dir = 'East';	
 	}
 
-	if ($y_diff < 1) {
+	if ($y_diff < 0) {
 		$y_dir = 'North';
 	}
-	elsif ($y_diff > 1) {
+	elsif ($y_diff > 0) {
 		$y_dir = 'South';	
 	}
 	

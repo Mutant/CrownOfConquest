@@ -3,10 +3,12 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
-use Carp qw(cluck croak);
+use Data::Dumper;
+use Carp qw(cluck croak confess);
 
 use RPG::ResultSet::RowsInSectorRange;
 use Statistics::Basic qw(average);
+use RPG::Map;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Land');
@@ -76,6 +78,8 @@ __PACKAGE__->might_have( 'dungeon', 'RPG::Schema::Dungeon', { 'foreign.land_id' 
 
 __PACKAGE__->might_have( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => 'self.land_id' } );
 
+__PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
+
 sub next_to {
     my $self = shift;
     my $compare_to = shift || croak 'sector to compare to not supplied';
@@ -133,8 +137,13 @@ sub get_surrounding_ctr_average {
     my $self         = shift;
     my $search_range = shift;
 
-    my @land_rec =
-        RPG::ResultSet::RowsInSectorRange->find_in_range( $self->result_source->resultset, 'me', { x => $self->x, y => $self->y }, $search_range, 0 );
+    my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => $search_range,
+        increment_search_by => 0
+    );
 
     my @ctrs;
     foreach my $land_rec (@land_rec) {
@@ -152,14 +161,74 @@ sub get_adjacent_towns {
     my %attrs = ( 'prefetch' => 'town', );
 
     my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
-        $self->result_source->resultset,
-        'me', { x => $self->x, y => $self->y },
-        3, 0, undef, \%criteria, \%attrs
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => 3,
+        increment_search_by => 0,
+        criteria            => \%criteria,
+        attrs               => \%attrs,
     );
-    
+
     my @towns = map { $_->town } @land_rec;
 
     return @towns;
+}
+
+sub has_road_joining_to {
+    my $self = shift;
+    my $sector_to_check = shift;
+   
+    if (! $self->next_to($sector_to_check)) {
+        return 0;   
+    }
+    
+    my $source_connects = _road_connects_sectors($self, $sector_to_check);
+    my $dest_connects = _road_connects_sectors($sector_to_check, $self);
+    
+    return $source_connects && $dest_connects;
+}
+
+sub _road_connects_sectors {
+    my $source = shift;
+    my $dest = shift;
+   
+    # Due to the directions used in RPG::Map and road positions not matching up, we need this wonderful map
+    my %direction_map = (
+        'North' => 'top',
+        'South' => 'bottom',
+        'West' => 'left',
+        'East' => 'right',
+        'North West' => 'top left',
+        'North East' => 'top right',
+        'South West' => 'bottom left',
+        'South East' => 'bottom right',
+    );    
+    
+    my $connects;
+    
+    if ($source->town) {
+        $connects = 1;   
+    }
+    else {
+        my @roads = $source->roads;
+        my $direction = RPG::Map->get_direction_to_point(
+            {
+                x => $source->x,
+                y => $source->y,
+            },
+            {
+                x => $dest->x,
+                y => $dest->y,
+            },
+        );
+        
+        confess "Couldn't find direction between points" unless $direction;
+                
+        $connects = grep { $_->position eq $direction_map{$direction} } @roads;
+    }  
+    
+    return $connects;
 }
 
 1;

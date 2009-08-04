@@ -158,12 +158,30 @@ sub generate_grid : Private {
     );
 
     $c->stats->profile("Queried db for sectors");
+    
+    my @roads = $c->model('DBIC::Road')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        $x_size,
+    );
+    
+    
+    my $road_grid;
+    foreach my $road (@roads) {
+        push @{$road_grid->[ $road->{location}->{x} ][ $road->{location}->{y} ]}, $road;
+    }
+    
+    $c->stats->profile("Queried db for roads");
 
     my @grid;
 
     my $movement_factor = $c->stash->{party}->movement_factor;
 
     foreach my $location (@$locations) {
+        $location->{roads} = $road_grid->[ $location->{x} ][ $location->{y} ];
+        
         $grid[ $location->{x} ][ $location->{y} ] = $location;
 
         $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );

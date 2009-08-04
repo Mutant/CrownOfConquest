@@ -31,11 +31,11 @@ sub get_x_y_range {
 }
 
 sub search_for_adjacent_sectors {
-    my $self = shift;
-    my $x    = shift;
-    my $y    = shift;
-    my $search_range = shift;
-    my $max_range = shift;
+    my $self                  = shift;
+    my $x                     = shift;
+    my $y                     = shift;
+    my $search_range          = shift;
+    my $max_range             = shift;
     my $exclude_cgs_and_towns = shift // 0;
 
     my %params;
@@ -43,21 +43,21 @@ sub search_for_adjacent_sectors {
     if ($exclude_cgs_and_towns) {
         $params{'creature_group.creature_group_id'} = undef;
         $params{'town.town_id'}                     = undef;
-        $attrs{join} = ['creature_group','town'];
-    }    
-    
+        $attrs{join} = [ 'creature_group', 'town' ];
+    }
+
     return RPG::ResultSet::RowsInSectorRange->find_in_range(
-        $self,
-        'me',
-        {
+        resultset    => $self,
+        relationship => 'me',
+        base_point   => {
             x => $x,
             y => $y,
         },
-        $search_range,
-        1,
-        $max_range,
-        \%params,
-        \%attrs,
+        search_range        => $search_range,
+        increment_search_by => 1,
+        max_range           => $max_range,
+        criteria            => \%params,
+        attrs               => \%attrs,
     );
 }
 
@@ -73,7 +73,7 @@ sub get_party_grid {
     my $sql = <<SQL;
 SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre, 
 	terrain.terrain_id, terrain.terrain_name, terrain.image, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
-	mapped_sector.party_id, mapped_sector.date_stored, town.town_id, town.town_name, town.prosperity 
+	mapped_sector.party_id, mapped_sector.date_stored, town.town_id, town.town_name, town.prosperity
 	
 	FROM Land me  
 	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id ) 

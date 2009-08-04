@@ -162,4 +162,67 @@ sub test_get_adjacent_towns_one_nearby : Tests(12) {
     }
 }
 
+sub test_has_road_joining_to_not_adjacent : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+
+    # WHEN
+    my $result = $land[0]->has_road_joining_to($land[8]);
+    
+    # THEN
+    is($result, 0, "Roads do not join sectors");
+    
+}
+
+sub test_has_road_joining_to_roads_join : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    $self->{schema}->resultset('Road')->create(
+        {
+            position => 'bottom right',  
+            land_id => $land[0]->id,
+        },
+    );
+
+    $self->{schema}->resultset('Road')->create(
+        {
+            position => 'top left',  
+            land_id => $land[4]->id,
+        },
+    );
+
+    # WHEN
+    my $result = $land[0]->has_road_joining_to($land[4]);
+    
+    # THEN
+    is($result, 1, "Roads join sectors");
+    
+}
+
+sub test_has_road_joining_to_only_one_joins : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    $self->{schema}->resultset('Road')->create(
+        {
+            position => 'bottom right',  
+            land_id => $land[0]->id,
+        },
+    );
+
+    # WHEN
+    my $result = $land[0]->has_road_joining_to($land[4]);
+    
+    # THEN
+    is($result, 0, "Roads don't join sectors");
+    
+}
+
 1;

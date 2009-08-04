@@ -191,7 +191,7 @@ sub _change_prosperity_as_needed {
                 }
 
                 my $town_to_change = $self->_select_town_from_category( $from_category, @$towns );
-                my $modifier = $category > $from_category ? 3 : -3;
+                my $modifier = $category > $from_category ? 4 : -4;
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
 
@@ -226,7 +226,7 @@ sub _change_prosperity_as_needed {
                 }
 
                 my $town_to_change = $self->_select_town_from_category( $category, @$towns );
-                my $modifier = $category > $to_category ? -3 : 3;
+                my $modifier = $category > $to_category ? -4 : 4;
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
 

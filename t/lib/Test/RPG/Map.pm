@@ -114,4 +114,84 @@ sub test_surrounds_by_range : Tests(6) {
     }
 }
 
+sub test_get_direction_to_point : Tests {
+    my $self = shift;
+    
+    # GIVEN
+    my @tests = (
+        {
+            point1 => {
+                x => 1,
+                y => 1,
+            },
+            point2 => {
+                x => 2,
+                y => 1,
+            },
+            expected_result => 'East',
+        },
+        {
+            point1 => {
+                x => 2,
+                y => 1,
+            },
+            point2 => {
+                x => 1,
+                y => 1,
+            },
+            expected_result => 'West',
+        },        
+        {
+            point1 => {
+                x => 1,
+                y => 1,
+            },
+            point2 => {
+                x => 2,
+                y => 2,
+            },
+            expected_result => 'South East',
+        },
+        {
+            point1 => {
+                x => 1,
+                y => 1,
+            },
+            point2 => {
+                x => 10,
+                y => 10,
+            },
+            expected_result => 'South East',
+        },       
+        {
+            point1 => {
+                x => 8,
+                y => 1,
+            },
+            point2 => {
+                x => 10,
+                y => 10,
+            },
+            expected_result => 'South',
+        },          
+                  
+    );   
+    
+    # WHEN
+    my @results;
+    foreach my $test_data (@tests) {
+        push @results, RPG::Map->get_direction_to_point(
+            $test_data->{point1},
+            $test_data->{point2},
+        );
+    } 
+    
+    # THEN
+    my $count = 0;
+    foreach my $test_data (@tests) {
+        is($results[$count], $test_data->{expected_result}, "Expected result returned");
+        $count++;   
+    }
+}
+
 1;

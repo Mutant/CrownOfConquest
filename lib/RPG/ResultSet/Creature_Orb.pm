@@ -14,8 +14,14 @@ sub find_in_range {
     my $increment_search_by = shift;
     my $max_range           = shift;
 
-    return RPG::ResultSet::RowsInSectorRange->find_in_range( $self, 'land', $base_point, $search_range, $increment_search_by, $max_range )
-        ;
+    return RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self,
+        relationship        => 'land',
+        base_point          => $base_point,
+        search_range        => $search_range,
+        increment_search_by => $increment_search_by,
+        max_range           => $max_range
+    );
 }
 
 1;

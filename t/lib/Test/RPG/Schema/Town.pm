@@ -11,6 +11,7 @@ use Test::More;
 
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Town;
+use Test::RPG::Builder::Land;
 
 use RPG::Schema::Town;
 
@@ -58,6 +59,106 @@ sub test_tax_cost_with_prestige : Tests(2) {
     # THEN
     is($tax_cost->{gold}, 90, "Gold cost set correctly");
     is($tax_cost->{turns}, 9, "Turn cost set correctly");       
+}
+
+sub test_has_road_to_connected : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 5, 'y_size' => 5);
+    
+    my $town1 = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+    my $town2 = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[19]->id);
+    
+    $land[1]->add_to_roads(
+        {
+            position => 'top',
+        },
+    );
+    
+    $land[1]->add_to_roads(
+        {
+            position => 'bottom right',
+        },
+    );    
+   
+    $land[7]->add_to_roads(
+        {
+            position => 'top left',
+        },
+    );     
+    
+    $land[7]->add_to_roads(
+        {
+            position => 'bottom right',
+        },
+    );      
+   
+    $land[13]->add_to_roads(
+        {
+            position => 'top left',
+        },
+    );     
+    
+    $land[13]->add_to_roads(
+        {
+            position => 'bottom right',
+        },
+    );
+    
+    # WHEN
+    my $result = $town1->has_road_to($town2);
+    
+    # THEN
+    is($result, 1, "Towns are connected by roads");
+      
+}
+
+sub test_has_road_to_not_connected : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 5, 'y_size' => 5);
+    
+    my $town1 = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+    my $town2 = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[19]->id);
+    
+    $land[1]->add_to_roads(
+        {
+            position => 'top',
+        },
+    );
+    
+    $land[1]->add_to_roads(
+        {
+            position => 'bottom right',
+        },
+    );    
+   
+    $land[7]->add_to_roads(
+        {
+            position => 'top left',
+        },
+    );     
+    
+    $land[7]->add_to_roads(
+        {
+            position => 'bottom right',
+        },
+    );      
+   
+    $land[13]->add_to_roads(
+        {
+            position => 'top left',
+        },
+    );     
+    
+    # WHEN
+    my $result = $town1->has_road_to($town2);
+    
+    # THEN
+    is($result, 0, "Towns are not connected by roads");
+      
 }
 
 1;

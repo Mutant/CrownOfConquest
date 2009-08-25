@@ -158,7 +158,7 @@ sub generate_grid : Private {
     );
 
     $c->stats->profile("Queried db for sectors");
-    
+   
     my @roads = $c->model('DBIC::Road')->find_in_range(
         {
             x => $x_centre,
@@ -184,7 +184,12 @@ sub generate_grid : Private {
         
         $grid[ $location->{x} ][ $location->{y} ] = $location;
 
-        $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
+        if ($location->{next_to_centre}) {
+            $location->{party_movement_factor} = RPG::Schema::Land::movement_cost( $location, $movement_factor, $location->{modifier}, $c->stash->{party}->location );
+        }
+        else {
+            $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
+        }
 
         # Record sector to the party's map
         if ( $add_to_party_map && !$location->{mapped_sector_id} ) {
@@ -277,7 +282,7 @@ sub move_to : Local {
     }
 
     # Check that the party has enough movement points
-    elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor) ) {
+    elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location) ) {
         $c->stash->{error} = 'You do not have enough turns to move there';
     }
 

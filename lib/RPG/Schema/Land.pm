@@ -100,13 +100,27 @@ sub next_to {
 }
 
 sub movement_cost {
-    my $self = shift;
-
-    my $movement_factor = shift // croak 'movement factor not supplied';
+    my $self = shift // confess 'base sector not supplied';
+    my $movement_factor = shift // confess 'movement factor not supplied';            
     my $terrain_modifier = shift;
-    $terrain_modifier = $self->terrain->modifier unless defined $terrain_modifier;
+    my $from_sector = shift;
+    
+    if (! defined $terrain_modifier) {        
+        if (ref $self && $self->isa('RPG::Schema::Land')) {
+            $terrain_modifier = $self->terrain->modifier;
+        }
+        else {
+            confess 'terrain modifier not supplied';
+        }   
+    }
 
     my $cost = $terrain_modifier - $movement_factor;
+    
+    # If from sector is next to current one, factor roads into movement cost calculation
+    if ($from_sector && has_road_joining_to($from_sector, $self)) {
+        $cost -= 2;   
+    }
+    
     $cost = 1 if $cost < 1;
 
     return $cost;
@@ -177,9 +191,24 @@ sub get_adjacent_towns {
 
 sub has_road_joining_to {
     my $self = shift;
-    my $sector_to_check = shift;
+    my $sector_to_check = shift || confess "sector_to_check not supplied";
+    
+    #confess $self;
+    my ($source_x, $source_y) = ref $self eq 'HASH' ? ($self->{x}, $self->{y}) : ($self->x, $self->y);
+    my ($dest_x, $dest_y) = ref $sector_to_check eq 'HASH' ? ($sector_to_check->{x}, $sector_to_check->{y}) : ($sector_to_check->x, $sector_to_check->y);
    
-    if (! $self->next_to($sector_to_check)) {
+    my $secords_adjacent = RPG::Map->is_adjacent_to(
+        {
+            x => $source_x,
+            y => $source_y,
+        },
+        {
+            x => $dest_x,
+            y => $dest_y,
+        }
+    );        
+   
+    if (! $secords_adjacent) {   
         return 0;   
     }
     
@@ -207,25 +236,31 @@ sub _road_connects_sectors {
     
     my $connects;
     
-    if ($source->town) {
+    my $has_town = ref $source eq 'HASH' ? $source->{town_id} : $source->town;
+    if ($has_town) {
         $connects = 1;   
     }
-    else {
-        my @roads = $source->roads;
+    else {        
+        my @roads = ref $source eq 'HASH' ? (map {$_ && $_->{position}} @{$source->{roads}}) : (map {$_->position} $source->roads);
+        
+        my ($source_x, $source_y) = ref $source eq 'HASH' ? ($source->{x}, $source->{y}) : ($source->x, $source->y);
+        my ($dest_x, $dest_y) = ref $dest eq 'HASH' ? ($dest->{x}, $dest->{y}) : ($dest->x, $dest->y);
+        
+        
         my $direction = RPG::Map->get_direction_to_point(
             {
-                x => $source->x,
-                y => $source->y,
+                x => $source_x,
+                y => $source_y,
             },
             {
-                x => $dest->x,
-                y => $dest->y,
+                x => $dest_x,
+                y => $dest_y,
             },
         );
         
         confess "Couldn't find direction between points" unless $direction;
                 
-        $connects = grep { $_->position eq $direction_map{$direction} } @roads;
+        $connects = grep { $_ && $_ eq $direction_map{$direction} } @roads;
     }  
     
     return $connects;

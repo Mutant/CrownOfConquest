@@ -20,8 +20,8 @@ Prosperity: [% position.prosperity %]<br>
 [%
 	image_width = 96 / zoom_level
 	image_height = 80 / zoom_level
-	sector_width = image_width;
-	sector_height = image_height;
+	sector_width = image_width + 2;
+	sector_height = image_height + 2;
 	min_width = (sector_width + 3) * grid_size;
 	min_height = (sector_height + 2) * grid_size;
 %]
@@ -72,23 +72,29 @@ Prosperity: [% position.prosperity %]<br>
 					text-align: center;
 					display: inline;					
 					font-size: 1px;
-					position: relative;
-					border: 1px solid [% border_colour %];
+					position: relative;					
 					[% IF position.town_id %]background: lightgrey;[% END %]
 					"
 					[% IF position.town_id %]id="town_[% position.town_id %]"[% END %]
 										
 					>
 					[% IF position %]
+						<span style = "
+							border: 1px solid [% border_colour %]; 
+							width: [% sector_width %]px; 
+							height: [% sector_height %]px;
+							top: 0px;
+							left: 0px; 
+							position: absolute;">
 						<img 
 							src="[% c.config.static_path %][% image_path %][% position.image %]" 
 							border=0 
 							title="[% sector_title(position) || collapse %]" 
 							width="[% image_width %]"
-							height="[% image_height %]"
-							style = "z-index: 100"
+							height="[% image_height %]"							
 						>
-
+						</span>
+					
 						[% FOREACH road IN position.roads %]
 							[% IF road.position %]
 								<img src="[% c.config.static_path %][% image_path %]road/[% road.position | replace('\s+', '_') %].gif" style="
@@ -97,8 +103,12 @@ Prosperity: [% position.prosperity %]<br>
 									left: 0px;							
 								"
 								border = 0
-								width="[% image_width %]"
-								height="[% image_height %]">
+								width="[% sector_width %]"
+								height="[% sector_height %]"
+								[% IF loop.last %]
+									title="[% sector_title(position) || collapse %]"
+								[% END %]
+								>
 			
 							[% END %]
 						[% END %]

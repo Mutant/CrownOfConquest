@@ -208,7 +208,7 @@ sub after_land_move {
     my $self = shift;
     my $land = shift;
 
-    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor ) );
+    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
 }
 
 # Record turns used whenever number of turns are decreased

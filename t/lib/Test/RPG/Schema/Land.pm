@@ -91,6 +91,7 @@ sub test_movement_cost : Tests(5) {
         $mock_terrain->set_always( 'modifier', $test->{modifier} );
 
         my $mock_sector = Test::MockObject->new;
+        $mock_sector->set_isa('RPG::Schema::Land');
         $mock_sector->set_always( 'terrain', $mock_terrain );
 
         is( RPG::Schema::Land::movement_cost( $mock_sector, $test->{movement_cost} ), $test->{result}, "movement_cost: " . $test->{desc} );
@@ -98,6 +99,81 @@ sub test_movement_cost : Tests(5) {
         is( RPG::Schema::Land::movement_cost( 'package', $test->{movement_cost}, $test->{modifier} ),
             $test->{result}, "movement_cost (as class method): " . $test->{desc} );
     }
+}
+
+sub test_movement_cost_with_roads_with_hashes : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $source_land = {
+        x => 1,
+        y => 1,
+        roads => ['bottom right'],   
+    };
+    
+    my $dest_land = {
+        x => 2,
+        y => 2,
+        roads => ['top left'],   
+    };
+    
+=comment
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $terrain = $self->{schema}->resultset('Terrain')->create(
+        {
+            terrain_name => 'test1',
+            modifier => 8,
+        },
+    );
+    
+    $land[0]->terrain_id($terrain->id);
+    $land[0]->update;
+    
+    $self->{schema}->resultset('Road')->create(
+        {
+            position => 'bottom right',  
+            land_id => $land[0]->id,
+        },
+    );
+=cut
+    
+    # WHEN
+    my $movement_cost = RPG::Schema::Land::movement_cost($source_land, 6, 8, $dest_land);
+    
+    # THEN
+    is($movement_cost, 2, "Movement cost calculated correctly");
+       
+}
+
+sub test_movement_cost_with_roads_objects : Tests(1) {
+    my $self = shift;
+
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $terrain = $self->{schema}->resultset('Terrain')->create(
+        {
+            terrain_name => 'test1',
+            modifier => 8,
+        },
+    );
+    
+    $land[0]->terrain_id($terrain->id);
+    $land[0]->update;
+    
+    $self->{schema}->resultset('Road')->create(
+        {
+            position => 'bottom right',  
+            land_id => $land[0]->id,
+        },
+    );
+    
+    # WHEN
+    my $movement_cost = $land[0]->movement_cost(5, undef, $land[4]);
+    
+    # THEN
+    is($movement_cost, 3, "Movement cost calculated correctly");
+       
 }
 
 sub test_available_creature_group : Tests(1) {

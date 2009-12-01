@@ -7,9 +7,9 @@ use Data::Dumper;
 use Math::Round qw(round);
 
 has 'schema'        => ( isa => 'RPG::Schema', is => 'ro', required  => 1 );
-has 'max_x'         => ( isa => 'Int',         is => 'rw', init_args => undef );
-has 'max_y'         => ( isa => 'Int',         is => 'rw', init_args => undef );
-has 'total_sectors' => ( isa => 'Int',         is => 'rw', init_args => undef );
+has 'max_x'         => ( isa => 'Int',         is => 'rw', init_arg => undef );
+has 'max_y'         => ( isa => 'Int',         is => 'rw', init_arg => undef );
+has 'total_sectors' => ( isa => 'Int',         is => 'rw', init_arg => undef );
 
 sub get_land_at_location {
     my $self = shift;

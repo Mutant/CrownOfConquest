@@ -159,14 +159,15 @@ sub generate_grid : Private {
 
     $c->stats->profile("Queried db for sectors");
    
+    #$c->log->debug("X center: $x_centre; Y Centre: $y_centre");
+   
     my @roads = $c->model('DBIC::Road')->find_in_range(
         {
             x => $x_centre,
             y => $y_centre,
         },
         $x_size,
-    );
-    
+    );    
     
     my $road_grid;
     foreach my $road (@roads) {
@@ -185,7 +186,7 @@ sub generate_grid : Private {
         $grid[ $location->{x} ][ $location->{y} ] = $location;
 
         if ($location->{next_to_centre}) {
-            $location->{party_movement_factor} = RPG::Schema::Land::movement_cost( $location, $movement_factor, $location->{modifier}, $c->stash->{party}->location );
+            $location->{party_movement_factor} = RPG::Schema::Land::movement_cost( $location, $movement_factor, $location->{modifier}, $c->stash->{party_location} );
         }
         else {
             $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
@@ -292,11 +293,14 @@ sub move_to : Local {
     }
 
     else {
+        #$c->log->debug("Before p move_to: " . $c->stash->{party}->land_id);
+        
         $c->stash->{party}->move_to($new_land);
 
         $c->stash->{party}->update;
 
         # Fetch from the DB, since it may have changed recently
+        #$c->log->debug("After p move_to: " . $c->stash->{party}->land_id);
         $c->stash->{party_location} = $c->model('DBIC::Land')->find( { land_id => $c->stash->{party}->land_id, } );
 
         $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
@@ -324,6 +328,8 @@ sub move_to : Local {
         }
 
     }
+    
+    #$c->log->debug("ploc x: " . $c->stash->{party_location}->x . ", ploc y: " . $c->stash->{party_location}->y);
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }

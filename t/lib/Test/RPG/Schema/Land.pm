@@ -108,13 +108,13 @@ sub test_movement_cost_with_roads_with_hashes : Tests(1) {
     my $source_land = {
         x => 1,
         y => 1,
-        roads => ['bottom right'],   
+        roads => [{position => 'bottom right'}],   
     };
     
     my $dest_land = {
         x => 2,
         y => 2,
-        roads => ['top left'],   
+        roads => [{position => 'top left'}],   
     };
     
 =comment
@@ -139,7 +139,7 @@ sub test_movement_cost_with_roads_with_hashes : Tests(1) {
 =cut
     
     # WHEN
-    my $movement_cost = RPG::Schema::Land::movement_cost($source_land, 6, 8, $dest_land);
+    my $movement_cost = RPG::Schema::Land::movement_cost($source_land, 4, 8, $dest_land);
     
     # THEN
     is($movement_cost, 2, "Movement cost calculated correctly");

@@ -71,6 +71,10 @@ sub aa_setup_context : Test(setup) {
 	$self->{c}->set_always('log',$self->{mock_logger});
 	
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $self->{template_args} = \@_ };
+    
+    $self->{mock_stats} = Test::MockObject->new();
+    $self->{mock_stats}->set_true('profile');
+    $self->{c}->set_always('stats',$self->{mock_stats});
 	
 	
 		

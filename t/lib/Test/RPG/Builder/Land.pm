@@ -8,7 +8,7 @@ sub build_land {
     my $schema = shift;
     my %params = @_;
 
-    my $terrain = $schema->resultset('Terrain')->create( { terrain_name => 'terrain', } );
+    my $terrain = $schema->resultset('Terrain')->create( { terrain_name => 'terrain', modifier => 5} );
 
     my @land;
     for my $x ( 1 .. ($params{x_size} || 3) ) {

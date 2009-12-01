@@ -20,7 +20,7 @@ my %direction_map = (
     'South East' => { y => 1,  x => 1 },
 );
 
-my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", { AutoCommit => 1 }, );
+my $schema = RPG::Schema->connect( "dbi:mysql:game2", "root", "root", { AutoCommit => 1 }, );
 
 my @towns = $schema->resultset('Town')->search(
     { 'me.prosperity' => { '>=', 30 }, },

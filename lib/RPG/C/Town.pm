@@ -36,6 +36,7 @@ sub main : Local {
                     town              => $town,
                     day_logs          => $c->stash->{day_logs},
                     party_messages    => $c->stash->{party_messages},
+                    messages          => $c->stash->{messages},
                     parties_in_sector => $parties_in_sector,
                     prestige          => $party_town->prestige,
                     allowed_discount  => $town->discount_type && $party_town->prestige >= $town->discount_threshold ? 1 : 0,

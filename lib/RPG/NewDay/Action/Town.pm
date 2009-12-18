@@ -63,11 +63,19 @@ sub calculate_prosperity {
 
     my $ctr_diff = $global_avg_ctr - $ctr_avg;
     $ctr_diff = 0 if $ctr_diff < 0;
+    
+    my $tax_collected = 0;
+    my $raids_today = 0;
+    
+    if ($party_town_rec) {
+    	$tax_collected = $party_town_rec->get_column('tax_collected');
+    	$raids_today = $party_town_rec->get_column('raids_today');
+    }
 
     my $prosp_change =
-        ( ( $party_town_rec->get_column('tax_collected') || 0 ) / 10 ) +
+        ( ( $tax_collected || 0 ) / 10 ) +
         ( $ctr_diff / 20 ) -
-        ( ( $party_town_rec->get_column('raids_today') || 0 ) / 4 );
+        ( ( $raids_today || 0 ) / 4 );
 
     $prosp_change = $context->config->{max_prosp_change} if $prosp_change > $context->config->{max_prosp_change};
 
@@ -117,7 +125,12 @@ sub scale_prosperity {
 
     $self->context->logger->info( "Changes required: " . Dumper \%changes_needed );
 
-    $self->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );
+	eval {
+    	$self->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );
+	};
+	if ($@) {
+		$self->context->logger->error("Error updating town's prosperity; $@");
+	}
 
 }
 

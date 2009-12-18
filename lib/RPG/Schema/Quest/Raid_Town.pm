@@ -75,7 +75,7 @@ sub set_quest_params {
 
     $self->gold_value($gold_value);
     $self->xp_value( $self->{_config}{xp_per_distance} * $distance );
-    $self->min_level( $self->{_config}{min_level} );
+    $self->min_level( RPG::Schema->config->{minimum_raid_level} );
 
     my $days_to_complete = $distance;
     $days_to_complete += Games::Dice::Advanced->roll('1d4') - 2;

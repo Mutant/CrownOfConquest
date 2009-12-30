@@ -183,18 +183,18 @@ sub test_change_prosperity_as_needed : Tests(14) {
     is( $towns[0]->prosperity,  1,   "Prosperity unchanged" );
     is( $towns[1]->prosperity,  5,   "Prosperity unchanged" );
     is( $towns[2]->prosperity,  10,  "Prosperity unchanged" );
-    is( $towns[3]->prosperity,  27,  "Prosperity reduced" );
-    is( $towns[4]->prosperity,  43,  "Prosperity increased" );
+    is( $towns[3]->prosperity,  26,  "Prosperity reduced" );
+    is( $towns[4]->prosperity,  44,  "Prosperity increased" );
     is( $towns[5]->prosperity,  55,  "Prosperity unchanged" );
     is( $towns[6]->prosperity,  66,  "Prosperity unchanged" );
     is( $towns[7]->prosperity,  77,  "Prosperity unchanged" );
-    is( $towns[8]->prosperity,  85,  "Prosperity reduced" );
+    is( $towns[8]->prosperity,  84,  "Prosperity reduced" );
     is( $towns[9]->prosperity,  90,  "Prosperity unchanged" );
     is( $towns[10]->prosperity, 100, "Prosperity unchanged" );
     
-    is($prosp_changes->{$towns[3]->id}{prosp_change}, -2, "Prosp change recorded");
-    is($prosp_changes->{$towns[4]->id}{prosp_change}, 3, "Prosp change recorded");
-    is($prosp_changes->{$towns[8]->id}{prosp_change}, -5, "Prosp change recorded");
+    is($prosp_changes->{$towns[3]->id}{prosp_change}, -3, "Prosp change recorded");
+    is($prosp_changes->{$towns[4]->id}{prosp_change}, 4, "Prosp change recorded");
+    is($prosp_changes->{$towns[8]->id}{prosp_change}, -6, "Prosp change recorded");
 }
 
 sub test_calculate_changes_needed : Tests(10) {
@@ -335,7 +335,7 @@ sub test_set_discount : Test(3) {
     $town->discard_changes;
     is(grep({$_ eq $town->discount_type} ('sage','healer','blacksmith')), 1, "Discount type set correctly");
     is($town->discount_value, 30, "Discount value set correctly");
-    is($town->discount_threshold, 10, "Discount threshold set correectly");
+    is($town->discount_threshold, 75, "Discount threshold set correectly");
 }
 
 sub test_set_discount_doesnt_use_blacksmith_type_if_no_blacksmith : Test(3) {
@@ -361,7 +361,7 @@ sub test_set_discount_doesnt_use_blacksmith_type_if_no_blacksmith : Test(3) {
     $town->discard_changes;
     is($town->discount_type, 'healer', "Discount type set correctly");
     is($town->discount_value, 30, "Discount value set correctly");
-    is($town->discount_threshold, 10, "Discount threshold set correectly");
+    is($town->discount_threshold, 75, "Discount threshold set correectly");
 }
 
 1;

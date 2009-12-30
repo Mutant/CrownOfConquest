@@ -1,0 +1,37 @@
+<h2>Kingdoms Daily Report for "[% party.name %]", Game Day [% yesterday.day_number %]</h2>
+
+<h3>Battles</h3>
+
+[% IF offline_combat_count == 0 %]
+<p>You were not involved in any battles.</p>
+[% ELSE %]
+<table>
+	<tr>
+		<th>Opponent</th>
+		<th>Outcome</th>
+	</tr>
+	[% FOREACH battle IN combat_logs %]
+	<tr>
+		<td>
+			[% party_num = battle.party_opponent_number(party) %]
+			[% opp_num = party_num == 1 ? 2 : 1 %]
+		
+			[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+		</td>
+		<td>
+			[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
+				Won
+			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
+				Lost
+			[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
+			    We Fled
+			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
+				They Fled
+			[% END %]
+		</td>
+	</tr>
+	[% END %]
+</table>
+[% END %]
+
+[% INCLUDE player/email/email_footer.txt %]

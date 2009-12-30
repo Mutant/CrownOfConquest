@@ -34,6 +34,8 @@ sub complete_battles {
         },
         { prefetch => [ { 'creatures' => 'type' }, 'in_combat_with' ], },
     );
+    
+    $c->logger->info(scalar @cgs . " CGs with battles to complete");
 
     foreach my $cg (@cgs) {
         unless ( $cg->in_combat_with->is_online ) {
@@ -58,6 +60,10 @@ sub initiate_battles {
         },
     );
       
+	$c->logger->info(scalar @cgs . " CGs in sectors with active parties");
+	
+	my $combat_count = 0;
+      
     CG: foreach my $cg (@cgs) {
         my @parties = $cg->location->parties;
         
@@ -70,11 +76,15 @@ sub initiate_battles {
 
             if (Games::Dice::Advanced->roll('1d100') <= $c->config->{offline_combat_chance}) {
                 $self->execute_offline_battle( $party, $cg, 1 );
+                $combat_count++;                
                 
                 next CG;
             }   
         }
     }
+    
+    
+    $c->logger->info($combat_count . " battles executed");
 }
 
 sub execute_offline_battle {

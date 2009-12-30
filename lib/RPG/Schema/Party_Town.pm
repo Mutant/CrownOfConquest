@@ -20,11 +20,11 @@ sub prestige {
     
     return $self->_prestige unless defined $new_prestige;
     
-    if ($new_prestige > 30) {
-        $new_prestige = 30;
+    if ($new_prestige > 100) {
+        $new_prestige = 100;
     }
-    if ($new_prestige < -30) {
-        $new_prestige = -30;   
+    if ($new_prestige < -100) {
+        $new_prestige = -100;   
     }
     
     $self->_prestige($new_prestige);

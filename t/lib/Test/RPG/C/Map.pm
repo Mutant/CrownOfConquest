@@ -79,7 +79,7 @@ sub test_move_to_successful_move : Tests(4) {
 
 	# THEN
 	$party->discard_changes;
-	is( $party->turns,   99,           "Turns reduced" );
+	is( $party->turns,   95,           "Turns reduced" );
 	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
 
 	$land[0]->discard_changes;
@@ -117,7 +117,7 @@ sub test_move_to_successful_town_entrance : Tests(4) {
 
 	# THEN
 	$party->discard_changes;
-	is( $party->turns,   99,           "Turns reduced" );
+	is( $party->turns,   95,           "Turns reduced" );
 	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
 
 	$land[0]->discard_changes;
@@ -211,6 +211,7 @@ sub test_generated_grid_has_correct_movement_costs : Tests(2) {
 	$party->set_always('location', $land[4]);
 	
 	$self->{stash}{party} = $party;
+	$self->{stash}{party_location} = $land[4];
 	
 	# WHEN
 	my $result = RPG::C::Map->generate_grid($self->{c}, 3, 3, 2, 2, 1);

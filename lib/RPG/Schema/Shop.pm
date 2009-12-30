@@ -119,8 +119,8 @@ sub grouped_items_in_shop {
 		},
 		{
 			prefetch => {'item_type' => 'category'},
-			+select => [ {'count' => '*'}, 'me.item_id', 'item_type.item_type_id' ],
-			+as => [ 'number_of_items', 'item_id', 'item_type_id' ],
+			'+select' => [ {'count' => '*'} ],
+			'+as' => [ 'number_of_items' ],
 			group_by => 'item_type',
 			order_by => 'item_category',
 		},

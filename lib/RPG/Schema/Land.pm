@@ -130,7 +130,7 @@ sub movement_cost {
 sub available_creature_group {
     my $self = shift;
 
-    my $creature_group = $self->find_related(
+    my $creature_group = $self->search_related(
         'creature_group',
         { 'in_combat_with.party_id' => undef, },
         {
@@ -138,7 +138,7 @@ sub available_creature_group {
             join     => 'in_combat_with',
             order_by => 'type.creature_type, group_order',
         },
-    );
+    )->first;
 
     return unless $creature_group;
 
@@ -193,10 +193,9 @@ sub has_road_joining_to {
     my $self = shift;
     my $sector_to_check = shift || confess "sector_to_check not supplied";
     
-    #confess $self;
     my ($source_x, $source_y) = ref $self eq 'HASH' ? ($self->{x}, $self->{y}) : ($self->x, $self->y);
     my ($dest_x, $dest_y) = ref $sector_to_check eq 'HASH' ? ($sector_to_check->{x}, $sector_to_check->{y}) : ($sector_to_check->x, $sector_to_check->y);
-   
+
     my $secords_adjacent = RPG::Map->is_adjacent_to(
         {
             x => $source_x,

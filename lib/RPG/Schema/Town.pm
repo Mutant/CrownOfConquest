@@ -45,7 +45,7 @@ sub tax_cost {
 
     my $multiplier = 1 + ( RPG::Schema->config->{tax_level_modifier} * ( $party->level - 1 ) );
     
-    my $prestige_modifier = (0-$prestige) / 15;
+    my $prestige_modifier = (0-$prestige) / 40;
 
     my $gold_cost = round $base_cost * ($multiplier + $prestige_modifier); 
     $gold_cost = 1 if $gold_cost < 1;

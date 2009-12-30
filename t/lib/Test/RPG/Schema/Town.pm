@@ -57,8 +57,8 @@ sub test_tax_cost_with_prestige : Tests(2) {
     my $tax_cost = $town->tax_cost($party);
     
     # THEN
-    is($tax_cost->{gold}, 90, "Gold cost set correctly");
-    is($tax_cost->{turns}, 9, "Turn cost set correctly");       
+    is($tax_cost->{gold}, 102, "Gold cost set correctly");
+    is($tax_cost->{turns}, 10, "Turn cost set correctly");       
 }
 
 sub test_has_road_to_connected : Tests(1) {

@@ -28,7 +28,7 @@ sub test_set_quest_params : Tests(8) {
     $self->{config}{quest_type_vars}{raid_town}{initial_search_range} = 3;
     $self->{config}{quest_type_vars}{raid_town}{xp_per_distance}      = 1;
     $self->{config}{quest_type_vars}{raid_town}{gold_per_distance}    = 1;
-    $self->{config}{quest_type_vars}{raid_town}{min_level}            = 6;
+    $self->{config}{minimum_raid_level}                               = 6;
 
     $self->mock_dice;
     $self->{rolls} = [ 50, 2 ];

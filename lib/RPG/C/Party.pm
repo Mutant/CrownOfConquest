@@ -550,7 +550,7 @@ sub destroy_orb : Local {
     $c->stash->{party_location}->discard_changes;
 
     unless ( $orb->can_destroy( $party->level ) ) {
-        $c->stash->{messages} = "It's not good - you're just not powerful enough to destroy this Orb of " . $orb->name;
+        $c->stash->{messages} = "It's no good - you're just not powerful enough to destroy the Orb of " . $orb->name;
         $c->forward( '/panel/refresh', ['messages'] );
         return;
     }

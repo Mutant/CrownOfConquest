@@ -353,7 +353,7 @@ sub set_discount {
         if ( $chance_for_discount <= $discount_roll ) {
             my $discount_type      = ( shuffle @available_discount_types )[0];
             my $discount_value     = ( Games::Dice::Advanced->roll( '1d' . $discount_steps ) - 1 ) * 5 + $c->config->{min_discount_value};
-            my $discount_threshold = Games::Dice::Advanced->roll('1d4') * 5 + 5;
+            my $discount_threshold = Games::Dice::Advanced->roll('1d5') * 5 + 70;
 
             $town->discount_type($discount_type);
             $town->discount_value($discount_value);

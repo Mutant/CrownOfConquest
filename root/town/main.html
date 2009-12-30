@@ -1,25 +1,25 @@
 Welcome to the Town of [% town.town_name %]! (Prosperity: [% town.prosperity %])
 <br><br>
 Your prestige here: 	
-    [% IF prestige < -25 %]
+    [% IF prestige < -90 %]
 		you're about to be lynched.
-	[% ELSIF prestige < -20 %]
+	[% ELSIF prestige < -80 %]
 		awful.
-	[% ELSIF prestige < -15 %]
+	[% ELSIF prestige < -60 %]
 		very poor.
-	[% ELSIF prestige < -10 %]
+	[% ELSIF prestige < -40 %]
 		poor.
-	[% ELSIF prestige < -5 %]
+	[% ELSIF prestige < -20 %]
 		below average.
-	[% ELSIF prestige < 5 %]
-		neutral.
-	[% ELSIF prestige < 10 %]
-		above average.
-	[% ELSIF prestige < 15 %]
-		good.
 	[% ELSIF prestige < 20 %]
+		neutral.
+	[% ELSIF prestige < 40 %]
+		above average.
+	[% ELSIF prestige < 60 %]
+		good.
+	[% ELSIF prestige < 80 %]
 		very good.
-	[% ELSIF prestige < 25 %]
+	[% ELSIF prestige < 90 %]
 		exceptional.
 	[% ELSE %]
 		the mayor wants to marry you.

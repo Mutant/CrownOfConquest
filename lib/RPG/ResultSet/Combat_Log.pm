@@ -29,11 +29,14 @@ sub get_logs_around_sector {
 sub get_offline_log_count {
     my $self  = shift;
     my $party = shift;
+    my $date_range_start = shift;
+    
+    $date_range_start = $party->last_action unless $date_range_start;
 
     return $self->search(
         {
             $self->_party_criteria($party),
-            encounter_ended => { '>', $party->last_action },
+            encounter_ended => { '>', $date_range_start },
         },
     )->count;
 }
@@ -42,6 +45,8 @@ sub get_recent_logs_for_party {
     my $self  = shift;
     my $party = shift;
     my $logs_count = shift;
+    
+    return if $logs_count <= 0;
     
     return $self->search(
         {

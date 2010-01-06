@@ -194,12 +194,30 @@ sub generate_grid : Private {
 
         # Record sector to the party's map
         if ( $add_to_party_map && !$location->{mapped_sector_id} ) {
-            $c->model('DBIC::Mapped_Sectors')->create(
-                {
-                    party_id => $c->stash->{party}->id,
-                    land_id  => $location->{land_id},
-                },
-            );
+        	# Only record if they're within the 'viewing range'
+        	my $distance = RPG::Map->get_distance_between_points(
+        		{
+        			x => $x_centre,
+        			y => $y_centre,
+        		},
+        		{
+        			x => $location->{x},
+        			y => $location->{y},
+        		},
+        	);
+        	
+        	if ($distance <= $c->config->{party_viewing_range}) {
+	            $c->model('DBIC::Mapped_Sectors')->create(
+	                {
+	                    party_id => $c->stash->{party}->id,
+	                    land_id  => $location->{land_id},
+	                },
+	            );
+        	}
+        	else {
+        		# Remove it from the grid, as they haven't got it in their map, and it's too far away to see it
+        		$grid[ $location->{x} ][ $location->{y} ] = "";
+        	}
         }
         elsif ( !$add_to_party_map && !$location->{mapped_sector_id} ) {
             $grid[ $location->{x} ][ $location->{y} ] = "";

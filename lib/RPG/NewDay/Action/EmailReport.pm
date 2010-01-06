@@ -15,9 +15,14 @@ sub run {
             created => {'!=',undef},
             defunct => undef,
             'player.deleted' => 0,
+            'player.send_daily_report' => 1,
         },
         { 
-        	prefetch => ['characters', 'player'], 
+        	prefetch => [
+        		'characters', 
+        		'player', 
+        		{'location' => 'town'}
+        	], 
         }
     );
     
@@ -27,6 +32,16 @@ sub run {
 			
 		my @combat_logs = 
 			$context->schema->resultset('Combat_Log')->get_recent_logs_for_party($party, $offline_combat_count);
+			
+		my @quests = $context->schema->resultset('Quest')->search(
+			{
+				party_id => $party->id,
+				status => 'In Progress',
+			},
+			{
+				prefetch => 'town',
+			}
+		);
 
         my $message = RPG::Template->process(
             $context->config,
@@ -37,19 +52,20 @@ sub run {
                 offline_combat_count => $offline_combat_count,
                 combat_logs => \@combat_logs,
                 c => $context,
+                quests => \@quests,
+                in_town => $party->location->town ? 1 : 0,
             }
         );
         
-        warn $message;
-
         my $msg = MIME::Lite->new(
             From    => $context->config->{send_email_from},
             To      => $party->player->email,
             Subject => 'Kingdoms - Daily Report',
             Data    => $message,
+            Type    => 'text/html',
         );
-        #$msg->send( 'smtp', $context->config->{smtp_server}, Debug => 0, );
-    }    
+        $msg->send( 'smtp', $context->config->{smtp_server}, Debug => 0, );
+    }
 }
 
 1;

@@ -1,7 +1,16 @@
+<h3>Party Options</h3>
+
 <form method="POST" action="[% base %]/party/update_options">
-	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"><br>
+	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"> 
 	<input type="submit" value="Save Settings" name="save">	
 </form>
 
 <button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/change_password'">Change Password</button>
 <button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband'">Disband Party</button>
+
+<h3>Email Options</h3>
+
+<form method="POST" action="[% base %]/party/update_email_options">
+	Send a "Daily Report" about your party: <input type="checkbox" name="send_daily_report" value="1"> 
+	<input type="submit" value="Save Settings" name="save">	
+</form>

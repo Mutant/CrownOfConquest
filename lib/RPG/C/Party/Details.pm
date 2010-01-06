@@ -94,7 +94,10 @@ sub options : Local {
         [
             {
                 template     => 'party/details/options.html',
-                params       => { flee_threshold => $c->stash->{party}->flee_threshold, },
+                params       => { 
+                	flee_threshold => $c->stash->{party}->flee_threshold,
+                	send_daily_report => $c->stash->{party}->player->send_daily_report, 
+                },
                 fill_in_form => 1,
             }
         ]

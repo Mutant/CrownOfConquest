@@ -621,6 +621,19 @@ sub update_options : Local {
     $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
 }
 
+sub update_email_options : Local {
+    my ( $self, $c ) = @_;
+
+    if ( $c->req->param('save') ) {
+    	my $player = $c->stash->{party}->player;
+        $player->send_daily_report($c->req->param('send_daily_report') ? 1 : 0);
+        $player->update;
+        $c->flash->{messages} = 'Changes Saved';
+    }
+
+    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
+}
+
 sub zoom : Private {
     my ( $self, $c ) = @_;
     

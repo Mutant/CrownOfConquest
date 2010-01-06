@@ -1,4 +1,15 @@
-<h2>Kingdoms Daily Report for "[% party.name %]", Game Day [% yesterday.day_number %]</h2>
+<h2>Kingdoms Daily Report for "[% party.name %]", Game Day [% c.yesterday.day_number %]</h2>
+
+Current Turns: [% party.turns %]
+[% IF party.turns == c.config.maximum_turns %]
+   (<b>Note</b>: You're at the maximum number of turns allowed. Use some today to avoid losing turns!)
+[% END %]<br>
+Location: [% party.location.x %], [% party.location.y %]
+[% IF in_town %]
+    (In the town of [% party.location.town.town_name %])
+[% ELSE %]
+	(<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
+[% END %]<br>
 
 <h3>Battles</h3>
 
@@ -34,4 +45,29 @@
 </table>
 [% END %]
 
+<h3>Quests</h3>
+
+[% IF quests.0 %]
+[% PROCESS quest/description.html %]
+<table cellspacing="3">
+	<tr>
+		<th>Quest</th>
+		<th>Town</th>
+		<th>Days Left</th>
+	</tr>
+	[% FOREACH quest IN quests %]
+	<tr>
+		<td>[% short_description(quest) %]</td>
+		<td>[% quest.town.town_name %]</td>
+		<td>[% quest.days_to_complete %]</td>
+	</tr>
+	[% END %]
+</table>
+[% ELSE %]
+You don't current have any active quests.
+[% END %]
+<br><br>
+Note, you can disable this email by logging into Kingdoms, clicking on "Party", going to the "Options" tab, and un-checking the 
+"Send a Daily Report" option.  
+<br><br>
 [% INCLUDE player/email/email_footer.txt %]

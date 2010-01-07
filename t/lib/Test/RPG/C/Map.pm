@@ -213,6 +213,8 @@ sub test_generated_grid_has_correct_movement_costs : Tests(2) {
 	$self->{stash}{party} = $party;
 	$self->{stash}{party_location} = $land[4];
 	
+	$self->{config}{party_viewing_range} = 3;
+	
 	# WHEN
 	my $result = RPG::C::Map->generate_grid($self->{c}, 3, 3, 2, 2, 1);
 	

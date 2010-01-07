@@ -71,7 +71,6 @@ sub process_effects {
     my @character_effects = $self->schema->resultset('Character_Effect')->search(
         {
             character_id    => [ map { $_->id } $self->party->characters ],
-            'effect.combat' => 1,
         },
         { prefetch => 'effect', },
     );

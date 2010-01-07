@@ -21,7 +21,7 @@ sub get_party_grid {
         },
         {
             join     => 'mapped_dungeon_grid',
-            prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' } ],
+            prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' }, 'treasure_chest' ],
         }        
     );
     

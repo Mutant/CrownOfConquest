@@ -78,59 +78,18 @@ sub cast {
 
 sub create_effect {
     my ( $self, $params ) = @_;
-
-    my ( $relationship_name, $search_field, $joining_table );
-
-    if ( $params->{target}->is_character ) {
-        $search_field      = 'character_id';
-        $relationship_name = 'character_effect';
-        $joining_table     = 'Character_Effect';
-    }
-    else {
-        $search_field      = 'creature_id';
-        $relationship_name = 'creature_effect';
-        $joining_table     = 'Creature_Effect';
-    }
-    
-    $self->_create_effect($search_field, $relationship_name, $joining_table, $params);
-}
-
-sub _create_effect {
-    my $self = shift;
-    my ($search_field, $relationship_name, $joining_table, $params) = @_;
     
     my $schema = $self->result_source->schema;
-
-    my $effect = $schema->resultset('Effect')->find_or_new(
-        {
-            "$relationship_name.$search_field" => $params->{target}->id,
-            effect_name                        => $params->{effect_name},
-        },
-        { join => $relationship_name, }
-    );
-
-    unless ( $effect->in_storage ) {
-        $effect->insert;
-        $schema->resultset($joining_table)->create(
-            {
-                $search_field => $params->{target}->id,
-                effect_id     => $effect->id,
-            }
-        );
-    }
-
-    $effect->time_left( ( $effect->time_left || 0 ) + $params->{duration} );
-    $effect->modifier( $params->{modifier} );
-    $effect->modified_stat( $params->{modified_state} );
-    $effect->combat( $params->{combat} );
-    $effect->time_type( $params->{time_type} );
-    $effect->update;   
+    
+    $schema->resultset('Effect')->create_effect($params);
 }
 
 sub create_party_effect {
     my ( $self, $params ) = @_;
 
-    $self->_create_effect('party_id', 'party_effect', "Party_Effect", $params);
+    my $schema = $self->result_source->schema;
+    
+    $schema->resultset('Effect')->create_party_effect($params);
 }
 
 1;

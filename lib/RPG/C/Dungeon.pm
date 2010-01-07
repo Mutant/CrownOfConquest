@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
+use feature "switch";
+
 use Data::Dumper;
 use Carp;
 use List::Util qw(shuffle);
@@ -278,7 +280,17 @@ sub sector_menu : Local {
 
     my $current_location =
         $c->model('DBIC::Dungeon_Grid')
-        ->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => { 'doors' => 'position' }, } );
+        ->find( 
+        	{ 
+        		dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, 
+        	}, 
+        	{ 
+        		prefetch => [
+        			{'doors' => 'position'},
+        			'treasure_chest',
+        		],        		
+       		} 
+       	);
 
     my $creature_group = $current_location->available_creature_group;
 
@@ -480,5 +492,180 @@ sub store_allowed_move_hashes : Private {
 
     $c->flash->{allowed_move_hashes} = $allowed_hashes;
 }
+
+sub open_chest : Local {
+    my ( $self, $c ) = @_;
+
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
+    	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, },
+    	{
+    		prefetch => {'treasure_chest' => 'items'},
+    	},
+    );
+
+    croak "No chest here" unless $current_location->treasure_chest;
+    
+    if ($current_location->treasure_chest->trap) {
+    	$c->detach('handle_chest_trap', [$current_location]);
+    }
+
+	my @items = $current_location->treasure_chest->items;
+	
+	my @characters = $c->stash->{party}->characters;
+	
+	my @items_found;
+	
+	foreach my $item (@items) {
+        my $finder;
+        foreach my $character ( shuffle @characters ) {
+            unless ( $character->is_dead ) {
+                $finder = $character;
+                last;
+            }
+        }		
+        
+        $item->add_to_characters_inventory($finder);
+        
+        push @items_found, {
+        	character => $finder,
+        	item => $item,
+        };
+	}
+	
+    my $message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'dungeon/open_chest.html',
+                params   => {
+                    items_found => \@items_found,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+
+    $c->stash->{messages} = $message;
+
+    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
+    $c->stash->{party}->update;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub handle_chest_trap : Private {
+	my ( $self, $c, $current_location ) = @_;
+	
+	my $avg_div = $c->stash->{party}->average_stat('divinity');
+	unless ($c->session->{detected_trap}[$current_location->x][$current_location->y] || 
+		Games::Dice::Advanced->roll('1d30') <= $avg_div) {
+		# Failed to detect trap
+		$c->detach('trigger_trap', [$current_location]);
+	}
+	
+	$c->stash->{dialog_to_display} = 'chest-trap';
+	
+	$c->session->{detected_trap}[$current_location->x][$current_location->y] = 1;
+	
+	$c->forward( '/panel/refresh', [ 'messages' ] );	
+}
+
+sub disarm_trap : Local {
+	my ( $self, $c ) = @_;
+	
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
+    	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, },
+    	{
+    		prefetch => {'treasure_chest' => 'items'},
+    	},
+    );
+
+    croak "No chest here" unless $current_location->treasure_chest;
+    
+    unless ($current_location->treasure_chest->trap) {
+    	# Could have been someone else disarming it?
+    	$c->stash->{messages} = "The trap seems to have disappeared on it's own";	
+    	$c->detach( '/panel/refresh', [ 'messages' ] );
+    }
+    
+    my $avg_int = $c->stash->{party}->average_stat('intelligence');
+	if (Games::Dice::Advanced->roll('1d30') <= $avg_int) {
+		$current_location->treasure_chest->trap(undef);
+		$current_location->treasure_chest->update;
+		
+    	$c->stash->{messages} = "Trap disarmed!";	
+    	$c->detach( '/panel/refresh', [ 'messages' ] );
+	}
+	else {
+		$c->forward('trigger_trap', [$current_location]);
+	}	
+}
+
+sub trigger_trap : Private {
+	my ( $self, $c, $current_location ) = @_;
+
+	my $chest = $current_location->treasure_chest;
+	
+	my $dungeon = $current_location->dungeon_room->dungeon;
+	
+	my $target = (shuffle(grep { ! $_->is_dead } $c->stash->{party}->characters))[0];
+	my $trap_variable;
+	
+	given($chest->trap) {
+		when ("Curse") {
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$c->model('DBIC::Effect')->create_effect({
+				effect_name => 'Cursed',
+				target => $target,
+				duration => $trap_variable,
+				modifier => -8 * $dungeon->level,
+				combat => 0,
+				modified_state => 'attack_factor',					
+			});	
+		}
+		
+		when ("Hypnotise") {
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$c->model('DBIC::Effect')->create_effect({
+				effect_name => 'Hypnotised',
+				target => $target,
+				duration => $trap_variable,
+				modifier => -4,
+				combat => 0,
+				modified_state => 'attack_frequency',					
+			});	
+		}	
+		
+		when ("Detonate") {
+			$trap_variable = Games::Dice::Advanced->roll('2d4') * $dungeon->level;
+			$target->hit($trap_variable);
+		}				
+	}
+	
+    my $message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'dungeon/trigger_chest_trap.html',
+                params   => {
+                    target => $target,
+                    trap => $chest->trap,
+                    trap_variable => $trap_variable,
+                    
+                },
+                return_output => 1,
+            }
+        ]
+    );
+
+    $c->stash->{messages} = $message;	
+	
+	$current_location->treasure_chest->trap(undef);
+	$current_location->treasure_chest->update;
+	
+    $c->detach( '/panel/refresh', [ 'messages', 'party' ] );
+		
+}
+ 
 
 1;

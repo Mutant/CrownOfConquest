@@ -28,6 +28,10 @@ sub refresh : Private {
 	if ($c->stash->{error}) {
 		$response{error} = $c->stash->{error};
 	}
+	
+	if ($c->stash->{dialog_to_display}) {
+		$response{displayDialog} = $c->stash->{dialog_to_display};
+	}	
 
 	foreach my $panel (@panels_to_refresh) {
 		unless (ref $panel eq 'ARRAY') {

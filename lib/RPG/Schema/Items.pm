@@ -78,6 +78,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => '11'
     },
+    'treasure_chest_id' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => undef,
+        'is_foreign_key'    => 0,
+        'name'              => 'treasure_chest_id',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },
 
 );
 __PACKAGE__->set_primary_key('item_id');
@@ -320,6 +329,7 @@ sub add_to_characters_inventory {
 
     $self->character_id( $character->id );
     $self->shop_id(undef);
+    $self->treasure_chest_id(undef);
 
     my $category = $self->item_type->category;
 

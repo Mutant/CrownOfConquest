@@ -26,6 +26,9 @@ sub run {
     my $c = $self->context;
 
     my $dungeons_rs = $c->schema->resultset('Dungeon')->search();
+    
+    # Fill empty dungeon chests
+    $self->fill_empty_chests();
 
     my $land_rs = $c->schema->resultset('Land')->search(
         {},
@@ -77,6 +80,7 @@ sub run {
         );
 
         $self->_generate_dungeon_grid( $dungeon, \%positions );
+        $self->generate_treasure_chests( $dungeon ); 
     }
 }
 
@@ -639,6 +643,118 @@ sub reconfigure_doors {
         }
 
     }
+}
+
+my @TRAPS = qw/Curse Hypnotise Detonate/;
+
+sub generate_treasure_chests {
+	my $self = shift;
+	my $dungeon = shift;
+	
+	my @rooms = $dungeon->rooms;    
+	
+	foreach my $room (@rooms) {
+		my $chest_roll = Games::Dice::Advanced->roll('1d100');
+		if ($chest_roll <= 20) {
+			# Create a chest in this room
+			my @sectors = $room->sectors;
+			
+			# Choose a sector
+			my $sector_to_use;
+			foreach my $sector (shuffle @sectors) {
+				unless ($sector->has_door) {
+					$sector_to_use = $sector;
+					last;
+				}
+			}
+			
+			# Couldn't find a sector to use... skip this room
+			next unless $sector_to_use;
+			
+			my $chest = $self->context->schema->resultset('Treasure_Chest')->create(
+				{
+					dungeon_grid_id => $sector_to_use->id,
+				}
+			);
+			
+			$self->fill_chest($chest);
+		}
+	}
+}
+
+my %item_types_by_prevalence;
+sub fill_chest {
+	my $self = shift;
+	my $chest = shift;
+	
+	my $dungeon = $chest->dungeon_grid->dungeon_room->dungeon;
+	
+	unless (%item_types_by_prevalence) {
+		my @item_types = $self->context->schema->resultset('Item_Type')->search(
+	        {
+	            'category.hidden'           => 0,
+	        },
+	        {
+	            prefetch => { 'item_variable_params' => 'item_variable_name' },
+	            join     => 'category',
+	        },
+	    );
+	
+	    map { push @{ $item_types_by_prevalence{ $_->prevalence } }, $_ } @item_types;
+	}
+	
+	my $number_of_items = RPG::Maths->weighted_random_number(1..5);
+				
+	for (1..$number_of_items) {
+		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
+		$max_prevalence = 100 if $max_prevalence > 100;		
+
+        my $item_type;
+        while ( !defined $item_type ) {
+            last if $max_prevalence > 100;
+        	
+    	    my @items = map { $_ <= $max_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
+			$item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
+			
+			$max_prevalence++;
+		}
+                
+	    # We couldn't find a suitable item. Try again
+	    next unless $item_type;
+	            
+		my $item = $self->context->schema->resultset('Items')->create(
+			{
+				item_type_id      => $item_type->id,
+			    treasure_chest_id => $chest->id,
+			}
+	    );
+	}
+	
+	# Add a trap
+	if (Games::Dice::Advanced->roll('1d100') <= 20) {
+		my $trap = (shuffle @TRAPS)[0];
+		$chest->trap($trap);
+		$chest->update;
+	}
+	else {
+		$chest->trap(undef);
+		$chest->update;
+	}
+	
+}
+
+sub fill_empty_chests {
+	my $self = shift;
+	
+	my @chests = $self->context->resultset('Treasure_Chest')->all;
+	
+	foreach my $chest (@chests) {
+		unless ($chest->items) {
+			if (Games::Dice::Advanced->roll('1d100') <= 50) {
+				$self->fill_chest($chest);
+			} 	
+		}	
+	}	
 }
 
 1;

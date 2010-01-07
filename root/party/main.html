@@ -27,13 +27,17 @@ function getPanels(url) {
 				dojo.byId('error-message').innerHTML = responseObject.error;
 	    		dijit.byId('error').show();
 	    		dijit.byId('messages-pane').setContent(originalContent);
-			}		
+			}
 			
 			refreshPanels(responseObject);
 			
 			dungeonScroll();
 			
-			displayPopupMessages();			
+			displayPopupMessages();	
+			
+			if (responseObject.displayDialog) {
+	    		dijit.byId(responseObject.displayDialog).show();
+			}		
 		},
         
         error: function(err) {
@@ -202,6 +206,10 @@ function findDungeon(dialogFields) {
 	getPanels("/town/sage/find_dungeon?find_level=" + dialogFields.find_level);
 }
 
+function disarmTrap(dialogFields) {
+	getPanels("/dungeon/disarm_trap");
+}
+
 function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {
 	if (confirmAttack == 1) {
 		dojo.byId('creature-group-id').value = creatureGroupId;
@@ -340,6 +348,15 @@ function unblockDoor(action) {
 		<button dojoType=dijit.form.Button onclick="unblockDoor('pick')">Pick Lock</button>
     	<button dojoType=dijit.form.Button onclick="unblockDoor('break')">Break Seals</button>
 		<button dojoType=dijit.form.Button onClick="dijit.byId('unblock-door-diag').hide()">Ignore</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="chest-trap" style="display: none" title="Trap Detected" execute="disarmTrap(arguments[0]);">
+    You detect a trap on this chest. Do you want to atttempt to disarm it, or leave the chest alone?
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">Disarm Trap</button>
+		<button dojoType=dijit.form.Button onClick="dijit.byId('chest-trap').hide()">Ignore Chest</button>
 	</div>
 </div>
 

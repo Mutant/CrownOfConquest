@@ -6,6 +6,8 @@ use warnings;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Effect');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Effect');
+
 __PACKAGE__->add_columns(qw/effect_id effect_name time_left modifier modified_stat combat time_type/);
 
 __PACKAGE__->set_primary_key('effect_id');

@@ -88,6 +88,8 @@
 								dojoType="dijit.Tooltip" 
 								connectId="p_[% x _ y %]"
 								label="[% INCLUDE party/summary.html party=parties.$x.$y %]"></div>
+						[% ELSIF sector.treasure_chest %]
+							<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
 						[% ELSIF can_move_to_sector %]
 						    .
 						[% END %]

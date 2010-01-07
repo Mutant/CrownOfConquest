@@ -32,6 +32,8 @@ __PACKAGE__->might_have( 'creature_group', 'RPG::Schema::CreatureGroup', { 'fore
 
 __PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
 sub sides_with_walls {
     my $self = shift;
 
@@ -85,8 +87,13 @@ sub sides_with_doors {
 sub has_door {
     my $self      = shift;
     my $door_side = shift;
-
-    return grep { $door_side eq $_ } $self->sides_with_doors;
+    
+    if ($door_side) {
+    	return grep { $door_side eq $_ } $self->sides_with_doors;
+    }
+    else {
+    	return $self->sides_with_doors ? 1 : 0;
+    }
 }
 
 sub has_passable_door {

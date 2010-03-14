@@ -28,6 +28,7 @@ my %QUEST_TYPE_TO_CLASS_MAP = (
     msg_to_town              => 'RPG::Schema::Quest::Msg_To_Town',
     destroy_orb              => 'RPG::Schema::Quest::Destroy_Orb',
     raid_town                => 'RPG::Schema::Quest::Raid_Town',
+    find_dungeon_item        => 'RPG::Schema::Quest::Find_Dungeon_Item',
 );
 
 # Inflate the result as a class based on quest type
@@ -43,7 +44,7 @@ sub inflate_result {
 
 sub insert {
     my ( $self, @args ) = @_;
-
+	
     my $ret = $self->next::method(@args);
 
     $ret->_bless_into_type_class;
@@ -57,6 +58,8 @@ sub _bless_into_type_class {
     my $self = shift;
 
     my $class = $QUEST_TYPE_TO_CLASS_MAP{ $self->type->quest_type };
+    
+    croak "Class not found for quest type: " . $self->type->quest_type unless $class;
 
     $self->ensure_class_loaded($class);
     bless $self, $class;
@@ -162,5 +165,8 @@ sub interested_actions_by_quest_type {
     
     return %actions_by_quest_type;
 }
+
+# Called when the quest is completed (i.e. town hall)
+sub finish_quest {}
 
 1;

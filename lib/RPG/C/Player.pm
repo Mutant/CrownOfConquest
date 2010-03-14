@@ -426,4 +426,52 @@ sub vote : Local {
     $c->forward( 'RPG::V::TT', [ { template => 'player/vote.html', } ] );
 }
 
+sub delete_account : Local {
+	my ( $self, $c ) = @_;
+	
+	$c->session->{delete_account_conf_displayed} = 1;
+	
+    $c->forward( 'RPG::V::TT', [ { template => 'player/delete_account.html', } ] );	
+}
+
+sub delete_account_confirmed : Local {
+	my ( $self, $c ) = @_;
+
+	unless ($c->session->{delete_account_conf_displayed}) {
+		$c->error("Account deletion not confirmed");
+		return;	
+	}
+	
+	$c->session->{party_level} = $c->stash->{party}->level;
+	$c->session->{turns_used} = $c->stash->{party}->turns;
+	
+	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
+	$player->delete;
+	delete $c->session->{player};
+	
+    $c->forward( 'RPG::V::TT', [ { template => 'player/survey.html', } ] );	
+}
+
+sub survey : Local {
+	my ( $self, $c ) = @_;
+	
+	my $reason = join ',', $c->req->param('reason');
+	$reason .= ','.$c->req->param('reason_other');
+	
+	my $survey_resp = $c->model('Survey_Response')->create(
+		{
+			reason => $reason,
+			favourite => $c->req->param('favourite'),
+			least_favourite => $c->req->param('least_favourite'),
+			feedback => $c->req->param('feedback'),
+			email => $c->req->param('email'),
+			party_level => $c->session->{party_level},
+			turns_used => $c->session->{turns_used},
+		}
+	);
+	
+	$c->forward( 'RPG::V::TT', [ { template => 'player/survey_thanks.html', } ] );
+	
+}
+
 1;

@@ -13,7 +13,7 @@ has 'party_2'                 => ( is => 'rw', isa => 'RPG::Schema::Party',     
 has 'party_1_flee_attempt'    => ( is => 'ro', isa => 'Bool',                      default  => 0 );
 has 'party_2_flee_attempt'    => ( is => 'ro', isa => 'Bool',                      default  => 0 );
 has 'battle_record'           => ( is => 'ro', isa => 'RPG::Schema::Party_Battle', required => 1 );
-has 'initiated_by_opp_number' => ( is => 'ro', isa => 'Maybe[Int]' );
+has 'initiated_by_opp_number' => ( is => 'ro', isa => 'Maybe[Int]', default => 0 );
 
 sub combatants {
     my $self = shift;
@@ -115,7 +115,7 @@ sub _award_xp_for_characters_killed {
         }
     }
 
-    my $xp;
+    my $xp = 0;
 
     foreach my $character ( @characters_killed ) {
         # Generate random modifier between 0.6 and 1.5

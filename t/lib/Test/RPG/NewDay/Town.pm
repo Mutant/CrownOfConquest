@@ -72,7 +72,7 @@ sub test_calculate_prosperity : Tests {
     my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
 
     # WHEN
-    $town_action->calculate_prosperity($town);
+    $town_action->calculate_prosperity($town, 0);
 
     # THEN
     $town->discard_changes;

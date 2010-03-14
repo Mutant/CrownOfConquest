@@ -25,6 +25,12 @@ sub build_character {
             level => $params{level} || 1,
             gender => $params{gender} || 'male',
             xp => $params{xp} || 0,
+            strength => 10,
+            constitution => 10,
+            agility => 10,
+            intelligence => 10,
+            divinity => 10,
+            stat_points => 0,
         }
     );
         

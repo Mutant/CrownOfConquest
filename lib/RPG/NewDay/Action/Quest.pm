@@ -111,7 +111,7 @@ sub update_days_left {
                     party_id => $quest->party_id,
                 },
             );
-            $party_town->prestige( $party_town->prestige - 3 );
+            $party_town->prestige( ($party_town->prestige || 0) - 3 );
             $party_town->update;
         }
 

@@ -550,7 +550,7 @@ sub distribute_xp {
     my ( $self, $xp, $char_ids ) = @_;
 
     my %awarded_xp;
-
+	$xp //= 0;
     # Everyone gets 10% to start with
     my $min_xp = int $xp * 0.10;
     @awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
@@ -733,7 +733,8 @@ sub DEMOLISH {
 
     if ( $self->session ) {
         my $session = freeze $self->session;
-
+use Carp qw(cluck);
+#cluck 'demolish';
         $self->combat_log->session($session);
     }
 

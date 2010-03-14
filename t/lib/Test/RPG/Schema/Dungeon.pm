@@ -12,7 +12,14 @@ use Test::MockObject;
 
 use Data::Dumper;
 
-use RPG::Schema::Dungeon;
+sub startup : Test(startup => 1) {
+	my $self = shift;
+	
+    $self->{mock_rpg_schema} = Test::MockObject->new();
+    $self->{mock_rpg_schema}->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, );	
+	
+	use_ok 'RPG::Schema::Dungeon';
+}
 
 sub test_party_can_enter_instance : Test(3) {
     my $self = shift;
@@ -21,6 +28,8 @@ sub test_party_can_enter_instance : Test(3) {
     my $mock_party = Test::MockObject->new();
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_isa('RPG::Schema::Dungeon');
+    
+    $self->{config}{dungeon_entrance_level_step} = 5;
     
     my %tests = (
         low_level_party_allowed_to_enter_level_1_dungeon => {
@@ -60,6 +69,8 @@ sub test_party_can_enter_class : Test(1) {
     # GIVEN
     my $mock_party = Test::MockObject->new();
     $mock_party->set_always('level',10);
+    
+    $self->{config}{dungeon_entrance_level_step} = 5;
     
     # WHEN
     my $result = RPG::Schema::Dungeon->party_can_enter(4, $mock_party);

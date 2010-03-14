@@ -16,7 +16,7 @@ __PACKAGE__->load_classes(qw/
     Quest Quest_Param Quest_Param_Name Quest_Type Character_History Grave Creature_Orb Party_Messages
     Dungeon Dungeon_Grid Dungeon_Wall Dungeon_Position Door Dungeon_Room Mapped_Dungeon_Grid Session
     Item_Property_Category Party_Town Party_Battle Battle_Participant Party_Effect Town_History Road
-    Treasure_Chest
+    Treasure_Chest Survey_Response
 /);
 
 my $config;

@@ -51,6 +51,7 @@ sub test_sell : Tests(5) {
     $self->{stash}{party}          = $party;
     $self->{stash}{party_location} = $town->location;
     $self->{stash}{today}          = $day;
+    $self->{config}{url_root}      = '';
 
     RPG::C::Town::Recruitment->sell( $self->{c} );
 

@@ -202,7 +202,7 @@ sub check_for_item_found {
     my ( $characters, $avg_creature_level ) = @_;
 
     # See if party find an item
-    if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * $self->config->{chance_to_find_item} ) {
+    if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * ($self->config->{chance_to_find_item} || 0) ) {
         my $min_prevalence = 100 - ($avg_creature_level * $self->config->{prevalence_per_creature_level_to_find});
 
         # Get item_types within the prevalance roll

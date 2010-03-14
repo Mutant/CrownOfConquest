@@ -20,7 +20,7 @@ after 'finish' => sub {
             }
         );
         
-        $party_town_recs->prestige($party_town_recs->prestige+1);
+        $party_town_recs->prestige(($party_town_recs->prestige || 0 )+1);
         $party_town_recs->update;
     }
     

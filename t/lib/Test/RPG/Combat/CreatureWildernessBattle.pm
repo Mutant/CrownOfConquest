@@ -437,6 +437,7 @@ sub test_check_for_flee_successful_flee : Tests(10) {
     $combat_log->set_true('encounter_ended');
     $combat_log->set_true('update');
     $combat_log->set_true('xp_awarded');
+    $combat_log->set_true('session');
 
     my $land = Test::MockObject->new();
     $land->set_always( 'id', 1 );

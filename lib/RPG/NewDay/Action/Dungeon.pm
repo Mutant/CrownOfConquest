@@ -746,7 +746,7 @@ sub fill_chest {
 sub fill_empty_chests {
 	my $self = shift;
 	
-	my @chests = $self->context->resultset('Treasure_Chest')->all;
+	my @chests = $self->context->schema->resultset('Treasure_Chest')->all;
 	
 	foreach my $chest (@chests) {
 		unless ($chest->items) {

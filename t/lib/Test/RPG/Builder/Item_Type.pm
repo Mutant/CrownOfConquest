@@ -19,7 +19,7 @@ sub build_item_type {
 
     my $item_type = $schema->resultset('Item_Type')->find_or_create(
         {
-            item_type        => 'Test1',
+            item_type        => $params{item_type} || 'Test1',
             item_category_id => $item_cat->id,
             prevalence => $params{prevalence} || 10,
         }

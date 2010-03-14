@@ -16,21 +16,29 @@ sub build_item {
             super_category_id => $super_cat->id,
         }
     );
+	
+	my $item_type_id = $params{item_type_id} || '';
 
-    my $item_type = $schema->resultset('Item_Type')->find_or_create(
-        {
-            item_type        => 'Test1',
-            item_category_id => $item_cat->id,
-        }
-    );
+	unless ($item_type_id) {
+	    my $item_type = $schema->resultset('Item_Type')->find_or_create(
+	        {
+	            item_type        => 'Test1',
+	            item_category_id => $item_cat->id,
+	        }
+	    );
+	    
+	    $item_type_id = $item_type->id;
+	}
 
     my $eq_place = $schema->resultset('Equip_Places')->find(1);
 
     my $item = $schema->resultset('Items')->create(
         {
-            item_type_id   => $item_type->id,
+            item_type_id   => $item_type_id,
             character_id   => $params{char_id} || undef,
+            treasure_chest_id => $params{treasure_chest_id} || undef,
             equip_place_id => $eq_place->id,
+            name => $params{name} || '',
         }
     );
 
@@ -63,7 +71,7 @@ sub build_item {
         $schema->resultset('Item_Attribute')->create(
             {
                 item_attribute_name_id => $ian->id,
-                item_type_id           => $item_type->id,
+                item_type_id           => $item_type_id,
                 item_attribute_value   => $attribute->{item_attribute_value},
             }
         );

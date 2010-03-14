@@ -189,7 +189,9 @@ sub movement_factor {
 
     my $avg_con = $self->average_stat('constitution');
 
-    return int $avg_con / 4;
+	my $base_mf = int $avg_con / 4; 
+
+    return $base_mf;
 }
 
 sub level {
@@ -458,6 +460,16 @@ sub prestige_for_town {
     );
     
     return $party_town ? $party_town->prestige : 0;    
+}
+
+sub has_overencumbered_character {
+	my $self = shift;
+	
+	my @characters = $self->characters;
+		
+	my $over_encumbered_characters = grep { $_->is_overencumbered } @characters;
+	
+	return $over_encumbered_characters;	
 }
 
 1;

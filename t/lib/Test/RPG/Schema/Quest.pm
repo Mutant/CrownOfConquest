@@ -43,6 +43,8 @@ sub setup_data : Tests(setup) {
 				min_cgs_to_kill => 2,
 				max_cgs_to_kill => 2,
 				range => 3,
+				gold_per_cg => 1,
+				xp_per_cg => 1,
 			},			
 		},
 	};		

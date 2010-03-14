@@ -121,6 +121,8 @@ sub check_action : Private {
 sub complete_quest : Private {
     my ( $self, $c, $party_quest ) = @_;
 
+	$party_quest->finish_quest;
+
     $party_quest->status('Complete');
     $party_quest->update;
 

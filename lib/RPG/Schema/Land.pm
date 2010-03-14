@@ -111,7 +111,7 @@ sub movement_cost {
         }
         else {
             confess 'terrain modifier not supplied';
-        }   
+        }
     }
 
     my $cost = $terrain_modifier - $movement_factor;

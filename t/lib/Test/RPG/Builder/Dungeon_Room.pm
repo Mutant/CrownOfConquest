@@ -10,7 +10,9 @@ sub build_dungeon_room {
     my $schema = shift;
     my %params = @_;
     
-    my $room = $schema->resultset('Dungeon_Room')->create({});
+    my $room = $schema->resultset('Dungeon_Room')->create({
+    	dungeon_id => $params{dungeon_id} || 1,
+    });
     
     if ($params{top_left} && $params{bottom_right}) {
         for my $x ($params{top_left}{x} .. $params{bottom_right}{x}) {

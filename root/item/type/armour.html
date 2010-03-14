@@ -1,4 +1,4 @@
-<b>[% item_type.item_type %][% IF item %] (ID: [% item.id %])[% END %]</b><br>
+[% INCLUDE item/tooltip_header.html %]
 
 [% FOREACH attribute IN item_type.category.item_attribute_names %]
 	[% IF item && attribute.item_attribute_name == "Defence Factor" && item.variable("Defence Factor Upgrade") %]

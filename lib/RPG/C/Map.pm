@@ -309,8 +309,13 @@ sub move_to : Local {
     elsif ( $new_land->town && !$c->stash->{entered_town} ) {
         croak 'Invalid town entrance';
     }
+    
+    # Can't move if a character is overencumbered
+    elsif ( $c->stash->{party}->has_overencumbered_character ) {
+    	$c->stash->{error} = "One or more characters is carrying two much equipment. Your party cannot move"; 
+	}
 
-    else {
+    else {   	
         #$c->log->debug("Before p move_to: " . $c->stash->{party}->land_id);
         
         $c->stash->{party}->move_to($new_land);

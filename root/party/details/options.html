@@ -5,12 +5,29 @@
 	<input type="submit" value="Save Settings" name="save">	
 </form>
 
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/change_password'">Change Password</button>
 <button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband'">Disband Party</button>
+
+<br>
 
 <h3>Email Options</h3>
 
 <form method="POST" action="[% base %]/party/update_email_options">
-	Send a "Daily Report" about your party: <input type="checkbox" name="send_daily_report" value="1"> 
-	<input type="submit" value="Save Settings" name="save">	
+<table>
+	<tr>
+		<td>Send a "Daily Report" about your party:</td>
+		<td><input type="checkbox" name="send_daily_report" value="1"></td> 
+	</tr>	
+	<tr>
+		<td>Send email announcements about Kingdoms:</td>
+		<td><input type="checkbox" name="send_email_announcements" value="1"></td> 
+	</tr>
+</table>
+<input type="submit" value="Save Settings" name="save">
 </form>
+
+<br>
+
+<h3>Account Options</h3>
+
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/change_password'">Change Password</button><br>
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/delete_account'">Delete Account</button>

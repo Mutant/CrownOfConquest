@@ -38,7 +38,7 @@ sub set_quest_params {
     	},
     );
     
-    # No jewels in range, so create some
+    # No jewels in range, so create some (if possible)
     if ($jewel_rs->count == 0) {
     	$self->_create_jewels_in_range($town, $town_location, $jewel_type_to_use);
     }
@@ -121,6 +121,7 @@ sub _find_jewel_type_to_use {
 	return $jewel_to_use;		   
 }
 
+# Try to create jewels in range of the town. If it's not possible, we simply return (i.e. the quest still gets created)
 sub _create_jewels_in_range {
 	my $self = shift;
 	my $town = shift;
@@ -135,6 +136,8 @@ sub _create_jewels_in_range {
    		$self->{_config}{search_range},
    		2,
    	);
+   	
+   	#warn scalar @towns_in_range . " towns in range";
     	
    	my $town_to_create_in;
    	TOWN_LOOP: foreach my $town_to_check (@towns_in_range) {
@@ -163,9 +166,9 @@ sub _create_jewels_in_range {
    		$town_to_create_in = $town_to_check;
    		last;
    	}
-    	
+   	    	
    	unless ($town_to_create_in) {
-   		# TODO: Throw exception?
+   		return;
    	}
    	else {
    		my @shops = $town_to_create_in->shops;

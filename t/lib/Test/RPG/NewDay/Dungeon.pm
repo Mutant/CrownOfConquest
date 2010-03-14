@@ -38,6 +38,7 @@ sub dungeon_startup : Test(startup => 1) {
 
     my $logger = Test::MockObject->new();
     $logger->set_always('debug');
+    $logger->set_always('info');
 
     $self->{context} = Test::MockObject->new();
 
@@ -706,7 +707,7 @@ sub test_create_corridor : Tests(1) {
     $self->{rolls} = [12, 2, 2, 2, 2];
 
     my $mock_dungeon = Test::MockObject->new();
-    $mock_dungeon->set_always( 'id', 1 );
+    $mock_dungeon->set_always( 'id', 88 );
     
     # WHEN
     my @sectors = $self->{dungeon}->_create_corridor($mock_dungeon, 10, 10, [], $self->{positions});

@@ -74,6 +74,37 @@ sub group_id {
     return $self->party_id;
 }
 
+sub encumbrance {
+	my $self = shift;
+	
+	my $total_weight = $self->result_source->schema->resultset('Items')->find(
+		{
+			'character_id' => $self->id,
+		},
+		{
+			'select' => [
+				{'sum' => 'item_type.weight'},
+			],
+			'as' => ['total_weight'],
+			join => 'item_type',
+		},
+	)->get_column('total_weight');
+	
+	return $total_weight || 0;
+}
+
+sub encumbrance_allowance {
+	my $self = shift;
+	
+	return ($self->strength + $self->constitution) * 10; 
+}
+
+sub is_overencumbered {
+	my $self = shift;
+	
+	return 1 if $self->encumbrance > $self->encumbrance_allowance;	
+}
+
 sub roll_all {
     my $self = shift;
 
@@ -159,6 +190,7 @@ sub _roll_points {
         $level = $self->level;
         my $stat_name = shift;
         $stat  = $self->get_column($stat_name);
+        confess "stat $stat_name not defined" unless defined $stat;
     }
     else {
         $level = shift || croak 'Level not supplied';

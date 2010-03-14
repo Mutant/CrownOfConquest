@@ -1,9 +1,9 @@
 use strict;
 use warnings;
 
-package Test::RPG::Builder::Town;
+package Test::RPG::Builder::Dungeon;
 
-sub build_town {
+sub build_dungeon {
     my $package = shift;
     my $schema = shift;
     my %params = @_;
@@ -13,15 +13,14 @@ sub build_town {
         $params{land_id} = $location->id;
     }
     
-    my $town = $schema->resultset('Town')->create(
+    my $dungeon = $schema->resultset('Dungeon')->create(
         {
             land_id => $params{land_id},
-            prosperity => $params{prosperity} || 50,
-            blacksmith_age => $params{blacksmith_age} || 0,
+            level => $params{level} || 1,
         }   
     );
     
-    return $town;
+    return $dungeon;    	
 }
 
 1;

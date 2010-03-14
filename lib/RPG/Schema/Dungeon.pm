@@ -7,7 +7,7 @@ use base 'DBIx::Class';
 
 use Carp;
 
-__PACKAGE__->load_components(qw/Core/);
+__PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Dungeon');
 
 __PACKAGE__->add_columns(qw/dungeon_id level land_id name/);
@@ -33,8 +33,8 @@ sub party_can_enter {
     croak "Level not supplied" unless $level;
     
     my $party = shift || croak "Party not supplied";
-    
-    return ( $level - 1 ) * 5 <= $party->level ? 1 : 0;
+
+    return ( $level - 1 ) * RPG::Schema->config->{dungeon_entrance_level_step} <= $party->level ? 1 : 0;
 }
 
 1;

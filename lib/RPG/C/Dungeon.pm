@@ -516,6 +516,11 @@ sub open_chest : Local {
 	my @items_found;
 	
 	foreach my $item (@items) {
+		# XXX: call find_dungeon_item quest hack, see method for details
+		if ($c->forward('check_for_quest_item', [$item])) {
+			next;			
+		}
+		
         my $finder;
         foreach my $character ( shuffle @characters ) {
             unless ( $character->is_dead ) {
@@ -545,12 +550,45 @@ sub open_chest : Local {
         ]
     );
 
-    $c->stash->{messages} = $message;
+    push @{$c->stash->{messages}},  $message;
+    
+    my $dungeon = $current_location->dungeon_room->dungeon;
+    my $quest_messages = $c->forward( '/quest/check_action', [ 'chest_opened', $dungeon->id, \@items ] );
+    
+    push @{$c->stash->{messages}}, @$quest_messages;
 
     $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
     $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+# XXX: this is a hack to get around the problem of parties picking up an item created for an item quest for a particular party
+#  If an item has a name, we check if it's involved in a quest, and if the current party is the correct one. If not, the item
+#  effectively invisible to this party.
+sub check_for_quest_item : Private {
+	my ($self, $c, $item) = @_;
+	
+	return 0 unless $item->name;
+	
+	my $quest = $c->model('DBIC::Quest')->find(
+		{
+			'quest_param_name.quest_param_name' => 'Item',
+			'quest_params.current_value' => $item->id,
+			'type.quest_type' => 'find_dungeon_item',
+		},
+		{
+			join => [
+				'type',
+				{'quest_params' => 'quest_param_name'},
+			],
+		}		
+	);
+	
+	return 0 unless $quest;
+	return 0 if $quest->party_id == $c->stash->{party}->id;
+	
+	return 1;
 }
 
 sub handle_chest_trap : Private {

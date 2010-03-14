@@ -40,6 +40,8 @@ sub build_party {
             defunct                 => $params{defunct} || undef,
             last_action             => $params{last_action} || undef,
             in_combat_with          => $params{in_combat_with} || undef,
+            dungeon_grid_id			=> $params{dungeon_grid_id} || undef,
+            name => 'test',
         }
     );
 

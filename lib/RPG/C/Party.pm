@@ -627,6 +627,7 @@ sub update_email_options : Local {
     if ( $c->req->param('save') ) {
     	my $player = $c->stash->{party}->player;
         $player->send_daily_report($c->req->param('send_daily_report') ? 1 : 0);
+        $player->send_email_announcements($c->req->param('send_email_announcements') ? 1 : 0);        
         $player->update;
         $c->flash->{messages} = 'Changes Saved';
     }

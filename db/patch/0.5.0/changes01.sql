@@ -76,6 +76,8 @@ UPDATE `Item_Type` SET weight = 21 WHERE item_type = 'Small Steel Shield';
 UPDATE `Item_Type` SET weight = 1 WHERE weight = 0;
 
 ALTER TABLE `Player` ADD COLUMN `send_email_announcements` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
+ALTER TABLE `Player` ADD COLUMN `display_announcements` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
+ALTER TABLE `Player` ADD COLUMN `display_tip_of_the_day` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
 
 CREATE TABLE `Survey_Response` (
   `survey_response_id` INTEGER  NOT NULL AUTO_INCREMENT,
@@ -90,3 +92,52 @@ CREATE TABLE `Survey_Response` (
   PRIMARY KEY (`survey_response_id`)
 )
 ENGINE = InnoDB;
+
+CREATE TABLE `Announcement` (
+  `announcement_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(255) NOT NULL,
+  `announcement` TEXT NOT NULL,
+  `date` DATETIME NOT NULL,
+  PRIMARY KEY (`announcement_id`)
+)
+ENGINE = InnoDB;
+
+CREATE TABLE `Announcement_Player` (
+  `announcement_id` INTEGER  NOT NULL,
+  `player_id` INTEGER  NOT NULL,
+  `viewed` TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`announcement_id`,`player_id`)
+)
+ENGINE = InnoDB;
+
+alter table Party add INDEX dungeon_idx(dungeon_grid_id);
+
+alter table `Character` add INDEX party_id_idx(party_id);
+
+CREATE TABLE `Tip` (
+  `tip_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(255) NOT NULL,
+  `tip` TEXT NOT NULL,
+  PRIMARY KEY (`tip_id`)
+)
+ENGINE = InnoDB;
+
+INSERT INTO `Tip` VALUES (1,'Find the best shops','Towns with higher prosperity tend to have better shops. Here, you\'ll find a bigger range at cheaper prices. Certain shops within each town will be even better. Make a note of the best ones, and check back often'),(2,'','Increasing your prestige rating with a town can net your party a discount at certain services in the town'),(3,'A good Blacksmith is hard to find','The skill of a town\'s blacksmith increases over time. Check the blacksmith\'s description to see how long he\'s been around'),(4,'','Upgrading your weapons and armour at the blacksmith is an excellent way of getting the most out of your equipment'),(5,'','Quests are an excellent way for new parties to increase their wealth and experience. To start a quest, head to the Town Hall of the nearest town'),(6,'Multi-tasking','You can only get one quest from each town at a time, but there\'s nothing stopping you having several quests from different towns. The maximum quests you can have at a time is determined by your party\'s level. Just make sure you have enough time to complete them all, or the town\'s council won\'t be happy!'),(7,'Finding a quest','The bigger the town (i.e. the higher it\'s prosperity) the more likely it is to have a big selection of quests. Not all quests will be offered to you though - some depend on your party level.'),(8,'Dungeons','Once you\'ve slaughtered a few easy monsters in the wilderness, and got a few easy quests under your belt, it\'s a good idea to head to a dungeon, where you\'ll find a lot of creatures, treasure and more. If you need to find a dungeon in your area, head to the Sage. The dungeons you know about are listed on the \'Map\' screen.'),(9,'Turns','You don\'t need to log into Kingdoms every day to make use of all your turns. Turns will accumulate for a few days, before you have to use them or lose them.'),(10,'The Watcher','New parties start with a \'Watcher\' effect, a force that gives you an indication of how tough each group of monsters is. This effect lasts for 20 days - if you need more, one of your mages will have to cast a \'Watcher\' spell.'),(11,'Prosperity','A town\'s prosperity is an indication of how big it is, and how likely it is to have a good range of services at good prices. A number of factors influence a town\'s prosperity. For instance, if a town collects a good amount of tax, and keeps the surrounding wildnerness clear of monsters, it\'s prosperity will likely go up. Your party can nurture a town\'s prosperity, and reap the benefits as its services improve.');
+
+
+CREATE TABLE `Dungeon_Sector_Path` (
+  `sector_id` INTEGER  NOT NULL,
+  `has_path_to` INTEGER  NOT NULL,
+  `distance` INTEGER NOT NULL,
+  PRIMARY KEY (`sector_id`, `has_path_to`)
+)
+ENGINE = InnoDB;
+
+CREATE TABLE `Dungeon_Sector_Path_Door` (
+  `sector_id` INTEGER  NOT NULL,
+  `has_path_to` INTEGER  NOT NULL,
+  `door_id` INTEGER NOT NULL,
+  PRIMARY KEY (`sector_id`, `has_path_to`, `door_id`)
+)
+ENGINE = InnoDB;
+

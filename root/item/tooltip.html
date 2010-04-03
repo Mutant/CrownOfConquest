@@ -1,5 +1,4 @@
 [% INCLUDE item/tooltip_header.html %]
-
 [% FOREACH attribute IN item_type.category.item_attribute_names %]
 [% attribute.item_attribute_name %]: [% item_type.attribute(attribute.item_attribute_name).formatted_value %]<br>
 [% END %]

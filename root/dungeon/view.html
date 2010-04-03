@@ -1,162 +1,45 @@
+[% PROCESS dungeon/map_vars.html %]
 [%
 	x = min_x - 1;
 	y = min_y - 1;
-	size = 80 / zoom_level;
-	door_thickness = size / 10;
-	door_length = size - 4;
 	
 	scroll_to_x = current_location.x + 6;
-%]	
+	scroll_to_y = current_location.y + 4; 	
+	
+%]
+
 	[% IF scroll_to_x > max_x %]
 		[% scroll_to_x = max_x %]
 	[% END %]
-[%	
-	scroll_to_y = current_location.y + 4; 
-%]
 	[% IF scroll_to_y > max_y %]
 		[% scroll_to_y = max_y %]
 	[% END %]
 	
 <div style="position: relative;">
+<div style="display: none" id="scroll_to">sector_[% scroll_to_x %]_[% scroll_to_y %]</div>
 [% WHILE y <= max_y %]
 	[% y = y+1 %]
 	[% x = min_x - 1 %]
 	[% WHILE x <= max_x %]
+		[% x = x+1 %]
+		[% sector = grid.$x.$y %]
+		
 		[% FILTER collapse %]
-			[% x = x+1 %]
-			[% sector = grid.$x.$y %]
-			[% IF sector %]
-				[% border = "" %]
-				[% sides_with_walls = sector.walls %]
-				[% FOREACH side IN positions  %]
-					[% border_color = "#6B654E" %]
-					[% FOREACH side_with_wall IN sides_with_walls %]
-						[% IF side_with_wall == side %]
-							[% border_color = "black" %]
-						[% END %]
-					[% END %]				
-				
-					[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
-				[% END %] 
-				
-				[%
-					current_x = sector.x
-					current_y = sector.y
-				%]					
-					
-				[% can_move_to_sector = 0 %]
-				[% IF allowed_to_move_to.$current_x.$current_y && ! in_combat %]
-					[% can_move_to_sector =  1 %]
-				[% END %]
-			
-				[% IF can_move_to_sector %]
-					<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]&h=[% allowed_move_hashes.${sector.x}.${sector.y} %]')" 
-						style="text-decoration: none;">
-				[% END %]
-				
-				[% background_image = 'floor.PNG' %]
-				[% IF viewable_sectors.${sector.x}.${sector.y} || current_location.id == sector.dungeon_grid_id %]
-				 	[% background_image = 'brightfloor.PNG' %]
-				[% END %]
-				
-				<div style="
-					[% border %]
-					width: [% size %]px; 
-					height: [% size %]px; 
-					position: absolute;
-					left: [% (sector.x - min_x) * size %]; 
-					top: [% (sector.y - min_y) * size %];
-					background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
-					font-size: [% size / 2 %]px;
-					text-align: center"
-					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
-					>
-							
-						[% IF sector.stairs_up %]
-							<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
-						[% ELSIF cgs.$x.$y %]
-							[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
-						
-							<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>
-						    <div 
-								dojoType="dijit.Tooltip" 
-								connectId="m_[% x _ y %]"								
-								label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
-						[% ELSIF parties.$x.$y %]
-							<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0  width=[% size %] height=[% size %]></span>
-						    <div 
-								dojoType="dijit.Tooltip" 
-								connectId="p_[% x _ y %]"
-								label="[% INCLUDE party/summary.html party=parties.$x.$y %]"></div>
-						[% ELSIF sector.treasure_chest %]
-							<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-						[% ELSIF can_move_to_sector %]
-						    .
-						[% END %]
-						
-						[% IF current_location.id == sector.dungeon_grid_id %]
-							<span style="z-index: 50; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/partyloc_t.PNG" border=0  width=[% size %] height=[% size %]></span>
-						[% END %]
-					</div>
-					
-					[% IF can_move_to_sector %]</a>[% END %]
-					
-					[% FOREACH door IN sector.raw_doors %]
-						[% IF door.type != 'secret' || door.state == 'open' %]
-					
-							[% left_offset = 0 %]
-							[% width_offset = 0 %]
-							[% top_offset = 0 %]
-							[% height_offset = 0 %]
-							[% position = door.position.position %]
-						
-							[% IF position == 'right' ||  position == 'left' %]
-								[% height = door_length %]
-								[% width = door_thickness %]
-								[% height_offset = 2 %]
-							[% ELSE %]
-								[% height = door_thickness %]
-								[% width = door_length %]
-								[% width_offset = 2 %]
-							[% END %]
-						
-							[% IF position == 'right' %]
-								[% left_offset = 1 %]
-								[% width_offset = 0 - width + 1 %]
-							[% ELSIF position == 'left' %]
-								[% left_offset = 0 %]
-								[% width_offset = 1 %]
-							[% ELSIF position == 'bottom' %]
-								[% top_offset = 1 %]
-								[% height_offset = 0 - height + 1 %]
-							[% END %]
-							
-			         		<div 
-							   style="
-								position: absolute;
-								width: [% width %];
-								height: [% height %];
-								background: black;
-								left: [% ((sector.x - min_x) + left_offset) * size + width_offset %];
-								top: [% ((sector.y - min_y) + top_offset) * size + height_offset %];"
-							>					
-							</div>			
-						[% END %]			
-					[% END %]
-					
-			[% ELSE %]
-				<div style="
-					left: [% (x - min_x) * size %]; 
-					top: [% (y - min_y) * size %];
-					width: [% size - 2 %]px; 
-					height: [% size - 2 %]px; 					
-					position: absolute;
-				"
-				[% IF scroll_to_x == x && scroll_to_y == y %]id="scroll-to"[% END %]
-				>					
-				</div>
-			[% END %]
+		<div style="
+			left: [% (x - min_x) * size %]; 
+			top: [% (y - min_y) * size %];
+			width: [% size %]px; 
+			height: [% size %]px; 					
+			position: absolute;
+			"
+			id="sector_[% x %]_[% y %]"
+		>	
+		
+		[% INCLUDE dungeon/sector_inner.html %]
+		
+		</div>
 		[% END %]
+		
 	[% END %]	
 [% END %]
 </div>

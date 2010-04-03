@@ -125,7 +125,9 @@ sub attribute {
 	my $self = shift;
 	my $attribute = shift;
 
+	RPG::Schema->log->debug('In attribute()');
 	my @attributes = $self->item_attributes;
+
 	my ($item_attribute) = grep { $_->item_attribute_name->item_attribute_name eq $attribute } @attributes;	
 			
 	return $item_attribute;

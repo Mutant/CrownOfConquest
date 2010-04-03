@@ -18,7 +18,8 @@ sub view : Private {
 
     my $party_location = $c->stash->{party_location};
     
-    my $zoom_level = $c->session->{zoom_level} || 2;
+    $c->session->{zoom_level} ||= 2;
+    my $zoom_level = $c->session->{zoom_level};
     
     my $grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
     $grid_size-- if $c->session->{zoom_level} % 2 == 0;    # Odd numbers cause us problems

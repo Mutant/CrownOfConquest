@@ -20,7 +20,7 @@ sub main : Local {
 
     $c->forward('/party/party_messages_check');
 
-    my $party_town = $c->model('Party_Town')->find_or_create(
+    my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
         {
             party_id => $c->stash->{party}->id,
             town_id  => $town->id,

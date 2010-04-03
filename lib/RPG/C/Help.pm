@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
+use List::Util qw(shuffle);
+
 sub default : Path {
 	my ($self, $c) = @_;
 	
@@ -38,6 +40,23 @@ sub about : Local {
             template => 'help/about.html',
         }]
     );	
+}
+
+sub tips : Local {
+	my ($self, $c) = @_;	
+	
+	my @tips = shuffle $c->model('DBIC::Tip')->search();
+	
+	$c->forward('RPG::V::TT',
+        [
+        	{
+            	template => 'help/tips.html',
+            	params => {
+            		tips => \@tips,
+            	},
+        	},
+        ]
+    );		
 }
 
 1;

@@ -10,8 +10,6 @@
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
 
-			var item_data = source.getItem(nodes[0].id).data;
-
 			tmp = t.node.id.split(/-/);
 			var target_id = tmp[0];
 			var target_type = tmp[1];
@@ -20,7 +18,7 @@
 			var item_id = order_val[1];
 			
 			if (target_type == 'equip_place') {
-				equip_item(target_id, item_id, item_data);
+				equip_item(target_id, item_id);
 			}
 			else if (target_type == 'char') {
 				give_item(target_id, item_id);
@@ -28,7 +26,7 @@
 		});
 	}
 	
-	function equip_item(equip_place, item_id, item_data) {
+	function equip_item(equip_place, item_id) {
 		dojo.xhrGet( {
 	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
 	        handleAs: "json",
@@ -38,11 +36,28 @@
 			      	dijit.byId('error').show();
 	        	}
 	        	else {
-					dojo.byId(equip_place + '-equip-place-item').innerHTML = item_data;
-					
-					if (responseObject.clear_equip_place) {
-						dojo.byId(responseObject.clear_equip_place + '-equip-place-item').innerHTML = '';
-					}
+		        	var changed_slots = responseObject.changed_slots;
+	        		for (var changed_slot in changed_slots) {
+	        			var item = changed_slots[changed_slot];	        			
+	        			if (item.image) {
+	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'block';
+	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'hidden';
+	        				dojo.byId(changed_slot + '-equip-place-image').src = '[% c.config.static_path %]/images/items/' + item.image;
+	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';
+	        			}
+	        			else if (item.text) {	        			
+	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
+	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'hidden';
+	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
+	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = item.item_type;
+	        			}
+	        			else {
+	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
+	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'visible';
+	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
+	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';	        			
+	        			}
+	        		}
 				}
 	        }
 	    });
@@ -182,7 +197,7 @@ function calculateSpellPoints() {
 		[% other_character.character_name %]
 	[% ELSE %]
 	<span dojoType="rpg.dnd.Target" id="[% other_character.id %]-char" accept="item">
-	<a href="[% base %]/character/view?character_id=[% other_character.id %]">[% other_character.character_name %]</a>
+	<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">[% other_character.character_name %]</a>
 	</span>	
 	[% END %]
 	&nbsp;
@@ -234,7 +249,7 @@ function calculateSpellPoints() {
 </style>
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
-      <div dojoType="dijit.layout.ContentPane" title="Stats" style="display: none">
+      <div dojoType="dijit.layout.ContentPane" title="Stats" style="display: none" [% IF selected == 'stats' %]selected="true"[% END %]>
 		<div class="aligned" id="character">
 		
 		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
@@ -292,16 +307,20 @@ function calculateSpellPoints() {
 	</div>
 
 	
-    <div dojoType="dojox.layout.ContentPane" title="Equipment" href="[% base %]/character/equipment_tab?character_id=[% character.id %]">    
+    <div dojoType="dojox.layout.ContentPane" title="Equipment" 
+    	href="[% base %]/character/equipment_tab?character_id=[% character.id %]&item_mode=[% item_mode %]"
+    	[% IF selected == 'equipment' %]selected="true"[% END %]>    
     </div>
 
 	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]
-    <div dojoType="dijit.layout.ContentPane" title="Spells" href="[% base %]/character/spells_tab?character_id=[% character.id %]"
+    <div dojoType="dijit.layout.ContentPane" title="Spells" 
+    	href="[% base %]/character/spells_tab?character_id=[% character.id %]"
          [% IF selected == 'spells' %]selected="true"[% END %]>    
     </div>
     [% END %]
     
-    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]">    
+    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]
+    	[% IF selected == 'history' %]selected="true"[% END %]">    
     </div>
 
 

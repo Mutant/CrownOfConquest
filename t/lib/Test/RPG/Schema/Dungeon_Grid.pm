@@ -659,4 +659,79 @@ sub test_has_wall : Tests(4) {
     is($results{bottom}, 0, "Doesn't have a bottom wall");
 }
 
+sub test_sectors_allowed_to_move_to : Tests() {
+	my $self = shift;	
+	
+    # GIVEN
+    my @sectors;
+    for my $x ( 1 .. 4 ) {
+        for my $y ( 1 .. 4 ) {
+            my @walls;
+            my @doors;
+
+            if ( $x == 3 && $y == 1 ) {
+                @walls = ( 'top', 'right' );
+            }
+            if ( $x == 1 && $y == 1 ) {
+                @walls = ( 'bottom', 'right' );
+                @doors = ('right');
+            }
+
+            my $sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid(
+                $self->{schema},
+                x     => $x,
+                y     => $y,
+                walls => \@walls,
+                doors => \@doors,
+            );
+
+            push @sectors, $sector;
+        }
+    }	
+    
+    my $start_sector = $sectors[5];    # 2,2
+    
+    my $sectors_by_coord;
+    foreach my $sector (@sectors) {
+    	$sectors_by_coord->[$sector->x][$sector->y] = $sector;	
+    }
+    
+	my $allowed_to_move_to = $start_sector->allowed_to_move_to_sectors( \@sectors, 1 );
+	    
+	for my $y (1 .. 4) {
+		for my $x (1 .. 4) {
+			next unless $allowed_to_move_to->[$x][$y];
+				
+			$self->{schema}->resultset('Dungeon_Sector_Path')->create(
+				{
+					sector_id => $start_sector->id,
+					has_path_to => $sectors_by_coord->[$x][$y]->id,
+					distance => 1,
+				}
+			);								
+		}
+	}    
+
+    my %expected_allowed_to_move_to;
+    $expected_allowed_to_move_to{$sectors[0]->id} = 1; # 1,1
+    $expected_allowed_to_move_to{$sectors[1]->id} = 1; # 1,2
+    $expected_allowed_to_move_to{$sectors[2]->id} = 1; # 1,3
+    $expected_allowed_to_move_to{$sectors[4]->id} = 1; # 2,1
+    $expected_allowed_to_move_to{$sectors[6]->id} = 1; # 2,3 
+    $expected_allowed_to_move_to{$sectors[8]->id} = 1; # 3,1
+    $expected_allowed_to_move_to{$sectors[9]->id} = 1; # 3,2
+    $expected_allowed_to_move_to{$sectors[10]->id} = 1;# 3,3
+
+    # WHEN
+    my %allowed_to_move_to = $start_sector->sectors_allowed_to_move_to( 1 );
+
+    # THEN
+	for my $y (1 .. 4) {
+		for my $x (1 .. 4) {
+			my $sector_to_check = $sectors_by_coord->[$x][$y];
+    		is( $allowed_to_move_to{$sector_to_check->id}, $expected_allowed_to_move_to{$sector_to_check->id}, "Allowed to move as expected for $x, $y" );
+		}		
+    }    
+}
+
 1;

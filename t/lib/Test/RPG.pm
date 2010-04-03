@@ -30,7 +30,11 @@ sub aa_setup_context : Test(setup) {
 						
 			my $sub = $self->{mock_forward}{$path};
 			
-			croak "Forward to $path called, but no mock sub defined" unless ref $sub eq 'CODE';
+			# If there's no sub defined, warn and return (could still break the test, but let's be nice...)
+			unless (ref $sub eq 'CODE') {
+				warn "WARNING: Forward to $path called, but no mock sub defined\n";
+				return;
+			}; 
 			
 			return $sub->($args);
 		}
@@ -57,6 +61,9 @@ sub aa_setup_context : Test(setup) {
 
 	$self->{config} ||= {};
 	$self->{c}->mock( 'config', sub { $self->{config} } );
+	
+	$self->{flash} ||= {};
+	$self->{c}->mock( 'flash', sub { $self->{flash} } );	
 	
 	$self->{mock_response} = Test::MockObject->new;
 	$self->{mock_response}->mock('body', sub {});

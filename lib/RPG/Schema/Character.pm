@@ -96,7 +96,7 @@ sub encumbrance {
 sub encumbrance_allowance {
 	my $self = shift;
 	
-	return ($self->strength + $self->constitution) * 10; 
+	return ($self->strength + $self->constitution) * 15; 
 }
 
 sub is_overencumbered {

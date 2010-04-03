@@ -30,21 +30,13 @@ sub get_party_grid {
     my @sectors = $mapped_sectors_rs->all;
     
     foreach my $sector (@sectors) {
-        my @doors;
-        foreach my $raw_door (@{$sector->{doors}}) {
-            push @doors, $raw_door->{position}{position};
-        }
-
-        $sector->{raw_doors} = $sector->{doors};
-        $sector->{doors} = \@doors;
-
         my @walls;
         foreach my $raw_wall (@{$sector->{walls}}) {
             push @walls, $raw_wall->{position}{position};
         }
         
         $sector->{raw_walls} = $sector->{walls};
-        $sector->{walls} = \@walls;
+        $sector->{sides_with_walls} = \@walls;
     }
     
     return @sectors;

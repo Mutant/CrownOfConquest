@@ -3,7 +3,7 @@
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
-	//dojo.require("rpg.dnd.Target");
+	dojo.require("rpg.dnd.Target");
 	
 function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
@@ -143,7 +143,7 @@ dojo.addOnLoad( init );
 	
 [% FOREACH char = characters %]
 <span style="padding: 5px">
-	<span dojoType="dojo.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_id %]" 
+	<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_id %]" 
 		class="target" accept="item" style="width: 70%;">
 			[% char.character_name %]
 	</span>

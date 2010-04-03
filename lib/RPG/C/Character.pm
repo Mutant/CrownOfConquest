@@ -52,7 +52,8 @@ sub view : Local {
                     character         => $character,
                     characters        => \@characters,
                     xp_for_next_level => $next_level ? $next_level->xp_needed : '????',
-                    selected          => $c->stash->{selected_tab},
+                    selected          => $c->stash->{selected_tab} || $c->req->param('selected'),
+                    item_mode         => $c->req->param('item_mode'),
                 }
             }
         ]
@@ -65,16 +66,33 @@ sub equipment_tab : Local {
     my $character = $c->stash->{character};
 
     croak "Invalid character id" unless $character;
+    
+    my $item_mode = $c->req->param('item_mode') || 'char';
+    
+    my $criteria;
+    my @extra_join;
+
+    if ($item_mode eq 'char') {
+    	$criteria = { character_id => $c->req->param('character_id'), };
+    }
+    else {
+    	$criteria = { 'belongs_to_character.party_id' => $c->stash->{party}->id, };
+    	@extra_join = ('belongs_to_character');
+    }
 
     my @items = $c->model('DBIC::Items')->search(
-        { character_id => $c->req->param('character_id'), },
+        $criteria,
         {
-            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+            prefetch => {'item_type' => 'category'},
+            join => [ @extra_join ],
             order_by => 'item_category',
         },
     );
 
-    my $equipped_items = $character->equipped_items(@items);
+	# Get list of items this char has, to allow us to build the equipped_items hash
+	my @characters_items = grep { $_->character_id == $character->id } @items;
+
+    my $equipped_items = $character->equipped_items(@characters_items);
 
     my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
 
@@ -88,11 +106,46 @@ sub equipment_tab : Local {
                     equipped_items            => $equipped_items,
                     equip_place_category_list => \%equip_place_category_list,
                     items                     => \@items,
+                    item_mode                 => $item_mode,
                 }
             }
         ]
     );
 }
+
+sub item_details : Local {
+	my ($self, $c) = @_;
+	
+	my $item = $c->model('DBIC::Items')->find(
+		{
+			'item_id' => $c->req->param('item_id'),
+		},
+		{
+			prefetch => [
+				{ 'item_type' => 'category' },
+				'item_variables',
+			],
+		}
+	);
+	
+	# TODO: make sure item is in party's inventory
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'character/tooltip_specific.html',
+                params   => {
+					item => $item,
+					item_type => $item->item_type,
+                }
+            }
+        ]
+    );	
+	
+}
+
+
 
 sub item_list : Local {
     my ( $self, $c ) = @_;
@@ -151,21 +204,31 @@ sub equip_item : Local {
         }
     }
 
-    my %ret;
+    my %ret = (
+    	$c->req->param('equip_place') => {
+    		item_type => $item->item_type->item_type,
+   			image => $item->item_type->image,
+    	},
+    );
+    my $slots_cleared;
     if ( scalar @slots_changed > 1 ) {
 
         # More than one slot changed... clear anything that wasn't the slot we tried to equip to
-        # XXX: currently the AJAX call just expects one slot to clear, since there's no way more than one
-        #  could be cleared. If this changes, we'll have to give it a different data structure
         my @slots_to_clear = grep { $_ ne $c->req->param('equip_place') } @slots_changed;
 
+        # Don't expect to get more than one slot changed (which might be a poor assumption)
         # Just warn for now if we have more than 1
         $c->log->warn("Found more than one slot to clear in equip_item") if scalar @slots_to_clear > 1;
 
-        %ret = ( clear_equip_place => $slots_to_clear[0] );
+        $ret{$slots_to_clear[0]} = {
+        	item_type => undef,
+   			image => undef,
+        };
     }
-
-    $c->res->body( to_json( \%ret ) );
+    
+    warn Dumper \%ret;
+    
+    $c->res->body( to_json( {changed_slots => \%ret} ) );
 }
 
 sub give_item : Local {

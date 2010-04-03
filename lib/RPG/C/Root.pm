@@ -23,6 +23,8 @@ sub auto : Private {
     $c->req->base( $c->config->{url_root} );
 
     $c->model('DBIC')->schema->config( RPG->config );
+    
+    $c->model('DBIC')->schema->log( $c->log );
 
     $c->model('DBIC')->storage->txn_begin;
 
@@ -48,10 +50,11 @@ sub auto : Private {
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
 
         # Get recent combat count if party has been offline
+        # (We check $c->flash->{fresh_login} first to ensure this is only done immediately after login)
         if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
             my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
             if ( $offline_combat_count > 0 ) {
-                $c->stash->{messages} = $c->forward(
+                push @{ $c->stash->{messages} }, $c->forward(
                     'RPG::V::TT',
                     [
                         {
@@ -62,6 +65,16 @@ sub auto : Private {
                     ]
                 );
             }
+        }
+        
+        # Display announcements if relevant
+        if ($c->session->{announcements}) {
+        	$c->forward('display_announcements');	
+        }
+        
+        # Display tip of the day, if necessary
+        if ($c->flash->{tip} && ! $c->stash->{party}->in_combat_with) {
+        	$c->forward('display_tip_of_the_day');
         }
 
         $c->stash->{party_location} = $c->stash->{party}->location;
@@ -98,6 +111,61 @@ sub auto : Private {
 
     return 1;
 
+}
+
+sub display_announcements : Private {
+    my ( $self, $c ) = @_;
+    
+    my $announcement_to_display = $c->session->{announcements}->[0];
+    
+    # Mark announcements as viewed by this player
+    foreach my $announcement (@{ $c->session->{announcements}}) {
+    	$c->model('DBIC::Announcement_Player')->find(
+			{
+    		   	announcement_id => $announcement->id,
+    			player_id => $c->session->{player}->id,
+    		},
+    	)->update(
+    		{
+    			viewed => 1,
+    		},
+    	);
+    }
+    
+    push @{ $c->stash->{panel_messages} }, $c->forward(
+	    'RPG::V::TT',
+        [
+    	    {
+        	    template      => 'player/announcement/login_message.html',
+                params        => { 
+                	announcement => $announcement_to_display,
+                	announcement_count => scalar @{ $c->session->{announcements}},
+                },
+                return_output => 1,
+            }
+        ]
+   );
+   
+   $c->session->{announcements} = undef;
+}
+
+sub display_tip_of_the_day : Private {
+    my ( $self, $c ) = @_;	
+    
+    my $tip = $c->flash->{tip};
+    
+    push @{ $c->stash->{panel_messages} }, $c->forward(
+	    'RPG::V::TT',
+        [
+    	    {
+        	    template      => 'player/tip_of_the_day.html',
+                params        => { 
+                	tip => $tip,
+                },
+                return_output => 1,
+            }
+        ]
+   );    
 }
 
 sub default : Private {

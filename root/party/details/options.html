@@ -9,18 +9,26 @@
 
 <br>
 
-<h3>Email Options</h3>
+<h3>Notification Options</h3>
 
 <form method="POST" action="[% base %]/party/update_email_options">
 <table>
 	<tr>
-		<td>Send a "Daily Report" about your party:</td>
+		<td>Send a "Daily Report" about your party via email:</td>
 		<td><input type="checkbox" name="send_daily_report" value="1"></td> 
 	</tr>	
 	<tr>
 		<td>Send email announcements about Kingdoms:</td>
 		<td><input type="checkbox" name="send_email_announcements" value="1"></td> 
 	</tr>
+	<tr>
+		<td>Display new announcements when logging in to Kingdoms:</td>
+		<td><input type="checkbox" name="display_announcements" value="1"></td> 
+	</tr>
+	<tr>
+		<td>Display Tip of the Day when logging into Kingdoms:</td>
+		<td><input type="checkbox" name="display_tip_of_the_day" value="1"></td> 
+	</tr>	
 </table>
 <input type="submit" value="Save Settings" name="save">
 </form>

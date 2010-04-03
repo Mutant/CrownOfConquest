@@ -8,6 +8,7 @@ use RPG::Map;
 use RPG::Maths;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
+use Clone qw(clone);
 
 use Carp;
 use Data::Dumper;
@@ -80,7 +81,8 @@ sub run {
         );
 
         $self->_generate_dungeon_grid( $dungeon, \%positions );
-        $self->generate_treasure_chests( $dungeon ); 
+        $self->generate_treasure_chests( $dungeon );
+        $self->populate_sector_paths( $dungeon ); 
     }
 }
 
@@ -131,7 +133,7 @@ sub _generate_dungeon_grid {
     my $sectors_created;
 
     $c->logger->debug("Creating $number_of_rooms rooms in dungeon");
-
+    
     for my $current_room_number ( 1 .. $number_of_rooms ) {
         $c->logger->debug("Creating room # $current_room_number");
 
@@ -210,7 +212,7 @@ sub _generate_dungeon_grid {
                 }
             );
         }
-    }
+    }  
 }
 
 sub _create_room {
@@ -755,6 +757,285 @@ sub fill_empty_chests {
 			} 	
 		}	
 	}	
+}
+
+sub populate_sector_paths {
+    my $self      = shift;
+    my $dungeon   = shift;
+
+	# TODO: we only calculate paths up to 3 moves. This may need to change if we allow parties to move further in one go
+    my $max_moves = 3;
+    
+    $self->context->logger->info("Populating sector paths for dungeon"); 
+    
+    my @sectors = $self->context->schema->resultset('Dungeon_Grid')->search(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+        },
+        {
+        	join => 'dungeon_room',
+            prefetch => [ 
+            	{ 'doors' => 'position' },
+            	{ 'walls' => 'position' },
+            ],
+        },
+    );    
+    
+    $self->context->logger->debug("Finding paths for " . scalar @sectors . " sectors");
+    
+    my $sectors_by_coord;
+    foreach my $sector (@sectors) {
+    	$sectors_by_coord->[$sector->x][$sector->y] = $sector;	
+    }
+    
+    my $count = 0;
+    
+    foreach my $sector (@sectors) {    		
+   		my ($top_left, $bottom_right) = RPG::Map->surrounds_by_range($sector->x, $sector->y, $max_moves);
+    		
+   		# Build a sector grid of all the sectors within the max_move range
+   		my $sector_grid;
+   		my @sectors_to_check;
+   		for my $grid_x ($top_left->{x} .. $bottom_right->{x}) {
+   			for my $grid_y ($top_left->{y} .. $bottom_right->{y}) {
+   				my $check_sector = $sectors_by_coord->[$grid_x][$grid_y];
+   				
+   				next unless $check_sector;
+   				
+   				$sector_grid->[$grid_x][$grid_y] = $check_sector;
+   				push @sectors_to_check, $check_sector;
+   			}	
+   		}	
+    		
+   		# Check all the sectors in range to see if they have a path
+   		foreach my $sector_to_check (@sectors_to_check) {
+   			if ($self->check_has_path($sector, $sector_to_check, $sector_grid, $max_moves)) {
+   				# This one has a path, write it to the DB
+   				$count++;
+   				
+   				my $distance = RPG::Map->get_distance_between_points(
+					{
+						x=> $sector->x,
+						y=> $sector->y,
+					},
+					{
+						x=>$sector_to_check->x,
+						y=>$sector_to_check->y,	
+					}
+				);
+    				
+   				$self->context->schema->resultset('Dungeon_Sector_Path')->create(
+					{
+						sector_id => $sector->id,
+						has_path_to => $sector_to_check->id,
+						distance => $distance,
+					}
+				);	
+   			}
+   		}
+    }
+    
+    $self->context->logger->info("Finished populating paths, found $count paths");
+}
+
+sub check_has_path {
+    my $self          = shift;
+    my $start_sector  = shift;    
+    my $target_sector = shift;
+    my $sector_grid   = shift;
+    my $max_moves     = shift;
+    my $moves_made    = shift;
+    my $sectors_tried = shift;
+
+    $moves_made = 0 unless defined $moves_made;
+
+    $moves_made++;
+
+    return 0 if $moves_made > $max_moves;
+
+    my ( $x, $y ) = ( $target_sector->x, $target_sector->y );
+
+    $sectors_tried->[$x][$y] = 1;
+
+    #warn "Trying sector: $x, $y\n";
+
+    my @paths_to_check = (
+        [ $x - 1, $y - 1 ],
+        [ $x + 1, $y + 1 ],
+        [ $x - 1, $y + 1 ],
+        [ $x + 1, $y - 1 ],
+        [ $x + 1, $y ],
+        [ $x - 1, $y ],
+        [ $x,     $y + 1 ],
+        [ $x,     $y - 1 ],
+    );
+
+    my $move_cache;
+
+    foreach my $path (@paths_to_check) {
+        my ( $test_x, $test_y ) = @$path;
+
+        #warn "Testing: $x, $y -> $test_x, $test_y (current moves: $moves_made)\n";
+
+        if ( !$sectors_tried->[$test_x][$test_y] && $sector_grid->[$test_x][$test_y] ) {
+
+            my $sector_to_try = $sector_grid->[$test_x][$test_y];
+
+            #warn "Seeing if we can move there...\n";
+            
+            my $cache_key = $target_sector->x . '-' . $target_sector->y . '-' . $sector_to_try->x . '-' . $sector_to_try->y;
+            
+            my $has_path = $move_cache->{$cache_key} // $self->can_move_to($target_sector, $sector_to_try);
+            
+            $move_cache->{$cache_key} = $has_path;
+
+            next unless $has_path;
+
+            #warn "(we can)\n";
+
+            if ( $start_sector->x == $test_x && $start_sector->y == $test_y ) {
+                #warn ".. dest is reached";
+                # Dest reached
+                return 1;
+            }
+
+            if ( $self->check_has_path( $start_sector, $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried ) ) {
+                #warn "... path found";
+                return 1;
+            }
+            
+            #warn ".. no path found";
+        }
+
+    }
+
+    return 0;
+}
+
+sub can_move_to {
+    my $self   = shift;
+    my $start  = shift;
+    my $sector = shift;
+
+    #warn "in _can_move_to\n";
+    #warn "src: " . $self->x . ", " . $self->y;
+    #warn "dest: " . $sector->x . ", " . $sector->y;
+
+    # Can't move to sector if src/dest are the same
+    return 0 if $start->x == $sector->x && $start->y == $sector->y;
+
+    #warn "checking is adjacent to\n";
+
+    # Sectors must be adjacent
+    return 0 unless RPG::Map->is_adjacent_to(
+        {
+            x => $start->x,
+            y => $start->y,
+        },
+        {
+            x => $sector->x,
+            y => $sector->y,
+        },
+    );
+    
+    #warn "checking for non diagonal sectors\n";
+
+    # Now, check walls/doors on sectors on non diagonal
+
+    # Sector to the right
+    if ( $start->x < $sector->x && $start->y == $sector->y ) {
+        if ( $sector->has_wall('left') && !$sector->has_passable_door('left') ) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    # Sector to the left    
+    if ( $start->x > $sector->x && $start->y == $sector->y ) {
+        if ( $sector->has_wall('right') && !$sector->has_passable_door('right') ) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    # Sector above
+    if ( $start->y > $sector->y && $start->x == $sector->x ) {
+        if ( $sector->has_wall('bottom') && !$sector->has_passable_door('bottom') ) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    # Sector below
+    if ( $start->y < $sector->y && $start->x == $sector->x ) {
+        if ( $sector->has_wall('top') && !$sector->has_passable_door('top') ) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    # See if the sector is on the diagonal
+    my $diagonal_to_check;
+    if ( $start->x > $sector->x && $start->y > $sector->y ) {
+        $diagonal_to_check = 'top_left';
+    }
+    elsif ( $start->x < $sector->x && $start->y > $sector->y ) {
+        $diagonal_to_check = 'top_right';
+    }
+    elsif ( $start->x > $sector->x && $start->y < $sector->y ) {
+        $diagonal_to_check = 'bottom_left';
+    }
+    elsif ( $start->x < $sector->x && $start->y < $sector->y ) {
+        $diagonal_to_check = 'bottom_right';
+    }
+    
+    #warn "must be diagonal sector: $diagonal_to_check\n";
+
+    # Should never happen... (!)
+    croak "Couldn't find position of adjacent sector (src: " . $start->x . ", " . $start->y . "; dest: " . $sector->x . ", " . $sector->y . ")"
+        unless $diagonal_to_check;
+
+    my %diagonal_checks = (
+        'top_left'     => [ 'bottom', 'right' ],
+        'top_right'    => [ 'bottom', 'left' ],
+        'bottom_left'  => [ 'top',    'right' ],
+        'bottom_right' => [ 'top',    'left' ],
+    );
+
+    # Find the corners we're interested in for the source and dest sectors. Move can't be completed if either pair of walls exist.
+    #  Exception to that is if one has a door, so long as there's not a corresponding wall on the other sector blocking it
+    my ( $dest_wall_1, $dest_wall_2 ) = @{ $diagonal_checks{$diagonal_to_check} };
+    my ( $src_wall_1, $src_wall_2 ) = ( RPG::Position->opposite($dest_wall_1), RPG::Position->opposite($dest_wall_2) );
+    
+    #warn "Dest corner: $dest_wall_1, $dest_wall_2\n";
+    #warn "Src corner: $src_wall_1, $src_wall_2\n";
+
+    my $dest_pos1_blocked = $sector->has_wall($dest_wall_1) && ( $start->has_wall($src_wall_2) || !$sector->has_passable_door($dest_wall_1) );
+    my $dest_pos2_blocked = $sector->has_wall($dest_wall_2) && ( $start->has_wall($src_wall_1) || !$sector->has_passable_door($dest_wall_2) );
+    
+    return 0 if $dest_pos1_blocked && $dest_pos2_blocked;
+
+    my $src_pos1_blocked = $start->has_wall($src_wall_1) && ( $sector->has_wall($dest_wall_2) || !$start->has_passable_door($src_wall_1) );
+    my $src_pos2_blocked = $start->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$start->has_passable_door($src_wall_2) );
+    
+    return 0 if $src_pos1_blocked && $src_pos2_blocked;
+    
+    # Now check if there's a horizontal or vertical blockage
+    return 0 if ($start->has_wall($src_wall_1) && ! $start->has_passable_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_passable_door($dest_wall_1));
+    return 0 if ($start->has_wall($src_wall_2) && ! $start->has_passable_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_passable_door($dest_wall_2)); 
+    
+    #warn "No blockages found\n";
+    
+    # Only get here if move can be completed
+    return 1;
 }
 
 1;

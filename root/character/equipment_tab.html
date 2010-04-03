@@ -1,24 +1,40 @@
 <b>Equipped Items</b>
 
+[% MACRO display_equipped_item(equipped_items, slot) BLOCK %]
+		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" accept="item" align="center" style="border: black 1px dashed" width="20">
+			[% item = equipped_items.$slot %]
+			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
+				style="[% IF ! item.item_type.image %]display: none[% END %]">
+			<span id="[% slot %]-equip_place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>
+			<!--div dojoType="dijit.Tooltip"
+                   connectId="[% slot %]-equip_place"
+                   label="[% slot %]: [% FOREACH category IN equip_place_category_list.$slot %][% category %][% UNLESS loop.last %], [% END %][% END %]"--><!--/div-->
+	        [% IF ! item %]
+	           <span id="[% slot %]-slot-label">[% slot %]</span>
+	        [% END %]			
+		</td>
+[% END %]
+
+[% MACRO item_details(item_type, item) BLOCK %]
+	[% INCLUDE item/tooltip_specific.html item_type=item_type, item=item %]
+[% END %]
 <br><br>
 
 Mouse over an equipped item slot to see what types of items can be equipped there.
 
 <br><br>
 
-<table class="main" cellspacing="1">
-[% FOREACH equipped_item IN equipped_items %]
-	[% eq_item = equipped_item.key %]
+<table class="main">
 	<tr>
-		<td dojoType="rpg.dnd.Target" id="[% equipped_item.key %]-equip_place" accept="item" class="main-highlighted-col">
-			<span id="[% equipped_item.key %]">[% equipped_item.key %]</span>
-			<div dojoType="dijit.Tooltip"
-                   connectId="[% equipped_item.key %]"
-                   label="[% FOREACH category IN equip_place_category_list.$eq_item %][% category %][% UNLESS loop.last %], [% END %][% END %]"></div>
-		</td>
-		<td id="[% equipped_item.key %]-equip-place-item">[% equipped_item.value.item_type.item_type %]</td>
+		<td></td>
+		[% display_equipped_item(equipped_items, 'Head') %]
+		<td></td>
 	</tr>
-[% END %]
+	<tr>
+		[% display_equipped_item(equipped_items, 'Left Hand') %]
+		[% display_equipped_item(equipped_items, 'Torso and Legs') %]
+		[% display_equipped_item(equipped_items, 'Right Hand') %]
+	</tr>	
 </table>
 
 <br>
@@ -32,33 +48,38 @@ Drag an item from inventory onto an equipped item slot to equip it.<br>
 Drag an item from inventory onto a character's name to give the item to that character.<br>
 
 <br>
+Display Inventory For:
+<a href="[% base %]/character/view?character_id=[% character_id %]&selected=equipment&item_mode=char" 
+	[% IF item_mode=="char" %]style="current-selection"[% END %] >This Character</a>
+<a href="[% base %]/character/view?character_id=[% character_id %]&selected=equipment&item_mode=all"
+	[% IF item_mode=="all" %]style="current-selection"[% END %]>Whole Party</a>
+
 [% END %]
 
-<table class="main">
 [% last_category = '' %]
 [% FOREACH item IN items %]
 	[% IF last_category != item.item_type.category.item_category %]
-		<tr><td colspan="2"><b>[% item.item_type.category.item_category %]</b></td></tr>
+		[% IF last_category != '' %]</div>[% END %]
+		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h4 style="text-align: center">[% item.item_type.category.item_category %]</h4>
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
-	<tr id="item-row-[% item.id %]">
-		<td>
-			[% IF character.party_id %]
-			<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true">
-				<span class="dojoDndItem" dndType="item" id="item-[% item.id %]" dndData="[% item.item_type.item_type %]">[% item.display_name %]</span>
-			</span>	
-			[% ELSE %]
+
+	[% IF character.party_id %]
+		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
+			<span class="dojoDndItem" dndType="item" id="item-[% item.id %]">
+				[% IF item.item_type.image %]
+					<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+				[% ELSE %]
 				[% item.display_name %]
-			[% END %]
-		</td>
-		<td>
-			<span dojoType="dijit.form.DropDownButton">
-			        <span>?</span>
-			        <div dojoType="dijit.TooltipDialog" style="display: none"
-			        	href="[% base %]/item/tooltip?item_id=[% item.id %]">
-			        </div>
+				[% END %]
 			</span>
-		</td>
-	</tr>
+			<div dojoType="dijit.TooltipDialog"
+           		connectId="item-connecter-[% item.id %]"
+          		href="[% base %]/character/item_details?item_id=[% item.id %]"
+				style="display: none">
+            </div>				
+		</span>	
+	[% ELSE %]
+		[% item.display_name %]
+	[% END %]
 [% END %]
-</table>

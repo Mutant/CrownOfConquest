@@ -11,6 +11,7 @@ use Test::MockObject;
 use Test::More;
 
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Player;
 
 use RPG::C::Player;
 
@@ -442,6 +443,8 @@ sub test_login_successful : Tests(4) {
     $self->{params}{password} = 'pass'; 
 
     $self->{config}->{url_root} = 'url_root';
+    
+    $self->{mock_forward}{post_login_checks} = sub {};
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -476,6 +479,8 @@ sub test_login_was_deleted : Tests(5) {
     $self->{config}->{url_root} = 'url_root';
     
     $self->{config}->{max_number_of_players} = 1;
+    
+    $self->{mock_forward}{post_login_checks} = sub {};
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -515,6 +520,8 @@ sub test_login_was_deleted_but_game_now_full : Tests(3) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
+    $self->{mock_forward}{post_login_checks} = sub {};
+    
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -524,6 +531,37 @@ sub test_login_was_deleted_but_game_now_full : Tests(3) {
     $player->discard_changes;
     is($player->warned_for_deletion, 1, "Warned for deletion flag still set");
     is($player->deleted, 1, "Player still deleted");
+}
+
+sub test_post_login_checks_tip_of_the_day : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $player = Test::RPG::Builder::Player->build_player($self->{schema}, display_tip_of_the_day => 1,);
+	my $tip = $self->{schema}->resultset('Tip')->create(
+		{
+			tip => 'tip',
+			title => 'title',
+			tip_of_the_day => DateTime->now(),	
+		}
+	); 
+	
+	my $tip2 = $self->{schema}->resultset('Tip')->create(
+		{
+			tip => 'tip',
+			title => 'title',
+			tip_of_the_day => DateTime->now->subtract( days => 1, minutes => 1 ),	
+		}
+	); 	
+	
+	$self->{session}{player} = $player;
+	
+	# WHEN
+	RPG::C::Player->post_login_checks( $self->{c} );
+	
+	# THEN
+	isa_ok($self->{flash}->{tip}, "RPG::Schema::Tip", "Tip record set in flash");
+	is($self->{flash}->{tip}->id, $tip->id, "Tip id matches");
 }
 
 1;

@@ -31,13 +31,19 @@ function getPanels(url) {
 			
 			refreshPanels(responseObject);
 			
-			dungeonScroll();
+			if (dojo.byId('scroll_to')) {
+				dungeonScroll(dojo.byId('scroll_to').innerHTML);
+			}
 			
 			displayPopupMessages();	
 			
 			if (responseObject.displayDialog) {
 	    		dijit.byId(responseObject.displayDialog).show();
-			}		
+			}
+			
+			if (responseObject.panel_callbacks) {
+				executeCallbacks(responseObject.panel_callbacks);
+			}
 		},
         
         error: function(err) {
@@ -63,7 +69,7 @@ function refreshPanels(panelData) {
 			dijit.byId(panel+'-pane').refresh();
 			//dijit.byId(panel+'-pane').parseOnLoad = true;
 		}
-	}
+	}	
 }
 
 function setPanel(panel, url) {
@@ -100,16 +106,92 @@ function displayMessages(messages_passed) {
 	}
 }
 
+var hack_that_needs_to_be_fixed;
+function executeCallbacks(callBacks) {
+	for (var callIdx in callBacks) {
+		callback = callBacks[callIdx];
+		hack_that_needs_to_be_fixed = callback.data
+		
+		[%# more elegant way of doing this? %]
+		eval(callback.name + "Callback();");
+	}
+}
+
+function dungeonCallback() {
+	var data = hack_that_needs_to_be_fixed;
+	var updatedSectors = data.sectors;
+	for (var x in updatedSectors) {
+		for (var y in updatedSectors[x]) {
+			if (updatedSectors[x][y]) {
+				sector = updatedSectors[x][y];
+			
+				var sector_id = "sector_" + x + "_" + y;
+			
+				if (! dojo.byId(sector_id)) {
+					// Create sector
+					newSector = document.createElement("div");
+					newSector.id = sector_id;
+					newSector.style.position = 'absolute';
+					newSector.style.top = y - 1 * 40;
+					newSector.style.left = x - 1 * 40; 
+					newSector.style.width = '40px';
+					newSector.style.height = '40px';					
+					alert("Created: " + sector_id);
+				}
+			
+				if (! dojo.byId(sector_id)) {
+					alert(x + ", " + y);
+					//alert(sector.sector);
+				}
+				dojo.byId(sector_id).innerHTML = sector.sector;
+				
+				
+				[%# Create CG descs %]
+				if (dijit.byId('cgtt_' + x + '_' + y)) {
+					[%# Destroy if it used to exist %]
+					dijit.byId('cgtt_' + x + '_' + y).destroyRecursive();
+				}					
+				if (sector.cg_desc) {
+					params = {
+						connectId: [sector_id],
+						label: sector.cg_desc,
+						id: 'cgtt_'+ x + '_' + y,
+					};		
+					new dijit.Tooltip(params);
+				}
+				
+				if (dijit.byId('ptt_' + x + '_' + y)) {
+					[%# Destroy if it used to exist %]
+					dijit.byId('ptt_' + x + '_' + y).destroyRecursive();
+				}					
+				if (sector.party_desc) {
+					params = {
+						connectId: [sector_id],
+						label: sector.party_desc,
+						id: 'ptt_' + x + '_' + y,
+					};		
+					new dijit.Tooltip(params);				
+				}		
+			}		 
+		}	
+	}
+	
+	scroll_to_sector = 'sector_' + data.scroll_to.x + "_" + data.scroll_to.y;
+	dungeonScroll(scroll_to_sector); 
+}
+
 var panel_init = [% panels %];
 
 function init() {
 	refreshPanels(panel_init);
 	
-	dungeonScroll();
+	if (dojo.byId('scroll_to')) {
+		dungeonScroll(dojo.byId('scroll_to').innerHTML);
+	}
 }
 
-function dungeonScroll() {
-	loc = dojo.byId('scroll-to');
+function dungeonScroll(sectorId) {
+	loc = dojo.byId(sectorId);
 	if (loc) {
 		dijit.scrollIntoView(loc);
 	}
@@ -365,6 +447,8 @@ function unblockDoor(action) {
 <div id="party_status-pane" dojoType="dijit.layout.ContentPane">
 [% INCLUDE party/status.html %]
 </div>
+
+<div dojoType="dijit.layout.ContentPane" id="dungeon-pane" style="display: none"></div>
 
 <div dojoType="dijit.layout.BorderContainer"
 				design="sidebar"                

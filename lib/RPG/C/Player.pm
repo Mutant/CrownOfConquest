@@ -9,6 +9,8 @@ use DateTime;
 use Carp;
 
 use String::Random;
+use DateTime;
+use List::Util qw(shuffle);
 
 sub login : Local {
     my ( $self, $c ) = @_;
@@ -27,6 +29,9 @@ sub login : Local {
 
             if ( $user->verified ) {
                 $c->session->{player} = $user;
+                                
+                # Various post login checks
+                $c->forward('post_login_checks');
 
                 if ($was_deleted) {                        
                     if ( $c->model('DBIC::Player')->count( { deleted => 0 } ) > $c->config->{max_number_of_players} ) {
@@ -68,6 +73,35 @@ sub login : Local {
             }
         ]
     );
+}
+
+sub post_login_checks : Private {
+	my ($self, $c) = @_;
+                
+    my $player = $c->session->{player};
+                
+    # Check for announcements
+	my @announcements = $c->model('DBIC::Announcement')->search(
+    	{
+       		'announcement_player.player_id' => $player->id,
+       		'announcement_player.viewed' => 0,                		
+       	},
+       	{
+      		'order_by' => 'date desc',
+       		'join' => 'announcement_player',
+       	}
+    );
+                
+    $c->session->{announcements} = \@announcements if scalar @announcements > 0;
+    
+    # Check for tip of the day
+    if ($player->display_tip_of_the_day) {
+    	my @tips = shuffle $c->model('DBIC::Tip')->search();
+    	
+    	my $tip = $tips[0];
+    	
+    	$c->flash->{tip} = $tip if $tip;
+    }
 }
 
 sub logout : Local {
@@ -458,7 +492,7 @@ sub survey : Local {
 	my $reason = join ',', $c->req->param('reason');
 	$reason .= ','.$c->req->param('reason_other');
 	
-	my $survey_resp = $c->model('Survey_Response')->create(
+	my $survey_resp = $c->model('DBIC::Survey_Response')->create(
 		{
 			reason => $reason,
 			favourite => $c->req->param('favourite'),
@@ -473,5 +507,38 @@ sub survey : Local {
 	$c->forward( 'RPG::V::TT', [ { template => 'player/survey_thanks.html', } ] );
 	
 }
+
+sub announcements : Local {
+	my ( $self, $c ) = @_;
+	
+	my @announcements = $c->model('DBIC::Announcement')->search(
+		{},
+		{
+			order_by => 'date desc',
+		}
+	);
+	
+	$c->forward( 'RPG::V::TT', [ 
+		{ 
+			template => 'player/announcement/list.html',
+			params => {
+				announcements => \@announcements,
+			} 
+		} 
+	] );	
+}
+
+sub disable_tips : Local {
+	my ( $self, $c ) = @_;
+	
+	my $player = $c->stash->{party}->player;
+	$player->display_tip_of_the_day(0);
+	$player->update;
+	
+	push @{$c->stash->{panel_messages}}, "Tips of the day disabled";
+	
+	$c->forward( '/party/main' );
+}
+
 
 1;

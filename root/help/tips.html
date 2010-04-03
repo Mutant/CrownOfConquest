@@ -1,0 +1,18 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE help/subnav.html %]
+
+<h2>Tips</h2>
+
+[% FOREACH tip IN tips %]
+	<div style="border: 1px solid black; background: white; -moz-border-radius-bottomleft:14pt; -moz-border-radius-bottomright:14pt;
+		-moz-border-radius-topleft:14pt; -moz-border-radius-topright:14pt; padding: 5px">
+	
+	[% IF tip.title %]<b>[% tip.title %]</b><br>[% END %]
+	[% tip.tip %]
+	
+	</div>
+	<br>
+[% END %]
+
+[% INCLUDE bottom.html %]

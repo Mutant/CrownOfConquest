@@ -52,6 +52,8 @@ sub refresh : Private {
 		$response{panel_messages} = $c->stash->{panel_messages};
 	}
 	
+	$response{panel_callbacks} = $c->stash->{panel_callbacks};
+	
     my $resp = to_json \%response;
     $resp =~ s|script>|scri"+"pt>|g; # Nasty hack
 

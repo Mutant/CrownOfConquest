@@ -98,6 +98,8 @@ sub options : Local {
                 	flee_threshold => $c->stash->{party}->flee_threshold,
                 	send_daily_report => $c->stash->{party}->player->send_daily_report,
                 	send_email_announcements => $c->stash->{party}->player->send_email_announcements,
+                	display_tip_of_the_day => $c->stash->{party}->player->display_tip_of_the_day,
+                	display_announcements => $c->stash->{party}->player->display_announcements,
                 },
                 fill_in_form => 1,
             }

@@ -151,6 +151,20 @@ sub display_name {
     return $self->item_type->item_type . $quantity_string;
 }
 
+sub weight {
+    my $self = shift;
+
+	my $base_weight = $self->item_type->weight;
+
+    if ( my $quantity = $self->variable('Quantity') ) {
+		return $quantity  * $base_weight;
+    }
+    else {
+	    return $base_weight;
+    }
+	
+}
+
 # Override insert to populate item_variable data
 sub insert {
     my ( $self, @args ) = @_;
@@ -228,6 +242,7 @@ sub equip_item {
 
     # Make sure this category of item can be equipped here
     unless ($equip_place) {
+    	# TODO: replace with RPG::Exception
         croak "Can't equip an item of that type there\n";
     }
 

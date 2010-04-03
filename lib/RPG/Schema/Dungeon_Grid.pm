@@ -24,6 +24,8 @@ __PACKAGE__->has_many( 'doors', 'RPG::Schema::Door', { 'foreign.dungeon_grid_id'
 
 __PACKAGE__->has_many( 'walls', 'RPG::Schema::Dungeon_Wall', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->has_many( 'paths', 'RPG::Schema::Dungeon_Sector_Path', { 'foreign.sector_id' => 'self.dungeon_grid_id' } );
+
 __PACKAGE__->belongs_to( 'dungeon_room', 'RPG::Schema::Dungeon_Room', { 'foreign.dungeon_room_id' => 'self.dungeon_room_id' } );
 
 __PACKAGE__->has_many( 'mapped_dungeon_grid', 'RPG::Schema::Mapped_Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
@@ -102,6 +104,21 @@ sub has_passable_door {
     
     return grep { $door_side eq $_ } $self->sides_with_doors(1);   
 }
+
+sub sectors_allowed_to_move_to {
+    my $self      = shift;
+    my $max_moves = shift;
+    
+    my %allowed = map {$_->has_path_to => 1 } $self->search_related(
+    	'paths',
+    	{
+    		distance => {'<=', $max_moves},	
+    	},
+    );
+
+    return \%allowed;
+}
+
 
 sub allowed_to_move_to_sectors {
     my $self      = shift;
@@ -343,7 +360,6 @@ sub can_move_to {
     
     # Only get here if move can be completed
     return 1;
-
 }
 
 sub available_creature_group {

@@ -83,6 +83,7 @@ sub do_new_day {
     $logger->info( "Running ticker script as at: " . $dt->datetime() );
 
     my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
+    $schema->log($logger);
 
     my $context = RPG::NewDay::Context->new(
         config      => $config,

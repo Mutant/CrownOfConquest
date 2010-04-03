@@ -18,7 +18,7 @@ sub db_startup : Test(startup) {
 
     # Wrap in T::M::E so we can mock the config
     $schema = Test::MockObject::Extends->new($schema);
-    $schema->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} } );
+    $schema->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, 'log' => sub { $self->{mock_logger} } );
 
     $self->{schema} = $schema;
 }

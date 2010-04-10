@@ -10,7 +10,7 @@ use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use Clone qw(clone);
 
-use Carp;
+use Carp qw(confess croak);
 use Data::Dumper;
 
 use feature 'switch';
@@ -764,7 +764,7 @@ sub populate_sector_paths {
     my $dungeon   = shift;
 
 	# TODO: we only calculate paths up to 3 moves. This may need to change if we allow parties to move further in one go
-    my $max_moves = 3;
+    my $max_moves = shift || 3;
     
     $self->context->logger->info("Populating sector paths for dungeon"); 
     
@@ -809,28 +809,37 @@ sub populate_sector_paths {
     		
    		# Check all the sectors in range to see if they have a path
    		foreach my $sector_to_check (@sectors_to_check) {
-   			if ($self->check_has_path($sector, $sector_to_check, $sector_grid, $max_moves)) {
+   			#warn "Top level, find path for: " . $sector->x . ", " . $sector->y . " -> " . $sector_to_check->x . ", " . $sector_to_check->y . "\n";
+   			
+   			my $result = $self->check_has_path($sector, $sector_to_check, $sector_grid, $max_moves);
+   			
+   			#warn "Got result, has_path: " . $result->{has_path} . ", doors_in_path: " . 
+   			#	(ref $result->{doors_in_path} eq 'ARRAY' ? scalar @{ $result->{doors_in_path} } : 'none' ) . "\n";  
+   			
+   			if ($result->{has_path}) {
    				# This one has a path, write it to the DB
    				$count++;
-   				
-   				my $distance = RPG::Map->get_distance_between_points(
-					{
-						x=> $sector->x,
-						y=> $sector->y,
-					},
-					{
-						x=>$sector_to_check->x,
-						y=>$sector_to_check->y,	
-					}
-				);
-    				
+ 				
+ 				#warn $result->{moves_made};
    				$self->context->schema->resultset('Dungeon_Sector_Path')->create(
 					{
 						sector_id => $sector->id,
 						has_path_to => $sector_to_check->id,
-						distance => $distance,
+						distance => $result->{moves_made},
 					}
-				);	
+				);
+
+				
+				foreach my $door_in_path (@{$result->{doors_in_path}}) {
+					#warn ref $door_in_path;
+					$self->context->schema->resultset('Dungeon_Sector_Path_Door')->find_or_create(
+						{
+							sector_id => $sector->id,
+							has_path_to => $sector_to_check->id,
+							door_id => $door_in_path->id,	
+						}
+					);
+				}
    			}
    		}
     }
@@ -851,29 +860,23 @@ sub check_has_path {
 
     $moves_made++;
 
-    return 0 if $moves_made > $max_moves;
+    return {has_path=>0} if $moves_made > $max_moves;
 
     my ( $x, $y ) = ( $target_sector->x, $target_sector->y );
 
     $sectors_tried->[$x][$y] = 1;
 
+	#warn "Start sector: " . $start_sector->x . ", " . $start_sector->y;
     #warn "Trying sector: $x, $y\n";
 
-    my @paths_to_check = (
-        [ $x - 1, $y - 1 ],
-        [ $x + 1, $y + 1 ],
-        [ $x - 1, $y + 1 ],
-        [ $x + 1, $y - 1 ],
-        [ $x + 1, $y ],
-        [ $x - 1, $y ],
-        [ $x,     $y + 1 ],
-        [ $x,     $y - 1 ],
-    );
+	my @paths_to_check = $self->compute_paths_to_check($start_sector, $target_sector);
 
     my $move_cache;
 
     foreach my $path (@paths_to_check) {
         my ( $test_x, $test_y ) = @$path;
+
+    	my @doors_in_path;
 
         #warn "Testing: $x, $y -> $test_x, $test_y (current moves: $moves_made)\n";
 
@@ -885,23 +888,43 @@ sub check_has_path {
             
             my $cache_key = $target_sector->x . '-' . $target_sector->y . '-' . $sector_to_try->x . '-' . $sector_to_try->y;
             
-            my $has_path = $move_cache->{$cache_key} // $self->can_move_to($target_sector, $sector_to_try);
+            my $has_path;
+            my $result = $move_cache->{$cache_key} // $self->can_move_to($target_sector, $sector_to_try);
+           	$has_path = $result->{has_path};
             
-            $move_cache->{$cache_key} = $has_path;
+            $move_cache->{$cache_key} = $result;
 
-            next unless $has_path;
+            unless ($has_path) {
+            	#warn "Can't find a path path\n";
+            	next;	
+            }
+            
+            push @doors_in_path, @{$result->{doors_in_path}} if @{$result->{doors_in_path}};
+            
+            #warn "Doors_in_path: " . scalar @doors_in_path;
 
             #warn "(we can)\n";
 
             if ( $start_sector->x == $test_x && $start_sector->y == $test_y ) {
                 #warn ".. dest is reached";
                 # Dest reached
-                return 1;
+                return {
+                	has_path => 1,
+                	doors_in_path => \@doors_in_path,	
+                	moves_made => $moves_made,
+                };
             }
 
-            if ( $self->check_has_path( $start_sector, $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried ) ) {
+			# Still not at dest, recurse to find another path
+			my $recursed_result = $self->check_has_path( $start_sector, $sector_to_try, $sector_grid, $max_moves, $moves_made, clone $sectors_tried );
+            if ( $recursed_result->{has_path} ) {
                 #warn "... path found";
-                return 1;
+                push @doors_in_path, @{$recursed_result->{doors_in_path}} if @{$recursed_result->{doors_in_path}}; 
+                return {
+                	has_path => 1,
+                	doors_in_path => \@doors_in_path,
+                	moves_made => $recursed_result->{moves_made},
+                };
             }
             
             #warn ".. no path found";
@@ -909,7 +932,46 @@ sub check_has_path {
 
     }
 
-    return 0;
+    return {has_path => 0};
+}
+
+sub compute_paths_to_check {
+	my $self = shift;
+	my $start_sector = shift;
+	my $target_sector = shift;
+	
+	my ($x, $y) = ($target_sector->x, $target_sector->y);
+	
+    my @paths_to_check = (
+        [ $x - 1, $y - 1 ],
+        [ $x + 1, $y + 1 ],
+        [ $x - 1, $y + 1 ],
+        [ $x + 1, $y - 1 ],
+        [ $x + 1, $y ],
+        [ $x - 1, $y ],
+        [ $x,     $y + 1 ],
+        [ $x,     $y - 1 ],
+    );
+    
+	my $adjacent = RPG::Map->is_adjacent_to(
+        {
+            x => $start_sector->x,
+            y => $start_sector->y,
+        },
+        {
+            x => $target_sector->x,
+            y => $target_sector->y,
+        },
+    );    
+    
+    # If sectors are adjacent, check direct path first
+    if ($adjacent) {
+    	@paths_to_check = grep { ! ($->[0] == $start_sector->x && $_->[1] == $start_sector->y) } @paths_to_check; 
+    	unshift @paths_to_check, [ $start_sector->x , $start_sector->y]	
+    }
+    
+    return @paths_to_check;
+		
 }
 
 sub can_move_to {
@@ -922,12 +984,12 @@ sub can_move_to {
     #warn "dest: " . $sector->x . ", " . $sector->y;
 
     # Can't move to sector if src/dest are the same
-    return 0 if $start->x == $sector->x && $start->y == $sector->y;
+    return {has_path=>0} if $start->x == $sector->x && $start->y == $sector->y;
 
     #warn "checking is adjacent to\n";
 
     # Sectors must be adjacent
-    return 0 unless RPG::Map->is_adjacent_to(
+    return {has_path=>0} unless RPG::Map->is_adjacent_to(
         {
             x => $start->x,
             y => $start->y,
@@ -944,42 +1006,22 @@ sub can_move_to {
 
     # Sector to the right
     if ( $start->x < $sector->x && $start->y == $sector->y ) {
-        if ( $sector->has_wall('left') && !$sector->has_passable_door('left') ) {
-            return 0;
-        }
-        else {
-            return 1;
-        }
+		return $self->get_non_diag_result($start, 'right');
     }
 
     # Sector to the left    
     if ( $start->x > $sector->x && $start->y == $sector->y ) {
-        if ( $sector->has_wall('right') && !$sector->has_passable_door('right') ) {
-            return 0;
-        }
-        else {
-            return 1;
-        }
+    	return $self->get_non_diag_result($start, 'left');
     }
 
     # Sector above
     if ( $start->y > $sector->y && $start->x == $sector->x ) {
-        if ( $sector->has_wall('bottom') && !$sector->has_passable_door('bottom') ) {
-            return 0;
-        }
-        else {
-            return 1;
-        }
+		return $self->get_non_diag_result($start, 'top');
     }
 
     # Sector below
     if ( $start->y < $sector->y && $start->x == $sector->x ) {
-        if ( $sector->has_wall('top') && !$sector->has_passable_door('top') ) {
-            return 0;
-        }
-        else {
-            return 1;
-        }
+		return $self->get_non_diag_result($start, 'bottom');
     }
 
     # See if the sector is on the diagonal
@@ -1018,24 +1060,60 @@ sub can_move_to {
     #warn "Dest corner: $dest_wall_1, $dest_wall_2\n";
     #warn "Src corner: $src_wall_1, $src_wall_2\n";
 
-    my $dest_pos1_blocked = $sector->has_wall($dest_wall_1) && ( $start->has_wall($src_wall_2) || !$sector->has_passable_door($dest_wall_1) );
-    my $dest_pos2_blocked = $sector->has_wall($dest_wall_2) && ( $start->has_wall($src_wall_1) || !$sector->has_passable_door($dest_wall_2) );
+    my $dest_pos1_blocked = $sector->has_wall($dest_wall_1) && ( $start->has_wall($src_wall_2) || !$sector->has_door($dest_wall_1) );
+    my $dest_pos2_blocked = $sector->has_wall($dest_wall_2) && ( $start->has_wall($src_wall_1) || !$sector->has_door($dest_wall_1));
     
-    return 0 if $dest_pos1_blocked && $dest_pos2_blocked;
+    if ($dest_pos1_blocked && $dest_pos2_blocked) {
+    	return {
+    		has_path => 0,
+    	}
+    }
 
-    my $src_pos1_blocked = $start->has_wall($src_wall_1) && ( $sector->has_wall($dest_wall_2) || !$start->has_passable_door($src_wall_1) );
-    my $src_pos2_blocked = $start->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$start->has_passable_door($src_wall_2) );
+    my $src_pos1_blocked = $start->has_wall($src_wall_1) && ( $sector->has_wall($dest_wall_2) || !$start->has_door($src_wall_1) );
+    my $src_pos2_blocked = $start->has_wall($src_wall_2) && ( $sector->has_wall($dest_wall_1) || !$start->has_door($src_wall_2) );
     
-    return 0 if $src_pos1_blocked && $src_pos2_blocked;
+    if ($src_pos1_blocked && $src_pos2_blocked) {
+    	return {
+    		has_path => 0,
+    	}
+    }    
     
     # Now check if there's a horizontal or vertical blockage
-    return 0 if ($start->has_wall($src_wall_1) && ! $start->has_passable_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_passable_door($dest_wall_1));
-    return 0 if ($start->has_wall($src_wall_2) && ! $start->has_passable_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_passable_door($dest_wall_2)); 
+    return {has_path => 0} if ($start->has_wall($src_wall_1) && ! $start->has_door($src_wall_1)) && ($sector->has_wall($dest_wall_1) && ! $sector->has_door($dest_wall_1));
+    return {has_path => 0} if ($start->has_wall($src_wall_2) && ! $start->has_door($src_wall_2)) && ($sector->has_wall($dest_wall_2) && ! $sector->has_door($dest_wall_2)); 
     
     #warn "No blockages found\n";
     
     # Only get here if move can be completed
-    return 1;
+    
+    # Assemble array of doors in this path
+    
+    my @doors_in_path;
+    push @doors_in_path, $start->get_door_at($src_wall_1) // ();
+    push @doors_in_path, $start->get_door_at($src_wall_2) // ();
+    push @doors_in_path, $sector->get_door_at($dest_wall_1) // ();
+    push @doors_in_path, $sector->get_door_at($dest_wall_2) // ();
+   
+    return {
+    	has_path => 1,
+    	doors_in_path => \@doors_in_path,
+    };
+}
+
+sub get_non_diag_result {
+	my $self = shift;
+	my $sector = shift;
+	my $direction = shift;
+	
+    if ( $sector->has_wall($direction) && !$sector->has_door($direction) ) {
+        return {has_path => 0};
+    }
+    else {
+        return {
+			has_path => 1,
+			doors_in_path => [$sector->get_door_at($direction) // ()],            	
+        };
+    }	
 }
 
 1;

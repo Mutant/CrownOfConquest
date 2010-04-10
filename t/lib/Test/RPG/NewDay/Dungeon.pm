@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Dungeon;
 
-use base qw(Test::RPG::DB);
+use base qw(Test::RPG::NewDay::Dungeon::Base);
 
 __PACKAGE__->runtests unless caller();
 
@@ -15,59 +15,11 @@ use Test::Exception;
 
 use Test::RPG::Builder::Dungeon_Room;
 
-sub dungeon_startup : Test(startup => 1) {
-    my $self = shift;
-
-    $self->{dice} = Test::MockObject->new();
-
-    $self->{dice}->fake_module(
-        'Games::Dice::Advanced',
-        roll => sub {
-            if ( $self->{rolls} ) {
-                my $ret = $self->{rolls}[ $self->{counter} ];
-                $self->{counter}++;
-                return $ret;
-            }
-            else {
-                return $self->{roll_result} || 0;
-            }
-        }
-    );
-
-    use_ok 'RPG::NewDay::Action::Dungeon';
-
-    my $logger = Test::MockObject->new();
-    $logger->set_always('debug');
-    $logger->set_always('info');
-
-    $self->{context} = Test::MockObject->new();
-
-    $self->{config} = {
-        max_x_dungeon_room_size => 6,
-        max_y_dungeon_room_size => 6,
-    };
-
-    $self->{context}->set_always( 'logger', $logger );
-    $self->{context}->set_always( 'schema', $self->{schema} );
-    $self->{context}->set_always( 'config', $self->{config} );
-    $self->{context}->set_isa('RPG::NewDay::Context');
-}
-
-sub dungeon_shutdown : Test(shutdown) {
-    my $self = shift;
-
-    delete $INC{'Games/Dice/Advanced.pm'};
-}
-
 sub dungeon_setup : Tests(setup) {
     my $self = shift;
 
-    # Create Dungeon_Positions
-    my %positions;
-    foreach my $position (qw/top bottom left right/) {
-        my $position_rec = $self->{schema}->resultset('Dungeon_Position')->create( { position => $position, } );
-        $positions{$position} = $position_rec->id;
-    }
+    # Query Dungeon_Positions
+    my %positions = map { $_->position => $_->id} $self->{schema}->resultset('Dungeon_Position')->search();
 
     $self->{positions} = \%positions;
 

@@ -130,19 +130,17 @@ function dungeonCallback() {
 				if (! dojo.byId(sector_id)) {
 					// Create sector
 					newSector = document.createElement("div");
-					newSector.id = sector_id;
+					newSector.setAttribute('id', sector_id);
 					newSector.style.position = 'absolute';
-					newSector.style.top = y - 1 * 40;
-					newSector.style.left = x - 1 * 40; 
+					console.log("y:" + y + ", boundary: " + data.boundaries.min_y + ", top: " + (y - data.boundaries.min_y) * 40);					
+					newSector.style.top = (y - data.boundaries.min_y) * 40;
+					console.log("x:" + x + ", boundary: " + data.boundaries.min_x + ", left: " + (x - data.boundaries.min_x) * 40);
+					newSector.style.left = (x - data.boundaries.min_x) * 40; 
 					newSector.style.width = '40px';
-					newSector.style.height = '40px';					
-					alert("Created: " + sector_id);
+					newSector.style.height = '40px';
+					dojo.byId('dungeon_outer').appendChild(newSector); 
 				}
-			
-				if (! dojo.byId(sector_id)) {
-					alert(x + ", " + y);
-					//alert(sector.sector);
-				}
+
 				dojo.byId(sector_id).innerHTML = sector.sector;
 				
 				

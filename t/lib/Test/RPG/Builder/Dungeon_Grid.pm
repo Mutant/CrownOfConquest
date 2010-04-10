@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::Dungeon_Grid;
 
+use Data::Dumper;
+
 sub build_dungeon_grid {
     my $package = shift;
     my $schema  = shift;

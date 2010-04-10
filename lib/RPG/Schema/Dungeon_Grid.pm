@@ -102,19 +102,48 @@ sub has_passable_door {
     my $self      = shift;
     my $door_side = shift;
     
-    return grep { $door_side eq $_ } $self->sides_with_doors(1);   
+    return grep { $door_side eq $_ } $self->sides_with_doors(1);
+}
+
+# Returns the door at a particular position, or undef if none exists
+sub get_door_at {
+	my $self = shift;
+	my $door_side = shift;
+	
+	return undef unless $self->has_door($door_side);
+	
+	my @doors = $self->doors;
+	
+    foreach my $door (@doors) {
+        if ($door->position->position eq $door_side) {
+        	return $door;	
+        }
+    }	
 }
 
 sub sectors_allowed_to_move_to {
     my $self      = shift;
     my $max_moves = shift;
     
-    my %allowed = map {$_->has_path_to => 1 } $self->search_related(
+    my @paths = $self->search_related(
     	'paths',
     	{
     		distance => {'<=', $max_moves},	
     	},
+    	{
+    		prefetch => {'doors_in_path' => 'door'}, 
+    	}
     );
+    
+    my %allowed;
+    foreach my $path (@paths) {
+    	# Skip path is a door in the path is not passable
+    	if (grep { ! $_->door->can_be_passed } $path->doors_in_path) {
+    		next;    		
+    	}
+    	
+    	$allowed{$path->has_path_to} = 1;
+    }
 
     return \%allowed;
 }

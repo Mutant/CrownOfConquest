@@ -171,6 +171,13 @@ sub render_dungeon_grid : Private {
         $min_x = $sector->{x} if $min_x > $sector->{x};
         $min_y = $sector->{y} if $min_y > $sector->{y};
     }
+    
+    $c->session->{mapped_dungeon_boundaries} = {
+    	min_x => $min_x,
+    	max_x => $max_x,
+    	min_y => $min_y,
+    	max_y => $max_y,	
+    };
 
     return $c->forward(
         'RPG::V::TT',
@@ -286,9 +293,25 @@ sub build_updated_sectors_data : Private {
 			
 			next unless $current_sector;
 
+			# Only sectors in allowed_to_move_to or viewable area (or current location) should be updated
 			next unless $allowed_to_move_to->{$current_sector->id} || 
 				($new_location->x == $x && $new_location->y == $y);
+=comment
+			# Update dungeon boundaries
+			if ($x < $c->session->{mapped_dungeon_boundaries}{min_x}) {
+				$c->session->{mapped_dungeon_boundaries}{min_x} = $x;
+			}
+			elsif ($x > $c->session->{mapped_dungeon_boundaries}{max_x}) {
+				$c->session->{mapped_dungeon_boundaries}{max_x} = $x;
+			}
 			
+			if ($y < $c->session->{mapped_dungeon_boundaries}{min_y}) {
+				$c->session->{mapped_dungeon_boundaries}{min_y} = $y;
+			}
+			elsif ($y > $c->session->{mapped_dungeon_boundaries}{y}) {
+				$c->session->{mapped_dungeon_boundaries}{max_y} = $y;
+			}			
+=cut		
 
 			# Check if sector is mapped by party
 			# TODO: might be a bit slow?
@@ -320,6 +343,10 @@ sub build_updated_sectors_data : Private {
 		                	zoom_level => $c->session->{zoom_level} || 2,
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
 		                	positions => \@positions,
+		                    max_x               => $c->session->{mapped_dungeon_boundaries}{max_x},
+		                    max_y               => $c->session->{mapped_dungeon_boundaries}{max_y},
+		                    min_x               => $c->session->{mapped_dungeon_boundaries}{min_x},
+		                    min_y               => $c->session->{mapped_dungeon_boundaries}{min_y},		                	
 		                },
 		                return_output => 1,
 		            }
@@ -428,6 +455,7 @@ sub build_updated_sectors_data : Private {
 	return {
 		sectors => $sectors,
 		scroll_to => $scroll_to,
+		boundaries => $c->session->{mapped_dungeon_boundaries},
 	};
 	
 }

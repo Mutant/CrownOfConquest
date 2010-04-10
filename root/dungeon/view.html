@@ -15,7 +15,7 @@
 		[% scroll_to_y = max_y %]
 	[% END %]
 	
-<div style="position: relative;">
+<div style="position: relative;" id="dungeon_outer">
 <div style="display: none" id="scroll_to">sector_[% scroll_to_x %]_[% scroll_to_y %]</div>
 [% WHILE y <= max_y %]
 	[% y = y+1 %]

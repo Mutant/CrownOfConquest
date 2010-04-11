@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use Text::Wrap;
 
 sub offer : Local {
     my ( $self, $c ) = @_;
@@ -49,6 +50,7 @@ sub accept : Local {
     $quest->update;
 
     # If this town has no quests left, create a new quest of the same type
+    # TODO: does this work? Also, need to catch exceptions
     if ( $c->model('DBIC::Quest')->count( { town_id => $town->id, party_id => undef, } ) == 0 ) {
         $c->model('DBIC::Quest')->create(
             {
@@ -57,6 +59,26 @@ sub accept : Local {
             }
         );
     }
+    
+    my $message;
+    my $accept_template = 'quest/accept_message/' . $quest->type->quest_type . '.html';
+    if (-f $c->path_to('root') . '/' . $accept_template) {
+	    $message = $c->forward(
+	        'RPG::V::TT',
+	        [
+	            {
+	                template => $accept_template,
+	                params   => { quest => $quest, },
+	                return_output => 1,
+	            }
+	        ]
+	    );
+	
+		$Text::Wrap::columns = 80;
+		$message = Text::Wrap::wrap('', '<br>', $message);	    
+    };
+    
+    $c->res->body($message);
 }
 
 sub list : Local {

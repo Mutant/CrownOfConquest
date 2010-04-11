@@ -7,6 +7,11 @@ function acceptQuest(quest_id) {
         handleAs: "text",
         
         load: function(responseObject, ioArgs) {
+        	if (responseObject) {
+        		dojo.byId('accept-message-text').innerHTML = responseObject;
+        		dijit.byId('message').show();
+        	}
+        
         	dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
         }
     });
@@ -14,6 +19,14 @@ function acceptQuest(quest_id) {
 </script>
 
 [% PROCESS quest/description.html %]
+
+<div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
+    <span id="accept-message-text"></span>
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+	</div>
+</div>
 
 <h2>[% short_description(quest) %]</h2>
 

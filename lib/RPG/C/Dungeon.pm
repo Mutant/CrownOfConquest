@@ -133,7 +133,7 @@ sub build_viewable_sector_grids : Private {
     
     my $viewable_sectors_by_coord;
     foreach my $viewable_sector (@viewable_sectors) {
-        $viewable_sectors_by_coord->[ $viewable_sector->{x} ][ $viewable_sector->{y} ] = $viewable_sector;
+        $viewable_sectors_by_coord->[ $viewable_sector->{x} ][ $viewable_sector->{y} ] = 1;
     }    
     
     $c->stats->profile("Got viewable sectors");	
@@ -304,7 +304,7 @@ sub build_updated_sectors_data : Private {
 	
 	my $sectors;
 	my $cg_descs;
-		
+
 	my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $new_location->x, $new_location->y, 3 );
 	for my $y ($top_corner->{y} .. $bottom_corner->{y}) {
 		for my $x ($top_corner->{x} .. $bottom_corner->{x}) {	
@@ -313,11 +313,22 @@ sub build_updated_sectors_data : Private {
 			next unless $current_sector;
 
 			# Only sectors in allowed_to_move_to or viewable area (or current location) should be updated
-			next unless ($allowed_to_move_to->{$current_sector->{dungeon_grid_id}} && $viewable_sector_grid->[$x][$y]) || 
+			next unless $allowed_to_move_to->{$current_sector->{dungeon_grid_id}} ||
 				($new_location->x == $x && $new_location->y == $y);
+				
+			# If sector is not viewable, but is moveable, check if sector is mapped by party. Only display mapped
+			#  sectors (viewable sectors are always mapped)
+			unless ($viewable_sector_grid->[$x][$y] || $c->model('DBIC::Mapped_Dungeon_Grid')->find(
+				{
+					dungeon_grid_id => $current_sector->{dungeon_grid_id},
+					party_id => $c->stash->{party}->id,
+				}
+			)) {
+				next;
+			}							
 
 			my %sector_data;
-						
+				
 			$sector_data{sector} = $c->forward(
 		        'RPG::V::TT',
 		        [

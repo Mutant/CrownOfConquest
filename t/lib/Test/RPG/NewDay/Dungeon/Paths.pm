@@ -397,6 +397,50 @@ sub check_has_path_walls_force_longer_path : Tests(9) {
     
 }
 
+sub check_has_path_longer_route_could_add_door_in_path_erroneously : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $sector_grid;
+    for my $x ( 1 .. 2 ) {
+        for my $y ( 1 .. 3 ) {
+            my @walls;
+            my @doors;
+
+            if ( $x == 2 && $y == 1 ) {
+                @walls = ( 'top', 'left', 'right' );
+            }
+            if ( $x == 2 && $y == 2 ) {
+                @walls = ('left', 'right');
+            }
+            if ( $x == 2 && $y == 3 ) {
+                @walls = ( 'bottom', 'right', 'left' );
+                @doors = ('left');
+            }
+            if ( $x == 1 && $y == 3 ) {
+                @walls = ( 'top', 'bottom','left', 'right' );
+                @doors = ('right');            	
+            }
+
+            my $sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid(
+                $self->{schema},
+                x     => $x,
+                y     => $y,
+                walls => \@walls,
+                doors => \@doors,
+            );
+            $sector_grid->[$x][$y] = $sector;
+        }
+    }
+
+    # WHEN
+    my $result = $self->{dungeon}->check_has_path( $sector_grid->[2][1], $sector_grid->[2][3], $sector_grid, 3 );
+
+    # THEN
+    is( $result->{has_path}, 1, "Have path to sector" );
+    is( scalar @{$result->{doors_in_path}}, 0, "No Doors in path returned");
+}
+
 sub test_populate_sector_paths_1 : Tests(1) {
     my $self = shift;
 

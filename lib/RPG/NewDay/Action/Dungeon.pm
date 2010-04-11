@@ -872,6 +872,8 @@ sub check_has_path {
 	my @paths_to_check = $self->compute_paths_to_check($start_sector, $target_sector);
 
     my $move_cache;
+    
+    my @paths_found;
 
     foreach my $path (@paths_to_check) {
         my ( $test_x, $test_y ) = @$path;
@@ -908,11 +910,12 @@ sub check_has_path {
             if ( $start_sector->x == $test_x && $start_sector->y == $test_y ) {
                 #warn ".. dest is reached";
                 # Dest reached
-                return {
+                push @paths_found, {
                 	has_path => 1,
                 	doors_in_path => \@doors_in_path,	
                 	moves_made => $moves_made,
                 };
+                next;
             }
 
 			# Still not at dest, recurse to find another path
@@ -920,7 +923,7 @@ sub check_has_path {
             if ( $recursed_result->{has_path} ) {
                 #warn "... path found";
                 push @doors_in_path, @{$recursed_result->{doors_in_path}} if @{$recursed_result->{doors_in_path}}; 
-                return {
+                push @paths_found, {
                 	has_path => 1,
                 	doors_in_path => \@doors_in_path,
                 	moves_made => $recursed_result->{moves_made},
@@ -931,8 +934,29 @@ sub check_has_path {
         }
 
     }
-
-    return {has_path => 0};
+    
+    if (@paths_found) {
+    	# Find the best path
+    	my $best_path = shift @paths_found; # Start with a random path
+    	foreach my $path_found (@paths_found) {
+    		if ($path_found->{moves_made} < $best_path->{moves_made}) {
+    			$best_path = $path_found;
+    			next;	
+    		}
+    		
+    		# We prefer paths with less doors, since they could be unpassable
+    		if ($path_found->{moves_made} == $best_path->{moves_made} 
+    			&& scalar @{$path_found->{doors_in_path}} < scalar @{$best_path->{doors_in_path}} ) {
+    			$best_path = $path_found;
+    			next;
+    		}
+    	}
+    	
+    	return $best_path;
+    }
+    else {
+	    return {has_path => 0};
+    }
 }
 
 sub compute_paths_to_check {

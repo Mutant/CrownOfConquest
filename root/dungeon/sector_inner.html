@@ -19,7 +19,7 @@
 		[% END %]
 		
 		[% IF can_move_to_sector %]
-			<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]&h=[% allowed_move_hashes.$x.$y %]')" 
+			<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
 				style="text-decoration: none;">
 		[% END %]
 		
@@ -38,14 +38,12 @@
 			text-align: center;			
 			"
 			>
+						
 			[% IF sector.stairs_up %]
 				<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
 			[% ELSIF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-			[% END %]
-			
-
-			[% IF cgs.$x.$y %]
+			[% ELSIF cgs.$x.$y %]
 				[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
 			
 				<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>

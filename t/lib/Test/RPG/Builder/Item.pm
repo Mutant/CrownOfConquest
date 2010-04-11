@@ -39,6 +39,7 @@ sub build_item {
             treasure_chest_id => $params{treasure_chest_id} || undef,
             equip_place_id => $eq_place->id,
             name => $params{name} || '',
+            shop_id => $params{shop_id} || undef,
         }
     );
 

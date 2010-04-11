@@ -8,6 +8,8 @@ use warnings;
 use List::Util qw(shuffle);
 use RPG::Map;
 
+use Data::Dumper;
+
 sub set_quest_params {
     my $self = shift;
     
@@ -70,7 +72,7 @@ sub _find_jewel_type_to_use {
 		},
 	);
 	
-	my @jewels_in_town = $self->result_source->schema->resultset('Item_Type')->search(
+	my %jewels_in_town = map { $_->id => 1 } $self->result_source->schema->resultset('Item_Type')->search(
 		{
 			'category.item_category' => 'Jewel',
 			'in_town.town_id' => $self->town->id,
@@ -84,16 +86,14 @@ sub _find_jewel_type_to_use {
 			],
 		},
 	);
+		
+	my @jewels_to_pick_from = @jewels;	
 	
-	my @jewels_to_pick_from = @jewels;
-	
-	foreach my $jewel_in_town (@jewels_in_town) {
-		@jewels_to_pick_from = grep { $_->id != $jewel_in_town->id } @jewels_to_pick_from;	
-	}
+	@jewels_to_pick_from = grep { ! $jewels_in_town{$_->id} } @jewels_to_pick_from;
 	
 	my $jewel_to_use;	
 	
-	unless (@jewels_to_pick_from) {
+	if (! @jewels_to_pick_from) {
 		# Hmm, seems every jewel type is in town. Pick one at ramdom and delete all of the items of that type in town.
 		@jewels = shuffle @jewels;
 		

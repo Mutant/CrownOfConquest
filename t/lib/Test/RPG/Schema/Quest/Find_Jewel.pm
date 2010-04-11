@@ -62,7 +62,7 @@ sub test_find_jewel_type_to_use_jewels_exist_in_town : Tests(2) {
 	my $jewel_type1 = Test::RPG::Builder::Item_Type->build_item_type($schema, category_name => 'Jewel', item_type => 'jewel1');
 	my $jewel_type2 = Test::RPG::Builder::Item_Type->build_item_type($schema, category_name => 'Jewel', item_type => 'jewel2');
 	
-	my $jewel = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type1->id);
+	my $jewel = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type1->id, shop_id => $shop->id);
 		
 	$self->{quest}->set_always('town', $town);
 	
@@ -85,8 +85,8 @@ sub test_find_jewel_type_to_use_all_jewel_types_exist_in_town : Tests(3) {
 	my $jewel_type1 = Test::RPG::Builder::Item_Type->build_item_type($schema, category_name => 'Jewel', item_type => 'jewel1');
 	my $jewel_type2 = Test::RPG::Builder::Item_Type->build_item_type($schema, category_name => 'Jewel', item_type => 'jewel2');
 	
-	my $jewel1 = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type1->id);
-	my $jewel2 = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type2->id);
+	my $jewel1 = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type1->id, shop_id => $shop->id);
+	my $jewel2 = Test::RPG::Builder::Item->build_item($schema, item_type_id => $jewel_type2->id, shop_id => $shop->id);
 		
 	$self->{quest}->set_always('town', $town);
 	

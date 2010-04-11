@@ -63,8 +63,8 @@ sub test_set_quest_params : Tests(11) {
     is($quest->quest_type_id, $quest_type->id, "Quest type id set correctly");
     is($quest->param_start_value('Dungeon'), $dungeon->id, "Dungeon param set correctly");
     is($quest->param_start_value('Item Found'), 0, "Item found param set correctly");
-    is($quest->gold_value, 45, "Gold value set correctly");
-    is($quest->xp_value, 30, "XP value set correctly");
+    is($quest->gold_value, 90, "Gold value set correctly");
+    is($quest->xp_value, 60, "XP value set correctly");
     is($quest->min_level, 5, "Min level set correctly");
     is($quest->days_to_complete, 20, "Days to complete set correctly");
     

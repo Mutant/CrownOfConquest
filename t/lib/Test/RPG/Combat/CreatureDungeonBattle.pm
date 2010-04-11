@@ -52,6 +52,14 @@ sub test_get_sector_to_flee_to : Tests(1) {
         },
     );
     
+    my $dungeon_path = $self->{schema}->resultset('Dungeon_Sector_Path')->create(
+    	{
+    		sector_id => $dungeon_grid1->id,
+    		has_path_to => $dungeon_grid2->id,
+    		distance => 1,
+    	}
+    );
+    
     $cg->dungeon_grid_id($dungeon_grid1->id);
     $cg->update;
     

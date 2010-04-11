@@ -39,7 +39,7 @@ sub get_sector_to_flee_to {
         );
 
         foreach my $sector_in_range (@sectors_in_range) {
-            if ( $self->location->can_move_to($sector_in_range) ) {
+            if ( $self->location->has_path_to($sector_in_range->id) ) {
                 push @sectors_to_flee_to, $sector_in_range;
             }
         }

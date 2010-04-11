@@ -77,7 +77,7 @@ sub group_id {
 sub encumbrance {
 	my $self = shift;
 	
-	my $total_weight = $self->result_source->schema->resultset('Items')->find(
+	my $total_weight_rec = $self->result_source->schema->resultset('Items')->find(
 		{
 			'character_id' => $self->id,
 		},
@@ -88,9 +88,11 @@ sub encumbrance {
 			'as' => ['total_weight'],
 			join => 'item_type',
 		},
-	)->get_column('total_weight');
+	);
 	
-	return $total_weight || 0;
+	my $total_weight = $total_weight_rec ? $total_weight_rec->get_column('total_weight') : 0;
+	
+	return $total_weight;
 }
 
 sub encumbrance_allowance {

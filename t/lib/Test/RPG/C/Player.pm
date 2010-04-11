@@ -542,17 +542,8 @@ sub test_post_login_checks_tip_of_the_day : Tests(2) {
 		{
 			tip => 'tip',
 			title => 'title',
-			tip_of_the_day => DateTime->now(),	
 		}
 	); 
-	
-	my $tip2 = $self->{schema}->resultset('Tip')->create(
-		{
-			tip => 'tip',
-			title => 'title',
-			tip_of_the_day => DateTime->now->subtract( days => 1, minutes => 1 ),	
-		}
-	); 	
 	
 	$self->{session}{player} = $player;
 	

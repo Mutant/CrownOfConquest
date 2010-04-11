@@ -66,11 +66,11 @@ sub test_get_party_grid_simple : Tests(5) {
     is_deeply( [sort @{$sector->{sides_with_walls}}], ['right','top'], "Walls returned correctly");
     
     my @doors;
-    foreach my $raw_wall (@{$sector->{doors}}) {
-       push @doors, $raw_wall->{position}{position};
+    foreach my $door (@{$sector->{doors}}) {
+       push @doors, $door->{position}{position};
     }
     
-    is_deeply( $sector->{doors}, ['top'], "Doors returned correctly");
+    is_deeply( \@doors, ['top'], "Doors returned correctly");
 }
 
 1;

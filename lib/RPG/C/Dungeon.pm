@@ -49,38 +49,26 @@ sub view : Local {
 sub build_viewable_sector_grids : Private {
 	my ($self, $c, $current_location) = @_;
 	
-	$c->stats->profile(start => "build_viewable_sector_grids");	
+	$c->stats->profile("in build_viewable_sector_grids");	
 	
     # Find actual list of sectors party can move to
     my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $current_location->x, $current_location->y, 3 );
     $c->log->debug("Getting sectors allowed to move to");
    
-    my @sectors = $c->model('DBIC::Dungeon_Grid')->search(
-        {
-            x                         => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
-            y                         => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
-            'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
-        },
-        {
-            prefetch => [ 
-            	'dungeon_room', 
-            	{ 'doors' => 'position' },
-            	{ 'walls' => 'position' }, 
-            	{ 'party' => { 'characters' => 'class' } },
-            	'treasure_chest' 
-            ],
-
-        },
+    my @sectors = $c->model('DBIC::Dungeon_Grid')->get_party_grid(
+    	undef, # Don't supply party_id as we want sectors whether they're mapped by the party or not
+    	$current_location->dungeon_room->dungeon_id,
+    	{
+    		top_corner => $top_corner,
+    		bottom_corner => $bottom_corner,
+    	},
     );
     
     $c->stats->profile("Queried sectors allowed to move to");
 
 	my $allowed_to_move_to = $current_location->sectors_allowed_to_move_to( $c->config->{dungeon_move_maximum} );
-    #my $allowed_to_move_to = $current_location->allowed_to_move_to_sectors( \@sectors, $c->config->{dungeon_move_maximum} );
 
     $c->stats->profile("Built allowed to move to hash");
-
-    #$c->forward( 'store_allowed_move_hashes', [$allowed_to_move_to] );	
 	
     # Get cgs in viewable area
     my $cgs;
@@ -100,17 +88,38 @@ sub build_viewable_sector_grids : Private {
         $cg->{group_size} = scalar $cg->creatures if $cg;
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
     }
-
-    my $parties;	
-    
+ 
     $c->stats->profile("Got CGs");	
+
+	# Get parties in viewbale area
+    my $parties;
+    my @party_recs = $c->model('DBIC::Dungeon_Grid')->search(
+        {
+            x                              => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
+            y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
+            'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
+            'party.party_id'               => { '!=', $c->stash->{party}->id },
+        },
+        {
+            prefetch => [ { 'party' => { 'characters' => 'class' } }, ],
+            join     => 'dungeon_room',
+        },
+    );
+    foreach my $party_rec (@party_recs) {
+        $parties->[ $party_rec->x ][ $party_rec->y ] = $party_rec->party;
+    }
+ 
+    $c->stats->profile("Got Parties");	    
 	
-    # Find viewable sectors, add newly discovered sectors to party's map, and get list of other parties nearby
+    # Find viewable sectors, add newly discovered sectors to party's map
     my @viewable_sectors;
     foreach my $sector (@sectors) {
-        next unless $sector->dungeon_room_id == $current_location->dungeon_room_id;
-
-        #$c->log->debug("Adding: " . $sector->x . ", " . $sector->y . " to viewable sectors");
+        next unless $sector->{dungeon_room}{dungeon_room_id} == $current_location->dungeon_room_id;
+        
+	    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks 
+	    #  in the viewable area, avoids the problem of twisting corridors having two lighted sections)
+	    # TODO: prevent light going round corners (?)
+        next unless $current_location->has_path_to($sector->{dungeon_grid_id}, 3);
 
         push @viewable_sectors, $sector;
 
@@ -118,39 +127,19 @@ sub build_viewable_sector_grids : Private {
         my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->find_or_create(
 	        {
     	        party_id        => $c->stash->{party}->id,
-                dungeon_grid_id => $sector->dungeon_grid_id,
+                dungeon_grid_id => $sector->{dungeon_grid_id},
             }
         );
-        
-        if ( $sector->party && $sector->party->id != $c->stash->{party}->id ) {
-            next if $sector->party->defunct;
-            $parties->[ $sector->x ][ $sector->y ] = $sector->party;
-        }
-
     }
+    
+    my $viewable_sectors_by_coord;
+    foreach my $viewable_sector (@viewable_sectors) {
+        $viewable_sectors_by_coord->[ $viewable_sector->{x} ][ $viewable_sector->{y} ] = $viewable_sector;
+    }    
     
     $c->stats->profile("Got viewable sectors");	
 
-    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks in the viewable area,
-    #  avoids the problem of twisting corridors having two lighted sections)
-    # TODO: prevent light going round corners (?)
-    my $viewable_sectors_by_coord;
-    foreach my $viewable_sector (@viewable_sectors) {
-        $viewable_sectors_by_coord->[ $viewable_sector->x ][ $viewable_sector->y ] = $viewable_sector;
-    }
-
-    my $viewable_sector_grid;
-
-    for my $viewable_sector (@viewable_sectors) {
-        if ( $viewable_sector->check_has_path( $current_location, $viewable_sectors_by_coord, 3 ) ) {
-            $viewable_sector_grid->[ $viewable_sector->x ][ $viewable_sector->y ] = 1;
-        }
-    }
-    
-    $c->stats->profile("Fixed viewable sectors");
-    $c->stats->profile(end => "build_viewable_sector_grids");	
-    
-    return [\@sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties];		
+    return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties];		
 }
 
 sub render_dungeon_grid : Private {
@@ -208,7 +197,7 @@ sub render_dungeon_grid : Private {
 }
 
 sub move_to : Local {
-    my ( $self, $c, $sector_id, $no_hash_check ) = @_;
+    my ( $self, $c, $sector_id ) = @_;
 
     $sector_id ||= $c->req->param('sector_id');
 
@@ -226,8 +215,8 @@ sub move_to : Local {
         croak "Can't move to sector: $sector_id - in the wrong dungeon";
     }
 
-	# Check sector is in range. We trust the random 'h' param to tell us so we don't have to do the (slow) check again
-    if (0) { #! $no_hash_check && $c->req->param('h') != $c->flash->{allowed_move_hashes}[$sector->x][$sector->y]) {
+	# Check sector is in range.
+    if (! $current_location->has_path_to($sector_id, 3)) {
         $c->stash->{error} = "You must be in range of the sector";
     }
     elsif ( $c->stash->{party}->turns < 1 ) {
@@ -278,7 +267,8 @@ sub build_updated_sectors_data : Private {
 	
 	my $orginal_sectors_grid;
 	foreach my $sector (@$orginal_sectors) {
-		$orginal_sectors_grid->[$sector->x][$sector->y] = $sector;		
+		$orginal_sectors_grid->[$sector->{x}][$sector->{y}] = $sector
+			if $sector;		
 	}
 	
 	my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
@@ -294,30 +284,14 @@ sub build_updated_sectors_data : Private {
 			next unless $current_sector;
 
 			# Only sectors in allowed_to_move_to or viewable area (or current location) should be updated
-			next unless $allowed_to_move_to->{$current_sector->id} || 
+			next unless $allowed_to_move_to->{$current_sector->{dungeon_grid_id}} || 
 				($new_location->x == $x && $new_location->y == $y);
-=comment
-			# Update dungeon boundaries
-			if ($x < $c->session->{mapped_dungeon_boundaries}{min_x}) {
-				$c->session->{mapped_dungeon_boundaries}{min_x} = $x;
-			}
-			elsif ($x > $c->session->{mapped_dungeon_boundaries}{max_x}) {
-				$c->session->{mapped_dungeon_boundaries}{max_x} = $x;
-			}
-			
-			if ($y < $c->session->{mapped_dungeon_boundaries}{min_y}) {
-				$c->session->{mapped_dungeon_boundaries}{min_y} = $y;
-			}
-			elsif ($y > $c->session->{mapped_dungeon_boundaries}{y}) {
-				$c->session->{mapped_dungeon_boundaries}{max_y} = $y;
-			}			
-=cut		
 
 			# Check if sector is mapped by party
 			# TODO: might be a bit slow?
 			unless ($c->model('DBIC::Mapped_Dungeon_Grid')->find(
 				{
-					dungeon_grid_id => $current_sector->id,
+					dungeon_grid_id => $current_sector->{dungeon_grid_id},
 					party_id => $c->stash->{party}->id,
 				}
 			)) {
@@ -342,11 +316,7 @@ sub build_updated_sectors_data : Private {
 		                	current_location => $new_location,
 		                	zoom_level => $c->session->{zoom_level} || 2,
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
-		                	positions => \@positions,
-		                    max_x               => $c->session->{mapped_dungeon_boundaries}{max_x},
-		                    max_y               => $c->session->{mapped_dungeon_boundaries}{max_y},
-		                    min_x               => $c->session->{mapped_dungeon_boundaries}{min_x},
-		                    min_y               => $c->session->{mapped_dungeon_boundaries}{min_y},		                	
+		                	positions => \@positions,                	
 		                },
 		                return_output => 1,
 		            }
@@ -516,7 +486,7 @@ sub open_door : Local {
         { join => 'dungeon_room', }
     );
 
-    $c->forward( 'move_to', [ $sector_to_move_to->id, 1 ] );
+    $c->forward( 'move_to', [ $sector_to_move_to->id ] );
 }
 
 sub sector_menu : Local {
@@ -717,25 +687,6 @@ sub search_room : Local {
     $c->stash->{party}->update;
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
-}
-
-# Generates hashes of allowed moves, and saves them in the flash, so we can check only allowed sectors were passed to move_to
-# (this is an optimisation)
-sub store_allowed_move_hashes : Private {
-    my ( $self, $c, $allowed_to_move_to ) = @_;
-
-    my $allowed_hashes;
-    foreach my $x ( 0 .. scalar @$allowed_to_move_to ) {
-        if ($allowed_to_move_to->[$x]) {
-            foreach my $y ( 0 .. scalar @{ $allowed_to_move_to->[$x] } ) {
-                if ( $allowed_to_move_to->[$x][$y] ) {
-                    $allowed_hashes->[$x][$y] = int rand 100000000;
-                }
-            }
-        }
-    }
-
-    $c->flash->{allowed_move_hashes} = $allowed_hashes;
 }
 
 sub open_chest : Local {

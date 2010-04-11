@@ -108,7 +108,7 @@ sub test_check_for_quest_item_with_quest_by_other_party : Tests(1) {
 	is($result, 1, "Item has related quest, but quest is owned by another party, therefore hide item");
 }
 
-sub test_open_chest_with_quest_item : Tests {
+sub test_open_chest_with_quest_item : Tests(2) {
 	my $self = shift;
 	
 	my $schema = $self->{schema};
@@ -141,7 +141,7 @@ sub test_open_chest_with_quest_item : Tests {
 		$item->id == $item2->id ? 1 : 0;
 	};
 	
-	$self->{mock_forward}{'/quest/check_action'} = sub {};
+	$self->{mock_forward}{'/quest/check_action'} = sub { [] };
 	$self->{mock_forward}{'/panel/refresh'} = sub {};
 	
 	# WHEN
@@ -151,8 +151,11 @@ sub test_open_chest_with_quest_item : Tests {
 	my $template_params = $self->template_params;
 	my @items_found = @{ $template_params->{items_found} };
 	is(scalar @items_found, 2, "only 2 items found, as other is invisible because it's a quest item");
-	is($items_found[1]->{item}->id, $item1->id, "Correct item found");
-	is($items_found[0]->{item}->id, $item3->id, "Correct item found");    
+	
+	my @expected = sort ($item1->id, $item3->id);
+	my @got = sort ($items_found[0]->{item}->id, $items_found[1]->{item}->id);
+	
+	is_deeply(\@got, \@expected, "Correct items found");  
 }
 
 1;

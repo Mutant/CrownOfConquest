@@ -36,7 +36,7 @@ sub view : Local {
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
     }
 
-	my $grids = $c->forward('build_viewable_sector_grids', [$current_location]);
+	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
 	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
 
     $c->stats->profile("Finshed /dungeon/view");
@@ -299,7 +299,8 @@ sub build_updated_sectors_data : Private {
 		next unless $viewable_sector_grid->[$sector->{x}][$sector->{y}];
 		
 		if (! RPG::Map->is_in_range($sector, $boundary_tl, $boundary_br)) {
-			$c->log->info( $sector->{x} . ", " . $sector->{y} . " out of range, bailing out of quick sector update");		
+			$c->log->info( $sector->{x} . ", " . $sector->{y} . " out of range, bailing out of quick sector update");
+			$c->stash->{saved_grid} = $grids; # Can use these later
 			$bail_out = 1;
 			last;				
 		}

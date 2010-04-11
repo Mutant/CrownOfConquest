@@ -106,19 +106,16 @@ function displayMessages(messages_passed) {
 	}
 }
 
-var hack_that_needs_to_be_fixed;
 function executeCallbacks(callBacks) {
 	for (var callIdx in callBacks) {
 		callback = callBacks[callIdx];
-		hack_that_needs_to_be_fixed = callback.data
 		
-		[%# more elegant way of doing this? %]
-		eval(callback.name + "Callback();");
+		var callbackName = callback.name + "Callback"
+		window[callbackName](callback.data);		
 	}
 }
 
-function dungeonCallback() {
-	var data = hack_that_needs_to_be_fixed;
+function dungeonCallback(data) {
 	var updatedSectors = data.sectors;
 	for (var x in updatedSectors) {
 		for (var y in updatedSectors[x]) {

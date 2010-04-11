@@ -14,9 +14,11 @@ use DateTime;
 
 $|=1;
 
+my $dungeon_id = $ARGV[0];
+
 my $schema = RPG::Schema->connect( "dbi:mysql:game2", "root", "root", );
 
-my @dungeons = $schema->resultset('Dungeon')->search;
+my @dungeons = $dungeon_id ? $schema->resultset('Dungeon')->find($dungeon_id) : $schema->resultset('Dungeon')->search;
 
     my $home = $ENV{RPG_HOME};
 
@@ -44,8 +46,10 @@ my @dungeons = $schema->resultset('Dungeon')->search;
     
 my $populator = RPG::NewDay::Action::Dungeon->new( context => $context );
 
-$schema->resultset('Dungeon_Sector_Path')->delete;
-$schema->resultset('Dungeon_Sector_Path_Door')->delete;
+unless ($dungeon_id) {
+	$schema->resultset('Dungeon_Sector_Path')->delete;
+	$schema->resultset('Dungeon_Sector_Path_Door')->delete;
+}
 
 foreach my $dungeon (@dungeons) {
 	print "Processing dungeon_id: " . $dungeon->id . "...\n";

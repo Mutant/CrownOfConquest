@@ -166,6 +166,15 @@ sub render_dungeon_grid : Private {
     	min_y => $min_y,
     	max_y => $max_y,	
     };
+        
+    my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
+    
+    $c->stash->{panel_callbacks} = [
+    	{
+        	name => 'dungeonRefresh',
+        	data => $scroll_to,
+    	}
+    ];    
     
     return $c->forward(
         'RPG::V::TT',
@@ -187,6 +196,7 @@ sub render_dungeon_grid : Private {
                     allowed_move_hashes => $c->flash->{allowed_move_hashes},
                     in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
                     zoom_level => $c->session->{zoom_level} || 2,
+                    scroll_to => $scroll_to,
                     create_tooltips => 1,
                 },
                 return_output => 1,
@@ -444,12 +454,7 @@ sub build_updated_sectors_data : Private {
 		}
 	}
 		
-	# TODO: logic duplicated from template, but probably needs to be here. Probably better to pull it out of the template, and
-	#  use it from here, rather than the template, as /dungeon/view does
-	my $scroll_to = {
-		x => $new_location->x + 6,
-		y => $new_location->y + 4,
-	};
+	my $scroll_to = $c->forward('calculate_scroll_to', [$new_location]);
 	
 	return {
 		sectors => $sectors,
@@ -457,6 +462,17 @@ sub build_updated_sectors_data : Private {
 		boundaries => $c->session->{mapped_dungeon_boundaries},
 	};
 	
+}
+
+sub calculate_scroll_to : Private {
+	my ($self, $c, $location) = @_;
+	
+	my $scroll_to = {
+		x => $location->x + 6,
+		y => $location->y + 4,
+	};	
+	
+	return $scroll_to;
 }
 
 sub check_for_creature_move : Private {

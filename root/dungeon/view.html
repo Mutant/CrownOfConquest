@@ -2,21 +2,12 @@
 [%
 	x = min_x - 1;
 	y = min_y - 1;
-	
-	scroll_to_x = current_location.x + 6;
-	scroll_to_y = current_location.y + 4; 	
+
 	
 %]
 
-	[% IF scroll_to_x > max_x %]
-		[% scroll_to_x = max_x %]
-	[% END %]
-	[% IF scroll_to_y > max_y %]
-		[% scroll_to_y = max_y %]
-	[% END %]
-	
 <div style="position: relative;" id="dungeon_outer">
-<div style="display: none" id="scroll_to">sector_[% scroll_to_x %]_[% scroll_to_y %]</div>
+<div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
 [% WHILE y <= max_y %]
 	[% y = y+1 %]
 	[% x = min_x - 1 %]

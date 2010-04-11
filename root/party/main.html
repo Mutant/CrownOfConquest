@@ -31,10 +31,6 @@ function getPanels(url) {
 			
 			refreshPanels(responseObject);
 			
-			if (dojo.byId('scroll_to')) {
-				dungeonScroll(dojo.byId('scroll_to').innerHTML);
-			}
-			
 			displayPopupMessages();	
 			
 			if (responseObject.displayDialog) {
@@ -128,10 +124,8 @@ function dungeonCallback(data) {
 					// Create sector
 					newSector = document.createElement("div");
 					newSector.setAttribute('id', sector_id);
-					newSector.style.position = 'absolute';
-					console.log("y:" + y + ", boundary: " + data.boundaries.min_y + ", top: " + (y - data.boundaries.min_y) * 40);					
+					newSector.style.position = 'absolute';					
 					newSector.style.top = (y - data.boundaries.min_y) * 40;
-					console.log("x:" + x + ", boundary: " + data.boundaries.min_x + ", left: " + (x - data.boundaries.min_x) * 40);
 					newSector.style.left = (x - data.boundaries.min_x) * 40; 
 					newSector.style.width = '40px';
 					newSector.style.height = '40px';
@@ -171,8 +165,11 @@ function dungeonCallback(data) {
 		}	
 	}
 	
-	scroll_to_sector = 'sector_' + data.scroll_to.x + "_" + data.scroll_to.y;
-	dungeonScroll(scroll_to_sector); 
+	dungeonScroll(data.scroll_to); 
+}
+
+function dungeonRefreshCallback(scroll_to) {
+	dungeonScroll(scroll_to); 
 }
 
 var panel_init = [% panels %];
@@ -180,14 +177,15 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	
-	if (dojo.byId('scroll_to')) {
-		dungeonScroll(dojo.byId('scroll_to').innerHTML);
-	}
+	console.log(dojo.byId('scroll_to').innerHTML);
+	dijit.scrollIntoView(dojo.byId('scroll_to').innerHTML);
 }
 
-function dungeonScroll(sectorId) {
-	loc = dojo.byId(sectorId);
+function dungeonScroll(scroll_to) {
+	scroll_to_sector = 'sector_' + scroll_to.x + "_" + scroll_to.y;
+	loc = dojo.byId(scroll_to_sector);
 	if (loc) {
+		console.log("Scrolling to " + scroll_to_sector);
 		dijit.scrollIntoView(loc);
 	}
 }

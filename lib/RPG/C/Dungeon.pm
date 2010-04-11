@@ -39,9 +39,7 @@ sub view : Local {
 	my $grids = $c->forward('build_viewable_sector_grids', [$current_location]);
 	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
 
-    #warn "viewable sectors: " . scalar @viewable_sectors;
-
-    $c->stats->profile("Saved newly discovered sectors");
+    $c->stats->profile("Finshed /dungeon/view");
 
     return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
 }
@@ -119,7 +117,8 @@ sub build_viewable_sector_grids : Private {
 	    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks 
 	    #  in the viewable area, avoids the problem of twisting corridors having two lighted sections)
 	    # TODO: prevent light going round corners (?)
-        next unless $current_location->has_path_to($sector->{dungeon_grid_id}, 3);
+        next unless $current_location->id == $sector->{dungeon_grid_id} 
+        	|| $current_location->has_path_to($sector->{dungeon_grid_id}, 3);
 
         push @viewable_sectors, $sector;
 
@@ -167,7 +166,7 @@ sub render_dungeon_grid : Private {
     	min_y => $min_y,
     	max_y => $max_y,	
     };
-
+    
     return $c->forward(
         'RPG::V::TT',
         [
@@ -244,12 +243,14 @@ sub move_to : Local {
         
         my $sectors = $c->forward('build_updated_sectors_data', [$current_location, $sector_id]);
         
-        $c->stash->{panel_callbacks} = [
-        	{
-        		name => 'dungeon',
-        		data => $sectors,
-        	}
-        ];
+        if ($sectors) {
+	        $c->stash->{panel_callbacks} = [
+	        	{
+	        		name => 'dungeon',
+	        		data => $sectors,
+	        	}
+	        ];
+        }
     }
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
@@ -261,14 +262,42 @@ sub build_updated_sectors_data : Private {
 	my $new_location = $c->model('DBIC::Dungeon_Grid')->find($sector_id);
 	
 	my $grids = $c->forward('build_viewable_sector_grids', [$new_location]);
-	my ($orginal_sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
+	my ($sectors_to_update, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
 	
-	push @$orginal_sectors, $new_location; # Not included in original array 
+	my $sectors_to_update_grid;
+	foreach my $sector (@$sectors_to_update) {
+		$sectors_to_update_grid->[$sector->{x}][$sector->{y}] = $sector;		
+	}
 	
-	my $orginal_sectors_grid;
-	foreach my $sector (@$orginal_sectors) {
-		$orginal_sectors_grid->[$sector->{x}][$sector->{y}] = $sector
-			if $sector;		
+	# Check for a sector to update outside of the original map boundaries. If we find one, we give up and just refresh
+	#  the panel. Haven't figured out a way to add sectors outside the boundary and have them displaybale (they can
+	#  be created, but can't be scrolled to). If I could find a way to do it, it'd be better not to use this bail out
+	#  option, since it's a lot slower to redraw the whole map (that's the whole point of updating the sectors individually)
+	my $bail_out = 0;
+	my $boundary_tl = {
+		x => $c->session->{mapped_dungeon_boundaries}{min_x},
+		y => $c->session->{mapped_dungeon_boundaries}{min_y},
+	};
+	my $boundary_br = {
+		x => $c->session->{mapped_dungeon_boundaries}{max_x},
+		y => $c->session->{mapped_dungeon_boundaries}{max_y},
+	};	
+	
+	foreach my $sector (@$sectors_to_update) {
+		# Don't let sectors out of the viewable area cause us to bail out. If you can't see it, you don't need to
+		#  update it
+		next unless $viewable_sector_grid->[$sector->{x}][$sector->{y}];
+		
+		if (! RPG::Map->is_in_range($sector, $boundary_tl, $boundary_br)) {
+			$c->log->info( $sector->{x} . ", " . $sector->{y} . " out of range, bailing out of quick sector update");		
+			$bail_out = 1;
+			last;				
+		}
+	}
+	
+	if ($bail_out) {
+		push @{ $c->stash->{refresh_panels} }, 'map';
+		return;
 	}
 	
 	my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
@@ -279,25 +308,14 @@ sub build_updated_sectors_data : Private {
 	my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $new_location->x, $new_location->y, 3 );
 	for my $y ($top_corner->{y} .. $bottom_corner->{y}) {
 		for my $x ($top_corner->{x} .. $bottom_corner->{x}) {	
-			my $current_sector = $orginal_sectors_grid->[$x][$y];
+			my $current_sector = $sectors_to_update_grid->[$x][$y];
 			
 			next unless $current_sector;
 
 			# Only sectors in allowed_to_move_to or viewable area (or current location) should be updated
-			next unless $allowed_to_move_to->{$current_sector->{dungeon_grid_id}} || 
+			next unless ($allowed_to_move_to->{$current_sector->{dungeon_grid_id}} && $viewable_sector_grid->[$x][$y]) || 
 				($new_location->x == $x && $new_location->y == $y);
 
-			# Check if sector is mapped by party
-			# TODO: might be a bit slow?
-			unless ($c->model('DBIC::Mapped_Dungeon_Grid')->find(
-				{
-					dungeon_grid_id => $current_sector->{dungeon_grid_id},
-					party_id => $c->stash->{party}->id,
-				}
-			)) {
-				next;
-			}
-			
 			my %sector_data;
 						
 			$sector_data{sector} = $c->forward(

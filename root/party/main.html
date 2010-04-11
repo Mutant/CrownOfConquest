@@ -177,8 +177,12 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	
-	console.log(dojo.byId('scroll_to').innerHTML);
-	dijit.scrollIntoView(dojo.byId('scroll_to').innerHTML);
+	scrollTo = dojo.byId('scroll_to');
+
+	if (scrollTo) {
+		console.log("Scrolling to " + scrollTo.innerHTML);
+		dijit.scrollIntoView(scrollTo.innerHTML);
+	}
 }
 
 function dungeonScroll(scroll_to) {

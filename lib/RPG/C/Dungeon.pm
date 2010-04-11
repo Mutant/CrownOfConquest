@@ -97,6 +97,7 @@ sub build_viewable_sector_grids : Private {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'party.party_id'               => { '!=', $c->stash->{party}->id },
+            'party.defunct'				   => undef,
         },
         {
             prefetch => [ { 'party' => { 'characters' => 'class' } }, ],
@@ -471,7 +472,22 @@ sub calculate_scroll_to : Private {
 	my $scroll_to = {
 		x => $location->x + 6,
 		y => $location->y + 4,
-	};	
+	};
+	
+	my $boundaries = $c->session->{mapped_dungeon_boundaries};
+	
+	if ($scroll_to->{x} < $boundaries->{min_x}) {
+		$scroll_to->{x} = $boundaries->{min_x};
+	}
+	if ($scroll_to->{x} > $boundaries->{max_x}) {
+		$scroll_to->{x} = $boundaries->{max_x};
+	}
+	if ($scroll_to->{y} < $boundaries->{min_y}) {
+		$scroll_to->{y} = $boundaries->{min_y};
+	}
+	if ($scroll_to->{y} > $boundaries->{max_y}) {
+		$scroll_to->{y} = $boundaries->{max_y};
+	}		
 	
 	return $scroll_to;
 }

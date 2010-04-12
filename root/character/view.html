@@ -19,10 +19,7 @@
 			
 			if (target_type == 'equip_place') {
 				equip_item(target_id, item_id);
-			}
-			else if (target_type == 'char') {
-				give_item(target_id, item_id);
-			}			
+			}		
 		});
 	}
 	
@@ -37,10 +34,7 @@
 	        	}
 	        	else {
 		        	var changed_slots = responseObject.changed_slots;
-		        		        		console.log(changed_slots);
 	        		for (changed_slot in changed_slots) {
-	        		//console.log(changed_slot);
-	        		//changed_slot.replace(/\s+/g, '_');
 	        			var item = changed_slots[changed_slot];	  
 	        			  			
 	        			if (item.image) {	        				
@@ -56,11 +50,7 @@
 	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = item.item_type;
 	        			}
 	        			else {
-	        				console.log(changed_slot + '-equip-place-image');
-	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
-	        				dojo.byId(changed_slot + '-slot-label').style.display = 'block';
-	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
-	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';	        			
+       						clearEquipSlot(changed_slot);
 	        			}
 	        		}
 				}
@@ -71,25 +61,52 @@
 	    });
 	}
 	
-	function give_item(char_id, item_id) {
+	function give_item_to(char_id, item_id) {
 		dojo.xhrGet( {
 	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	if (responseObject.message) {
-       	          	dojo.byId('message-text').innerHTML = responseObject.message;
-       	          	dojo.byId('item-row-' + item_id).style.display = 'none';
-			      	dijit.byId('message').show();					
-	        	}
+	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
 				
 				if (responseObject.clear_equip_place) {
-					dojo.byId(responseObject.clear_equip_place + '-equip-place-item').innerHTML = '';
+					clearEquipSlot(responseObject.clear_equip_place);
 				}
 	        }
 	    });	       
 	}
 	
+	function drop_item(item_id, char_id) {
+		dojo.byId('drop-char-id').value = char_id;
+		dojo.byId('drop-item-id').value = item_id;
+		dijit.byId('drop-item-conf-diag').show();
+	}
+	
+	function drop_item_confirmed(arguments) {
+		item_id = arguments.item_id;
+		char_id = arguments.char_id;
+		dojo.xhrGet( {
+	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
+	        handleAs: "json",	
+	        load: function(responseObject, ioArgs) {
+	        	console.log(item_id);
+	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
+				
+				if (responseObject.clear_equip_place) {
+					clearEquipSlot(responseObject.clear_equip_place);
+				}
+	        }
+	    });	       
+	}	
+	
+	
 	dojo.addOnLoad( init );	
+	
+function clearEquipSlot(slot_name) {
+	dojo.byId(slot_name + '-equip-place-image').style.display = 'none';
+	dojo.byId(slot_name + '-slot-label').style.display = 'block';
+	dojo.byId(slot_name + '-equip-place-image').src = '';
+	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	 
+}	
 	
 function addStatPoint(char_id, stat) {
 	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
@@ -174,13 +191,6 @@ function calculateSpellPoints() {
 	dojo.byId('spell-points-used').innerHTML = points_used;
 }
 
-function displayEquipTooltip(event) {
-	tmp = event.currentTarget.id.split(/-/);
-	itemId = tmp[2];
-	dijit.("item-dijit-" + itemId).show();
-	console.log(itemId);
-	
-}
 </script>
 
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
@@ -196,6 +206,17 @@ function displayEquipTooltip(event) {
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="drop-item-conf-diag" style="display: none" title="Drop Item" execute="drop_item_confirmed(arguments[0]);">
+    <input id="drop-char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="drop-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	Are you sure you want to drop this item? You won't be able to get it back!
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('drop-item-conf-diag').hide()">Cancel</button>
 	</div>
 </div>
 

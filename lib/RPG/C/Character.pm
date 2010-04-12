@@ -17,6 +17,8 @@ sub auto : Private {
     $c->stash->{character} =
         $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), }, { prefetch => [ 'race', 'class', ], }, );
 
+	confess "Character not found! ID: " . $c->req->param('character_id') unless $c->stash->{character};
+
     # Make sure party is allowed to view this character
     if ( $c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id ) {
         croak "Not allowed to view this character\n";
@@ -53,7 +55,7 @@ sub view : Local {
                     characters        => \@characters,
                     xp_for_next_level => $next_level ? $next_level->xp_needed : '????',
                     selected          => $c->stash->{selected_tab} || $c->req->param('selected'),
-                    item_mode         => $c->req->param('item_mode'),
+                    item_mode         => $c->req->param('item_mode') || '',
                 }
             }
         ]
@@ -99,6 +101,9 @@ sub equipment_tab : Local {
 	my @characters_items = grep { $_->character_id == $character->id } @items;
 
     my $equipped_items = $character->equipped_items(@characters_items);
+    
+    my %equipped_items_by_id = 
+    	map { $equipped_items->{$_} ? ($equipped_items->{$_}->id => $equipped_items->{$_}) : () } keys %$equipped_items; 
 
     my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
 
@@ -110,9 +115,12 @@ sub equipment_tab : Local {
                 params   => {
                     character                 => $character,
                     equipped_items            => $equipped_items,
+                    equipped_items_by_id      => \%equipped_items_by_id,
                     equip_place_category_list => \%equip_place_category_list,
+                    equip_places              => [ keys %equip_place_category_list ],
                     items                     => \@items,
                     item_mode                 => $item_mode,
+                    party					  => $c->stash->{party},
                 }
             }
         ]
@@ -232,9 +240,7 @@ sub equip_item : Local {
    			image => undef,
         };
     }
-    
-    warn Dumper \%ret;
-    
+        
     $c->res->body( to_json( {changed_slots => \%ret} ) );
 }
 
@@ -269,9 +275,42 @@ sub give_item : Local {
     $c->res->body(
         to_json(
             {
-                message           => "A " . $item->item_type->item_type . " was given to " . $character->character_name,
                 clear_equip_place => $slot_to_clear,
+            }
+        )
+    );
+}
 
+sub drop_item : Local {
+    my ( $self, $c ) = @_;
+
+    $c->forward('check_action_allowed');
+
+    my $character = $c->stash->{character};
+
+    my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
+
+    # Make sure this item belongs to a character in the party
+    my @characters = $c->stash->{party}->characters;
+    if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
+        $c->log->warn( "Attempted to drop item  "
+                . $item->id
+                . " within party "
+                . $c->stash->{party}->id
+                . ", but item does not belong to this party (item is owned by character: "
+                . $item->character_id
+                . ")" );
+        return;
+    }
+
+    my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
+
+    $item->delete;
+
+    $c->res->body(
+        to_json(
+            {
+                clear_equip_place => $slot_to_clear,
             }
         )
     );

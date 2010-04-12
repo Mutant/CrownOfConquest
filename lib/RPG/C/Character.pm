@@ -83,7 +83,13 @@ sub equipment_tab : Local {
     my @items = $c->model('DBIC::Items')->search(
         $criteria,
         {
-            prefetch => {'item_type' => 'category'},
+            prefetch => [
+            	{ 'item_variables' => 'item_variable_name' },
+            	{'item_type' => [
+            		'category',
+            		{ 'item_attributes' => 'item_attribute_name' },            		
+            	]},
+            ],
             join => [ @extra_join ],
             order_by => 'item_category',
         },
@@ -189,7 +195,8 @@ sub equip_item : Local {
     }
 
     my @slots_changed;
-    eval { @slots_changed = $item->equip_item( $c->req->param('equip_place') ); };
+    my $equip_place = $c->req->param('equip_place');
+    eval { @slots_changed = $item->equip_item( $equip_place ); };
     if ($@) {
 
         # TODO: need better way of detecting exceptions

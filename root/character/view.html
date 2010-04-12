@@ -37,29 +37,37 @@
 	        	}
 	        	else {
 		        	var changed_slots = responseObject.changed_slots;
-	        		for (var changed_slot in changed_slots) {
-	        			var item = changed_slots[changed_slot];	        			
-	        			if (item.image) {
+		        		        		console.log(changed_slots);
+	        		for (changed_slot in changed_slots) {
+	        		//console.log(changed_slot);
+	        		//changed_slot.replace(/\s+/g, '_');
+	        			var item = changed_slots[changed_slot];	  
+	        			  			
+	        			if (item.image) {	        				
 	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'block';
-	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'hidden';
+	        				dojo.byId(changed_slot + '-slot-label').style.display = 'none';
 	        				dojo.byId(changed_slot + '-equip-place-image').src = '[% c.config.static_path %]/images/items/' + item.image;
 	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';
-	        			}
+	        			} 
 	        			else if (item.text) {	        			
 	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
-	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'hidden';
+	        				dojo.byId(changed_slot + '-slot-label').style.display = 'none';
 	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
 	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = item.item_type;
 	        			}
 	        			else {
+	        				console.log(changed_slot + '-equip-place-image');
 	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
-	        				dojo.byId(changed_slot + '-slot-label').style.visibility = 'visible';
+	        				dojo.byId(changed_slot + '-slot-label').style.display = 'block';
 	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
 	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';	        			
 	        			}
 	        		}
 				}
-	        }
+	        },
+	        error: function(err) {
+	        	console.debug(err);
+	        },
 	    });
 	}
 	
@@ -166,7 +174,13 @@ function calculateSpellPoints() {
 	dojo.byId('spell-points-used').innerHTML = points_used;
 }
 
-
+function displayEquipTooltip(event) {
+	tmp = event.currentTarget.id.split(/-/);
+	itemId = tmp[2];
+	dijit.("item-dijit-" + itemId).show();
+	console.log(itemId);
+	
+}
 </script>
 
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
@@ -196,9 +210,11 @@ function calculateSpellPoints() {
 	[% IF other_character.id == character.id %]
 		[% other_character.character_name %]
 	[% ELSE %]
-	<span dojoType="rpg.dnd.Target" id="[% other_character.id %]-char" accept="item">
-	<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">[% other_character.character_name %]</a>
-	</span>	
+		[% FILTER collapse %]
+			<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">
+				[% other_character.character_name %]
+			</a>
+		[% END %]
 	[% END %]
 	&nbsp;
 [% END %]
@@ -309,7 +325,7 @@ function calculateSpellPoints() {
 	
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]&item_mode=[% item_mode %]"
-    	[% IF selected == 'equipment' %]selected="true"[% END %]>    
+    	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    
     </div>
 
 	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]

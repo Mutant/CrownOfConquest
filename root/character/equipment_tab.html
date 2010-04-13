@@ -18,6 +18,16 @@
 	<tr>
 		<td valign="top" width="250" style="background: lightgray">
 
+<script>
+	// Hack to get around dojo defeciency
+	var currentItemId;
+	function saveCurrentItemId(id) {
+		console.log("Saving id " + id);
+		parts = id.split(/-/);
+		currentItemId = parts[2];
+	}
+</script>
+
 <b>Equipped Items</b>
 
 <br><br>
@@ -67,7 +77,7 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 	[% END %]
 
 	[% IF character.party_id %]
-	<span id="item-menu-[% item.id %]">
+	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId(this.id)">
 		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
 			<span class="dojoDndItem" dndType="item" id="item-[% item.id %]">
 				<span id="item-tooltip-[% item.id %]">
@@ -94,8 +104,8 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 <script>
 function createMenus() { 
 
-	[% FOREACH item IN items %]
-	var params = {id:"item_context_menu_[% item.id %]", targetNodeIds:["item-menu-[% item.id %]"] };
+	var params = {id:"item_context_menu", 
+		targetNodeIds:[[% FOREACH item IN items %]"item-menu-[% item.id %]"[% UNLESS loop.last %],[% END %][% END %]] };
 	var menu = new dijit.Menu(params,document.createElement("div"));
 
 	var equipSubMenu = new dijit.Menu();
@@ -103,8 +113,9 @@ function createMenus() {
 	[% FOREACH equip_place IN equip_places %]
 		params = {
 			label: "[% equip_place %]",
-			onClick: function() {
-				equip_item('[% equip_place %]', '[% item.id %]');
+			onClick: function(event) {
+				console.log(event);
+				equip_item('[% equip_place %]', currentItemId);
 			}
 		};
 		
@@ -120,14 +131,14 @@ function createMenus() {
 	var equipPopupMenu = new dijit.PopupMenuItem(params);
 	menu.addChild(equipPopupMenu);
 	
-	var giveSubMenu = new dijit.Menu({label: "Give"});
+	var giveSubMenu = new dijit.Menu();
 	
 	[% FOREACH char_in_party IN party.characters %]
 		[% UNLESS char_in_party.character_id == character.id %]
 			params = {
 				label: "[% char_in_party.name %]",
 				onClick: function() {
-					give_item_to('[% char_in_party.id %]', '[% item.id %]');
+					give_item_to('[% char_in_party.id %]', currentItemId);
 				}
 			};
 			
@@ -147,12 +158,11 @@ function createMenus() {
 	params = {
 		label: "Drop Item",
 		onClick: function() {
-			drop_item('[% item.id %]', '[% character.id %]');
+			drop_item(currentItemId, '[% character.id %]');
 		}
 	};			
 	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(dropItem);
-	[% END %]	 	
+	menu.addChild(dropItem);	
 	
 }
 

@@ -253,9 +253,11 @@ sub give_item : Local {
 
     my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-    # Make sure this item belongs to a character in the party
     my @characters = $c->stash->{party}->characters;
-    if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
+	my ($original_character) = grep { $_->id eq $item->character_id } @characters;
+
+    # Make sure this item belongs to a character in the party
+    unless ( $original_character ) {
         $c->log->warn( "Attempted to give item  "
                 . $item->id
                 . " within party "
@@ -276,6 +278,7 @@ sub give_item : Local {
         to_json(
             {
                 clear_equip_place => $slot_to_clear,
+                encumbrance       => $original_character->encumbrance,
             }
         )
     );
@@ -311,6 +314,7 @@ sub drop_item : Local {
         to_json(
             {
                 clear_equip_place => $slot_to_clear,
+                encumbrance       => $character->encumbrance,
             }
         )
     );

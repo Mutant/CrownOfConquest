@@ -77,20 +77,37 @@ sub group_id {
 sub encumbrance {
 	my $self = shift;
 	
-	my $total_weight_rec = $self->result_source->schema->resultset('Items')->find(
+	my $total_weight_rs = $self->result_source->schema->resultset('Items')->search(
 		{
 			'character_id' => $self->id,
 		},
 		{
-			'select' => [
-				{'sum' => 'item_type.weight'},
+			prefetch => [
+				'item_type',
+				{ 'item_variables' => 'item_variable_name' },
 			],
-			'as' => ['total_weight'],
-			join => 'item_type',
 		},
 	);
 	
-	my $total_weight = $total_weight_rec ? $total_weight_rec->get_column('total_weight') : 0;
+	$total_weight_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+	
+	my $total_weight = 0;
+	
+	while (my $item = $total_weight_rs->next) {
+		my $quantity = 1;
+
+		if ($item->{item_variables}) {
+			my @item_variables = @{$item->{item_variables}};
+			
+			
+			foreach my $variable (@item_variables) {
+				$quantity = $variable->{item_variable_value} 
+					if $variable->{item_variable_name}{item_variable_name} eq 'Quantity';	
+			}
+		}
+		
+		$total_weight += ($item->{item_type}{weight} * $quantity);
+	}
 	
 	return $total_weight;
 }
@@ -98,7 +115,7 @@ sub encumbrance {
 sub encumbrance_allowance {
 	my $self = shift;
 	
-	return ($self->strength + $self->constitution) * 15; 
+	return ($self->strength + $self->constitution) * 10; 
 }
 
 sub is_overencumbered {

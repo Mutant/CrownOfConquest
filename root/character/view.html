@@ -67,10 +67,11 @@
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
 	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
+	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
-					clearEquipSlot(responseObject.clear_equip_place);
-				}
+					clearEquipSlot(responseObject.clear_equip_place);					
+				}				
 	        }
 	    });	       
 	}
@@ -88,12 +89,12 @@
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	console.log(item_id);
 	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
+	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
-					clearEquipSlot(responseObject.clear_equip_place);
-				}
+					clearEquipSlot(responseObject.clear_equip_place);					
+				}				
 	        }
 	    });	       
 	}	
@@ -272,7 +273,7 @@ function calculateSpellPoints() {
 
 <div class="aligned-line">
     <span class="aligned-label">Encumbrance:</span>
-    <span class="aligned-value">[% character.encumbrance %] / [% character.encumbrance_allowance %]</span>
+    <span class="aligned-value"><span id="encumbrance-value">[% character.encumbrance %]</span> / [% character.encumbrance_allowance %]</span>
 </div>
 
 </div>

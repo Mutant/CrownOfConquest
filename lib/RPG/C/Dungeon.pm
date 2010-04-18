@@ -31,13 +31,21 @@ sub view : Local {
 
     $c->stats->profile("Queried map sectors");
 
+	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
+	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
+
     my $mapped_sectors_by_coord;
     foreach my $sector (@mapped_sectors) {
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
     }
-
-	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
-	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
+	
+	# Add any sectors from viewable grid into mapped sectors, if they're not there already
+	$c->log->debug("Raw viewable sectors: " . scalar @$sectors);
+	foreach my $sector (@$sectors) {
+		if (! $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] && $viewable_sector_grid->[ $sector->{x} ][ $sector->{y} ]) {
+			push @mapped_sectors, $sector;
+		}	
+	}
 
     $c->stats->profile("Finshed /dungeon/view");
 
@@ -152,7 +160,7 @@ sub render_dungeon_grid : Private {
 
     foreach my $sector (@$mapped_sectors) {
 
-        #$c->log->debug( "Rendering: " . $sector->{x} . ", " . $sector->{y} );
+        $c->log->debug( "Rendering dungeon sector: " . $sector->{x} . ", " . $sector->{y} );
         $grid->[ $sector->{x} ][ $sector->{y} ] = $sector;
 
         $max_x = $sector->{x} if $max_x < $sector->{x};

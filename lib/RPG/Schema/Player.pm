@@ -133,6 +133,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => '11'
     },    
+    'send_email' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'send_email',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },       
 
 
 );

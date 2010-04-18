@@ -62,7 +62,7 @@ sub run {
         RPG::Email->send(
         	$context->config,
         	{
-	            email      => $party->player->email,
+	            players => [$party->player],
 	            subject => 'Daily Report',
 	            body    => $message,
         	}

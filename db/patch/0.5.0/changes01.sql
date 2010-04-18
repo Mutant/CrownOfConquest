@@ -78,6 +78,7 @@ UPDATE `Item_Type` SET weight = 1 WHERE weight = 0;
 ALTER TABLE `Player` ADD COLUMN `send_email_announcements` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
 ALTER TABLE `Player` ADD COLUMN `display_announcements` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
 ALTER TABLE `Player` ADD COLUMN `display_tip_of_the_day` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
+ALTER TABLE `Player` ADD COLUMN `send_email` TINYINT(1) NOT NULL DEFAULT 1 AFTER `warned_for_deletion`;
 
 CREATE TABLE `Survey_Response` (
   `survey_response_id` INTEGER  NOT NULL AUTO_INCREMENT,

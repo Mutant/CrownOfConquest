@@ -16,15 +16,12 @@ sub login : Local {
     my ( $self, $c ) = @_;
 
     my $message;
-
+    
     if ( $c->req->param('email') ) {
         my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), password => $c->req->param('password') } );
 
         if ($user) {
             $user->last_login( DateTime->now() );
-            $user->warned_for_deletion(0);
-            my $was_deleted = $user->deleted;
-            $user->deleted(0);
             $user->update;
 
             if ( $user->verified ) {
@@ -32,28 +29,13 @@ sub login : Local {
                                 
                 # Various post login checks
                 $c->forward('post_login_checks');
-
-                if ($was_deleted) {                        
-                    if ( $c->model('DBIC::Player')->count( { deleted => 0 } ) > $c->config->{max_number_of_players} ) {
-                        
-                        $user->warned_for_deletion(1);
-                        $user->deleted(1);
-                        $user->update;
-                        
-                        $c->forward( 'RPG::V::TT', [ 
-                            {
-                                 template => 'player/full.html', 
-                                 params => { inactive => 1 } 
-                            } 
-                        ] );
-                        return;
-                    }  
-                    
-                    $c->res->redirect( $c->config->{url_root} . "/player/reactivate" );
-                }
-                else {
-                    $c->res->redirect( $c->config->{url_root} );
-                }
+                
+                my $url_to_redirect_to = $c->session->{login_url};
+                undef $c->session->{login_url};
+                
+                $c->log->info("Post login redirect to: $url_to_redirect_to");
+                              
+                $c->res->redirect( $c->config->{url_root} . $url_to_redirect_to );
             }
             else {
                 $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
@@ -62,6 +44,10 @@ sub login : Local {
         else {
             $message = "Email address and/or password incorrect";
         }
+    }
+    else {
+    	$c->log->debug("Saving redirect url: " . $c->req->uri->path);
+        $c->session->{login_url} = $c->req->uri->path;	
     }
 
     $c->forward(
@@ -358,44 +344,6 @@ sub captcha : Local {
     $c->create_captcha();
 }
 
-sub change_password : Local {
-    my ( $self, $c ) = @_;
-
-    my $message;
-
-    if ( $c->req->param('current_password') ) {
-        if ( $c->req->param('current_password') ne $c->session->{player}->password ) {
-            $c->stash->{error} = "Current password is incorrect";
-        }
-        elsif ( $c->req->param('new_password') ne $c->req->param('retyped_password') ) {
-            $c->stash->{error} = "New passwords don't match";
-        }
-        elsif ( length $c->req->param('new_password') < $c->config->{minimum_password_length} ) {
-            $c->stash->{error} = "New password must be at least " . $c->config->{minimum_password_length} . " characters";
-        }
-        else {
-            my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id, } );
-
-            $player->password( $c->req->param('new_password') );
-            $player->update;
-
-            $c->session->{player} = $player;
-
-            $message = 'Password changed';
-        }
-    }
-
-    $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'player/change_password.html',
-                params   => { message => $message, },
-            }
-        ]
-    );
-}
-
 sub verify : Local {
     my ( $self, $c ) = @_;
 
@@ -456,32 +404,6 @@ sub vote : Local {
     $c->forward( 'RPG::V::TT', [ { template => 'player/vote.html', } ] );
 }
 
-sub delete_account : Local {
-	my ( $self, $c ) = @_;
-	
-	$c->session->{delete_account_conf_displayed} = 1;
-	
-    $c->forward( 'RPG::V::TT', [ { template => 'player/delete_account.html', } ] );	
-}
-
-sub delete_account_confirmed : Local {
-	my ( $self, $c ) = @_;
-
-	unless ($c->session->{delete_account_conf_displayed}) {
-		$c->error("Account deletion not confirmed");
-		return;	
-	}
-	
-	$c->session->{party_level} = $c->stash->{party}->level;
-	$c->session->{turns_used} = $c->stash->{party}->turns;
-	
-	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
-	$player->delete;
-	delete $c->session->{player};
-	
-    $c->forward( 'RPG::V::TT', [ { template => 'player/survey.html', } ] );	
-}
-
 sub survey : Local {
 	my ( $self, $c ) = @_;
 	
@@ -523,18 +445,5 @@ sub announcements : Local {
 		} 
 	] );	
 }
-
-sub disable_tips : Local {
-	my ( $self, $c ) = @_;
-	
-	my $player = $c->stash->{party}->player;
-	$player->display_tip_of_the_day(0);
-	$player->update;
-	
-	push @{$c->stash->{panel_messages}}, "Tips of the day disabled";
-	
-	$c->forward( '/party/main' );
-}
-
 
 1;

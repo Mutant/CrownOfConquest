@@ -32,6 +32,8 @@ sub get_offline_log_count {
     my $date_range_start = shift;
     
     $date_range_start = $party->last_action unless $date_range_start;
+    
+    return 0 unless $date_range_start;
 
     return $self->search(
         {

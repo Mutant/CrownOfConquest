@@ -13,9 +13,18 @@ use DateTime::Format::HTTP;
 
 #
 # Sets the actions in this controller to be registered with no prefix
-# so they function identically to actions created in MyApp.pm
+# so they function identically to actions created in RPG.pm
 #
 __PACKAGE__->config->{namespace} = '';
+
+# List of paths which won't be prompted for reactivation if the player is inactive
+# Mostly used so they can log in, change some settings, and log out, without having to worry about playing the game
+my @DONT_PROMPT_FOR_REACTIVATION = (
+	'player/account/email_unsubscribe',
+	'player/account/disable_emails',
+	'player/account/delete_account',
+	'player/account/delete_account_confirmed',
+);
 
 sub auto : Private {
     my ( $self, $c ) = @_;
@@ -29,13 +38,14 @@ sub auto : Private {
     $c->model('DBIC')->storage->txn_begin;
 
     if ( !$c->session->{player} ) {
-        if ( $c->action !~ m|^player| ) {
+        if ( $c->action !~ m|^player(?!/account)| ) {
             $c->detach('/player/login');
         }
         return 1;
     }
-
-    return 1 if $c->action =~ m/^admin/;
+        return 1 if $c->action =~ m/^admin/;
+    
+    $c->forward('check_for_deleted_player');
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
@@ -50,7 +60,6 @@ sub auto : Private {
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
 
         # Get recent combat count if party has been offline
-        # (We check $c->flash->{fresh_login} first to ensure this is only done immediately after login)
         if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
             my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
             if ( $offline_combat_count > 0 ) {
@@ -105,12 +114,53 @@ sub auto : Private {
         }
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
-        $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
-        return 0;
+    	if (! $c->error) {
+        	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
+        	return 0;
+    	}
     }
 
     return 1;
 
+}
+
+sub check_for_deleted_player : Private {
+	my ($self, $c) = @_;
+		
+	if ($c->session->{player}->deleted) {                        
+		# If they're just logging in to (eg) disable emails, don't make them reactivate.
+		my $dont_reactivate = grep { ref $_ eq 'Regexp' ? $c->action =~ m/$_/ : $c->action eq $_ } @DONT_PROMPT_FOR_REACTIVATION;
+
+		$c->log->debug("Not going to forward to reactivation screen, because action is: " . $c->action) if $dont_reactivate;
+		
+		return if $dont_reactivate;
+
+		# Check for a full game
+		my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );
+		if ( $players_in_game_rs->count > $c->config->{max_number_of_players} ) {
+			
+			$c->log->debug("Player deleted, but game is full");
+
+            $c->detach( 'RPG::V::TT', [ 
+            	{
+                    template => 'player/full.html', 
+                    params => { inactive => 1 } 
+                } 
+             ]);
+        }
+        
+        $c->log->debug("Undeleting player: " . $c->session->{player}->id);
+        
+        my $player = $c->model('DBIC::Player')->find($c->session->{player}->id);
+                
+        $player->deleted(0);
+        $player->warned_for_deletion(0);
+        $player->update;
+        
+        $c->session->{player} = $player;
+         
+        $c->detach( "/player/reactivate" );
+	}	
 }
 
 sub display_announcements : Private {

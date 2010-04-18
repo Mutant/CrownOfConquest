@@ -50,7 +50,7 @@ sub run {
         RPG::Email->send(
         	$context->config.
         	{
-            	email => $player->email,
+            	players => [$player],
             	subject => 'Game Inactivity',
             	body    => $message,
         	}

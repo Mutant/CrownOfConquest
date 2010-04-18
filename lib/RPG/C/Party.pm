@@ -609,35 +609,6 @@ sub enter_dungeon : Local {
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
 }
 
-# TODO: move these into Details.pm?
-sub update_options : Local {
-    my ( $self, $c ) = @_;
-
-    if ( $c->req->param('save') ) {
-        $c->stash->{party}->flee_threshold( $c->req->param('flee_threshold') );
-        $c->stash->{party}->update;
-        $c->flash->{messages} = 'Changes Saved';
-    }
-
-    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
-}
-
-sub update_email_options : Local {
-    my ( $self, $c ) = @_;
-
-    if ( $c->req->param('save') ) {
-    	my $player = $c->stash->{party}->player;
-        $player->send_daily_report($c->req->param('send_daily_report') ? 1 : 0);
-        $player->send_email_announcements($c->req->param('send_email_announcements') ? 1 : 0);
-        $player->display_announcements($c->req->param('display_announcements') ? 1 : 0);
-        $player->display_tip_of_the_day($c->req->param('display_tip_of_the_day') ? 1 : 0);
-        $player->update;
-        $c->flash->{messages} = 'Changes Saved';
-    }
-
-    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
-}
-
 sub zoom : Private {
     my ( $self, $c ) = @_;
     

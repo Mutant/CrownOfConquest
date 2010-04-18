@@ -27,8 +27,7 @@ sub send {
     	$emails = $params->{email};
     }
     else {   
-    	#$emails = map { $_->send_emails ? $_->email : () } @{ $params->{players} };
-    	$emails = join ', ', (map { $_->email } @{ $params->{players} });
+    	$emails = map { $_->send_email && $_->verified ? $_->email : () } @{ $params->{players} };
     	$to_field = 'Bcc';
     }
 	

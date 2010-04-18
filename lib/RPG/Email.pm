@@ -27,11 +27,13 @@ sub send {
     	$emails = $params->{email};
     }
     else {   
-    	$emails = map { $_->send_email && $_->verified ? $_->email : () } @{ $params->{players} };
+    	$emails = join ',', (map { $_->send_email && $_->verified ? $_->email : () } @{ $params->{players} });
     	$to_field = 'Bcc';
     }
 	
 	return unless $emails;
+	
+	warn $emails;
 	
     my $msg = MIME::Lite->new(
         From    => $config->{send_email_from},

@@ -22,6 +22,9 @@ sub login : Local {
 
         if ($user) {
             $user->last_login( DateTime->now() );
+            # Only clear warned for deletion if they're not deleted. Deleted users will get that cleared later
+            #  when they reactivate (in Root.pm).
+            $user->warned_for_deletion(0) unless $user->deleted;
             $user->update;
 
             if ( $user->verified ) {
@@ -138,41 +141,34 @@ sub register : Local {
                     ]
                 );
             }
-
-            my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
-
-            my $player;
-
-            eval {
-                $player = $c->model('DBIC::Player')->create(
-                    {
-                        player_name       => $c->req->param('player_name'),
-                        email             => $c->req->param('email'),
-                        password          => $c->req->param('password1'),
-                        verification_code => $verification_code,
-                        last_login        => DateTime->now(),
-                    }
-                );
-            };
-            if ($@) {
-                if ( $@ =~ /Duplicate entry '.+' for key 2/ ) {
-                    return "A player with the name '" . $c->req->param('player_name') . "' is already registered";
-                }
-                else {
-                    croak $@;
-                }
+            
+            $existing_player = $c->model('DBIC::Player')->find( { player_name => $c->req->param('player_name') }, );
+            
+            if ($existing_player) {
+            	return "A player with the name '" . $c->req->param('player_name') . "' is already registered";	
             }
-
+            
+            my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
+            
+            my $player = $c->model('DBIC::Player')->create(
+                {
+                    player_name       => $c->req->param('player_name'),
+                    email             => $c->req->param('email'),
+                    password          => $c->req->param('password1'),
+                    verification_code => $verification_code,
+                    last_login        => DateTime->now(),
+                }
+            );
+ 
             $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
 
             return;
         };
+	    if (my $error = $@) {
+	        confess $error;
+	    }
 
         return unless $message;
-    }
-    if ($@) {
-        my $error = $@;
-        croak $error;
     }
 
     $c->forward(

@@ -11,7 +11,7 @@ sub send {
 	my $self = shift;
 	my $config = shift;
 	my $params = shift;
-	
+
     my $email_footer = RPG::Template->process(
         $config,
         'player/email/email_footer.txt',
@@ -30,11 +30,8 @@ sub send {
     	$emails = join ',', (map { $_->send_email && $_->verified ? $_->email : () } @{ $params->{players} });
     	$to_field = 'Bcc';
     }
-	
 	return unless $emails;
-	
-	warn $emails;
-	
+		
     my $msg = MIME::Lite->new(
         From    => $config->{send_email_from},
         $to_field     => $emails,
@@ -42,7 +39,7 @@ sub send {
         Data    => $params->{body} . $email_footer,
         Type    => 'text/html',
     );
-
+    
     $msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );	
 }
 

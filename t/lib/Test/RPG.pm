@@ -51,6 +51,10 @@ sub aa_setup_context : Test(setup) {
 		return $ret;
 	} );
 	$req->mock('params', sub {$self->{params}});
+	$req->set_always('uri', $req);
+	$req->set_always('path', $self->{request_path});
+	$self->{c}->set_always('req',$req);		
+	
 	$self->{c}->set_always('req', $req);
 
 	$self->{stash} ||= {};

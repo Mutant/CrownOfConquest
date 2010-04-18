@@ -13,17 +13,23 @@ use Test::More;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Player;
 
-use RPG::C::Player;
-
 use Data::Dumper;
 
-sub setup_player : Tests(setup) {
+sub setup_player : Tests(setup => 1) {
     my $self = shift;
     
     $self->{mock_mime_lite} = Test::MockObject->new();
     $self->{mock_mime_lite}->fake_module('MIME::Lite',
         send => sub {},
+        'new' => sub { $self->{mock_mime_lite} }
     );
+    
+    $self->{rpg_template} = Test::MockObject->new();
+    $self->{rpg_template}->fake_module('RPG::Template',
+        process => sub {},
+    );    
+    
+    use_ok 'RPG::C::Player';
 }
 
 sub test_reactivate_form : Tests(1) {
@@ -488,49 +494,11 @@ sub test_login_was_deleted : Tests(5) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/reactivate", "Redirected to reactivate page");
+    is($args->[1], "url_root", "Redirected to url_root");
     is($self->{session}{player}->id, $player->id, "User now stored in session");
     $player->discard_changes;
-    is($player->warned_for_deletion, 0, "Warned for deletion flag cleared");
-    is($player->deleted, 0, "Deleted flag cleared");
-}
-
-sub test_login_was_deleted_but_game_now_full : Tests(3) {
-    my $self = shift;
-
-    # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( 
-        { 
-            player_name => 'name', 
-            email => 'foo@bar.com', 
-            password => 'pass', 
-            verified => 1,
-            warned_for_deletion => 1,
-            deleted => 1, 
-        } 
-    );
-    
-    $self->{params}{email} = 'foo@bar.com';
-    $self->{params}{password} = 'pass'; 
-
-    $self->{config}->{url_root} = 'url_root';
-    
-    $self->{config}->{max_number_of_players} = 0;
-    
-    my $template_args;
-    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
-    
-    $self->{mock_forward}{post_login_checks} = sub {};
-    
-
-    # WHEN
-    RPG::C::Player->login( $self->{c} );
-
-    # THEN
-    is ($template_args->[0][0]{template}, 'player/full.html', "Forwarded to game full template");
-    $player->discard_changes;
     is($player->warned_for_deletion, 1, "Warned for deletion flag still set");
-    is($player->deleted, 1, "Player still deleted");
+    is($player->deleted, 1, "Deleted flag still set");
 }
 
 sub test_post_login_checks_tip_of_the_day : Tests(2) {

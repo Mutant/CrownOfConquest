@@ -14,8 +14,10 @@ sub send {
 	
     my $email_footer = RPG::Template->process(
         $config,
-        'party/email/email_footer.txt',
-    	{}
+        'player/email/email_footer.txt',
+    	{
+    		config => $config,
+    	}
     );	
     
     my $emails;
@@ -25,9 +27,12 @@ sub send {
     	$emails = $params->{email};
     }
     else {   
-    	$emails = map { $_->send_emails ? $_->email : () } @{ $params->{players} };
+    	#$emails = map { $_->send_emails ? $_->email : () } @{ $params->{players} };
+    	$emails = join ', ', (map { $_->email } @{ $params->{players} });
     	$to_field = 'Bcc';
     }
+	
+	return unless $emails;
 	
     my $msg = MIME::Lite->new(
         From    => $config->{send_email_from},

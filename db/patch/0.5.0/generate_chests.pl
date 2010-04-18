@@ -11,7 +11,7 @@ use DateTime;
 use RPG::NewDay::Action::Dungeon;
 use RPG::NewDay::Context;
 
-my $schema = RPG::Schema->connect( "dbi:mysql:game2", "root", "root", { AutoCommit => 1 }, );
+my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", { AutoCommit => 1 }, );
 
 my $home = $ENV{RPG_HOME};
 die "RPG_HOME not defined\n" unless $home;

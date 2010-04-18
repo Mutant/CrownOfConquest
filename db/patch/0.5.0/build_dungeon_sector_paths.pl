@@ -16,7 +16,7 @@ $|=1;
 
 my $dungeon_id = $ARGV[0];
 
-my $schema = RPG::Schema->connect( "dbi:mysql:game2", "root", "root", );
+my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", );
 
 my @dungeons = $dungeon_id ? $schema->resultset('Dungeon')->find($dungeon_id) : $schema->resultset('Dungeon')->search;
 

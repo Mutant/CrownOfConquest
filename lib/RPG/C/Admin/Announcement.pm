@@ -90,6 +90,8 @@ sub send : Private {
     }
 
     my @players_to_email = grep { $_->email && $_->send_email_announcements } @players;
+    
+    $c->log->info("Sending mail to " . scalar @players_to_email . " players");
 
 	RPG::Email->send(
 		$c->config,

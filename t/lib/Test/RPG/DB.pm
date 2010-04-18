@@ -14,11 +14,13 @@ sub db_startup : Test(startup) {
 
     return if $ENV{TEST_NO_DB};
 
-    my $schema = RPG::Schema->connect( $self->{config}, "dbi:mysql:game-test", "root", "root", { AutoCommit => 0 }, );
+    my $schema = RPG::Schema->connect( $self->{config}, "dbi:mysql:game-test", "root", "", { AutoCommit => 0 }, );
 
     # Wrap in T::M::E so we can mock the config
     $schema = Test::MockObject::Extends->new($schema);
     $schema->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, 'log' => sub { $self->{mock_logger} } );
+    
+    #$schema->storage->dbh->begin_work;
 
     $self->{schema} = $schema;
 }
@@ -55,8 +57,7 @@ sub roll_back : Test(teardown) {
     }
     else {    
         $self->{schema}->storage->dbh->rollback;
-    }    
-    
+    }
 }
 
 1;

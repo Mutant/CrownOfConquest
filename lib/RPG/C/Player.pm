@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use MIME::Lite;
+use RPG::Email;
 use DateTime;
 use Carp;
 
@@ -221,13 +221,14 @@ sub _generate_and_send_verification_code {
         ]
     );
 
-    my $msg = MIME::Lite->new(
-        From    => $c->config->{send_email_from},
-        To      => $to_address,
-        Subject => 'Verification code',
-        Data    => $email_message,
+    RPG::Email->send(
+    	$c->config,
+    	{
+	        email      => $to_address,
+	        subject => 'Verification code',
+	        body    => $email_message,
+    	}
     );
-    $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
 
     return $verification_code;
 }
@@ -325,20 +326,15 @@ sub forgot_password : Local {
                 ]
             );
 
-            my $msg = MIME::Lite->new(
-                From    => $c->config->{send_email_from},
-                To      => $c->req->param('email'),
-                Subject => 'Reset Password',
-                Data    => $email_message,
+            RPG::Email->send(
+            	$c->config,
+            	{
+                	email   => $c->req->param('email'),
+                	subject => 'Reset Password',
+              		body    => $email_message,
+            	}
             );
-            $msg->send(
-                'smtp',
-                $c->config->{smtp_server},
-                AuthUser => $c->config->{smtp_user},
-                AuthPass => $c->config->{smtp_pass},
-                Debug    => 1,
-            );
-
+            
             $message = 'A new password has been sent to you.';
         }
         else {

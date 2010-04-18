@@ -4,6 +4,8 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
+use RPG::Email;
+
 sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Party/ };
 
 sub run {
@@ -57,14 +59,14 @@ sub run {
             }
         );
         
-        my $msg = MIME::Lite->new(
-            From    => $context->config->{send_email_from},
-            To      => $party->player->email,
-            Subject => 'Kingdoms - Daily Report',
-            Data    => $message,
-            Type    => 'text/html',
+        RPG::Email->send(
+        	$context->config,
+        	{
+	            email      => $party->player->email,
+	            subject => 'Daily Report',
+	            body    => $message,
+        	}
         );
-        $msg->send( 'smtp', $context->config->{smtp_server}, Debug => 0, );
     }
 }
 

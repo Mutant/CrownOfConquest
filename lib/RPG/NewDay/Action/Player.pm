@@ -5,7 +5,7 @@ use Moose;
 extends 'RPG::NewDay::Base';
 
 use DateTime;
-use MIME::Lite;
+use RPG::Email;
 use RPG::Template;
 
 sub run {
@@ -47,13 +47,14 @@ sub run {
             }
         );
 
-        my $msg = MIME::Lite->new(
-            From    => $context->config->{send_email_from},
-            To      => $player->email,
-            Subject => 'Game Inactivity',
-            Data    => $message,
+        RPG::Email->send(
+        	$context->config.
+        	{
+            	email => $player->email,
+            	subject => 'Game Inactivity',
+            	body    => $message,
+        	}
         );
-        $msg->send( 'smtp', $context->config->{smtp_server}, Debug => 1, );
 
         $player->warned_for_deletion(1);
         $player->update;
@@ -97,14 +98,14 @@ sub verification_reminder {
             }
         );
 
-        my $msg = MIME::Lite->new(
-            From    => $c->config->{send_email_from},
-            To      => $player->email,
-            Subject => 'Verification Reminder',
-            Data    => $message,
+        RPG::Email->send(
+        	$c->config,
+        	{
+            	email      => $player->email,
+            	subject => 'Verification Reminder',
+            	body    => $message,
+        	}
         );
-
-        $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 1, );
     }
 }
 

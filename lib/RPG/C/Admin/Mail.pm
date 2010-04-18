@@ -5,7 +5,7 @@ use warnings;
 
 use base 'Catalyst::Controller';
 
-use MIME::Lite;
+use RPG::Email;
 
 sub default : Path {
     my ( $self, $c ) = @_;
@@ -56,23 +56,21 @@ sub send : Local {
 
     my @players = $c->model('DBIC::Player')->search( \%params );
 
-    my $emails = join ', ', ( map { $_->email } @players );
-
-    my $msg = MIME::Lite->new(
-        From    => $c->config->{send_email_from},
-        Bcc     => $emails,
-        Subject => $c->req->param('subject'),
-        Data    => $c->req->param('body'),
+    RPG::Email->send(
+    	$c->config,
+    	{
+        	players => \@players,
+        	subject => $c->req->param('subject'),
+        	body    => $c->req->param('body'),
+    	}
     );
-
-    $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
 
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'admin/mail/confirmation.html',
-                params   => { emails => $emails, },
+                #params   => { emails => $emails, },
             }
         ]
     );

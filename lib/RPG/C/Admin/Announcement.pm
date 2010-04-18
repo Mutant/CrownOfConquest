@@ -5,7 +5,6 @@ use warnings;
 
 use base 'Catalyst::Controller';
 
-use MIME::Lite;
 use DateTime;
 
 sub default : Path {
@@ -90,19 +89,16 @@ sub send : Private {
     	}
     }
 
-    my $emails = join ', ', ( map { $_->email && $_->send_email_announcements } @players );
+    my @players_to_email = grep { $_->email && $_->send_email_announcements } @players;
 
-=comment
-    my $msg = MIME::Lite->new(
-        From    => $c->config->{send_email_from},
-        Bcc     => $emails,
-        Subject => $c->req->param('title'),
-        Data    => $c->req->param('announcement'),
-        Type    => 'text/html',
-    );
-
-    $msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );
-=cut
+	RPG::Email->send(
+		$c->config,
+		{
+			players => \@players_to_email,
+			subject => $c->req->param('title'),
+			body => $c->req->param('announcement'),
+		}
+	);
 
     $c->forward(
         'RPG::V::TT',

@@ -733,8 +733,6 @@ sub DEMOLISH {
 
     if ( $self->session ) {
         my $session = freeze $self->session;
-use Carp qw(cluck);
-#cluck 'demolish';
         $self->combat_log->session($session);
     }
 

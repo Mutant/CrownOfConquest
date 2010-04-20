@@ -114,10 +114,7 @@ sub auto : Private {
         }
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
-    	if (! $c->error) {
-        	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
-        	return 0;
-    	}
+       	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
     }
 
     return 1;

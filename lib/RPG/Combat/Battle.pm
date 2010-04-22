@@ -51,6 +51,8 @@ sub execute_round {
     if ( $self->check_for_flee ) {
         # One opponent has fled, end of the battle
         $self->end_of_combat_cleanup;
+        
+        $self->result->{combat_complete} = 1;
 
         return $self->result;
     }

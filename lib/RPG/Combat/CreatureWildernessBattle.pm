@@ -8,9 +8,15 @@ with qw/
     RPG::Combat::InWilderness
 /;
 
+use Carp qw(cluck);
+
 after 'finish' => sub {
     my $self = shift;
     
+    # XXX: See note in after finish in InWilderness
+    return if $self->{_cwb_after_finish_called};
+    $self->{_cwb_after_finish_called} = 1;
+        
     # Improve prestige with nearby towns   
     foreach my $town ($self->nearby_towns) {
         my $party_town_recs = $self->schema->resultset('Party_Town')->find_or_create(
@@ -19,7 +25,7 @@ after 'finish' => sub {
                 party_id => $self->party->id,   
             }
         );
-        
+      
         $party_town_recs->prestige(($party_town_recs->prestige || 0 )+1);
         $party_town_recs->update;
     }

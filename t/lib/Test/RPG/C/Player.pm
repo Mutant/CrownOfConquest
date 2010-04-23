@@ -15,7 +15,7 @@ use Test::RPG::Builder::Player;
 
 use Data::Dumper;
 
-sub setup_player : Tests(setup => 1) {
+sub setup_player : Tests(startup => 1) {
     my $self = shift;
     
     $self->{mock_mime_lite} = Test::MockObject->new();
@@ -27,9 +27,17 @@ sub setup_player : Tests(setup => 1) {
     $self->{rpg_template} = Test::MockObject->new();
     $self->{rpg_template}->fake_module('RPG::Template',
         process => sub {},
-    );    
-    
+    );
+     
     use_ok 'RPG::C::Player';
+}
+
+sub teardown : Tests(shutdown) {
+	my $self = shift;
+	
+	$self->{mock_mime_lite}->unfake_module();
+	$self->{rpg_template}->unfake_module();
+		
 }
 
 sub test_reactivate_form : Tests(1) {

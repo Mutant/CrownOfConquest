@@ -17,9 +17,16 @@ use Test::RPG::Builder::Day;
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
 
-    $self->{dice} = Test::MockObject->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
+	$self->{dice} = Test::MockObject->new();
+    $self->{dice}->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
 
     use_ok('RPG::Schema::Character');
+}
+
+sub character_shutdown : Tests(shutdown) {
+	my $self = shift;
+	
+	$self->{dice}->unfake_module();	
 }
 
 sub test_get_equipped_item : Tests(2) {

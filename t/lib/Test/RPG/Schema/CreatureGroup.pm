@@ -17,19 +17,17 @@ sub startup : Test(startup => 1) {
     $self->{mock_rpg_schema} = Test::MockObject->new();
     $self->{mock_rpg_schema}->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, );
 
-    $self->{dice} = Test::MockObject->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
+	$self->{dice} = Test::MockObject->new();
+    $self->{dice}->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
 
     use_ok 'RPG::Schema::CreatureGroup';
 }
 
 sub shutdown : Test(shutdown) {
 	my $self = shift;
-	
-	delete $INC{'Games/Dice/Advanced.pm'};
-	require 'Games/Dice/Advanced.pm';
-	
-	delete $INC{'RPG/Schema.pm'};
-	require 'RPG/Schema.pm';
+
+	$self->{mock_rpg_schema}->unfake_module();
+	$self->{dice}->unfake_module();
 }
 
 sub test_initiate_combat : Test(6) {

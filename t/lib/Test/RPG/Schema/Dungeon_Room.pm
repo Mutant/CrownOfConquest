@@ -28,6 +28,11 @@ sub dungeon_setup : Tests(setup) {
     $self->{positions} = \%positions;
 }
 
+sub dungeon_shutdown : Tests(shutdown) {
+	my $self = shift;
+	$self->{mock_rpg_schema}->unfake_module();	
+}
+
 sub test_connected_to_room : Tests(2) {
     my $self = shift;
 

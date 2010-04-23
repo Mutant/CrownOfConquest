@@ -22,14 +22,19 @@ use Test::RPG::Builder::Town;
 use Storable qw(thaw);
 use Data::Dumper;
 
+use Carp qw(cluck);
+
 sub startup : Tests(startup => 1) {
-    use_ok 'RPG::Combat::CreatureWildernessBattle';
+	my $self = shift;
+	
+	use_ok 'RPG::Combat::CreatureWildernessBattle';    
 }
 
 sub setup : Tests(setup) {
     my $self = shift;
-
+    
     Test::RPG::Builder::Day->build_day( $self->{schema} );
+
 }
 
 sub test_process_effects_one_char_effect : Tests(2) {
@@ -65,7 +70,7 @@ sub test_process_effects_one_char_effect : Tests(2) {
         creature_group => $cg,
         log            => $self->{mock_logger},
     );
-
+    
     # WHEN
     $battle->process_effects;
 
@@ -769,12 +774,13 @@ sub test_finish_creates_town_history : Tests(3) {
     my $mock_template = Test::MockObject->new();
     $mock_template->fake_module( 'RPG::Template', process => sub { 'combat_log_message' }, );
 
+	$self->{dice}->unfake_module() if $self->{dice};
     $self->mock_dice;
     $self->{roll_result} = 10;
-
+    
     # WHEN
     $battle->finish($cg);
-
+    
     # THEN
     my @history = $self->{schema}->resultset('Town_History')->search( town_id => $town->id, );
 
@@ -789,6 +795,9 @@ sub test_finish_creates_town_history : Tests(3) {
     );
     
     is($party_town->prestige, 1, "Prestige increased");
+ 
+    $mock_template->unfake_module();
+    $self->{dice}->unfake_module();
 }
 
 sub test_check_for_item_found_correct_prevalence_used : Tests(5) {

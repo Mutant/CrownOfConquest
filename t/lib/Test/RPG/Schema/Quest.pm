@@ -11,7 +11,17 @@ use Test::More;
 use Test::MockObject;
 
 sub startup : Tests(startup=>1) {
+	my $self = shift;
+
+	$self->mock_dice;
+	
 	use_ok('RPG::Schema::Quest');
+}
+
+sub teardown : Tests(shutdown) {
+	my $self = shift;
+	
+	$self->{dice}->unfake_module;
 }
 
 sub setup_data : Tests(setup) {
@@ -52,6 +62,8 @@ sub setup_data : Tests(setup) {
 
 sub test_create_quest : Tests(7) {
 	my $self = shift;
+
+	$self->{roll_result} = 1;
 	
 	my $quest = $self->{schema}->resultset('Quest')->create(
 		{
@@ -59,7 +71,7 @@ sub test_create_quest : Tests(7) {
 			town_id => 1,
 		},
 	);
-	
+
 	isa_ok($quest, 'RPG::Schema::Quest::Kill_Creatures_Near_Town', "Quest created with correct class");
 	
 	$quest = $self->{schema}->resultset('Quest')->find( $quest->id );

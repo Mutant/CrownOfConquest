@@ -24,8 +24,15 @@ sub startup : Tests(startup=>1) {
     $self->{config} = {};
 
     $mock_config->fake_module( 'RPG::Config', 'config' => sub { $self->{config} }, );
+    
+    $self->{mock_config} = $mock_config;
 
     use_ok 'RPG::Schema::Party';
+}
+
+sub shutdown : Tests(shutdown) {
+	my $self = shift;
+	$self->{mock_config}->unfake_module();	
 }
 
 sub test_new_day : Tests(2) {
@@ -69,7 +76,7 @@ sub test_in_party_battle_with : Tests(2) {
     
     my $battle = $self->{schema}->resultset('Party_Battle')->create(
         {
-            complete => undef,
+            complete => '',
         }
     );
     

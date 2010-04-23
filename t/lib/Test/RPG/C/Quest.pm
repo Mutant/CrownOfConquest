@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::C::Player;
+package Test::RPG::C::Quest;
 
 use base qw(Test::RPG::DB);
 
@@ -11,7 +11,6 @@ use Test::MockObject;
 use Test::More;
 
 use Test::RPG::Builder::Party;
-use Test::RPG::Builder::Quest::Destroy_Orb;
 
 use RPG::C::Quest;
 
@@ -19,6 +18,8 @@ sub test_check_action_only_in_progress_quests_checked : Tests(1) {
     my $self = shift;
 
     # GIVEN
+    use_ok('Test::RPG::Builder::Quest::Destroy_Orb');
+    
     $self->{config}{quest_type_vars}{destroy_orb}{initial_search_range} = 1;
     
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );

@@ -29,6 +29,14 @@ sub dungeon_setup : Tests(setup) {
     };
 
     $self->{dungeon} = RPG::NewDay::Action::Dungeon->new( context => $self->{context} );
+    
+    $self->mock_dice;
+}
+
+sub dungeon_teardown : Tests(teardown) {
+	my $self = shift;
+	
+	$self->{dice}->unfake_module();;
 }
 
 sub test_find_room_dimensions : Tests(16) {
@@ -654,7 +662,7 @@ sub test_create_walls_for_room : Tests(9) {
 sub test_create_corridor : Tests(1) {
     my $self = shift;
     
-    # GIVEN
+    # GIVEN   
     $self->{counter} = 0;
     $self->{rolls} = [12, 2, 2, 2, 2];
 
@@ -665,9 +673,7 @@ sub test_create_corridor : Tests(1) {
     my @sectors = $self->{dungeon}->_create_corridor($mock_dungeon, 10, 10, [], $self->{positions});
     
     # THEN
-    is(scalar @sectors, 20, "Correct number of sectors created");
-
-    
+    is(scalar @sectors, 20, "Correct number of sectors created");    
        
 }
 

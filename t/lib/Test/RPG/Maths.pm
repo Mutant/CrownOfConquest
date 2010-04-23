@@ -17,7 +17,8 @@ use RPG::Maths;
 sub startup : Test(startup) {
 	my $self = shift;
 	
-	$self->{dice} = Test::MockObject->fake_module( 
+	$self->{dice} = Test::MockObject->new();
+	$self->{dice}->fake_module( 
 		'Games::Dice::Advanced',
 		roll => sub { $self->{roll_result} || 0 }, 
 	);
@@ -26,8 +27,7 @@ sub startup : Test(startup) {
 sub shutdown : Test(shutdown) {
 	my $self = shift;
 	
-	delete $INC{'Games/Dice/Advanced.pm'};	
-	require 'Games/Dice/Advanced.pm';
+	$self->{dice}->unfake_module();
 }
 
 sub test_weighted_random_number_even_number_list : Tests(no_plan) {

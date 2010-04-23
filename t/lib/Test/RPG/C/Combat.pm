@@ -8,6 +8,7 @@ use base qw(Test::RPG::DB);
 __PACKAGE__->runtests unless caller();
 
 use Test::MockObject;
+use Test::MockModule;
 use Test::More;
 
 use Test::RPG::Builder::Character;
@@ -34,8 +35,8 @@ sub test_fight : Tests(5) {
     my $mock_battle = Test::MockObject->new();
     my %new_args;
     $mock_battle->fake_module(
-        'RPG::Combat::CreatureWildernessBattle',
-        new => sub {
+    	'RPG::Combat::CreatureWildernessBattle',
+    	new => sub {
             shift @_;
             %new_args = @_;
             return $mock_battle;
@@ -70,6 +71,8 @@ sub test_fight : Tests(5) {
     $mock_battle->called_ok('execute_round');
 
     is( $template_args->[0][0]{params}{combat_messages}, "messages from combat", "Combat messages passed to template" );
+    
+    $mock_battle->unfake_module('RPG::Combat::CreatureWildernessBattle');
 }
 
 sub test_flee_flee_successful : Tests(7) {
@@ -81,12 +84,12 @@ sub test_flee_flee_successful : Tests(7) {
     my $mock_battle = Test::MockObject->new();
     my %new_args;
     $mock_battle->fake_module(
-        'RPG::Combat::CreatureWildernessBattle',
-        new => sub {
-            shift @_;
-            %new_args = @_;
-            return $mock_battle;
-        },
+    	'RPG::Combat::CreatureWildernessBattle',
+    	new => sub {
+			shift @_;
+	        %new_args = @_;
+	        return $mock_battle;
+		},
     );
 
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
@@ -123,6 +126,7 @@ sub test_flee_flee_successful : Tests(7) {
     is( $self->{stash}{party}->land_id, $orig_location+1, "Party record in stash refreshed");
     is( $self->{stash}{creature_group}, undef, "Creature group in stash cleared");
     
+    $mock_battle->unfake_module('RPG::Combat::CreatureWildernessBattle');
 }
 
 sub test_select_action : Tests(3) {

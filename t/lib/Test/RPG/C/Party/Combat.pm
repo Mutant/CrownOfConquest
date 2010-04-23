@@ -30,13 +30,13 @@ sub test_fight : Tests(2) {
         party_2 => $party2,
     );
     
-    my $mock_battle = Test::MockObject->new();
+    my $mock_battle = Test::MockObject->new();    
     my %new_args;
     $mock_battle->fake_module(
-        'RPG::Combat::PartyWildernessBattle',
+    	'RPG::Combat::PartyWildernessBattle',
         new => sub { shift @_; %new_args = @_; return $mock_battle },
     );
-    $mock_battle->set_true('execute_round');
+    $mock_battle->mock('execute_round', sub {});
     
     $self->{mock_forward}{'/combat/process_round_result'} = sub {};
     
@@ -47,8 +47,7 @@ sub test_fight : Tests(2) {
     is($new_args{party_1}, $party1, "Actual party reference passed in to battle object");
     is($new_args{party_2}->id, $party2->id, "Correct party record passed as secont party");
     
-    
-    
+    $mock_battle->unfake_module('RPG::Combat::PartyWildernessBattle');    
 }
 
 1;

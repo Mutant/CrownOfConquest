@@ -8,6 +8,9 @@ use base qw(Test::Class);
 use Carp;
 use Data::Dumper;
 
+use Test::More;
+use Test::MockModule;
+
 sub aa_init_params : Test(startup) {
     my $self = shift;
     
@@ -107,16 +110,7 @@ sub clear_dice_data : Tests(shutdown) {
     # These could probably go in teardown, but some tests (wrongly) rely on them persisting
 	undef $self->{rolls};
 	undef $self->{roll_result};
-
-=comment
-    no warnings;	
-    delete $INC{'Games/Dice/Advanced.pm'};
-  
-    require 'Games/Dice/Advanced.pm';
-    $INC{'Games/Dice/Advanced.pm'} = 1;
-=cut    
 }
-
 
 # Convenience method to Mock Games::Dice::Advanced
 sub mock_dice {
@@ -125,7 +119,7 @@ sub mock_dice {
     my $dice = Test::MockObject->new();
 
     $dice->fake_module(
-        'Games::Dice::Advanced',
+    	'Games::Dice::Advanced',        
         roll => sub {
             $self->{counter} ||= 0;
             if ( $self->{rolls} ) {
@@ -139,7 +133,13 @@ sub mock_dice {
         }
     );
     
+    $self->{dice} = $dice;
+    
     return $dice;
+}
+
+sub zz_teardown : Tests(teardown) {
+	my $self = shift;
 }
 
 # Returns any template params that have been captured as a hashref

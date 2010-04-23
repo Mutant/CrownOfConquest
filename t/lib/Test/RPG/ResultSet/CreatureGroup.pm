@@ -31,8 +31,7 @@ sub setup : Tests(setup) {
 sub shutdown : Tests(shutdown) {
     my $self = shift;
     
-    delete $INC{'RPG/Maths.pm'};        
-    require 'RPG/Maths.pm';
+    $self->{mock_maths}->unfake_module();
 }
 
 sub test_create_in_wilderness_simple : Tests(5) {

@@ -12,14 +12,14 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Land;
 
-use RPG::Schema::Quest::Destroy_Orb;
-
 use Scalar::Util 'blessed';
 
 sub setup_orb_quest : Tests(setup) {
     my $self = shift;
 
-    $self->{dice} = $self->mock_dice;    
+    $self->{dice} = $self->mock_dice;
+    
+    use_ok 'RPG::Schema::Quest::Destroy_Orb';    
 }
 
 sub test_check_action_from_another_party_deletes_not_started_quest : Tests(2) {

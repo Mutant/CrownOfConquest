@@ -21,6 +21,11 @@ sub startup : Test(startup => 1) {
 	use_ok 'RPG::Schema::Dungeon';
 }
 
+sub dungeon_shutdown : Tests(shutdown) {
+	my $self = shift;
+	$self->{mock_rpg_schema}->unfake_module();	
+}
+
 sub test_party_can_enter_instance : Test(3) {
     my $self = shift;
     

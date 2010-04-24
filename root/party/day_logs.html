@@ -1,10 +1,2 @@
- [% FOREACH day_log IN day_logs %]
- A new day has dawned! It's now day [% day_log.day.day_number %] of Year [% day_log.day.game_year %] 
- <span id="day_log_[% day_log.id %]">(Details)</span>
- 
-<div dojoType="dijit.Tooltip" connectId="day_log_[% day_log.id %]" style="display: none">
-[% day_log.log | html_line_break %]
-</div>
-<br>
-[% END %]
-<br>
+ A new day has dawned! It's now day [% day_log.day.day_number %] (<a href="[% base %]/party/details?tab=history">Details</a>)
+<br><br>

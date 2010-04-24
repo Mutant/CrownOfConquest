@@ -112,7 +112,7 @@ sub day_logs_check : Private {
 	return if $c->stash->{party}->in_combat;
 	
     # Check if new day message should be displayed
-    my @day_logs = $c->model('DBIC::DayLog')->search(
+    my ($day_log) = $c->model('DBIC::DayLog')->search(
     	{
     		'displayed' => 0,
     		'party_id' => $c->stash->{party}->id,
@@ -120,26 +120,27 @@ sub day_logs_check : Private {
     	{
     		order_by => 'day.date_started desc',
     		prefetch => 'day',
-    		rows => 7, # TODO: config me
+    		rows => 1,
     	},
     );
     
-    if (@day_logs) {
-    	foreach my $day_log (@day_logs) {   		
-    		$day_log->displayed(1);
-    		$day_log->update;
-    	}
+    if ($day_log) {
+    	$c->model('DBIC::DayLog')->search(
+	    	{
+	    		'displayed' => 0,
+	    		'party_id' => $c->stash->{party}->id,
+	    	}
+		)->update( { displayed => 1 } );
     	
     	$c->stash->{day_logs} = $c->forward('RPG::V::TT',
 	        [{
 	            template => 'party/day_logs.html',
 				params => {
-					day_logs => \@day_logs,
+					day_log => $day_log,
 				},
 				return_output => 1,
 	        }]		       
-   		);
-   			
+   		);   			
     }
 }
 

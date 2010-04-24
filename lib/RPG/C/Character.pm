@@ -78,6 +78,7 @@ sub equipment_tab : Local {
     	$criteria = { character_id => $c->req->param('character_id'), };
     }
     else {
+    	confess "Item mode Disabled"; # Disabled for now, since it's pretty slow...
     	$criteria = { 'belongs_to_character.party_id' => $c->stash->{party}->id, };
     	@extra_join = ('belongs_to_character');
     }

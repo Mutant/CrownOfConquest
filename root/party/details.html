@@ -12,6 +12,14 @@
 
 <h2>[% party.name %]</h2>
 
+<b>Characters:</b>
+[% FOREACH character IN party.characters %]	
+	<a href="[% base %]/character/view?character_id=[% character.id %]">
+		[% character.character_name %]</a>
+	&nbsp;
+[% END %]
+<br><br>
+
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
 	
 <div dojoType="dijit.layout.ContentPane" title="Details">

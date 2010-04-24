@@ -49,6 +49,7 @@ sub refresh : Private {
 	}
 
 	if ($c->stash->{panel_messages}) {
+		confess "Panel messages must be an arrayref" unless ref $c->stash->{panel_messages} eq 'ARRAY';
 		$response{panel_messages} = $c->stash->{panel_messages};
 	}
 	

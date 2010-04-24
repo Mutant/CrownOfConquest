@@ -380,7 +380,7 @@ sub enter : Local {
 
         if ( $c->req->param('payment_method') eq 'gold' ) {
             if ( $cost->{gold} > $c->stash->{party}->gold ) {
-                $c->stash->{panel_messages} = "You don't have enough gold to pay the tax";
+                $c->stash->{panel_messages} = ["You don't have enough gold to pay the tax"];
                 $c->detach( '/panel/refresh', ['messages'] );
             }
 
@@ -388,7 +388,7 @@ sub enter : Local {
         }
         else {
             if ( $cost->{turns} > $c->stash->{party}->turns ) {
-                $c->stash->{panel_messages} = "You don't have enough turns to pay the tax";
+                $c->stash->{panel_messages} = ["You don't have enough turns to pay the tax"];
                 $c->detach( '/panel/refresh', ['messages'] );
             }
 

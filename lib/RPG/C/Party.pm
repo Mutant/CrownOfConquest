@@ -475,7 +475,7 @@ sub disband : Local {
 
     # If this is a confirmation (and the referer details check out, disband the party. Otherwise check for confirmation
     my $url_root = $c->config->{url_root};
-    if ( $c->req->params('confirmed') && $c->req->referer =~ /^$url_root/ && $c->req->referer =~ m|party/disband| ) {
+    if ( $c->req->param('confirmed') && $c->req->referer =~ /^$url_root/ && $c->req->referer =~ m|party/disband| ) {
         $c->stash->{party}->defunct( DateTime->now() );
         $c->stash->{party}->update;
         $c->res->redirect( $c->config->{url_root} );

@@ -365,7 +365,7 @@ sub enter : Local {
     );
 
     # Check if they have really low prestige, and need to be refused.
-    my $prestige_threshold = -30 + round( $town->prosperity / 25 );
+    my $prestige_threshold = -90 + round( $town->prosperity / 25 );
     if ( $party_town->prestige <= $prestige_threshold ) {
         $c->stash->{panel_messages} =
             [ "You've been refused entry to " . $town->town_name . ". You'll need to wait until your prestige improves before coming back" ];

@@ -806,7 +806,7 @@ sub set_starting_equipment {
         $item->add_to_characters_inventory($self);
 
         if ( $item->variable('Quantity') ) {
-            $item->variable( 'Quantity', 50 );
+            $item->variable( 'Quantity', 250 );
         }
     }
 }

@@ -31,7 +31,8 @@ Top Parties By:
 		<th>Total XP</th>
 		<th># of Chars</th>
 		<th>Turns Used</th>
-		<th>Date Created</th>		
+		<th>Date Created</th>
+		<th>Last Login</th>
 	</tr>
 [% FOREACH party IN parties %]
 	<tr>
@@ -43,7 +44,8 @@ Top Parties By:
 		<td align="right">[% party.get_column('total_xp') %]</td>
 		<td align="right">[% party.get_column('character_count') %]</td>
 		<td align="right">[% party.turns_used %]</td>
-		<td>[% party.created.ymd %]</td>		
+		<td>[% party.created.ymd %]</td>
+		<td>[% party.player.last_login.ymd %]</td>
 	</tr>
 [% END %]
 </table>

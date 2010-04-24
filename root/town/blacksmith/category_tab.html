@@ -35,9 +35,9 @@
 				<td align="center">
 					<a href="javascript:confirmUpgrade(
 							'[% variable.id %]',
-							'[% infl.A(variable.item_variable_name) %]',								
+							'[% infl.A(variable.item_variable_name, 1) %]',								
 							'[% item.id %]', 
-							'[% infl.A(item.item_type.item_type) %]',
+							'[% infl.A(item.item_type.item_type, 1) %]',
 							'[% item.upgrade_cost(variable.item_variable_name) %]',
 							'[% category.item_category %]'
 						)">[% item.upgrade_cost(variable.item_variable_name) %] gold</a>
@@ -51,7 +51,7 @@
 					<td align="center">
 						<a href="javascript:confirmRepair(							
 								'[% item.id %]', 
-								'[% infl.A(item.item_type.item_type) %]',
+								'[% infl.A(item.item_type.item_type, 1) %]',
 								'[% repair_cost %]',
 								'[% category.item_category %]'
 							)">[% repair_cost %] gold</a>

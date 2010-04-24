@@ -18,6 +18,7 @@ use Module::Pluggable::Dependency search_path => ['RPG::NewDay::Action'], instan
 sub run {
     my $self = shift;
     my $date_to_run_at = shift;
+    my @plugins = @_;
     
     my $dt;
     
@@ -56,7 +57,7 @@ sub run {
     }    
     
     while (1) {
-        eval { $self->do_new_day( $config, $logger, $dt ); };
+        eval { $self->do_new_day( $config, $logger, $dt, @plugins ); };
         if ($@) {
             $logger->error("Error running new day script: $@");
             return $@;
@@ -78,7 +79,7 @@ sub run {
 
 sub do_new_day {
     my $self = shift;
-    my ( $config, $logger, $dt ) = @_;
+    my ( $config, $logger, $dt, @plugins ) = @_;
     
     $logger->info( "Running ticker script as at: " . $dt->datetime() );
 
@@ -93,6 +94,10 @@ sub do_new_day {
     );
     
     foreach my $action ( $self->plugins( context => $context ) ) {
+    	if (@plugins) {
+    		next unless grep {$action->isa($_)} @plugins;
+    	}
+    	
         my $cron = DateTime::Cron::Simple->new( $action->cron_string );
 
         if ( $cron->validate_time($dt) ) {

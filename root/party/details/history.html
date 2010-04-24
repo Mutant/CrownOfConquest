@@ -11,7 +11,7 @@
 				<hr size=1>
 				[% IF message_logs.${day_count} %]					
 					[% FOREACH message IN message_logs.${day_count} %]
-						[% message | html_line_break %]<br>
+						[% message %]<br>
 						<hr size=1>
 					[% END %]
 				[% END %]

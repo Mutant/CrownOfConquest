@@ -3,13 +3,13 @@
 <table class="main" cellpadding="5" cellspacing="10">
 	<tr>
 	[% FOREACH dungeon IN known_dungeons %]
-		[% IF dungeon.level != last_level %]
+		[% IF dungeon.known_dungeon != last_level %]
 			<tr>
-				<td colspan="5"><b>Level [% dungeon.level %]</td>			
+				<td colspan="5"><b>Level [% dungeon.known_dungeon %]</td>			
 			</tr>
-			[% last_level = dungeon.level %]
+			[% last_level = dungeon.known_dungeon %]
 		[% END %]
-		<td><li>[% dungeon.x %], [% dungeon.y %]</td>
+		<td><li>[% dungeon.location.x %], [% dungeon.location.y %]</td>
 		[% IF loop.count % 10 == 0 %]
 			</tr><tr>
 		[% END %]

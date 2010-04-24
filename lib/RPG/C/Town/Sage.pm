@@ -308,7 +308,7 @@ sub find_dungeon : Local {
                 land_id  => $dungeon->land_id,
             );
 
-            unless ($mapped_sector) {
+            unless ($mapped_sector->known_dungeon) {
                 $dungeon_to_find = $dungeon;
                 last;
             }
@@ -323,6 +323,7 @@ sub find_dungeon : Local {
             {
                 land_id  => $dungeon_to_find->land_id,
                 party_id => $party->id,
+                known_dungeon => $dungeon_to_find->level,
             }
         );
 

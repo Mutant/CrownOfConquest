@@ -73,7 +73,10 @@ sub execute_round {
         my $action_result;
         if ( $combatant->is_character ) {
             $action_result = $self->character_action($combatant);
-            $self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
+            
+            if ($action_result) {
+            	$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
+            }
         }
         else {
             $action_result = $self->creature_action($combatant);

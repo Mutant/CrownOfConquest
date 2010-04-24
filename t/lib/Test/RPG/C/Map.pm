@@ -126,47 +126,146 @@ sub test_move_to_successful_town_entrance : Tests(4) {
 		$land[0]->id, "Stash party location updated correctly" );
 }
 
-sub test_known_dungeons : Tests(7) {
+sub test_move_to_found_dungeon : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
 	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
 
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		land_id         => $land[1]->id
+	);
+
+	my $dungeon = $self->{schema}->resultset('Dungeon')->create(
+		{
+			level   => 3,
+			land_id => $land[0]->id,
+		}
+	);
+
+	$self->{params}{land_id} = $land[0]->id;
+
+	$self->{stash}{party}          = $party;
+	$self->{stash}{party_location} = $party->location;
+
+	$self->{mock_forward}{'/combat/check_for_attack'} = sub { };
+	$self->{mock_forward}{'/panel/refresh'}           = sub { };
+
+	# WHEN
+	RPG::C::Map->move_to( $self->{c} );
+
+	# THEN
+	$party->discard_changes;
+	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
+
+	my $mapped_sector = $self->{schema}->resultset('Mapped_Sectors')->find(
+		{
+			land_id => $land[0]->id,	
+			party_id => $party->id,
+		}
+	);
+	is($mapped_sector->known_dungeon, 3, "Dungeon recorded in mapped sectors");
+}
+
+sub test_move_to_phantom_dungeon : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		land_id         => $land[1]->id
+	);
+
+	my $mapped_sector = $self->{schema}->resultset('Mapped_Sectors')->create(
+		{
+			land_id => $land[0]->id,
+			party_id => $party->id,
+			known_dungeon => 2,
+		},
+	);
+
+	$self->{params}{land_id} = $land[0]->id;
+
+	$self->{stash}{party}          = $party;
+	$self->{stash}{party_location} = $party->location;
+
+	$self->{mock_forward}{'/combat/check_for_attack'} = sub { };
+	$self->{mock_forward}{'/panel/refresh'}           = sub { };
+
+	# WHEN
+	RPG::C::Map->move_to( $self->{c} );
+
+	# THEN
+	$party->discard_changes;
+	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
+
+	$mapped_sector->discard_changes;
+	is($mapped_sector->known_dungeon, 0, "Dungeon no longer there");
+	is($self->{stash}{had_phantom_dungeon}, 1, "Record that there was a phantom");
+}
+
+sub test_known_dungeons : Tests(7) {
+	my $self = shift;
+
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		character_level => 10,
+		land_id => $land[1],
+	);
+	
+	# All but 1 sector mapped by party
+	my @mapped_sectors;
+	for my $id ( 0 .. 7 ) {
+		my $mapped_sector = $self->{schema}->resultset('Mapped_Sectors')->create(
+			{
+				land_id  => $land[$id]->id,
+				party_id => $party->id,
+			}
+	  	);
+		push @mapped_sectors, $mapped_sector;	  
+	}	
+	
+
+	# Dungeon in mapped sectors, and known_dungeons is true
 	my $dungeon1 = $self->{schema}->resultset('Dungeon')->create(
 		{
 			level   => 1,
 			land_id => $land[5]->id,
 		}
 	);
+	$mapped_sectors[5]->known_dungeon(1);
+	$mapped_sectors[5]->update;	
 
+	# Dungeon in mapped sectors, but known_dungeon is false
 	my $dungeon2 = $self->{schema}->resultset('Dungeon')->create(
+		{
+			level   => 1,
+			land_id => $land[4]->id,
+		}
+	);
+
+	# Dungeon outside mapped sectors
+	my $dungeon3 = $self->{schema}->resultset('Dungeon')->create(
 		{
 			level   => 1,
 			land_id => $land[8]->id,
 		}
 	);
 
-	my $party = Test::RPG::Builder::Party->build_party(
-		$self->{schema},
-		character_count => 2,
-		character_level => 10
-	);
+	# Dungeon doesn't exist, but is known (i.e. phantom dungeon)
+	$mapped_sectors[2]->known_dungeon(2);
+	$mapped_sectors[2]->update;
 
 	$self->{stash}{party} = $party;
-
-	# All but 1 sector mapped
-	my @mapped_sectors;
-	for my $id ( 0 .. 7 ) {
-		push @mapped_sectors,
-		  $self->{schema}->resultset('Mapped_Sectors')->create(
-			{
-				land_id  => $land[$id]->id,
-				party_id => $party->id,
-			}
-		  );
-	}
-	$mapped_sectors[2]->phantom_dungeon(2);
-	$mapped_sectors[2]->update;
 
 	# WHEN
 	RPG::C::Map->known_dungeons( $self->{c} );
@@ -175,17 +274,17 @@ sub test_known_dungeons : Tests(7) {
 	my @known_dungeons = @{ $self->template_params->{known_dungeons} };
 	is( scalar @known_dungeons, 2, "2 known dungeons" );
 
-	is( $known_dungeons[0]->{level}, 1, "First known dungeon level returned" );
-	is( $known_dungeons[0]->{x}, $land[5]->x,
+	is( $known_dungeons[0]->{known_dungeon}, 1, "First known dungeon level returned" );
+	is( $known_dungeons[0]->{location}{x}, $land[5]->x,
 		"First known dungeon x returned" );
-	is( $known_dungeons[0]->{y}, $land[5]->y,
+	is( $known_dungeons[0]->{location}{y}, $land[5]->y,
 		"First known dungeon y returned" );
 
-	is( $known_dungeons[1]->{level}, 2, "First known dungeon level returned" );
-	is( $known_dungeons[1]->{x}, $land[2]->x,
-		"First known dungeon x returned" );
-	is( $known_dungeons[1]->{y}, $land[2]->y,
-		"First known dungeon y returned" );
+	is( $known_dungeons[1]->{known_dungeon}, 2, "Second known dungeon level returned" );
+	is( $known_dungeons[1]->{location}{x}, $land[2]->x,
+		"Second known dungeon x returned" );
+	is( $known_dungeons[1]->{location}{y}, $land[2]->y,
+		"Second known dungeon y returned" );
 
 }
 

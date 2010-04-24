@@ -597,15 +597,6 @@ sub check_for_dungeon_deletion {
 
             $c->logger->info( 'Deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y );
 
-            # Record "phantom" dungeons
-            my $rs = $c->schema->resultset('Mapped_Sectors')->search(
-                {
-                    'location.x' => $dungeon->location->x,
-                    'location.y' => $dungeon->location->y,
-                },
-                { join => 'location', },
-            )->update( { phantom_dungeon => $dungeon->level }, { join => 'location', } );
-
             # Delete the dungeon
             $dungeon->delete;
         }

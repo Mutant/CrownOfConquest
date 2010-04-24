@@ -96,35 +96,21 @@ sub party : Local {
 sub known_dungeons : Local {
     my ( $self, $c ) = @_;
 
-    my $rs = $c->model('DBIC::Mapped_Sectors')->search(
-        { 'party_id' => $c->stash->{party}->id, },
+    my $mapped_sectors_rs = $c->model('DBIC::Mapped_Sectors')->search(
+        { 
+        	'party_id' => $c->stash->{party}->id,
+        	'known_dungeon' => {'!=', 0}, 
+        },
         {
-            prefetch => { 'location' => 'dungeon' },
-
-            #order_by => 'level, location.x, location.y',
+        	prefetch => 'location',
+            order_by => 'known_dungeon, location.x, location.y',
         },
     );
-
-    $rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-
-    my @known_dungeons;
-
-    while ( my $mapped_sector = $rs->next ) {
-        my $level = $mapped_sector->{phantom_dungeon} || $mapped_sector->{location}{dungeon}{level};
-
-        if ( $level && RPG::Schema::Dungeon->party_can_enter( $level, $c->stash->{party} ) ) {
-
-            push @known_dungeons,
-                {
-                level => $level,
-                x     => $mapped_sector->{location}{x},
-                y     => $mapped_sector->{location}{y},
-                };
-        }
-    }
-
-    @known_dungeons = sort { $a->{level} <=> $b->{level} || $a->{x} <=> $b->{x} || $a->{y} <=> $b->{y} } @known_dungeons;
-
+    
+    $mapped_sectors_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+    
+    my @known_dungeons = $mapped_sectors_rs->all;
+    
     $c->forward(
         'RPG::V::TT',
         [
@@ -330,18 +316,28 @@ sub move_to : Local {
         $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
         $c->stash->{party_location}->update;
 
-        my $mapped_sector = $c->model('DBIC::Mapped_Sectors')->find(
+        my $mapped_sector = $c->model('DBIC::Mapped_Sectors')->find_or_create(
             {
                 party_id => $c->stash->{party}->id,
                 land_id  => $new_land->id,
-            }
+            },
+            {
+            	prefetch => { location => 'dungeon' },
+            },
         );
         
-        if ($mapped_sector && $mapped_sector->phantom_dungeon) {
-            # They know for sure if there's a dungeon here now
-            $mapped_sector->update( { phantom_dungeon => 0 } );
+        if ($mapped_sector) {
+        	if ($mapped_sector->known_dungeon && ! $mapped_sector->location->dungeon) {
+            	# They thought there was a dungeon here, but there's not
+            	$mapped_sector->update( { known_dungeon => 0 } );
             
-            $c->stash->{had_phantom_dungeon} = 1;
+            	$c->stash->{had_phantom_dungeon} = 1;
+        	}
+        	elsif ($mapped_sector->location->dungeon) {
+        		# They've found a dungeon
+        		$mapped_sector->known_dungeon( $mapped_sector->location->dungeon->level );
+        		$mapped_sector->update;
+        	}
         } 
 
         my $creature_group = $c->forward( '/combat/check_for_attack', [$new_land] );

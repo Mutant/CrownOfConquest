@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Mapped_Sectors');
 
-__PACKAGE__->add_columns(qw/mapped_sector_id storage_type land_id party_id phantom_dungeon/);
+__PACKAGE__->add_columns(qw/mapped_sector_id storage_type land_id party_id known_dungeon/);
 
 __PACKAGE__->add_columns(
 	date_stored => { data_type => 'datetime' }

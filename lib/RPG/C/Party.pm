@@ -11,6 +11,9 @@ use JSON;
 use Carp;
 
 use List::Util qw(shuffle);
+use DateTime;
+use DateTime::Event::Cron::Quartz;
+use DateTime::Format::Duration;
 
 sub main : Local {
     my ( $self, $c ) = @_;
@@ -236,6 +239,22 @@ sub status : Private {
     my ( $self, $c ) = @_;
 
     my $party = $c->stash->{party};
+   
+    # TODO: should use config, but it still uses old style cron strings
+    my $event = DateTime::Event::Cron::Quartz->new('0 5 4 * * ?');
+   
+    my $dt = DateTime->now();
+    $dt->set_time_zone('local');
+
+    my $next_date = $event->get_next_valid_time_after($dt);
+    
+    my $dur = $next_date->subtract_datetime($dt);   
+
+	my $d = DateTime::Format::Duration->new(
+    	pattern => '%H hours, %M minutes'
+	);
+	
+	my $time_to_next_day = $d->format_duration_from_deltas($d->normalise($dur));
 
     $c->forward(
         'RPG::V::TT',
@@ -246,6 +265,7 @@ sub status : Private {
                     party      => $party,
                     location   => $c->stash->{party_location},
                     day_number => $c->stash->{today}->day_number,
+                    time_to_next_day => $time_to_next_day,
                 },
                 return_output => 1,
             }

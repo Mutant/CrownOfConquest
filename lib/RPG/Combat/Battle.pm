@@ -62,7 +62,7 @@ sub execute_round {
 
     my @combatants = $self->combatants;
 
-    # Get list of combatants, modified for changes in attack frequency, and radomised in order
+    # Get list of combatants, modified for changes in attack frequency, and randomised in order
     @combatants = $self->get_combatant_list(@combatants);
 
     my @combat_messages;
@@ -73,6 +73,7 @@ sub execute_round {
         my $action_result;
         if ( $combatant->is_character ) {
             $action_result = $self->character_action($combatant);
+            $self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
         }
         else {
             $action_result = $self->creature_action($combatant);
@@ -80,9 +81,17 @@ sub execute_round {
 
         if ($action_result) {
             push @combat_messages, $action_result;
+                                    
+			$self->combat_log->record_damage( $self->opponent_number_of_being($action_result->attacker), $action_result->damage );
+
+        	if ( $action_result->defender_killed ) {
+        		$self->combat_log->record_death( 
+        			$self->opponent_number_of_being($action_result->defender)
+        		);
+        	}            
             
             if ($action_result->defender_killed) {
-                my $type = $action_result->defender->is_character ? 'character' : 'creature';
+            	my $type = $action_result->defender->is_character ? 'character' : 'creature';                
                 push @{$self->session->{killed}{$type}}, $action_result->defender->id;
             }
     
@@ -191,7 +200,7 @@ sub character_action {
 
     if ( $character->last_combat_action eq 'Attack' ) {
 
-        # If they' ve selected a target, make sure it's still alive
+        # If they've selected a target, make sure it's still alive
         my $targetted_opponent = $character->last_combat_param1;
 
         if ( $targetted_opponent && $opponents{$targetted_opponent} && !$opponents{$targetted_opponent}->is_dead ) {
@@ -208,7 +217,6 @@ sub character_action {
             }
 
             unless ($opponent) {
-
                 # No living opponent found, something weird has happened
                 croak "Couldn't find an opponent to attack!\n";
             }
@@ -221,8 +229,7 @@ sub character_action {
         if (ref $damage) {
             %action_params = %$damage;
         }
-        else {
-            $self->session->{damage_done}{ $character->id } = $damage;
+        else {            
             $action_params{damage} = $damage;
         }
 
@@ -369,15 +376,8 @@ sub attack {
 
         $defender->hit($damage);
 
-        # Record damage in combat log
-        my $damage_col = 'total_opponent_' . $self->opponent_number_of_being($attacker) . '_damage';
-        $self->combat_log->set_column( $damage_col, ( $self->combat_log->get_column($damage_col) || 0 ) + $damage );
-
         if ( $defender->is_dead ) {
-
-            my $death_col = 'opponent_' . $self->opponent_number_of_being($defender) . '_deaths';
-            $self->combat_log->set_column( $death_col, ( $self->combat_log->get_column($death_col) || 0 ) + 1 );
-
+			# TODO: move to schema class?
             if ( $defender->is_character ) {
                 my $attacker_type = $attacker->is_character ? $attacker->class->class_name : $attacker->type->creature_type;
 
@@ -552,7 +552,7 @@ sub distribute_xp {
     my ( $self, $xp, $char_ids ) = @_;
 
     my %awarded_xp;
-	$xp //= 0;
+	$xp //= 0; #/
     # Everyone gets 10% to start with
     my $min_xp = int $xp * 0.10;
     @awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;

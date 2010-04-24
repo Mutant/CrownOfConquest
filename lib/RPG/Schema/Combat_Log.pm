@@ -3,6 +3,8 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Carp;
+
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Combat_Log');
 
@@ -162,6 +164,23 @@ sub location {
         
         return "a level " . $dungeon->level . " dungeon at " . $dungeon->location->x . ", " . $dungeon->location->y;
     }   
+}
+
+sub record_damage {
+	my $self = shift;
+	my $opp_number = shift // croak "Opp number not supplied"; #/
+	my $damage = shift // croak "Damage not supplied"; #/
+	
+	my $damage_col = 'total_opponent_' . $opp_number . '_damage';
+    $self->set_column( $damage_col, ( $self->get_column($damage_col) || 0 ) + $damage );
+}
+
+sub record_death {
+	my $self = shift;
+	my $opp_number = shift // croak "Opp number not supplied"; #/
+	
+	my $damage_col = 'opponent_' . $opp_number . '_deaths';
+    $self->set_column( $damage_col, ( $self->get_column($damage_col) || 0 ) + 1 );
 }
 
 1;

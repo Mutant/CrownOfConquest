@@ -213,10 +213,78 @@ sub test_character_action_cast_spell_on_opponent : Tests(2) {
     is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
 }
 
+sub test_character_action_cast_spell_on_opponent_who_is_killed : Tests(4) {
+    my $self = shift;
+
+    # GIVEN
+    $self->mock_dice;
+    $self->clear_dice_data;
+    
+    $self->{roll_result} = 6;
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    $character->party_id( $party->id );
+    $character->last_combat_action('Cast');
+
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Energy Beam', } );
+
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );
+
+    $character->last_combat_param1( $spell->id );
+
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+
+    my $creature = ( $cg->creatures )[0];
+    $creature->hit_points_current(6);
+    $creature->update;
+
+    $character->last_combat_param2( $creature->id );
+    $character->update;
+
+    $self->{config} = {
+        creature_defence_base           => 5,
+        create_defence_factor_increment => 5,
+        creature_attack_base            => 5,
+        create_attack_factor_increment  => 5,
+    };
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        log            => $self->{mock_logger},
+    );
+
+    # WHEN
+    my $results = $battle->character_action($character);
+
+    # THEN
+    isa_ok( $results, 'RPG::Combat::SpellActionResult', "Spell Results returned" );
+    is($results->defender_killed, 1, "Defender marked as killed");
+    is($results->damage, 6, "Damage recorded");
+    is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
+    
+    $self->{dice}->unfake_module();
+}
+
 sub test_character_action_cast_spell_on_party_member : Tests(3) {
     my $self = shift;
 
     # GIVEN
+    $self->mock_dice;
+    $self->clear_dice_data;
+    
+    $self->{roll_result} = 6;
+    
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
@@ -270,6 +338,8 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
     is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
     $target->discard_changes;
     ok( $target->hit_points > 5, "Hit points have increased" );
+    
+    $self->{dice}->unfake_module();
 }
 
 sub test_creature_action_basic : Tests(9) {
@@ -615,8 +685,7 @@ sub test_build_character_weapons : Tests(3) {
     is( $battle->character_weapons->{ $character->id }{ammunition}, undef,     "No ammo" );
 
 }
-
-sub test_execute_round_creature_killed : Tests(4) {
+sub test_execute_round_creature_killed : Tests(9) {
     my $self = shift;
 
     # GIVEN
@@ -649,7 +718,7 @@ sub test_execute_round_creature_killed : Tests(4) {
     $battle->set_always( 'check_for_flee', undef );
     $battle->set_true('process_effects');
 
-    my $action_result = RPG::Combat::ActionResult->new(
+    my $char_action_result = RPG::Combat::ActionResult->new(
         {
             attacker        => $char,
             defender        => $cret,
@@ -657,7 +726,19 @@ sub test_execute_round_creature_killed : Tests(4) {
             damage          => 1,
         }
     );
-    $battle->set_always( 'creature_action', $action_result );
+    $battle->set_always( 'character_action', $char_action_result );
+    
+    my $cret_action_result = RPG::Combat::ActionResult->new(
+        {
+            attacker        => $cret,
+            defender        => $char,
+            defender_killed => 0,
+            damage          => 2,
+        }
+    );
+    $battle->set_always( 'creature_action', $cret_action_result );    
+    
+    $battle->mock('get_combatant_list', sub { ($cret, $char) });
 
     # WHEN
     my $result = $battle->execute_round();
@@ -667,9 +748,57 @@ sub test_execute_round_creature_killed : Tests(4) {
     is( scalar @{ $result->{messages} },                  2,         "2 Combat messages returned" );
     is( scalar @{ $battle->session->{killed}{creature} }, 1,         "One creature recorded as killed" );
     is( $battle->session->{killed}{creature}[0],          $cret->id, "Correct creature recorded as killed" );
+    
+    is( $battle->session->{damage_done}{ $char->id }, 1, "Damage recorded"); 
+    is( $battle->combat_log->opponent_2_deaths, 1, "Creature death recorded in combat log");
+    is( $battle->combat_log->total_opponent_1_damage, 1, "Char Damage recorded in combat log");
+    
+    is( $battle->combat_log->opponent_1_deaths, undef, "No char deaths recorded in combat log");
+    is( $battle->combat_log->total_opponent_2_damage, 2, "Cret Damage recorded in combat log");    
 }
 
 sub test_execute_round_creature_group_wiped_out : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    $cg = Test::MockObject::Extends->new($cg);
+    $cg->set_always( 'number_alive', 0 );
+
+    $self->{config} = {
+        attack_dice_roll                      => 10,
+        defence_dice_roll                     => 10,
+        creature_defence_base                 => 5,
+        create_defence_factor_increment       => 5,
+        creature_attack_base                  => 5,
+        create_attack_factor_increment        => 5,
+        maximum_turns                         => 300,
+        xp_multiplier                         => 10,
+        chance_to_find_item                   => 0,
+        prevalence_per_creature_level_to_find => 1,
+        nearby_town_range                     => 5
+    };
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_true('process_effects');
+
+    # WHEN
+    my $result = $battle->execute_round();
+
+    # THEN
+    is( $result->{combat_complete}, 1, "Combat ended" );
+}
+
+sub test_execute_round_spell_killed_creature : Tests(1) {
     my $self = shift;
 
     # GIVEN

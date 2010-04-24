@@ -418,7 +418,9 @@ function unblockDoor(action) {
 	Character to attempt action:
     <select id="character-id">
     	[% FOREACH character IN party.characters %]
-			<option value="[% character.id %]">[% character.name %]</option>
+    		[% UNLESS character.is_dead %]
+				<option value="[% character.id %]">[% character.name %]</option>
+			[% END %]
 		[% END %]
     </select>
 	<br><br>

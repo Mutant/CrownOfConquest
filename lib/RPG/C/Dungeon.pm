@@ -626,6 +626,8 @@ sub unblock_door : Local {
     my $success = 0;
 
     my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
+    
+    croak "Character is dead" if $character->is_dead;
 
     # Only attempt to unblock door if action matches door's type
     if ( $action_for_door{ $c->req->param('action') } eq $door->type ) {

@@ -247,6 +247,7 @@ sub status : Private {
     $dt->set_time_zone('local');
 
     my $next_date = $event->get_next_valid_time_after($dt);
+    $next_date->add( minutes => 10 ); # Give it about 10 mins for the script to run.
     
     my $dur = $next_date->subtract_datetime($dt);   
 

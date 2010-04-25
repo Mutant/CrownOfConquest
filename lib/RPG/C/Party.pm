@@ -68,6 +68,12 @@ sub sector_menu : Private {
     if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
         @adjacent_towns = $c->stash->{party_location}->get_adjacent_towns;
     }
+    
+    my $can_build_garrison = 0;
+    my $garrison = $c->stash->{party_location}->garrison;
+    if ( $c->stash->{party}->level >= $c->config->{minimum_garrison_level} ) {
+        $can_build_garrison = $c->stash->{party_location}->garrison_allowed;
+    }
 
     $c->forward(
         'RPG::V::TT',
@@ -75,6 +81,7 @@ sub sector_menu : Private {
             {
                 template => 'party/sector_menu.html',
                 params   => {
+                	party                  => $c->stash->{party},
                     creature_group_display => $creature_group_display,
                     creature_group         => $creature_group,
                     confirm_attack         => $confirm_attack || 0,
@@ -87,6 +94,8 @@ sub sector_menu : Private {
                     dungeon                => $dungeon,
                     adjacent_towns         => \@adjacent_towns,
                     had_phantom_dungeon    => $c->stash->{had_phantom_dungeon},
+                    garrison               => $garrison,
+                    can_build_garrison     => $can_build_garrison,
                 },
                 return_output => 1,
             }
@@ -161,7 +170,11 @@ sub list : Private {
     #  to be re-read.
     # TODO: check if an update has occured, and only re-read if it has
     my @characters = $c->model('DBIC::Character')->search(
-        { 'party_id' => $c->stash->{party}->id, },
+        { 
+        	'party_id' => $c->stash->{party}->id,
+        	'garrison_id' => undef, 
+        	
+        },
         {
             prefetch => [ 'class', 'race', { 'character_effects' => 'effect' } ],
             order_by => 'party_order',

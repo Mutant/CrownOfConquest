@@ -1,0 +1,79 @@
+[% INCLUDE top.html %]
+
+<script>
+function addToGarrison() {
+	moveOption('in-party-select', 'in-garrison-select');
+}
+
+function removeFromGarrison() {
+	moveOption('in-garrison-select', 'in-party-select');
+}
+
+function moveOption(sourceId, destId) {
+	var source = dojo.byId(sourceId);
+	var dest = dojo.byId(destId);
+	
+	var selected = new Array();
+	for (var i = 0; i < source.options.length; i++) {
+		if (source.options[ i ].selected) {
+			selected.push(source.options[ i ]);
+		}
+	}
+	
+	for (var i = 0; i < selected.length; i++) {
+		option = selected[ i ];
+		try {
+			dest.add(option, null);
+		}
+		catch(ex) {
+			dest.add(option); // IE == fail
+		}		
+	}	
+}
+
+function selectAll() {
+	var select = dojo.byId('in-party-select');
+	for (var i = 0; i < select.options.length; i++) {
+		select.options[ i ].selected = true;
+	}
+
+	select = dojo.byId('in-garrison-select');
+	for (var i = 0; i < select.options.length; i++) {
+		select.options[ i ].selected = true;
+	}
+}
+</script>
+
+<h3>Create a Garrison</h3>
+
+<form method="POST" action="[% base %]/garrison/create" id="garrison-form" onSubmit="selectAll()">
+
+<table class="main">
+	<tr><td>
+	<b>In Party</b><br>
+	<select multiple="multiple" name="in_party" id="in-party-select" style="height: 200px; width: 250px">
+		[% FOREACH character IN characters %]
+			[% UNLESS character.is_dead %]
+				<option value="[% character.id %]">[% character.name %] ([% character.class.class_name %], lvl[% character.level %])</option>
+			[% END %]
+		[% END %] 
+	</select>
+</td><td>
+	<button onClick="addToGarrison(); return false">>></button><br>
+	<button onClick="removeFromGarrison(); return false"><<</button>
+</td><td>
+	<b>In Garrison</b><br>
+	<select multiple="multiple" name="in_garrison" id="in-garrison-select" style="height: 200px; width: 250px">
+		 [% FOREACH character IN garrison.characters %]
+		 	<option value="[% character.id %]">[% character.name %] ([% character.class.class_name %], lvl[% character.level %])</option>
+		 [% END %]		 
+	</select>
+
+</td></tr>
+</table>
+
+<input type="submit" value="[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison" name="submit">
+
+</form>
+
+[% INCLUDE bottom.html %]

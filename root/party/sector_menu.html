@@ -4,6 +4,14 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
 [% IF dungeon %]There is an entrance to a dungeon here. (Level [% dungeon.level %])<br><br>[% END %]
 [% IF had_phantom_dungeon %]The dungeon entrance you expected to see here has mysteriously disappeared.<br><br>[% END %]
+[% IF garrison %]
+	[% IF garrison.party_id == party.id %]
+		You have a garrison here.
+	[% ELSE %]
+		There is a garrison here owned by the party "[% garrison.party.party_name %]".
+	[% END %]
+	<br><br>
+[% END %]
 
 [% IF graves.0 %]
 	[% INCLUDE graves/main.html %]
@@ -20,6 +28,11 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 		[% FOREACH town IN adjacent_towns %]
 			| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
 		[% END %]
+	[% END %]
+	[% IF can_build_garrison %]
+		| <a href="[% base %]/garrison/create">Create a Garrison</a>
+	[% ELSIF garrison.party_id == party.id %]
+		| <a href="[% base %]/garrison/create">Manage Garrison</a>
 	[% END %]
 <br>
 

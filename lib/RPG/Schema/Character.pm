@@ -20,7 +20,7 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender/
+        last_combat_param1 last_combat_param2 gender garrison_id/
 );
 
 __PACKAGE__->add_columns( xp => { accessor => '_xp' } );

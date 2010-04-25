@@ -78,6 +78,8 @@ __PACKAGE__->might_have( 'dungeon', 'RPG::Schema::Dungeon', { 'foreign.land_id' 
 
 __PACKAGE__->might_have( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => 'self.land_id' } );
 
+__PACKAGE__->might_have( 'garrison', 'RPG::Schema::Garrison', { 'foreign.land_id' => 'self.land_id' } );
+
 __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
 
 sub next_to {
@@ -263,6 +265,29 @@ sub _road_connects_sectors {
     }  
     
     return $connects;
+}
+
+# Returns true if this sector is allowed to have a garrison
+sub garrison_allowed {
+	my $self = shift;
+	
+	# Not allowed if an orb is here
+	return 0 if $self->orb;
+	
+	# Not allowed if a town is here
+	return 0 if $self->town;
+	
+	# Not allowed if CG is here
+	return 0 if $self->creature_group;
+	
+	# Not allowed if another garrison is here
+	return 0 if $self->garrison;
+	
+	# Not allowed if adjacent to a town
+	return 0 if $self->get_adjacent_towns;
+	
+	# Ok, it's allowed
+	return 1;
 }
 
 1;

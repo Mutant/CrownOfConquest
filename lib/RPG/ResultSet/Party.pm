@@ -13,6 +13,7 @@ sub get_by_player_id {
         {
             player_id => $player_id,
             defunct   => undef,
+            'characters.garrison_id' => undef,
         },
         {
             prefetch => [

@@ -30,6 +30,9 @@ sub process {
         my $output = $c->res->body;
 
         my %fill_params = (%{$c->req->params}, %{$params->{params}});
+        
+        %fill_params = (%fill_params, %{$params->{fill_in_form}})
+        	if ref $params->{fill_in_form} eq 'HASH';
 
         my $filled_output = $fif->fill(
             scalarref => \$output,

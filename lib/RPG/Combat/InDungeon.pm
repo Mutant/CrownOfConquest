@@ -9,8 +9,10 @@ has 'location' => ( is => 'ro', isa => 'RPG::Schema::Dungeon_Grid', required => 
 
 sub get_sector_to_flee_to {
     my $self = shift;
-    my $exclude_creatures //= 0;
-
+    my $fleeing_group = shift;
+    
+    my $exclude_creatures = $fleeing_group->group_type eq 'creature' ? 1 : 0;
+    
     my @sectors_to_flee_to;
     my $range     = 3;
     my $max_range = 10;

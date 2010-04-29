@@ -4,12 +4,12 @@ use Moose::Role;
 
 use Carp;
 
-requires qw/members number_alive after_land_move/;
+requires qw/members number_alive after_land_move group_type current_location/;
 
 sub move_to {
     my $self   = shift;
     my $sector = shift;
-
+    
     return unless $sector;
 
     if ( $sector->isa('RPG::Schema::Land') ) {

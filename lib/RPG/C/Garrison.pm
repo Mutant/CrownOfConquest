@@ -42,6 +42,10 @@ sub create : Local {
 					$message = 'No characters are left in the garrison - garrison removed'; 
 				}
 				else {
+					$garrison->party_attack_mode($c->req->param('party_attack_mode'));
+					$garrison->creature_attack_mode($c->req->param('creature_attack_mode'));
+					$garrison->flee_threshold($c->req->param('flee_threshold'));
+					$garrison->update;
 					$message = 'Garrison updated';
 				}
 			}
@@ -57,6 +61,9 @@ sub create : Local {
 					{
 						land_id => $c->stash->{party_location}->land_id,
 						party_id => $c->stash->{party}->id,
+						party_attack_mode => $c->req->param('party_attack_mode'),
+						creature_attack_mode => $c->req->param('creature_attack_mode'),
+						flee_threshold => $c->req->param('flee_threshold'),
 					}
 				);
 				
@@ -104,7 +111,9 @@ sub create : Local {
             	characters => \@characters,
             	garrison => $garrison,
             	message => $message,
+            	flee_threshold => 70, # default
             },
+            fill_in_form => $garrison ? {$garrison->get_columns} : 1,
         }]
     );			
 }

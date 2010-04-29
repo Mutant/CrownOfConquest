@@ -470,6 +470,8 @@ sub check_character_attack {
     return;
 }
 
+# Party (or garrison) attempts to flee
+# Param passed is party's opponent number 
 sub party_flee {
     my $self       = shift;
     my $opp_number = shift;
@@ -483,19 +485,10 @@ sub party_flee {
     $self->combat_log->set_column( $flee_attempts_column, ( $self->combat_log->get_column($flee_attempts_column) || 0 ) + 1 );
 
     my $flee_successful = $self->roll_flee_attempt( $party, $opponent, $opp_number );
-
     if ($flee_successful) {
-        my $sector = $self->get_sector_to_flee_to;
+        my $sector = $self->get_sector_to_flee_to($party);
 
         $party->move_to($sector);
-        $party->end_combat();
-        $party->update;
-        
-        # TODO: probably doing this more than once
-        if ($opponent->can('end_combat')) {
-            $opponent->end_combat();
-            $opponent->update;
-        }
 
         $self->combat_log->outcome( 'opp' . $opp_number . '_fled' );
         $self->combat_log->encounter_ended( DateTime->now() );
@@ -612,8 +605,9 @@ sub _build_combat_log {
 
     my ( $opp1, $opp2 ) = $self->opponents;
 
-    my $opp1_type = $opp1->isa('RPG::Schema::Party') ? 'party' : 'creature_group';
-    my $opp2_type = $opp2->isa('RPG::Schema::Party') ? 'party' : 'creature_group';
+	# TODO: currently garrisons are called 'party' as far as the combat log is concerned
+    my $opp1_type = $opp1->group_type eq 'creature' ? 'creature_group' : 'party';
+    my $opp2_type = $opp2->group_type eq 'creature' ? 'creature_group' : 'party';
 
     my $combat_log = $self->schema->resultset('Combat_Log')->find(
         {

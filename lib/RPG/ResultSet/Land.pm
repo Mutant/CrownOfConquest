@@ -36,7 +36,7 @@ sub search_for_adjacent_sectors {
     my $y                     = shift;
     my $search_range          = shift;
     my $max_range             = shift;
-    my $exclude_cgs_and_towns = shift // 0;
+    my $exclude_cgs_and_towns = shift // 0; #/
 
     my %params;
     my %attrs;

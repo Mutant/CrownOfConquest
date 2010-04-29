@@ -73,7 +73,7 @@ sub test_get_sector_to_flee_to : Tests(1) {
     );
     
     # WHEN
-    my $sector = $battle->get_sector_to_flee_to(1);
+    my $sector = $battle->get_sector_to_flee_to($cg);
         
     # THEN
     is($sector->id, $dungeon_grid2->id, "Creatures to flee to second dungeon grid");

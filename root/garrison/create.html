@@ -44,9 +44,14 @@ function selectAll() {
 }
 </script>
 
-<h3>Create a Garrison</h3>
+<h3>[% IF garrison %]Manage[% ELSE %]Create a[% END %] Garrison</h3>
+
+<div style="min-height: 300px">
 
 <form method="POST" action="[% base %]/garrison/create" id="garrison-form" onSubmit="selectAll()">
+
+<fieldset style="float: left">
+<legend>Assign Characters</legend>
 
 <table class="main">
 	<tr><td>
@@ -72,7 +77,55 @@ function selectAll() {
 </td></tr>
 </table>
 
-<input type="submit" value="[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison" name="submit">
+</fieldset>
+
+<fieldset>
+<legend>Set Orders</legend>
+<table class="main">
+	<tr>
+		<td>Orders against creatures:</td>
+		<td>
+			<select name="creature_attack_mode">
+				<option>Defensive Only</option>
+				<option>Attack Weaker Opponents</option>
+				<option>Attack Similar Opponents</option>
+				<option>Attack Stronger Opponents</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td>Orders against parties:</td>
+		<td>
+			<select name="party_attack_mode">
+				<option>Defensive Only</option>
+				<option>Attack Weaker Opponents</option>
+				<option>Attack Similar Opponents</option>
+				<option>Attack Stronger Opponents</option>
+			</select>
+		</td>
+	</tr>			
+	<tr id="flee-threshold">
+		<td>Flee Threshold:</td>
+		<td><input type="text" name="flee_threshold" size="3">
+		<div dojoType="dijit.Tooltip"
+           		connectId="flee-threshold"
+           		id="flee-threshold-tooltip"
+				style="display: none">
+			Percentage of hit points remaining before characters in this garrison will attempt to flee from combat.<br>
+			If a garrison flees, they will move to an adjacent sector and form a new garrison. Any items stashed at the<br>
+			original garrison will be lost.			 
+		</div>		
+	</tr>
+</table>
+
+</fieldset>
+<br>
+<div align="center">
+	<input type="submit" value="[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison" name="submit">
+	<button onClick="document.location='[% base %]'; return false;">[% IF garrison %]Done[% ELSE %]Cancel[% END %]</button>
+</div>
+
+</div>
 
 </form>
 

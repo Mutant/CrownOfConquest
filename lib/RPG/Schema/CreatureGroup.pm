@@ -32,8 +32,18 @@ sub members {
     return $self->creatures;
 }
 
+sub group_type {
+	return 'creature_group';
+}
+
 sub after_land_move {
 
+}
+
+sub current_location {
+	my $self = shift;
+	
+	return $self->location;
 }
 
 sub initiate_combat {

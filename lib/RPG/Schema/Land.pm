@@ -277,9 +277,6 @@ sub garrison_allowed {
 	# Not allowed if a town is here
 	return 0 if $self->town;
 	
-	# Not allowed if CG is here
-	return 0 if $self->creature_group;
-	
 	# Not allowed if another garrison is here
 	return 0 if $self->garrison;
 	

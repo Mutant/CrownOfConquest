@@ -4,12 +4,9 @@ use Moose;
 
 extends 'DBIx::Class';
 
-with 'RPG::Schema::Role::BeingGroup';
-
 use Data::Dumper;
 use List::Util qw(sum);
 use Math::Round qw(round);
-use POSIX;
 
 use RPG::Exception;
 
@@ -178,10 +175,19 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
 __PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', 'dungeon_grid_id' );
 
+with qw/
+	RPG::Schema::Role::BeingGroup
+	RPG::Schema::Role::CharacterGroup
+/;
+
 sub members {
     my $self = shift;
 
     return $self->characters;
+}
+
+sub group_type {
+	return 'party';	
 }
 
 sub movement_factor {
@@ -194,23 +200,17 @@ sub movement_factor {
     return $base_mf;
 }
 
-sub level {
-    my $self = shift;
-
-    my (@characters) = $self->characters;
-
-    return int _median( map { $_->level } @characters );
-}
-
-sub _median {
-    sum( ( sort { $a <=> $b } @_ )[ int( $#_ / 2 ), ceil( $#_ / 2 ) ] ) / 2;
-}
-
 sub after_land_move {
     my $self = shift;
     my $land = shift;
 
     $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
+}
+
+sub current_location {
+	my $self = shift;
+	
+	return $self->location;
 }
 
 # Record turns used whenever number of turns are decreased
@@ -421,24 +421,6 @@ sub is_online {
     my $self = shift;
 
     return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;
-}
-
-sub is_over_flee_threshold {
-    my $self = shift;
-
-    my $rec = $self->find_related(
-        'characters',
-        {},
-        {
-            select => [              { sum => 'max_hit_points' }, { sum => 'hit_points' }, ],
-            'as'   => [ 'total_hps', 'current_hps' ],
-        }
-    );
-
-    my $percentage = int( ( $rec->get_column('current_hps') / $rec->get_column('total_hps') ) * 100 );
-
-    return $percentage < $self->flee_threshold ? 1 : 0;
-
 }
 
 sub quests_in_progress {

@@ -16,6 +16,15 @@ with qw/
 	RPG::Combat::InWilderness
 /;
 
+sub BUILD {
+	my $self = shift;
+	
+	# We have to do this while non-garrison modules do it in the controller (etc).
+	#  Maybe better here?
+	$self->garrison->in_combat_with($self->creature_group->id);
+	$self->garrison->update;	
+}
+
 sub character_group {
 	my $self = shift;
 	
@@ -59,10 +68,12 @@ sub finish {
 
     # Delete garrison if they lost
     if ($losers->group_type eq 'garrison') {
-    	$losers->delete;	
+    	$losers->delete;
     }
     else {
     	$self->creatures_lost;
+    	
+    	$self->garrison->party->gold( $self->party->gold + $self->result->{gold} );
     }
 }
 

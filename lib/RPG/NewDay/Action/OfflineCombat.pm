@@ -4,6 +4,7 @@ use Moose;
 extends 'RPG::NewDay::Base';
 
 use RPG::Combat::CreatureWildernessBattle;
+use RPG::Combat::GarrisonCreatureBattle;
 
 use List::Util qw(shuffle);
 
@@ -48,13 +49,9 @@ sub initiate_battles {
     my $self = shift;
     my $c    = $self->context;    
     
-    # Get all CGs in a sector with one or more active parties
+    # Get all CGs in a sector with one or more active parties or garrisons
     my @cgs = $c->schema->resultset('CreatureGroup')->search(
-        { 
-            'parties.party_id' => { '!=', undef },
-            'parties.defunct' => undef,
-            'parties.dungeon_grid_id' => undef, 
-        },
+        {},
         {
             prefetch => [ { 'creatures' => 'type' }, { 'location' => 'parties' }, ],
         },
@@ -63,12 +60,13 @@ sub initiate_battles {
 	$c->logger->info(scalar @cgs . " CGs in sectors with active parties");
 	
 	my $combat_count = 0;
+	my $garrison_combat_count = 0;
       
     CG: foreach my $cg (@cgs) {
         my @parties = $cg->location->parties;
         
         foreach my $party (shuffle @parties) {
-            next if $party->is_online || $party->in_combat;
+            next if ! $party || $party->is_online || $party->in_combat || $party->dungeon_grid_id || $party->defunct;
             
             my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party );
             
@@ -81,10 +79,21 @@ sub initiate_battles {
                 next CG;
             }   
         }
+        
+        if (my $garrison = $cg->location->garrison) {
+       		next if $garrison->in_combat;
+      		
+       		if (Games::Dice::Advanced->roll('1d100') <= $c->config->{garrison_combat_chance}) {
+       			$self->execute_garrison_battle($garrison, $cg);	
+       			$garrison_combat_count++;
+       		}
+       			
+        }
     }
     
     
     $c->logger->info($combat_count . " battles executed");
+    $c->logger->info($garrison_combat_count . " garrison battles executed");
 }
 
 sub execute_offline_battle {
@@ -112,5 +121,28 @@ sub execute_offline_battle {
         last if $result->{combat_complete};
     }
 }
+
+sub execute_garrison_battle {
+    my $self     = shift;
+    my $garrison = shift;
+    my $cg       = shift;
+
+    my $c      = $self->context;
+    my $battle = RPG::Combat::GarrisonCreatureBattle->new(
+        creature_group      => $cg,
+        garrison            => $garrison,
+        schema              => $c->schema,
+        config              => $c->config,
+        creatures_initiated => 1,
+        log                 => $c->logger,
+    );
+
+    while (1) {
+    	my $result = $battle->execute_round;
+
+        last if $result->{combat_complete};
+    }
+}
+
 
 1;

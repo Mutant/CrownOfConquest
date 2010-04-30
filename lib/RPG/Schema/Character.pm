@@ -71,7 +71,7 @@ sub name {
 sub group_id {
     my $self = shift;
 
-    return $self->party_id;
+    return $self->garrison_id || $self->party_id;
 }
 
 sub encumbrance {

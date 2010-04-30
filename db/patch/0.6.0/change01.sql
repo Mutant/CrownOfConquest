@@ -5,6 +5,7 @@ CREATE  TABLE IF NOT EXISTS `Garrison` (
   `creature_attack_mode` VARCHAR(45) NULL ,
   `party_attack_mode` VARCHAR(45) NULL ,
   `flee_threshold` INT DEFAULT 70,
+  `in_combat_with` INT NULL,
   PRIMARY KEY (`garrison_id`) ,
   INDEX `fk_Garrison_Land1` (`land_id` ASC) ,
   INDEX `fk_Garrison_Party1` (`party_id` ASC) ,

@@ -33,7 +33,7 @@ sub teardown : Tests(teardown) {
 	$self->{dice}->unfake_module();	
 }
 
-sub test_new : Tests(1) {
+sub test_new : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
@@ -51,6 +51,8 @@ sub test_new : Tests(1) {
     
     # THEN
     isa_ok($battle, 'RPG::Combat::GarrisonCreatureBattle', "Object instatiated correctly");
+    $garrison->discard_changes;
+    is($garrison->in_combat_with, $cg->id, "Garrison now in combat with CG");
 }
 
 sub test_check_for_flee : Tests(3) {
@@ -95,6 +97,76 @@ sub test_check_for_flee : Tests(3) {
     isnt($garrison->land_id, $land[4]->id, "No longer in original location");
     is($battle->result->{party_fled}, 1, "Correct value set in battle result"); 	
 		
+}
+
+sub test_finish_garrison_lost : Test(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	my $battle = RPG::Combat::GarrisonCreatureBattle->new(
+        schema             => $self->{schema},
+        garrison           => $garrison,
+        creature_group     => $cg,
+        log                => $self->{mock_logger},
+        config			   => {nearby_town_range => 1},
+    );	
+	
+	# WHEN
+	$battle->finish($garrison);
+	
+	# THEN
+	$garrison->discard_changes;
+	is($garrison->in_storage, 0, "Garrison deleted");
+}
+
+sub test_execute_round : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	$character->garrison_id($garrison->id);
+	$character->update;
+	
+    $self->{config} = {
+        attack_dice_roll                      => 10,
+        defence_dice_roll                     => 10,
+        creature_defence_base                 => 5,
+        create_defence_factor_increment       => 5,
+        creature_attack_base                  => 5,
+        create_attack_factor_increment        => 5,
+        maximum_turns                         => 300,
+        xp_multiplier                         => 10,
+        chance_to_find_item                   => 0,
+        prevalence_per_creature_level_to_find => 1,
+        nearby_town_range                     => 5,
+        front_rank_attack_chance              => 5,
+    };
+
+    my $battle = RPG::Combat::GarrisonCreatureBattle->new(
+        schema         => $self->{schema},
+        garrison       => $garrison,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_true('process_effects');
+
+    # WHEN
+    my $result = $battle->execute_round();
+
+    # THEN
+    is( $result->{combat_complete}, undef, "Combat hasn't ended" );
 }
 
 1;

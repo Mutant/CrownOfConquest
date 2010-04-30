@@ -100,6 +100,10 @@ sub creature_flee {
                 $self->combat_log->encounter_ended( DateTime->now() );
 
                 $self->result->{creatures_fled} = 1;
+                
+                $self->character_group->in_combat_with(undef);
+        		$self->character_group->update;
+                
                 return 1;
             }
         }
@@ -115,16 +119,15 @@ sub creatures_lost {
 
     my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
     $self->result->{gold} = $gold;
-
-    $self->party->gold( $self->party->gold + $gold );
+    
     $self->combat_log->gold_found($gold);
 
     $self->_award_xp_for_creatures_killed();
 
-    $self->party->in_combat_with(undef);
-    $self->party->update;
+    $self->character_group->in_combat_with(undef);
+    $self->character_group->update;
 
-    $self->check_for_item_found( [$self->party->characters], $avg_creature_level );
+    $self->check_for_item_found( [$self->character_group->characters], $avg_creature_level );
 
     # Don't delete creature group, since it's needed by news
     $self->creature_group->land_id(undef);

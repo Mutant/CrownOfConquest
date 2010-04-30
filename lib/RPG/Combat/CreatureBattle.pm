@@ -53,13 +53,7 @@ sub check_for_flee {
     
     return unless $self->creatures_can_flee;
 
-    if ($self->creature_flee) {
-		$self->party->in_combat_with(undef);
-        $self->party->update;
-        
-        return 1;
-    }
-    
+    return $self->creature_flee;    
 }
 
 sub finish {
@@ -70,6 +64,9 @@ sub finish {
     return if $losers->group_type eq 'party';
 
     $self->creatures_lost;
+    
+    $self->party->gold( $self->party->gold + $self->result->{gold} );
+    $self->party->update;
 }
 
 1;

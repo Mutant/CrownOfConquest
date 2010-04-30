@@ -14,6 +14,7 @@ use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Garrison;
 
 use DateTime;
 
@@ -102,6 +103,44 @@ sub test_initiate_battles : Tests(5) {
     is($args->[1]->id, $party->id, "Correct party passed");
     isa_ok($args->[2], 'RPG::Schema::CreatureGroup', "CG passed to offline battle");
     is($args->[2]->id, $cg->id, "Correct cg passed");    
+    
+    $self->{dice}->unfake_module();
+}
+
+sub test_initiate_battles_garrison : Tests(5) {
+    my $self = shift;
+        
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $land = $land[0];
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land->id);
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, land_id => $land->id);
+    
+    my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
+    
+    $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
+    $offline_combat_action->set_always('execute_garrison_battle');
+    
+    $self->{config}{garrison_combat_chance} = 35;
+    
+    $self->mock_dice;
+    
+    $self->{roll_result} = 35;
+    
+    # WHEN
+    $offline_combat_action->initiate_battles();
+    
+    # THEN
+    my ($method, $args) = $offline_combat_action->next_call();
+    
+    is($method, 'execute_garrison_battle', "Garrison battle executed");
+    isa_ok($args->[1], 'RPG::Schema::Garrison', "Party passed to offline battle");
+    is($args->[1]->id, $garrison->id, "Correct party passed");
+    isa_ok($args->[2], 'RPG::Schema::CreatureGroup', "CG passed to offline battle");
+    is($args->[2]->id, $cg->id, "Correct cg passed");   
+    
+    $self->{dice}->unfake_module(); 
 }
 
 1;

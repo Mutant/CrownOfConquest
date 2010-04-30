@@ -30,14 +30,8 @@ sub opponent_number_of_being {
     my $being = shift;
 
     my ($opp1) = ( $self->opponents )[0];
-
-    if (
-        $being->group_id == $opp1->id
-        && (   $being->isa('RPG::Schema::Character') && $opp1->isa('RPG::Schema::Party')
-            || $being->isa('RPG::Schema::Creature') && $opp1->isa('RPG::Schema::CreatureGroup') )
-        )
-    {
-
+    
+    if ($being->group_id == $opp1->id ) {
         return 1;
     }
     else {
@@ -605,16 +599,12 @@ sub _build_combat_log {
 
     my ( $opp1, $opp2 ) = $self->opponents;
 
-	# TODO: currently garrisons are called 'party' as far as the combat log is concerned
-    my $opp1_type = $opp1->group_type eq 'creature' ? 'creature_group' : 'party';
-    my $opp2_type = $opp2->group_type eq 'creature' ? 'creature_group' : 'party';
-
     my $combat_log = $self->schema->resultset('Combat_Log')->find(
         {
             opponent_1_id   => $opp1->id,
-            opponent_1_type => $opp1_type,
+            opponent_1_type => $opp1->group_type,
             opponent_2_id   => $opp2->id,
-            opponent_2_type => $opp2_type,
+            opponent_2_type => $opp2->group_type,
             encounter_ended => undef,
         },
     );
@@ -623,9 +613,9 @@ sub _build_combat_log {
         $combat_log = $self->schema->resultset('Combat_Log')->create(
             {
                 opponent_1_id       => $opp1->id,
-                opponent_1_type     => $opp1_type,
+                opponent_1_type     => $opp1->group_type,
                 opponent_2_id       => $opp2->id,
-                opponent_2_type     => $opp2_type,
+                opponent_2_type     => $opp2->group_type,
                 encounter_started   => DateTime->now(),
                 combat_initiated_by => $self->initiated_by,
                 opponent_1_level    => $opp1->level,

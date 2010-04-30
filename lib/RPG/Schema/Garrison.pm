@@ -7,7 +7,7 @@ extends 'DBIx::Class';
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Garrison');
 
-__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold/);
+__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with/);
 
 __PACKAGE__->set_primary_key('garrison_id');
 
@@ -25,6 +25,10 @@ with qw/
 	RPG::Schema::Role::BeingGroup
 	RPG::Schema::Role::CharacterGroup
 /;
+
+sub rank_separator_position {
+	return 0;
+}
 
 sub members {
 	my $self = shift;
@@ -84,4 +88,9 @@ sub find_fleeable_sectors {
     );
 }
 
+sub in_combat {
+	my $self = shift;
+	
+	return $self->in_combat_with ? 1 : 0;	
+}
 1;

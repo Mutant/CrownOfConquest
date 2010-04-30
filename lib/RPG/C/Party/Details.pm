@@ -137,4 +137,22 @@ sub update_email_options : Local {
     $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
 }
 
+sub garrisons : Local {
+	my ($self, $c) = @_;
+	
+	my @garrisons = $c->stash->{party}->garrisons;
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/garrisons.html',
+                params   => {
+                    garrisons => \@garrisons,
+                },
+            }
+        ]
+    );	
+}
+
 1;

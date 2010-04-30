@@ -62,22 +62,63 @@ sub get_recent_logs_for_party {
     );
 }
 
+sub get_logs_count_for_garrison {
+    my $self  = shift;
+    my $garrison = shift;
+    
+    my $rs = $self->search(
+        {
+            $self->_group_type_critiera($garrison, 'garrison'),
+        },
+        {}
+    );
+    
+    return $rs->count;
+}
+
+sub get_recent_logs_for_garrison {
+    my $self  = shift;
+    my $garrison = shift;
+    my $logs_count = shift;
+    
+    return if $logs_count <= 0;
+    
+    return $self->search(
+        {
+            $self->_group_type_critiera($garrison, 'garrison'),
+        },
+        {
+            prefetch => 'day',
+            order_by => 'encounter_ended desc',
+            rows => $logs_count,
+        }
+    );
+}
+
 sub _party_criteria {
     my $self  = shift;
     my $party = shift;
 
+	return $self->_group_type_critiera($party, 'party');
+}
+
+sub _group_type_critiera {
+	my $self = shift;
+	my $group = shift;
+	my $group_type = shift;	
+	
     return (
         -nest => [
             '-and' => {
-                opponent_1_type => 'party',
-                opponent_1_id   => $party->id,
+                opponent_1_type => $group_type,
+                opponent_1_id   => $group->id,
             },
             '-and' => {
-                opponent_2_type => 'party',
-                opponent_2_id   => $party->id,
+                opponent_2_type => $group_type,
+                opponent_2_id   => $group->id,
             }
         ]
-    );
+    );	
 }
 
 1;

@@ -5,6 +5,8 @@ use warnings;
 
 use Carp;
 
+use feature "switch";
+
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Combat_Log');
 
@@ -82,7 +84,10 @@ sub party_opponent_number {
     my $self = shift;
     my $party = shift;
     
-    if ($self->opponent_1_type eq 'party' && $self->opponent_1->id == $party->id) {
+    warn $self->opponent_1;
+    warn $party;
+    
+    if (($self->opponent_1_type eq 'party' || $self->opponent_1_type eq 'garrison') && $self->opponent_1->id == $party->id) {
         return 1;   
     }
     
@@ -95,13 +100,13 @@ sub opponent {
     
     my $id = $self->get_column("opponent_${opp_number}_id");
     
-    if ($self->get_column("opponent_${opp_number}_type") eq 'party') {
-        return $self->_get_party($id);
-    } 
-    else {
-        return $self->_get_cg($id);
+    warn $id;
+    
+    given($self->get_column("opponent_${opp_number}_type")) {
+    	when('party') { return $self->_get_party($id) };
+    	when('creature_group') { return $self->_get_cg($id) };
+    	when('garrison') { return $self->_get_garrison($id) };
     }
-
 }
 
 sub _get_party {
@@ -133,6 +138,23 @@ sub _get_cg {
     $self->{_cg}{$id} = $cg;
 
     return $cg;
+}
+
+sub _get_garrison {
+    my $self = shift;
+    my $id   = shift;
+    
+    warn $id;
+        
+    return $self->{_garrison}{$id} if defined $self->{_garrison}{$id};
+
+    my $garrison = $self->result_source->schema->resultset('Garrison')->find( { garrison_id => $id, }, );
+
+    $self->{_garrison}{$id} = $garrison;
+    
+    warn $garrison;
+
+    return $garrison;
 }
 
 sub location {

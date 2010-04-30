@@ -1,6 +1,12 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
+[%# TODO: refactor so it's not so tied to 'party' %]
+
 <h4>Recent Battles</h4>
+
+[% UNLESS show_location.defined %]
+	[% show_location = 1 %]
+[% END %]
 
 <table class="main">
 [% last_day = 0 %]
@@ -29,8 +35,10 @@
 				party known as [% battle.opponent(opp_num).name %]
 			[% END %]
 			
-			[% location = battle.location %] 
-			[% IF location %] at [% location %][% END %]
+			[% IF show_location %]
+				[% location = battle.location %] 
+				[% IF location %] at [% location %][% END %]
+			[% END %]
 			
 			[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
 				and crushed them like the maggots they are!

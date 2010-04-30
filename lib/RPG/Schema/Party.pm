@@ -175,6 +175,8 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
 __PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', 'dungeon_grid_id' );
 
+__PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 'party_id', );
+
 with qw/
 	RPG::Schema::Role::BeingGroup
 	RPG::Schema::Role::CharacterGroup

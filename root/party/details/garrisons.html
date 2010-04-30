@@ -1,0 +1,14 @@
+<h4>Garrisons</h4>
+
+[% UNLESS garrisons %]
+You do not have any garrisons
+[% ELSE %]
+	[% FOREACH garrison IN garrisons %]
+	<b>Garrison at [% garrison.land.x %], [% garrison.land.y %]</b><br>
+	Characters: [% FOREACH character IN garrison.characters %][% character.character_name %] 
+		( Level [% character.level %] - [% character.class.class_name %])
+		[% UNLESS loop.last %], [% END %][% END %]<br>
+	Battles: [% garrison.recent_battles_count || 0 %] (<a href="[% base %]garrison/combat_log?garrison_id=[% garrison.id %]">Details</a>)
+	<br><br> 
+	[% END %]
+[% END %]

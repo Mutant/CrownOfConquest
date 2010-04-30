@@ -93,4 +93,11 @@ sub in_combat {
 	
 	return $self->in_combat_with ? 1 : 0;	
 }
+
+sub recent_battles_count {
+	my $self = shift;
+	
+	return $self->result_source->schema->resultset('Combat_Log')->get_logs_count_for_garrison($self);
+}
+
 1;

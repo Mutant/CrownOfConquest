@@ -118,4 +118,33 @@ sub create : Local {
     );			
 }
 
+sub combat_log : Local {
+	my ($self, $c) = @_;
+	
+	my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			garrison_id => $c->req->param('garrison_id'),
+			party_id => $c->stash->{party}->id,
+		},
+	);
+	
+	die "Can't find garrison" unless defined $garrison;
+	
+    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_garrison( $garrison, 20 );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'garrison/combat_log.html',
+                params   => {
+                    logs  => \@logs,
+                    garrison => $garrison,
+                },
+            }
+        ]
+    );	
+	
+}
+
 1;

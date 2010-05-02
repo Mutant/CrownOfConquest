@@ -50,7 +50,6 @@
 				and were thwarted as the cowards retreated.
 			[% END %]
 			
-			[% foo = 'bar' %]
 			<br>
 			<li>The battle lasted [% FILTER inflect %]NO(round, [% battle.rounds %])[% END %], 
 					and [% FILTER inflect %]NO(spell, [% battle.spells_cast %])[% END %] were cast.
@@ -64,6 +63,9 @@
 				[% IF battle.xp_awarded > 0 %]
 					<li>We gained a total of [% battle.xp_awarded %] xp from the battle</li>
 				[% END %]
+			[% END %]
+			[% IF battle.has_messages %]
+				<a href="[% base %]party/details/combat_messages?combat_log_id=[% battle.id %]&opp_num=[% party_num %]">View Full Battle Messages</a><br>
 			[% END %]
 			<hr size=1>
 		</td>

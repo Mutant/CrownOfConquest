@@ -47,6 +47,8 @@ __PACKAGE__->has_many( 'character_effects', 'RPG::Schema::Character_Effect', { '
 
 __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_id' );
 
+__PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
+
 our @STATS = qw(str con int div agl);
 
 # These allow us to use the 'Being' role
@@ -72,6 +74,12 @@ sub group_id {
     my $self = shift;
 
     return $self->garrison_id || $self->party_id;
+}
+
+sub group {
+	my $self = shift;
+	
+	return $self->garrison_id ? $self->garrison : $self->party;
 }
 
 sub encumbrance {

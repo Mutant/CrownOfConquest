@@ -30,7 +30,7 @@ sub test_fight : Tests(5) {
     my $self = shift;
 
     # GIVEN
-    my $result = { messages => 'messages from combat', };
+    my $result = { display_messages => {1 => ['messages from combat']}, };
 
     my $mock_battle = Test::MockObject->new();
     my %new_args;
@@ -70,7 +70,7 @@ sub test_fight : Tests(5) {
     is( $new_args{creatures_can_flee}, 1,          "Creatures allowed to flee" );
     $mock_battle->called_ok('execute_round');
 
-    is( $template_args->[0][0]{params}{combat_messages}, "messages from combat", "Combat messages passed to template" );
+    is( $self->{stash}{combat_messages}[0], "messages from combat", "Combat messages stored in stash" );
     
     $mock_battle->unfake_module('RPG::Combat::CreatureWildernessBattle');
 }
@@ -160,7 +160,10 @@ sub process_round_result_party_wiped_out : Tests(5) {
     $party->update;
         
     my $result = {
-        messages => ['some message'],
+        display_messages => {
+        	1 => ['some message'],
+        	2 => ['other message'],
+        },
         combat_complete => 1,
     };
     
@@ -175,8 +178,8 @@ sub process_round_result_party_wiped_out : Tests(5) {
     
     # THEN
     is($self->{stash}{messages_path}, '/combat/main', "Messages path set to main");
-    is(scalar @{$self->{stash}{combat_messages}}, 2, "Two messages added");
-    is($self->{stash}{combat_messages}[1], "Your party has been wiped out!", "Party wiped out message given");
+    is(scalar @{$self->{stash}{combat_messages}}, 1, "Two messages added");
+    is($self->{stash}{combat_messages}[0], "some message", "Correct message given");
     is($self->{stash}{combat_complete}, 1, "Combat complete recorded in stash"); 
     is_deeply($params, ['messages', 'party', 'party_status', 'map'], "Correct panels refreshed");
 }

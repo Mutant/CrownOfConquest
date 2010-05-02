@@ -30,6 +30,8 @@ __PACKAGE__->belongs_to( 'land', 'RPG::Schema::Land', { 'foreign.land_id' => 'se
 
 __PACKAGE__->belongs_to( 'day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.game_day' } );
 
+__PACKAGE__->has_many( 'messages', 'RPG::Schema::Combat_Log_Messages', 'combat_log_id' );
+
 # Note, party and creature_group relationships defined manually, as DBIx::Class doesn't support complex
 #  join conditions
 sub opponent_1 {
@@ -83,10 +85,8 @@ sub was_initiated_by_party {
 sub party_opponent_number {
     my $self = shift;
     my $party = shift;
-    
-    warn $self->opponent_1;
-    warn $party;
-    
+        
+    warn $self->opponent_1_type;
     if (($self->opponent_1_type eq 'party' || $self->opponent_1_type eq 'garrison') && $self->opponent_1->id == $party->id) {
         return 1;   
     }
@@ -99,9 +99,7 @@ sub opponent {
     my $opp_number = shift;
     
     my $id = $self->get_column("opponent_${opp_number}_id");
-    
-    warn $id;
-    
+        
     given($self->get_column("opponent_${opp_number}_type")) {
     	when('party') { return $self->_get_party($id) };
     	when('creature_group') { return $self->_get_cg($id) };
@@ -143,17 +141,13 @@ sub _get_cg {
 sub _get_garrison {
     my $self = shift;
     my $id   = shift;
-    
-    warn $id;
-        
+            
     return $self->{_garrison}{$id} if defined $self->{_garrison}{$id};
 
     my $garrison = $self->result_source->schema->resultset('Garrison')->find( { garrison_id => $id, }, );
 
     $self->{_garrison}{$id} = $garrison;
     
-    warn $garrison;
-
     return $garrison;
 }
 
@@ -192,7 +186,7 @@ sub record_damage {
 	my $self = shift;
 	my $opp_number = shift // croak "Opp number not supplied"; #/
 	my $damage = shift // croak "Damage not supplied"; #/
-	
+
 	my $damage_col = 'total_opponent_' . $opp_number . '_damage';
     $self->set_column( $damage_col, ( $self->get_column($damage_col) || 0 ) + $damage );
 }
@@ -203,6 +197,31 @@ sub record_death {
 	
 	my $damage_col = 'opponent_' . $opp_number . '_deaths';
     $self->set_column( $damage_col, ( $self->get_column($damage_col) || 0 ) + 1 );
+}
+
+sub has_messages {
+	my $self = shift;
+	
+	my $messages_rs = $self->search_related('messages');
+	
+	return $messages_rs->count > 0 ? 1 : 0;
+}
+
+sub get_messages_for_group {
+	my $self = shift;	
+	my $group = shift;
+	
+	my $opp_number = $self->opponent_1_id == $group->id && $self->opponent_1_type eq $group->group_type ? 1 : 2;
+	
+	return $self->search_related(
+		'messages',
+		{
+			opponent_number => $opp_number,
+		},
+		{
+			order_by => 'round',
+		}, 
+	);
 }
 
 1;

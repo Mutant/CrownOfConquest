@@ -47,4 +47,11 @@ sub factor_aggregates {
     return ( $members, $af_aggregate / $members, $df_aggregate / $members, $hp_aggregate, $dam_aggregate / $members );
 }
 
+sub is {
+	my $self = shift;
+	my $test_group = shift;
+	
+	return 1 if $self->id == $test_group->id && $self->group_type eq $test_group->group_type; 	
+}
+
 1;

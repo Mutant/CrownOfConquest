@@ -17,12 +17,13 @@ use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Character;
 
-use RPG::Combat::GarrisonCreatureBattle;
-
-sub setup : Tests(setup) {
+sub setup : Tests(setup => 2) {
     my $self = shift;
     
     Test::RPG::Builder::Day->build_day( $self->{schema} );
+    
+    use_ok 'RPG::Combat::GarrisonCreatureBattle';
+    use_ok 'RPG::Template';
     
     $self->mock_dice;
 }
@@ -124,6 +125,33 @@ sub test_finish_garrison_lost : Test(1) {
 	is($garrison->in_storage, 0, "Garrison deleted");
 }
 
+sub test_finish_garrison_won : Test(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$self->{roll_result} = 10;
+	
+	my $battle = RPG::Combat::GarrisonCreatureBattle->new(
+        schema             => $self->{schema},
+        garrison           => $garrison,
+        creature_group     => $cg,
+        log                => $self->{mock_logger},
+        config			   => {nearby_town_range => 1},
+    );	
+	
+	# WHEN
+	$battle->finish($cg);
+	
+	# THEN
+	$garrison->discard_changes;
+	is($garrison->gold, 10, "Garrison gold increased");
+}
+
 sub test_execute_round : Tests(1) {
     my $self = shift;
 
@@ -149,6 +177,7 @@ sub test_execute_round : Tests(1) {
         prevalence_per_creature_level_to_find => 1,
         nearby_town_range                     => 5,
         front_rank_attack_chance              => 5,
+        home => '/home/sam/RPG',
     };
 
     my $battle = RPG::Combat::GarrisonCreatureBattle->new(

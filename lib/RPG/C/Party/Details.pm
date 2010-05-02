@@ -5,6 +5,9 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Data::Dumper;
+use Carp;
+
+use feature "switch";
 
 sub default : Path {
     my ( $self, $c ) = @_;
@@ -84,6 +87,55 @@ sub combat_log : Local {
             }
         ]
     );
+}
+
+sub combat_messages : Local {
+    my ( $self, $c ) = @_;
+    
+    my $combat_log = $c->model('DBIC::Combat_Log')->find($c->req->param('combat_log_id'));
+    
+    my $opp_num = $c->req->param('opp_num');
+    
+    my $type = $combat_log->get_column("opponent_${opp_num}_type");
+    my $id = $combat_log->get_column("opponent_${opp_num}_id");
+    
+    given ($type) {
+    	when ('party') {
+    		croak "Invalid combat log" unless $id == $c->stash->{party}->id;	
+    	}
+    	when ('garrison') {
+    		my $garrison = $c->model('DBIC::Garrison')->find(
+    			{
+    				garrison_id => $id,
+    				party_id => $c->stash->{party}->id,
+    			},
+    		);
+    		croak "Invalid combat log" unless $garrison;
+    	}
+    }
+
+    my @messages = $c->model('DBIC::Combat_Log_Messages')->search(
+    	{
+    		combat_log_id => $combat_log->id,
+    		opponent_number => $opp_num,
+    	},
+    	{
+    		order_by => 'round',
+    	},
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/combat_messages.html',
+                params   => {
+                    messages  => \@messages,
+                    party => $c->stash->{party},
+                },
+            }
+        ]
+    );	
 }
 
 sub options : Local {

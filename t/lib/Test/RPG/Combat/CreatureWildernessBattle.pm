@@ -24,10 +24,11 @@ use Data::Dumper;
 
 use Carp qw(cluck);
 
-sub startup : Tests(startup => 1) {
+sub startup : Tests(startup => 2) {
 	my $self = shift;
 	
-	use_ok 'RPG::Combat::CreatureWildernessBattle';    
+	use_ok 'RPG::Combat::CreatureWildernessBattle';
+	use_ok 'RPG::Template';
 }
 
 sub setup : Tests(setup) {
@@ -705,6 +706,7 @@ sub test_execute_round_creature_killed : Tests(9) {
         xp_multiplier                         => 10,
         chance_to_find_item                   => 0,
         prevalence_per_creature_level_to_find => 1,
+        home => '/home/sam/RPG/',
     };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -748,13 +750,18 @@ sub test_execute_round_creature_killed : Tests(9) {
     is( scalar @{ $result->{messages} },                  2,         "2 Combat messages returned" );
     is( scalar @{ $battle->session->{killed}{creature} }, 1,         "One creature recorded as killed" );
     is( $battle->session->{killed}{creature}[0],          $cret->id, "Correct creature recorded as killed" );
-    
+   
     is( $battle->session->{damage_done}{ $char->id }, 1, "Damage recorded"); 
-    is( $battle->combat_log->opponent_2_deaths, 1, "Creature death recorded in combat log");
-    is( $battle->combat_log->total_opponent_1_damage, 1, "Char Damage recorded in combat log");
+
+    undef $battle; # Force combat log to be written
     
-    is( $battle->combat_log->opponent_1_deaths, undef, "No char deaths recorded in combat log");
-    is( $battle->combat_log->total_opponent_2_damage, 2, "Cret Damage recorded in combat log");    
+    my $combat_log = $self->{schema}->resultset('Combat_Log')->search->first;
+    
+    is( $combat_log->opponent_2_deaths, 1, "Creature death recorded in combat log");
+    is( $combat_log->total_opponent_1_damage, 1, "Char Damage recorded in combat log");
+    
+    is( $combat_log->opponent_1_deaths, 0, "No char deaths recorded in combat log");
+    is( $combat_log->total_opponent_2_damage, 2, "Cret Damage recorded in combat log");    
 }
 
 sub test_execute_round_creature_group_wiped_out : Tests(1) {
@@ -777,7 +784,8 @@ sub test_execute_round_creature_group_wiped_out : Tests(1) {
         xp_multiplier                         => 10,
         chance_to_find_item                   => 0,
         prevalence_per_creature_level_to_find => 1,
-        nearby_town_range                     => 5
+        nearby_town_range                     => 5,
+        home => '/home/sam/RPG/',
     };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -798,7 +806,7 @@ sub test_execute_round_creature_group_wiped_out : Tests(1) {
     is( $result->{combat_complete}, 1, "Combat ended" );
 }
 
-sub test_execute_round_spell_killed_creature : Tests(1) {
+sub test_execute_round_messages_recorded_in_db : Tests(4) {
     my $self = shift;
 
     # GIVEN
@@ -818,7 +826,8 @@ sub test_execute_round_spell_killed_creature : Tests(1) {
         xp_multiplier                         => 10,
         chance_to_find_item                   => 0,
         prevalence_per_creature_level_to_find => 1,
-        nearby_town_range                     => 5
+        nearby_town_range                     => 5,
+        home => '/home/sam/RPG/',
     };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -837,6 +846,12 @@ sub test_execute_round_spell_killed_creature : Tests(1) {
 
     # THEN
     is( $result->{combat_complete}, 1, "Combat ended" );
+    
+    my $combat_log_message = $self->{schema}->resultset('Combat_Log_Messages')->search->first;
+    
+    is($combat_log_message->round, 1, "Round number recorded");
+    is($combat_log_message->opponent_number, 1, "Opp number set correctly");
+    is(defined $combat_log_message->message, 1, "Message set");
 }
 
 sub test_finish : Tests(6) {
@@ -967,4 +982,58 @@ sub test_check_for_item_found_correct_prevalence_used : Tests(5) {
 
 }
 
+sub test_oppoent_number_of_being : Tests(2) {
+	my $self = shift;	
+
+	# GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, party_id => 1, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_group_id => 1 );
+    
+    my $cret = ($cg->creatures)[0];
+    my $char = ($party->characters)[0];
+  
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );    
+    
+    # WHEN
+    my $party_opp_number = $battle->opponent_number_of_being($char);
+    my $cg_opp_number = $battle->opponent_number_of_being($cret);
+    
+    # THEN
+    is($party_opp_number, 1, "Party opp number correct");
+    is($cg_opp_number, 2, "CG opp number correct");
+		
+}
+
+sub test_oppoent_number_of_group : Tests(2) {
+	my $self = shift;	
+
+	# GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, party_id => 1, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_group_id => 1 );
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+    );    
+    
+    # WHEN
+    my $party_opp_number = $battle->opponent_number_of_group($party);
+    my $cg_opp_number = $battle->opponent_number_of_group($cg);
+    
+    # THEN
+    is($party_opp_number, 1, "Party opp number correct");
+    is($cg_opp_number, 2, "CG opp number correct");
+		
+}
+
 1;
+

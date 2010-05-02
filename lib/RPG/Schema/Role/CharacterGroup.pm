@@ -44,5 +44,35 @@ sub is_over_flee_threshold {
     return $percentage < $self->flee_threshold ? 1 : 0;
 }
 
+# Award XP to all characters. Takes the amount of xp to award if it's the same for everyone, or a hash of
+#  character id to amount awarded
+# Returns an array with the details of the changes
+sub xp_gain {
+    my ( $self, $awarded_xp ) = @_;
+
+    my @characters = $self->characters;
+
+    my @details;
+
+    foreach my $character (@characters) {
+        next if $character->is_dead;
+
+        my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
+        
+        next if ! $xp_gained || $xp_gained <= 0;
+
+        my $level_up_details = $character->xp( $character->xp + ($xp_gained || 0) );
+
+        push @details, {
+        	character         => $character,	
+			xp_awarded       => $xp_gained,
+            level_up_details => $level_up_details,
+        };
+
+        $character->update;
+    }
+
+    return @details;
+}
 
 1;

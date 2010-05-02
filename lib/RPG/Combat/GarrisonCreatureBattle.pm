@@ -73,7 +73,8 @@ sub finish {
     else {
     	$self->creatures_lost;
     	
-    	$self->garrison->party->gold( $self->party->gold + $self->result->{gold} );
+    	$self->garrison->gold( ($self->garrison->gold || 0) + $self->result->{gold} );
+    	$self->garrison->update;
     }
 }
 

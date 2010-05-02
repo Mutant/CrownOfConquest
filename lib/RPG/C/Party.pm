@@ -533,34 +533,21 @@ sub disband : Local {
 sub xp_gain : Private {
     my ( $self, $c, $awarded_xp ) = @_;
 
-    my @characters = $c->stash->{party}->characters;
-
+    my @details = $c->stash->{party}->xp_gain($awarded_xp);
     my @messages;
 
-    foreach my $character (@characters) {
-        next if $character->is_dead;
-
-        my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
-
-        my $level_up_details = $character->xp( $character->xp + $xp_gained );
-
+    foreach my $details (@details) {
         push @messages,
             $c->forward(
             'RPG::V::TT',
             [
                 {
                     template => 'party/xp_gain.html',
-                    params   => {
-                        character        => $character,
-                        xp_awarded       => $xp_gained,
-                        level_up_details => $level_up_details,
-                    },
+                    params   => $details,
                     return_output => 1,
                 }
             ]
-            );
-
-        $character->update;
+        );
     }
 
     return \@messages;

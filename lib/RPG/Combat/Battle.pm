@@ -10,6 +10,7 @@ use Data::Dumper;
 use Math::Round qw(round);
 
 use RPG::Combat::ActionResult;
+use RPG::Combat::MessageDisplayer;
 
 requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by/;
 
@@ -29,14 +30,21 @@ sub opponent_number_of_being {
     my $self  = shift;
     my $being = shift;
 
+    return $self->opponent_number_of_group($being->group);
+}
+
+sub opponent_number_of_group {
+	my $self = shift;
+	my $group = shift;
+
     my ($opp1) = ( $self->opponents )[0];
     
-    if ($being->group_id == $opp1->id ) {
+    if ($group->id == $opp1->id && $group->group_type eq $opp1->group_type ) {
         return 1;
     }
     else {
         return 2;
-    }
+    }		
 }
 
 sub execute_round {
@@ -47,6 +55,8 @@ sub execute_round {
         $self->end_of_combat_cleanup;
         
         $self->result->{combat_complete} = 1;
+        
+        $self->record_messages;
 
         return $self->result;
     }
@@ -93,6 +103,7 @@ sub execute_round {
             }
     
             if ( my $losers = $self->check_for_end_of_combat($combatant) ) {
+            	$self->result->{losers} = $losers;
                 $self->finish($losers);
                 $self->end_of_combat_cleanup;
                 last;
@@ -103,6 +114,8 @@ sub execute_round {
     $self->combat_log->rounds( ( $self->combat_log->rounds || 0 ) + 1 );
 
     $self->result->{messages} = \@combat_messages;
+    
+    $self->record_messages;
 
     return $self->result;
 }
@@ -154,6 +167,42 @@ sub _process_effects {
             $effect->effect->update;
         }
     }
+}
+
+# Record combat messages in the DB
+sub record_messages {
+	my $self = shift;
+	
+	my @opponents = $self->opponents;
+	my %display_messages;
+	
+	foreach my $opp_number (1..2) {	
+		next if $opponents[$opp_number-1]->group_type eq 'creature_group';
+		
+		my @messages = RPG::Combat::MessageDisplayer->display( 
+			config => $self->config, 
+			group => $opponents[$opp_number-1], 
+			opponent => $opponents[$opp_number == 1 ? 1 : 0], 
+			result => $self->result 
+		);
+		
+		$self->log->debug('Recording messages:');
+		$self->log->debug(join "", @messages);
+		
+		$self->schema->resultset('Combat_Log_Messages')->create(
+			{
+				combat_log_id => $self->combat_log->id,
+				round => $self->combat_log->rounds,
+				opponent_number => $opp_number,
+				message => join "", @messages,
+			},
+		);
+		
+		$display_messages{$opp_number} = \@messages;
+	}
+	
+	$self->result->{display_messages} = \%display_messages;
+	
 }
 
 sub get_combatant_list {

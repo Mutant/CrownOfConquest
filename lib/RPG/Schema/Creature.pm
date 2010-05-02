@@ -42,6 +42,12 @@ sub group_id {
     return $self->creature_group_id;   
 }
 
+sub group {
+	my $self = shift;
+	
+	return $self->creature_group;
+}
+
 sub gender {
     return 'neuter';   
 }

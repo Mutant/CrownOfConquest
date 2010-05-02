@@ -1,5 +1,6 @@
+[% FILTER collapse %]
 [% FOREACH message IN combat_messages %]
-	[% IF message.attacker.is_character && message.attacker.party_id == party.id %]
+	[% IF message.attacker.is_character && message.attacker.group_id == group.id %]
 		[% 
 			attacker_class  = "combat-party-attacker"
 			defender_class  = "combat-creature-defender"
@@ -32,4 +33,5 @@
 		[% END %]
 	[% END %]
 	<br>
+[% END %]
 [% END %]

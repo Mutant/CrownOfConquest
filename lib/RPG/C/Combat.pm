@@ -215,21 +215,8 @@ sub flee : Local {
 sub process_round_result : Private {
     my ( $self, $c, $result ) = @_;
 
-    push @{ $c->stash->{combat_messages} },
-        $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'combat/message.html',
-                params   => {
-                    combat_messages => $result->{messages},
-                    combat_complete => $result->{combat_complete},
-                    party           => $c->stash->{party},
-                },
-                return_output => 1,
-            }
-        ]
-        );
+	my $display_messages = $result->{display_messages};
+    push @{ $c->stash->{combat_messages} }, @{ $display_messages->{1} }; # We only want messages for opp1, since that's always the online party
 
     my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
     if ( $result->{combat_complete} ) {
@@ -237,31 +224,10 @@ sub process_round_result : Private {
         push @panels_to_refesh, 'map';
 
         if ( !$c->stash->{party}->defunct ) {
-
-            # TODO: needs to be templated
-            my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
-
-            push @{ $c->stash->{combat_messages} }, @$xp_messages;
-
-            push @{ $c->stash->{combat_messages} }, "You find $result->{gold} gold";
-
-            foreach my $item_found ( @{ $result->{found_items} } ) {
-                push @{ $c->stash->{combat_messages} }, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name;
-            }
-
             # Check for state of quests
+            # TODO: should deal with offline combat too
             my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
             push @{ $c->stash->{combat_messages} }, @$messages;
-
-            if ( $result->{creature_battle} ) {
-                push @{ $c->stash->{combat_messages} }, "You've killed the creatures";
-            }
-            else {
-                push @{ $c->stash->{combat_messages} }, "You've wiped out the party";
-            }
-        }
-        else {
-            push @{ $c->stash->{combat_messages} }, "Your party has been wiped out!";
         }
 
         # Force combat main to display final time
@@ -273,21 +239,9 @@ sub process_round_result : Private {
 
         undef $c->stash->{creature_group};
 
-        push @{ $c->stash->{messages} }, "The creatures have fled!";
-
-        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
-
-        push @{ $c->stash->{messages} }, @$xp_messages;
-
     }
     if ( $result->{offline_party_fled} ) {
         push @panels_to_refesh, 'map';
-
-        push @{ $c->stash->{messages} }, "The party has fled!";
-
-        my $xp_messages = $c->forward( '/party/xp_gain', [ $result->{awarded_xp} ] );
-
-        push @{ $c->stash->{messages} }, @$xp_messages;
     }
 
     $c->stash->{combat_complete} = $result->{combat_complete};

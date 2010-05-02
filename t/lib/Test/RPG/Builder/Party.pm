@@ -32,6 +32,7 @@ sub build_party {
 
     my $party = $schema->resultset('Party')->create(
         {
+        	party_id				=> $params{party_id},
             land_id                 => $params{land_id},
             player_id               => $params{player_id},
             rank_separator_position => 2,

@@ -4,7 +4,7 @@ use Moose::Role;
 
 use Lingua::EN::Gender qw();
 
-requires 'group_id';
+requires qw/group_id group/;
 
 sub health {
 	my $self = shift;

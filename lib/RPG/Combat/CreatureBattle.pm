@@ -62,7 +62,7 @@ sub finish {
 
     # Only do stuff if the party won
     return if $losers->group_type eq 'party';
-
+    
     $self->creatures_lost;
     
     $self->party->gold( $self->party->gold + $self->result->{gold} );

@@ -35,7 +35,6 @@ sub complete_battles {
         },
         { prefetch => [ { 'creatures' => 'type' }, 'in_combat_with' ], },
     );
-    
     $c->logger->info(scalar @cgs . " CGs with battles to complete");
 
     foreach my $cg (@cgs) {

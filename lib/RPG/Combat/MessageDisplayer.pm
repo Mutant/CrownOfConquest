@@ -46,6 +46,9 @@ sub display {
 				
 	        push @messages, @xp_messages;
 	    }
+	    elsif ( $result->{party_fled} ) {
+	    	push @messages, "You fled the battle!";
+	    }
     	elsif ( ! $group->is($result->{losers}) ) {
             my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
 

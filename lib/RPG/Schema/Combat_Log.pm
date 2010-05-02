@@ -86,7 +86,6 @@ sub party_opponent_number {
     my $self = shift;
     my $party = shift;
         
-    warn $self->opponent_1_type;
     if (($self->opponent_1_type eq 'party' || $self->opponent_1_type eq 'garrison') && $self->opponent_1->id == $party->id) {
         return 1;   
     }

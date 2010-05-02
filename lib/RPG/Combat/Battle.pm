@@ -56,6 +56,8 @@ sub execute_round {
         
         $self->result->{combat_complete} = 1;
         
+        $self->combat_log->rounds( ( $self->combat_log->rounds || 0 ) + 1 );
+        
         $self->record_messages;
 
         return $self->result;

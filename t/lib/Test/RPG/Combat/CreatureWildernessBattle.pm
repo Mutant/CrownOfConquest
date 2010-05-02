@@ -854,6 +854,57 @@ sub test_execute_round_messages_recorded_in_db : Tests(4) {
     is(defined $combat_log_message->message, 1, "Message set");
 }
 
+sub test_execute_round_party_flees_successfully : Tests(5) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+    $cg = Test::MockObject::Extends->new($cg);
+    $cg->set_always( 'number_alive', 0 );
+
+    $self->{config} = {
+        attack_dice_roll                      => 10,
+        defence_dice_roll                     => 10,
+        creature_defence_base                 => 5,
+        create_defence_factor_increment       => 5,
+        creature_attack_base                  => 5,
+        create_attack_factor_increment        => 5,
+        maximum_turns                         => 300,
+        xp_multiplier                         => 10,
+        chance_to_find_item                   => 0,
+        prevalence_per_creature_level_to_find => 1,
+        nearby_town_range                     => 5,
+        online_threshold                      => 10,
+        home => '/home/sam/RPG/',
+    };
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        config         => $self->{config},
+        log            => $self->{mock_logger},
+        party_flee_attempt => 1,
+    );
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'party_flee', 1 );
+    $battle->set_true('process_effects');
+
+    # WHEN
+    my $result = $battle->execute_round();
+
+    # THEN
+    is( $result->{combat_complete}, 1, "Combat ended" );
+    is( $result->{party_fled}, 1, "Party fled recorded in DB");
+    
+    my $combat_log_message = $self->{schema}->resultset('Combat_Log_Messages')->search->first;
+    
+    is($combat_log_message->round, 1, "Round number recorded");
+    is($combat_log_message->opponent_number, 1, "Opp number set correctly");
+    like($combat_log_message->message, qr/You fled the battle!/, "Flee message set");
+}
+
 sub test_finish : Tests(6) {
     my $self = shift;
 

@@ -49,7 +49,7 @@ sub factor_aggregates {
 
 sub is {
 	my $self = shift;
-	my $test_group = shift;
+	my $test_group = shift || confess "Group to test not defined";
 	
 	return 1 if $self->id == $test_group->id && $self->group_type eq $test_group->group_type; 	
 }

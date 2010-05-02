@@ -32,7 +32,7 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 	[% IF can_build_garrison %]
 		| <a href="[% base %]/garrison/create">Create a Garrison</a>
 	[% ELSIF garrison.party_id == party.id %]
-		| <a href="[% base %]/garrison/create">Manage Garrison</a>
+		| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
 	[% END %]
 <br>
 

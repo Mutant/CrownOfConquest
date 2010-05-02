@@ -17,119 +17,124 @@ sub auto : Private {
 		{
 			prefetch => ['characters', 'land'],
 		}
-	);	
+	);
+	
+	return 1;	
 }
 
 sub create : Local {
 	my ($self, $c) = @_;
 	
-	my $garrison;
-	my @characters;
-	my $message;
-	
-	# Block lets use use last to exit (so we still get to the template)	
-	{		
-		$garrison = $c->model('DBIC::Garrison')->find(
-			{
-				land_id => $c->stash->{party_location}->land_id,
-			}
-		);
-		
-		if ($garrison && $garrison->party_id != $c->stash->{party}->id) {
-			$c->stash->{error} = "There's already a garrison here, owned by another party!";
-			last;
-		} 
-			
-		if ($c->req->param('submit')) {
-			my @char_ids_in_party = $c->req->param('in_party');
-			unless (@char_ids_in_party) {
-				$c->stash->{error} = "You must leave at least one character in your party";
-				last;
-			}
-			
-			my @char_ids_to_garrison = $c->req->param('in_garrison');			
-					
-			if ($garrison) {
-				if (! @char_ids_to_garrison) {
-					# No more chars, so delete the garrison
-					$garrison->delete;
-					$message = 'No characters are left in the garrison - garrison removed'; 
-				}
-				else {
-					$garrison->party_attack_mode($c->req->param('party_attack_mode'));
-					$garrison->creature_attack_mode($c->req->param('creature_attack_mode'));
-					$garrison->flee_threshold($c->req->param('flee_threshold'));
-					$garrison->update;
-					$message = 'Garrison updated';
-				}
-			}
-			else {
-				if ( $c->stash->{party}->level < $c->config->{minimum_garrison_level} ) {
-					$c->stash->{error} = "You can't create a garrison here - your party level is too low";
-					last;
-				}
-				
-				croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
-				
-				$garrison = $c->model('DBIC::Garrison')->create(
-					{
-						land_id => $c->stash->{party_location}->land_id,
-						party_id => $c->stash->{party}->id,
-						party_attack_mode => $c->req->param('party_attack_mode'),
-						creature_attack_mode => $c->req->param('creature_attack_mode'),
-						flee_threshold => $c->req->param('flee_threshold'),
-					}
-				);
-				
-				$message = 'Garrison created';
-			}
-				
-			
-			if (@char_ids_to_garrison) {
-				$c->model('DBIC::Character')->search(
-					{
-						character_id => \@char_ids_to_garrison,
-						party_id => $c->stash->{party}->id,
-					}
-				)->update(
-					{
-						garrison_id => $garrison->id,
-					}
-				);				
-			}
-			
-			my $character_rs = $c->model('DBIC::Character')->search(
-				{
-					character_id => \@char_ids_in_party,
-					party_id => $c->stash->{party}->id,
-				}
-			);
-			
-			$character_rs->update(
-				{
-					garrison_id => undef,
-				}
-			);
-			
-			@characters = $character_rs->all;
-		}
-		else {
-			@characters = $c->stash->{party}->characters;
-		}
-	}
-	
 	$c->forward('RPG::V::TT',
         [{
             template => 'garrison/create.html',
             params => {
-            	characters => \@characters,
-            	garrison => $garrison,
-            	message => $message,
             	flee_threshold => 70, # default
+            	party => $c->stash->{party},
             },
-            fill_in_form => $garrison ? {$garrison->get_columns} : 1,
         }]
     );			
+}
+
+sub add : Local {
+	my ($self, $c) = @_;
+	
+	if ( $c->stash->{party}->level < $c->config->{minimum_garrison_level} ) {
+		$c->stash->{error} = "You can't create a garrison - your party level is too low";
+		return;
+	}
+	
+	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
+
+	my @char_ids_to_garrison = $c->req->param('chars_in_garrison');
+		
+	croak "Must have at least one char in the garrison" unless @char_ids_to_garrison;
+	
+	my @characters = $c->stash->{party}->characters;
+	
+	if (scalar @char_ids_to_garrison == scalar @characters) {
+		croak "Must keep at least one character in the party";
+	} 
+	
+	my $garrison = $c->model('DBIC::Garrison')->create(
+		{
+			land_id => $c->stash->{party_location}->land_id,
+			party_id => $c->stash->{party}->id,
+			creature_attack_mode => 'Attack Weaker Opponents',
+			party_attack_mode => 'Densive Only',
+		}
+	);
+	
+	$c->model('DBIC::Character')->search(
+		{
+			character_id => \@char_ids_to_garrison,
+			party_id => $c->stash->{party}->id,
+		}
+	)->update(
+		{
+			garrison_id => $garrison->id,
+		}
+	);
+	
+	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
+}
+
+sub update : Local {
+	my ($self, $c) = @_;
+	
+	croak "Can't find garrison" unless $c->stash->{garrison};
+	
+	croak "Must be in correct sector to update garrison" unless $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	
+	my @current_chars = $c->stash->{garrison}->characters;
+		
+	my %char_ids_to_garrison = map { $_ => 1 } $c->req->param('chars_in_garrison');
+	
+	croak "Must have at least one char in the garrison" unless %char_ids_to_garrison;
+	
+	my @characters = $c->stash->{party}->characters;
+	if (scalar keys(%char_ids_to_garrison) - scalar @current_chars == scalar @characters) {
+		croak "Must keep at least one character in the party";
+	} 
+	
+	foreach my $current_char (@current_chars) {
+		if (! $char_ids_to_garrison{$current_char->id}) {
+			# Char removed
+			$current_char->garrison_id(undef);
+			$current_char->update;
+		}
+	}
+	
+	$c->model('DBIC::Character')->search(
+		{
+			character_id => [keys %char_ids_to_garrison],
+			party_id => $c->stash->{party}->id,
+		}
+	)->update(
+		{
+			garrison_id => $c->stash->{garrison}->id,
+		}
+	);	
+	
+	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
+	
+}
+
+sub remove : Local {
+	my ($self, $c) = @_;
+	
+	confess "Can't find garrison" unless $c->stash->{garrison};
+	
+	foreach my $character ($c->stash->{garrison}->characters) {
+		$character->garrison_id(undef);
+		$character->update;	
+	}
+	
+	$c->stash->{garrison}->delete;
+	
+	$c->stash->{panel_messages} = ['Garrison Removed'];
+	
+	$c->forward('/party/main');
 }
 
 sub manage : Local {
@@ -147,6 +152,7 @@ sub manage : Local {
                 params   => {
                     garrison => $c->stash->{garrison},
                     party_garrisons => \@party_garrisons,
+                    selected => $c->req->param('selected') || '',
                 },
             }
         ]
@@ -156,6 +162,8 @@ sub manage : Local {
 sub character_tab : Local {
 	my ($self, $c) = @_;
 
+	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+
     $c->forward(
         'RPG::V::TT',
         [
@@ -163,6 +171,8 @@ sub character_tab : Local {
                 template => 'garrison/characters.html',
                 params   => {
                     garrison => $c->stash->{garrison},
+                    editable => $editable,
+                    party => $c->stash->{party},
                 },
             }
         ]
@@ -186,7 +196,34 @@ sub combat_log_tab : Local {
             }
         ]
     );	
+}
+
+sub orders_tab : Local {
+	my ($self, $c) = @_;
 	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'garrison/orders.html',
+                params   => {
+                    garrison => $c->stash->{garrison},
+                },
+                fill_in_form => {$c->stash->{garrison}->get_columns},
+            }
+        ]
+    );	
+}
+
+sub update_orders : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{garrison}->creature_attack_mode($c->req->param('creature_attack_mode'));
+	$c->stash->{garrison}->party_attack_mode($c->req->param('party_attack_mode'));
+	$c->stash->{garrison}->flee_threshold($c->req->param('flee_threshold'));
+	$c->stash->{garrison}->update;
+	
+	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders' );
 }
 
 1;

@@ -82,6 +82,12 @@ sub group {
 	return $self->garrison_id ? $self->garrison : $self->party;
 }
 
+sub is_spell_caster {
+	my $self = shift;
+	
+	return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
+}
+
 sub encumbrance {
 	my $self = shift;
 	
@@ -384,7 +390,7 @@ Returns a list of any equipped item records for a specified super category.
 sub get_equipped_item {
     my $self           = shift;
     my $category       = shift || croak 'Category not supplied';
-    my $variables_only = shift // 0;
+    my $variables_only = shift // 0; #/
 
     return @{ $self->{equipped_item}{$category} } if ref $self->{equipped_item}{$category} eq 'ARRAY';
 

@@ -1,0 +1,28 @@
+<h3>Characters in this Garrison</h3>
+
+<table class="main">
+<tr>
+    <th>Name</th>
+    <th>Race</th>
+    <th>Class</th>
+    <th>Level</th>
+    <th>HP</th>
+	<th></th>
+    <th>XP</th>
+    <th>Orders</th>
+</tr>
+
+[% FOREACH char IN garrison.characters %]
+	<tr>
+	[% INCLUDE party/party_list_char_line.html %]
+	<td>
+		<select onChange="saveCharacterOrder(this, '[% char.id %]')">
+			[% options = ['Attack','Defend'] %]
+			[% options.push('Cast') IF char.is_spell_caster %]
+			[% FOREACH option IN options %]
+				<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
+			[% END %]
+		</select>
+	</tr>
+[% END %]
+</table>

@@ -1,0 +1,55 @@
+[% INCLUDE top.html %]
+
+<script type="text/javascript">
+	dojo.require("dojox.layout.ContentPane");
+	dojo.require("dijit.layout.TabContainer");
+
+function saveCharacterOrder(select, char_id) {
+	dojo.xhrGet( {
+        url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
+        handleAs: "text",        
+    });
+}
+	
+</script>
+
+<style>
+	#mainTabContainer {height: 100%}
+	
+	* html #mainTabContainer {height: 700px; overflow: auto}
+</style>
+
+<h3>Manage Garrison at [% garrison.land.x %], [% garrison.land.y %]</h3>
+
+[% IF party_garrisons.size > 1 %]
+	Other Garrisons:
+	[% FOREACH other_garrison IN party_garrisons %]
+		[% IF other_garrison.id != garrison.id %]
+			<a href="[% base %]garrison/manage?garrison_id=[% other_garrison.id %]">[% other_garrison.land.x %], [% other_garrison.land.y %]</a>
+		[% ELSE %]
+			[% other_garrison.land.x %], [% other_garrison.land.y %]
+		[% END %]
+		&nbsp;
+	[% END %]
+[% END %]
+
+<br><br>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
+     <div dojoType="dojox.layout.ContentPane" title="Characters" 
+    	href="[% base %]garrison/character_tab?garrison_id=[% garrison.id %]"
+    	[% IF selected == 'garrison' %]selected="true"[% END %]>    
+    </div>
+
+    <div dojoType="dojox.layout.ContentPane" title="Messages" 
+    	href="[% base %]garrison/messages_tab?garrison_id=[% garrison.id %]"
+    	[% IF selected == 'messages' %]selected="true"[% END %]>    
+    </div>
+
+    <div dojoType="dojox.layout.ContentPane" title="Combat Log" 
+    	href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
+    	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
+    </div>
+</div>
+
+[% INCLUDE bottom.html %]

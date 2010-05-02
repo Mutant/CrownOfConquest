@@ -6,6 +6,20 @@ use base 'Catalyst::Controller';
 
 use Carp;
 
+sub auto : Private {
+	my ($self, $c) = @_;
+	
+	$c->stash->{garrison} = $c->model('DBIC::Garrison')->find(
+		{
+			garrison_id => $c->req->param('garrison_id'),
+			party_id => $c->stash->{party}->id,
+		},
+		{
+			prefetch => ['characters', 'land'],
+		}
+	);	
+}
+
 sub create : Local {
 	my ($self, $c) = @_;
 	
@@ -118,19 +132,47 @@ sub create : Local {
     );			
 }
 
-sub combat_log : Local {
+sub manage : Local {
 	my ($self, $c) = @_;
 	
-	my $garrison = $c->model('DBIC::Garrison')->find(
-		{
-			garrison_id => $c->req->param('garrison_id'),
-			party_id => $c->stash->{party}->id,
-		},
-	);
+	confess "Can't find garrison" unless $c->stash->{garrison};
 	
-	die "Can't find garrison" unless defined $garrison;
+	my @party_garrisons = $c->stash->{party}->garrisons;
 	
-    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_garrison( $garrison, 20 );
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'garrison/manage.html',
+                params   => {
+                    garrison => $c->stash->{garrison},
+                    party_garrisons => \@party_garrisons,
+                },
+            }
+        ]
+    );		
+}
+
+sub character_tab : Local {
+	my ($self, $c) = @_;
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'garrison/characters.html',
+                params   => {
+                    garrison => $c->stash->{garrison},
+                },
+            }
+        ]
+    );	
+}
+
+sub combat_log_tab : Local {
+	my ($self, $c) = @_;
+	
+    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_garrison( $c->stash->{garrison}, 20 );
 
     $c->forward(
         'RPG::V::TT',
@@ -139,7 +181,7 @@ sub combat_log : Local {
                 template => 'garrison/combat_log.html',
                 params   => {
                     logs  => \@logs,
-                    garrison => $garrison,
+                    garrison => $c->stash->{garrison},
                 },
             }
         ]

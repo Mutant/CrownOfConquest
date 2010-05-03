@@ -37,4 +37,14 @@ CREATE  TABLE IF NOT EXISTS `Combat_Log_Messages` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 
+CREATE  TABLE IF NOT EXISTS `Garrison_Messages` (
+  `garrison_message_id` INT NOT NULL AUTO_INCREMENT ,
+  `message` TEXT NOT NULL ,
+  `garrison_id` INT NOT NULL ,
+  `day_id` INT(11) NOT NULL ,
+  PRIMARY KEY (`garrison_message_id`) ,
+  INDEX `fk_Garrison_Messages_Garrison1` (`garrison_id` ASC) ,
+  INDEX `fk_Garrison_Messages_Day1` (`day_id` ASC))
+ENGINE = InnoDB
+
 ALTER TABLE `Character` ADD COLUMN `garrison_id` INT  NULL AFTER `gender`;

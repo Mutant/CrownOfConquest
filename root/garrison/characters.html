@@ -3,6 +3,7 @@
 	
 	<table class="main" id="garrison-list">
 	<tr>
+		<th></th>
 	    <th>Name</th>
 	    <th>Race</th>
 	    <th>Class</th>
@@ -42,6 +43,7 @@
 	
 	<table class="main" id="party-list">
 	<tr>
+		<th></th>
 	    <th>Name</th>
 	    <th>Race</th>
 	    <th>Class</th>
@@ -76,7 +78,7 @@
 	<br>
 	<div align="center">
 		<button onClick="postGarrisonForm()">[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison</button>
-		<button onClick="document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]'">Remove Garrison</button>
+		[% IF garrison %]<button onClick="document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]'">Remove Garrison</button>[% END %]
 	</div>
 	
 [% END %]

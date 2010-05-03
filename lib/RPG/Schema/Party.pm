@@ -215,6 +215,16 @@ sub current_location {
 	return $self->location;
 }
 
+sub characters_in_party {
+	my $self = shift;
+	
+	return $self->search_related('characters',
+		{
+			'garrison_id' => undef,
+		}
+	);
+}
+
 # Record turns used whenever number of turns are decreased
 sub turns {
     my $self      = shift;

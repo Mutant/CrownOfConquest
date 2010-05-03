@@ -24,6 +24,17 @@ sub build_garrison {
 			
         }
     );
+    
+    if ( $params{character_count} ) {
+        for ( 1 .. $params{character_count} ) {
+            Test::RPG::Builder::Character->build_character(
+                $schema,
+                party_id   => $params{party_id},
+                garrison_id => $garrison->id,
+                level      => $params{character_level} || 1,
+            );
+        }
+    }    
 
     return $garrison;
 }

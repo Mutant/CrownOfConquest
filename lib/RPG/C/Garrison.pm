@@ -92,17 +92,27 @@ sub update : Local {
 	
 	croak "Must have at least one char in the garrison" unless %char_ids_to_garrison;
 	
-	my @characters = $c->stash->{party}->characters;
-	if (scalar keys(%char_ids_to_garrison) - scalar @current_chars == scalar @characters) {
+	my @chars_in_party = $c->stash->{party}->characters_in_party;
+	if (scalar keys(%char_ids_to_garrison) - scalar @current_chars == scalar @chars_in_party) {
 		croak "Must keep at least one character in the party";
-	} 
+	}
 	
+	my @chars_to_remove;
 	foreach my $current_char (@current_chars) {
 		if (! $char_ids_to_garrison{$current_char->id}) {
 			# Char removed
-			$current_char->garrison_id(undef);
-			$current_char->update;
+			push @chars_to_remove, $current_char;
 		}
+	}
+	
+	if (scalar @chars_to_remove + scalar @chars_in_party > $c->config->{max_party_characters}) {
+		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " in your party";
+		$c->detach( 'manage' );		
+	}
+	
+	foreach my $char (@current_chars) {
+		$char->garrison_id(undef);
+		$char->update;
 	}
 	
 	$c->model('DBIC::Character')->search(
@@ -125,16 +135,26 @@ sub remove : Local {
 	
 	confess "Can't find garrison" unless $c->stash->{garrison};
 	
-	foreach my $character ($c->stash->{garrison}->characters) {
-		$character->garrison_id(undef);
-		$character->update;	
+	my @garrison_characters = $c->stash->{garrison}->characters;
+	my @characters = $c->stash->{party}->characters_in_party;
+
+	if (scalar @garrison_characters + scalar @characters > $c->config->{max_party_characters}) {
+		$c->stash->{error} = "You can't remove this garrison - " .
+			"adding these characters would give you more than " . $c->config->{max_party_characters} . " characters in the party";
+		$c->detach( 'manage' );
 	}
-	
-	$c->stash->{garrison}->delete;
-	
-	$c->stash->{panel_messages} = ['Garrison Removed'];
-	
-	$c->forward('/party/main');
+	else {	
+		foreach my $character (@garrison_characters) {
+			$character->garrison_id(undef);
+			$character->update;	
+		}
+		
+		$c->stash->{garrison}->delete;
+		
+		$c->stash->{panel_messages} = ['Garrison Removed'];
+		
+		$c->forward('/party/main');
+	}
 }
 
 sub manage : Local {
@@ -224,6 +244,38 @@ sub update_orders : Local {
 	$c->stash->{garrison}->update;
 	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders' );
+}
+
+sub messages_tab : Local {
+	my ($self, $c) = @_;
+
+    my @messages = $c->model('DBIC::Garrison_Messages')->search(
+        { 'garrison_id' => $c->stash->{garrison}->id, },
+        {
+            order_by => 'day.date_started desc',
+            prefetch => 'day',
+            rows     => 7,                         # TODO: config me
+        },
+    );
+
+    my %message_logs;
+    foreach my $message (@messages) {
+        push @{ $message_logs{ $message->day->day_number } }, $message->message;
+    }
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/history.html',
+                params   => {
+                    message_logs   => \%message_logs,
+                    today          => $c->stash->{today},
+                    history_length => 7,
+                },
+            }
+        ]
+    );	
 }
 
 1;

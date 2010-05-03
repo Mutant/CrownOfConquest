@@ -31,6 +31,7 @@ sub build_character {
             intelligence => 10,
             divinity => 10,
             stat_points => 0,
+            garrison_id => $params{garrison_id},
         }
     );
         

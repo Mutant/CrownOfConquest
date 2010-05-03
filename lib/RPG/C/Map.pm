@@ -339,6 +339,19 @@ sub move_to : Local {
         		$mapped_sector->update;
         	}
         } 
+        
+        if (my $garrison = $new_land->garrison) {
+        	# Garrison records a party sighting (unless it's the owner)
+        	if ($garrison->party_id != $c->stash->{party}->id) {
+        		$c->model('DBIC::Garrison_Messages')->create(
+        			{
+        				garrison_id => $garrison->id,
+        				day_id => $c->stash->{today}->id,
+        				message => 'The party known as ' . $c->stash->{party}->name . ' passed through our sector',
+        			}
+        		);
+        	}
+        }
 
         my $creature_group = $c->forward( '/combat/check_for_attack', [$new_land] );
 

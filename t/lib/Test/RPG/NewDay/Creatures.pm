@@ -187,7 +187,7 @@ sub test_spawn_monsters_with_towns : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-        $self->{creature_action}->spawn_monsters;
+    $self->{creature_action}->spawn_monsters;
 
     my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
     is( scalar @cgs, 3, "3 groups generated" );
@@ -215,7 +215,7 @@ sub test_move_cg_no_other_cgs : Tests(3) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
-    is( $moved, 1, "Creature group was moved" );
+    is( defined $moved, 1, "Creature group was moved" );
 
     $cg->discard_changes;
     isnt( $cg->land_id, $land[0]->id, "No longer in the same position" );
@@ -248,7 +248,7 @@ sub test_move_cg_some_other_cgs : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg1 );
 
-    is( $moved, 1, "Creature group was moved" );
+    is( defined $moved, 1, "Creature group was moved" );
 
     $cg1->discard_changes;
     is( $cg1->land_id, $land[4]->id, "Moved to only sector available" );
@@ -268,7 +268,7 @@ sub test_move_cg_other_cgs_blocking : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg1 );
 
-    is( $moved, 0, "Creature group was not moved" );
+    is( defined $moved, '', "Creature group was not moved" );
 
     $cg1->discard_changes;
     is( $cg1->land_id, $land[0]->id, "Still in the same position" );
@@ -295,7 +295,7 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
-    is( $moved, 1, "Creature group was moved" );
+    is( defined $moved, 1, "Creature group was moved" );
 
     $cg->discard_changes;
     is( $cg->land_id, $land[5]->id, "Moved to only sector available" );
@@ -318,7 +318,7 @@ sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
-    is( $moved, 0, "Creature group was not moved" );
+    is( defined $moved, '', "Creature group was not moved" );
 
     $cg->discard_changes;
     is( $cg->land_id, $land[4]->id, "Still in the same square" );
@@ -345,7 +345,7 @@ sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 2, $cg );
 
-    is( $moved, 1, "Creature group was moved" );
+    is( defined $moved, 1, "Creature group was moved" );
 
     $cg->discard_changes;
     is( $cg->land_id, $land[0]->id, "Hopped to available sqaure" );
@@ -379,14 +379,14 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 
     my $moved = $self->{creature_action}->_move_cg( 2, $cg1 );
 
-    is( $moved, 1, "First creature group was moved" );
+    is( defined $moved, 1, "First creature group was moved" );
 
     $cg1->discard_changes;
     is( $cg1->land_id, $land[0]->id, "Moved to available sqaure" );
 
     $moved = $self->{creature_action}->_move_cg( 1, $cg2 );
 
-    is( $moved, 0, "Second creature group was not moved" );
+    is( defined $moved, '', "Second creature group was not moved" );
 
     $cg2->discard_changes;
     is( $cg2->land_id, $land[4]->id, "Still in the same sqaure" );
@@ -408,7 +408,7 @@ sub test_move_cg_town_blocks_some_squares : Tests(2) {
 
     my $moved = $self->{creature_action}->_move_cg( 1, $cg );
 
-    is( $moved, 0, "Creature group couldn't be moved" );
+    is( defined $moved, '', "Creature group couldn't be moved" );
 
     $cg->discard_changes;
     is( $cg->land_id, $land[0]->id, "Still in same sector" );

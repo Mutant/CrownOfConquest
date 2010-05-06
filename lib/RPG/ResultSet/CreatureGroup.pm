@@ -64,7 +64,9 @@ sub _create_group {
         $self->{creature_types_by_level} = \@creature_types_by_level;
     }
 
-    my $cg = $self->create( {} );
+    my $cg = $self->create( {
+    	creature_group_id => undef,
+    } );
 
     my $number_of_types = RPG::Maths->weighted_random_number( 1 .. 3 );
 

@@ -40,14 +40,14 @@ sub display {
 	
 	    }
 	    elsif ( $result->{offline_party_fled} ) {	
-	        push @messages, "The party has fled!";
+	        push @messages, "The party has fled!\n";
 	
 			my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
 				
 	        push @messages, @xp_messages;
 	    }
 	    elsif ( $result->{party_fled} ) {
-	    	push @messages, "You fled the battle!";
+	    	push @messages, "You fled the battle!\n";
 	    }
     	elsif ( ! $group->is($result->{losers}) ) {
             my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
@@ -62,20 +62,20 @@ sub display {
 
             given ( $opponent->group_type ) {
             	when ('creature_group') { 
-                	push @messages, "You've killed the creatures";
+                	push @messages, "You've killed the creatures\n";
             	}
             	when ('party') {
-                	push @messages, "You've wiped out the party";
+                	push @messages, "You've wiped out the party\n";
             	}
             }
         }
         else {
         	given ( $group->group_type ) {
         		when ('party') {
-            		push @messages, "Your party has been wiped out!";
+            		push @messages, "Your party has been wiped out!\n";
         		}
         		when ('garrison') {
-        			push @messages, "The garrison has been wiped out!";
+        			push @messages, "The garrison has been wiped out!\n";
         		}
         	}
         }

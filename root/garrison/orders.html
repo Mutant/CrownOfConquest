@@ -3,7 +3,7 @@
 <form method="post" action="[% base %]garrison/update_orders">
 <input type="hidden" name="garrison_id" value="[% garrison.id %]">
 <table class="main">
-	<tr>
+	<tr id="creature-attack-mode">
 		<td>Orders against creatures:</td>
 		<td>
 			<select name="creature_attack_mode">
@@ -14,7 +14,7 @@
 			</select>
 		</td>
 	</tr>
-	<tr>
+	<tr id="party-attack-mode">
 		<td>Orders against parties:</td>
 		<td>
 			<select name="party_attack_mode">
@@ -38,6 +38,16 @@
 		</div>		
 	</tr>
 </table>
+
+<div dojoType="dijit.Tooltip"
+   		connectId="party-attack-mode,creature-attack-mode"
+   		id="mode-tooltip"
+		style="display: none">
+	Whether to attack creatures or parties that enter the sector.<br>
+	Select the maximum strength of the opponent the garrison should attack.<br>
+	If you select 'Attack Stronger Opponents', the garrison will still ignore<br>
+	some opponents, where the battle would be suicidal.	 
+</div>	
 
 <input type="submit" value="Update Orders">
 

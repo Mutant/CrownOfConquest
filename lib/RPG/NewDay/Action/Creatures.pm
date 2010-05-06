@@ -6,6 +6,10 @@ extends 'RPG::NewDay::Base';
 use List::Util qw(shuffle);
 use Data::Dumper;
 
+with 'RPG::NewDay::Role::GarrisonCombat';
+
+use feature 'switch';
+
 sub cron_string {
     my $self = shift;
      
@@ -238,7 +242,7 @@ sub move_monsters {
             last;
         }
 
-        my $cg_moved = 0;
+        my $new_sector;
 
         # Don't move creatures in combat, or guarding an orb
         next if $cg->in_combat_with || $cg->location->orb;
@@ -247,18 +251,24 @@ sub move_monsters {
 
         # Find sector to move to.. try sectors immediately adjacent first, and then go one more sector if we can't find anything
         for my $hop_size ( 1 .. $c->config->{max_hops} ) {
-            $cg_moved = $self->_move_cg( $hop_size, $cg );
+            $new_sector = $self->_move_cg( $hop_size, $cg );
 
-            if ($cg_moved) {
+            if ($new_sector) {
                 $moved++;
+                
+                # If there's a garrison, see if it wants to start a fight...
+                if (my $garrison = $new_sector->garrison) {
+                	$self->_check_for_fight($cg, $garrison);
+                }
 
                 if ( $moved % 100 == 0 ) {
                     $c->logger->info("Moved $moved so far...");
                 }
+                last;
             }
         }
 
-        unless ($cg_moved) {
+        unless ($new_sector) {
 
             # Couldn't move this CG. Add it back into the array and try again later
             #  (After other cg's have moved and possibly cleared some space)
@@ -277,7 +287,7 @@ sub _move_cg {
     my $size    = shift;
     my $cg      = shift;
 
-    my $cg_moved = 0;
+    my $new_sector;
 
     #warn "size: $size";
     #warn "loc: " . $cg->location->x . ", " . $cg->location->y;
@@ -298,6 +308,9 @@ sub _move_cg {
                     x => $sector->{x},
                     y => $sector->{y},
                 },
+                {
+                	prefetch => 'garrison',
+                }
             );
             
             $cg->land_id( $sector_record->id );
@@ -309,7 +322,7 @@ sub _move_cg {
             $c->land_grid->set_land_object( 'creature_group', $sector->{x}, $sector->{y} );
             $c->land_grid->clear_land_object( 'creature_group', $orig_x, $orig_y );
 
-            $cg_moved = 1;
+            $new_sector = $sector_record;
 
             last;
         }
@@ -320,7 +333,34 @@ sub _move_cg {
         }
     }
 
-    return $cg_moved;
+    return $new_sector;
+}
+
+sub _check_for_fight {
+	my $self = shift;
+	my $cg = shift;
+	my $garrison = shift;
+	
+	return if $garrison->creature_attack_mode eq 'Defensive Only';
+	
+	my $factor = $cg->compare_to_party($garrison);
+	
+	my $fight = 0;
+	given ($garrison->creature_attack_mode) {
+		when ('Attack Weaker Opponents' && $factor > 20) {
+			$fight = 1;
+		}
+		when ('Attack Similar Opponents' && $factor > 5) {
+			$fight = 1;
+		}
+		when ('Attack Stronger Opponents' && $factor > -15) {
+			$fight = 1;
+		}
+	}
+	
+	if ($fight) {
+		$self->execute_garrison_battle($garrison, $cg, 0);
+	}
 }
 
 1;

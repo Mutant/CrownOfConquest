@@ -32,7 +32,7 @@ sub display {
 
     if ( $result->{combat_complete} ) {
 		if ( $result->{creatures_fled} ) {	
-	        push @messages, "The creatures have fled!";
+	        push @messages, "The creatures have fled!\n";
 	
 			my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
 	

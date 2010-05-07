@@ -32,7 +32,7 @@
 <b>Last Round</b>:
 <ul>
 	[% FOREACH message = combat_messages %]
-	<li>[% message %]</li>
+	[% IF message %]<li>[% message %]</li>[% END %]
 	[% END %]
 </ul>
 

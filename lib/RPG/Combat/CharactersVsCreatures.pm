@@ -74,11 +74,11 @@ sub process_effects {
 sub creature_flee {
 	my $self = shift;
 
-    # See if the creatures want to flee... check this every 3 rounds
+    # See if the creatures want to flee... check this every 2 rounds
     #  Only flee if cg level is lower than party
-    if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 3 == 0 ) {
-        if ( $self->creature_group->level < $self->character_group->level - 2 ) {
-            my $chance_of_fleeing = ( $self->character_group->level - $self->creature_group->level ) * $self->config->{chance_creatures_flee_per_level_diff};
+    if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 2 == 0 ) {
+        if ( $self->creature_group->level < $self->character_group->level ) {
+            my $chance_of_fleeing = ( $self->character_group->level - $self->creature_group->level - 2 ) * $self->config->{chance_creatures_flee_per_level_diff};
 
             $self->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 

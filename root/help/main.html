@@ -28,19 +28,32 @@ equipment tab, and drag the item into the appropriate slot.</p>
 
 <p>Each town has a "prosperity" rating. This indicates how big the town is, and how useful (and cheap) it's services are likely to be.</p>
 
+<h3>Tax</h3>
+
+<p>Each town charges a tax to enter for the day. You can pay this by "working" (using up turns), or in gold. Each game day you'll have to pay tax again
+to enter the town.</p>
+
+<p>The amount of tax you pay is determined by a number of factors, including the size of the town, and your prestige with the town.</p>
+
 <h2>The Wilderness</h2>
 
 <p>Once you leave town, you're in the wilderness. Here, you'll find groups of monsters roaming free. Some may attack you, or you may choose to initiate combat
 yourself.</p>
 
-<p>To move around, click on a sector on the map next to the current location of your party (indicated by the blue square).</p>
+<p>To move around, click on a sector on the map next to the current location of your party (indicated by the blue square). You can zoom the map with the zoom
+buttons to the left. Any blank squares are ones you have yet to explore.</p>
 
 <p>As you move through the wilderness, your party will record the terrain around them. Clicking on the "Map" link on the left hand menu will display all the
-terrain your party has currently seen. Clicking on a sector on this screen will centre the map on it, alowing you can view the entire map.</p>
+terrain your party has currently seen. Clicking on a sector on this screen will centre the map on it, allowing you to view the entire map.</p>
 
 <p>The amount of turns it takes to move to a particular sector depends on your party's Movement Factor (displayed above the map, based on the constitution of
 your characters), and the type of terrain. Mousing over a sector on the map will tell you how many turns it will cost to move there. (For towns, 
 it will also display the name of the town, and its prosperity).</p>
+
+<h3>Orbs</h3>
+
+<p>You'll find Orbs scattered throughout the wilderness. These evil devices are responsible for spawning monsters. If you're high enough level, you may be able
+to destroy the orb (be careful though - they'll be protected!) Destroying orbs can help towns increase their prosperity.</p> 
 
 <h2>Combat</h2>
 
@@ -56,7 +69,7 @@ when using ranged weapons, archers will attack twice every second round.</p>
 
 <p>Each round of combat also uses one of your party's turns. However, you can keep fighting even if your turns go below zero.</p>
 
-<p>At the end of combat, if you defeated the creatures, you will receive experience, gold and maybe even find an item.</p>
+<p>At the end of combat, if you've defeated the creatures, you will receive experience, gold and maybe even find an item.</p>
 
 <h3>Party Rank</h3>
 
@@ -67,13 +80,24 @@ to change how the ranks will form.</p>
 <p>Characters in the front rank have a greater chance of being targetted by opponents. However those in the back rank will receive penalties when trying
 to attack with a melee weapon.</p>
 
+<h3>The Watcher</h3>
+
+<p>When your party starts out, they'll automatically get a "Watcher" effect. This is a force that stays with the party, and gives them an indication of how
+tough a group of creatures in the current sector is. This effect lasts for a few game days. After that, you'll need one of your mages to cast another
+"Watcher" spell.</p>
+
+<h3>Offline Combat</h3>
+
+<p>If you log out of the game in the middle of a battle, or if you leave your party in the wilderness, your party can be attacked while you're offline. You'll
+receive notification of any battles you were in when you next log in.</p>
+
 <h2>Spells</h2>
 
-<p>Two character classes - Mages and Priests - have the capability to cast spells. A particular spell can be cast either in or outside of combat (or sometimes
+<p>Two character classes - Mages and Priests - have the ability to cast spells. A particular spell can be cast either in or outside of combat (or sometimes
 both). If a character has an appropriate spell memorised, it will be available to you in the "Action" menu next to the character's name.</p>
 
 <p>To choose which spells a character has memorised, click on the character's name in the main screen to go to the character's page, and click the "Spells"
-tab. There you can see which spells the character has memorised today, and which he'll memorise tomorrow. You can change which spells s/he will memorise
+tab. There you can see which spells the character has memorised today, and which s/he'll memorise tomorrow. You can change which spells s/he will memorise
 tomorrow, and these will be updated the next day. A new character has a default set of spells memorised, and these probably need to be changed.</p>
 
 <h2>Quests</h2>
@@ -84,9 +108,22 @@ on what needs to be done to complete the quest.</p>
 
 <p>The number of quests a party can accept is limited by your party's level. Additionally, only one quest per town can be accepted.</p>
 
+<p>Each quest has a time limit to complete. If you don't complete the quest in time, you'll lose prestige with the town.</p>
+
 <h2>New Day</h2>
 
 <p>Every 24 hours, a new day will be started within the game. This will give your party another [% c.config.daily_turns %] turns, up to a maximum of
 [% c.config.maximum_turns %]. Your spell-casters' spells will also be re-memorised, and if your party is rested, they will heal.</p>
+
+<h2>Dungeons</h2>
+
+<p>If you've tired of the wilderness, you can find dungeons to explore. These underground labyrinths have large concentrations of high level creatures. You can find
+them by accident (by entering a sector with a dungeon entrance), or through a sage.</p>
+
+<h2>Garrisons</h2>
+
+<p>At party level [% c.config.minimum_garrison_level %], you can create garrisons. A garrison lets you assign one or more characters to stay in the sector, and
+battle monsters while the party is away. You can give the garrison certain orders (letting it know what to do when a group of monsters or another party enter
+the sector), and you can also store equipment and gold there.</p>
 
 [% INCLUDE bottom.html %]

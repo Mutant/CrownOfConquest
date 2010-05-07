@@ -10,7 +10,7 @@ use Math::Round qw(round);
 
 use RPG::Exception;
 
-__PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
+__PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
 __PACKAGE__->table('Party');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Party');
@@ -176,6 +176,8 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 __PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', 'dungeon_grid_id' );
 
 __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 'party_id', );
+
+__PACKAGE__->numeric_columns(qw/gold/);
 
 with qw/
 	RPG::Schema::Role::BeingGroup

@@ -29,6 +29,22 @@ sub character_shutdown : Tests(shutdown) {
 	$self->{dice}->unfake_module();	
 }
 
+sub test_numeric : Tests() {
+	my $self = shift;	
+	
+    my $char = $self->{schema}->resultset('Character')->create(
+        {
+			hit_points => 5,
+        }
+    );
+    
+    $char->increase_hit_points(5);
+    $char->increase_spell_points(11);
+    
+    is($char->hit_points, 10, "Yep");
+    is($char->spell_points, 11, "Sure");	
+}
+
 sub test_get_equipped_item : Tests(2) {
     my $self = shift;
 

@@ -4,10 +4,12 @@ use Moose;
 
 extends 'DBIx::Class';
 
-__PACKAGE__->load_components(qw/Core/);
+__PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Garrison');
 
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold/);
+
+__PACKAGE__->numeric_columns(qw/gold/);
 
 __PACKAGE__->set_primary_key('garrison_id');
 

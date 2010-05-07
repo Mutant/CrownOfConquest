@@ -48,3 +48,5 @@ CREATE  TABLE IF NOT EXISTS `Garrison_Messages` (
 ENGINE = InnoDB
 
 ALTER TABLE `Character` ADD COLUMN `garrison_id` INT  NULL AFTER `gender`;
+
+ALTER TABLE `Items` ADD COLUMN `garrison_id` INTEGER  AFTER `treasure_chest_id`;

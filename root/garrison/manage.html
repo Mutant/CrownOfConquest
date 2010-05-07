@@ -4,12 +4,63 @@
 <script type="text/javascript">
 	dojo.require("dojox.layout.ContentPane");
 	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.form.FilteringSelect");
 
 function saveCharacterOrder(select, char_id) {
 	dojo.xhrGet( {
         url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
         handleAs: "text",        
     });
+}
+
+function moveItem(itemSpan, confirmed) {
+	item_id = (itemSpan.id.split('-'))[2];
+
+	if (! confirmed && dojo.byId('item_equip_' + item_id).style.display != 'none' && dojo.byId('item_equip_' + item_id).innerHTML.match('<br>')) {
+		dojo.byId('move-item-id').value = itemSpan.id;
+		dijit.byId('confirm-move').show();
+		return;
+	}
+
+	[%# find if it's in a category or not %]
+	parent = itemSpan.parentNode;
+	
+	var newParent;
+	if (parent.id == 'garrison-equipment') {
+		newParent = dojo.byId('party-equipment');
+	}
+	else {
+		newParent = dojo.byId('garrison-equipment');
+	}
+	
+	newParent.appendChild(itemSpan);
+
+	dojo.byId('item_equip_' + item_id).style.display = 'none';
+
+	dojo.xhrGet( {
+        url: "[% base %]/garrison/move_item?item_id=" + item_id + '&garrison_id=[% garrison.id %]',
+        handleAs: "text",        
+    });	
+}
+
+function confirmedMove(arguments) {
+	itemSpan = dojo.byId(arguments.move_item_id);
+	moveItem(itemSpan, true);
+}
+
+function changeGold(garrisonGoldInput) {
+	dojo.xhrGet( {
+        url: "[% base %]/garrison/change_gold?garrison_id=[% garrison.id %]&garrison_gold=" + garrisonGoldInput.value, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) { 
+        	dojo.byId('party_gold').innerHTML = responseObject.party_gold;
+        	if (garrisonGoldInput.value != responseObject.garrison_gold) {
+        		garrisonGoldInput.value = responseObject.garrison_gold;
+        	}
+        },
+		timeout: 5000	 
+    }); 
 }
 
 </script>
@@ -19,6 +70,15 @@ function saveCharacterOrder(select, char_id) {
 	
 	* html #mainTabContainer {height: 700px; overflow: auto}
 </style>
+
+<div dojoType="dijit.Dialog" id="confirm-move" style="display: none" title="Confirm Move" execute="confirmedMove(arguments[0]);">
+    Are you sure you want to move this equipped item to the garrison?
+	<input id="move-item-id" name="move_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-move').hide()">Cancel</button>
+	</div>
+</div>
 
 <h3>Manage Garrison at [% garrison.land.x %], [% garrison.land.y %]</h3>
 
@@ -45,6 +105,11 @@ function saveCharacterOrder(select, char_id) {
     <div dojoType="dojox.layout.ContentPane" title="Orders" 
     	href="[% base %]garrison/orders_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'orders' %]selected="true"[% END %]>    
+    </div>
+
+    <div dojoType="dojox.layout.ContentPane" title="Equipment" 
+    	href="[% base %]garrison/equipment_tab?garrison_id=[% garrison.id %]"
+    	[% IF selected == 'equipment' %]selected="true"[% END %]>    
     </div>
 
     <div dojoType="dojox.layout.ContentPane" title="Messages" 

@@ -5,6 +5,9 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Carp;
+use JSON;
+
+use List::Util qw(shuffle);
 
 sub auto : Private {
 	my ($self, $c) = @_;
@@ -276,6 +279,123 @@ sub messages_tab : Local {
             }
         ]
     );	
+}
+
+sub equipment_tab : Local {
+	my ($self, $c) = @_;
+	
+	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	
+	my @party_equipment;
+	
+	if ($editable) {
+		@party_equipment = $c->model('DBIC::Items')->search(
+        	{ 
+	        	'belongs_to_character.garrison_id' => undef,
+	        	'belongs_to_character.party_id' => $c->stash->{party}->id, 
+	        },
+	        {
+	        	join => 'belongs_to_character',
+	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+	            order_by => 'item_category',
+	        },
+	    );
+	}
+    
+	my @garrison_equipment = $c->model('DBIC::Items')->search(
+        { 
+        	'garrison_id' => $c->stash->{garrison}->id, 
+        },
+        {
+            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+            order_by => 'item_category',
+        },
+    );    
+    
+    my @categories = $c->model('DBIC::Item_Category')->search( { hidden => 0 }, { order_by => 'item_category', }, );
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'garrison/equipment.html',
+                params   => {
+                	party_equipment => \@party_equipment,
+                	garrison_equipment => \@garrison_equipment,
+                	characters => [$c->stash->{party}->characters_in_party],
+                	categories => \@categories,
+                	garrison => $c->stash->{garrison},
+                	party => $c->stash->{party},
+                	editable => $editable,
+                },
+            }
+        ]
+    );		
+}
+
+sub move_item : Local {
+	my ($self, $c) = @_;
+	
+	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	
+	return unless $editable;
+	
+	my $item = $c->model('DBIC::Items')->find($c->req->param('item_id'));
+	
+	croak "Item not found" unless $item;
+	
+	my @characters = $c->stash->{party}->characters_in_party;
+	
+	if ($item->garrison_id == $c->stash->{garrison}->id) {
+		# Move back to party
+		my $character = (shuffle @characters)[0];
+		$item->add_to_characters_inventory($character);
+	}
+	else {
+		# Add to garrison, if it belonged to one of the party's characters
+		if (grep { $_->id == $item->character_id } @characters) {
+			$item->garrison_id($c->stash->{garrison}->id);
+			$item->character_id(undef);
+			$item->equip_place_id(undef);
+			$item->update;
+		}
+	}
+}
+
+sub change_gold : Local {
+	my ($self, $c) = @_;
+	
+	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	
+	return unless $editable;
+	
+	my $party = $c->stash->{party};
+	my $garrison = $c->stash->{garrison};
+		
+	my $garrison_gold = $c->req->param('garrison_gold');
+	my $total_gold = $garrison->gold + $party->gold;
+	if ($garrison_gold > $total_gold) {
+		$garrison_gold = $total_gold
+	}
+	
+	$garrison_gold = 0 if $garrison_gold < 0;
+	
+	my $party_gold = $total_gold - $garrison_gold;
+	
+	$party->gold($party_gold);
+	$party->update;
+	
+	$garrison->gold($garrison_gold);
+	$garrison->update;
+	
+	$c->res->body(
+		to_json(
+			{
+				party_gold => $party_gold,
+				garrison_gold => $garrison_gold,
+			}
+		),
+	);
 }
 
 1;

@@ -20,7 +20,7 @@
 		<td>
 			<select onChange="saveCharacterOrder(this, '[% char.id %]')">
 				[% options = ['Attack','Defend'] %]
-				[% options.push('Cast') IF char.is_spell_caster %]
+				[%# options.push('Cast') IF char.is_spell_caster %]
 				[% FOREACH option IN options %]
 					<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
 				[% END %]

@@ -12,7 +12,7 @@ use List::Util qw(sum);
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
-__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('`Character`');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Character');
@@ -22,6 +22,8 @@ __PACKAGE__->add_columns(
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id/
 );
+
+__PACKAGE__->numeric_columns(qw/hit_points spell_points/);
 
 __PACKAGE__->add_columns( xp => { accessor => '_xp' } );
 

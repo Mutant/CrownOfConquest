@@ -65,6 +65,13 @@ sub delete_account_confirmed : Local {
 	$c->session->{turns_used} = $c->stash->{party}->turns;
 	
 	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
+	
+	my @parties = $player->parties;
+	foreach my $party (@parties) {
+		$party->defunct(DateTime->now());
+		$party->update;	
+	}
+	
 	$player->delete;
 	delete $c->session->{player};
 	

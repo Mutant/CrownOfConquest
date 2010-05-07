@@ -37,6 +37,10 @@ sub login : Local {
                 undef $c->session->{login_url};
                 
                 $c->log->info("Post login redirect to: $url_to_redirect_to");
+                
+                if ($url_to_redirect_to =~ m|player/login|) {
+                	$url_to_redirect_to = ''; # Don't redirect back to the login page	
+                }
                               
                 $c->res->redirect( $c->config->{url_root} . $url_to_redirect_to );
             }

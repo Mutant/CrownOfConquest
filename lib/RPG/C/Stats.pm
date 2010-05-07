@@ -69,7 +69,6 @@ sub game : Local {
                 params   => {
                     players_count               => $players_count,
                     parties_count               => $parties_count,
-                    defunct_parties_count       => $defunct_parties_count,
                     character_count             => $character_count_rs->get_column('count'),
                     average_character_level     => $character_count_rs->get_column('average_level'),
                     class_stats                 => $class_rs,

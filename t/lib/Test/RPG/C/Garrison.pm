@@ -29,6 +29,7 @@ sub test_remove : Tests(6) {
 	
 	$self->{stash}{garrison} = $garrison;
 	$self->{stash}{party} = $party;
+	$self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});  
 	
 	$self->{mock_forward}{'/party/main'} = sub {};
 	

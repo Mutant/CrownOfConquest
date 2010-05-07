@@ -223,7 +223,10 @@ sub characters_in_party {
 	return $self->search_related('characters',
 		{
 			'garrison_id' => undef,
-		}
+		},
+		{
+			'order_by' => 'party_order',
+		},
 	);
 }
 
@@ -294,13 +297,15 @@ sub new_day {
 
     push @log, "You now have " . $self->turns . " turns.";
 
-    my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + ( $self->rest || 0 ) * RPG::Schema->config->{max_heal_percentage} / 10;
-
     foreach my $character ( $self->characters ) {
         next if $character->is_dead;
 
+		my $rest = $character->garrison_id ? 3 : $self->rest;
+
         # Heal chars based on amount of rest they've had during the day
-        if ( $self->rest != 0 ) {
+        if ( $rest != 0 ) {
+        	my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $rest * RPG::Schema->config->{max_heal_percentage} / 10;
+        	
             my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;
             $hp_increase = 1 if $hp_increase == 0;    # Always a min of 1
 
@@ -349,7 +354,7 @@ sub adjust_order {
     my $self = shift;
 
     my $count = 0;
-    foreach my $character ( $self->characters ) {
+    foreach my $character ( $self->characters_in_party ) {
         $character->discard_changes;
         next unless $character->in_storage && $character->party_id == $self->id;
 
@@ -357,12 +362,20 @@ sub adjust_order {
         $character->party_order($count);
         $character->update;
     }
+    
+    # Reset rank bar if it's gone off edge of party
+    if ($self->rank_separator_position >= $count) {    	
+    	my $new_pos = $count-1;
+    	$new_pos = 1 if $new_pos <= 0;
+    	$self->rank_separator_position($new_pos);
+    	$self->update;
+    }
 }
 
 sub summary {
     my $self                    = shift;
     my $include_dead_characters = shift || 0;
-    my @characters              = $self->characters;
+    my @characters              = $self->characters_in_party;
 
     my %summary;
 

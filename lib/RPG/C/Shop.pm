@@ -106,7 +106,12 @@ sub sell : Local {
 sub character_sell_tab : Local {
     my ( $self, $c ) = @_;
 
-    my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id') } );
+    my $character = $c->model('DBIC::Character')->find( 
+    	{ 
+    		character_id => $c->req->param('character_id'),
+    		garrison_id => undef, 
+    	} 
+    );
 
     croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
 

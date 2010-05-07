@@ -108,7 +108,7 @@ sub _create_orb_in_land {
         #warn Dumper $land;
         my ( $x, $y ) = ( $land->{x}, $land->{y} );
 
-        next if $land->{orb} || $land->{town};
+        next if $land->{orb} || $land->{town} || $land->{garrison};
 
         # Search for towns and orbs in this sector to see if it will block us spawning the orb.
         # The two searches are different sizes, so we have to find the largest one

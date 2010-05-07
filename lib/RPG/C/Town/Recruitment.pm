@@ -59,6 +59,9 @@ sub buy : Local {
     $character->town_id(undef);
     $character->party_order( scalar $c->stash->{party}->characters + 1 );
     $character->update;
+    
+    # Rejig party order
+    $c->stash->{party}->adjust_order;
 
     $c->model('DBIC::Character_History')->create(
         {
@@ -86,6 +89,11 @@ sub sell : Local {
     if ($character->is_dead) {
         croak "Can't sell a dead character\n";
     }   
+    
+    if ($character->garrison_id) {
+    	croak "Can't sell a character in a garrison\n";	
+    }
+    
     
 
     $c->stash->{party}->gold( $c->stash->{party}->gold + $character->sell_value );

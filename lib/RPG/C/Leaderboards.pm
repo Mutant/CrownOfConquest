@@ -19,7 +19,7 @@ sub default : Path {
             created => { '!=', undef },
         },
         {
-            prefetch  => ['player'],
+            #prefetch  => ['player'], # For some reason, this breaks the query....
             join      => 'characters',
             '+select' => [ \'sum(characters.xp) as total_xp', \'round(avg(characters.xp)) as average_xp', \'sum(characters.xp)/turns_used as xp_per_turn', \'count(character_id) as character_count' ],
             '+as'     => [ 'total_xp', 'average_xp', 'xp_per_turn', 'character_count' ],

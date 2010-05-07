@@ -90,6 +90,13 @@ sub is_spell_caster {
 	return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
 }
 
+# Returns true if character is in a party (any party), and not a garrison
+sub is_in_party {
+	my $self = shift;
+	
+	return $self->party_id && ! $self->garrison_id ? 1 : 0;
+}
+
 sub encumbrance {
 	my $self = shift;
 	

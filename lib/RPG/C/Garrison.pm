@@ -79,6 +79,17 @@ sub add : Local {
 		}
 	);
 	
+	$c->model('DBIC::Party_Messages')->create(
+		{
+			message => "We created a garrison at " . $garrison->land->x . ", " . $garrison->land->y,
+			alert_party => 0,
+			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->id,
+		}
+	);
+	
+	$c->stash->{party}->adjust_order;
+	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
 }
 
@@ -129,6 +140,8 @@ sub update : Local {
 		}
 	);	
 	
+	$c->stash->{party}->adjust_order;
+	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
 	
 }
@@ -152,6 +165,17 @@ sub remove : Local {
 			$character->update;	
 		}
 		
+		$c->stash->{party}->adjust_order;
+
+		$c->model('DBIC::Party_Messages')->create(
+			{
+				message => "We disbanded our garrison at " . $c->stash->{garrison}->land->x . ", " . $c->stash->{garrison}->land->y,
+				alert_party => 0,
+				party_id => $c->stash->{party}->id,
+				day_id => $c->stash->{today}->id,
+			}
+		);		
+
 		$c->stash->{garrison}->delete;
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];

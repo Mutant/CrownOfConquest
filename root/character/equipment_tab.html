@@ -56,9 +56,9 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 
 <br><br>
 
-[% IF character.party_id %]
+[% IF character.is_in_party %]
 	Mouse over an item to get it's stats. Drag an item onto an equip slot to the left to equip it. Alternatively, right click an 
-	item to equip it, drop it, give it to another character. 
+	item to equip it, drop it, give it to another character.<br> 
 [% END %]
 
 [% last_category = '' %]
@@ -75,9 +75,11 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
 
-	[% IF character.party_id %]
+	[% IF character.is_in_party %]
 	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId(this.id)">
 		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
+	[% END %]
+	
 			<span class="dojoDndItem" dndType="item" id="item-[% item.id %]">
 				<span id="item-tooltip-[% item.id %]">
 				[% IF item.item_type.image %]
@@ -93,13 +95,15 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 				style="display: none">
 					[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
             </div>
+            
+    [% IF character.is_in_party %]
 		</span>	
 	</span>
-	[% ELSE %]
-		[% item.display_name %]
 	[% END %]
+	
 [% END %]
 
+[% IF character.is_in_party %]
 <script>
 function createMenus() { 
 
@@ -167,4 +171,6 @@ function createMenus() {
 
 dojo.addOnLoad( createMenus );
 </script>
+[% END %]
+
 </td></tr></table>

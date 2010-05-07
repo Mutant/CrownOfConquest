@@ -228,17 +228,26 @@ function calculateSpellPoints() {
 [% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
 
 <b>[% IF character.party_id %]Party[% ELSE %]Other Characters Available to Recruit[% END %]:</b>
-[% FOREACH other_character IN characters %]
-	[% IF other_character.id == character.id %]
-		[% other_character.character_name %]
-	[% ELSE %]
-		[% FILTER collapse %]
-			<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">
-				[% other_character.character_name %]
-			</a>
+
+[% MACRO character_links(characters) BLOCK %]
+	[% FOREACH other_character IN characters %]
+		[% IF other_character.id == character.id %]
+			[% other_character.character_name %]
+		[% ELSE %]
+			[% FILTER collapse %]
+				<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">
+					[% other_character.character_name %]</a>
+			[% END %]
 		[% END %]
+		&nbsp;
 	[% END %]
-	&nbsp;
+[% END %]
+
+[% character_links(characters) %]
+[% IF garrison_characters.0 %]	
+	<br>
+	<b>Garrison Characters</b>:
+	[% character_links(garrison_characters) %]
 [% END %]
 
 <br><br>

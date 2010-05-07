@@ -508,7 +508,7 @@ sub test_check_for_flee_successful_flee : Tests(10) {
     );
 
     my $combat_log = Test::MockObject->new();
-    $combat_log->set_always( 'rounds', 3 );
+    $combat_log->set_always( 'rounds', 2 );
     $combat_log->set_true('outcome');
     $combat_log->set_true('encounter_ended');
     $combat_log->set_true('update');

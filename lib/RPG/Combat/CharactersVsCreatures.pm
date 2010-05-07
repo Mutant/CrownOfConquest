@@ -152,6 +152,7 @@ sub check_for_item_found {
             {
                 prevalence        => { '>=', $min_prevalence },
                 'category.hidden' => 0,
+                'category.findable' => 1,
             },
             { join => 'category', },
         );

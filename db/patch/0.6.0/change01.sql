@@ -50,3 +50,7 @@ ENGINE = InnoDB
 ALTER TABLE `Character` ADD COLUMN `garrison_id` INT  NULL AFTER `gender`;
 
 ALTER TABLE `Items` ADD COLUMN `garrison_id` INTEGER  AFTER `treasure_chest_id`;
+
+ALTER TABLE `Item_Category` ADD COLUMN `findable` TINYINT  NOT NULL DEFAULT 1 AFTER `auto_add_to_shop`;
+UPDATE `Item_Category` set findable = 0 where item_category = 'Special Items';
+

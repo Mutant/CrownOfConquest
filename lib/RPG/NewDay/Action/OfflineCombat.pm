@@ -50,14 +50,17 @@ sub initiate_battles {
     my $self = shift;
     my $c    = $self->context;    
     
-    # Get all CGs in a sector with one or more active parties or garrisons
+    # Get all CGs in a sector with one or more active parties
     my $cg_rs = $c->schema->resultset('CreatureGroup')->search(
-        {},
+        { 
+            'parties.party_id' => { '!=', undef },
+            'parties.defunct' => undef,
+            'parties.dungeon_grid_id' => undef, 
+        },
         {
             prefetch => [ { 'creatures' => 'type' }, { 'location' => 'parties' }, ],
         },
-    );      
-	
+    ); 	
 	
 	my $combat_count = 0;
 	my $garrison_combat_count = 0;
@@ -65,9 +68,7 @@ sub initiate_battles {
     CG: while (my $cg = $cg_rs->next) {
         my @parties = $cg->location->parties;
         
-        foreach my $party (shuffle @parties) {
-            next if ! $party || $party->is_online || $party->in_combat || $party->dungeon_grid_id || $party->defunct;
-            
+        foreach my $party (shuffle @parties) {            
             my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party );
             
             next if $offline_combat_count >= $c->config->{max_offline_combat_count};
@@ -79,21 +80,55 @@ sub initiate_battles {
                 next CG;
             }   
         }
-        
-        if (my $garrison = $cg->location->garrison) {
-       		next if $garrison->in_combat;
-      		
-       		if (Games::Dice::Advanced->roll('1d100') <= $c->config->{garrison_combat_chance}) {
-       			$self->execute_garrison_battle($garrison, $cg, 1);	
-       			$garrison_combat_count++;
-       		}
-       			
-        }
     }
+    
+    # Now do the garrisons
+    $cg_rs = $c->schema->resultset('CreatureGroup')->search(
+        { 
+            'party.defunct' => undef,
+            'garrison.garrison_id' => {'!=', undef}, 
+        },
+        {
+            prefetch => [ { 'creatures' => 'type' }, { 'location' => {'garrison' => 'party' } }, ],
+        },
+    );
+    
+    while (my $cg = $cg_rs->next) {
+		if (Games::Dice::Advanced->roll('1d100') <= $c->config->{garrison_combat_chance}) {
+        	$self->execute_garrison_battle( $cg->location->garrison, $cg, 1 );
+            $garrison_combat_count++;
+		}
+    }    
     
     
     $c->logger->info($combat_count . " battles executed");
     $c->logger->info($garrison_combat_count . " garrison battles executed");
+}
+
+sub execute_offline_battle {
+    my $self  = shift;
+    my $party = shift;
+    my $cg    = shift;
+    my $creatures_initiated = shift || 0;
+
+    my $c      = $self->context;
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        creature_group      => $cg,
+        party               => $party,
+        schema              => $c->schema,
+        config              => $c->config,
+        creatures_initiated => $creatures_initiated,
+        log                 => $c->logger,
+        creatures_can_flee  => $cg->location->orb ? 1 : 0,
+    );
+
+    while (1) {
+        last if $party->is_online;
+
+        my $result = $battle->execute_round;
+
+        last if $result->{combat_complete};
+    }
 }
 
 1;

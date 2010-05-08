@@ -53,8 +53,7 @@ sub generate_character {
 
     my $level = RPG::Maths->weighted_random_number( 1 .. $max_level );
 
-    my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
-    my $xp = $levels{$level} + int rand( $xp_for_next_level - $levels{$level} );
+	my $xp = $self->calculate_xp($level, $max_level, %levels);
 
     my $character = $c->schema->resultset('Character')->generate_character($race, $class, $level, $xp);
     
@@ -72,6 +71,22 @@ sub generate_character {
             event        => $character->character_name . " arrived at the town of " . $town->town_name . " and began looking for a party to join",
         },
     );
+}
+
+sub _calculate_xp {
+	my $self = shift;
+	my $level = shift;
+	my $max_level = shift;
+	my %levels = @_;
+	
+	my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
+	
+	my $dice_size = $xp_for_next_level - $levels{$level};
+	$dice_size = $levels{$level} if $level == $max_level;
+	
+    my $xp = $levels{$level} + Games::Dice::Advanced->roll( '1d' . $dice_size );
+    
+    return $xp;
 }
 
 sub _allocate_equipment {

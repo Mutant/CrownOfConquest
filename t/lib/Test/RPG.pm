@@ -123,6 +123,7 @@ sub mock_dice {
     $dice->fake_module(
     	'Games::Dice::Advanced',        
         roll => sub {
+        	$self->{mock_dice_params} = \@_;
             $self->{counter} ||= 0;
             if ( $self->{rolls} ) {
                 my $ret = $self->{rolls}[ $self->{counter} ];

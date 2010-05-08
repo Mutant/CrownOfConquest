@@ -62,8 +62,6 @@ function refreshPanels(panelData) {
     if (panelData.refresh_panels) {
 		for (var panel in panelData.refresh_panels) {
 			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
-			dijit.byId(panel+'-pane').refresh();
-			//dijit.byId(panel+'-pane').parseOnLoad = true;
 		}
 	}	
 }

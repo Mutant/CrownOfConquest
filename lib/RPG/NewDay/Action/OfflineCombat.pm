@@ -13,7 +13,7 @@ use List::Util qw(shuffle);
 sub cron_string {
     my $self = shift;
 
-    return "*/15 * * * *";
+    return "15 * * * *";
 }
 
 sub run {
@@ -51,19 +51,18 @@ sub initiate_battles {
     my $c    = $self->context;    
     
     # Get all CGs in a sector with one or more active parties or garrisons
-    my @cgs = $c->schema->resultset('CreatureGroup')->search(
+    my $cg_rs = $c->schema->resultset('CreatureGroup')->search(
         {},
         {
             prefetch => [ { 'creatures' => 'type' }, { 'location' => 'parties' }, ],
         },
-    );
-      
-	$c->logger->info(scalar @cgs . " CGs in sectors with active parties");
+    );      
+	
 	
 	my $combat_count = 0;
 	my $garrison_combat_count = 0;
       
-    CG: foreach my $cg (@cgs) {
+    CG: while (my $cg = $cg_rs->next) {
         my @parties = $cg->location->parties;
         
         foreach my $party (shuffle @parties) {

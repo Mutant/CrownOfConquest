@@ -53,7 +53,7 @@ sub generate_character {
 
     my $level = RPG::Maths->weighted_random_number( 1 .. $max_level );
 
-	my $xp = $self->calculate_xp($level, $max_level, %levels);
+	my $xp = $self->_calculate_xp($level, $max_level, %levels);
 
     my $character = $c->schema->resultset('Character')->generate_character($race, $class, $level, $xp);
     

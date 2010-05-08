@@ -176,6 +176,15 @@ sub remove : Local {
 			}
 		);		
 
+		# Move equipment and gold back to party
+		foreach my $item ($c->stash->{garrison}->items) {
+			my $character = (shuffle @characters)[0];
+			$item->add_to_characters_inventory($character);
+		}
+		
+		$c->stash->{party}->increase_gold($c->stash->{garrison}->gold);
+		$c->stash->{party}->update;
+
 		$c->stash->{garrison}->delete;
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];

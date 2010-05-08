@@ -15,6 +15,8 @@ __PACKAGE__->set_primary_key('garrison_id');
 
 __PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', 'garrison_id', {cascade_delete => 0});
 
+__PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'garrison_id');
+
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', 'party_id', );
 
 __PACKAGE__->belongs_to(

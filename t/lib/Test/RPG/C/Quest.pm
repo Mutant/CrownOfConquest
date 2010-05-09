@@ -14,13 +14,17 @@ use Test::RPG::Builder::Party;
 
 use RPG::C::Quest;
 
-sub test_check_action_only_in_progress_quests_checked : Tests(1) {
+sub test_check_action_only_in_progress_quests_checked : Tests(2) {
     my $self = shift;
 
     # GIVEN
     use_ok('Test::RPG::Builder::Quest::Destroy_Orb');
     
     $self->{config}{quest_type_vars}{destroy_orb}{initial_search_range} = 1;
+    $self->{config}{quest_type_vars}{destroy_orb}{max_search_range} = undef;
+
+    #use Data::Dumper;
+    #warn Dumper $self->{c}->config;
     
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $quest1 = Test::RPG::Builder::Quest::Destroy_Orb->build_quest( $self->{schema}, status => 'In Progress', party_id => $party->id );
@@ -38,7 +42,8 @@ sub test_check_action_only_in_progress_quests_checked : Tests(1) {
  
     my $counter = 0;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { return 'message: ' . $counter++ };
-    
+
+   
     # WHEN
     my $messages = RPG::C::Quest->check_action($self->{c}, 'orb_destroyed', 1);
     

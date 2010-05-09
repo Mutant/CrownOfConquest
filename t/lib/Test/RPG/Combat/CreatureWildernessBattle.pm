@@ -190,13 +190,6 @@ sub test_character_action_cast_spell_on_opponent : Tests(2) {
     $character->last_combat_param2( $creature->id );
     $character->update;
 
-    $self->{config} = {
-        creature_defence_base           => 5,
-        create_defence_factor_increment => 5,
-        creature_attack_base            => 5,
-        create_attack_factor_increment  => 5,
-    };
-
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
         party          => $party,
@@ -250,13 +243,6 @@ sub test_character_action_cast_spell_on_opponent_who_is_killed : Tests(4) {
 
     $character->last_combat_param2( $creature->id );
     $character->update;
-
-    $self->{config} = {
-        creature_defence_base           => 5,
-        create_defence_factor_increment => 5,
-        creature_attack_base            => 5,
-        create_attack_factor_increment  => 5,
-    };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -314,13 +300,6 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
     $character->update;
 
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-
-    $self->{config} = {
-        creature_defence_base           => 5,
-        create_defence_factor_increment => 5,
-        creature_attack_base            => 5,
-        create_attack_factor_increment  => 5,
-    };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -695,20 +674,6 @@ sub test_execute_round_creature_killed : Tests(9) {
     my $cg    = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
     my $cret  = ( $cg->creatures )[0];
 
-    $self->{config} = {
-        attack_dice_roll                      => 10,
-        defence_dice_roll                     => 10,
-        creature_defence_base                 => 5,
-        create_defence_factor_increment       => 5,
-        creature_attack_base                  => 5,
-        create_attack_factor_increment        => 5,
-        maximum_turns                         => 300,
-        xp_multiplier                         => 10,
-        chance_to_find_item                   => 0,
-        prevalence_per_creature_level_to_find => 1,
-        home => '/home/sam/RPG/',
-    };
-
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
         party          => $party,
@@ -773,21 +738,6 @@ sub test_execute_round_creature_group_wiped_out : Tests(1) {
     $cg = Test::MockObject::Extends->new($cg);
     $cg->set_always( 'number_alive', 0 );
 
-    $self->{config} = {
-        attack_dice_roll                      => 10,
-        defence_dice_roll                     => 10,
-        creature_defence_base                 => 5,
-        create_defence_factor_increment       => 5,
-        creature_attack_base                  => 5,
-        create_attack_factor_increment        => 5,
-        maximum_turns                         => 300,
-        xp_multiplier                         => 10,
-        chance_to_find_item                   => 0,
-        prevalence_per_creature_level_to_find => 1,
-        nearby_town_range                     => 5,
-        home => '/home/sam/RPG/',
-    };
-
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
         party          => $party,
@@ -810,25 +760,10 @@ sub test_execute_round_messages_recorded_in_db : Tests(4) {
     my $self = shift;
 
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2,);
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
     $cg = Test::MockObject::Extends->new($cg);
     $cg->set_always( 'number_alive', 0 );
-
-    $self->{config} = {
-        attack_dice_roll                      => 10,
-        defence_dice_roll                     => 10,
-        creature_defence_base                 => 5,
-        create_defence_factor_increment       => 5,
-        creature_attack_base                  => 5,
-        create_attack_factor_increment        => 5,
-        maximum_turns                         => 300,
-        xp_multiplier                         => 10,
-        chance_to_find_item                   => 0,
-        prevalence_per_creature_level_to_find => 1,
-        nearby_town_range                     => 5,
-        home => '/home/sam/RPG/',
-    };
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},

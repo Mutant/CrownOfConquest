@@ -4,7 +4,7 @@ use Moose::Role;
 
 use Carp;
 
-requires qw/members flee_threshold in_combat/;
+requires qw/members flee_threshold in_combat is_online/;
 
 use List::Util qw(sum);
 use POSIX;

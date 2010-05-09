@@ -446,7 +446,7 @@ sub end_combat {
 
 sub is_online {
     my $self = shift;
-
+    
     return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;
 }
 

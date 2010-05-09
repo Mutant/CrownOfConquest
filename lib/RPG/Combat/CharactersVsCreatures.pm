@@ -160,7 +160,7 @@ sub check_for_item_found {
         my $item_type = shift @item_types;
 
         unless ($item_type) {
-            $self->log->warn("Couldn't find item to give to party under prevalence $min_prevalence");
+            $self->log->info("Couldn't find item to give to party under prevalence $min_prevalence");
             return;
         }
 

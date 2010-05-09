@@ -10,6 +10,8 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 use Test::MockObject;
 
+use Data::Dumper;
+
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
@@ -548,9 +550,143 @@ sub test_level_up : Tests(6) {
     is(scalar @history, 1, "1 item recorded in character history");
     is($history[0]->event, $character->character_name . " reached level 2", "Level up event recorded");
     is($history[0]->day_id, $today->id, "History event recorded on correct day");
-    
-    
+}
 
+sub test_check_for_offline_cast : Tests(10) {
+	my $self = shift;
+	
+	# GIVEN
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->offline_cast_chance(50);
+	$character->update;
+	
+	my $spell1 = $self->{schema}->resultset('Spell')->find( { spell_name => 'Energy Beam', } );
+	my $spell2 = $self->{schema}->resultset('Spell')->find( { spell_name => 'Haste', } );
+	
+	my @tests = (
+		{
+			roll => 60,
+			memorised_spells => [
+				{
+					spell_id => $spell1->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 1,
+				}
+			],
+			expected_result => 0,
+			label => 'Roll less than offline_cast_chance, no spell cast',
+		},	
+		{
+			roll => 50,
+			memorised_spells => [
+				{
+					spell_id => $spell1->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 1,
+				}
+			],
+			expected_result => 1,
+			label => 'Roll equal to offline_cast_chance, spell cast',
+		},		
+		{
+			roll => 40,
+			memorised_spells => [
+				{
+					spell_id => $spell1->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 1,
+				},
+				{
+					spell_id => $spell2->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 0,
+				},				
+			],
+			expected_result => 1,
+			expected_spell => $spell1->id,
+			label => 'Only cast spells marked to cast offline',
+		},	
+		{
+			roll => 40,
+			memorised_spells => [
+				{
+					spell_id => $spell1->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 1,
+				},
+				{
+					spell_id => $spell2->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 1,
+					cast_offline => 1,
+				},				
+			],
+			expected_result => 1,
+			expected_spell => $spell1->id,
+			label => 'Only cast spells with casts left today',
+		},	
+		{
+			roll => 40,
+			memorised_spells => [
+				{
+					spell_id => $spell1->id,
+					character_id => $character->id,
+					memorised_today => 1,
+					memorise_count => 1,
+					number_cast_today => 0,
+					cast_offline => 0,
+				},		
+			],
+			expected_result => 0,
+			label => 'Dont cast anything if no spells marked to cast offline',
+		},							
+	);
+	
+	$self->mock_dice;
+	
+	# WHEN
+	my @results;
+	foreach my $test (@tests) {
+		$self->{schema}->resultset('Memorised_Spells')->delete;	
+	
+		foreach my $mem_spell (@{$test->{memorised_spells}}) {
+			$self->{schema}->resultset('Memorised_Spells')->create($mem_spell);
+		}
+		$self->{roll_result} = $test->{roll};
+		my $result = $character->check_for_offline_cast;
+		push @results, $result;
+	}
+	
+	# THEN
+	my $count = 0;
+	foreach my $test (@tests) {
+		is($results[$count] ? 1 : 0, $test->{expected_result}, $test->{label});
+		if ($results[$count]) {
+			isa_ok($results[$count], 'RPG::Schema::Spell', "Result returned in a spell");	
+		}		
+		if ($test->{expected_spell}) {
+			is($results[$count]->id, $test->{expected_spell}, "Spell returned as expected");	
+		}
+		$count++;
+	}
+	
 }
 
 1;

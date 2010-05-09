@@ -431,6 +431,12 @@ sub update_spells : Local {
 		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise those spells";
 	}
 	else {
+		my $cast_chance = $c->req->param('offline_cast_chance');
+		$cast_chance = 0 if $cast_chance < 0;
+		$cast_chance = 100 if $cast_chance > 100;
+		$character->offline_cast_chance($cast_chance);
+		$character->update;
+		
 		foreach my $spell_id ( keys %memorise_tomorrow ) {
 			my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find_or_create(
 				{
@@ -446,6 +452,8 @@ sub update_spells : Local {
 			else {
 				$memorised_spell->memorise_tomorrow(0);
 			}
+			
+			$memorised_spell->cast_offline($c->req->param('cast_offline_' . $spell_id) ? 1 : 0);
 
 			$memorised_spell->memorise_count_tomorrow($mem_count);
 			$memorised_spell->update;
@@ -555,7 +563,7 @@ sub bury : Local {
 sub check_action_allowed : Local {
 	my ( $self, $c ) = @_;
 
-	unless ( $c->stash->{character}->is_in_party ) {
+	unless ( $c->stash->{character}->party_id ) {
 		croak "Can only make changes to a character in your party\n";
 	}
 }

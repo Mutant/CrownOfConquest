@@ -20,25 +20,63 @@
 
 <form method="post" id="spells-form" action="[% base %]/character/update_spells">
 <input type="hidden" name="character_id" value="[% character.id %]">
-<table class="main">
+<table class="main" cellpadding="2" cellspacing="0">
+	<tr>
+		<td></td>
+		<td></td>
+		<td></td>
+		<th># to<br>Memorise</th>
+		<th>Cast<br>Offline <span id="cast_offline_help">(?)</span></th>
+	</tr>
+<div dojoType="dijit.Tooltip"
+	connectId="cast_offline_help"
+    label="Check any combat spells that you would like this character to cast while in offline (or garrison) combat"></div>	
+	
 [% FOREACH spell IN available_spells %]	
 	[% spell_id = spell.id %]
-	<tr>
+	<tr [% IF loop.count % 2 == 0 %]style="background: lightgrey"[% END %]>
 		<td>[% spell.spell_name %]</td>
 		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
 		<td>
 		 <span dojoType="dijit.form.Button" id="mem_spell_[% spell.id %]">?</span>
+		 	[% desc = spell.description _ "<br>(" %]
+		 	[% IF spell.combat && spell.non_combat %]
+		 		[% desc = desc _ "Combat & Non-Combat" %]
+		 	[% ELSIF spell.combat %]
+		 		[% desc = desc _ "Combat Only" %]
+		 	[% ELSE %]
+		 		[% desc = desc _ "Non-Combat Only" %]
+		 	[% END %]
+		 	[% desc = desc _ ")" %]
+		 	
 			<div dojoType="dijit.Tooltip"
                    connectId="mem_spell_[% spell.id %]"
-                   label="[% spell.description | html_entity %]"></div>
+                   label="[% desc | html_entity %]"></div>
 		</td>
 		<td>			
 			<input type="text" size="3" name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"
 				onkeyup="calculateSpellPoints()" autocomplete="off">
 		</td>
+		<td align="center">
+			[% IF spell.combat %]
+				<input type="checkbox" name="cast_offline_[% spell.id %]" [% IF memorised_spells_by_id.$spell_id.cast_offline %]checked[% END %] value="1">
+			[% END %]
+		</td>
 	</tr>
 [% END %]
 </table>
+<br>
+
+Offline Cast % Chance <span id="offline_cast_chance_help">(?)</span>: 
+<input type="text" dojoType="dijit.form.NumberTextBox" name="offline_cast_chance" value="[% character.offline_cast_chance %]" 
+	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" size="4">
+
+<div dojoType="dijit.Tooltip"
+	connectId="offline_cast_chance_help"
+    label="The percentage chance each round this character will cast a spell in offline (or garrison) combat.<br>Set to 0 to disable offline casting."></div>	
+
+<br>
+
 <input type="submit" value="Update Spells">
 </form>
 [% END %]

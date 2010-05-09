@@ -11,10 +11,24 @@ use Data::Dumper;
 use Test::More;
 use Test::MockModule;
 
+use YAML;
+
+my $config;
+BEGIN {
+    my $home = $ENV{RPG_HOME};
+    $config = YAML::LoadFile("$home/rpg.yml");
+    if ( -f "$home/rpg_local.yml" ) {
+        my $local_config = YAML::LoadFile("$home/rpg_local.yml");
+        $config = { %$config, %$local_config };
+    }    
+}	
+
 sub aa_init_params : Test(startup) {
     my $self = shift;
     
-    $self->{config} = {};
+    $self->{base_config} = $config; 
+    
+    $self->{config} = $config;
 }
 
 sub aa_setup_context : Test(setup) {
@@ -68,7 +82,8 @@ sub aa_setup_context : Test(setup) {
 	$self->{session} ||= {};
 	$self->{c}->mock( 'session', sub { $self->{session} } );
 
-	$self->{config} ||= {};
+	$self->{config} = $self->{base_config};
+
 	$self->{c}->mock( 'config', sub { $self->{config} } );
 	
 	$self->{flash} ||= {};

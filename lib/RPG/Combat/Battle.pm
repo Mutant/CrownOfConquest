@@ -12,6 +12,8 @@ use Math::Round qw(round);
 use RPG::Combat::ActionResult;
 use RPG::Combat::MessageDisplayer;
 
+use feature 'switch';
+
 requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by/;
 
 has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
@@ -245,6 +247,9 @@ sub character_action {
     my $opp_group = $self->opponents_of($character);
 
     my %opponents = map { $_->id => $_ } $opp_group->members;
+    
+    # Check if spell casters should do an offline cast
+    $self->check_for_offline_cast($character);
 
     if ( $character->last_combat_action eq 'Attack' ) {
 
@@ -311,6 +316,44 @@ sub character_action {
 
         return $result;
     }
+}
+
+sub check_for_offline_cast {
+	my $self = shift;
+	my $character = shift;
+	
+	my $opp_group = $self->opponents_of($character);
+	my %opponents = map { $_->id => $_ } $opp_group->members;
+	
+    if( ! $character->group->is_online && $character->is_spell_caster) {    
+    	if (my $spell = $character->check_for_offline_cast) {
+    		# Change character's actions to cast the spell
+    		$character->last_combat_action('Cast');
+    		$character->last_combat_param1($spell->id);
+    		
+    		# Randomly select a target
+    		given ($spell->target) {
+    			when ('creature') {
+    				my $target;
+					for my $id ( shuffle keys %opponents ) {
+		                unless ( $opponents{$id}->is_dead ) {
+		                    $target = $opponents{$id};
+		                    last;
+		                }
+		            }    		
+    				$character->last_combat_param2($target->id);
+    			}
+    			when ('character') {
+    				my $target = (shuffle grep { ! $_->is_dead } $character->group->characters)[0];
+    				$character->last_combat_param2($target->id);
+    			}
+    			default {
+    				# Currently only combat spells with creature/character target are implemented
+    				confess "Can't handle spell target: $_";	
+    			}
+    		}    			
+    	}	
+    }	
 }
 
 sub creature_action {

@@ -8,7 +8,7 @@ use base 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
-use List::Util qw(sum);
+use List::Util qw(sum shuffle);
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
@@ -20,7 +20,7 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender garrison_id/
+        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
@@ -832,6 +832,30 @@ sub set_starting_equipment {
             $item->variable( 'Quantity', 250 );
         }
     }
+}
+
+# Returns the spell to cast if there is one, undef otherwise
+sub check_for_offline_cast {
+	my $self = shift;
+	
+	my $cast_roll = Games::Dice::Advanced->roll('1d100');
+	if ($cast_roll <= $self->offline_cast_chance) {
+		my @spells = $self->search_related(
+			'memorised_spells',
+			{
+				cast_offline => 1,
+			},
+			{
+				prefetch => 'spell',
+			}
+		);
+		
+		@spells = grep { $_->casts_left_today > 0 } @spells;
+		
+		return unless @spells;
+		
+		return (shuffle @spells)[0]->spell; 
+	}	
 }
 
 1;

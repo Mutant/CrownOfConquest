@@ -104,4 +104,8 @@ sub recent_battles_count {
 	return $self->result_source->schema->resultset('Combat_Log')->get_logs_count_for_garrison($self);
 }
 
+sub is_online {
+	return 0;
+}
+	
 1;

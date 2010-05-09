@@ -15,6 +15,7 @@ use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
 
 use Data::Dumper;
+use DateTime;
 
 use RPG::Combat::Battle;
 
@@ -435,5 +436,111 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
 	is(defined $party->defunct, 1, "Party now marked as defunct"); 
 }
 
+sub test_check_for_offline_cast_creature_target : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Energy Beam', } );
+	
+	$self->{config} = {
+		online_threshold => 5,
+	};
+	
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+    my $cret = ($cg->creatures)[0];
+    
+    $party->last_action(DateTime->now()->subtract( minutes => 10 ));	
+    $party->update;
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character = Test::MockObject::Extends->new($character);
+	$character->set_true('is_spell_caster');
+	$character->set_always('check_for_offline_cast', $spell);
+	
+	my $battle = Test::MockObject->new();
+	$battle->set_always('opponents_of', $cg);
+	
+	# WHEN
+	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	
+	# THEN
+	is($character->last_combat_action, 'Cast', "Last combat action set correctly");
+	is($character->last_combat_param1, $spell->id, "Spell id set correctly");
+	is($character->last_combat_param2, $cret->id, "Spell target set correctly");	
+
+}
+
+sub test_check_for_offline_cast_character_target : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Haste', } );
+	
+	$self->{config} = {
+		online_threshold => 5,
+	};
+	
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+    my $cret = ($cg->creatures)[0];
+    
+    $party->last_action(DateTime->now()->subtract( minutes => 10 ));	
+    $party->update;
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character = Test::MockObject::Extends->new($character);
+	$character->set_true('is_spell_caster');
+	$character->set_always('check_for_offline_cast', $spell);
+	
+	my $battle = Test::MockObject->new();
+	$battle->set_always('opponents_of', $cg);
+	
+	# WHEN
+	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	
+	# THEN
+	is($character->last_combat_action, 'Cast', "Last combat action set correctly");
+	is($character->last_combat_param1, $spell->id, "Spell id set correctly");
+	is($character->last_combat_param2, $character->id, "Spell target set correctly");	
+
+}
+
+sub test_check_for_offline_cast_online_so_no_cast : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Haste', } );
+	
+	$self->{config} = {
+		online_threshold => 11,
+	};
+	
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+    my $cret = ($cg->creatures)[0];
+    
+    $party->last_action(DateTime->now()->subtract( minutes => 10 ));	
+    $party->update;
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character->last_combat_action('Defend');
+	$character->update;
+	$character = Test::MockObject::Extends->new($character);
+	$character->set_true('is_spell_caster');
+	$character->set_always('check_for_offline_cast', $spell);
+	
+	my $battle = Test::MockObject->new();
+	$battle->set_always('opponents_of', $cg);
+	
+	# WHEN
+	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	
+	# THEN
+	is($character->last_combat_action, 'Defend', "Last combat action set correctly");
+	is($character->last_combat_param1, undef, "No spell id");
+	is($character->last_combat_param2, undef, "No spell target");	
+
+}
 
 1;

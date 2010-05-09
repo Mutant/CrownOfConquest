@@ -151,7 +151,8 @@ sub test_initiate_battles_garrison_vs_party : Tests(5) {
     my $land = $land[0];
     my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
     my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land->id);
-    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $land->id);
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $land->id, 
+    	last_action => DateTime->now()->subtract( minutes => 20 ));
     
     my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
     

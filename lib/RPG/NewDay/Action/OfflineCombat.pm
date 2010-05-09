@@ -116,6 +116,9 @@ sub initiate_battles {
     while (my $party = $party_rs->next) {
     	next if $party->is_online;
     	my $garrison = $party->location->garrison;
+    	
+    	next if $garrison->level - $party->level > $c->config->{max_party_garrison_level_difference};
+    	
     	if ($self->check_for_garrison_fight($party, $garrison, $garrison->party_attack_mode)) {
         	$self->execute_garrison_battle( $garrison, $party );
             $garrison_party_combat_count++;    		    		

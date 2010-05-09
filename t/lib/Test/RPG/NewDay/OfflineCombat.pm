@@ -143,4 +143,34 @@ sub test_initiate_battles_garrison : Tests(5) {
     $self->{dice}->unfake_module(); 
 }
 
+sub test_initiate_battles_garrison_vs_party : Tests(5) {
+    my $self = shift;
+        
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $land = $land[0];
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land->id);
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $land->id);
+    
+    my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
+    
+    $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
+    $offline_combat_action->set_true('execute_garrison_battle');
+    $offline_combat_action->set_true('check_for_garrison_fight');
+    
+    
+    # WHEN
+    $offline_combat_action->initiate_battles();
+    
+    # THEN
+    my ($method, $args) = $offline_combat_action->next_call(2);
+    
+    is($method, 'execute_garrison_battle', "Garrison battle executed");
+    isa_ok($args->[1], 'RPG::Schema::Garrison', "Garrison passed to offline battle");
+    is($args->[1]->id, $garrison->id, "Correct garrison passed");
+    isa_ok($args->[2], 'RPG::Schema::Party', "Party passed to offline battle");
+    is($args->[2]->id, $party2->id, "Correct party passed"); 
+}
+
 1;

@@ -340,25 +340,8 @@ sub _check_for_fight {
 	my $self = shift;
 	my $cg = shift;
 	my $garrison = shift;
-	
-	return if $garrison->creature_attack_mode eq 'Defensive Only';
-	
-	my $factor = $cg->compare_to_party($garrison);
-	
-	my $fight = 0;
-	given ($garrison->creature_attack_mode) {
-		when ('Attack Weaker Opponents' && $factor > 20) {
-			$fight = 1;
-		}
-		when ('Attack Similar Opponents' && $factor > 5) {
-			$fight = 1;
-		}
-		when ('Attack Stronger Opponents' && $factor > -15) {
-			$fight = 1;
-		}
-	}
-	
-	if ($fight) {
+		
+	if ($self->check_for_garrison_fight($cg, $garrison, $garrison->creature_attack_mode)) {
 		$self->execute_garrison_battle($garrison, $cg, 0);
 	}
 }

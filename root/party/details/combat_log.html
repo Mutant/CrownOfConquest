@@ -31,8 +31,10 @@
 			[% END %]
 			[% IF opp_stats.$opp_num.type == 'creature_group' %]
 				group of [% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
-			[% ELSE %]
+			[% ELSIF opp_stats.$opp_num.type == 'party' %]
 				party known as [% battle.opponent(opp_num).name %]
+			[% ELSE %]
+				a garrison owned by the party [% battle.opponent(opp_num).party.name %]
 			[% END %]
 			
 			[% IF show_location %]

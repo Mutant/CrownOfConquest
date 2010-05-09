@@ -50,6 +50,10 @@ sub initiate_battles {
     my $self = shift;
     my $c    = $self->context;    
     
+	my $combat_count = 0;
+	my $garrison_cg_combat_count = 0;
+	my $garrison_party_combat_count = 0;    
+    
     # Get all CGs in a sector with one or more active parties
     my $cg_rs = $c->schema->resultset('CreatureGroup')->search(
         { 
@@ -60,11 +64,8 @@ sub initiate_battles {
         {
             prefetch => [ { 'creatures' => 'type' }, { 'location' => 'parties' }, ],
         },
-    ); 	
-	
-	my $combat_count = 0;
-	my $garrison_combat_count = 0;
-      
+    ); 		
+     
     CG: while (my $cg = $cg_rs->next) {
         my @parties = $cg->location->parties;
         
@@ -82,7 +83,7 @@ sub initiate_battles {
         }
     }
     
-    # Now do the garrisons
+    # Now do the garrisons vs cgs
     $cg_rs = $c->schema->resultset('CreatureGroup')->search(
         { 
             'party.defunct' => undef,
@@ -96,13 +97,34 @@ sub initiate_battles {
     while (my $cg = $cg_rs->next) {
 		if (Games::Dice::Advanced->roll('1d100') <= $c->config->{garrison_combat_chance}) {
         	$self->execute_garrison_battle( $cg->location->garrison, $cg, 1 );
-            $garrison_combat_count++;
+            $garrison_cg_combat_count++;
 		}
     }    
     
+    # ... and garrisons vs parties
+    my $party_rs = $c->schema->resultset('Party')->search(
+    	{
+    		'me.defunct' => undef,
+    		'party.defunct' => undef,
+            'garrison.garrison_id' => {'!=', undef},
+    	},
+    	{
+    		prefetch => [ { 'location' => {'garrison' => 'party' } } ],
+    	},
+    );
+    
+    while (my $party = $party_rs->next) {
+    	next if $party->is_online;
+    	my $garrison = $party->location->garrison;
+    	if ($self->check_for_garrison_fight($party, $garrison, $garrison->party_attack_mode)) {
+        	$self->execute_garrison_battle( $garrison, $party );
+            $garrison_party_combat_count++;    		    		
+    	}	
+    }
     
     $c->logger->info($combat_count . " battles executed");
-    $c->logger->info($garrison_combat_count . " garrison battles executed");
+    $c->logger->info($garrison_cg_combat_count . " garrison cg battles executed");
+    $c->logger->info($garrison_party_combat_count . " garrison party battles executed");
 }
 
 sub execute_offline_battle {

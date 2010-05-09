@@ -155,9 +155,7 @@ sub test_offline_party_flee : Tests(7) {
     # GIVEN
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    $party1 = Test::MockObject::Extends->new($party1);
-    $party1->set_false('is_online');
-    $party1->set_true('is_over_flee_threshold');
+    
     my $char = ( $party1->characters )[0];
 
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
@@ -174,6 +172,11 @@ sub test_offline_party_flee : Tests(7) {
         battle_record => $battle_record,
         config        => { xp_multiplier_character => 10 },
     );
+
+    $party1 = Test::MockObject::Extends->new($party1);
+    $party1->set_false('is_online');
+    $party1->set_true('is_over_flee_threshold');
+    $party1->set_true('does_role');
 
     $self->{config}{maximum_turns} = 100;
 

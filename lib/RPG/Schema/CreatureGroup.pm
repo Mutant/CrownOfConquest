@@ -86,23 +86,6 @@ sub party_within_level_range {
     return 1;
 }
 
-sub compare_to_party {
-    my $self = shift;
-    my $party = shift || croak "Party not supplied";
-
-    my ( $party_members, $party_af, $party_df, $party_hp, $party_dam ) = $party->factor_aggregates;
-    my ( $cg_members, $cg_af, $cg_df, $cg_hp, $cg_dam ) = $self->factor_aggregates;
-
-    my $factor_comparison =
-        ( ( $party_members - $cg_members ) * 5 ) +
-        ( $party_af - $cg_df ) +
-        ( $party_df - $cg_af ) +
-        ( ( $party_hp - $cg_hp ) / 2 ) +
-        ( $party_dam - $cg_dam );
-
-    return $factor_comparison;
-}
-
 sub creature_summary {
     my $self                   = shift;
     my $include_dead_creatures = shift || 0;

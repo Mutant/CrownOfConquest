@@ -7,7 +7,7 @@ use Carp;
 
 use feature "switch";
 
-__PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
+__PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
 __PACKAGE__->table('Combat_Log');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Combat_Log');
@@ -18,6 +18,8 @@ __PACKAGE__->add_columns(
         opponent_1_level opponent_2_level game_day opponent_1_flee_attempts opponent_2_flee_attempts 
         opponent_1_type opponent_2_type session dungeon_grid_id/
 );
+
+__PACKAGE__->numeric_columns(qw/rounds/);
 
 __PACKAGE__->add_columns(
     encounter_started => { data_type => 'datetime' },

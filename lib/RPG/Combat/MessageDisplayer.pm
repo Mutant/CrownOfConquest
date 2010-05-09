@@ -31,6 +31,7 @@ sub display {
         );
 
     if ( $result->{combat_complete} ) {
+    	# TODO: wotamess
 		if ( $result->{creatures_fled} ) {	
 	        push @messages, "The creatures have fled!\n";
 	
@@ -39,14 +40,21 @@ sub display {
 	        push @messages, @xp_messages;
 	
 	    }
-	    elsif ( $result->{offline_party_fled} ) {	
+	    elsif ( $result->{offline_party_fled} || $group->group_type eq 'garrison' && $result->{party_fled} ) {	
 	        push @messages, "The party has fled!\n";
 	
 			my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
 				
 	        push @messages, @xp_messages;
 	    }
-	    elsif ( $result->{party_fled} ) {
+	    elsif ( $result->{garrison_fled} && $group->group_type eq 'party' ) {
+			push @messages, "The garrison has fled!\n";	    
+			
+			my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
+				
+	        push @messages, @xp_messages;
+	    }
+	    elsif ( $result->{party_fled} || $result->{garrison_fled} ) {
 	    	push @messages, "You fled the battle!\n";
 	    }
     	elsif ( ! $group->is($result->{losers}) ) {

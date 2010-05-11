@@ -9,8 +9,8 @@ use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
 
-has 'character_group_1'       => ( is => 'rw', does => 'RPG::Schema::Role::CharacterGroup', required => 1 );
-has 'character_group_2'       => ( is => 'rw', does => 'RPG::Schema::Role::CharacterGroup', required => 1 );
+has 'character_group_1'       => ( is => 'rw', required => 1 );
+has 'character_group_2'       => ( is => 'rw', required => 1 );
 has 'initiated_by_opp_number' => ( is => 'ro', isa  => 'Maybe[Int]',                        default  => 0 );
 
 sub combatants {

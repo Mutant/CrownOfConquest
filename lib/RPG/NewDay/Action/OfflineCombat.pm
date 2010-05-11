@@ -33,6 +33,7 @@ sub complete_battles {
     my @cgs = $c->schema->resultset('CreatureGroup')->search(
         {
             'in_combat_with.party_id' => { '!=', undef },
+            'in_combat_with.combat_type' => 'creature_group',
             'in_combat_with.defunct'  => undef,
         },
         { prefetch => [ { 'creatures' => 'type' }, 'in_combat_with' ], },
@@ -75,6 +76,7 @@ sub initiate_battles {
             next if $offline_combat_count >= $c->config->{max_offline_combat_count};
 
             if (Games::Dice::Advanced->roll('1d100') <= $c->config->{offline_combat_chance}) {
+            	$party->initiate_combat($cg);
                 $self->execute_offline_battle( $party, $cg, 1 );
                 $combat_count++;                
                 
@@ -120,6 +122,7 @@ sub initiate_battles {
     	next if $garrison->level - $party->level > $c->config->{max_party_garrison_level_difference};
     	
     	if ($self->check_for_garrison_fight($party, $garrison, $garrison->party_attack_mode)) {
+    		$party->initiate_combat($garrison);
         	$self->execute_garrison_battle( $garrison, $party );
             $garrison_party_combat_count++;    		    		
     	}	
@@ -154,6 +157,8 @@ sub execute_offline_battle {
 
         last if $result->{combat_complete};
     }
+    
+    $party->end_combat();
 }
 
 1;

@@ -102,8 +102,7 @@ sub creature_flee {
 
 				$self->result->{creatures_fled} = 1;
 
-				$self->character_group->in_combat_with(undef);
-				$self->character_group->update;
+				$self->character_group->end_combat;
 
 				return 1;
 			}
@@ -125,8 +124,7 @@ sub creatures_lost {
 
 	$self->_award_xp_for_creatures_killed();
 
-	$self->character_group->in_combat_with(undef);
-	$self->character_group->update;
+	$self->character_group->end_combat;
 
 	$self->check_for_item_found( [ $self->character_group->characters ], $avg_creature_level );
 

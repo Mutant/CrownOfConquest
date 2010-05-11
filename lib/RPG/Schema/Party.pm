@@ -152,6 +152,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => 0,
     },
+    'combat_type' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'combat_type',
+        'is_nullable'       => 0,
+        'size'              => 255
+    },    
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -399,6 +408,15 @@ sub in_party_battle {
     return $self->_get_party_battle ? 1 : 0;
 }
 
+sub initiate_combat {
+	my $self = shift;
+	my $opponent = shift;
+	
+	$self->in_combat_with($opponent->id);
+	$self->combat_type($opponent->group_type);
+	$self->update;	
+}
+
 sub in_party_battle_with {
     my $self = shift;
 
@@ -435,6 +453,8 @@ sub end_combat {
     my $self = shift;
 
     $self->in_combat_with(undef);
+	$self->combat_type(undef);
+	$self->update;
 
     my $party_battle = $self->_get_party_battle;
 

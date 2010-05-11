@@ -102,7 +102,7 @@ sub auto : Private {
         # TODO: clean up this logic!
         if (   $c->stash->{party}->in_combat
             && $c->action ne 'party/main'
-            && $c->action !~ m{^((dungeon|party)/)?combat}
+            && $c->action !~ m{^((dungeon|party|garrison)/)?combat}
             && $c->action ne 'party/select_action'
             && $c->action ne 'default'
             && $c->action ne 'player/logout' )

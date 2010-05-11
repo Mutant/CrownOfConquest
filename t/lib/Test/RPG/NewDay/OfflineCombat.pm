@@ -46,7 +46,9 @@ sub test_complete_battles : Tests(5) {
     my $self = shift;  
     
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema});    
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, in_combat_with => $cg->id, last_action => DateTime->now->subtract(minutes=>15));
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, 
+    	in_combat_with => $cg->id, last_action => DateTime->now->subtract(minutes=>15), combat_type => 'creature_group',
+    );
 
     my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
     

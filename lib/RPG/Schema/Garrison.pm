@@ -107,5 +107,12 @@ sub recent_battles_count {
 sub is_online {
 	return 0;
 }
+
+sub end_combat {
+	my $self = shift;
+	
+	$self->in_combat_with(undef);
+	$self->update;	
+}
 	
 1;

@@ -47,6 +47,10 @@ sub execute_garrison_battle {
 
 		last if $result->{combat_complete};
 	}
+	
+	if ($opponent->group_type eq 'party') {
+		$opponent->end_combat;	
+	}
 }
 
 sub check_for_garrison_fight {

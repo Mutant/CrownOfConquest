@@ -14,6 +14,8 @@
 	[% prefix = '/dungeon' %]
 [% ELSIF opposing_party %]
 	[% prefix = '/party' %]
+[% ELSIF opposing_garrison %]
+	[% prefix = '/garrison' %]
 [% END %]	
 
 <a href="javascript:getPanels('[% prefix %]/combat/fight')"><img src="[% c.config.static_path %]/images/fightunsel.png" border="0"></a> 
@@ -24,6 +26,8 @@
 
 [% IF opposing_party %]
 	[% INCLUDE combat/opposing_party.html %]
+[% ELSIF opposing_garrison %]
+	[% INCLUDE combat/opposing_party.html opposing_party=opposing_garrison %]
 [% ELSE %]
 	[% creature_group_display %]
 [% END %]

@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
+use feature 'switch';
+
 use Data::Dumper;
 use Carp;
 
@@ -25,8 +27,7 @@ sub check_for_attack : Local {
 		$c->stash->{creature_group} = $creature_group;
 
 		if ( $creature_group->initiate_combat( $c->stash->{party} ) ) {
-			$c->stash->{party}->in_combat_with( $creature_group->id );
-			$c->stash->{party}->update;
+			$c->stash->{party}->initiate_combat( $creature_group );
 			$c->stash->{creatures_initiated} = 1;
 
 			return $creature_group;
@@ -51,8 +52,7 @@ sub execute_attack : Private {
 	if ($creature_group) {
 		$c->stash->{creature_group} = $creature_group;
 
-		$c->stash->{party}->in_combat_with( $creature_group->id );
-		$c->stash->{party}->update;
+		$c->stash->{party}->initiate_combat( $creature_group );
 
 		$c->forward( '/panel/refresh', [ 'messages', 'party' ] );
 	}
@@ -61,6 +61,23 @@ sub execute_attack : Private {
 		$c->forward( '/panel/refresh', ['messages'] );
 	}
 
+}
+
+sub switch : Private {
+	my ( $self, $c ) = @_;
+	
+	my $party = $c->stash->{party};
+	
+	return unless $party->in_combat_with;
+	
+	given ($party->combat_type) {
+		when ('creature_group') {
+			return $c->forward('/combat/main');
+		}
+		when ('garrison') {
+			return $c->forward('/garrison/combat/main');
+		}
+	}
 }
 
 sub main : Local {
@@ -266,6 +283,8 @@ sub process_flee_result : Private {
 	if ( $result->{party_fled} ) {
 		$c->stash->{messages} = "You got away!";
 		$c->log->debug("discarding party");
+		
+		$c->stash->{party}->end_combat;
 
 		$c->stash->{party}->discard_changes;
 		$c->stash->{party_location} = $c->stash->{party}->location;

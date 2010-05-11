@@ -80,7 +80,7 @@ sub find_panel_path : Private {
     		return '/town/main';
     	}
     	elsif ($party->in_combat_with) {
-    		return '/combat/main';
+    		return '/combat/switch';
     	}
     	elsif ($party->in_party_battle) {
     		return '/party/combat/main';

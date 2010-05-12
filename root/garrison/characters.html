@@ -77,7 +77,7 @@
 	
 	<br>
 	<div align="center">
-		<button onClick="postGarrisonForm()">[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison</button>
+		<button onClick="changes=false; postGarrisonForm()">[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison</button>
 		[% IF garrison %]<button onClick="document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]'">Remove Garrison</button>[% END %]
 	</div>
 	

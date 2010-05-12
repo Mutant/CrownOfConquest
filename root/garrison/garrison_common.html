@@ -1,16 +1,17 @@
 <script>
+var changes = false;
 function addToGarrison(char_id) {
-
 	dojo.byId('garrison-list-outer').style.display = 'block';
 	
 	moveChar(char_id, 'party-list','garrison-list', 'removeFromGarrison', 'Remove From Garrison');
 }
 
-function removeFromGarrison(char_id) {
+function removeFromGarrison(char_id) {	
 	moveChar(char_id, 'garrison-list', 'party-list','addToGarrison', 'Add To Garrison');
 }
 
 function moveChar(char_id, sourceTableId, destTableId, funcName, linkLabel) {
+	changes = true;
 	var sourceTable = dojo.byId(sourceTableId);
 	
 	var tableRow = dojo.byId('char_row_' + char_id);

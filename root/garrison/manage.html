@@ -63,6 +63,11 @@ function changeGold(garrisonGoldInput) {
     }); 
 }
 
+window.onbeforeunload = function() {
+	if (changes) {
+		return "You've changed the character's assigned to this garrison, but haven't saved the changes yet";
+	}
+}
 </script>
 
 <style>

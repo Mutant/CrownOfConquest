@@ -68,6 +68,14 @@ window.onbeforeunload = function() {
 		return "You've changed the character's assigned to this garrison, but haven't saved the changes yet";
 	}
 }
+
+function confirmRemoveGarrison() {
+	dijit.byId('confirm-remove').show();
+}
+
+function removeGarrison() {
+	document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]';
+}
 </script>
 
 <style>
@@ -82,6 +90,14 @@ window.onbeforeunload = function() {
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-move').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="confirm-remove" style="display: none" title="Confirm Remove" execute="removeGarrison(arguments[0]);">
+    Are you sure you want to remove this garrison?	
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-remove').hide()">Cancel</button>
 	</div>
 </div>
 

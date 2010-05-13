@@ -686,7 +686,7 @@ sub fill_chest {
 		my @item_types = $self->context->schema->resultset('Item_Type')->search(
 	        {
 	            'category.hidden'           => 0,
-	            'category.finable'			=> 1,
+	            'category.findable'			=> 1,
 	        },
 	        {
 	            prefetch => { 'item_variable_params' => 'item_variable_name' },

@@ -43,6 +43,39 @@ sub get_offline_log_count {
     )->count;
 }
 
+sub get_offline_garrison_log_count {
+    my $self  = shift;
+    my $party = shift;
+    my $date_range_start = shift;
+    
+    $date_range_start = $party->last_action unless $date_range_start;
+    
+    return 0 unless $date_range_start;
+    
+    my @garrisons = $party->garrisons;
+    
+    return unless @garrisons;
+
+	my @garrions_counts;
+	foreach my $garrison (@garrisons) {		
+	    my $count = $self->search(
+	        {
+	            $self->_group_type_critiera($garrison),
+	            encounter_ended => { '>', $date_range_start },
+	        },
+	    )->count;
+	    
+	    if ($count > 0) {
+	   		push @garrions_counts, {
+	   			combat_count => $count,
+	   			garrison => $garrison,
+	   		};
+	    }
+	}
+	
+	return @garrions_counts;
+}
+
 sub get_recent_logs_for_party {
     my $self  = shift;
     my $party = shift;
@@ -105,7 +138,7 @@ sub _party_criteria {
 sub _group_type_critiera {
 	my $self = shift;
 	my $group = shift;
-	my $group_type = shift;	
+	my $group_type = shift || $group->group_type;	
 	
     return (
         -nest => [

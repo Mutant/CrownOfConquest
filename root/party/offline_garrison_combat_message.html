@@ -1,0 +1,9 @@
+[% FILTER collapse %]
+[% USE infl = Lingua.EN.Inflect; %]
+
+[% FOREACH garrison_count IN garrison_counts %]
+Your garrison at [% garrison_count.garrison.land.x %], [% garrison_count.garrison.land.x %] 
+was involved in [% FILTER inflect %]NO(battle, [% garrison_count.combat_count %])[% END %]. 
+Click <a href="[% base %]/garrison/manage?garrison_id=[% garrison_count.garrison.id %]&selected=combat_log">here</a> for details.
+[% END %]
+[% END %]

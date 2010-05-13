@@ -26,7 +26,7 @@ sub execute_garrison_battle {
 
 	my $package;
 	given ( $opponent->group_type ) {
-		when ('creature') {
+		when ('creature_group') {
 			$package = 'RPG::Combat::GarrisonCreatureBattle';
 			$params{creature_group} = $opponent;
 			$params{creatures_initiated} = $opp_initiated;

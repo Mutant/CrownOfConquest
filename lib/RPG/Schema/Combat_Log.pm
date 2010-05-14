@@ -95,6 +95,17 @@ sub party_opponent_number {
     return 2;     
 }
 
+sub garrison_opponent_number {
+    my $self = shift;
+    my $garrison = shift;
+        
+    if ($self->opponent_1_type eq 'garrison' && $self->opponent_1->id == $garrison->id) {
+        return 1;   
+    }
+    
+    return 2;     
+}
+
 sub opponent {
     my $self = shift;
     my $opp_number = shift;

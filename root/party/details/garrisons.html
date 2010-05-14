@@ -5,9 +5,7 @@ You do not have any garrisons
 [% ELSE %]
 	[% FOREACH garrison IN garrisons %]
 	<b>Garrison at [% garrison.land.x %], [% garrison.land.y %]</b><br>
-	Characters: [% FOREACH character IN garrison.characters %][% character.character_name %] 
-		( Level [% character.level %] - [% character.class.class_name %])
-		[% UNLESS loop.last %], [% END %][% END %]<br>
+	Characters: [% INCLUDE garrison/char_summary.html %]<br>
 	Battles: [% garrison.recent_battles_count || 0 %]<br> 
 	<a href="[% base %]garrison/manage?garrison_id=[% garrison.id %]">Manage</a>
 	<br><br> 

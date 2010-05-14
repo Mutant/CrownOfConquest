@@ -52,21 +52,16 @@
 				and were thwarted as the cowards retreated.
 			[% END %]
 			
-			<br>
 			<li>The battle lasted [% FILTER inflect %]NO(round, [% battle.rounds %])[% END %], 
-					and [% FILTER inflect %]NO(spell, [% battle.spells_cast %])[% END %] were cast.
-			<br>
+					and [% FILTER inflect %]NO(spell, [% battle.spells_cast %])[% END %] were cast.</li>
 			<li>We dealt out [% opp_stats.$party_num.damage_inflicted %] in damage, and sustained 
-				[% FILTER inflect %]NO(death, [% opp_stats.$party_num.deaths %])[% END %].
-			<br>
+				[% FILTER inflect %]NO(death, [% opp_stats.$party_num.deaths %])[% END %].</li>
 			<li>In return, we took [% opp_stats.$opp_num.damage_inflicted %] in damage, and inflicted
-				[% FILTER inflect %]NO(death, [% opp_stats.$opp_num.deaths %])[% END %].	
+				[% FILTER inflect %]NO(death, [% opp_stats.$opp_num.deaths %])[% END %].</li>	
 			[% IF battle.outcome == 'opp' _ party_num _ '_won' or battle.outcome == 'opp' _ opp_num _ '_fled' %]
 				[% IF battle.xp_awarded > 0 %]
 					<li>We gained a total of [% battle.xp_awarded %] xp from the battle</li>
 				[% END %]
-			[% ELSE %]
-				<br>
 			[% END %]
 			[% IF battle.has_messages %]
 				<a href="[% base %]party/details/combat_messages?combat_log_id=[% battle.id %]&opp_num=[% party_num %]">View Full Battle Messages</a><br>

@@ -5,9 +5,11 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Carp;
-use JSON;
+use Data::Dumper;
 
+use JSON;
 use List::Util qw(shuffle);
+use Set::Object qw(set);
 
 sub auto : Private {
 	my ($self, $c) = @_;
@@ -44,7 +46,7 @@ sub add : Local {
 	
 	if ( $c->stash->{party}->level < $c->config->{minimum_garrison_level} ) {
 		$c->stash->{error} = "You can't create a garrison - your party level is too low";
-		return;
+		$c->detach('create');
 	}
 	
 	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
@@ -53,11 +55,23 @@ sub add : Local {
 		
 	croak "Must have at least one char in the garrison" unless @char_ids_to_garrison;
 	
-	my @characters = $c->stash->{party}->characters;
+	my @characters = $c->stash->{party}->characters_in_party;
 	
 	if (scalar @char_ids_to_garrison == scalar @characters) {
 		croak "Must keep at least one character in the party";
-	} 
+	}
+	
+	my %chars_by_id = map { $_->id => $_ } @characters;
+	if ((grep { ! $chars_by_id{$_}->is_dead } @char_ids_to_garrison) <= 0 ) {
+		$c->stash->{error} = "You must have at least one living character in the garrison";
+		$c->detach('create');
+	}
+	
+	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(@char_ids_to_garrison) };
+	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
+		$c->stash->{error} = "You must have at least one living character in your party";
+		$c->detach('create');		
+	}
 	
 	my $garrison = $c->model('DBIC::Garrison')->create(
 		{
@@ -102,19 +116,31 @@ sub update : Local {
 	
 	croak "Must be in correct sector to update garrison" unless $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
 	
-	my @current_chars = $c->stash->{garrison}->characters;
+	my @current_garrison_chars = $c->stash->{garrison}->characters;
 		
 	my %char_ids_to_garrison = map { $_ => 1 } $c->req->param('chars_in_garrison');
 	
 	croak "Must have at least one char in the garrison" unless %char_ids_to_garrison;
 	
 	my @chars_in_party = $c->stash->{party}->characters_in_party;
-	if (scalar keys(%char_ids_to_garrison) - scalar @current_chars == scalar @chars_in_party) {
+	if (scalar keys(%char_ids_to_garrison) - scalar @current_garrison_chars == scalar @chars_in_party) {
 		croak "Must keep at least one character in the party";
 	}
 	
+	my %chars_by_id = map { $_->id => $_ } (@chars_in_party, @current_garrison_chars);
+	if ((grep { ! $chars_by_id{$_}->is_dead } keys %char_ids_to_garrison ) <= 0 ) {
+		$c->stash->{error} = "You must have at least one living character in the garrison";
+		$c->detach( 'manage' );
+	}
+	
+	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(keys %char_ids_to_garrison) };
+	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
+		$c->stash->{error} = "You must have at least one living character in your party";
+		$c->detach('manage');		
+	}	
+	
 	my @chars_to_remove;
-	foreach my $current_char (@current_chars) {
+	foreach my $current_char (@current_garrison_chars) {
 		if (! $char_ids_to_garrison{$current_char->id}) {
 			# Char removed
 			push @chars_to_remove, $current_char;
@@ -126,7 +152,7 @@ sub update : Local {
 		$c->detach( 'manage' );		
 	}
 	
-	foreach my $char (@current_chars) {
+	foreach my $char (@current_garrison_chars) {
 		$char->garrison_id(undef);
 		$char->update;
 	}

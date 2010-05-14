@@ -114,5 +114,11 @@ sub end_combat {
 	$self->in_combat_with(undef);
 	$self->update;	
 }
+
+sub name {
+	my $self = shift;
+	
+	return "A garrison owned by " . $self->party->name;	
+}
 	
 1;

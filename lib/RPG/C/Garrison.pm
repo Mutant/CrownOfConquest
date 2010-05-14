@@ -90,6 +90,8 @@ sub add : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
+	$c->forward('add_to_town_news', ['create']);
+	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
 }
 
@@ -182,6 +184,8 @@ sub remove : Local {
 			$item->add_to_characters_inventory($character);
 		}
 		
+		$c->forward('add_to_town_news', ['remove']);
+		
 		$c->stash->{party}->increase_gold($c->stash->{garrison}->gold);
 		$c->stash->{party}->update;
 
@@ -191,6 +195,45 @@ sub remove : Local {
 		
 		$c->forward('/party/main');
 	}
+}
+
+sub add_to_town_news : Private {
+	my ($self, $c, $action) = @_;
+	
+	my $template = $action eq 'create' ? 'creation_news.html' : 'removal_news.html';
+
+	# Add to town news
+    my @towns = $c->model('DBIC::Town')->find_in_range(
+        {
+            x => $c->stash->{party_location}->x,
+            y => $c->stash->{party_location}->y,
+        },
+        $c->config->{nearby_town_range},
+    );
+    
+    if (@towns) {
+    	my $message = $c->forward('RPG::V::TT',
+	        [{
+	            template => "garrison/$template",
+	            params => {
+	            	land => $c->stash->{party_location},
+	            	party => $c->stash->{party},
+	            },
+	            return_output => 1,
+	        }]
+	    );
+    
+	    foreach my $town (@towns) {
+            $c->model('DBIC::Town_History')->create(
+                {
+                    town_id => $town->id,
+                    day_id  => $c->stash->{today}->id,
+                    message => $message,
+                }
+            );    		
+	    }
+    }	
+	
 }
 
 sub manage : Local {

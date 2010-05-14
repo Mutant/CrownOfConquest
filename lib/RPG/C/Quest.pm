@@ -153,7 +153,7 @@ sub complete_quest : Private {
 
     my $xp_gained = $party_quest->xp_value;
 
-    my @characters = grep { !$_->is_dead } $c->stash->{party}->characters;
+    my @characters = grep { !$_->is_dead } $c->stash->{party}->characters_in_party;
     my $xp_each = int $xp_gained / scalar @characters;
 
     my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );

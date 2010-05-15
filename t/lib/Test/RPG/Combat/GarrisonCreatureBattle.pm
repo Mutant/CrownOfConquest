@@ -16,6 +16,7 @@ use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Item;
 
 sub setup : Tests(setup => 2) {
     my $self = shift;
@@ -56,7 +57,7 @@ sub test_new : Tests(2) {
     is($garrison->in_combat_with, $cg->id, "Garrison now in combat with CG");
 }
 
-sub test_check_for_flee : Tests(3) {
+sub test_check_for_flee : Tests(7) {
 	my $self = shift;
 
 	# GIVEN
@@ -65,6 +66,8 @@ sub test_check_for_flee : Tests(3) {
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
 	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, garrison_id => $garrison->id );
+	
 	$character->garrison_id($garrison->id);
 	$character->update;
 	
@@ -96,7 +99,17 @@ sub test_check_for_flee : Tests(3) {
     
     $garrison->discard_changes();
     isnt($garrison->land_id, $land[4]->id, "No longer in original location");
+    is($garrison->gold, 0, "Garrison lost all its gold");
     is($battle->result->{party_fled}, 1, "Correct value set in battle result"); 	
+    
+    $item->discard_changes();
+    is($item->in_storage, 0, "Garrison equipment no longer in storage");
+    
+    undef $battle;
+    
+    my ($combat_log) = $self->{schema}->resultset('Combat_Log')->search();
+    is($combat_log->outcome, 'opp1_fled', "Correct combat log outcome");
+    is(defined $combat_log->encounter_ended, 1, "Encounter ended set in combat log");
 		
 }
 

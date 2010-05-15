@@ -14,6 +14,7 @@ with qw/
 	RPG::Combat::CharactersVsCreatures
 	RPG::Combat::Battle
 	RPG::Combat::InWilderness
+	RPG::Combat::GarrisonBattle
 /;
 
 sub BUILD {
@@ -36,7 +37,7 @@ sub check_for_flee {
 	
 	if ($self->garrison->is_over_flee_threshold && $self->party_flee(1)) {
 		$self->result->{party_fled} = 1;
-		$self->garrison->update;
+		$self->garrison_flee;
         return 1;	
 	}
 

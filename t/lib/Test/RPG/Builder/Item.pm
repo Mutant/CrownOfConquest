@@ -40,6 +40,7 @@ sub build_item {
             equip_place_id => $eq_place->id,
             name => $params{name} || '',
             shop_id => $params{shop_id} || undef,
+            garrison_id => $params{garrison_id} || undef,
         }
     );
 

@@ -19,7 +19,9 @@ with qw/
 	RPG::Combat::CharactersVsCharacters
 	RPG::Combat::Battle
 	RPG::Combat::InWilderness
+	RPG::Combat::GarrisonBattle
 	/;
+	
 around BUILDARGS => sub {
 	my $orig   = shift;
 	my $class  = shift;
@@ -48,6 +50,7 @@ sub check_for_flee {
 			}
 			when ('garrison') {
 				$self->{result}->{garrison_fled} = 1;
+				$self->garrison_flee;
 			}
 		}
 		return 1;

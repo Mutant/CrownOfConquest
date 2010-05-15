@@ -76,16 +76,8 @@
 	        }
 	    });	       
 	}
-	
+
 	function drop_item(item_id, char_id) {
-		dojo.byId('drop-char-id').value = char_id;
-		dojo.byId('drop-item-id').value = item_id;
-		dijit.byId('drop-item-conf-diag').show();
-	}
-	
-	function drop_item_confirmed(arguments) {
-		item_id = arguments.item_id;
-		char_id = arguments.char_id;
 		dojo.xhrGet( {
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
@@ -208,17 +200,6 @@ function calculateSpellPoints() {
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
-	</div>
-</div>
-
-<div dojoType="dijit.Dialog" id="drop-item-conf-diag" style="display: none" title="Drop Item" execute="drop_item_confirmed(arguments[0]);">
-    <input id="drop-char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <input id="drop-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	Are you sure you want to drop this item? You won't be able to get it back!
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('drop-item-conf-diag').hide()">Cancel</button>
 	</div>
 </div>
 

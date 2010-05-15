@@ -104,7 +104,7 @@ sub main : Local {
 	if ($creature_group) {
 		$creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, $c->stash->{creatures_initiated} ] );
 	}
-
+	
 	return $c->forward(
 		'RPG::V::TT',
 		[

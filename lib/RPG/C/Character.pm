@@ -320,7 +320,17 @@ sub drop_item : Local {
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 
-	$item->delete;
+	if ($c->stash->{party_location}->town) {
+		# If we're in a town, just delete the item...
+		# TODO: Could think of something better to do here...
+		$item->delete;
+	}
+	else {
+		$item->land_id($c->stash->{party_location}->id);
+		$item->character_id(undef);
+		$item->equip_place_id(undef);
+		$item->update;
+	}
 
 	$c->res->body(
 		to_json(

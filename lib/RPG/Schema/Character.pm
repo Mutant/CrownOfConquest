@@ -450,6 +450,12 @@ sub is_dead {
     return $self->hit_points <= 0 ? 1 : 0;
 }
 
+sub is_alive {
+	my $self = shift;
+	
+	return ! $self->is_dead;	
+}
+
 =head2 equipped_items(@items)
 
 Returns a hashref keyed by equip places, with the character's item equipped in that place as the value

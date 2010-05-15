@@ -96,6 +96,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => '11'
     },    
+    'land_id' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => undef,
+        'is_foreign_key'    => 0,
+        'name'              => 'land_id',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },      
 
 );
 __PACKAGE__->set_primary_key('item_id');
@@ -355,6 +364,7 @@ sub add_to_characters_inventory {
     $self->shop_id(undef);
     $self->treasure_chest_id(undef);
     $self->garrison_id(undef);
+	$self->land_id(undef);
 
     my $category = $self->item_type->category;
 

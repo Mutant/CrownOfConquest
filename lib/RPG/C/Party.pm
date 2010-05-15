@@ -74,7 +74,9 @@ sub sector_menu : Private {
     if ( $c->stash->{party}->level >= $c->config->{minimum_garrison_level} ) {
         $can_build_garrison = $c->stash->{party_location}->garrison_allowed;
     }
-
+    
+    my @items = $c->stash->{party_location}->items;
+    
     $c->forward(
         'RPG::V::TT',
         [
@@ -96,6 +98,7 @@ sub sector_menu : Private {
                     had_phantom_dungeon    => $c->stash->{had_phantom_dungeon},
                     garrison               => $garrison,
                     can_build_garrison     => $can_build_garrison,
+                    items				   => \@items,
                 },
                 return_output => 1,
             }
@@ -576,7 +579,7 @@ sub destroy_orb : Local {
         return;
     }
 
-    my $random_char = ( shuffle $party->characters )[0];
+    my $random_char = ( shuffle grep { $_->is_alive } $party->characters )[0];
 
     my $quest_messages = $c->forward( '/quest/check_action', [ 'orb_destroyed', $orb->id ] );
 
@@ -600,6 +603,35 @@ sub destroy_orb : Local {
 
     $orb->land_id(undef);
     $orb->update;
+
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub pickup_item : Local {
+    my ( $self, $c ) = @_;
+
+    my $item = $c->model('DBIC::Items')->find($c->req->param('item_id'));
+
+    croak "Item not found" unless $item;
+
+    my $party = $c->stash->{party};
+
+	croak "Item not in sector" unless $item->land_id == $party->land_id; 
+
+    if ( $party->turns < 1 ) {
+        $c->stash->{error} = "You do not have enough turns to pickup the item";
+        $c->forward( '/panel/refresh', ['messages'] );
+        return;
+    }
+
+    my $random_char = ( shuffle grep { $_->is_alive } $party->characters )[0];
+
+    $party->turns( $party->turns - 1);
+    $party->update;
+    
+    $item->add_to_characters_inventory($random_char);
+    
+	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

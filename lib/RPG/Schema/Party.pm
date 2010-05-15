@@ -186,7 +186,7 @@ __PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', 'dunge
 
 __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 'party_id', );
 
-__PACKAGE__->numeric_columns(qw/gold/);
+__PACKAGE__->numeric_columns(qw/gold/); # Can't use this for turns..
 
 with qw/
 	RPG::Schema::Role::BeingGroup

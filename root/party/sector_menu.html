@@ -12,6 +12,13 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 	[% END %]
 	<br><br>
 [% END %]
+[% IF items.0 %]
+	Items here (click to pick up):
+	[% FOREACH item IN items %]
+		<a href="javascript:getPanels('/party/pickup_item?item_id=[% item.id %]')">[% item.display_name %]</a>[% UNLESS loop.last %], [% END %]
+	[% END %]
+	<br><br>
+[% END %]
 
 [% IF graves.0 %]
 	[% INCLUDE graves/main.html %]

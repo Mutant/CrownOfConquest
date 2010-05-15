@@ -57,7 +57,7 @@ sub test_new : Tests(2) {
     is($garrison->in_combat_with, $cg->id, "Garrison now in combat with CG");
 }
 
-sub test_check_for_flee : Tests(7) {
+sub test_check_for_flee : Tests(8) {
 	my $self = shift;
 
 	# GIVEN
@@ -103,7 +103,8 @@ sub test_check_for_flee : Tests(7) {
     is($battle->result->{party_fled}, 1, "Correct value set in battle result"); 	
     
     $item->discard_changes();
-    is($item->in_storage, 0, "Garrison equipment no longer in storage");
+    is($item->garrison_id, undef, "Garrison equipment no longer in storage");
+    is($item->land_id, $land[4]->id, "Item in original sector");
     
     undef $battle;
     

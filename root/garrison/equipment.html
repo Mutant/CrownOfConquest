@@ -1,6 +1,6 @@
 [% MACRO display_equipment(equipment) BLOCK %]
 	[% FOREACH item IN equipment %]
-		<span id="item-tooltip-[% item.id %]" onClick="moveItem(this)" style="float: left">
+		<span id="item-tooltip-[% item.id %]" onClick="moveItem(this)" style="float: left; height: 140px">
 			[% IF item.item_type.image %]
 				<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
 			[% ELSE %]
@@ -41,7 +41,7 @@ Garrison Gold: [% garrison.gold %]<br>
 
 <h3>Garrison Equipment</h3>
 
-<div id="garrison-equipment" style="overflow: auto; width: 100%">
+<div id="garrison-equipment" style="overflow: auto; width: 100%; min-height: 140px">
 	[% display_equipment(garrison_equipment) %]
 </div>
 
@@ -50,7 +50,7 @@ Garrison Gold: [% garrison.gold %]<br>
 	
 	<h3>Party Equipment</h3>
 	
-	<div id="party-equipment" style="overflow: auto; width: 100%">
+	<div id="party-equipment" style="overflow: visible; width: 100%; min-height: 140px">
 		[% display_equipment(party_equipment) %]
 	</div>
 [% END %]

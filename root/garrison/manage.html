@@ -41,6 +41,8 @@ function moveItem(itemSpan, confirmed) {
         url: "[% base %]/garrison/move_item?item_id=" + item_id + '&garrison_id=[% garrison.id %]',
         handleAs: "text",        
     });	
+    
+    dijit.byId('item-dijit-' + item_id).close();
 }
 
 function confirmedMove(arguments) {

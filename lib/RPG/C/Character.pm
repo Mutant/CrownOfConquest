@@ -118,20 +118,23 @@ sub equipment_tab : Local {
 
 	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
 
+	my @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+
 	$c->forward(
 		'RPG::V::TT',
 		[
 			{
 				template => 'character/equipment_tab.html',
 				params   => {
-					character                 => $character,
-					equipped_items            => $equipped_items,
-					equipped_items_by_id      => \%equipped_items_by_id,
-					equip_place_category_list => \%equip_place_category_list,
-					equip_places              => [ keys %equip_place_category_list ],
-					items                     => \@items,
-					item_mode                 => $item_mode,
-					party                     => $c->stash->{party},
+					character                     => $character,
+					equipped_items                => $equipped_items,
+					equipped_items_by_id          => \%equipped_items_by_id,
+					equip_place_category_list     => \%equip_place_category_list,
+					equip_places                  => [ keys %equip_place_category_list ],
+					items                         => \@items,
+					item_mode                     => $item_mode,
+					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
+					party                         => $c->stash->{party},
 				}
 			}
 		]
@@ -262,7 +265,7 @@ sub give_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-	my @characters = $c->stash->{party}->characters;
+	my @characters = $c->stash->{party}->characters_in_sector;
 	my ($original_character) = grep { $_->id eq $item->character_id } @characters;
 
 	# Make sure this item belongs to a character in the party
@@ -432,11 +435,11 @@ sub update_spells : Local {
 	}
 	else {
 		my $cast_chance = $c->req->param('offline_cast_chance');
-		$cast_chance = 0 if $cast_chance < 0;
+		$cast_chance = 0   if $cast_chance < 0;
 		$cast_chance = 100 if $cast_chance > 100;
 		$character->offline_cast_chance($cast_chance);
 		$character->update;
-		
+
 		foreach my $spell_id ( keys %memorise_tomorrow ) {
 			my $memorised_spell = $c->model('DBIC::Memorised_Spells')->find_or_create(
 				{
@@ -452,8 +455,8 @@ sub update_spells : Local {
 			else {
 				$memorised_spell->memorise_tomorrow(0);
 			}
-			
-			$memorised_spell->cast_offline($c->req->param('cast_offline_' . $spell_id) ? 1 : 0);
+
+			$memorised_spell->cast_offline( $c->req->param( 'cast_offline_' . $spell_id ) ? 1 : 0 );
 
 			$memorised_spell->memorise_count_tomorrow($mem_count);
 			$memorised_spell->update;

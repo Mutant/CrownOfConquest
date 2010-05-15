@@ -136,7 +136,7 @@ function createMenus() {
 	
 	var giveSubMenu = new dijit.Menu();
 	
-	[% FOREACH char_in_party IN party.characters %]
+	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
 		[% UNLESS char_in_party.character_id == character.id %]
 			params = {
 				label: "[% char_in_party.name %]",

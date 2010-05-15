@@ -239,6 +239,19 @@ sub characters_in_party {
 	);
 }
 
+sub characters_in_sector {
+	my $self = shift;
+	
+	my @chars = $self->characters_in_party;
+	
+	my $garrison = $self->location->garrison;
+	if ($garrison && $garrison->party_id == $self->id) {
+		push @chars, $garrison->characters;
+	}
+	
+	return @chars;		
+}
+
 # Record turns used whenever number of turns are decreased
 sub turns {
     my $self      = shift;

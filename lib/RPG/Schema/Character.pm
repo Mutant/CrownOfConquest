@@ -94,7 +94,14 @@ sub is_spell_caster {
 sub is_in_party {
 	my $self = shift;
 	
-	return $self->party_id && ! $self->garrison_id ? 1 : 0;
+	return 0 unless $self->party_id;
+	
+	return 1 unless $self->garrison_id;
+	
+	# They're in a garrison.. if the party is currently in the garrison's sector, consider the char to be in the party
+	return 1 if $self->garrison->land_id == $self->party->land_id;
+	
+	return 0;
 }
 
 sub encumbrance {

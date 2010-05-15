@@ -37,6 +37,7 @@ sub set_quest_params {
     
     # No dungeons in range, throw exception
     if ($dungeon_rs->count == 0) {
+    	$self->delete;
         die RPG::Exception->new(
             message => "Can't find dungeon in range of town, skipping quest creation",
             type    => 'quest_creation_error',
@@ -58,6 +59,7 @@ sub set_quest_params {
     
     unless (@chests) {
 		# TODO: try another dungeon?
+		$self->delete;
         die RPG::Exception->new(
             message => "Can't find chest in the dungeon, skipping",
             type    => 'quest_creation_error',

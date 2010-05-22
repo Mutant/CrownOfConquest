@@ -57,6 +57,9 @@ sub display {
 	    elsif ( $result->{party_fled} || $result->{garrison_fled} ) {
 	    	push @messages, "You fled the battle!\n";
 	    }
+	    elsif ( $result->{stalemate} ) {
+	    	push @messages, "The battle was a stalemate\n";
+	    }
     	elsif ( ! $group->is($result->{losers}) ) {
             my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );
 

@@ -79,4 +79,8 @@ sub finish {
     }
 }
 
+sub is_online {
+	return 0;	
+}
+
 1;

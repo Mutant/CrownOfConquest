@@ -14,7 +14,7 @@ use RPG::Combat::MessageDisplayer;
 
 use feature 'switch';
 
-requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by/;
+requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by is_online/;
 
 has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
 has 'config' => ( is => 'ro', isa => 'HashRef',     required => 0 );
@@ -51,8 +51,8 @@ sub opponent_number_of_group {
 
 sub execute_round {
     my $self = shift;
-
-    if ( $self->check_for_flee ) {
+        
+    if ( $self->stalemate_check || $self->check_for_flee ) {
         # One opponent has fled, end of the battle
         $self->end_of_combat_cleanup;
         
@@ -124,6 +124,27 @@ sub execute_round {
     return $self->result;
 }
 
+# If both sides are offline, check if any damage has been done in the last 10 rounds (on either side)
+#  If no damage has been done, declare a 'stalemate'. This prevents battles lasting forever
+sub stalemate_check {
+	my $self = shift;
+	
+	return 0 if $self->is_online;
+	
+	return 0 if $self->combat_log->rounds == 0 || $self->combat_log->rounds % 10 != 0;
+	
+	if ($self->session->{stalemate_check} != 0) {
+		# Damage done, so no stalemate
+		$self->session->{stalemate_check} = 0;
+		return 0;
+	}
+	else {
+		# It's a stalemate
+		$self->result->{stalemate} = 1;
+		return 1;
+	}
+}
+
 sub check_for_end_of_combat {
     my $self           = shift;
     my $last_combatant = shift;
@@ -136,8 +157,7 @@ sub check_for_end_of_combat {
         $self->combat_log->encounter_ended( DateTime->now() );
         $self->result->{combat_complete} = 1;
 
-        # TODO: best way to find if opponents are a party?
-        if ( $opponents->isa('RPG::Schema::Party') ) {
+        if ( $opponents->group_type eq 'party' ) {
             $opponents->defunct( DateTime->now() );
             $opponents->update;
         }
@@ -466,6 +486,8 @@ sub attack {
             unless $dam_max <= 0;
 
         $defender->hit($damage);
+        
+        $self->session->{stalemate_check} += $damage; 
 
         if ( $defender->is_dead ) {
 			# TODO: move to schema class?

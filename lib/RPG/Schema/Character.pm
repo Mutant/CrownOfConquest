@@ -538,10 +538,10 @@ sub run_out_of_ammo {
 
     my ($weapon) = $self->get_equipped_item('Weapon');
 
-    return unless $weapon;
+    return 0 unless $weapon;
 
     unless ( $weapon->item_type->category->item_category eq 'Ranged Weapon' ) {
-        return;
+        return 0;
     }
 
     my @ammo = $self->ammunition_for_item($weapon);

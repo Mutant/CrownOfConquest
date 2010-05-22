@@ -50,6 +50,8 @@
 			    and ran from the battle without shame.
 			[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
 				and were thwarted as the cowards retreated.
+			[% ELSIF battle.outcome == 'stalemate' %]
+				and it was a stalemate.
 			[% END %]
 			
 			<li>The battle lasted [% FILTER inflect %]NO(round, [% battle.rounds %])[% END %], 

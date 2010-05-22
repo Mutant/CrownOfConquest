@@ -161,4 +161,10 @@ sub check_for_item_found {
 
 }
 
+sub is_online {
+	my $self = shift;
+	
+	return $self->character_group_1->is_online || $self->character_group_1->is_online ? 1 : 0; 
+}
+
 1;

@@ -1,5 +1,8 @@
 package RPG::Combat::CreatureBattle;
 
+# Battle between creatures and a party (not a garrison)
+# TODO: Possibly needs a rename?
+
 use Moose::Role;
 
 use Data::Dumper;
@@ -67,6 +70,12 @@ sub finish {
     
     $self->party->gold( $self->party->gold + $self->result->{gold} );
     $self->party->update;
+}
+
+sub is_online {
+	my $self = shift;
+	
+	return $self->party->is_online;	
 }
 
 1;

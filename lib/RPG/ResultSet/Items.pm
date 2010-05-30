@@ -24,4 +24,27 @@ sub party_items_requiring_repair {
     );   
 }
 
+sub create_enchanted {
+	my $self = shift;
+	my $params = shift;
+	my $extra_params = shift;
+		
+	my $item = $self->create($params);
+	
+	return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
+	
+	for (1 .. $extra_params->{number_of_enchantments}) {
+		my $enchantment = $self->result_source->schema->resultset('Enchantments')->random;
+		
+		$item->add_to_item_enchantments(
+			{
+				enchantment_id => $enchantment->id,
+			}
+		); 
+	}
+	
+	return $item;
+	
+}
+
 1;

@@ -17,7 +17,7 @@ __PACKAGE__->load_classes(qw/
     Dungeon Dungeon_Grid Dungeon_Wall Dungeon_Position Door Dungeon_Room Mapped_Dungeon_Grid Session
     Item_Property_Category Party_Town Party_Battle Battle_Participant Party_Effect Town_History Road
     Treasure_Chest Survey_Response Announcement Announcement_Player Tip Dungeon_Sector_Path
-    Dungeon_Sector_Path_Door Garrison Combat_Log_Messages Garrison_Messages
+    Dungeon_Sector_Path_Door Garrison Combat_Log_Messages Garrison_Messages Enchantments Item_Enchantments
 /);
 
 my $config;

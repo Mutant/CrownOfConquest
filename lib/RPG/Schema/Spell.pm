@@ -55,11 +55,30 @@ sub cast {
     my $self = shift;
     my ( $character, $target ) = @_;
 
-    confess "No target or character. ($character, $target)" unless $character && $target;
-
     my $memorised_spell = $self->find_related( 'memorised_spells', { character_id => $character->id, } );
 
     confess "Character has not memorised spell" if !$memorised_spell || $memorised_spell->casts_left_today <= 0;
+
+    my $result = $self->_cast_impl($character, $target);
+
+    $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
+    $memorised_spell->update;
+
+    return $result;
+}
+
+sub cast_from_action {
+	my $self = shift;
+	my ( $character, $target ) = @_;
+	
+	return $self->_cast_impl($character, $target);
+}
+
+sub _cast_impl {
+	my $self = shift;
+	my ( $character, $target ) = @_;
+	
+    confess "No target or character. ($character, $target)" unless $character && $target;
 
     my $result_params = $self->_cast( $character, $target );
 
@@ -70,10 +89,7 @@ sub cast {
         %$result_params,
     );
 
-    $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
-    $memorised_spell->update;
-
-    return $result;
+    return $result;	
 }
 
 sub create_effect {
@@ -90,6 +106,12 @@ sub create_party_effect {
     my $schema = $self->result_source->schema;
     
     $schema->resultset('Effect')->create_party_effect($params);
+}
+
+sub label {
+	my $self = shift;
+	
+	return $self->spell_name;	
 }
 
 1;

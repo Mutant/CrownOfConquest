@@ -871,4 +871,26 @@ sub check_for_offline_cast {
 	}	
 }
 
+# Get item actions (i.e. all items that can be used)
+sub get_item_actions {
+	my $self = shift;
+	my $combat = shift;
+	
+	my @items = $self->search_related('items',
+		{
+			'item_enchantments.enchantment_id' => {'!=', undef},
+		},
+		{
+			prefetch => 'item_enchantments',
+		}			
+	);
+		
+	my @actions;
+	foreach my $item (@items) {
+		push @actions, $item->usable_actions($combat);		
+	}
+	
+	return @actions;	
+}
+
 1;

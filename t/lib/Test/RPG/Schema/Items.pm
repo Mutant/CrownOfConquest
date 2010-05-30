@@ -207,8 +207,32 @@ sub test_repair_cost : Tests(1) {
     
     # THEN
     is($repair_cost, 14, "Repair cost correct");
-    
-    
 }
 
+sub test_usable_actions_with_one_usable_enchantment : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day', 'indestructible'] );
+	
+	# WHEN
+	my @actions = $item->usable_actions;
+	
+	# THEN
+	is(scalar @actions, 1, "Item has one usable action");
+	is($actions[0]->enchantment->enchantment_name, 'spell_casts_per_day', "correct action is usable");			
+}
+
+sub test_usable_actions_with_no_usable_enchantments : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['indestructible'] );
+	
+	# WHEN
+	my @actions = $item->usable_actions;
+	
+	# THEN
+	is(scalar @actions, 0, "Item has one usable action");			
+}
 1;

@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::Item;
 
+use Carp;
+
 sub build_item {
     my $self   = shift;
     my $schema = shift;
@@ -77,6 +79,23 @@ sub build_item {
                 item_attribute_value   => $attribute->{item_attribute_value},
             }
         );
+    }
+    
+    foreach my $enchantment ( @{ $params{enchantments} } ) {
+    	my $enchantment_rec = $schema->resultset('Enchantments')->find(
+    		{
+    			enchantment_name => $enchantment,
+    		}
+    	);
+    	
+    	confess "Enchantment $enchantment not found!" unless $enchantment_rec;
+    	
+    	$schema->resultset('Item_Enchantments')->create(
+    		{
+    			enchantment_id => $enchantment_rec->id,
+    			item_id => $item->id,
+    		}
+    	);
     }
 
     return $item;

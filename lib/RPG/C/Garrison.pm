@@ -78,7 +78,7 @@ sub add : Local {
 			land_id => $c->stash->{party_location}->land_id,
 			party_id => $c->stash->{party}->id,
 			creature_attack_mode => 'Attack Weaker Opponents',
-			party_attack_mode => 'Densive Only',
+			party_attack_mode => 'Defensive Only',
 		}
 	);
 	

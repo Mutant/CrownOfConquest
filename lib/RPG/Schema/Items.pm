@@ -119,6 +119,10 @@ __PACKAGE__->belongs_to( 'equipped_in', 'RPG::Schema::Equip_Places', { 'foreign.
 
 __PACKAGE__->has_many( 'item_variables', 'RPG::Schema::Item_Variable', { 'foreign.item_id' => 'self.item_id' } );
 
+__PACKAGE__->has_many( 'item_enchantments', 'RPG::Schema::Item_Enchantments', 'item_id' );
+
+__PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' );
+
 sub attribute {
     my $self      = shift;
     my $attribute = shift;
@@ -143,7 +147,7 @@ sub variable_row {
     my $variable_name = shift;
     my $new_val       = shift;
 
-    $self->{variables} = { map { $_->item_variable_name->item_variable_name => $_ } $self->item_variables }
+    $self->{variables} = { map { $_->name || $_->item_variable_name->item_variable_name => $_ } $self->item_variables }
         unless $self->{variables};
 
     my $variable = $self->{variables}{$variable_name};
@@ -445,6 +449,30 @@ sub repair_cost {
     }
     
     return $cost;
+}
+
+# Returns the currently usable actions for this item. Each enchantment on the item (if any) is checked to see
+#  if it can be used,  and the criteria for that action must be satisfied 
+#  (e.g. the item is equipped if the action requires that)
+sub usable_actions {
+	my $self = shift;
+	my $combat = shift;
+	
+	my @enchantments = $self->item_enchantments;
+	return unless @enchantments;
+	
+	my @actions;
+	foreach my $enchantment (@enchantments) {
+		next unless $enchantment->is_usable($combat);
+		if ($enchantment->must_be_equipped) {
+			push @actions, $enchantment if $self->equipped;
+		}
+		else {
+			push @actions, $enchantment;
+		}
+	}
+	
+	return @actions;
 }
 
 1;

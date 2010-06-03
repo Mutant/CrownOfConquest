@@ -24,4 +24,16 @@ sub must_be_equipped {
 	return 0;	
 }
 
+sub target {
+	
+}
+
+sub label {
+		
+}
+
+sub tooltip {
+	return 'Indestructible';	
+}
+
 1;

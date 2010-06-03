@@ -8,9 +8,9 @@ use warnings;
 use Games::Dice::Advanced;
 
 sub _cast {
-    my ( $self, $character, $target ) = @_;
+    my ( $self, $character, $target, $level ) = @_;
 
-    my $modifier = $character->level;
+    my $modifier = $level;
     my $duration = 2 + ( int $character->level / 3 + 1 );
 
     $self->create_effect(

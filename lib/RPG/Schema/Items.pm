@@ -165,12 +165,17 @@ sub variable_row {
 sub display_name {
     my $self = shift;
 
-    my $quantity_string = '';
-    if ( my $quantity = $self->variable('Quantity') ) {
-        $quantity_string = ' (x' . $quantity . ')';
-    }
+	my $name = $self->item_type->item_type;
 
-    return $self->item_type->item_type . $quantity_string;
+    if ( my $quantity = $self->variable('Quantity') ) {
+        $name .= ' (x' . $quantity . ')';
+    }
+    
+    if ($self->enchantments_count > 0) {
+    	$name .= '(*)';
+    }    
+
+    return $name;
 }
 
 sub weight {
@@ -473,6 +478,18 @@ sub usable_actions {
 	}
 	
 	return @actions;
+}
+
+sub equipped {
+	my $self = shift;
+	
+	return $self->equip_place_id ? 1 : 0;	
+}
+
+sub enchantments_count {
+	my $self = shift;
+	
+	return $self->search_related('item_enchantments')->count();	
 }
 
 1;

@@ -62,7 +62,7 @@ sub view : Local {
 					characters          => \@characters,
 					garrison_characters => \@garrison_characters,
 					xp_for_next_level   => $next_level ? $next_level->xp_needed : '????',
-					selected  => $c->stash->{selected_tab}   || $c->req->param('selected'),
+					selected  => $c->stash->{selected_tab}   || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 				}
 			}

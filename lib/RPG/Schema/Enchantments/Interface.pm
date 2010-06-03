@@ -4,7 +4,7 @@ package RPG::Schema::Enchantments::Interface;
 use Moose::Role;
 
 # Defined by the role
-requires qw/init_enchantment is_usable must_be_equipped label target/;
+requires qw/init_enchantment is_usable must_be_equipped label target tooltip/;
 
 # For good measure, we also list things required to be in the schema class
 requires qw/add_to_variables item/;

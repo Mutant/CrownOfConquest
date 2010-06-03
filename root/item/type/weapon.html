@@ -17,4 +17,6 @@
 			[% variable.item_variable_name %]: [% variable_rec.item_variable_value %][% IF variable_rec.max_value %] / [% variable_rec.max_value %][% END %]<br>
 		[% END %]
 	[% END %]
+	
+	[% INCLUDE item/enchantments.html %]	
 [% END %]

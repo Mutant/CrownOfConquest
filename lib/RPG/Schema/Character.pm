@@ -38,7 +38,7 @@ __PACKAGE__->belongs_to( 'race', 'RPG::Schema::Race', { 'foreign.race_id' => 'se
 __PACKAGE__->has_many(
     'items', 'RPG::Schema::Items',
     { 'foreign.character_id' => 'self.character_id' },
-    { prefetch               => [ 'item_type', 'item_variables' ], },
+    { prefetch               => [ 'item_type' ], },
 );
 
 __PACKAGE__->has_many( 'memorised_spells', 'RPG::Schema::Memorised_Spells', { 'foreign.character_id' => 'self.character_id' }, );
@@ -132,7 +132,7 @@ sub encumbrance {
 			
 			foreach my $variable (@item_variables) {
 				$quantity = $variable->{item_variable_value} 
-					if $variable->{item_variable_name}{item_variable_name} eq 'Quantity';	
+					if ($variable->{item_variable_name}{item_variable_name} || '') eq 'Quantity';	
 			}
 		}
 		

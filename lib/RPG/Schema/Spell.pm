@@ -69,18 +69,18 @@ sub cast {
 
 sub cast_from_action {
 	my $self = shift;
-	my ( $character, $target ) = @_;
+	my ( $character, $target, $level ) = @_;
 	
-	return $self->_cast_impl($character, $target);
+	return $self->_cast_impl($character, $target, $level);
 }
 
 sub _cast_impl {
 	my $self = shift;
-	my ( $character, $target ) = @_;
+	my ( $character, $target, $level ) = @_;
 	
     confess "No target or character. ($character, $target)" unless $character && $target;
 
-    my $result_params = $self->_cast( $character, $target );
+    my $result_params = $self->_cast( $character, $target, $level || $character->level );
 
     my $result = RPG::Combat::SpellActionResult->new(
         spell_name => $self->spell_name,

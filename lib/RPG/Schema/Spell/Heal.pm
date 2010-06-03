@@ -8,9 +8,9 @@ use warnings;
 use Games::Dice::Advanced;
 
 sub _cast {
-    my ( $self, $character, $target ) = @_;
+    my ( $self, $character, $target, $level ) = @_;
 
-    my $dice_count = int $character->level / 5 + 1;
+    my $dice_count = int $level / 5 + 1;
 
     my $heal = Games::Dice::Advanced->roll( $dice_count . "d6" );
 

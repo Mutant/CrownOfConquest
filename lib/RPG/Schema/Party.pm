@@ -170,7 +170,7 @@ __PACKAGE__->has_many( 'day_logs', 'RPG::Schema::DayLog', 'party_id', );
 
 __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );
 
-__PACKAGE__->might_have( 'cg_opponent', 'RPG::Schema::CreatureGroup', { 'foreign.creature_group_id' => 'self.in_combat_with' } );
+__PACKAGE__->belongs_to( 'cg_opponent', 'RPG::Schema::CreatureGroup', { 'foreign.creature_group_id' => 'self.in_combat_with' } );
 
 __PACKAGE__->belongs_to( 'player', 'RPG::Schema::Player', { 'foreign.player_id' => 'self.player_id' } );
 

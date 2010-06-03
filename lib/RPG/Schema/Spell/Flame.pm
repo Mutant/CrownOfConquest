@@ -8,8 +8,8 @@ use warnings;
 use Games::Dice::Advanced;
 
 sub _cast {
-    my ( $self, $character, $target ) = @_;
-    my $dice_count = int $character->level / 3 + 1;
+    my ( $self, $character, $target, $level ) = @_;
+    my $dice_count = int $level / 3 + 1;
 
     my $flame = Games::Dice::Advanced->roll( $dice_count . "d10" );
 

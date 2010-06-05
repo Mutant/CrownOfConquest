@@ -38,8 +38,15 @@ sub init_enchantment {
 
 sub is_usable {
 	my $self = shift;
+	my $combat = shift;
 	
-	return $self->item->variable('Casts Per Day') > 0 ? 1 : 0;	
+	return 0 if $self->item->variable('Casts Per Day') <= 0;
+	
+	return 1 if $combat && $self->spell->combat;
+	
+	return 1 if ! $combat && $self->spell->non_combat;
+	
+	return 0;
 }
 
 sub must_be_equipped {
@@ -49,7 +56,8 @@ sub must_be_equipped {
 sub label {
 	my $self = shift;
 	
-	return $self->item->display_name . " (" . $self->item->variable('Spell') . ")";	
+	return $self->item->display_name . " (" . $self->item->variable('Spell') . " (" .
+		$self->item->variable('Casts Per Day') . "))";	
 }
 
 sub tooltip {
@@ -98,7 +106,7 @@ sub use {
 	
 	confess "No casts left today" unless $casts_per_days->item_variable_value > 0;
 	
-	my $result = $self->spell->cast_from_action($self->item->belongs_to_character, $target, $self->variable('Spell Level'));
+	my $result = $self->spell->cast_from_action($self->item->belongs_to_character, $target, $self->item->variable('Spell Level'));
 	
 	$casts_per_days->decrement_item_variable_value;
 	$casts_per_days->update;

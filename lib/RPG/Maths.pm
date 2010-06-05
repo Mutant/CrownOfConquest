@@ -4,6 +4,7 @@ use warnings;
 package RPG::Maths;
 
 use Games::Dice::Advanced;
+use Math::Round qw(round);
 
 use Data::Dumper;
 
@@ -13,38 +14,42 @@ sub weighted_random_number {
     my $package = shift;
     my @numbers = sort {$a <=> $b} @_;
     
+    return unless @numbers;    
+    
+	my ($cumulative_chance, %chances) = _calculate_weights(@numbers);
+        
+    my $roll = Games::Dice::Advanced->roll("1d" . $cumulative_chance);
+        
+    foreach my $chance_to_check (sort {$a <=> $b} keys %chances) {    
+        if ($roll <= $chance_to_check) {
+            return $chances{$chance_to_check};
+        }
+    }
+}
+
+sub _calculate_weights {
+	my @numbers = @_;
+	
     my $size_of_group = scalar @numbers;
     
-    my $base_chance_per_number = int 100 / $size_of_group;
-    
-    # Count starts at 0 for odd number of numbers, 0.5 for even number of numbers
-    #  This makes sure the cumulative chance adds to 100 
-    my $count = 1; #scalar @numbers % 2 == 0 ? 0.5 : 0;
+    my $base_chance_per_number = $size_of_group * 100;
+     
+    my $count = int $size_of_group / 10;
+    $count = 2 if $count < 2;
     my $cumulative_chance = 0;
     
     my %chances;
     foreach my $number (@numbers) {
         $count++;
-        my $chance = $base_chance_per_number + ($base_chance_per_number / 2) * ($size_of_group - ($count-1));
         
-        #warn "$number => $chance\n";
+        my $chance = $base_chance_per_number / $count**2;
         
         $cumulative_chance+=$chance;
         
         $chances{$cumulative_chance} = $number;
     }
     
-    #warn Dumper \%chances;
-    
-    my $roll = Games::Dice::Advanced->roll("1d" . $cumulative_chance);
-    #warn $roll;
-    
-    foreach my $chance_to_check (sort {$a <=> $b} keys %chances) {
-        #warn $chance_to_check;
-        if ($roll <= $chance_to_check) {
-            return $chances{$chance_to_check};
-        }
-    }
+    return (round($cumulative_chance), %chances);
 }
 
 1;

@@ -21,3 +21,11 @@ ALTER TABLE `Item_Variable` MODIFY COLUMN `item_variable_value` VARCHAR(100)  NO
 
 INSERT INTO `Enchantments` (enchantment_name) values ('spell_casts_per_day');
 INSERT INTO `Enchantments` (enchantment_name) values ('indestructible');
+
+ALTER TABLE `Item_Category` ADD COLUMN `enchantable` TINYINT NOT NULL DEFAULT '0';
+UPDATE `Item_Category` set enchantable = 1 where
+  item_category = 'Melee Weapon' or
+  item_category = 'Armour' or
+  item_category = 'Ranged Weapon' or
+  item_category = 'Head Gear' or
+  item_category = 'Shield';

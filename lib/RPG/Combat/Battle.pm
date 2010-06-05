@@ -312,18 +312,38 @@ sub character_action {
             %action_params,
         );
     }
-    elsif ( $character->last_combat_action eq 'Cast' ) {
-        my $spell = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
+    elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
+        my $obj;
+        my $target_type;
+        if ( $character->last_combat_action eq 'Cast' ) {
+        	$obj = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
+        	
+        	$target_type = $obj->target;
+        }
+        else {
+        	$obj = $self->schema->resultset('Item_Enchantments')->find($character->last_combat_param1);
+						
+			confess "Attempt to use item that belongs to another character" 
+				unless $obj->item->character_id == $character->id;
+				
+			$target_type = $obj->spell->target;					
+        }
 
         my $target;
-        if ($spell->target eq 'character') {
+        if ($target_type eq 'character') {
             $target = $self->combatants_by_id->{'character'}{$character->last_combat_param2};   
         }
         else {
             $target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
         }
-
-        my $result = $spell->cast( $character, $target );
+        
+        my $result;
+        if ( $character->last_combat_action eq 'Cast' ) {
+        	$result = $obj->cast( $character, $target );
+        }
+        else {
+        	$result = $obj->use( $target );
+        }
 
         # Since effects could have changed an af or df, we delete any id's in the cache matching the second param
         #  (the target's id) and then recompute.

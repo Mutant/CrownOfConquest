@@ -60,9 +60,6 @@ after 'execute_round' => sub {
 		$party->turns( $party->turns - 1 );
 		$party->update;
 	}
-
-	# Don't think this is needed, but left here just in case...
-	# $self->result->{party_battle} = 1;
 };
 
 sub finish {
@@ -82,7 +79,7 @@ sub finish {
 
 	$self->result->{gold} = $gold;
 
-	my @characters = $winners->characters;
+	my @characters = $winners->can('characters_in_party') ? $winners->characters_in_party : $winners->characters;
 	$self->check_for_item_found( \@characters, $avg_character_level );
 
 	$winners->gold( $winners->gold + $gold );

@@ -9,6 +9,8 @@ use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
 
+use RPG::Maths;
+
 requires qw/character_group party_flee distribute_xp/;
 
 has 'creature_group' => ( is => 'rw', isa => 'RPG::Schema::CreatureGroup', required => 1 );
@@ -126,7 +128,9 @@ sub creatures_lost {
 
 	$self->character_group->end_combat;
 
-	$self->check_for_item_found( [ $self->character_group->characters ], $avg_creature_level );
+	my $group = $self->character_group;
+	my @characters = $group->can('characters_in_party') ? $group->characters_in_party : $group->characters;
+	$self->check_for_item_found( \@characters, $avg_creature_level );
 
 	# Don't delete creature group, since it's needed by news
 	$self->creature_group->land_id(undef);
@@ -173,7 +177,21 @@ sub check_for_item_found {
 		}
 
 		# Create the item
-		my $item = $self->schema->resultset('Items')->create( { item_type_id => $item_type->id, }, );
+		my $item;
+		if ($item_type->category->enchantable && $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
+			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
+			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
+			if ($enchantment_roll <= $enchantment_chance) {
+				my $enchantment_count = RPG::Maths->weighted_random_number(1..3);
+				
+				$item = $self->schema->resultset('Items')->create_enchanted(
+					{ item_type_id => $item_type->id, },
+					{ number_of_enchantments => $enchantment_count },
+				);
+			}
+		}
+		
+		$item ||= $self->schema->resultset('Items')->create( { item_type_id => $item_type->id, }, );
 
 		$item->add_to_characters_inventory($finder);
 

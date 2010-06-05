@@ -322,6 +322,65 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
     $self->{dice}->unfake_module();
 }
 
+sub test_character_action_use_item : Tests(5) {
+    my $self = shift;
+
+    # GIVEN
+    $self->mock_dice;
+    $self->clear_dice_data;
+    
+    $self->{roll_result} = 6;
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    $character->party_id( $party->id );
+    $character->last_combat_action('Use');
+
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    $target->party_id( $party->id );
+    $target->max_hit_points(10);
+    $target->hit_points(5);
+    $target->update;
+
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'] );
+	$item->variable_row('Spell', 'Heal');	
+	$item->variable_row('Casts Per Day', 2);
+
+    $character->last_combat_param1( $item->variable_row('Spell')->item_enchantment_id );
+    $character->last_combat_param2( $target->id );
+    $character->update;
+
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+
+    my $battle = RPG::Combat::CreatureWildernessBattle->new(
+        schema         => $self->{schema},
+        party          => $party,
+        creature_group => $cg,
+        log            => $self->{mock_logger},
+    );
+
+    $battle = Test::MockObject::Extends->new($battle);
+
+    # WHEN
+    my $result = $battle->character_action($character);
+
+    # THEN
+    isa_ok( $result, 'RPG::Combat::SpellActionResult', "Spell Results returned" );
+    is($result->damage, 6, "Heal amount recorded in action result");
+    
+    is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
+    $target->discard_changes;
+    is( $target->hit_points, 10, "Target's hit points have increased" );
+    
+    
+    $item->discard_changes;
+    is($item->variable('Casts Per Day'), 1, "Item's casts per day reduced");
+    
+    
+    $self->{dice}->unfake_module();
+}
+
 sub test_creature_action_basic : Tests(9) {
     my $self = shift;
 

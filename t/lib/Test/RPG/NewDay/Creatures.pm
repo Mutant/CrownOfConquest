@@ -81,7 +81,7 @@ sub test_spawn_monsters : Tests(4) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
-        $self->{creature_action}->spawn_monsters;
+       $self->{creature_action}->spawn_monsters;
 
     my @cgs = $self->{schema}->resultset('CreatureGroup')->search( {}, { prefetch => 'location', } );
     is( scalar @cgs, 5, "Five groups generated" );

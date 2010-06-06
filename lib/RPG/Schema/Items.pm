@@ -220,20 +220,29 @@ sub insert {
 sub sell_price {
     my $self = shift;
     my $shop = shift;
+    my $use_modifier = shift // 1;
 
-    my $modifier = $shop ? RPG->config->{shop_sell_modifier} : 0;
+    my $modifier = $use_modifier ? RPG::Schema->config->{shop_sell_modifier} : 0;
 
-    my $price = int( $self->item_type->modified_cost($shop) / ( 100 / ( 100 + $modifier ) ) );
+	my $price = $self->item_type->modified_cost($shop);
 
     # Adjust for upgrades
     my @upgrade_variables = $self->item_type->category->variables_in_property_category('Upgrade');
     foreach my $upgrade_variable (@upgrade_variables) {
         $price += ( $self->variable($upgrade_variable) || 0 ) * 20;
     }
+    
+    # Adjust for enchantments
+    my @enchantments = $self->item_enchantments;
+    foreach my $enchantment (@enchantments) {
+    	$price += ($enchantment->sell_price_adjustment || 0);	
+    }
 
     $price = 1 if $price == 0;
 
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
+
+    $price = int( $price / ( 100 / ( 100 + $modifier ) ) );
 
     return $price;
 }

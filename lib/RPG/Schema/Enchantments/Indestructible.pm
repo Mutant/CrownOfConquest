@@ -36,4 +36,8 @@ sub tooltip {
 	return 'Indestructible';	
 }
 
+sub sell_price_adjustment {
+	return 125;	
+}
+
 1;

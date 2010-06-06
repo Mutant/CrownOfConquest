@@ -3,6 +3,7 @@
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
+	dojo.require("dijit.layout.TabContainer");
 	dojo.require("rpg.dnd.Target");
 	
 function init() {	
@@ -20,10 +21,18 @@ function init() {
     	
     	var item_type_id = tmp[1];
 		
-		if (tmp[0] == 'item') {			
+		if (tmp[0] == 'item' || tmp[0] == 'enchanted') {			
 			dojo.byId('confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
 			dojo.byId('purchasing-char-id').value = char_id;
-			dojo.byId('purchasing-item-type-id').value = item_type_id;
+			
+			if (tmp[0] == 'item') {
+			    dojo.byId('purchasing-item-id').value = null;
+				dojo.byId('purchasing-item-type-id').value = item_type_id;
+			}
+			else {
+				dojo.byId('purchasing-item-id').value = item_type_id;
+				dojo.byId('purchasing-item-type-id').value = null;
+			}
 			
 			dijit.byId('confirmation').show();
 		}
@@ -42,11 +51,19 @@ function init() {
 	});	
 }
 
-function savePurchase(dialogFields) {	
+function savePurchase(dialogFields) {
+	if (dialogFields.purchasing_item_id) {
+		url = "[% base %]/shop/buy_item?item_id=" + dialogFields.purchasing_item_id;
+	}
+	else {
+		url = "[% base %]/shop/buy_item?item_type_id=" + dialogFields.purchasing_item_type_id;
+	}
+	
+	url += "&character_id=" + dialogFields.purchasing_char_id 
+		+  "&shop_id=[% shop.id %]";
+
 	dojo.xhrGet( {
-        url: "[% base %]/shop/buy_item?character_id=" + dialogFields.purchasing_char_id 
-        	+ "&item_type_id=" + dialogFields.purchasing_item_type_id
-        	+ "&shop_id=[% shop.id %]", 
+        url: url, 
         handleAs: "json",
         
         load: function(responseObject, ioArgs) {
@@ -55,12 +72,13 @@ function savePurchase(dialogFields) {
           	dijit.byId('error').show();
           }
           else if (responseObject.gold) {
-			  dojo.byId('current-gold').innerHTML = responseObject.gold;
-			  dojo.byId('item-quantity-' + responseObject.updated_stock.item_type).innerHTML = responseObject.updated_stock.count;
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
 			  
 			  if (responseObject.updated_stock.count == 0) {
-			  	dojo.byId('item-source-' + responseObject.updated_stock.item_type).innerHTML = 
-			  		dojo.byId('item-' + dialogFields.purchasing_item_id).innerHTML;
+			    dojo.byId('item_outer_' + responseObject.updated_stock.item).style.display = 'none';
+			  }
+			  else {
+			    dojo.byId('item-quantity-' + responseObject.updated_stock.item).innerHTML = responseObject.updated_stock.count;
 			  }	  	  
 		  }
           return responseObject;
@@ -104,6 +122,7 @@ dojo.addOnLoad( init );
     <span id="confirmation-message"></span>
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
@@ -155,55 +174,20 @@ dojo.addOnLoad( init );
 <div align="center">Drag an item below onto a character's name to purchase it</div>
 <br>
 
-[% MACRO item_details(item_type, sell_type) BLOCK %]
-	[% INCLUDE item/tooltip.html item_type=item_type, item=undef %]
+[% IF shop.has_enchanted_items %]
+	<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items" style="display: none;">
 [% END %]
 
-<div style="min-height: 700px; height: 700px;">
-[% last_category = '' %]
-[% FOREACH category IN items %]
-	[% IF last_category != category.key %]
-		[% IF last_category != '' %]</div>[% END %]
-		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h3 style="text-align: center">[% category.key %]</h3>
-		[% last_category = category.key %]
-	[% END %]
+[% INCLUDE shop/item_list.html items=items %]
+
+[% IF shop.has_enchanted_items %]
+	</div>
+	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted Items" style="display: none;"
+		href="[% base %]/shop/enchanted_tab?shop_id=[% shop.id %]">
+	</div>
+</div>
+[% END %]
 	
-	[% FOREACH item_or_type IN category.value %]
-		[% sell_type = item_or_type.key %]	
-		[% FOREACH item IN item_or_type.value %]
-			[% IF sell_type == 'item' %]
-				[% item_type = item.item_type %]
-			[% ELSE %]
-				[% item_type = item %]
-			[% END %]
-		
-			<div style="float: left; padding: 10px; height: 125px" id="item_type_[% item_type.id %]">
-				
-					<div style="text-align: center">
-						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
-						<span dojoType="dojo.dnd.Source" copyOnly="true" id="item_source_[% item_type.id %]">
-							<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% item_type.id %]" dndData="[% item_type.item_type %]">
-								[% IF item_type.image %]
-									<img src="[% c.config.static_path %]/images/items/[% item_type.image %]">
-								[% ELSE %]
-									[% item_type.item_type %]
-								[% END %]
-							</span>
-						</span>
-					</div>
-					<div style="text-align: center">([% item_type.modified_cost(shop) %] gold[% IF sell_type=='quantity' %] each[% END %])</div>
-					
-				
-					<div dojoType="dijit.Tooltip"
-                   		connectId="item_source_[% item_type.id %]"
-                   		label="[% item_details(item_type, sell_type) | collapse %]"
-						style="display: none">
-                   </div>
-			</div>
-		[% END %]
-	[% END %]				
-[% END %]	
-</div>
-</div>
 
 [% INCLUDE bottom.html %]

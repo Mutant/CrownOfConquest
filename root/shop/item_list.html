@@ -1,0 +1,60 @@
+<div style="min-height: 700px; height: 700px;">
+[% last_category = '' %]
+[% FOREACH category IN items %]
+	[% IF last_category != category.key %]
+		[% IF last_category != '' %]</div>[% END %]
+		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h3 style="text-align: center">[% category.key %]</h3>
+		[% last_category = category.key %]
+	[% END %]
+	
+	[% FOREACH item_or_type IN category.value %]
+		[% sell_type = item_or_type.key %]	
+		[% FOREACH item IN item_or_type.value %]
+			[%# 
+				Depending on the kind of item, we setup the ids, etc. to use. These get used for css ids.
+				Note, this could theoretically result in id clashes, as item_type_ids and item_ids could
+				be the same. This should be rare enough not to worry about (I hope)
+			%]
+		
+			[% IF sell_type == 'item' %]
+				[% item_type = item.item_type %]
+				[% id = item_type.id %]
+				[% cost = item_type.modified_cost(shop) %]
+			[% ELSIF sell_type == 'quantity' %]
+				[% item_type = item %]
+				[% id = item.id %]
+				[% cost = item_type.modified_cost(shop) %]
+			[% ELSIF sell_type == 'enchanted' %]
+				[% item_type = item.item_type %]
+				[% id = item.item_id %]
+				[% cost = item.sell_price(shop, 0) %]
+			[% END %]
+		
+			<div style="float: left; padding: 10px; height: 125px" id="item_outer_[% id %]">
+				
+					<div style="text-align: center">
+						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
+						<span dojoType="dojo.dnd.Source" copyOnly="true" id="item_source_[% id %]">
+							<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% id %]" dndData="[% item_type.item_type %]">
+								[% IF item_type.image %]
+									<img src="[% c.config.static_path %]/images/items/[% item_type.image %]">
+								[% ELSE %]
+									[% item_type.item_type %]
+								[% END %]
+							</span>
+						</span>
+					</div>
+					<div style="text-align: center">([% cost %] gold[% IF sell_type=='quantity' %] each[% END %])</div>
+					
+				
+					<div dojoType="dijit.Tooltip"
+                   		connectId="item_source_[% id %]"
+                   		label="[% INCLUDE item/tooltip.html item_type=item_type, item=sell_type == 'item' ? undef : item | collapse %]"
+						style="display: none">
+                   </div>
+			</div>
+		[% END %]
+	[% END %]				
+[% END %]	
+</div>
+</div>

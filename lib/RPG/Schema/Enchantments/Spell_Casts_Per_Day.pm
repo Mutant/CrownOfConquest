@@ -124,4 +124,14 @@ sub new_day {
 	return;	
 }
 
+sub sell_price_adjustment {
+	my $self = shift;
+	
+	my $item = $self->item;
+	
+	my $step = ($item->variable('Casts Per Day') + $item->variable('Spell Level')) * 60;
+	
+	return 120 + $step; 	
+}
+
 1;

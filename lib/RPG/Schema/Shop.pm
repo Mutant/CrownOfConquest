@@ -116,6 +116,7 @@ sub grouped_items_in_shop {
 	
 	return $self->search_related('items_in_shop',
 		{
+			'item_enchantments.enchantment_id' => undef,
 		},
 		{
 			prefetch => {'item_type' => 'category'},
@@ -123,8 +124,36 @@ sub grouped_items_in_shop {
 			'+as' => [ 'number_of_items' ],
 			group_by => 'item_type',
 			order_by => 'item_category',
+			join => 'item_enchantments',
 		},
 	);
+}
+
+sub has_enchanted_items {
+	my $self = shift;
+	
+	return $self->search_related('items_in_shop',
+		{
+			'item_enchantments.enchantment_id' => {'!=', undef},
+		},
+		{
+			join => 'item_enchantments',
+		}
+	)->count > 0 ? 1 : 0;
+}
+
+sub enchanted_items_in_shop {
+	my $self = shift;
+	
+	return $self->search_related('items_in_shop',
+		{
+			'item_enchantments.enchantment_id' => {'!=', undef},
+		},
+		{
+			prefetch => ['item_enchantments', {'item_type' => 'category'},],
+			order_by => 'item_category',
+		}
+	);	
 }
 
 sub shop_name {

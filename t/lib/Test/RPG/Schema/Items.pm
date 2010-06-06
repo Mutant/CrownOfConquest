@@ -14,6 +14,7 @@ use Test::Exception;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Item_Type;
 
 sub startup : Tests(startup=>1) {
     my $self = shift;
@@ -233,6 +234,41 @@ sub test_usable_actions_with_no_usable_enchantments : Tests(1) {
 	my @actions = $item->usable_actions;
 	
 	# THEN
-	is(scalar @actions, 0, "Item has one usable action");			
+	is(scalar @actions, 0, "Item has no usable actions");			
 }
+
+sub test_sell_price : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, base_cost => 20 );
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, item_type_id => $item_type->id );
+	
+	# WHEN
+	my $sell_price = $item->sell_price(undef, 0);
+	my $sell_price_modified = $item->sell_price(undef, 1);
+	
+	# THEN
+	is($sell_price, 20, "Correct sell price returned");
+	is($sell_price_modified, 16, "Correct modified sell price returned");
+		
+}
+
+sub test_sell_price_enchanted : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, base_cost => 20 );
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, item_type_id => $item_type->id, enchantments => ['indestructible'] );
+	
+	# WHEN
+	my $sell_price = $item->sell_price(undef, 0);
+	my $sell_price_modified = $item->sell_price(undef, 1);
+	
+	# THEN
+	is($sell_price, 145, "Correct sell price returned");
+	is($sell_price_modified, 116, "Correct modified sell price returned");
+		
+}
+
 1;

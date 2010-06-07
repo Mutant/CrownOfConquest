@@ -33,12 +33,23 @@
 	);
 [% END %]
 
+[% MACRO single_target(caster, target_id, action, num_left, action_type, inprogress_label) BLOCK %]
+	params = {
+		label: "[% action.label %] ([% num_left %])",
+		onClick: function(){
+			[% action_function %]('[% action_type %]', '[% caster.id %]', '[% action.id %]', '[% target_id %]', 
+				'[% inprogress_label %] [% action.label %]')
+		}
+	};
+	var item = new dijit.MenuItem(params,document.createElement("div"));		
+[% END %]
+
 [% MACRO target_menu(caster, action, num_left, action_type, inprogress_label) BLOCK %]
 	[% SWITCH action.target %]
 		[% CASE ['self','none'] %]
-			[% target_party(caster, '', action, num_left, action_type, inprogress_label) %]
-		[% CASE 'party' %]
-			[% target_party(caster, party.id, action, num_left, action_type, inprogress_label) %]
+			[% single_target(caster, '', action, num_left, action_type, inprogress_label) %]
+		[% CASE 'party' %]			
+			[% single_target(caster, party.id, action, num_left, action_type, inprogress_label) %]
 		[% CASE ['creature', 'character'] %]
 			[% targets = action.target == 'creature' ? opponents : characters %]
 			[% multi_target(caster, targets, action, num_left, action_type, inprogress_label) %]

@@ -156,8 +156,10 @@ sub mock_dice {
     return $dice;
 }
 
-sub zz_teardown : Tests(teardown) {
+sub unmock_dice {
 	my $self = shift;
+	
+	$self->{dice}->unfake_module if $self->{dice};
 }
 
 # Returns any template params that have been captured as a hashref

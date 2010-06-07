@@ -27,6 +27,8 @@ sub startup : Tests(startup=>1) {
 sub setup_data : Tests(setup) {
     my $self = shift;
     
+    $self->mock_dice;    
+    
     $self->{rolls} = [5, 2];
 
     $self->{item_category} = $self->{schema}->resultset('Item_Category')->create( {} );
@@ -214,7 +216,13 @@ sub test_usable_actions_with_one_usable_enchantment : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
-	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day', 'indestructible'] );
+	$self->unmock_dice();
+	
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantable => 1 );
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day', 'indestructible'], 
+		item_type_id => $item_type->id );
+	my ($enchantment) = $item->item_enchantments;
+	$enchantment->variable('Spell', 'Heal');
 	
 	# WHEN
 	my @actions = $item->usable_actions;
@@ -227,7 +235,9 @@ sub test_usable_actions_with_one_usable_enchantment : Tests(2) {
 sub test_usable_actions_with_no_usable_enchantments : Tests(1) {
 	my $self = shift;
 	
-	# GIVEN
+	# GIVEN	
+	$self->unmock_dice();
+	
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['indestructible'] );
 	
 	# WHEN
@@ -241,6 +251,8 @@ sub test_sell_price : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
+	$self->unmock_dice();
+	
 	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, base_cost => 20 );
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, item_type_id => $item_type->id );
 	
@@ -258,6 +270,8 @@ sub test_sell_price_enchanted : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
+	$self->unmock_dice();
+	
 	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, base_cost => 20 );
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, item_type_id => $item_type->id, enchantments => ['indestructible'] );
 	

@@ -5,6 +5,8 @@ use warnings;
 
 use Games::Dice::Advanced;
 
+use Moose;
+
 use Carp;
 use Data::Dumper;
 use Math::Round qw(round);
@@ -123,6 +125,14 @@ __PACKAGE__->has_many( 'item_enchantments', 'RPG::Schema::Item_Enchantments', 'i
 
 __PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' );
 
+with 'RPG::Schema::Item::Variables';
+
+sub variables {
+	my $self = shift;
+	
+	return $self->item_variables;	
+}
+
 sub attribute {
     my $self      = shift;
     my $attribute = shift;
@@ -130,37 +140,6 @@ sub attribute {
     return $self->item_type->attribute($attribute);
 }
 
-sub variable {
-    my $self          = shift;
-    my $variable_name = shift;
-    my $new_val       = shift;
-
-    my $variable = $self->variable_row( $variable_name, $new_val );
-
-    return unless $variable;
-
-    return $variable->item_variable_value;
-}
-
-sub variable_row {
-    my $self          = shift;
-    my $variable_name = shift;
-    my $new_val       = shift;
-
-    $self->{variables} = { map { $_->name || $_->item_variable_name->item_variable_name => $_ } $self->item_variables }
-        unless $self->{variables};
-
-    my $variable = $self->{variables}{$variable_name};
-
-    return unless $variable;
-
-    if ($new_val) {
-        $variable->item_variable_value($new_val);
-        $variable->update;
-    }
-
-    return $variable;
-}
 
 sub display_name {
     my $self = shift;

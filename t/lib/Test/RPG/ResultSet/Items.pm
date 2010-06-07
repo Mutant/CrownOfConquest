@@ -13,15 +13,16 @@ __PACKAGE__->runtests() unless caller();
 sub startup : Tests(startup=>1) {
     my $self = shift;
     
+    $self->unmock_dice;
     use_ok 'RPG::ResultSet::Items';
      
 }
 
-sub test_create_enchanted_0_enchantments : Tests(1) {
+sub test_create_enchanted_0_enchantments : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
-	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema} );
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantable => 1 );
 	
 	# WHEN
 	my $item = $self->{schema}->resultset('Items')->create_enchanted(
@@ -32,13 +33,15 @@ sub test_create_enchanted_0_enchantments : Tests(1) {
 	
 	# THEN
 	isa_ok($item, 'RPG::Schema::Items', "Item created correctly");
+	my @enchantments = $item->item_enchantments;	
+	is(scalar @enchantments, 0, "No enchantments on item");	
 }
 
-sub test_create_enchanted_1_enchantment : Tests(5) {
+sub test_create_enchanted_1_enchantment : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
-	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema} );
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantable => 1 );
 	
 	# WHEN
 	my $item = $self->{schema}->resultset('Items')->create_enchanted(
@@ -54,9 +57,29 @@ sub test_create_enchanted_1_enchantment : Tests(5) {
 	isa_ok($item, 'RPG::Schema::Items', "Item created correctly");
 	my @enchantments = $item->item_enchantments;	
 	is(scalar @enchantments, 1, "One enchantment on item");
-	is($enchantments[0]->enchantment->enchantment_name, 'spell_casts_per_day', "Correct enchantment");
-	is($item->variable('Spell'), 'Heal', "Spell set in variable");
-	is($item->variable('Casts Per Day'), 2, "Correct number of casts per day");
+
+}
+
+sub test_create_enchanted_non_enchantable_type : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantable => 0 );
+	
+	# WHEN
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+            item_type_id   => $item_type->id,			
+		},
+		{
+			number_of_enchantments => 1,
+		}			
+	);
+	
+	# THEN
+	isa_ok($item, 'RPG::Schema::Items', "Item created correctly");
+	my @enchantments = $item->item_enchantments;	
+	is(scalar @enchantments, 0, "No enchantments on item");	
 }
 
 1;

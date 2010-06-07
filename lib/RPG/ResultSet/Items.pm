@@ -33,6 +33,8 @@ sub create_enchanted {
 	
 	return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
 	
+	return $item unless $item->item_type->category->enchantable;
+	
 	for (1 .. $extra_params->{number_of_enchantments}) {
 		my $enchantment = $self->result_source->schema->resultset('Enchantments')->random;
 		

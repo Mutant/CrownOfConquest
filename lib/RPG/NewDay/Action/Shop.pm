@@ -47,7 +47,7 @@ sub run {
             my @items_in_shop =
                 $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
 
-            # Remove some random items. This lets new items, or changes in prevalence, etc. have a chance to take affect
+            # Remove some random items. This lets new items, or changes in prevalence, etc. have a chance to take effect
             @items_in_shop = _remove_random_items_from_shop(@items_in_shop);
 
             foreach my $item (@items_in_shop) {
@@ -110,14 +110,22 @@ sub run {
                     $item_value_to_add -= $item_type->modified_cost($shop) * $median_value;
                 }
                 else {
-                    my $item = $c->schema->resultset('Items')->create(
+                	my $number_of_enchantments = 0;
+                	if (Games::Dice::Advanced->roll('1d100') <= $c->config->{shop_enchanted_item_chance}) {
+                		$number_of_enchantments = RPG::Maths->weighted_random_number(1..3);	
+                	}
+                	
+                    my $item = $c->schema->resultset('Items')->create_enchanted(
                         {
                             item_type_id => $item_type->id,
                             shop_id      => $shop->id,
-                        }
+                        },
+                        {
+                        	number_of_enchantments => $number_of_enchantments,
+                        }                        
                     );
 
-                    $item_value_to_add -= $item->item_type->modified_cost($shop);
+                    $item_value_to_add -= $item->sell_price($shop, 0);
                 }
             }
         }

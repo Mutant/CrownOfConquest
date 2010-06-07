@@ -5,6 +5,8 @@ package RPG::Schema::Item_Enchantments;
 
 use base 'DBIx::Class';
 
+use Moose;
+
 use Carp;
 
 __PACKAGE__->load_components(qw/Core/);
@@ -19,6 +21,8 @@ __PACKAGE__->belongs_to( 'enchantment', 'RPG::Schema::Enchantments', 'enchantmen
 __PACKAGE__->belongs_to( 'item', 'RPG::Schema::Items', 'item_id');
 
 __PACKAGE__->has_many( 'variables', 'RPG::Schema::Item_Variable', 'item_enchantment_id');
+
+with 'RPG::Schema::Item::Variables';
 
 sub insert {
 	my ( $self, @args ) = @_;

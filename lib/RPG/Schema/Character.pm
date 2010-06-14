@@ -8,7 +8,7 @@ use base 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
-use List::Util qw(sum shuffle);
+use List::Util qw(shuffle);
 use Math::Round qw(round);
 
 use DBIx::Class::ResultClass::HashRefInflator;
@@ -737,59 +737,23 @@ sub in_front_rank {
 }
 
 # Return the number of attacks allowed by this character
-sub number_of_attacks {
+around 'number_of_attacks' => sub {
+	my $orig = shift;
     my $self           = shift;
-    my @attack_history = @_;
-
-    my $number_of_attacks = 1;
-
-    # Modifier is number of extra attacks per round
-    #  i.e. 1 = 2 attacks per round, 0.5 = 2 attacks every 3 rounds
+    my @attack_history = @_;	
+    
     my $modifier = 0;
-
-    # Check for Archer's second attack, which applies an extra modifier
-    # TODO: currently hardcoded class name and item category, but could be in the DB
+    
     if ( $self->class->class_name eq 'Archer' ) {
         my @weapons = $self->get_equipped_item('Weapon');
 
         my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
 
-        $modifier += 0.5 if $ranged_weapons >= 1;
+        $modifier = 0.5 if $ranged_weapons >= 1;
     }
-
-    # Check for any attack_frequency effects
-    my $extra_modifier_from_effects = $self->effect_value('attack_frequency') || 0;
-    $modifier += $extra_modifier_from_effects;
-
-    # Any whole numbers are added on to number of attacks
-    my $whole_extra_attacks = $modifier > 0 ? int $modifier : round $modifier;
-    $number_of_attacks += $whole_extra_attacks;
-
-    # Find out the decimal if any, and decide whether another attack should occur this round
-    $modifier = $modifier - $whole_extra_attacks;
-
-    # If there's a modifier, and an attack history exists, figure out if there should be another extra attack this round.
-    #  (If there's no history, we start with the smaller amount of attacks)
-    if ( $modifier > 0 && @attack_history ) {
-
-        # Figure out number of attacks they should've had in recent rounds
-        my $expected_attacks = int 1 / $modifier;
-
-        # Figure out how far to look back
-        my $lookback = $expected_attacks - 1;
-        $lookback = scalar @attack_history if $lookback > scalar @attack_history;
-
-        my @recent = splice @attack_history, -$lookback;
-
-        my $count = sum @recent;
-
-        if ( $count < $expected_attacks + $whole_extra_attacks * $lookback ) {
-            $number_of_attacks++;
-        }
-    }
-
-    return $number_of_attacks;
-}
+    
+    return $self->$orig($modifier, @attack_history);
+};
 
 sub effect_value {
     my $self = shift;

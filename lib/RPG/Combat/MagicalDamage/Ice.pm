@@ -24,7 +24,7 @@ sub apply {
 	);
 
 	unless ( $params{opponent}->is_dead ) {
-		my $modifier = 0.5;
+		my $modifier = -0.5;
 		my $duration = int (($params{level} + 3) / 2);
 
 		$params{schema}->resultset('Effect')->create_effect(

@@ -17,7 +17,7 @@ sub _cast {
             target      => $target,
             effect_name    => 'Slowed',
             duration       => $duration,
-            modifier       => 1,
+            modifier       => -0.5,
             combat         => 1,
             modified_state => 'attack_frequency',
         }

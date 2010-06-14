@@ -3,8 +3,10 @@ package RPG::Schema::Role::Being;
 use Moose::Role;
 
 use Lingua::EN::Gender qw();
+use List::Util qw(sum);
+use Math::Round qw(round);
 
-requires qw/group_id group/;
+requires qw/group_id group effect_value/;
 
 sub health {
 	my $self = shift;
@@ -39,9 +41,53 @@ sub pronoun {
     
     my $pronoun_type = shift;
     
-    return Lingua::EN::Gender::pronoun($pronoun_type, $self->gender);
+    return Lingua::EN::Gender::pronoun($pronoun_type, $self->gender);    
+}
+
+# Return the number of attacks allowed by this character
+sub number_of_attacks {
+    my $self           = shift;
+
+    # Modifier is number of extra attacks per round
+    #  i.e. 1 = 2 attacks per round, 0.5 = 1 attacks every 2 rounds
+    my $modifier       = shift;
     
-    
+    my @attack_history = @_;
+
+    my $number_of_attacks = 1;
+
+    # Check for any attack_frequency effects
+    my $extra_modifier_from_effects = $self->effect_value('attack_frequency') || 0;
+    $modifier += $extra_modifier_from_effects;
+
+    # Any whole numbers are added on to number of attacks
+    my $whole_extra_attacks = $modifier > 0 ? int $modifier : round $modifier;
+    $number_of_attacks += $whole_extra_attacks;
+
+    # Find out the decimal if any, and decide whether another attack should occur this round
+    $modifier = $modifier - $whole_extra_attacks;
+
+    # If there's a modifier, and an attack history exists, figure out if there should be another extra attack this round.
+    #  (If there's no history, we start with the smaller amount of attacks)
+    if ( $modifier != 0 && @attack_history ) {
+
+        # Figure out number of attacks they should've had in recent rounds
+        my $expected_attacks = int 1 / $modifier;
+
+        # Figure out how far to look back
+        my $lookback = $expected_attacks - 1;
+        $lookback = scalar @attack_history if $lookback > scalar @attack_history;
+
+        my @recent = splice @attack_history, -$lookback;
+
+        my $count = sum @recent;
+
+        if ( $count < $expected_attacks + $whole_extra_attacks * $lookback ) {
+            $number_of_attacks++;
+        }
+    }
+
+    return $number_of_attacks;
 }
 
 

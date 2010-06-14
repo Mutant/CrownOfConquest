@@ -37,6 +37,7 @@ sub teardown : Tests(shutdown) {
 	
 	$self->{mock_mime_lite}->unfake_module();
 	$self->{rpg_template}->unfake_module();
+	require RPG::Template;
 		
 }
 

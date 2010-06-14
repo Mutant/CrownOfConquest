@@ -32,7 +32,7 @@ sub setup : Tests(setup => 2) {
 sub teardown : Tests(teardown) {
 	my $self = shift;
 	
-	$self->{dice}->unfake_module();	
+	$self->unmock_dice;
 }
 
 sub test_new : Tests(2) {

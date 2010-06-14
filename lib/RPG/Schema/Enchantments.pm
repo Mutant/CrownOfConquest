@@ -12,10 +12,12 @@ __PACKAGE__->table('Enchantments');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Enchantments');
 
-__PACKAGE__->add_columns(qw/enchantment_id enchantment_name/);
+__PACKAGE__->add_columns(qw/enchantment_id enchantment_name one_per_item/);
 
 __PACKAGE__->set_primary_key('enchantment_id');
 
 __PACKAGE__->has_many( 'item_enchantments', 'RPG::Schema::Item_Enchantments', 'enchantment_id' );
+
+__PACKAGE__->has_many( 'categories', 'RPG::Schema::Enchantment_Item_Category', 'enchantment_id' );
 
 1;

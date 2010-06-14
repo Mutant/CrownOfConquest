@@ -35,7 +35,7 @@ sub test_calculate_xp_max_level : Tests(2) {
 	is($self->{mock_dice_params}->[1], '1d30', "Correct dice roll");
 	is($result, 50, "Result correct");
 	
-	$self->{dice}->unfake_module();
+	$self->unmock_dice;
 }
 
 sub test_calculate_xp_level_1 : Tests(2) {
@@ -57,5 +57,5 @@ sub test_calculate_xp_level_1 : Tests(2) {
 	is($self->{mock_dice_params}->[1], '1d10', "Correct dice roll");
 	is($result, 5, "Result correct");
 	
-	$self->{dice}->unfake_module();
+	$self->unmock_dice;
 }

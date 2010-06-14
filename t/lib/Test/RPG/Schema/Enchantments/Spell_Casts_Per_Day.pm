@@ -16,7 +16,7 @@ use Test::RPG::Builder::Character;
 sub test_startup : Tests(startup => 2) {
 	my $self = shift;
 	
-	use_ok('Games::Dice::Advanced');
+	#use_ok('Games::Dice::Advanced');
 	use_ok('RPG::Schema::Enchantments::Spell_Casts_Per_Day');
 }
 
@@ -48,7 +48,7 @@ sub test_use : Tests(2) {
 	$target->discard_changes;
 	is($target->hit_points, 10, "Target healed correctly");
 	
-	$self->{dice}->unfake_module();		
+	$self->unmock_dice;	
 }
 
 sub test_init : Tests(3) {

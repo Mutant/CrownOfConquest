@@ -10,10 +10,19 @@ sub init_enchantment {
 	$self->add_to_variables(
 		{
 			name => 'Indestructible',
-			item_variable_value => '1',
+			item_variable_value => 1,
 			item_id => $self->item_id,
 		},
 	);
+	
+	$self->item->search_related('item_variables',
+		{
+			'item_variable_name.item_variable_name' => 'Durability',
+		},
+		{
+			join => 'item_variable_name',
+		}
+	)->delete;
 }
 
 sub is_usable {
@@ -22,14 +31,6 @@ sub is_usable {
 
 sub must_be_equipped {
 	return 0;	
-}
-
-sub target {
-	
-}
-
-sub label {
-		
 }
 
 sub tooltip {

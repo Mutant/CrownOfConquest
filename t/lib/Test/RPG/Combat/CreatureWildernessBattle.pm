@@ -260,7 +260,7 @@ sub test_character_action_cast_spell_on_opponent_who_is_killed : Tests(4) {
     is($results->damage, 6, "Damage recorded");
     is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
     
-    $self->{dice}->unfake_module();
+    $self->unmock_dice;
 }
 
 sub test_character_action_cast_spell_on_party_member : Tests(3) {
@@ -319,7 +319,7 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
     $target->discard_changes;
     ok( $target->hit_points > 5, "Hit points have increased" );
     
-    $self->{dice}->unfake_module();
+    $self->unmock_dice;
 }
 
 sub test_character_action_use_item : Tests(5) {
@@ -378,7 +378,7 @@ sub test_character_action_use_item : Tests(5) {
     is($item->variable('Casts Per Day'), 1, "Item's casts per day reduced");
     
     
-    $self->{dice}->unfake_module();
+    $self->unmock_dice;
 }
 
 sub test_creature_action_basic : Tests(9) {
@@ -963,7 +963,6 @@ sub test_finish_creates_town_history : Tests(3) {
     my $mock_template = Test::MockObject->new();
     $mock_template->fake_module( 'RPG::Template', process => sub { 'combat_log_message' }, );
 
-	$self->{dice}->unfake_module() if $self->{dice};
     $self->mock_dice;
     $self->{roll_result} = 10;
     
@@ -986,7 +985,8 @@ sub test_finish_creates_town_history : Tests(3) {
     is($party_town->prestige, 1, "Prestige increased");
  
     $mock_template->unfake_module();
-    $self->{dice}->unfake_module();
+    require RPG::Template;
+    $self->unmock_dice;
 }
 
 sub test_check_for_item_found_correct_prevalence_used : Tests(5) {

@@ -178,7 +178,7 @@ sub check_for_item_found {
 
 		# Create the item
 		my $item;
-		if ($item_type->category->enchantable && $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
+		if ($avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
 			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
 			if ($enchantment_roll <= $enchantment_chance) {

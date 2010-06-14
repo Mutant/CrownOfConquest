@@ -106,7 +106,7 @@ sub test_initiate_battles : Tests(5) {
     isa_ok($args->[2], 'RPG::Schema::CreatureGroup', "CG passed to offline battle");
     is($args->[2]->id, $cg->id, "Correct cg passed");    
     
-    $self->{dice}->unfake_module();
+    $self->unmock_dice;
 }
 
 sub test_initiate_battles_garrison : Tests(5) {
@@ -142,7 +142,7 @@ sub test_initiate_battles_garrison : Tests(5) {
     isa_ok($args->[2], 'RPG::Schema::CreatureGroup', "CG passed to offline battle");
     is($args->[2]->id, $cg->id, "Correct cg passed");   
     
-    $self->{dice}->unfake_module(); 
+    $self->unmock_dice; 
 }
 
 sub test_initiate_battles_garrison_vs_party : Tests(5) {

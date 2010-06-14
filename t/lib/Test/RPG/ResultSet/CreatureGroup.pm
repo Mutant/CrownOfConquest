@@ -12,26 +12,32 @@ use Test::RPG::Builder::Land;
 use Test::More;
 use Test::MockObject;
 
-sub setup : Tests(setup) {
+sub startup : Tests(startup) {
     my $self = shift;
     
     my $mock_maths = Test::MockObject->new();
-    my $counter = 0;
     $mock_maths->fake_module(
         'RPG::Maths',
         weighted_random_number => sub {
-            my $ret = $self->{weighted_random_number}[$counter];
-            $counter++;
+            my $ret = $self->{weighted_random_number}[$self->{counter}];
+            $self->{counter}++;
             return $ret;
         },
     );
     $self->{mock_maths} = $mock_maths; 
 }
 
+sub setup : Tests(setup) {
+	my $self = shift;
+	
+	$self->{counter} = 0;	
+}
+
 sub shutdown : Tests(shutdown) {
     my $self = shift;
     
     $self->{mock_maths}->unfake_module();
+    require RPG::Maths;
 }
 
 sub test_create_in_wilderness_simple : Tests(5) {

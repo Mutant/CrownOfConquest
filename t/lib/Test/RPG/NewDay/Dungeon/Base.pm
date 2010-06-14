@@ -56,7 +56,7 @@ sub dungeon_startup : Test(startup => 1) {
 sub dungeon_shutdown : Test(shutdown) {
     my $self = shift;
 
-    $self->{dice}->unfake_module();
+    $self->unmock_dice;
 }
 
 1;

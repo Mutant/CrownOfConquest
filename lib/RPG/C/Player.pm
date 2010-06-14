@@ -33,7 +33,7 @@ sub login : Local {
                 # Various post login checks
                 $c->forward('post_login_checks');
                 
-                my $url_to_redirect_to = $c->session->{login_url};
+                my $url_to_redirect_to = $c->session->{login_url} || '';
                 undef $c->session->{login_url};
                 
                 $c->log->info("Post login redirect to: $url_to_redirect_to");

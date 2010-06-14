@@ -218,7 +218,7 @@ sub test_usable_actions_with_one_usable_enchantment : Tests(2) {
 	# GIVEN
 	$self->unmock_dice();
 	
-	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantable => 1 );
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantments => ['spell_casts_per_day', 'indestructible'] );
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day', 'indestructible'], 
 		item_type_id => $item_type->id );
 	my ($enchantment) = $item->item_enchantments;

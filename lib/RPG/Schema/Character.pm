@@ -9,6 +9,7 @@ use base 'DBIx::Class';
 use Carp;
 use Data::Dumper;
 use List::Util qw(sum shuffle);
+use Math::Round qw(round);
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
@@ -348,7 +349,7 @@ sub defence_factor {
     my $self = shift;
 
     my @items = $self->get_equipped_item('Armour');
-
+    
     # Get rid of broken items (items without a durability (i.e. not defined) are ok)
     @items = grep { my $dur = $_->variable('Durability'); !defined $dur || $dur > 0 } @items;
 
@@ -567,6 +568,8 @@ sub execute_defence {
 
     my $armour_now_broken = 0;
     foreach my $item (@items) {
+    	next if $item->variable('Indestructible');
+    	
         my $durability_rec = $item->variable_row('Durability');
         if ($durability_rec) {
             return if $durability_rec->item_variable_value == 0;
@@ -759,7 +762,7 @@ sub number_of_attacks {
     $modifier += $extra_modifier_from_effects;
 
     # Any whole numbers are added on to number of attacks
-    my $whole_extra_attacks = int $modifier;
+    my $whole_extra_attacks = $modifier > 0 ? int $modifier : round $modifier;
     $number_of_attacks += $whole_extra_attacks;
 
     # Find out the decimal if any, and decide whether another attack should occur this round

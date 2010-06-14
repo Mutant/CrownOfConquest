@@ -36,7 +36,7 @@ sub dungeon_setup : Tests(setup) {
 sub dungeon_teardown : Tests(teardown) {
 	my $self = shift;
 	
-	$self->{dice}->unfake_module();;
+	$self->unmock_dice;
 }
 
 sub test_find_room_dimensions : Tests(16) {

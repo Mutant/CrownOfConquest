@@ -368,14 +368,15 @@ sub add_to_characters_inventory {
     my %equipped_items = %{ $character->equipped_items() };
 
     # Try equipping the item in each empty equip place (without removing any existing items)
-    foreach my $equip_place (keys %equipped_items) {
+    LOOP: foreach my $equip_place (keys %equipped_items) {
         if ( !$equipped_items{$equip_place} ) {
             eval {
                 if ( $self->equip_item( $equip_place, 0 ) )
                 {
 
                     # Equip was successful, so don't try to equip again
-                    last;
+                    no warnings;
+                    last LOOP;
                 }
             };
             if ($@) {
@@ -423,7 +424,7 @@ sub repair_cost {
 
     my $variable_rec = $self->variable_row('Durability');
 
-    return 0 if !defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
+    return 0 if !$variable_rec || !defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
 
     my $repair_factor = $town->prosperity + $town->blacksmith_skill;
     $repair_factor = 100 if $repair_factor > 100;

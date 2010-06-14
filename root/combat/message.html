@@ -26,8 +26,24 @@
 			with [% message.attacker.pronoun('posessive-subjective') %] <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		
 		[% IF message.damage > 0 %]
-			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of damage.
-				[% IF message.defender_killed %]<span class="[% defender_class %]">[% message.defender.name %]</span> was killed![% END %]
+			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of						
+			[% IF message.magical_damage %]
+				[% magic_damage = message.magical_damage %]
+				standard damage[% IF magic_damage.extra_damage %] and <span class="[% defender_class %]">[% magic_damage.extra_damage %]</span>
+				points of [% magic_damage.type %] damage [% END %].
+				[% IF magic_damage.effect %]
+					<span class="[% defender_class %]">[% message.defender.name %]</span> was [% magic_damage.effect %] by the attack for 
+					[% magic_damage.duration %] rounds!
+				[% END %]				
+			[% ELSE %]
+				 damage.
+			[% END %]
+			
+			[% IF message.defender_killed %]
+				<span class="[% defender_class %]">[% message.defender.name %]</span> was killed!
+			[% END %]
+				
+				
 		[% ELSE %]
 			missed.
 		[% END %]

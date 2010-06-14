@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::Item_Type;
 
+use Carp;
+
 sub build_item_type {
     my $self   = shift;
     my $schema = shift;
@@ -14,9 +16,27 @@ sub build_item_type {
         {
             item_category     => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
-            enchantable => $params{enchantable} || 0,
         }
     );
+    
+    if ($params{enchantments}) {
+    	foreach my $enchantment_type (@{$params{enchantments}}) {
+    		my $enchantment = $schema->resultset('Enchantments')->find(
+    			{
+    				enchantment_name => $enchantment_type,
+    			}
+    		);
+    		
+    		confess "Can't find enchantment $enchantment_type" unless $enchantment;
+    		
+	    	$schema->resultset('Enchantment_Item_Category')->create(
+	    		{
+	    			enchantment_id => $enchantment->id,
+	    			item_category_id => $item_cat->id,
+	    		}
+	    	);
+    	}
+    }
 
     my $item_type = $schema->resultset('Item_Type')->find_or_create(
         {
@@ -26,6 +46,47 @@ sub build_item_type {
             base_cost => $params{base_cost} || 0,
         }
     );
+    
+    if ($params{variables}) {
+    	foreach my $variable (@{$params{variables}}) {
+			my $ivn = $schema->resultset('Item_Variable_Name')->create(
+				{
+					item_variable_name => $variable->{name},
+					create_on_insert => $variable->{create_on_insert} || 0,
+					item_category_id => $item_cat->id,
+				}
+			);
+			
+			$schema->resultset('Item_Variable_Params')->create(
+				{
+					item_variable_name_id => $ivn->id,
+					item_type_id => $item_type->id,
+					keep_max => $variable->{keep_max} || 0,
+					min_value => $variable->{min_value} || 0,
+					max_value => $variable->{max_value} || 100,
+				}
+			);
+    	}
+    }
+    
+    foreach my $attribute ( @{ $params{attributes} } ) {
+        my $ian = $schema->resultset('Item_Attribute_Name')->find_or_create(
+            {
+                item_attribute_name => $attribute->{item_attribute_name},
+                item_category_id    => $item_cat->id,
+            }
+        );
+
+        $schema->resultset('Item_Attribute')->create(
+            {
+                item_attribute_name_id => $ian->id,
+                item_type_id           => $item_type->id,
+                item_attribute_value   => $attribute->{item_attribute_value},
+            }
+        );
+    }    
+    
+    return $item_type;
 
 }
 

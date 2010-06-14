@@ -27,7 +27,7 @@ sub shutdown : Test(shutdown) {
 	my $self = shift;
 
 	$self->{mock_rpg_schema}->unfake_module();
-	$self->{dice}->unfake_module();
+	$self->unmock_dice;
 }
 
 sub test_initiate_combat : Test(6) {

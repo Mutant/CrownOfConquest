@@ -19,13 +19,17 @@ ALTER TABLE `Item_Variable` MODIFY COLUMN `item_variable_name_id` INTEGER  DEFAU
  ADD COLUMN `name` VARCHAR(100)  AFTER `item_enchantment_id`;
 ALTER TABLE `Item_Variable` MODIFY COLUMN `item_variable_value` VARCHAR(100)  NOT NULL;
 
-INSERT INTO `Enchantments` (enchantment_name) values ('spell_casts_per_day');
-INSERT INTO `Enchantments` (enchantment_name) values ('indestructible');
+ALTER TABLE `Enchantments` ADD COLUMN `one_per_item` TINYINT(4)  NOT NULL DEFAULT 0 AFTER `must_be_equipped`;
 
-ALTER TABLE `Item_Category` ADD COLUMN `enchantable` TINYINT NOT NULL DEFAULT '0';
-UPDATE `Item_Category` set enchantable = 1 where
-  item_category = 'Melee Weapon' or
-  item_category = 'Armour' or
-  item_category = 'Ranged Weapon' or
-  item_category = 'Head Gear' or
-  item_category = 'Shield';
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('spell_casts_per_day',0);
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('indestructible',1);
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('magical_damage',1);
+
+CREATE  TABLE IF NOT EXISTS `Enchantment_Item_Category` (
+  `enchantment_id` INT NOT NULL,
+  `item_category_id` INT NOT NULL,
+  PRIMARY KEY (`enchantment_id`,`item_category_id`) )
+ENGINE = InnoDB;
+
+
+

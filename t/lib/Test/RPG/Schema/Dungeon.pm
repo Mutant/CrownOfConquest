@@ -3,7 +3,7 @@ package Test::RPG::Schema::Dungeon;
 use strict;
 use warnings;
 
-use base qw(Test::RPG);
+use base qw(Test::RPG::DB);
 
 __PACKAGE__->runtests() unless caller();
 
@@ -14,16 +14,8 @@ use Data::Dumper;
 
 sub startup : Test(startup => 1) {
 	my $self = shift;
-	
-    $self->{mock_rpg_schema} = Test::MockObject->new();
-    $self->{mock_rpg_schema}->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, );	
-	
+		
 	use_ok 'RPG::Schema::Dungeon';
-}
-
-sub dungeon_shutdown : Tests(shutdown) {
-	my $self = shift;
-	$self->{mock_rpg_schema}->unfake_module();	
 }
 
 sub test_party_can_enter_instance : Test(3) {

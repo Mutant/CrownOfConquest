@@ -27,7 +27,7 @@ sub startup : Test(startup) {
 sub shutdown : Test(shutdown) {
 	my $self = shift;
 	
-	$self->{dice}->unfake_module();
+	$self->unmock_dice;
 }
 
 sub test_weighted_random_number : Tests(1) {

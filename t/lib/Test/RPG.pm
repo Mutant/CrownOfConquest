@@ -160,6 +160,15 @@ sub unmock_dice {
 	my $self = shift;
 	
 	$self->{dice}->unfake_module if $self->{dice};
+	$SIG{__WARN__} = sub {
+		my ($msg) = @_;
+		
+		return if $msg =~ /Subroutine (\S+) redefined/;
+		
+		print STDERR $msg;
+	};
+	require Games::Dice::Advanced;
+	$SIG{__WARN__} = undef;
 }
 
 # Returns any template params that have been captured as a hashref

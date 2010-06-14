@@ -5,6 +5,8 @@ package RPG::ResultSet::Items;
   
 use base 'DBIx::Class::ResultSet';
 
+use List::Util qw(shuffle);
+
 sub party_items_requiring_repair {
     my $self = shift;
     my $party_id = shift;
@@ -32,11 +34,26 @@ sub create_enchanted {
 	my $item = $self->create($params);
 	
 	return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
-	
-	return $item unless $item->item_type->category->enchantable;
+		
+	my @possible_enchantments = $self->result_source->schema->resultset('Enchantments')->search(
+		{
+			'categories.item_category_id' => $item->item_type->item_category_id,
+		},
+		{
+			join => 'categories',
+		}
+	);
+
+	return $item unless @possible_enchantments;
 	
 	for (1 .. $extra_params->{number_of_enchantments}) {
-		my $enchantment = $self->result_source->schema->resultset('Enchantments')->random;
+		last unless @possible_enchantments;
+
+		@possible_enchantments = shuffle @possible_enchantments;		
+		
+		my $enchantment = $possible_enchantments[0];
+		
+		shift @possible_enchantments if $enchantment->one_per_item;
 		
 		$item->add_to_item_enchantments(
 			{
@@ -45,8 +62,7 @@ sub create_enchanted {
 		); 
 	}
 	
-	return $item;
-	
+	return $item;	
 }
 
 1;

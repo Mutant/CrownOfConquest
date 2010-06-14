@@ -199,4 +199,16 @@ around 'number_of_attacks' => sub {
 	return $self->$orig( 0, @attack_history );
 };
 
+sub resistences {
+	my $self = shift;
+	
+	my $type = $self->type;
+	
+	return (
+		Fire => $type->fire,
+		Ice => $type->ice,
+		Poison => $type->poison,
+	);
+}
+
 1;

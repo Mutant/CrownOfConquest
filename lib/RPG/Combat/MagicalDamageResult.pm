@@ -8,5 +8,6 @@ has 'type' => ( is => 'ro', isa => 'Str', required => 1 );    # TODO: enforce al
 has 'duration'     => ( is => 'rw', isa => 'Int' );
 has 'effect'       => ( is => 'rw', isa => 'Str' );
 has 'extra_damage' => ( is => 'rw', isa => 'Int' );
+has 'resisted' => ( is => 'rw', isa => 'Bool' );
 
 1;

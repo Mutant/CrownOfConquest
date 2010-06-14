@@ -31,5 +31,9 @@ CREATE  TABLE IF NOT EXISTS `Enchantment_Item_Category` (
   PRIMARY KEY (`enchantment_id`,`item_category_id`) )
 ENGINE = InnoDB;
 
+ALTER TABLE `Creature_Type` ADD COLUMN `fire` INT  NOT NULL AFTER `weapon`,
+ ADD COLUMN `ice` INT  NOT NULL AFTER `fire`,
+ ADD COLUMN `poison` INT  NOT NULL AFTER `ice`;
 
+UPDATE `Creature_Type` SET fire = level * 3, ice = level * 3, poison = level * 3;
 

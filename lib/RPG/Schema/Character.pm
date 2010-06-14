@@ -765,6 +765,16 @@ sub effect_value {
     return $modifier;
 }
 
+sub resistences {
+	my $self = shift;
+	
+	return (
+		Fire => $self->level * 5,
+		Ice => $self->level * 5,
+		Poison => $self->level * 5,
+	);
+}
+
 sub value {
     my $self = shift;
 

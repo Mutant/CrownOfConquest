@@ -6,6 +6,7 @@ use warnings;
 use Games::Dice::Advanced;
 
 use RPG::Combat::MagicalDamage::Ice;
+use RPG::Combat::MagicalDamage::Fire;
 
 sub opponent_resisted {
 	my $self = shift;
@@ -15,8 +16,8 @@ sub opponent_resisted {
 	my %resistences = $opponent->resistences;
 	
 	my $resistence = $resistences{$type} || 0;
-	
-	return $resistence <= Games::Dice::Advanced->roll('1d100');
+		
+	return Games::Dice::Advanced->roll('1d100') <= $resistence;
 }
 
 1;

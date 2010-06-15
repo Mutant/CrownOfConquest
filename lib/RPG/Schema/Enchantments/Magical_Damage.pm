@@ -48,7 +48,7 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 	
-	return $self->variable('Magical Damage Level') * 150;	
+	return 400 + $self->variable('Magical Damage Level') * 225;	
 }
 
 1;

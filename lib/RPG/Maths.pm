@@ -17,9 +17,9 @@ sub weighted_random_number {
     return unless @numbers;    
     
 	my ($cumulative_chance, %chances) = _calculate_weights(@numbers);
-        
+	    
     my $roll = Games::Dice::Advanced->roll("1d" . $cumulative_chance);
-        
+            
     foreach my $chance_to_check (sort {$a <=> $b} keys %chances) {    
         if ($roll <= $chance_to_check) {
             return $chances{$chance_to_check};

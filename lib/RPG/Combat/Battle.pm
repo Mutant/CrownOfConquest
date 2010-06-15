@@ -383,10 +383,10 @@ sub apply_magical_damage {
 	my $magical_damage_result = $package->apply(
 		character => $character,
 		opponent => $opponent,
-		action_result => $action_result,
+		opponent_group => $self->opponents_of($character),
 		level => $level,
 		schema => $self->schema,
-	);	
+	);
 
 	$action_result->magical_damage($magical_damage_result);
 }

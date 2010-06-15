@@ -7,7 +7,6 @@ use base qw(RPG::Combat::MagicalDamage);
 
 use Games::Dice::Advanced;
 use RPG::Combat::MagicalDamageResult;
-use RPG::Schema;
 
 sub apply {
 	my $self   = shift;

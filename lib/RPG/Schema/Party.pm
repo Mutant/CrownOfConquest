@@ -196,7 +196,7 @@ with qw/
 sub members {
     my $self = shift;
 
-    return $self->characters;
+    return $self->characters_in_party;
 }
 
 sub group_type {

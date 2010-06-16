@@ -4,7 +4,7 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
-sub depends { qw/RPG::NewDay::Action::CreateDay/ };
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Enchantment/ };
 
 sub run {
     my $self = shift;

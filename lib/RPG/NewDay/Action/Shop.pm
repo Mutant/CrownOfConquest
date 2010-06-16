@@ -42,7 +42,7 @@ sub run {
             $self->_adjust_shops_modifier( $town, $shop );
 
             # Calculate items in shop
-            my $ideal_items_value = $shop->shop_size * 50 + ( Games::Dice::Advanced->roll('1d40') - 20 );
+            my $ideal_items_value = $shop->shop_size * 500 + ( Games::Dice::Advanced->roll('1d40') - 20 );
             my $actual_items_value = 0;
             my @items_in_shop =
                 $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );

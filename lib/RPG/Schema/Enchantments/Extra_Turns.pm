@@ -1,4 +1,4 @@
-package RPG::Schema::Enchantments::Daily_Heal;
+package RPG::Schema::Enchantments::Extra_Turns;
 
 use Moose::Role;
 
@@ -10,12 +10,12 @@ with 'RPG::Schema::Enchantments::Interface';
 sub init_enchantment {
 	my $self = shift;
 
-	my $heal = RPG::Maths->weighted_random_number( 1 .. 15 );
+	my $turns = RPG::Maths->weighted_random_number( 1 .. 20 );
 
 	$self->add_to_variables(
 		{
-			name                => 'Daily Heal',
-			item_variable_value => $heal,
+			name                => 'Extra Turns',
+			item_variable_value => $turns,
 			item_id             => $self->item_id,
 		},
 	);
@@ -28,7 +28,6 @@ sub init_enchantment {
 			item_id             => $self->item_id,
 		},
 	);
-
 }
 
 sub is_usable {
@@ -44,7 +43,7 @@ sub must_be_equipped {
 sub tooltip {
 	my $self = shift;
 
-	my $tip = 'Heals ' . $self->variable('Daily Heal') . ' hps per day';
+	my $tip = 'Adds ' . $self->variable('Extra Turns') . ' extra turns each day';
 	$tip .= ' (Must be equipped)' if $self->must_be_equipped;
 	
 	return $tip;
@@ -53,32 +52,36 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 
-	return 45 * $self->variable('Daily Heal') + ( $self->must_be_equipped ? 0 : 125 );
+	return 95 * $self->variable('Extra Turns') + ( $self->must_be_equipped ? 0 : 700 );
 }
 
 sub new_day {
-	my $self = shift;
+	my $self    = shift;
 	my $context = shift;
-	
+
 	my $item = $self->item;
 
 	if ( my $char = $item->belongs_to_character ) {
-		return if ! $item->equipped && $self->must_be_equipped;
-		
-		my $actual = $char->change_hit_points( $self->variable('Daily Heal') );
-		
-		if ($actual) {
-			$char->update;
-			
-			$char->party->add_to_day_logs(
-		        {
-		            day_id => $context->current_day->id,
-		            log    => $char->name . " was healed " . $actual . " hit points by " . $char->pronoun('posessive-subjective') 
-		            			. ' ' . $item->display_name,
-		        }
-	    	);
-		}
-		
+		return if !$item->equipped && $self->must_be_equipped;
+
+		my $party = $char->party;
+
+		return if $party->turns >= $context->config->{maximum_turns};
+
+		$party->increase_turns( $self->variable('Extra Turns') + $party->turns );
+		$party->update;
+
+		$party->add_to_day_logs(
+			{
+				day_id => $context->current_day->id,
+				log    => 'You received ' 
+					. $self->variable('Extra Turns') 
+					. ' extra turns from ' 
+					. $char->name . "'s"
+					. ' '
+					. $item->display_name,
+			}
+		);
 	}
 }
 

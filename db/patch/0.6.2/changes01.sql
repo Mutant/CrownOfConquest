@@ -25,6 +25,7 @@ INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('spell_casts
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('indestructible',1);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('magical_damage',1);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('daily_heal',1);
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('extra_turns',1);
 
 CREATE  TABLE IF NOT EXISTS `Enchantment_Item_Category` (
   `enchantment_id` INT NOT NULL,

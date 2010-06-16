@@ -24,6 +24,7 @@ ALTER TABLE `Enchantments` ADD COLUMN `one_per_item` TINYINT(4)  NOT NULL DEFAUL
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('spell_casts_per_day',0);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('indestructible',1);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('magical_damage',1);
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('daily_heal',1);
 
 CREATE  TABLE IF NOT EXISTS `Enchantment_Item_Category` (
   `enchantment_id` INT NOT NULL,

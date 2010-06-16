@@ -5,6 +5,8 @@ extends 'RPG::NewDay::Base';
 
 use Games::Dice::Advanced;
 
+sub depends { qw/RPG::NewDay::Action::CreateDay/ };
+
 sub run {
     my $self = shift;
 
@@ -22,7 +24,7 @@ sub run {
 	foreach my $item (@items) {
 		foreach my $enchantment ($item->item_enchantments) {
 			if ($enchantment->can('new_day')) {
-				$enchantment->new_day;	
+				$enchantment->new_day($c);	
 			}
 		}	
 	}    

@@ -12,6 +12,7 @@ use Math::Round qw(round);
 use RPG::Combat::ActionResult;
 use RPG::Combat::MessageDisplayer;
 use RPG::Combat::MagicalDamage;
+use RPG::Combat::EffectResult;
 
 use feature 'switch';
 
@@ -117,7 +118,7 @@ sub execute_round {
 
 	$self->combat_log->increment_rounds;
 
-	$self->result->{messages} = \@combat_messages;
+	push @{ $self->result->{messages} }, @combat_messages;
 
 	$self->record_messages;
 
@@ -175,6 +176,28 @@ sub _process_effects {
 	my @effects = @_;
 
 	foreach my $effect (@effects) {
+		my $being;
+		if ( $effect->can('character_id') ) {
+			$being = $self->combatants_by_id->{character}{ $effect->character_id };
+		}
+		else {
+			$being = $self->combatants_by_id->{creature}{ $effect->creature_id };
+		}
+		
+		if ( ! $being->is_dead && $effect->effect->modified_stat eq 'poison' ) {
+			my $damage = Games::Dice::Advanced->roll( '1d' . $effect->effect->modifier );
+
+			$being->hit($damage);
+
+			my $result = RPG::Combat::EffectResult->new(
+				defender => $being,
+				damage   => $damage,
+				effect   => 'poison',
+			);
+
+			push @{ $self->result->{messages} }, $result;
+		}		
+
 		$effect->effect->time_left( $effect->effect->time_left - 1 );
 
 		if ( $effect->effect->time_left == 0 ) {
@@ -182,12 +205,8 @@ sub _process_effects {
 			$effect->delete;
 
 			# Reload the combatant who has this effect, to make sure it's now gone
-			if ( $effect->can('character_id') ) {
-				$self->combatants_by_id->{character}{ $effect->character_id }->discard_changes;
-			}
-			else {
-				$self->combatants_by_id->{creature}{ $effect->creature_id }->discard_changes;
-			}
+			$being->discard_changes;
+
 		}
 		else {
 			$effect->effect->update;
@@ -316,10 +335,12 @@ sub character_action {
 		);
 
 		if ( my $type = $self->character_weapons->{ $character->id }{magical_damage_type} ) {
-			$self->apply_magical_damage( $character, $opponent, $action_result, $type, 
-				$self->character_weapons->{ $character->id }{magical_damage_level} );
+			$self->apply_magical_damage(
+				$character, $opponent, $action_result, $type,
+				$self->character_weapons->{ $character->id }{magical_damage_level}
+			);
 		}
-		
+
 		return $action_result;
 	}
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
@@ -374,18 +395,18 @@ sub apply_magical_damage {
 	my $opponent      = shift;
 	my $action_result = shift;
 	my $type          = shift;
-	my $level		  = shift;
+	my $level         = shift;
 
 	return if $action_result->damage == 0 || $opponent->is_dead;
-	
+
 	my $package = 'RPG::Combat::MagicalDamage::' . $type;
-	
+
 	my $magical_damage_result = $package->apply(
-		character => $character,
-		opponent => $opponent,
+		character      => $character,
+		opponent       => $opponent,
 		opponent_group => $self->opponents_of($character),
-		level => $level,
-		schema => $self->schema,
+		level          => $level,
+		schema         => $self->schema,
 	);
 
 	$action_result->magical_damage($magical_damage_result);
@@ -868,12 +889,12 @@ sub _build_character_weapons {
 		my ($weapon) = $combatant->get_equipped_item('Weapon');
 
 		if ($weapon) {
-			$character_weapons{ $combatant->id }{id}                  = $weapon->id;
-			$character_weapons{ $combatant->id }{durability}          = $weapon->variable('Durability');
-			$character_weapons{ $combatant->id }{indestructible}      = $weapon->variable('Indestructible');
-			$character_weapons{ $combatant->id }{ammunition}          = $combatant->ammunition_for_item($weapon);
-			$character_weapons{ $combatant->id }{magical_damage_type} = $weapon->variable('Magical Damage Type');
-			$character_weapons{ $combatant->id }{magical_damage_level}= $weapon->variable('Magical Damage Level');
+			$character_weapons{ $combatant->id }{id}                   = $weapon->id;
+			$character_weapons{ $combatant->id }{durability}           = $weapon->variable('Durability');
+			$character_weapons{ $combatant->id }{indestructible}       = $weapon->variable('Indestructible');
+			$character_weapons{ $combatant->id }{ammunition}           = $combatant->ammunition_for_item($weapon);
+			$character_weapons{ $combatant->id }{magical_damage_type}  = $weapon->variable('Magical Damage Type');
+			$character_weapons{ $combatant->id }{magical_damage_level} = $weapon->variable('Magical Damage Level');
 
 		}
 		else {

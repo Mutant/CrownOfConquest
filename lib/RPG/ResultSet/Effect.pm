@@ -57,7 +57,7 @@ sub _create_effect {
 
     $effect->time_left( ( $effect->time_left || 0 ) + $params->{duration} );
     $effect->modifier( $params->{modifier} );
-    $effect->modified_stat( $params->{modified_state} );
+    $effect->modified_stat( $params->{modified_state} ); # Yes, two different names!
     $effect->combat( $params->{combat} );
     $effect->time_type( $params->{time_type} );
     $effect->update;   

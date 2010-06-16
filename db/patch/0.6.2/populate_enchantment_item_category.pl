@@ -12,6 +12,7 @@ my %DATA = (
 	spell_casts_per_day => ['Melee Weapon', 'Armour', 'Head Gear', 'Ranged Weapon', 'Shield'],
 	indestructible => ['Melee Weapon', 'Armour', 'Ranged Weapon'],
 	magical_damage => ['Melee Weapon', 'Ranged Weapon'],
+	daily_heal => ['Melee Weapon', 'Armour', 'Head Gear', 'Ranged Weapon', 'Shield'],
 );
 
 foreach my $enchantment_type (keys %DATA) {

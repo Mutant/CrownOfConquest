@@ -48,7 +48,7 @@ sub test_init_doesnt_allow_multiple_cats_of_same_type : Tests(21) {
 	}
 	
 	my $count = 0;
-	foreach my $cat (sort @categories) {		
+	foreach my $cat (sort { $a <=> $b } @categories) {		
 		is($cat, $cats_created[$count]->id, "Correct creature category on enchantment");
 		$count++;
 	}

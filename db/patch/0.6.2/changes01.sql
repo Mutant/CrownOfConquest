@@ -27,6 +27,7 @@ INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('magical_dam
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('daily_heal',1);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('extra_turns',1);
 INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('bonus_against_creature_category',0);
+INSERT INTO `Enchantments` (enchantment_name, one_per_item) values ('stat_bonus',0);
 
 CREATE  TABLE IF NOT EXISTS `Enchantment_Item_Category` (
   `enchantment_id` INT NOT NULL,

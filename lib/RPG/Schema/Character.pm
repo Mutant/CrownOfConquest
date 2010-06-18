@@ -10,6 +10,7 @@ use Carp;
 use Data::Dumper;
 use List::Util qw(shuffle);
 use Math::Round qw(round);
+use Sub::Name;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
@@ -19,14 +20,21 @@ __PACKAGE__->table('`Character`');
 __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 
 __PACKAGE__->add_columns(
-    qw/character_id character_name class_id race_id strength intelligence agility divinity constitution hit_points
+    qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
 
-__PACKAGE__->add_columns( xp => { accessor => '_xp' } );
+__PACKAGE__->add_columns( 
+	xp => { accessor => '_xp' },
+	strength => { accessor => '_strength'}, 
+	intelligence  => { accessor => '_intelligence'}, 
+	agility  => { accessor => '_agility'}, 
+	divinity  => { accessor => '_divinity'}, 
+	constitution => { accessor => '_constitution'}, 
+);
 
 __PACKAGE__->set_primary_key('character_id');
 
@@ -53,6 +61,74 @@ __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_i
 __PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
 
 our @STATS = qw(str con int div agl);
+my @LONG_STATS = qw(strength constitution intelligence divinity agility);
+
+sub strength {
+	my $self = shift;
+	
+	return $self->_stat_accessor('strength', @_);	
+}
+
+sub constitution {
+	my $self = shift;
+	
+	return $self->_stat_accessor('constitution', @_);	
+}
+
+sub intelligence {
+	my $self = shift;
+	
+	return $self->_stat_accessor('intelligence', @_);	
+}
+
+sub divinity {
+	my $self = shift;
+	
+	return $self->_stat_accessor('divinity', @_);	
+}
+
+sub agility {
+	my $self = shift;
+	
+	return $self->_stat_accessor('agility', @_);	
+}
+
+sub _stat_accessor {
+	my $self = shift;
+	my $stat = shift;
+
+	my $value;
+	{
+		no strict 'refs';
+		my $accessor = '_' . $stat; 
+		$value = $self->$accessor(@_);
+	}
+	
+	my @items_with_stat_bonuses = $self->search_related(
+		'items',
+		{
+			'enchantment.enchantment_name' => 'stat_bonus',
+			'equip_place_id' => {'!=', undef},
+		},
+		{
+			prefetch => {'item_enchantments' => 'enchantment'},
+		}
+	);
+	
+	foreach my $item (@items_with_stat_bonuses) {
+		foreach my $enchantment ($item->item_enchantments) {
+			next if ! $enchantment->variable('Stat Bonus') || $enchantment->variable('Stat Bonus') ne $stat;
+			
+			$value+= $enchantment->variable('Bonus');
+		} 
+	}
+	
+	return $value;
+}
+
+sub long_stats {
+	return @LONG_STATS;	
+}
 
 # These allow us to use the 'Being' role
 sub hit_points_current {

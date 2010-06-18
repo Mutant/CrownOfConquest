@@ -15,6 +15,7 @@ my %DATA = (
 	daily_heal => ['Melee Weapon', 'Armour', 'Head Gear', 'Ranged Weapon', 'Shield'],
 	extra_turns => ['Melee Weapon', 'Armour', 'Head Gear', 'Ranged Weapon', 'Shield'],
 	bonus_against_creature_category => ['Melee Weapon', 'Ranged Weapon'],
+	stat_bonus => ['Melee Weapon', 'Armour', 'Head Gear', 'Ranged Weapon', 'Shield'],
 );
 
 foreach my $enchantment_type (keys %DATA) {

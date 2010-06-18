@@ -696,4 +696,22 @@ sub test_check_for_offline_cast : Tests(10) {
 	
 }
 
+sub test_stat_bonus : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10, agility => 4);
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'] );
+	$item->variable_row('Stat Bonus', 'strength');	
+	$item->variable_row('Bonus', 5);
+	
+	# WHEN
+	my $str = $character->strength;
+	my $agl = $character->agility;
+	
+	# THEN
+	is($str, 15, "Bonus added to strength correctly");
+	is($agl, 4, "No bonus added to agility");
+}
+
 1;

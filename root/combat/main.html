@@ -33,11 +33,12 @@
 [% END %]
 
 [% IF combat_messages %]
+
 <b>Last Round</b>:
 <ul>
-	[% FOREACH message = combat_messages %]
-	[% IF message %]<li>[% message %]</li>[% END %]
-	[% END %]
+[% FOREACH message = combat_messages %]
+[% IF message %][% IF loop.count != 1 %]<li>[% END %][% message %][% IF loop.count != 1 %]</li>[% END %][% END %]
+[% END %]
 </ul>
 
 [% IF combat_complete && ! party_dead %]

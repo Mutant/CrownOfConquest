@@ -6,6 +6,7 @@
 
 [% FILTER collapse %]
 [% FOREACH message IN combat_messages %]
+	<li>
 	[% IF message.attacker.is_character && message.attacker.group_id == group.id %]
 		[% 
 			attacker_class  = "combat-party-attacker"
@@ -71,6 +72,6 @@
 			missed.
 		[% END %]
 	[% END %]
-	<br>
+	</li>
 [% END %]
 [% END %]

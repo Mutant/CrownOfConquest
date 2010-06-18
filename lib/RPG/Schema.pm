@@ -18,7 +18,7 @@ __PACKAGE__->load_classes(qw/
     Item_Property_Category Party_Town Party_Battle Battle_Participant Party_Effect Town_History Road
     Treasure_Chest Survey_Response Announcement Announcement_Player Tip Dungeon_Sector_Path
     Dungeon_Sector_Path_Door Garrison Combat_Log_Messages Garrison_Messages Enchantments Item_Enchantments
-    Enchantment_Item_Category
+    Enchantment_Item_Category Creature_Category
 /);
 
 my $config;

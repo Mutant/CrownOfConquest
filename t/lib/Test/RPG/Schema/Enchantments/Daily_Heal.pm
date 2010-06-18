@@ -19,7 +19,7 @@ use Test::RPG::Builder::Day;
 sub test_startup : Tests(startup => 1) {
 	my $self = shift;
 	
-	use_ok('RPG::Schema::Enchantments::Indestructible');
+	use_ok('RPG::Schema::Enchantments::Daily_Heal');
 }
 
 sub test_new_day : Tests(3) {

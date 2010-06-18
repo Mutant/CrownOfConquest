@@ -542,6 +542,14 @@ sub attack {
 	my $defence_bonus = $defending ? $self->config->{defend_bonus} : 0;
 
 	my $af = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{af};
+	
+	if ($attacker->is_character && ! $defender->is_character) {
+		if (my $bonuses = $self->character_weapons->{$attacker->id}{creature_bonus}) {
+			$self->log->debug("Attacker gets a bonus for weapon: " . $bonuses->{$defender->type->category->id});
+			$af += $bonuses->{$defender->type->category->id} || 0;	
+		}
+	}
+	
 	my $df = $self->combat_factors->{ $defender->is_character ? 'character' : 'creature' }{ $defender->id }{df};
 
 	my $aq = $af - $a_roll;
@@ -895,6 +903,16 @@ sub _build_character_weapons {
 			$character_weapons{ $combatant->id }{ammunition}           = $combatant->ammunition_for_item($weapon);
 			$character_weapons{ $combatant->id }{magical_damage_type}  = $weapon->variable('Magical Damage Type');
 			$character_weapons{ $combatant->id }{magical_damage_level} = $weapon->variable('Magical Damage Level');
+			
+			my @enchantments = $weapon->item_enchantments;
+			my %creature_bonus;
+			foreach my $enchantment (@enchantments) {
+				if ($enchantment->enchantment->enchantment_name eq 'bonus_against_creature_category') {
+					$creature_bonus{$enchantment->variable('Creature Category')} = $enchantment->variable('Bonus');
+				}
+			} 
+			
+			$character_weapons{ $combatant->id }{creature_bonus} = \%creature_bonus;
 
 		}
 		else {

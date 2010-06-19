@@ -141,5 +141,8 @@ sub _allocate_equipment {
     }
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;
 

@@ -344,4 +344,7 @@ sub _remove_random_items_from_shop {
 
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

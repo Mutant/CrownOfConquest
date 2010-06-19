@@ -34,4 +34,6 @@ after 'finish' => sub {
     $self->location->update;
 };    
 
+__PACKAGE__->meta->make_immutable;
+
 1;

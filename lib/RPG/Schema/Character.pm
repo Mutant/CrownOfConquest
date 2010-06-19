@@ -398,7 +398,7 @@ sub attack_factor {
     $af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength'
         if $item;
 
-    my $attack_factor = $self->get_column($af_attribute);
+    my $attack_factor = do {no strict 'refs'; $self->$af_attribute};
 
     if ($item) {
 
@@ -945,5 +945,7 @@ sub get_item_actions {
 	
 	return @actions;	
 }
+
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

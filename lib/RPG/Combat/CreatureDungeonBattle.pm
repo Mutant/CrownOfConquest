@@ -8,4 +8,6 @@ with qw/
     RPG::Combat::InDungeon
 /;
 
+__PACKAGE__->meta->make_immutable;
+
 1;

@@ -1132,4 +1132,7 @@ sub get_non_diag_result {
     }	
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

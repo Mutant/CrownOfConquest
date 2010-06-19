@@ -346,4 +346,6 @@ sub _check_for_fight {
 	}
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

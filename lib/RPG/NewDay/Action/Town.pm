@@ -367,4 +367,7 @@ sub set_discount {
     }
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

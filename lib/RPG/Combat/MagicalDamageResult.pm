@@ -11,4 +11,6 @@ has 'extra_damage' => ( is => 'rw', isa => 'Int' );
 has 'resisted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'other_damages' => (is => 'rw', isa => 'ArrayRef[RPG::Combat::ActionResult]');
 
+__PACKAGE__->meta->make_immutable;
+
 1;

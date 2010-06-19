@@ -7,4 +7,7 @@ has 'logger'       => ( isa => 'Log::Dispatch',            is => 'ro', required 
 has 'land_grid'    => ( isa => 'RPG::Ticker::LandGrid',    is => 'ro', required => 1 );
 #has 'dungeon_grid' => ( isa => 'RPG::Ticker::DungeonGrid', is => 'ro', required => 1 );
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

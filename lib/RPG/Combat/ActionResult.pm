@@ -18,4 +18,6 @@ sub _build_defender_killed {
     return $self->defender->is_dead;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

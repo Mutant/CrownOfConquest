@@ -452,6 +452,8 @@ sub usable_actions {
 	my $self = shift;
 	my $combat = shift;
 	
+	return @{$self->{_actions}{$combat}} if $self->{_actions}{$combat}; 
+	
 	my @enchantments = $self->item_enchantments;
 	return unless @enchantments;
 	
@@ -465,6 +467,8 @@ sub usable_actions {
 			push @actions, $enchantment;
 		}
 	}
+	
+	$self->{_actions}{$combat} = \@actions;
 	
 	return @actions;
 }
@@ -480,5 +484,8 @@ sub enchantments_count {
 	
 	return $self->search_related('item_enchantments')->count();	
 }
+
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+
 
 1;

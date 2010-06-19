@@ -63,4 +63,7 @@ sub get_role_name {
 	return 'RPG::Schema::Enchantments::' . $name;
 }
 
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+
+
 1;

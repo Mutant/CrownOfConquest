@@ -77,3 +77,10 @@ UPDATE `Creature_Type` set creature_category_id = 7
 	where creature_type = 'Werewolf';
 
 UPDATE `Creature_Type` set creature_category_id = 1 where creature_category_id = 0 or creature_category_id is null;
+
+ALTER TABLE `Item_Variable` ADD INDEX `item_ench_idx`(`item_enchantment_id`);
+ALTER TABLE `Item_Variable` MODIFY COLUMN `item_variable_id` BIGINT  NOT NULL AUTO_INCREMENT;
+ALTER TABLE `Items` MODIFY COLUMN `item_id` BIGINT  NOT NULL AUTO_INCREMENT;
+
+
+

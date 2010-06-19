@@ -12,4 +12,7 @@ has 'time_type'  => ( is => 'ro', isa => 'Str', default => 'round' );
 has 'effect'     => ( is => 'ro', isa => 'Str', required => 1 );
 has 'spell_name' => ( is => 'ro', isa => 'Str', required => 1 );
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

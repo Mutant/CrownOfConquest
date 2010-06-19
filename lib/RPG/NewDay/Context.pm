@@ -18,4 +18,7 @@ sub _build_land_grid {
     return RPG::Ticker::LandGrid->new( schema => $self->schema );
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

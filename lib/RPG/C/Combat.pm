@@ -132,11 +132,15 @@ sub display_cg : Private {
 	return unless $creature_group;
 
 	my $factor_comparison;
+	
+	$c->stats->profile('Beginning factor comaprison');
 
 	if ($display_factor_comparison) {
 
 		# Check for a watcher effect
 		my @effects = $c->stash->{party}->party_effects;
+		
+		$c->stats->profile('Got party effects');
 
 		my $has_watcher = 0;
 		foreach my $effect (@effects) {
@@ -145,11 +149,19 @@ sub display_cg : Private {
 				last;
 			}
 		}
+		
+		$c->stats->profile('Got watcher boolean');
 
 		if ($has_watcher) {
+			$c->log->debug('About to compare cg to party');
 			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
+			$c->log->debug('Done comparing cg to party');
 		}
+		
+		$c->stats->profile('Compared to party');
 	}
+	
+	$c->stats->profile('Completed factor comaprison');
 
 	# Load effects, to make sure they're current (i.e. include current round)
 	my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
@@ -164,6 +176,8 @@ sub display_cg : Private {
 	foreach my $effect (@creature_effects) {
 		push @{ $creature_effects_by_id{ $effect->creature_id } }, $effect;
 	}
+	
+	$c->stats->profile('Got creature effects');
 
 	return $c->forward(
 		'RPG::V::TT',

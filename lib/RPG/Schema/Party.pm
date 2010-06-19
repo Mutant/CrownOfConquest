@@ -514,4 +514,7 @@ sub has_overencumbered_character {
 	return $over_encumbered_characters;	
 }
 
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+
+
 1;

@@ -161,4 +161,7 @@ sub execute_offline_battle {
     $party->end_combat();
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

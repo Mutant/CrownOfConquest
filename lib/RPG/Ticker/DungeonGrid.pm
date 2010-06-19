@@ -122,4 +122,7 @@ sub max_y {
     return $self->{max_y}->[$dungeon_id];
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

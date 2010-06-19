@@ -169,6 +169,8 @@ sub party_messages_check : Private {
 sub list : Private {
 	my ( $self, $c ) = @_;
 
+	$c->stats->profile("Entered /party/list");
+
 	my $party = $c->stash->{party};
 
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
@@ -183,8 +185,10 @@ sub list : Private {
 		{
 			prefetch => [ 'class', 'race', { 'character_effects' => 'effect' } ],
 			order_by => 'party_order',
-		},
+		},	
 	);
+	
+	$c->stats->profile("Fetched characters");
 
 	# See if any chars have broken weapons equipped
 	my @broken_equipped_items = $c->model('DBIC::Items')->search(
@@ -207,6 +211,8 @@ sub list : Private {
 		push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
 	}
 
+	$c->stats->profile("Got Broken weapons");
+
 	my %spells;
 	foreach my $character (@characters) {
 		next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
@@ -224,6 +230,8 @@ sub list : Private {
 		$spells{ $character->id } = \@spells if @spells;
 
 	}
+	
+	$c->stats->profile("Got Spells");
 
 	my @opponents;
 	if ( $c->stash->{creature_group} ) {
@@ -232,7 +240,9 @@ sub list : Private {
 	elsif ( my $opponent_party = $party->in_party_battle_with ) {
 		@opponents = $opponent_party->characters;
 	}
-
+	
+	$c->stats->profile("Got opponents");
+	
 	$c->forward(
 		'RPG::V::TT',
 		[

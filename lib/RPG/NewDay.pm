@@ -107,8 +107,9 @@ sub do_new_day {
     }
     
     $logger->info( "Successfully completed ticker script run for: " . $dt->datetime() );
-    
-
 }
+
+__PACKAGE__->meta->make_immutable;
+
 
 1;

@@ -8,4 +8,7 @@ with qw/
     RPG::Combat::InWilderness
 /;
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

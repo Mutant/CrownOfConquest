@@ -71,4 +71,7 @@ sub clear_land_object {
     $sector->{$object} = 0;
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

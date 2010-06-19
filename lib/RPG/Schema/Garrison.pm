@@ -121,4 +121,6 @@ sub name {
 	return "A garrison owned by " . $self->party->name;	
 }
 	
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+	
 1;

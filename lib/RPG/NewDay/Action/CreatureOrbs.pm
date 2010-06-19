@@ -208,4 +208,7 @@ sub _spawn_orb {
     $c->land_grid->set_land_object( 'creature_group', $land->{x}, $land->{y} );
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

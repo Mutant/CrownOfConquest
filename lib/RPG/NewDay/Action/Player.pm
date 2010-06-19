@@ -117,4 +117,7 @@ sub cleanup_sessions {
     $c->schema->resultset('Session')->search( { 'expires' => { '<', time() }, } )->delete;
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

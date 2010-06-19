@@ -138,4 +138,7 @@ sub randomly_delete_quests {
     }
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

@@ -43,4 +43,7 @@ sub BUILD {
 	$self->total_sectors($sector_count);
 }
 
+__PACKAGE__->meta->make_immutable;
+
+
 1;

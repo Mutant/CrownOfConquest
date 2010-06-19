@@ -36,3 +36,7 @@ sub run {
 
     $c->logger->info( "Beginning new day script for day: " . $new_day->day_number );
 }
+
+__PACKAGE__->meta->make_immutable;
+
+1;

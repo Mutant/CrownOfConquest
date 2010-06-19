@@ -12,4 +12,6 @@ sub cron_string {
     return $self->context->config->{default_cron_string};   
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

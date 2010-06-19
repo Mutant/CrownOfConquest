@@ -90,5 +90,4 @@ sub number_of_attacks {
     return $number_of_attacks;
 }
 
-
 1;

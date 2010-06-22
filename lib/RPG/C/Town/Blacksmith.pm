@@ -206,6 +206,9 @@ sub upgrade : Local {
 	            if $durabilty_variable->item_variable_value > $durabilty_variable->max_value;
 	        $durabilty_variable->update;
         }
+        else {
+        	$durability_decrease = 0;
+        }
     }
 
     # TODO: bit of a hack getting the name of the upgraded attribute with a regex...

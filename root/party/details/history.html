@@ -7,8 +7,12 @@
 		<tr>
 			<td valign="top" nowrap><b>Day [% day_count %]</b></td>
 			<td valign="top">
-				[% day_logs.${day_count}.log | html_line_break %]<br>
-				<hr size=1>
+				[% IF day_logs.${day_count} %]					
+					[% FOREACH message IN day_logs.${day_count} %]
+						[% message | html_line_break %]<br>
+						<hr size=1>
+					[% END %]
+				[% END %]
 				[% IF message_logs.${day_count} %]					
 					[% FOREACH message IN message_logs.${day_count} %]
 						[% message %]<br>

@@ -31,21 +31,29 @@ sub history : Local {
     my ( $self, $c ) = @_;
 
     # Check if new day message should be displayed
-    my %day_logs = map { $_->day->day_number => $_ } $c->model('DBIC::DayLog')->search(
-        { 'party_id' => $c->stash->{party}->id, },
+    my @day_logs = $c->model('DBIC::DayLog')->search(
+        { 
+        	'party_id' => $c->stash->{party}->id,
+        	'day.day_number' => {'>=', $c->stash->{today}->day_number - 7}, 
+        },
         {
-            order_by => 'day.date_started desc',
+            order_by => 'day.date_started desc, day_log_id',
             prefetch => 'day',
-            rows     => 7,                         # TODO: config me
         },
     );
+    my %day_logs;
+    foreach my $message (@day_logs) {
+        push @{ $day_logs{ $message->day->day_number } }, $message->log;
+    }    
 
     my @messages = $c->model('DBIC::Party_Messages')->search(
-        { 'party_id' => $c->stash->{party}->id, },
+        { 
+        	'party_id' => $c->stash->{party}->id,
+        	'day.day_number' => {'>=', $c->stash->{today}->day_number - 7}, 
+        },
         {
             order_by => 'day.date_started desc',
             prefetch => 'day',
-            rows     => 7,                         # TODO: config me
         },
     );
 

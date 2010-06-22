@@ -697,7 +697,7 @@ sub fill_chest {
 	    map { push @{ $item_types_by_prevalence{ $_->prevalence } }, $_ } @item_types;
 	}
 	
-	my $number_of_items = RPG::Maths->weighted_random_number(1..5);
+	my $number_of_items = RPG::Maths->weighted_random_number(1..3);
 				
 	for (1..$number_of_items) {
 		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
@@ -715,11 +715,20 @@ sub fill_chest {
                 
 	    # We couldn't find a suitable item. Try again
 	    next unless $item_type;
+	    
+	    my $enchantments = 0;
+	    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
+	    }
 	            
-		my $item = $self->context->schema->resultset('Items')->create(
+		my $item = $self->context->schema->resultset('Items')->create_enchanted(
 			{
 				item_type_id      => $item_type->id,
 			    treasure_chest_id => $chest->id,
+			},
+			{
+				number_of_enchantments => $enchantments,
+				max_value => $dungeon->level * 300,
 			}
 	    );
 	}

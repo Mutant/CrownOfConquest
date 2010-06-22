@@ -46,7 +46,7 @@ sub test_new_day : Tests(3) {
 	
 	my @logs = $party->day_logs;
 	is(scalar @logs, 1, "1 daily log added");
-	is($logs[0]->log, "test was healed 4 hit points by his Test1(*)", 'log line created correctly');
+	is($logs[0]->log, "test was healed 4 hit points by his Test1", 'log line created correctly');
 	
 }
 

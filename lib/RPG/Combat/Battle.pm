@@ -545,7 +545,6 @@ sub attack {
 	
 	if ($attacker->is_character && ! $defender->is_character) {
 		if (my $bonuses = $self->character_weapons->{$attacker->id}{creature_bonus}) {
-			$self->log->debug("Attacker gets a bonus for weapon: " . $bonuses->{$defender->type->category->id});
 			$af += $bonuses->{$defender->type->category->id} || 0;	
 		}
 	}

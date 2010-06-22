@@ -30,36 +30,55 @@ sub create_enchanted {
 	my $self = shift;
 	my $params = shift;
 	my $extra_params = shift;
-		
-	my $item = $self->create($params);
 	
-	return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
-		
-	my @possible_enchantments = $self->result_source->schema->resultset('Enchantments')->search(
-		{
-			'categories.item_category_id' => $item->item_type->item_category_id,
-		},
-		{
-			join => 'categories',
-		}
-	);
-
-	return $item unless @possible_enchantments;
+	my $item;
+	my $creation_tries = 0;
 	
-	for (1 .. $extra_params->{number_of_enchantments}) {
-		last unless @possible_enchantments;
-
-		@possible_enchantments = shuffle @possible_enchantments;		
+	while (! defined $item) {
+		$item = $self->create($params);
 		
-		my $enchantment = $possible_enchantments[0];
-		
-		shift @possible_enchantments if $enchantment->one_per_item;
-		
-		$item->add_to_item_enchantments(
+		return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
+			
+		my @possible_enchantments = $self->result_source->schema->resultset('Enchantments')->search(
 			{
-				enchantment_id => $enchantment->id,
+				'categories.item_category_id' => $item->item_type->item_category_id,
+			},
+			{
+				join => 'categories',
 			}
-		); 
+		);
+	
+		return $item unless @possible_enchantments;
+		
+		for (1 .. $extra_params->{number_of_enchantments}) {
+			last unless @possible_enchantments;
+	
+			@possible_enchantments = shuffle @possible_enchantments;		
+			
+			my $enchantment = $possible_enchantments[0];
+			
+			shift @possible_enchantments if $enchantment->one_per_item;
+			
+			$item->add_to_item_enchantments(
+				{
+					enchantment_id => $enchantment->id,
+				}
+			); 
+		}
+		
+		$creation_tries++;
+		
+		if (defined $extra_params->{max_value} && $item->sell_price > $extra_params->{max_value}) {
+			if ($creation_tries > 10) {
+				# Tried 10 times, but still don't have an item under max_value!
+				#  Just create something without an enchantment
+				return $self->create($params);
+			}
+
+			# Item worth more then max_value. Delete it and start again
+			$item->delete;
+			undef $item;
+		}
 	}
 	
 	return $item;	

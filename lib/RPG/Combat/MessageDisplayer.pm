@@ -68,7 +68,9 @@ sub display {
             push @messages, "You find $result->{gold} gold\n";
 
             foreach my $item_found ( @{ $result->{found_items} } ) {
-                push @messages, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name . "\n";
+            	my $enchanted = $item_found->{item}->enchantments_count > 0 ? 1 : 0;
+                push @messages, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name 
+                	. ($enchanted ? '(*)' : '') . "\n";
             }
 
             given ( $opponent->group_type ) {

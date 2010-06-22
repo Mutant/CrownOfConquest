@@ -8,7 +8,6 @@ use HTML::FillInForm;
 use Data::Dumper;
 
 #__PACKAGE__->config->{DEBUG} = 'all';
-__PACKAGE__->config(TIMER => 1);
 
 sub process {
     my ($self, $c, $params) = @_;

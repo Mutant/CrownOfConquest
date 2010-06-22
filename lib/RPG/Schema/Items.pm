@@ -149,10 +149,6 @@ sub display_name {
     if ( my $quantity = $self->variable('Quantity') ) {
         $name .= ' (x' . $quantity . ')';
     }
-    
-    if ($self->enchantments_count > 0) {
-    	$name .= '(*)';
-    }    
 
     return $name;
 }

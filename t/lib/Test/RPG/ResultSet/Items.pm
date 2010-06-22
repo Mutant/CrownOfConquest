@@ -107,4 +107,52 @@ sub test_create_enchanted_one_per_item : Tests(4) {
 
 }
 
+sub test_create_enchanted_max_value : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantments => [ 'spell_casts_per_day' ] );
+	
+	# WHEN
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+            item_type_id   => $item_type->id,			
+		},
+		{
+			number_of_enchantments => 1,
+			max_value => 350,
+		}		
+	);
+	
+	# THEN
+	isa_ok($item, 'RPG::Schema::Items', "Item created correctly");
+	my @enchantments = $item->item_enchantments;	
+	is(scalar @enchantments, 1, "One enchantment on item");
+	cmp_ok($item->sell_price, '<=', 350, "Item price under max_value");
+
+}
+sub test_create_enchanted_returns_item_even_if_cant_create_under_max_value : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, enchantments => [ 'spell_casts_per_day' ] );
+	
+	# WHEN
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+            item_type_id   => $item_type->id,			
+		},
+		{
+			number_of_enchantments => 1,
+			max_value => 1,
+		}		
+	);
+	
+	# THEN
+	isa_ok($item, 'RPG::Schema::Items', "Item created correctly");
+	my @enchantments = $item->item_enchantments;	
+	is(scalar @enchantments, 0, "Item is not enchanted");
+
+}
+
 1;

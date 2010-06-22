@@ -186,7 +186,10 @@ sub check_for_item_found {
 				
 				$item = $self->schema->resultset('Items')->create_enchanted(
 					{ item_type_id => $item_type->id, },
-					{ number_of_enchantments => $enchantment_count },
+					{ 
+						number_of_enchantments => $enchantment_count,
+						max_value => $avg_creature_level * 150, 
+					},
 				);
 			}
 		}

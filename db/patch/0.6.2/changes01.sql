@@ -82,5 +82,5 @@ ALTER TABLE `Item_Variable` ADD INDEX `item_ench_idx`(`item_enchantment_id`);
 ALTER TABLE `Item_Variable` MODIFY COLUMN `item_variable_id` BIGINT  NOT NULL AUTO_INCREMENT;
 ALTER TABLE `Items` MODIFY COLUMN `item_id` BIGINT  NOT NULL AUTO_INCREMENT;
 
-
+delete from Items where shop_id is not null;
 

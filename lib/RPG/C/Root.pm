@@ -119,7 +119,8 @@ sub auto : Private {
             && $c->action !~ m{^((dungeon|party|garrison)/)?combat}
             && $c->action ne 'party/select_action'
             && $c->action ne 'default'
-            && $c->action ne 'player/logout' )
+            && $c->action ne 'player/logout'
+            && $c->action ne 'party/zoom_change' )
         {
             $c->debug('Forwarding to /party/main since party is in combat');
             $c->stash->{error} = "You must flee before trying to move away!";

@@ -47,7 +47,7 @@ BEGIN {
     __PACKAGE__->config->{session} = {
         session => {
             dbic_class => 'DBIC::Session',
-            expires    => 60 * 60 * 24,
+            expires    => 60 * 20,
         },
     };
 
@@ -55,6 +55,10 @@ BEGIN {
         root       => __PACKAGE__->path_to('root'),
         'View::TT' => { INCLUDE_PATH => [ __PACKAGE__->path_to('root'), ] },
     );    
+    
+  __PACKAGE__->config( 'Plugin::Session' => {
+     cookie_expires  => 60 * 60 * 48,
+  });    
     
 }
 

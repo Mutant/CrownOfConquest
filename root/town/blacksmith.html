@@ -71,10 +71,10 @@
 	[% END %]
 	Select individual items to upgrade or repair:
 	
-	<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+	<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; min-height: 700px">
 		[% FOREACH category IN categories %]
 			[% FILTER collapse %]
-      		<div dojoType="dijit.layout.ContentPane" title="[% category.item_category %]" style="display: none" 
+      		<div dojoType="dijit.layout.ContentPane" title="[% category.item_category %]" style="height: 700px; min-height: 150px" 
 				href="[% base %]/town/blacksmith/category_tab?category_id=[% category.id %]"
 				[% IF current_tab == category.item_category %]selected=true[% END %]>
       		</div>

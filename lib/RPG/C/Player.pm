@@ -43,9 +43,11 @@ sub login : Local {
                 }
                               
                 $c->res->redirect( $c->config->{url_root} . $url_to_redirect_to );
+                return;
             }
             else {
                 $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
+                return;
             }
         }
         else {

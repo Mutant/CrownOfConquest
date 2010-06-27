@@ -1,6 +1,8 @@
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
 		[% slot = slot_orig %]
-		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" accept="item" align="center" style="border: black 1px dashed" 
+		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
+			accept="[% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %],[% END %][% END %]"
+			align="center" style="border: black 1px dashed" 
 			width="50">
 			[% item = equipped_items.$slot_orig %]
 			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
@@ -58,7 +60,7 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 
 [% IF character.is_in_party %]
 	Mouse over an item to get it's stats. Drag an item onto an equip slot to the left to equip it. Alternatively, right click an 
-	item to equip it, drop it, give it to another character.<br> 
+	item to equip it, drop it, or give it to another character.<br> 
 [% END %]
 
 [% last_category = '' %]
@@ -78,9 +80,9 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 	[% IF character.is_in_party %]
 	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId(this.id)">
 		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
-	[% END %]
-	
-			<span class="dojoDndItem" dndType="item" id="item-[% item.id %]">
+	[% END %]	
+			<span class="dojoDndItem" dndType="[% last_category %]" 
+				id="item-[% item.id %]">
 				<span id="item-tooltip-[% item.id %]">
 				[% IF item.item_type.image %]
 					<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">

@@ -1,0 +1,84 @@
+<table class="main" style="float:left">
+	<tr>
+		<td class="stat-label">Race:</td>
+    	<td>[% character.race.race_name %]</td>
+    </tr>
+    <tr>
+		<td class="stat-label">Class:</td>
+    	<td>[% character.class.class_name %]</td>
+    </tr>
+    <tr>
+		<td class="stat-label">Gender:</td>
+    	<td>[% character.gender | ucfirst %]</td>
+    </tr>
+    <tr>
+		<td class="stat-label">Level:</td>
+    	<td>[% character.level %]</td>	
+    </tr>
+    <tr>    	
+		<td class="stat-label">Experience:</td>
+    	<td nowrap>[% character.xp %] / [% xp_for_next_level %]</td>
+	</tr>
+    <tr>    	
+		<td class="stat-label">Encumbrance:</td>
+    	<td nowrap><span id="encumbrance-value">[% character.encumbrance %]</span> / [% character.encumbrance_allowance %]</td>
+	</tr>
+</table>
+
+<div style="width: 20px; float:left">&nbsp;</div>
+
+<table class="main" style="float:left">
+	[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
+	<tr>
+	    <td class="stat-label">[% stat | ucfirst %]:</span></td>
+		[% formatted_stat = character.$stat %]
+	    [% IF character.$stat < 10 %]
+	    	[% formatted_stat = '&nbsp;' _ character.$stat %]
+	    [% END %]		     
+	    <td id="stat-[% stat %]">[% formatted_stat %]</td>
+	    <td>
+	    	[% IF character.stat_points %]
+	    		<input type="button" value="+" style="height:16px; width: 20px; font-size: 8px" onClick="addStatPoint('[% character.id %]','[% stat %]')">
+	    	[% END %]
+	    </td>
+	</tr>		
+	[% END %]
+	
+	[% IF character.stat_points %]
+	<tr>
+		<td class="stat-label">Stat Points:</td>
+	    <td id="stat-points">[% character.stat_points %]</td>
+	</tr>			
+	[% END %]
+</table>
+
+<div style="width: 20px; float:left">&nbsp;</div>
+
+<table class="main" style="float:left">
+	<tr>
+	    <td class="stat-label">Hit Points:</td>
+	    <td nowrap>[% character.hit_points %] / [% character.max_hit_points %]</td>
+	</tr>
+
+	<tr>
+	    <td class="stat-label">Spell Points:</td>
+	    <td nowrap>[% character.spell_points %]</td>
+	</tr>
+	
+	<tr>
+	    <td class="stat-label">Attack Factor:</td>
+	    <td nowrap>[% character.attack_factor %]</td>
+	</tr>
+	
+	<tr>
+	    <td class="stat-label">Defence Factor:</td>
+	    <td nowrap>[% character.defence_factor %]</td>
+	</tr>		
+	
+	
+	<tr>
+	    <td class="stat-label">Damage:</td>
+	    <td nowrap>[% character.damage %]</td>
+	</tr>	
+</table>
+	

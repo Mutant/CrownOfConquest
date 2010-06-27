@@ -230,3 +230,7 @@ html>body .nav a {width: auto}
 	border: 0px;
 	background: inherit;
 }
+
+.stat-label {
+	font-weight: bold;
+}

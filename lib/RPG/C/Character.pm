@@ -35,8 +35,6 @@ sub view : Local {
 
 	my $character = $c->stash->{character};
 
-	my $next_level = $c->model('DBIC::Levels')->find( { level_number => $character->level + 1, } );
-
 	my @characters;
 	my @garrison_characters;
 	if ( $character->party_id ) {
@@ -61,9 +59,29 @@ sub view : Local {
 					character           => $character,
 					characters          => \@characters,
 					garrison_characters => \@garrison_characters,
-					xp_for_next_level   => $next_level ? $next_level->xp_needed : '????',
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
+				}
+			}
+		]
+	);
+}
+
+sub stats : Local {
+	my ( $self, $c ) = @_;
+
+	my $character = $c->stash->{character};
+	
+	my $next_level = $c->model('DBIC::Levels')->find( { level_number => $character->level + 1, } );
+
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'character/stats.html',
+				params   => {
+					character => $character,
+					xp_for_next_level   => $next_level ? $next_level->xp_needed : '????',
 				}
 			}
 		]
@@ -92,13 +110,13 @@ sub equipment_tab : Local {
 			{
 				template => 'character/equipment_tab.html',
 				params   => {
-					character                 => $character,
-					equipped_items            => $equipped_items,
-					equipped_items_by_id      => \%equipped_items_by_id,
-					equip_place_category_list => \%equip_place_category_list,
-					equip_places              => [ keys %equip_place_category_list ],
+					character                     => $character,
+					equipped_items                => $equipped_items,
+					equipped_items_by_id          => \%equipped_items_by_id,
+					equip_place_category_list     => \%equip_place_category_list,
+					equip_places                  => [ keys %equip_place_category_list ],
 					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
-					party                     => $c->stash->{party},
+					party                         => $c->stash->{party},
 				}
 			}
 		]
@@ -149,9 +167,9 @@ sub inventory : Local {
 			{
 				template => 'character/inventory.html',
 				params   => {
-					character                     => $character,
-					party                         => $c->stash->{party},
-					items                         => \@items,
+					character => $character,
+					party     => $c->stash->{party},
+					items     => \@items,
 				}
 			}
 		]
@@ -359,7 +377,6 @@ sub drop_item : Local {
 		to_json(
 			{
 				clear_equip_place => $slot_to_clear,
-				encumbrance       => $character->encumbrance,
 			}
 		)
 	);
@@ -386,7 +403,7 @@ sub unequip_item : Local {
 				. ")" );
 		return;
 	}
-	
+
 	return unless $item->equip_place_id;
 
 	my $slot_to_clear = $item->equipped_in->equip_place_name;

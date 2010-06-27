@@ -56,6 +56,7 @@
        						clearEquipSlot(changed_slot);
 	        			}
 	        			reloadInventory();
+	        			reloadStats();
 	        		}
 				}
 	        },
@@ -70,7 +71,8 @@
 	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();	        	
+	        	reloadInventory();
+	        	reloadStats();	        	
 	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
@@ -85,8 +87,8 @@
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();	        	
-	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
+	        	reloadInventory();
+	        	reloadStats();
 				
 				if (responseObject.clear_equip_place) {
 					clearEquipSlot(responseObject.clear_equip_place);					
@@ -101,6 +103,7 @@
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
+	        	reloadStats();
 				clearEquipSlot(responseObject.clear_equip_place);
 	        }
 	    });	       
@@ -125,7 +128,16 @@ function reloadInventory() {
          } 
      });
 }
-	
+
+function reloadStats() {
+     dojo.xhrGet({
+         url: "[% base %]/character/stats?character_id=[% character.id %]",
+         load: function(data,ioa){
+              dijit.byId('stats-panel').setContent(data);
+         } 
+     });
+}
+
 function addStatPoint(char_id, stat) {
 	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
 		return;
@@ -258,40 +270,8 @@ function calculateSpellPoints() {
 
 <br><br>
 
-<div class="aligned" id="character">
-
-<div class="aligned-line">
-    <span class="aligned-label">Race:</span>
-    <span class="aligned-value">[% character.race.race_name %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Class:</span>
-    <span class="aligned-value">[% character.class.class_name %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Gender:</span>
-    <span class="aligned-value">[% character.gender | ucfirst %]</span>
-</div>
-
-
-<div class="aligned-line">
-    <span class="aligned-label">Level:</span>
-    <span class="aligned-value">[% character.level %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Experience:</span>
-    <span class="aligned-value">[% character.xp %] / [% xp_for_next_level %]</span>
-</div>
-
-<div class="aligned-line">
-    <span class="aligned-label">Encumbrance:</span>
-    <span class="aligned-value"><span id="encumbrance-value">[% character.encumbrance %]</span> / [% character.encumbrance_allowance %]</span>
-</div>
-
-</div>
+<div dojoType="dijit.layout.ContentPane" href="[% base %]/character/stats?character_id=[% character.id %]" 
+	id="stats-panel" loadingMessage=""></div>
 
 <br>
 
@@ -302,64 +282,6 @@ function calculateSpellPoints() {
 </style>
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
-      <div dojoType="dijit.layout.ContentPane" title="Stats" style="display: none" [% IF selected == 'stats' %]selected="true"[% END %]>
-		<div class="aligned" id="character">
-		
-		[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
-		<div class="aligned-line">
-		    <span class="aligned-label">[% stat | ucfirst %]:</span>
-    		[% formatted_stat = character.$stat %]
-		    [% IF character.$stat < 10 %]
-		    	[% formatted_stat = '&nbsp;' _ character.$stat %]
-		    [% END %]		     
-		    <span class="aligned-value" id="stat-[% stat %]">[% formatted_stat %]</span>
-		    <span>
-		    	[% IF character.stat_points %]
-		    		<input type="button" value="+" onClick="addStatPoint('[% character.id %]','[% stat %]')">
-		    	[% END %]
-		    </span>
-		</div>
-		[% END %]
-
-		[% IF character.stat_points %]
-		<br><br>
-		<div class="aligned-line">
-		    <span class="aligned-label">Stat Points:</span>
-		    <span class="aligned-value" id="stat-points">[% character.stat_points %]</span>
-		</div>			
-		[% END %]
-		
-		<br><br>
-		<div class="aligned-line">
-		    <span class="aligned-label">Hit Points:</span>
-		    <span class="aligned-value">[% character.hit_points %] / [% character.max_hit_points %]</span>
-		</div>
-
-		<div class="aligned-line">
-		    <span class="aligned-label">Spell Points:</span>
-		    <span class="aligned-value">[% character.spell_points %]</span>
-		</div>
-		
-		<br><br>
-		<div class="aligned-line">
-		    <span class="aligned-label">Attack Factor:</span>
-		    <span class="aligned-value">[% character.attack_factor %]</span>
-		</div>
-
-		<div class="aligned-line">
-		    <span class="aligned-label">Defence Factor:</span>
-		    <span class="aligned-value">[% character.defence_factor %]</span>
-		</div>
-
-		<div class="aligned-line">
-		    <span class="aligned-label">Damage:</span>
-		    <span class="aligned-value">[% character.damage %]</span>
-		</div>
-		
-		</div>
-	</div>
-
-	
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
     	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    

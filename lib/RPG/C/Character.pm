@@ -62,7 +62,7 @@ sub view : Local {
 					characters          => \@characters,
 					garrison_characters => \@garrison_characters,
 					xp_for_next_level   => $next_level ? $next_level->xp_needed : '????',
-					selected  => $c->stash->{selected_tab}   || $c->req->param('selected') || '',
+					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 				}
 			}
@@ -71,6 +71,41 @@ sub view : Local {
 }
 
 sub equipment_tab : Local {
+	my ( $self, $c ) = @_;
+
+	my $character = $c->stash->{character};
+
+	croak "Invalid character id" unless $character;
+
+	my $equipped_items = $character->equipped_items();
+
+	my %equipped_items_by_id =
+		map { $equipped_items->{$_} ? ( $equipped_items->{$_}->id => $equipped_items->{$_} ) : () } keys %$equipped_items;
+
+	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
+
+	my @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'character/equipment_tab.html',
+				params   => {
+					character                 => $character,
+					equipped_items            => $equipped_items,
+					equipped_items_by_id      => \%equipped_items_by_id,
+					equip_place_category_list => \%equip_place_category_list,
+					equip_places              => [ keys %equip_place_category_list ],
+					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
+					party                     => $c->stash->{party},
+				}
+			}
+		]
+	);
+}
+
+sub inventory : Local {
 	my ( $self, $c ) = @_;
 
 	my $character = $c->stash->{character};
@@ -108,33 +143,15 @@ sub equipment_tab : Local {
 		},
 	);
 
-	# Get list of items this char has, to allow us to build the equipped_items hash
-	my @characters_items = grep { $_->character_id == $character->id } @items;
-
-	my $equipped_items = $character->equipped_items(@characters_items);
-
-	my %equipped_items_by_id =
-		map { $equipped_items->{$_} ? ( $equipped_items->{$_}->id => $equipped_items->{$_} ) : () } keys %$equipped_items;
-
-	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
-
-	my @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
-
 	$c->forward(
 		'RPG::V::TT',
 		[
 			{
-				template => 'character/equipment_tab.html',
+				template => 'character/inventory.html',
 				params   => {
 					character                     => $character,
-					equipped_items                => $equipped_items,
-					equipped_items_by_id          => \%equipped_items_by_id,
-					equip_place_category_list     => \%equip_place_category_list,
-					equip_places                  => [ keys %equip_place_category_list ],
-					items                         => \@items,
-					item_mode                     => $item_mode,
-					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
 					party                         => $c->stash->{party},
+					items                         => \@items,
 				}
 			}
 		]
@@ -235,8 +252,11 @@ sub equip_item : Local {
 		$c->req->param('equip_place') => {
 			item_type => $item->item_type->item_type,
 			image     => $item->item_type->image,
+			tooltip   => $c->forward( '/item/tooltip', [1] ),
+			item_id   => $item->id,
 		},
 	);
+
 	my $slots_cleared;
 	if ( scalar @slots_changed > 1 ) {
 
@@ -250,6 +270,8 @@ sub equip_item : Local {
 		$ret{ $slots_to_clear[0] } = {
 			item_type => undef,
 			image     => undef,
+			tooltip   => '',
+			item_id   => undef,
 		};
 	}
 
@@ -320,13 +342,14 @@ sub drop_item : Local {
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 
-	if ($c->stash->{party_location}->town) {
+	if ( $c->stash->{party_location}->town ) {
+
 		# If we're in a town, just delete the item...
 		# TODO: Could think of something better to do here...
 		$item->delete;
 	}
 	else {
-		$item->land_id($c->stash->{party_location}->id);
+		$item->land_id( $c->stash->{party_location}->id );
 		$item->character_id(undef);
 		$item->equip_place_id(undef);
 		$item->update;
@@ -337,6 +360,44 @@ sub drop_item : Local {
 			{
 				clear_equip_place => $slot_to_clear,
 				encumbrance       => $character->encumbrance,
+			}
+		)
+	);
+}
+
+sub unequip_item : Local {
+	my ( $self, $c ) = @_;
+
+	$c->forward('check_action_allowed');
+
+	my $character = $c->stash->{character};
+
+	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
+
+	# Make sure this item belongs to a character in the party
+	my @characters = $c->stash->{party}->characters_in_sector;
+	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
+		$c->log->warn( "Attempted to unequip item  "
+				. $item->id
+				. " within party "
+				. $c->stash->{party}->id
+				. ", but item does not belong to this party (item is owned by character: "
+				. $item->character_id
+				. ")" );
+		return;
+	}
+	
+	return unless $item->equip_place_id;
+
+	my $slot_to_clear = $item->equipped_in->equip_place_name;
+
+	$item->equip_place_id(undef);
+	$item->update;
+
+	$c->res->body(
+		to_json(
+			{
+				clear_equip_place => $slot_to_clear,
 			}
 		)
 	);

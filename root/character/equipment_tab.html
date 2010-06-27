@@ -1,18 +1,25 @@
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
 		[% slot = slot_orig %]
+		[% item = equipped_items.$slot_orig %]
 		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
 			accept="[% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %],[% END %][% END %]"
 			align="center" style="border: black 1px dashed" 
-			width="50">
-			[% item = equipped_items.$slot_orig %]
+			width="50">			
+			<span id="[% slot %]-item-id" style="display: none">[% item.id %]</span>
+			<span onMouseOver="saveCurrentItemId(dojo.byId('[% slot %]-item-id').innerHTML)">
+
 			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
-				style="[% IF ! item.item_type.image %]display: none[% END %]">
+				style="[% IF ! item.item_type.image %]display: none[% END %]"
+				>
 			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>
 			<div dojoType="dijit.Tooltip"
-                   connectId="[% slot %]-equip_place"
-                   label="[% slot %]: [% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %], [% END %][% END %]"></div>
-	        
+	           		connectId="[% slot %]-equip_place"
+	           		id="[% slot %]-tooltip"
+					style="display: none">
+						[% IF item %][% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %][% END %] 
+	        </div>        
 	        <span id="[% slot %]-slot-label" [% IF item %]style="display: none"[% END %]>[% slot_orig %]</span>
+	        </span>
 		</td>
 [% END %]
 
@@ -21,21 +28,123 @@
 		<td valign="top" width="250" style="background: lightgray">
 
 <script>
-	// Hack to get around dojo defeciency
+	// Hack to get around dojo deficiency
 	var currentItemId;
 	function saveCurrentItemId(id) {
-		parts = id.split(/-/);
-		currentItemId = parts[2];
+		currentItemId = id;
+		console.log(currentItemId);
 	}
+	
+function createMenus() {
+	createInventoryMenu(); 
+	createEquippedMenu();
+}
+	
+function createInventoryMenu() { 
+	if (dijit.byId('item_inventory_menu') != undefined) {
+		dijit.byId('item_inventory_menu').destroyRecursive();			
+	}
+	
+	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
+		if (! item.equipped)
+		  return true;
+	}), function(item) { return item.id } ); 
+
+	var params = {id:"item_inventory_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+	
+	var equipSubMenu = new dijit.Menu();
+	
+	[% FOREACH equip_place IN equip_places %]
+		params = {
+			label: "[% equip_place %]",
+			onClick: function(event) {
+				equip_item('[% equip_place %]', currentItemId);
+			}
+		};
+		
+		var item = new dijit.MenuItem(params,document.createElement("div"));
+		equipSubMenu.addChild(item);			
+	[% END %]
+	
+	params = {
+		label: "Equip Item In",
+		popup: equipSubMenu,
+		iconClass: "menuExpandIcon"
+	};			
+	var equipPopupMenu = new dijit.PopupMenuItem(params);
+	menu.addChild(equipPopupMenu);
+	
+	addCommonMenuItems(menu);	
+} 	
+
+function createEquippedMenu() {
+	if (dijit.byId('item_equipped_menu') != undefined) {
+		dijit.byId('item_equipped_menu').destroyRecursive();			
+	}
+	
+	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
+		if (item.equipped)
+		  return true;
+	}), function(item) { return item.equipped + '-equip_place' } ); 
+
+	var params = {id:"item_equipped_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+
+	params = {
+		label: "Unequip Item",
+		onClick: function() {
+			unequip_item(currentItemId, '[% character.id %]');
+		}
+	};			
+	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(dropItem);
+	
+	addCommonMenuItems(menu);			
+}
+
+function addCommonMenuItems(menu) {
+	var giveSubMenu = new dijit.Menu();
+
+	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
+		[% UNLESS char_in_party.character_id == character.id %]
+			params = {
+				label: "[% char_in_party.name %]",
+				onClick: function() {
+					give_item_to('[% char_in_party.id %]', currentItemId);
+				}
+			};
+			
+			var item = new dijit.MenuItem(params,document.createElement("div"));
+			giveSubMenu.addChild(item);			
+		[% END %]
+	[% END %]
+
+	params = {
+		label: "Give Item To",
+		popup: giveSubMenu,
+		iconClass: "menuExpandIcon"
+	};			
+	var givePopupMenu = new dijit.PopupMenuItem(params);
+	menu.addChild(givePopupMenu);	
+
+	params = {
+		label: "Drop Item",
+		onClick: function() {
+			drop_item(currentItemId, '[% character.id %]');
+		}
+	};			
+	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(dropItem);	
+}
+
 </script>
 
 <b>Equipped Items</b>
 
-<br><br>
-
-Mouse over an equipped item slot to see what types of items can be equipped there.
-
-<br><br>
+<br><br><br><br>
 
 <div align="center">
 	<table class="main">
@@ -63,116 +172,7 @@ Mouse over an equipped item slot to see what types of items can be equipped ther
 	item to equip it, drop it, or give it to another character.<br> 
 [% END %]
 
-[% last_category = '' %]
-[% FOREACH item IN items %]
-	[%# Disabled for now to allow release to get out sooner rather than later %]
-	[%# IF equipped_items_by_id.${item.id} %]
-		[%# Don't display equipped items %]
-		[%# NEXT %]
-	[%# END %]
-
-	[% IF last_category != item.item_type.category.item_category %]
-		[% IF last_category != '' %]</div>[% END %]
-		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h4 style="text-align: center">[% item.item_type.category.item_category %]</h4>
-		[% last_category = item.item_type.category.item_category %]
-	[% END %]
-
-	[% IF character.is_in_party %]
-	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId(this.id)">
-		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
-	[% END %]	
-			<span class="dojoDndItem" dndType="[% last_category %]" 
-				id="item-[% item.id %]">
-				<span id="item-tooltip-[% item.id %]">
-				[% IF item.item_type.image %]
-					<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
-				[% ELSE %]
-				[% item.display_name %]
-				[% END %]
-				</span>
-			</span>
-			<div dojoType="dijit.Tooltip"
-           		connectId="item-tooltip-[% item.id %]"
-           		id="item-dijit-[% item.id %]"
-				style="display: none">
-					[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
-            </div>
-            
-    [% IF character.is_in_party %]
-		</span>	
-	</span>
-	[% END %]
-	
-[% END %]
-
-[% IF character.is_in_party %]
-<script>
-function createMenus() { 
-
-	var params = {id:"item_context_menu", 
-		targetNodeIds:[[% FOREACH item IN items %]"item-menu-[% item.id %]"[% UNLESS loop.last %],[% END %][% END %]] };
-	var menu = new dijit.Menu(params,document.createElement("div"));
-
-	var equipSubMenu = new dijit.Menu();
-	
-	[% FOREACH equip_place IN equip_places %]
-		params = {
-			label: "[% equip_place %]",
-			onClick: function(event) {
-				console.log(event);
-				equip_item('[% equip_place %]', currentItemId);
-			}
-		};
-		
-		var item = new dijit.MenuItem(params,document.createElement("div"));
-		equipSubMenu.addChild(item);			
-	[% END %]
-	
-	params = {
-		label: "Equip Item In",
-		popup: equipSubMenu,
-		iconClass: "menuExpandIcon"
-	};			
-	var equipPopupMenu = new dijit.PopupMenuItem(params);
-	menu.addChild(equipPopupMenu);
-	
-	var giveSubMenu = new dijit.Menu();
-	
-	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
-		[% UNLESS char_in_party.character_id == character.id %]
-			params = {
-				label: "[% char_in_party.name %]",
-				onClick: function() {
-					give_item_to('[% char_in_party.id %]', currentItemId);
-				}
-			};
-			
-			var item = new dijit.MenuItem(params,document.createElement("div"));
-			giveSubMenu.addChild(item);			
-		[% END %]
-	[% END %]
-	
-	params = {
-		label: "Give Item To",
-		popup: giveSubMenu,
-		iconClass: "menuExpandIcon"
-	};			
-	var givePopupMenu = new dijit.PopupMenuItem(params);
-	menu.addChild(givePopupMenu);	
-	
-	params = {
-		label: "Drop Item",
-		onClick: function() {
-			drop_item(currentItemId, '[% character.id %]');
-		}
-	};			
-	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(dropItem);	
-	
-}
-
-dojo.addOnLoad( createMenus );
-</script>
-[% END %]
+<div dojoType="dojox.layout.ContentPane" href="[% base %]/character/inventory?character_id=[% character.id %]" 
+	id="inventory-panel" [% IF character.is_in_party %]onDownloadEnd="createMenus()"[% END %] loadingMessage=""></div>
 
 </td></tr></table>

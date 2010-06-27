@@ -547,11 +547,18 @@ sub equipped_items {
 
     my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search;
 
-    @items = $self->items unless @items;
+	unless (@items) {
+	    @items = $self->search_related(
+	    	'items',
+	    	{
+	    		'equip_place_id' => {'!=', undef},
+	    	}
+	    );
+	}
 
     my %equipped_items;
 
-    # Character has no items
+    # Character has no equipped items
     unless (@items) {
         %equipped_items = map { $_->equip_place_name => undef } @equip_places;
         return \%equipped_items;

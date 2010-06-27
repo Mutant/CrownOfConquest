@@ -36,8 +36,10 @@
 	        	else {
 		        	var changed_slots = responseObject.changed_slots;
 	        		for (changed_slot in changed_slots) {
-	        			var item = changed_slots[changed_slot];	  
-	        			  			
+	        			var item = changed_slots[changed_slot];
+	        			dijit.byId(changed_slot + '-tooltip').label = item.tooltip; 
+						dojo.byId(changed_slot + '-item-id').innerHTML = item.item_id; 
+	        				        			  			
 	        			if (item.image) {	        				
 	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'block';
 	        				dojo.byId(changed_slot + '-slot-label').style.display = 'none';
@@ -53,6 +55,7 @@
 	        			else {
        						clearEquipSlot(changed_slot);
 	        			}
+	        			reloadInventory();
 	        		}
 				}
 	        },
@@ -67,7 +70,7 @@
 	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
+	        	reloadInventory();	        	
 	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
@@ -82,7 +85,7 @@
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
-	        	dojo.byId('item-menu-' + item_id).style.display = 'none';
+	        	reloadInventory();	        	
 	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
@@ -91,6 +94,17 @@
 	        }
 	    });	       
 	}	
+	
+	function unequip_item(item_id, char_id) {
+		dojo.xhrGet( {
+	        url: "[% base %]/character/unequip_item?item_id=" +  item_id + "&character_id=" + char_id,
+	        handleAs: "json",	
+	        load: function(responseObject, ioArgs) {
+	        	reloadInventory();
+				clearEquipSlot(responseObject.clear_equip_place);
+	        }
+	    });	       
+	}		
 	
 	
 	dojo.addOnLoad( init );	
@@ -101,6 +115,16 @@ function clearEquipSlot(slot_name) {
 	dojo.byId(slot_name + '-equip-place-image').src = '';
 	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	 
 }	
+
+function reloadInventory() {
+     dojo.xhrGet({
+         url: "[% base %]/character/inventory?character_id=[% character.id %]",
+         load: function(data,ioa){
+              dijit.byId('inventory-panel').setContent(data);
+              createMenus();
+         } 
+     });
+}
 	
 function addStatPoint(char_id, stat) {
 	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {

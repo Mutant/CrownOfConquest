@@ -5,7 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 sub tooltip : Local {
-    my ( $self, $c ) = @_;
+    my ( $self, $c, $return_res ) = @_;
 
     my $item_type_id;
     my $item;
@@ -36,7 +36,7 @@ sub tooltip : Local {
     
     $template = $item_category_file_name if -e $c->config->{root} . '/' . $item_category_file_name;
 
-    $c->forward(
+    my $res = $c->forward(
         'RPG::V::TT',
         [
             {
@@ -45,9 +45,12 @@ sub tooltip : Local {
                     item      => $item,
                     item_type => $item_type,
                 },
+                return_output => $return_res,
             }
         ]
     );
+    
+    return $res;
 }
 
 1;

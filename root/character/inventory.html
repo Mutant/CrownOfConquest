@@ -1,0 +1,48 @@
+[% last_category = '' %]
+[% FOREACH item IN items %]
+	[% IF item.equipped %]
+		[% NEXT %]
+	[% END %]
+
+	[% IF last_category != item.item_type.category.item_category %]
+		[% IF last_category != '' %]</div>[% END %]
+		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h4 style="text-align: center">[% item.item_type.category.item_category %]</h4>
+		[% last_category = item.item_type.category.item_category %]
+	[% END %]
+	
+	[% IF character.is_in_party %]
+	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId('[% item.id %]')">
+		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
+	[% END %]	
+			<span class="dojoDndItem" dndType="[% last_category %]" 
+				id="item-[% item.id %]"
+				
+				>
+				<span id="item-tooltip-[% item.id %]">
+				[% IF item.item_type.image %]
+					<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+				[% ELSE %]
+				[% item.display_name %]
+				[% END %]
+				</span>
+			</span>
+			<div dojoType="dijit.Tooltip"
+           		connectId="item-tooltip-[% item.id %]"
+           		id="item-dijit-[% item.id %]"
+				style="display: none">
+					[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
+            </div>
+            
+    [% IF character.is_in_party %]
+		</span>	
+	</span>
+	[% END %]
+	
+[% END %]
+
+[% IF character.is_in_party %]
+<script>
+var itemMenuData = [[% FOREACH item IN items %]{id: "item-menu-[% item.id %]", equipped: "[% item.slot_equipped_in %]"}[% UNLESS loop.last %],[% END %][% END %]];
+
+</script>
+[% END %]

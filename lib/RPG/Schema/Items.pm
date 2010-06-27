@@ -475,6 +475,15 @@ sub equipped {
 	return $self->equip_place_id ? 1 : 0;	
 }
 
+sub slot_equipped_in {
+	my $self = shift;
+	
+	return unless $self->equipped;
+	
+	return $self->equipped_in->equip_place_name;
+	
+}
+
 sub enchantments_count {
 	my $self = shift;
 	

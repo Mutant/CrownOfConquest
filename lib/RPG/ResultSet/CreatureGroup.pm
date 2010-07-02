@@ -38,7 +38,7 @@ sub create_in_wilderness {
     $cg->land_id( $land->id );
     $cg->update;
 
-    $land->creature_threat( $land->creature_threat + 5 );
+    $land->creature_threat( $land->creature_threat + 1 );
     $land->update;
 
     return $cg;

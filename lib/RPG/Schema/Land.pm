@@ -10,7 +10,7 @@ use RPG::ResultSet::RowsInSectorRange;
 use Statistics::Basic qw(average);
 use RPG::Map;
 
-__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Land');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Land');
@@ -63,6 +63,10 @@ __PACKAGE__->add_columns(
     },
 );
 __PACKAGE__->set_primary_key('land_id');
+
+__PACKAGE__->numeric_columns(
+	creature_threat => {min_value => -100, max_value => 100},
+);
 
 __PACKAGE__->belongs_to( 'terrain', 'RPG::Schema::Terrain', { 'foreign.terrain_id' => 'self.terrain_id' } );
 

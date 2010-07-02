@@ -301,4 +301,20 @@ sub test_has_road_joining_to_only_one_joins : Tests(1) {
     
 }
 
+sub test_creature_threat_restrictions : Tests() {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+	
+	# WHEN
+	$land[0]->creature_threat(-200);
+	$land[1]->creature_threat(101);
+	
+	# THEN
+	is($land[0]->creature_threat, '-100', "Creature threat restricted to no less than -100");
+	is($land[1]->creature_threat, '100', "Creature threat restricted to no more than 100");
+		
+}
+
 1;

@@ -109,6 +109,8 @@ sub _create_orb_in_land {
         my ( $x, $y ) = ( $land->{x}, $land->{y} );
 
         next if $land->{orb} || $land->{town} || $land->{garrison};
+        
+        next if $land->{ctr} < ($level * 50) - 125;
 
         # Search for towns and orbs in this sector to see if it will block us spawning the orb.
         # The two searches are different sizes, so we have to find the largest one
@@ -158,6 +160,8 @@ sub _create_orb_in_land {
         $c->land_grid->set_land_object( 'orb', $x, $y, );
 
         $created = 1;
+        
+        last;
     }
 
     return $created;

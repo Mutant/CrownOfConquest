@@ -59,7 +59,11 @@ sub run {
     while (1) {
         eval { $self->do_new_day( $config, $logger, $dt, @plugins ); };
         if ($@) {
-            $logger->error("Error running new day script: $@");
+        	my $error = $@;
+        	if (ref $error && $error->isa('RPG::Exception')) {
+        		$error = $error->message;	
+        	} 
+            $logger->error("Error running new day script: $error");
             return $@;
         }
         

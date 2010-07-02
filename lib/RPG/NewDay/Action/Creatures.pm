@@ -5,6 +5,7 @@ extends 'RPG::NewDay::Base';
 
 use List::Util qw(shuffle);
 use Data::Dumper;
+use Try::Tiny;
 
 with 'RPG::NewDay::Role::GarrisonCombat';
 
@@ -172,7 +173,19 @@ sub spawn_dungeon_monsters {
                 }
             );
 
-            $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level, $level );
+			try {
+            	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level, $level );
+			}
+			catch {
+				if (ref $_ && $_->isa('RPG::Exception')) {
+					if ($_->type eq 'creature_type_error') {
+						# Couldn't find a creature type.. just skip this group
+						next;	
+					}
+				}
+				
+				die $_;	
+			};
 
             if ( $group_number % 50 == 0 ) {
                 $c->logger->info("Spawned $group_number groups...");
@@ -300,7 +313,14 @@ sub _move_cg {
 
         #warn Dumper $sector;
         # Can't move to a town or sector that already has a creature group
-        if ( !$sector->{town} && !$sector->{creature_group} && ( ( $sector->{ctr} / 10 ) + 1 ) > $cg->level ) {
+        if ( !$sector->{town} && !$sector->{creature_group}) {
+        	
+        	my $ctr_roll = ($cg->level * 5) - Games::Dice::Advanced->roll('1d100');
+        	if ($ctr_roll > $sector->{ctr}) {
+				$cant_move_reason{ctr}++;
+				next;
+        	}
+        	
             my ( $orig_x, $orig_y ) = ( $cg->location->x, $cg->location->y );
 
             my $sector_record = $c->schema->resultset('Land')->find(
@@ -329,7 +349,6 @@ sub _move_cg {
         else {
             $cant_move_reason{town}++, next if $sector->{town};
             $cant_move_reason{cg}++,   next if $sector->{creature_group};
-            $cant_move_reason{ctr}++;
         }
     }
 

@@ -7,6 +7,8 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use Text::Wrap;
 
+use Carp;
+
 sub offer : Local {
     my ( $self, $c ) = @_;
 
@@ -26,6 +28,7 @@ sub offer : Local {
                 params   => {
                     town  => $c->stash->{party_location}->town,
                     quest => $quest,
+                    party_below_min_level => $c->stash->{party}->level < $quest->min_level ? 1 : 0,
                 },
             }
         ]
@@ -34,6 +37,10 @@ sub offer : Local {
 
 sub accept : Local {
     my ( $self, $c ) = @_;
+
+	unless ($c->stash->{party}->allowed_more_quests) {
+		croak "Not allowed any more quests";	
+	}
 
     my $town = $c->stash->{party_location}->town;
 
@@ -44,6 +51,10 @@ sub accept : Local {
             party_id => undef,
         },
     );
+    
+    if ($c->stash->{party}->level < $quest->min_level) {
+    	croak "Too low level to accept quest";	
+    }
 
     $quest->party_id( $c->stash->{party}->id );
     $quest->status('In Progress');

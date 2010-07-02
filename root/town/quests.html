@@ -13,13 +13,24 @@
 	details on what you still have to do.
 [% ELSIF ! allowed_more_quests %]
 	You've reached the maximum number of quests allowed for a party of your level.
-[% ELSE %]	
+[% ELSIF ! quests.0 %]
+    There are no quests currently available in this town
+[% ELSE %] 	
 The following quests are available:
-	<ul>
+	<table class="main" cellspacing=0>
+		<tr>
+			<th>Quest</th><th>Minimum Level</th><th>Reward</th>
+		</tr>
 	[% FOREACH quest IN quests %]
-		<li><a href="[% base %]/quest/offer?quest_id=[% quest.id %]">[% short_description(quest) %]</a></li>
+		<tr style="cursor:pointer;cursor:hand; 
+			[% IF loop.count % 2 == 0 %]background: lightgrey;[% END %]"
+			onClick="document.location='[% base %]/quest/offer?quest_id=[% quest.id %]'">
+			<td>[% short_description(quest) %]</a></td>
+			<td align="center">[% quest.min_level %]</td>
+			<td align="center">[% quest.gold_value %]</td>
+		</tr>
 	[% END %]
-	</ul>
+	</table>
 [% END %]
 <br><br>
 [% INCLUDE town/town_footer.html %]

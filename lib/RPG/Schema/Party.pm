@@ -514,6 +514,21 @@ sub has_overencumbered_character {
 	return $over_encumbered_characters;	
 }
 
+sub allowed_more_quests {
+	my $self = shift;
+	
+    my $party_quests_rs = $self->search_related(
+    	'quests',
+        {
+            status   => 'In Progress',
+        },
+    );
+
+    my $number_of_quests_allowed = RPG::Schema->config->{base_allowed_quests} + ( RPG::Schema->config->{additional_quests_per_level} * $self->level );
+
+    return $party_quests_rs->count >= $number_of_quests_allowed ? 0 : 1;
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

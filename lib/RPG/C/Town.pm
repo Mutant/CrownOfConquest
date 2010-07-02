@@ -262,7 +262,7 @@ sub news : Local {
     $c->forward('/panel/refresh');
 }
 
-sub town_hall : Local {
+sub quests : Local {
     my ( $self, $c ) = @_;
 
     # See if party has a quest for this town
@@ -282,18 +282,7 @@ sub town_hall : Local {
     # Check for quest actions which can be triggered by a visit to the town hall
     my $quest_messages = $c->forward( '/quest/check_action', ['townhall_visit'] );
 
-    my $party_quests_rs = $c->model('DBIC::Quest')->search(
-        {
-            party_id => $c->stash->{party}->id,
-            status   => 'In Progress',
-        },
-    );
-
-    my $number_of_quests_allowed = $c->config->{base_allowed_quests} + ( $c->config->{additional_quests_per_level} * $c->stash->{party}->level );
-    my $allowed_more_quests = 1;
-    if ( $party_quests_rs->count >= $number_of_quests_allowed ) {
-        $allowed_more_quests = 0;
-    }
+	my $allowed_more_quests = $c->stash->{party}->allowed_more_quests;
 
     my @quests;
 
@@ -303,7 +292,6 @@ sub town_hall : Local {
             {
                 town_id        => $c->stash->{party_location}->town->id,
                 party_id       => undef,
-                'me.min_level' => { '<=', $c->stash->{party}->level },
             },
             { prefetch => 'type', },
         );
@@ -313,7 +301,7 @@ sub town_hall : Local {
         'RPG::V::TT',
         [
             {
-                template => 'town/town_hall.html',
+                template => 'town/quests.html',
                 params   => {
                     town                => $c->stash->{party_location}->town,
                     quests              => \@quests,

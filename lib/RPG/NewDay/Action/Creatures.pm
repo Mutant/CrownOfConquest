@@ -316,7 +316,7 @@ sub _move_cg {
         if ( !$sector->{town} && !$sector->{creature_group}) {
         	
         	my $ctr_roll = ($cg->level * 5) - Games::Dice::Advanced->roll('1d100');
-        	if ($ctr_roll > $sector->{ctr}) {
+        	if ($sector->{ctr} < $ctr_roll) {
 				$cant_move_reason{ctr}++;
 				next;
         	}

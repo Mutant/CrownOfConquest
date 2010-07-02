@@ -83,7 +83,7 @@ sub test_create_in_wilderness_simple : Tests(5) {
     ok(scalar @creatures <= 10, "No more than 10 creatures");
     is($creatures[0]->creature_type_id, $self->{creature_type_1}->id, "Creatures created of correct type");
     $land[0]->discard_changes;
-    is($land[0]->creature_threat, 15, "Creature threat increased");
+    is($land[0]->creature_threat, 11, "Creature threat increased");
 
 }
 
@@ -127,7 +127,7 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
     is($types{$creature_type_2->id}, 1, "Type 2 used");
     
     $land[0]->discard_changes;
-    is($land[0]->creature_threat, 15, "Creature threat increased");
+    is($land[0]->creature_threat, 11, "Creature threat increased");
 
 }
 

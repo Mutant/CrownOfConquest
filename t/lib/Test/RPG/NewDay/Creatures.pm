@@ -278,6 +278,9 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
     my $self = shift;
 
     my @land = $self->_create_land();
+    
+    $self->mock_dice();
+    $self->{roll_result} = -1;    
 
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[4]->id, }, );
     my $creature = $self->{schema}->resultset('Creature')->create(
@@ -287,7 +290,7 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
         }
     );
 
-    # Make one land high enough CTR to move
+    # Make one land low enough CTR to move
     $land[5]->creature_threat(20);
     $land[5]->update;
 
@@ -299,17 +302,22 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
 
     $cg->discard_changes;
     is( $cg->land_id, $land[5]->id, "Moved to only sector available" );
+    
+     $self->unmock_dice();
 }
 
 sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
     my $self = shift;
 
     my @land = $self->_create_land();
-
+    
+    $self->mock_dice();
+    $self->{roll_result} = 1;
+    
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[4]->id, }, );
     my $creature = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $self->{creature_type_3}->id,
             creature_group_id => $cg->id,
         }
     );
@@ -322,10 +330,15 @@ sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
 
     $cg->discard_changes;
     is( $cg->land_id, $land[4]->id, "Still in the same square" );
+    
+    $self->unmock_dice();
 }
 
 sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
     my $self = shift;
+
+    $self->mock_dice();
+    $self->{roll_result} = -1; 
 
     my @land = $self->_create_land( 5, 5 );
 
@@ -349,10 +362,15 @@ sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
 
     $cg->discard_changes;
     is( $cg->land_id, $land[0]->id, "Hopped to available sqaure" );
+    
+    $self->unmock_dice();
 }
 
 sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
     my $self = shift;
+
+    $self->mock_dice();
+    $self->{roll_result} = -1; 
 
     my @land = $self->_create_land();
 
@@ -390,6 +408,8 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 
     $cg2->discard_changes;
     is( $cg2->land_id, $land[4]->id, "Still in the same sqaure" );
+    
+    $self->unmock_dice;
 }
 
 sub test_move_cg_town_blocks_some_squares : Tests(2) {
@@ -416,6 +436,9 @@ sub test_move_cg_town_blocks_some_squares : Tests(2) {
 
 sub test_move_monsters : Tests(4) {
     my $self = shift;
+    
+    $self->mock_dice();
+    $self->{roll_result} = -1; 
 
     my @land = $self->_create_land( 4, 4 );
 
@@ -454,6 +477,8 @@ sub test_move_monsters : Tests(4) {
     is( $cg1->location->y, $land[5]->y,  "First cg moved to y where second was" );
     is( $cg2->location->x, $land[15]->x, "Second cg moved to x available square" );
     is( $cg2->location->y, $land[15]->y, "Second cg moved to y available square" );
+    
+    $self->unmock_dice;
 
 }
 

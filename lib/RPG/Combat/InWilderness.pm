@@ -17,7 +17,7 @@ sub get_sector_to_flee_to {
     my $self = shift;
     my $fleeing_group = shift;
     
-    my $exclude_towns_and_cgs = $fleeing_group->group_type eq 'creature' ? 1 : 0;
+    my $exclude_towns_and_cgs = $fleeing_group->group_type eq 'creature_group' ? 1 : 0;
 
     my @sectors_to_flee_to =
         $self->schema->resultset('Land')->search_for_adjacent_sectors( $self->location->x, $self->location->y, 3, 10, $exclude_towns_and_cgs, );

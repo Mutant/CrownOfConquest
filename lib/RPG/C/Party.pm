@@ -9,6 +9,7 @@ use feature 'switch';
 use Data::Dumper;
 use DateTime;
 use JSON;
+use Text::Wrap;
 
 use Carp;
 
@@ -30,6 +31,7 @@ sub main : Local {
 				params   => {
 					party  => $c->stash->{party},
 					panels => $panels,
+					created_message => $c->stash->{created_message} || '',
 				},
 			}
 		]
@@ -527,9 +529,9 @@ sub scout : Local {
 }
 
 sub new_party_message : Local {
-	my ( $self, $c ) = @_;
+	my ( $self, $c ) = @_;	
 
-	$c->forward(
+	$c->stash->{created_message} = $c->forward(
 		'RPG::V::TT',
 		[
 			{
@@ -538,9 +540,12 @@ sub new_party_message : Local {
 					party => $c->stash->{party},
 					town  => $c->stash->{party}->location->town,
 				},
+				return_output => 1,
 			}
 		]
 	);
+		
+	$c->forward('/party/main');
 }
 
 sub disband : Local {

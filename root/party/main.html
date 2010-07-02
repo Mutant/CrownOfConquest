@@ -351,6 +351,21 @@ function unblockDoor(action) {
 
 </script>
 
+[% IF created_message %]
+<script>
+	function displayCreatedMessage() { dijit.byId('created-message').show() }
+	dojo.addOnLoad(displayCreatedMessage);
+</script>
+
+<div dojoType="dijit.Dialog" id="created-message" style="display: none" title="Welcome To Kingdoms">
+    [% created_message %]
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+	</div>
+</div>
+[% END %]
+
+
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
     <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>
     <input id="creature-group-id" name="creature_group_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">

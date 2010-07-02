@@ -84,9 +84,6 @@ sub accept : Local {
 	            }
 	        ]
 	    );
-	
-		$Text::Wrap::columns = 80;
-		$message = Text::Wrap::wrap('', '<br>', $message);	    
     };
     
     $c->res->body($message);

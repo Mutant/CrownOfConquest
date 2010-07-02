@@ -55,8 +55,10 @@ sub login : Local {
         }
     }
     else {
-    	$c->log->debug("Saving redirect url: " . $c->req->uri->path);
-        $c->session->{login_url} = $c->req->uri->path;	
+    	unless ($c->req->uri->path =~ /favicon/) { 
+    		$c->log->debug("Saving redirect url: " . $c->req->uri->path);
+        	$c->session->{login_url} = $c->req->uri->path;
+    	}	
     }
 
     $c->forward(
@@ -267,7 +269,7 @@ sub reactivate : Local {
     my ( $self, $c ) = @_;
 
     if ( $c->req->param('reform_party') ) {
-        my $old_party = $c->model('DBIC::Party')->find(
+        my $party = $c->model('DBIC::Party')->find(
             { player_id => $c->session->{player}->id, },
             {
                 order_by => 'defunct desc',
@@ -275,10 +277,18 @@ sub reactivate : Local {
             },
         );
 
-        croak "Old party not found\n" unless $old_party;
-
-        $old_party->defunct(undef);
-        $old_party->update;
+		unless ($party) {
+        	$c->log->warn("Old party not found... generating a new one");
+        	$party = $c->model('DBIC::Party')->create(
+        		{
+        			player_id => $c->session->{player}->id,,
+				},
+        	);
+		}
+		else {
+        	$party->defunct(undef);
+        	$party->update;
+		}
 
         $c->res->redirect( $c->config->{url_root} );
 

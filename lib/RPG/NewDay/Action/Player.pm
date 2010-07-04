@@ -24,6 +24,7 @@ sub run {
         foreach my $party (@parties) {
             next if $party->defunct;
             $party->defunct( DateTime->now() );
+            $party->in_combat_with( undef );
             $party->update;
         }
     }

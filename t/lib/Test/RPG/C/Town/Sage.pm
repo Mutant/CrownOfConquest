@@ -55,8 +55,6 @@ sub test_calculate_costs_has_discount : Tests(5) {
     is($costs->{location_cost}, 140, "Location cost set correctly");
     is($costs->{item_find_cost}, 35, "Item Find cost set correctly");
     is($costs->{find_dungeon_cost_per_level}, 105, "Dungeon find cost set correctly");
-    
-    
 }
 
 1;

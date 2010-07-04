@@ -304,11 +304,13 @@ sub find_dungeon : Local {
         my $dungeon_to_find;
         foreach my $dungeon ( shuffle @dungeons ) {
             my $mapped_sector = $c->model('DBIC::Mapped_Sector')->find(
-                party_id => $party->id,
-                land_id  => $dungeon->land_id,
+            	{
+	                party_id => $party->id,
+	                land_id  => $dungeon->land_id,
+            	}
             );
 
-            unless ($mapped_sector->known_dungeon) {
+            if ($mapped_sector && ! $mapped_sector->known_dungeon) {
                 $dungeon_to_find = $dungeon;
                 last;
             }

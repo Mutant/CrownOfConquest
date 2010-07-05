@@ -109,6 +109,7 @@ sub initiate_battles {
     		'me.defunct' => undef,
     		'party.defunct' => undef,
             'garrison.garrison_id' => {'!=', undef},
+            'me.party_id' => {'!=',\'party.party_id'},
     	},
     	{
     		prefetch => [ { 'location' => {'garrison' => 'party' } } ],

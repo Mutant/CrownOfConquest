@@ -15,6 +15,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Party_Battle;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Garrison;
 
 sub startup : Tests(startup => 1) {
     use_ok 'RPG::Combat::PartyWildernessBattle';
@@ -208,5 +209,101 @@ sub test_offline_party_flee : Tests(7) {
 
     ok( $battle->combat_log->xp_awarded > 0, "Xp awarded" );
 }
+
+sub test_characters_in_garrison_not_included_in_defenders : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id );
+    
+    my $char1 = ( $party1->characters )[0];
+    $char1->garrison_id($garrison->id);
+    $char1->update;    
+
+    my $char2 = ( $party1->characters )[1];
+
+    my $char3 = ( $party2->characters )[0];
+    $char3->last_combat_action('Attack');
+    $char3->update;
+
+    my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
+        $self->{schema},
+        party_1 => $party1,
+        party_2 => $party2,
+    );
+
+    my $battle = RPG::Combat::PartyWildernessBattle->new(
+        schema        => $self->{schema},
+        party_1       => $party1,
+        party_2       => $party2,
+        log           => $self->{mock_logger},
+        battle_record => $battle_record,
+    );
+
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'attack', 1 );
+
+    # WHEN
+    my $action_result = $battle->character_action($char3);
+
+    # THEN
+	isa_ok($action_result, 'RPG::Combat::ActionResult', "Action result object returned");
+	is($action_result->attacker->id, $char3->id, "Correct attacker");
+	is($action_result->defender->id, $char2->id, "Correct defender");
+}
+
+sub test_characters_in_garrison_not_included_in_attackers : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );	
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id );
+    
+    my $char1 = ( $party1->characters )[0];
+    $char1->garrison_id($garrison->id);
+    $char1->last_combat_action('Attack');
+    $char1->update;    
+
+    my $char2 = ( $party1->characters )[1];
+    $char2->last_combat_action('Defend');
+    $char2->update;
+
+    my $char3 = ( $party2->characters )[0];
+    $char3->last_combat_action('Attack');
+    $char3->update;
+
+    my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
+        $self->{schema},
+        party_1 => $party1,
+        party_2 => $party2,
+    );
+
+    my $battle = RPG::Combat::PartyWildernessBattle->new(
+        schema        => $self->{schema},
+        party_1       => $party1,
+        party_2       => $party2,
+        log           => $self->{mock_logger},
+        battle_record => $battle_record,
+        config        => $self->{config},
+    );
+
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_true('process_effects');
+    $battle->set_false('stalemate_check');
+
+    # WHEN
+    my $result = $battle->execute_round;
+
+    # THEN
+    my @combat_messages = @{ $result->{messages} };
+	is(scalar @combat_messages, 1, "One combat message");
+	is($combat_messages[0]->attacker->id, $char3->id, "Correct attacker");
+	is($combat_messages[0]->defender->id, $char2->id, "Correct defender");
+}
+
 
 1;

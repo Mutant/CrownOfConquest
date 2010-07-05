@@ -16,7 +16,7 @@ has 'initiated_by_opp_number' => ( is => 'ro', isa  => 'Maybe[Int]',            
 sub combatants {
 	my $self = shift;
 
-	return ( $self->character_group_1->characters, $self->character_group_2->characters );
+	return ( $self->character_group_1->members, $self->character_group_2->members );
 }
 
 sub opponents {

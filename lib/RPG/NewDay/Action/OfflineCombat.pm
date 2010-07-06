@@ -35,6 +35,7 @@ sub complete_battles {
             'in_combat_with.party_id' => { '!=', undef },
             'in_combat_with.combat_type' => 'creature_group',
             'in_combat_with.defunct'  => undef,
+            'me.land_id' => { '!=', undef },
         },
         { prefetch => [ { 'creatures' => 'type' }, 'in_combat_with' ], },
     );

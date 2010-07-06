@@ -15,6 +15,7 @@ use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Garrison;
+use Test::RPG::Builder::Dungeon_Grid;
 
 use DateTime;
 
@@ -45,9 +46,11 @@ sub setup : Test(setup) {
 sub test_complete_battles : Tests(5) {
     my $self = shift;  
     
-    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema});    
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, land_id => $land[0]->id);    
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, 
     	in_combat_with => $cg->id, last_action => DateTime->now->subtract(minutes=>15), combat_type => 'creature_group',
+    	land_id => $land[0]->id
     );
 
     my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
@@ -69,6 +72,35 @@ sub test_complete_battles : Tests(5) {
     is($args->[1]->id, $party->id, "Correct party passed");
     isa_ok($args->[2], 'RPG::Schema::CreatureGroup', "CG passed to offline battle");
     is($args->[2]->id, $cg->id, "Correct cg passed");  
+    
+}
+
+sub test_complete_battles_doesnt_trigger_in_dungeons : Tests(1) {
+    my $self = shift;  
+    
+    # GIVEN
+    my $dungeon_sector = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($self->{schema});
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $dungeon_sector->id);    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, 
+    	in_combat_with => $cg->id, last_action => DateTime->now->subtract(minutes=>15), combat_type => 'creature_group',
+    	dungeon_grid_id => $dungeon_sector->id,
+    );
+
+    my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
+    
+    $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
+    $offline_combat_action->set_always('execute_offline_battle');
+    
+    $self->{config}{online_threshold} = 10;
+    $self->{config}{max_offline_combat_count} = 3;
+    
+    # WHEN
+    $offline_combat_action->complete_battles();
+    
+    # THEN
+    my ($method, $args) = $offline_combat_action->next_call();
+    
+    is($method, undef, "Combat not executed, as cg in dungeon"); 
     
 }
 

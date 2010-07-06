@@ -66,7 +66,7 @@ sub new_day {
 
 		my $party = $char->party;
 
-		return if $party->turns >= $context->config->{maximum_turns};
+		return if ! $party || $party->turns >= $context->config->{maximum_turns};
 
 		$party->increase_turns( $self->variable('Extra Turns') + $party->turns );
 		$party->update;

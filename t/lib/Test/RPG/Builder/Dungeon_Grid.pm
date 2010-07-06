@@ -12,8 +12,8 @@ sub build_dungeon_grid {
 
     my $sector = $schema->resultset('Dungeon_Grid')->create(
         {
-            x => $params{x},
-            y => $params{y},
+            x => $params{x} || 1,
+            y => $params{y} || 1,
             dungeon_room_id => $params{dungeon_room_id} || 1,
         }
     );

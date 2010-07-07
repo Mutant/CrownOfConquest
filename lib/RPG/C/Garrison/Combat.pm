@@ -19,11 +19,9 @@ sub attack : Local {
 
 	if ( $garrison->in_combat ) {
 		$c->stash->{error} = "The garrison is already in combat";
-		$c->detach('/party/main');
 	}
 	elsif ( $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
 		$c->stash->{error} = "The garrison is too weak to attack";
-		$c->detach('/party/main');
 	}
 	else {
 		$c->stash->{party_initiated} = 1;

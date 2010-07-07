@@ -71,6 +71,14 @@ sub execute_round {
 	# Process magical effects
 	$self->process_effects;
 
+	if ($self->result->{combat_complete}) {	
+		$self->combat_log->increment_rounds;
+
+		$self->record_messages;
+		
+		return $self->result;
+	}
+
 	my @combatants = $self->combatants;
 
 	# Get list of combatants, modified for changes in attack frequency, and randomised in order
@@ -107,10 +115,7 @@ sub execute_round {
 				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
 			}
 
-			if ( my $losers = $self->check_for_end_of_combat($combatant) ) {
-				$self->result->{losers} = $losers;
-				$self->finish($losers);
-				$self->end_of_combat_cleanup;
+			if ( my $losers = $self->check_for_end_of_combat ) {
 				last;
 			}
 		}
@@ -149,25 +154,30 @@ sub stalemate_check {
 }
 
 sub check_for_end_of_combat {
-	my $self           = shift;
-	my $last_combatant = shift;
+	my $self = shift;
 
-	my $opponents = $self->opponents_of($last_combatant);
-	if ( $opponents->number_alive == 0 ) {
-		my $oppponent1 = ( $self->opponents )[0];
-		my $opp = $opponents->id == $oppponent1->id && $opponents->isa( $oppponent1->meta->name ) ? 'opp2' : 'opp1';
-		$self->combat_log->outcome( $opp . "_won" );
-		$self->combat_log->encounter_ended( DateTime->now() );
-		$self->result->{combat_complete} = 1;
+	foreach my $opponents ( $self->opponents ) {
+		if ( $opponents->number_alive <= 0 ) {
+			my $opp = 'opp' . ($self->opponent_number_of_group($opponents) == 1 ? 2 : 1);
 
-		if ( $opponents->group_type eq 'party' ) {
-			$opponents->defunct( DateTime->now() );
-			$opponents->update;
+			$self->combat_log->outcome( $opp . "_won" );
+			$self->combat_log->encounter_ended( DateTime->now() );
+
+			$self->result->{combat_complete} = 1;
+
+			# TODO: should be in a role?
+			if ( $opponents->group_type eq 'party' ) {
+				$opponents->defunct( DateTime->now() );
+				$opponents->update;
+			}
+			
+			$self->result->{losers} = $opponents;
+			$self->finish($opponents);
+			$self->end_of_combat_cleanup;
+
+			return $opponents;
 		}
-
-		return $opponents;
 	}
-
 }
 
 # TODO: needs a better name
@@ -183,8 +193,8 @@ sub _process_effects {
 		else {
 			$being = $self->combatants_by_id->{creature}{ $effect->creature_id };
 		}
-		
-		if ( ! $being->is_dead && $effect->effect->modified_stat eq 'poison' ) {
+
+		if ( !$being->is_dead && $effect->effect->modified_stat eq 'poison' ) {
 			my $damage = Games::Dice::Advanced->roll( '1d' . $effect->effect->modifier );
 
 			$being->hit($damage);
@@ -196,7 +206,11 @@ sub _process_effects {
 			);
 
 			push @{ $self->result->{messages} }, $result;
-		}		
+			
+			if ($self->check_for_end_of_combat) {
+				return;
+			}
+		}
 
 		$effect->effect->time_left( $effect->effect->time_left - 1 );
 
@@ -542,13 +556,13 @@ sub attack {
 	my $defence_bonus = $defending ? $self->config->{defend_bonus} : 0;
 
 	my $af = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{af};
-	
-	if ($attacker->is_character && ! $defender->is_character) {
-		if (my $bonuses = $self->character_weapons->{$attacker->id}{creature_bonus}) {
-			$af += $bonuses->{$defender->type->category->id} || 0;	
+
+	if ( $attacker->is_character && !$defender->is_character ) {
+		if ( my $bonuses = $self->character_weapons->{ $attacker->id }{creature_bonus} ) {
+			$af += $bonuses->{ $defender->type->category->id } || 0;
 		}
 	}
-	
+
 	my $df = $self->combat_factors->{ $defender->is_character ? 'character' : 'creature' }{ $defender->id }{df};
 
 	my $aq = $af - $a_roll;
@@ -902,15 +916,15 @@ sub _build_character_weapons {
 			$character_weapons{ $combatant->id }{ammunition}           = $combatant->ammunition_for_item($weapon);
 			$character_weapons{ $combatant->id }{magical_damage_type}  = $weapon->variable('Magical Damage Type');
 			$character_weapons{ $combatant->id }{magical_damage_level} = $weapon->variable('Magical Damage Level');
-			
+
 			my @enchantments = $weapon->item_enchantments;
 			my %creature_bonus;
 			foreach my $enchantment (@enchantments) {
-				if ($enchantment->enchantment->enchantment_name eq 'bonus_against_creature_category') {
-					$creature_bonus{$enchantment->variable('Creature Category')} = $enchantment->variable('Bonus');
+				if ( $enchantment->enchantment->enchantment_name eq 'bonus_against_creature_category' ) {
+					$creature_bonus{ $enchantment->variable('Creature Category') } = $enchantment->variable('Bonus');
 				}
-			} 
-			
+			}
+
 			$character_weapons{ $combatant->id }{creature_bonus} = \%creature_bonus;
 
 		}

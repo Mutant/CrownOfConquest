@@ -10,10 +10,11 @@ sub build_effect {
 
     my $effect = $schema->resultset('Effect')->create(
         {
-            effect_name => 'foo',
+            effect_name => $params{effect_name} || 'foo',
             time_left   => 1,
             modifier    => 1,
             combat      => 1,
+            modified_stat => $params{modified_stat} || 'stat',
         }
     );
 
@@ -24,6 +25,15 @@ sub build_effect {
                 effect_id   => $effect->id,
             }
         );
+    }
+    
+    if ( $params{character_id} ) {
+        my $creature_effect = $schema->resultset('Character_Effect')->create(
+            {
+                character_id => $params{character_id},
+                effect_id   => $effect->id,
+            }
+        );    	
     }
     
     return $effect;

@@ -378,10 +378,12 @@ sub test_check_for_end_of_combat_cg_defeated : Tests(5) {
     my $result = {};
         
 	my $battle = Test::MockObject->new();
-	$battle->set_always('opponents_of', $cg);
+	$battle->set_always('opponent_number_of_group', 2);
 	$battle->set_list('opponents', $party, $cg);
 	$battle->set_always('combat_log', $combat_log);
 	$battle->mock('result', sub { $result } );	
+	$battle->set_always('finish');
+	$battle->set_always('end_of_combat_cleanup');	
 	
 	# WHEN
 	RPG::Combat::Battle::check_for_end_of_combat($battle, $combatant);
@@ -403,7 +405,7 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0 );
-    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, hit_points => 2 );
     my $combatant = Test::MockObject->new();
     
     my $combat_log = Test::MockObject->new();
@@ -413,10 +415,12 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     my $result = {};
         
 	my $battle = Test::MockObject->new();
-	$battle->set_always('opponents_of', $party);
+	$battle->set_always('opponent_number_of_group', 1);
 	$battle->set_list('opponents', $party, $cg);
 	$battle->set_always('combat_log', $combat_log);
-	$battle->mock('result', sub { $result } );	
+	$battle->mock('result', sub { $result } );
+	$battle->set_always('finish');
+	$battle->set_always('end_of_combat_cleanup');
 	
 	# WHEN
 	RPG::Combat::Battle::check_for_end_of_combat($battle, $combatant);

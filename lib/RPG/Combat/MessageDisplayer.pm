@@ -80,6 +80,9 @@ sub display {
             	when ('party') {
                 	push @messages, "You've wiped out the party\n";
             	}
+            	when ('garrison') {
+            		push @messages, "You've wiped out the garrison\n";
+            	}
             }
         }
         else {
@@ -88,7 +91,7 @@ sub display {
             		push @messages, "Your party has been wiped out!\n";
         		}
         		when ('garrison') {
-        			push @messages, "The garrison has been wiped out!\n";
+        			push @messages, "Your garrison has been wiped out!\n";
         		}
         	}
         }

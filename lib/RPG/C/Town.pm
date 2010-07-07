@@ -119,8 +119,11 @@ sub heal_party : Local {
     my $cost_to_heal = $c->forward( 'calculate_heal_cost', [$town] );
 
     my $amount_to_spend = defined $c->req->param('gold') ? $c->req->param('gold') : $cost_to_heal;
-
-    my $percent_to_heal = $amount_to_spend / $cost_to_heal * 100;
+	
+    my $percent_to_heal = 0;
+    unless ($cost_to_heal == 0) {
+    	$percent_to_heal = $amount_to_spend / $cost_to_heal * 100;
+    }
 
     if ( $amount_to_spend <= $c->stash->{party}->gold ) {
         $c->stash->{party}->gold( $c->stash->{party}->gold - $amount_to_spend );

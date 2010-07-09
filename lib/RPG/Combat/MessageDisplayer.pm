@@ -107,6 +107,7 @@ sub _xp_gain {
 	my $group = shift;
 	my $awarded_xp = shift;
 	
+	# TODO: xp_gain should probably be called in Battle.pm
 	my @details = $group->xp_gain($awarded_xp);
     my @messages;
 

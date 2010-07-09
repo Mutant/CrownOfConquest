@@ -54,7 +54,10 @@ sub opponent_number_of_group {
 sub execute_round {
 	my $self = shift;
 
-	if ( $self->stalemate_check || $self->check_for_flee ) {
+	# Check for stalemates, fleeing or no one alive in one of the groups
+	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
+	my $dead_group = $self->check_for_end_of_combat;
+	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
 
 		# One opponent has fled, end of the battle
 		$self->end_of_combat_cleanup;
@@ -137,7 +140,7 @@ sub stalemate_check {
 
 	return 0 if $self->is_online;
 
-	return 0 if $self->combat_log->rounds == 0 || $self->combat_log->rounds % 10 != 0;
+	return 0 if ! defined $self->combat_log->rounds || $self->combat_log->rounds == 0 || $self->combat_log->rounds % 10 != 0;
 
 	if ( $self->session->{stalemate_check} != 0 ) {
 
@@ -327,7 +330,7 @@ sub character_action {
 			unless ($opponent) {
 
 				# No living opponent found, something weird has happened
-				croak "Couldn't find an opponent to attack!\n";
+				confess "Couldn't find an opponent to attack!\n";
 			}
 		}
 		

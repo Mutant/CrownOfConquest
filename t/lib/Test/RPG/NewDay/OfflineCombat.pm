@@ -233,4 +233,43 @@ sub test_initiate_battles_garrison_vs_own_party : Tests(1) {
     is($method, undef, "Garrison battle not executed, as garrison belongs to party");
 }
 
+sub test_initiate_battles_against_cg_with_no_living_creatures : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $land = $land[0];
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $land->id, 
+    	last_action => DateTime->now->subtract(minutes=>15), character_count => 2);
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, land_id => $land->id, creature_hit_points_current => 0);
+    
+    my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
+    
+    $self->{config}{online_threshold} = 10;
+    $self->{config}{offline_combat_chance} = 35;
+    $self->{config}{max_offline_combat_count} = 3;
+    
+    $self->mock_dice;
+    
+    $self->{roll_result} = 35;
+    
+    # WHEN
+    $offline_combat_action->initiate_battles();
+    
+    # THEN
+    my $combat_log = $self->{schema}->resultset('Combat_Log')->find(
+    	{
+    		opponent_1_id => $party->id,
+    		opponent_1_type => 'party',
+    		opponent_2_id => $cg->id,
+    		opponent_2_type => 'creature_group',
+    	}
+    );
+    is(defined $combat_log, 1, "Combat log was generated");
+	is($combat_log->outcome, 'opp1_won', "Party won the combat");
+	is($combat_log->rounds, 1, "Only round round, as all cgs were already dead");
+    
+    $self->unmock_dice;
+}
+
 1;

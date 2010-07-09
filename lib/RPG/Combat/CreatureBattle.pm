@@ -11,7 +11,7 @@ use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
 
-requires qw/creature_flee creatures_lost/;
+requires qw/creature_flee creatures_lost deduct_turns/;
 
 has 'party'               => ( is => 'rw', isa => 'RPG::Schema::Party',         required => 1 );
 has 'creatures_can_flee'  => ( is => 'ro', isa => 'Bool',                       default  => 1 );
@@ -28,8 +28,7 @@ sub character_group {
 after 'execute_round' => sub {
     my $self = shift;
 
-    $self->party->turns( $self->party->turns - 1 );
-    $self->party->update;
+	$self->deduct_turns($self->party);
 
     $self->result->{creature_battle} = 1;
 };

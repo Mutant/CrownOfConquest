@@ -9,6 +9,8 @@ use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
 
+requires 'deduct_turns';
+
 has 'character_group_1'       => ( is => 'rw', required => 1 );
 has 'character_group_2'       => ( is => 'rw', required => 1 );
 has 'initiated_by_opp_number' => ( is => 'ro', isa  => 'Maybe[Int]',                        default  => 0 );
@@ -57,8 +59,7 @@ after 'execute_round' => sub {
 	foreach my $party ( $self->opponents ) {
 		next unless $party->is_online;    # Only online parties use up turns
 
-		$party->turns( $party->turns - 1 );
-		$party->update;
+		$self->deduct_turns($party);
 	}
 };
 

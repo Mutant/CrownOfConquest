@@ -1,5 +1,7 @@
 package RPG::Combat::PartyBattle;
 
+# Party vs Party battle (bad name?)
+
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 

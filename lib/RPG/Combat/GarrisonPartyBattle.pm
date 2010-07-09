@@ -16,6 +16,7 @@ has 'party_flee_attempt'      => ( is => 'ro', isa => 'Bool',       default => 0
 has 'initiated_by_opp_number' => ( is => 'ro', isa => 'Maybe[Int]', default => 0 );
 
 with qw/
+	RPG::Combat::HasParty
 	RPG::Combat::CharactersVsCharacters
 	RPG::Combat::Battle
 	RPG::Combat::InWilderness

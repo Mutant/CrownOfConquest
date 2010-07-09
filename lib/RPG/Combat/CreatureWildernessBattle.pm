@@ -6,6 +6,7 @@ with qw/
     RPG::Combat::Battle
     RPG::Combat::CreatureBattle 
     RPG::Combat::InWilderness
+	RPG::Combat::HasParty
 /;
 
 use Carp qw(cluck);

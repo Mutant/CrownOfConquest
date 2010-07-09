@@ -297,8 +297,6 @@ sub get_combatant_list {
 sub character_action {
 	my ( $self, $character ) = @_;
 
-	my ( $opponent, $damage );
-
 	my $opp_group = $self->opponents_of($character);
 
 	my %opponents = map { $_->id => $_ } $opp_group->members;
@@ -308,11 +306,13 @@ sub character_action {
 
 	if ( $character->last_combat_action eq 'Attack' ) {
 
-		# If they've selected a target, make sure it's still alive
-		my $targetted_opponent = $character->last_combat_param1;
+		my ( $opponent, $damage );
 
-		if ( $targetted_opponent && $opponents{$targetted_opponent} && !$opponents{$targetted_opponent}->is_dead ) {
-			$opponent = $opponents{$targetted_opponent};
+		# If they've selected a target, or have one saved from last round make sure it's still alive
+		my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
+
+		if ( $targetted_opponent_id && $opponents{$targetted_opponent_id} && !$opponents{$targetted_opponent_id}->is_dead ) {
+			$opponent = $opponents{$targetted_opponent_id};
 		}
 
 		# If we don't have a target, choose one randomly
@@ -330,6 +330,10 @@ sub character_action {
 				croak "Couldn't find an opponent to attack!\n";
 			}
 		}
+		
+		# Save opponent in session for next round so they keep attacking the same guy
+		#  (Unless they die, or they target someone else)
+		$self->session->{previous_opponents}{$character->id} = $opponent->id;
 
 		$damage = $self->attack( $character, $opponent );
 

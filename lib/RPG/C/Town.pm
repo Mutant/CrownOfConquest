@@ -81,7 +81,7 @@ sub healer : Local {
 
     my $town = $c->stash->{party_location}->town;
 
-    my @characters = $c->stash->{party}->characters;
+    my @characters = $c->stash->{party}->characters_in_party;
 
     my @dead_chars = grep { $_->is_dead } @characters;
 
@@ -114,7 +114,7 @@ sub heal_party : Local {
 
     my $town = $c->stash->{party_location}->town;
 
-    my @characters = $c->stash->{party}->characters;
+    my @characters = $c->stash->{party}->characters_in_party;
 
     my $cost_to_heal = $c->forward( 'calculate_heal_cost', [$town] );
 
@@ -164,7 +164,7 @@ sub resurrect : Local {
 
     my $town = $c->stash->{party_location}->town;
 
-    my @characters = $c->stash->{party}->characters;
+    my @characters = $c->stash->{party}->characters_in_party;
 
     my @dead_chars = grep { $_->is_dead } @characters;
 
@@ -216,7 +216,7 @@ sub calculate_heal_cost : Private {
 
     my $cost_to_heal = 0;
 
-    foreach my $character ( $c->stash->{party}->characters ) {
+    foreach my $character ( $c->stash->{party}->characters_in_party ) {
         next if $character->is_dead;
 
         $cost_to_heal += $per_hp_heal_cost * ( $character->max_hit_points - $character->hit_points );

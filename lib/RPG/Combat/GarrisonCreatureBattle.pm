@@ -70,12 +70,18 @@ sub finish {
     # Delete garrison if they lost
     if ($losers->group_type eq 'garrison') {
     	$losers->delete;
+
+	    $self->location->creature_threat( $self->location->creature_threat + 3 );
+	    $self->location->update;
     }
     else {
     	$self->creatures_lost;
     	
     	$self->garrison->gold( ($self->garrison->gold || 0) + $self->result->{gold} );
     	$self->garrison->update;
+    	
+	    $self->location->creature_threat( $self->location->creature_threat - 3 );
+	    $self->location->update;
     }
 }
 

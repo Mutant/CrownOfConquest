@@ -36,6 +36,7 @@ sub create : Local {
             params => {
             	flee_threshold => 70, # default
             	party => $c->stash->{party},
+            	turn_cost => $c->config->{garrison_creation_turn_cost},
             },
         }]
     );			
@@ -47,6 +48,11 @@ sub add : Local {
 	if ( $c->stash->{party}->level < $c->config->{minimum_garrison_level} ) {
 		$c->stash->{error} = "You can't create a garrison - your party level is too low";
 		$c->detach('create');
+	}
+	
+	if ( $c->stash->{party}->turns < $c->config->{garrison_creation_turn_cost} ) {
+		$c->stash->{error} = "You need at least " . $c->config->{garrison_creation_turn_cost} . " to create a garrison";
+		$c->detach('create');		
 	}
 	
 	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
@@ -103,6 +109,8 @@ sub add : Local {
 	);
 	
 	$c->stash->{party}->adjust_order;
+	$c->stash->{party}->turns($c->stash->{party}->turns - $c->config->{garrison_creation_turn_cost});
+	$c->stash->{party}->update;
 	
 	$c->forward('add_to_town_news', ['create']);
 	

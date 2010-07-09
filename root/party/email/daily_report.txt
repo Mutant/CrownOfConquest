@@ -14,8 +14,13 @@ Location: [% party.location.x %], [% party.location.y %]
 <h3>Battles</h3>
 
 [% MACRO battle_result(battle, party_num, group_num) BLOCK %]
+	[% IF battle.outcome == 'opp' _ party_num _ '_won' || battle.outcome == 'opp' _ opp_num _ '_fled' %]
+		[% xp = battle.xp_awarded %]
+	[% END %]
+	<td>
 	[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
 		Won
+		[% gold = battle.gold_found %]
 	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
 		Lost
 	[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
@@ -23,6 +28,13 @@ Location: [% party.location.x %], [% party.location.y %]
 	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
 		They Fled
 	[% END %]
+	</td>
+	<td align="center">
+		[% xp %]
+	</td>
+	<td align="center">
+		[% gold %]
+	</td>
 [% END %]
 
 [% IF offline_combat_count == 0 %]
@@ -32,6 +44,8 @@ Location: [% party.location.x %], [% party.location.y %]
 	<tr>
 		<th>Opponent</th>
 		<th>Outcome</th>
+		<th>XP Awarded</th>
+		<th>Gold Found</th>
 	</tr>
 	[% FOREACH battle IN combat_logs %]
 	<tr>
@@ -41,9 +55,7 @@ Location: [% party.location.x %], [% party.location.y %]
 		
 			[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
 		</td>
-		<td>
 			[% battle_result(battle, party_num, opp_num) %]
-		</td>
 	</tr>
 	[% END %]
 </table>
@@ -88,6 +100,8 @@ You don't current have any active quests.
 				<tr>
 					<th>Opponent</th>
 					<th>Outcome</th>
+					<th>XP Awarded</th>
+					<th>Gold Found</th>
 				</tr>
 				[% FOREACH battle IN garrison_log.combat_logs %]
 				<tr>
@@ -97,12 +111,11 @@ You don't current have any active quests.
 					
 						[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
 					</td>
-					<td>
-						[% battle_result(battle, garrison_num, opp_num) %]
-					</td>
+   					[% battle_result(battle, garrison_num, opp_num) %]
 				</tr>
 				[% END %]
 			</table>
+			<br>
 		[% ELSE %]
 			No recent combat.<br>
 		[% END %]
@@ -111,3 +124,4 @@ You don't current have any active quests.
 <br><br>
 Note, you can disable this email by logging into Kingdoms, clicking on "Party", going to the "Options" tab, and un-checking the 
 "Send a Daily Report" option.  
+

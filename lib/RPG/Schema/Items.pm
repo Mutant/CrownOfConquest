@@ -434,7 +434,7 @@ sub repair_cost {
     my $party;
     $party = $character->party if $character;
         
-    if ($party && $town->discount_type eq 'blacksmith' && $party->prestige_for_town($town) >= $town->discount_threshold ) {
+    if ($party && $town->discount_type && $town->discount_type eq 'blacksmith' && $party->prestige_for_town($town) >= $town->discount_threshold ) {
         $cost = round ($cost * ( 100 - $town->discount_value) / 100 );   
     }
     

@@ -73,6 +73,7 @@ sub category_tab : Local {
     my @items = $c->model('DBIC::Items')->search(
         {
             'belongs_to_character.party_id' => $c->stash->{party}->id,
+            'belongs_to_character.garrison_id' => undef,
             'item_type.item_category_id'    => $c->req->param('category_id'),
         },
         {
@@ -111,8 +112,13 @@ sub item_valid_check : Private {
 
     my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => [ 'belongs_to_character', 'item_type' ] } );
 
-    if ( $item->belongs_to_character->party_id != $c->stash->{party}->id ) {
+	my $character = $item->belongs_to_character;
+    if ( $character->party_id != $c->stash->{party}->id ) {
         croak "Attempting to upgrade weapon from different party\n";
+    }
+    
+    if ($character->garrison_id) {
+    	croak "Can't upgrade weapons from garrison chars";	
     }
 
     return $item;

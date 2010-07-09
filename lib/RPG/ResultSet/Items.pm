@@ -20,6 +20,7 @@ sub party_items_requiring_repair {
             'item_variables.item_variable_value' => \'< item_variables.max_value',
             'item_variable_name.item_variable_name' => 'Durability',
             'belongs_to_character.party_id'         => $party_id,
+            'belongs_to_character.garrison_id'      => undef,
             %extra_params,
         },
         { join => [ { 'item_variables' => 'item_variable_name' }, 'belongs_to_character' ], }

@@ -21,6 +21,12 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Road;
 
+sub startup : Tests(startup) {
+	my $self = shift;
+	
+	$self->{mock_forward}{'can_move_to_sector'} = sub { 1 };
+}
+
 sub setup : Tests(setup) {
 	my $self = shift;
 

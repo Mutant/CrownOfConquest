@@ -347,6 +347,11 @@ sub enter : Local {
     my ( $self, $c ) = @_;
 
     my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
+    
+    unless ($c->forward('/map/can_move_to_sector', [$town->location])) {
+    	# Can't move to this town for whatever reason
+    	$c->detach( '/panel/refresh', [  'messages', 'party_status' ] );	
+    }
 
     my $party_town = $c->model('Party_Town')->find_or_create(
         {

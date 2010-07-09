@@ -53,7 +53,7 @@ Prosperity: [% position.prosperity %]<br>
 	
 		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
 				[% IF position.town_id %]
-					[% IF ! town_costs.${position.town_id}.paid %]
+					[% IF ! town_costs.${position.town_id}.paid && party.turns >= position.party_movement_factor %]
 						<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
 					[% ELSE %]
 						<a href="#" onclick="getPanels('/town/enter?land_id=[% position.land_id %]')">

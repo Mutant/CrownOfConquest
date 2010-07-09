@@ -237,6 +237,7 @@ sub render_grid : Private {
     $params->{min_x}            = $params->{start_point}{x};
     $params->{min_y}            = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;
+    $params->{party} = $c->stash->{party};
 
     # Find any towns and calculate their tax costs
     my %town_costs;
@@ -276,33 +277,14 @@ sub move_to : Local {
 
     my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => [ 'terrain', 'town' ] }, );
 
-    my $movement_factor = $c->stash->{party}->movement_factor;
-
     unless ($new_land) {
         $c->error('Land does not exist!');
     }
-
-    # Check that the new location is actually next to current position.
-    elsif ( !$c->stash->{party}->location->next_to($new_land) ) {
-        $c->stash->{error} = 'You can only move to a location next to your current one';
-    }
-
-    # Check that the party has enough movement points
-    elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location) ) {
-        $c->stash->{error} = 'You do not have enough turns to move there';
-    }
-
     # If there's a town, check that they've gone in via /town/enter
     elsif ( $new_land->town && !$c->stash->{entered_town} ) {
         croak 'Invalid town entrance';
     }
-    
-    # Can't move if a character is overencumbered
-    elsif ( $c->stash->{party}->has_overencumbered_character ) {
-    	$c->stash->{error} = "One or more characters is carrying two much equipment. Your party cannot move"; 
-	}
-
-    else {   	
+    elsif ($c->stash->{entered_town} || $c->forward('can_move_to_sector', [$new_land])) {   	
         #$c->log->debug("Before p move_to: " . $c->stash->{party}->land_id);
         
         $c->stash->{party}->move_to($new_land);
@@ -365,6 +347,33 @@ sub move_to : Local {
     #$c->log->debug("ploc x: " . $c->stash->{party_location}->x . ", ploc y: " . $c->stash->{party_location}->y);
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+}
+
+# Check if a sector can be moved to
+sub can_move_to_sector : Private {
+	my ( $self, $c, $new_land ) = @_;
+	
+	my $movement_factor = $c->stash->{party}->movement_factor;
+	
+    # Check that the new location is actually next to current position.
+    if ( !$c->stash->{party}->location->next_to($new_land) ) {
+        $c->stash->{error} = 'You can only move to a location next to your current one';
+        return 0;
+    }
+    
+    # Check that the party has enough movement points
+    elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location) ) {
+        $c->stash->{error} = 'You do not have enough turns to move there';
+        return 0;
+    }
+  
+    # Can't move if a character is overencumbered
+    elsif ( $c->stash->{party}->has_overencumbered_character ) {
+    	$c->stash->{error} = "One or more characters is carrying two much equipment. Your party cannot move";
+    	return 0; 
+	}	
+	
+	return 1;
 }
 
 1;

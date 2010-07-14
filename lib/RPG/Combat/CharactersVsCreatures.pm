@@ -104,8 +104,6 @@ sub creature_flee {
 
 				$self->result->{creatures_fled} = 1;
 
-				$self->character_group->end_combat;
-
 				return 1;
 			}
 		}
@@ -125,8 +123,6 @@ sub creatures_lost {
 	$self->combat_log->gold_found($gold);
 
 	$self->_award_xp_for_creatures_killed();
-
-	$self->character_group->end_combat;
 
 	my $group = $self->character_group;
 	my @characters = $group->can('characters_in_party') ? $group->characters_in_party : $group->characters;

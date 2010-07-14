@@ -51,9 +51,10 @@ sub check_for_flee {
 			}
 			when ('garrison') {
 				$self->{result}->{garrison_fled} = 1;
-				$self->garrison_flee;
+				$self->garrison_flee;				
 			}
 		}
+				
 		return 1;
 	}
 }

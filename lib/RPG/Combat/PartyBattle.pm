@@ -48,27 +48,15 @@ sub check_for_flee {
 	}
 
 	if ( $self->result->{party_fled} ) {
-		$self->_end_party_combat;
 
 		return 1;
 	}
 
 	# Check for offline flee attempt
 	if ( $self->check_for_offline_flee ) {
-		$self->_end_party_combat;
 		$self->result->{offline_party_fled} = 1;
 		return 1;
 	}
-}
-
-sub _end_party_combat {
-	my $self = shift;
-
-	$self->party_1->end_combat();
-	$self->party_1->update();
-
-	$self->party_2->end_combat();
-	$self->party_2->update();
 }
 
 1;

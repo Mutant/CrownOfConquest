@@ -46,10 +46,7 @@ sub check_for_flee {
 
     if ( $attempt_to_flee && $self->party_flee(1) ) {
         $self->result->{party_fled} = 1;
-        
-        $self->party->end_combat();
-        $self->party->update();
-        
+                
         return 1;
     }
     

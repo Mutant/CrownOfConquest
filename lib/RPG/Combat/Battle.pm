@@ -747,6 +747,12 @@ sub roll_flee_attempt {
 
 sub end_of_combat_cleanup {
 	my $self = shift;
+	
+	foreach my $opponent ($self->opponents) {
+		if ($opponent->can('end_combat')) {
+			$opponent->end_combat;	
+		}
+	}
 
 	foreach my $combatant ( $self->combatants ) {
 		next unless $combatant->is_character;

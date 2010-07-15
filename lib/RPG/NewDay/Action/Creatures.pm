@@ -7,7 +7,10 @@ use List::Util qw(shuffle);
 use Data::Dumper;
 use Try::Tiny;
 
-with 'RPG::NewDay::Role::GarrisonCombat';
+with qw /
+	RPG::NewDay::Role::GarrisonCombat
+	RPG::NewDay::Role::CastleGuardGenerator
+/;
 
 use feature 'switch';
 
@@ -28,6 +31,9 @@ sub run {
 
     # Spawn dungeon monsters
     $self->spawn_dungeon_monsters();
+    
+    # Spawn town guards
+    $self->spawn_town_guards();
 }
 
 sub spawn_monsters {
@@ -122,7 +128,11 @@ sub spawn_dungeon_monsters {
     my $self = shift;
     my $c    = $self->context;
     
-    my $dungeon_rs = $c->schema->resultset('Dungeon')->search();
+    my $dungeon_rs = $c->schema->resultset('Dungeon')->search(
+    	{
+    		type => 'dungeon',
+    	}
+    );
 
     $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
@@ -163,15 +173,7 @@ sub spawn_dungeon_monsters {
 
             my $level = RPG::Maths->weighted_random_number( $level_range_start .. $level_range_end );
 
-            my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find(
-                { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, },
-                {
-                    order_by => 'rand()',
-                    rows     => 1,
-                    join     => 'dungeon_room',
-                    prefetch => 'creature_group',
-                }
-            );
+            my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->{dungeon_id} );
 
 			try {
             	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level, $level );
@@ -353,6 +355,20 @@ sub _move_cg {
     }
 
     return $new_sector;
+}
+
+sub spawn_town_guards {
+	my $self = shift;
+	
+	my $dungeon_rs = $self->context->schema->resultset('Dungeon')->search(
+		{
+			type => 'castle',
+		}
+	);
+	
+	while (my $castle = $dungeon_rs->next) {
+		$self->generate_guards($castle);	
+	}	
 }
 
 sub _check_for_fight {

@@ -9,6 +9,8 @@ with 'RPG::Schema::Role::BeingGroup';
 use Carp;
 use Data::Dumper;
 
+use List::Util qw(shuffle);
+
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Creature_Group');
 
@@ -26,10 +28,18 @@ __PACKAGE__->might_have( 'in_combat_with', 'RPG::Schema::Party', { 'foreign.in_c
 
 __PACKAGE__->has_many( 'creatures', 'RPG::Schema::Creature', { 'foreign.creature_group_id' => 'self.creature_group_id' }, );
 
-sub members {
-    my $self = shift;
+has 'melee_weapons' => ( is => 'ro', isa => 'ArrayRef', init_arg => undef, builder => '_build_melee_weapons', lazy => 1, );
 
-    return $self->creatures;
+sub _build_melee_weapons {
+	my $self = shift;
+	
+	return [$self->result_source->schema->resultset('Item_Type')->search( { 'category.item_category' => 'Melee Weapon', }, { join => 'category', } )];	
+}
+
+sub members {
+	my $self = shift;
+
+	return $self->creatures;
 }
 
 sub group_type {
@@ -42,99 +52,128 @@ sub after_land_move {
 
 sub current_location {
 	my $self = shift;
-	
+
 	return $self->location;
 }
 
 sub initiate_combat {
-    my $self = shift;
-    my $party = shift || croak "Party not supplied";
+	my $self = shift;
+	my $party = shift || croak "Party not supplied";
 
-    if ( $self->land_id && $self->location->orb && $self->location->orb->can_destroy( $party->level ) ) {
+	if ( $self->land_id && $self->location->orb && $self->location->orb->can_destroy( $party->level ) ) {
 
-        # Always attack if there's an orb in the sector, and the party is high enough level to destroy it
-        return 1;
-    }
+		# Always attack if there's an orb in the sector, and the party is high enough level to destroy it
+		return 1;
+	}
 
-    return 0 unless $self->party_within_level_range($party);
+	return 0 unless $self->party_within_level_range($party);
 
-    my $chance = RPG::Schema->config->{creature_attack_chance};
+	my $chance = RPG::Schema->config->{creature_attack_chance};
 
-    my $roll = Games::Dice::Advanced->roll('1d100');
+	my $roll = Games::Dice::Advanced->roll('1d100');
 
-    return $roll < $chance ? 1 : 0;
+	return $roll < $chance ? 1 : 0;
 }
 
 sub party_within_level_range {
-    my $self = shift;
-    my $party = shift || croak "Party not supplied";
+	my $self = shift;
+	my $party = shift || croak "Party not supplied";
 
-    if ( $self->level >= $party->level ) {
-        my $factor_comparison = $self->compare_to_party($party);
-        #warn $factor_comparison;
-        #warn RPG::Schema->config->{cg_attack_max_factor_difference};
-        return 0
-            if $factor_comparison < RPG::Schema->config->{cg_attack_max_factor_difference};
-    }
+	if ( $self->level >= $party->level ) {
+		my $factor_comparison = $self->compare_to_party($party);
 
-    # Won't attack party if they're too high a level
-    if ( $self->level < $party->level ) {
-        return 0
-            if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
-    }
+		#warn $factor_comparison;
+		#warn RPG::Schema->config->{cg_attack_max_factor_difference};
+		return 0
+			if $factor_comparison < RPG::Schema->config->{cg_attack_max_factor_difference};
+	}
 
-    return 1;
+	# Won't attack party if they're too high a level
+	if ( $self->level < $party->level ) {
+		return 0
+			if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
+	}
+
+	return 1;
 }
 
 sub creature_summary {
-    my $self                   = shift;
-    my $include_dead_creatures = shift || 0;
-    my @creatures              = $self->creatures;
+	my $self                   = shift;
+	my $include_dead_creatures = shift || 0;
+	my @creatures              = $self->creatures;
 
-    my %summary;
+	my %summary;
 
-    foreach my $creature (@creatures) {
-        next if !$include_dead_creatures && $creature->is_dead;
-        $summary{ $creature->type->creature_type }++;
-    }
+	foreach my $creature (@creatures) {
+		next if !$include_dead_creatures && $creature->is_dead;
+		$summary{ $creature->type->creature_type }++;
+	}
 
-    return \%summary;
+	return \%summary;
 }
 
 sub number_alive {
-    my $self = shift;
+	my $self = shift;
 
-    # TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
+	# TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
 
-    return $self->result_source->schema->resultset('Creature')->count(
-        {
-            hit_points_current => { '>', 0 },
-            creature_group_id  => $self->id,
-        }
-    );
+	return $self->result_source->schema->resultset('Creature')->count(
+		{
+			hit_points_current => { '>', 0 },
+			creature_group_id  => $self->id,
+		}
+	);
 }
 
 sub level {
-    my $self = shift;
+	my $self = shift;
 
-    return $self->{level} if $self->{level};
+	return $self->{level} if $self->{level};
 
-    my @creatures = $self->creatures;
+	my @creatures = $self->creatures;
 
-    return 0 unless @creatures;
+	return 0 unless @creatures;
 
-    my $level_aggr = 0;
-    foreach my $creature (@creatures) {
-        $level_aggr += $creature->type->level;
-    }
+	my $level_aggr = 0;
+	foreach my $creature (@creatures) {
+		$level_aggr += $creature->type->level;
+	}
 
-    $self->{level} = int( $level_aggr / scalar @creatures );
+	$self->{level} = int( $level_aggr / scalar @creatures );
 
-    return $self->{level};
+	return $self->{level};
 
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+sub add_creature {
+	my $self = shift;
+	my $type = shift;
+	my $count = shift;
 
+	my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
+	
+	my $melee_weapons = $self->melee_weapons;
+
+	my $weapon = 'Claws';
+	if ( $type->weapon eq 'Melee Weapon' ) {
+		my $weapon_rec = ( shuffle @$melee_weapons )[0];
+		$weapon = $weapon_rec->item_type;
+	}
+	else {
+		$weapon = $type->weapon;
+	}
+
+	$self->add_to_creatures(
+		{
+			creature_type_id   => $type->id,
+			hit_points_current => $hps,
+			hit_points_max     => $hps,
+			group_order        => $count,
+			weapon             => $weapon,
+		}
+	);
+}
+
+__PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;

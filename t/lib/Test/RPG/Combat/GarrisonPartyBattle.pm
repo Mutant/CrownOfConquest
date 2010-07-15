@@ -83,4 +83,44 @@ sub test_combat_ends_if_garrison_wiped_out_by_effect : Tests(2) {
 	is($res->{combat_complete}, 1, "Combat completed");
 }
 
+sub test_garrison_flees : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 1 );
+	
+	$garrison->in_combat_with($party1->id);
+	$garrison->update;
+	
+	$party1->in_combat_with($garrison->id);
+	$party1->update;
+
+	my $battle = RPG::Combat::GarrisonPartyBattle->new(
+		schema   => $self->{schema},
+		log      => $self->{mock_logger},
+		party    => $party1,
+		garrison => $garrison,
+		config   => $self->{config},
+	);
+
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_true('check_for_flee');
+	$battle->set_false('stalemate_check');
+	$battle->{result}->{garrison_fled} = 1;
+
+	# WHEN
+	my $res = $battle->execute_round();
+
+	# THEN
+	is($res->{combat_complete}, 1, "Combat completed");
+	
+	$garrison->discard_changes;
+	is($garrison->in_combat_with, undef, "Garrison no longer in combat with party");
+	
+	$party1->discard_changes;
+	is($party1->in_combat_with, undef, "Party no longer in combat with garrison");
+}
+
 1;

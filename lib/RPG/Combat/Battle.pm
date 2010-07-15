@@ -111,9 +111,7 @@ sub execute_round {
 
 			if ( $action_result->defender_killed ) {
 				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
-			}
 
-			if ( $action_result->defender_killed ) {
 				my $type = $action_result->defender->is_character ? 'character' : 'creature';
 				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
 			}
@@ -162,6 +160,8 @@ sub check_for_end_of_combat {
 	foreach my $opponents ( $self->opponents ) {
 		if ( $opponents->number_alive <= 0 ) {
 			my $opp = 'opp' . ($self->opponent_number_of_group($opponents) == 1 ? 2 : 1);
+
+			$self->log->debug("Combat over, opp #$opp won"); 
 
 			$self->combat_log->outcome( $opp . "_won" );
 			$self->combat_log->encounter_ended( DateTime->now() );
@@ -512,7 +512,7 @@ sub creature_action {
 	}
 
 	unless ($character) {
-		croak "Couldn't find a character to attack!\n";
+		confess "Couldn't find a character to attack!\n";
 	}
 
 	# Count number of times attacked for XP purposes

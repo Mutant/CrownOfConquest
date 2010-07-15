@@ -20,8 +20,10 @@ sub check_for_attack : Local {
     # If there are creatures here, check to see if we go straight into combat
     if ( $creature_group && $creature_group->number_alive > 0 ) {
         $c->stash->{creature_group} = $creature_group;
+        
+        my $type = $current_location->dungeon_room->dungeon->type;
 
-        if ( $creature_group->initiate_combat( $c->stash->{party} ) ) {
+        if ( $type eq 'castle' || $creature_group->initiate_combat( $c->stash->{party} ) ) {
         	$c->stash->{party}->initiate_combat($creature_group);
             $c->stash->{creatures_initiated} = 1;
             
@@ -79,6 +81,12 @@ sub flee : Local {
     );
 
     my $result = $battle->execute_round;
+    
+    my $castle = $c->stash->{party}->dungeon_location->dungeon_room->dungeon;
+    $c->log->debug('castle id ' . $castle->id);
+    if ($castle->type eq 'castle' && $result->{party_fled}) {
+    	$c->forward('/castle/successful_flee', [$castle]);
+    }
 
     $c->forward( '/combat/process_flee_result', [$result] );
 }

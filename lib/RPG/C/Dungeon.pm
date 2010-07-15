@@ -19,9 +19,13 @@ sub view : Local {
     my ( $self, $c ) = @_;
 
     $c->stats->profile("Entered /dungeon/view");
-
-    my $current_location =
-        $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => 'dungeon_room', } );
+    
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
+    	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, 
+    	{ prefetch => {'dungeon_room' => 'dungeon'}, } 
+	);
+	
+	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
 
     $c->log->debug( "Current location: " . $current_location->x . ", " . $current_location->y );
 
@@ -207,6 +211,7 @@ sub render_dungeon_grid : Private {
                     zoom_level => $c->session->{zoom_level} || 2,
                     scroll_to => $scroll_to,
                     create_tooltips => 1,
+                    dungeon_type => $c->stash->{dungeon_type},
                 },
                 return_output => 1,
             }
@@ -219,8 +224,12 @@ sub move_to : Local {
 
     $sector_id ||= $c->req->param('sector_id');
 
-    my $current_location =
-        $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, { prefetch => 'dungeon_room', } );
+    my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
+    	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, 
+    	{ prefetch => {'dungeon_room' => 'dungeon'} } 
+	);
+	
+	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
 
     my $sector = $c->model('DBIC::Dungeon_Grid')->find( { 'dungeon_grid_id' => $sector_id, }, { prefetch => 'dungeon_room', } );
 
@@ -229,7 +238,7 @@ sub move_to : Local {
     $c->log->debug( "Attempting to move to " . $sector->x . ", " . $sector->y );
 
     # Check they're moving to a sector in the dungeon they're currently in
-    if ( $current_location->dungeon_room->dungeon_id != $current_location->dungeon_room->dungeon_id ) {
+    if ( $current_location->dungeon_room->dungeon_id != $sector->dungeon_room->dungeon_id ) {
         croak "Can't move to sector: $sector_id - in the wrong dungeon";
     }
 
@@ -242,13 +251,13 @@ sub move_to : Local {
     }
     # Can't move if a character is overencumbered
     elsif ( $c->stash->{party}->has_overencumbered_character ) {
-    	$c->stash->{error} = "One or more characters is carrying two much equipment. Your party cannot move"; 
+    	$c->stash->{error} = "One or more characters are carrying two much equipment. Your party cannot move"; 
 	}   
     
     else {
-        $c->forward( 'check_for_creature_move', [$current_location] );
+    	$c->forward( '/' . $c->stash->{dungeon_type} . '/check_for_creature_move', [$sector] );
 
-        my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
+       	my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
 
         # If creatures attacked, refresh party panel
         if ($creature_group) {
@@ -275,6 +284,8 @@ sub move_to : Local {
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
+# Build the sector data that the party can now view. i.e. only the sectors that
+#  have changed as a result of the party's move (e.g. monsters, or what they can see)
 sub build_updated_sectors_data : Private {
 	my ($self, $c, $current_location, $sector_id) = @_;
 	
@@ -365,7 +376,8 @@ sub build_updated_sectors_data : Private {
 		                	current_location => $new_location,
 		                	zoom_level => $c->session->{zoom_level} || 2,
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
-		                	positions => \@positions,                	
+		                	positions => \@positions,      
+		                	dungeon_type => $c->stash->{dungeon_type},          	
 		                },
 		                return_output => 1,
 		            }
@@ -456,6 +468,7 @@ sub build_updated_sectors_data : Private {
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
 		                	positions => \@positions,
 		                	create_tooltips => 0,
+		                	dungeon_type => $c->stash->{dungeon_type},
 		                },
 		                return_output => 1,
 		            }
@@ -506,8 +519,18 @@ sub check_for_creature_move : Private {
     my @creatures_in_room =
         $c->model('DBIC::CreatureGroup')
         ->search( { 'dungeon_grid.dungeon_room_id' => $current_location->dungeon_room_id, }, { prefetch => 'dungeon_grid', }, );
+        
+    $c->forward('move_creatures', [$current_location, \@creatures_in_room, $c->config->{creature_move_chance_on_party_move}]);
+}
 
-    my @possible_sectors = shuffle $c->model('DBIC::Dungeon_Grid')->search(
+sub move_creatures : Private {
+	my ( $self, $c, $current_location, $creatures_in_room, $move_chance ) = @_;
+	
+	confess "Current location not supplied" unless $current_location;
+	confess "Creatures in room not supplied" unless $creatures_in_room;
+	confess "Move chance not supplied" unless $move_chance;
+	
+    my @possible_sectors = $c->model('DBIC::Dungeon_Grid')->search(
         {
             'dungeon_room_id'                  => $current_location->dungeon_room_id,
             'creature_group.creature_group_id' => undef,
@@ -515,18 +538,24 @@ sub check_for_creature_move : Private {
         { join => 'creature_group', }
     );
 
-    foreach my $cg (@creatures_in_room) {
+    foreach my $cg (@$creatures_in_room) {
         next if $cg->in_combat_with;
 
-        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance_on_party_move};
+        next if Games::Dice::Advanced->roll('1d100') > $move_chance;
 
-        my $sector_to_move_to = shift @possible_sectors;
+		my @move_range = RPG::Map->surrounds_by_range($cg->dungeon_grid->x, $cg->dungeon_grid->y, 3);
+
+        my @sectors = shuffle grep { RPG::Map->is_in_range({ x=>$_->x, y=>$_->y}, @move_range) } @possible_sectors;
+
+        return unless @sectors;
+        
+        my $sector_to_move_to = $sectors[0];
 
         if ($sector_to_move_to) {
             $cg->dungeon_grid_id( $sector_to_move_to->id );
             $cg->update;
         }
-    }
+    }	
 }
 
 sub open_door : Local {

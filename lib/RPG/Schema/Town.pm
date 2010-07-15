@@ -28,6 +28,8 @@ __PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', { 'foreign.town_i
 
 __PACKAGE__->has_many( 'party_town', 'RPG::Schema::Party_Town', { 'foreign.town_id' => 'self.town_id' }, );
 
+__PACKAGE__->might_have( 'castle', 'RPG::Schema::Dungeon', { 'foreign.land_id' => 'self.land_id' }, );
+
 sub tax_cost {
     my $self  = shift;
     my $party = shift;

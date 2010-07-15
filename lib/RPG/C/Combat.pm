@@ -298,8 +298,6 @@ sub process_flee_result : Private {
 		$c->stash->{messages} = "You got away!";
 		$c->log->debug("discarding party");
 		
-		$c->stash->{party}->end_combat;
-
 		$c->stash->{party}->discard_changes;
 		$c->stash->{party_location} = $c->stash->{party}->location;
 

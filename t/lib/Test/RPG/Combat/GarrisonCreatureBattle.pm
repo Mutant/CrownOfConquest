@@ -202,7 +202,7 @@ sub test_execute_round : Tests(1) {
         log            => $self->{mock_logger},
     );
     $battle = Test::MockObject::Extends->new($battle);
-    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_always( 'check_for_flee', undef );    
     $battle->set_true('process_effects');
 
     # WHEN

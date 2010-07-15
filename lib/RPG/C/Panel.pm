@@ -75,19 +75,19 @@ sub find_panel_path : Private {
     if ($panel eq 'messages') {
         if ($c->stash->{messages_path}) {
             return $c->stash->{messages_path};
-        }	
-    	elsif ($c->stash->{party_location}->town) {
-    		return '/town/main';
-    	}
+        }        
     	elsif ($party->in_combat_with) {
     		return '/combat/switch';
+    	}	
+    	elsif ($party->dungeon_grid_id) {
+    	    return '/dungeon/sector_menu';
+    	}
+    	elsif ($c->stash->{party_location}->town) {
+    		return '/town/main';
     	}
     	elsif ($party->in_party_battle) {
     		return '/party/combat/main';
     	}    	
-    	elsif ($party->dungeon_grid_id) {
-    	    return '/dungeon/sector_menu';
-    	}
     	else {
     		return '/party/sector_menu';
     	}

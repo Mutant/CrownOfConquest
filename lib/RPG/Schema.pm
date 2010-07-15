@@ -8,6 +8,14 @@ use base qw/DBIx::Class::Schema/;
 use Data::Dumper;
 use Carp;
 
+$SIG{__WARN__} = sub {
+	my $msg = shift;
+	
+	if ($msg !~ /DBIx::Class::ResultSet::search\(\)\: Prefetching multiple has_many rels doors and walls at top level will explode the number of row objects/) {
+		print STDERR $msg;	
+	}
+};
+
 __PACKAGE__->load_classes(qw/
     Items Item_Category Race Item_Type Player Party Terrain Land Dimension Class Character Shop Items_Made
     Creature CreatureType CreatureGroup Town GameVars Equip_Places Item_Attribute Item_Attribute_Name

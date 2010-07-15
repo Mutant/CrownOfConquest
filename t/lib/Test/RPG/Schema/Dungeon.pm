@@ -9,6 +9,8 @@ __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 use Test::MockObject;
+use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::Dungeon_Room;
 
 use Data::Dumper;
 
@@ -72,7 +74,72 @@ sub test_party_can_enter_class : Test(1) {
     # WHEN
     my $result = RPG::Schema::Dungeon->party_can_enter(4, $mock_party);
     
+    # THEN
     is($result, 0, "Successfully called party_can_enter as class method");
+}
+
+sub test_find_path_to_sector_1 : Test(5) {
+	my $self = shift;
+	
+	# GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 5, y => 5},		
+	);
+	
+	# WHEN
+	my @path = $dungeon->find_path_to_sector(
+		{
+			x=>2,
+			y=>1,
+		},
+		{
+			x=>4,
+			y=>5,
+		}
+	);
+	
+	# THEN
+	is(scalar @path, 4, "4 steps in path");
+	is_deeply($path[0], {x=>3,y=>2}, "First step correct");
+	is_deeply($path[1], {x=>4,y=>3}, "Second step correct");
+	is_deeply($path[2], {x=>4,y=>4}, "Third step correct");
+	is_deeply($path[3], {x=>4,y=>5}, "Forth step correct");
+}
+
+sub test_find_path_to_sector_2 : Test(5) {
+	my $self = shift;
+	
+	# GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 11},
+		bottom_right => {x => 15, y => 15},		
+	);
+	
+	# WHEN
+	my @path = $dungeon->find_path_to_sector(
+		{
+			x=>13,
+			y=>11,
+		},
+		{
+			x=>15,
+			y=>15,
+		}
+	);
+	
+	# THEN
+	is(scalar @path, 4, "4 steps in path");
+	is_deeply($path[0], {x=>14,y=>12}, "First step correct");
+	is_deeply($path[1], {x=>15,y=>13}, "Second step correct");
+	is_deeply($path[2], {x=>15,y=>14}, "Third step correct");
+	is_deeply($path[3], {x=>15,y=>15}, "Forth step correct");
 }
 
 1;

@@ -124,21 +124,23 @@ sub get_door_at {
 sub sectors_allowed_to_move_to {
     my $self      = shift;
     my $max_moves = shift;
+    my $consider_doors = shift // 1;
+    
+    my %extra_params;
+    $extra_params{prefetch} = {'doors_in_path' => 'door'} if $consider_doors;
     
     my @paths = $self->search_related(
     	'paths',
     	{
     		distance => {'<=', $max_moves},	
     	},
-    	{
-    		prefetch => {'doors_in_path' => 'door'}, 
-    	}
+    	\%extra_params,
     );
     
     my %allowed;
     foreach my $path (@paths) {
     	# Skip path if a door in the path is not passable
-    	if (grep { ! $_->door->can_be_passed } $path->doors_in_path) {
+    	if ($consider_doors && grep { ! $_->door->can_be_passed } $path->doors_in_path) {
     		next;    		
     	}
     	

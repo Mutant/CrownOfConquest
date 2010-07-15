@@ -159,8 +159,6 @@ sub execute_offline_battle {
 
         last if $result->{combat_complete};
     }
-    
-    $party->end_combat();
 }
 
 __PACKAGE__->meta->make_immutable;

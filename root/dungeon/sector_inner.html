@@ -19,7 +19,7 @@
 		[% END %]
 		
 		[% IF can_move_to_sector %]
-			<a href = "javascript:getPanels('/dungeon/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
+			<a href = "javascript:getPanels('/[% dungeon_type %]/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
 				style="text-decoration: none;">
 		[% END %]
 		

@@ -17,9 +17,13 @@
 
 
 <a href="javascript:getPanels('/dungeon/search_room')">Search Room</a>
+[% IF dungeon_type == 'castle' %]
+	| <a href="javascript:getPanels('/castle/toggle_move_type')">Move [% IF castle_move_type == 'stealth' %]Normally[% ELSE %]Stealthily[% END %]</a>
+[% END %]
 [% IF current_location.stairs_up %]
 	| <a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs</a>
-[% END %][% IF current_location.treasure_chest %]
+[% END %]
+[% IF current_location.treasure_chest %]
 	| <a href="javascript:getPanels('/dungeon/open_chest')">Open Treasure Chest</a>
 [% END %]
 

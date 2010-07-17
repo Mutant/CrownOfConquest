@@ -6,6 +6,7 @@ use Carp;
 
 use List::Util qw(shuffle);
 use Games::Dice::Advanced;
+use Array::Iterator::Circular;
 
 sub generate_guards {
 	my $self   = shift;
@@ -17,11 +18,15 @@ sub generate_guards {
 
 	return unless $town;
 
-	my $levels_aggregate = $town->prosperity * 10;
+	my $levels_aggregate = $town->prosperity * 15;
+	
+	my $max_level = int $town->prosperity / 4;
+	$max_level = 6 if $max_level < 6;
 
 	my @creature_types = $c->schema->resultset('CreatureType')->search(
 		{
 			'category.name' => 'Guards',
+			'level' => {'<=', $max_level},
 		},
 		{
 			join     => 'category',
@@ -42,11 +47,17 @@ sub generate_guards {
 	foreach my $creature (@creatures) {
 		$levels_aggregate -= $creature->type->level;	
 	}
+	
+	$self->context->logger->debug("Generating $levels_aggregate levels of guards in town " . $town->id);
 
 	my $lowest_level = $creature_types[0]->level;
+	
+	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
 
 	while ( $levels_aggregate >= $lowest_level ) {
-		my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id );
+		my $room = $room_iterator->next->id;
+		$self->context->logger->debug("Next room " . $room ); 
+		my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room );
 
 		next if $random_sector->creature_group;
 
@@ -59,7 +70,7 @@ sub generate_guards {
 
 		my $type = ( shuffle @creature_types )[0];
 
-		my $group_size = Games::Dice::Advanced->roll('2d6');
+		my $group_size = Games::Dice::Advanced->roll('2d4');
 
 		for my $count ( 1 .. $group_size ) {
 			$cg->add_creature( $type, $count );

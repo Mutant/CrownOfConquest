@@ -220,9 +220,11 @@ sub render_dungeon_grid : Private {
 }
 
 sub move_to : Local {
-    my ( $self, $c, $sector_id ) = @_;
+    my ( $self, $c, $sector_id, $turn_cost ) = @_;
 
     $sector_id ||= $c->req->param('sector_id');
+    
+    $turn_cost //= 1;
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
     	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, 
@@ -246,7 +248,7 @@ sub move_to : Local {
     if (! $current_location->has_path_to($sector_id, 3)) {
         $c->stash->{error} = "You must be in range of the sector";
     }
-    elsif ( $c->stash->{party}->turns < 1 ) {
+    elsif ( $c->stash->{party}->turns < $turn_cost ) {
         $c->stash->{error} = "You do not have enough turns to move there";
     }
     # Can't move if a character is overencumbered
@@ -265,7 +267,7 @@ sub move_to : Local {
         }
 
         $c->stash->{party}->dungeon_grid_id($sector_id);
-        $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
+        $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
         $c->stash->{party}->update;
         $c->stash->{party}->discard_changes;
         
@@ -524,7 +526,9 @@ sub check_for_creature_move : Private {
 }
 
 sub move_creatures : Private {
-	my ( $self, $c, $current_location, $creatures_in_room, $move_chance ) = @_;
+	my ( $self, $c, $current_location, $creatures_in_room, $move_chance, $max_move ) = @_;
+	
+	$max_move ||= 1;
 	
 	confess "Current location not supplied" unless $current_location;
 	confess "Creatures in room not supplied" unless $creatures_in_room;
@@ -543,7 +547,7 @@ sub move_creatures : Private {
 
         next if Games::Dice::Advanced->roll('1d100') > $move_chance;
 
-		my @move_range = RPG::Map->surrounds_by_range($cg->dungeon_grid->x, $cg->dungeon_grid->y, 3);
+		my @move_range = RPG::Map->surrounds_by_range($cg->dungeon_grid->x, $cg->dungeon_grid->y, $max_move);
 
         my @sectors = shuffle grep { RPG::Map->is_in_range({ x=>$_->x, y=>$_->y}, @move_range) } @possible_sectors;
 
@@ -592,8 +596,7 @@ sub sector_menu : Local {
     my ( $self, $c ) = @_;
 
     my $current_location =
-        $c->model('DBIC::Dungeon_Grid')
-        ->find( 
+        $c->model('DBIC::Dungeon_Grid')->find( 
         	{ 
         		dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, 
         	}, 
@@ -601,6 +604,7 @@ sub sector_menu : Local {
         		prefetch => [
         			{'doors' => 'position'},
         			'treasure_chest',
+        			{'dungeon_room' => 'dungeon'},
         		],        		
        		} 
        	);
@@ -625,6 +629,8 @@ sub sector_menu : Local {
                     creature_group         => $creature_group,
                     messages               => $c->stash->{messages},
                     parties_in_sector      => $parties_in_sector,
+                    dungeon_type           => $current_location->dungeon_room->dungeon->type,
+                    castle_move_type       => $c->session->{castle_move_type} || '',
                 },
                 return_output => 1,
             }
@@ -718,12 +724,23 @@ sub take_stairs : Local {
 
     croak "No stairs here" unless $current_location->stairs_up;
 
+	$c->forward('exit');
+
+}
+
+sub exit : Private {
+	my ( $self, $c, $turn_cost ) = @_;
+	
+	$turn_cost ||= 1;
+	
     # Reset zoom level
     $c->session->{zoom_level} = 2;
 
     $c->stash->{party}->dungeon_grid_id(undef);
-    $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
+    $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
     $c->stash->{party}->update;
+    
+    undef $c->session->{spotted};
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
 }

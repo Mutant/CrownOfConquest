@@ -34,8 +34,9 @@ sub run {
             }
         );	
         
-        # TODO: figure out dungeon size
-        $self->generate_dungeon_grid($dungeon, 5);
+        my $size = 5 + (int $town->prosperity / 10);
+        
+        $self->generate_dungeon_grid($dungeon, $size, 0);
         $self->populate_sector_paths($dungeon);
         $self->generate_guards($dungeon);
 	}

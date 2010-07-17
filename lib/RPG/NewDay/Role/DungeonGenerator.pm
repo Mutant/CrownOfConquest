@@ -26,6 +26,7 @@ sub generate_dungeon_grid {
 	my $self      = shift;
 	my $dungeon   = shift;
 	my $number_of_rooms = shift;
+	my $corridor_chance = shift // 15;
 	
 	my $positions = $self->positions;
 
@@ -81,7 +82,7 @@ sub generate_dungeon_grid {
 		# Create the room or corridor
 		my @new_sectors;
 		my $corridor_roll = Games::Dice::Advanced->roll('1d100');
-		if ( $corridor_roll <= 15 ) {
+		if ( $corridor_roll <= $corridor_chance ) {
 			@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $sectors_created, $positions );
 		}
 		else {

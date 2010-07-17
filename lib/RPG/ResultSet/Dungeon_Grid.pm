@@ -58,11 +58,20 @@ sub get_party_grid {
 }
 
 sub find_random_sector {
-	my $self       = shift;
-	my $dungeon_id = shift;
+	my $self            = shift;
+	my $dungeon_id      = shift;
+	my $dungeon_room_id = shift;
+	
+	my %params = (
+		'dungeon_room.dungeon_id' => $dungeon_id,
+	);
+	
+	if ($dungeon_room_id) {
+		$params{'dungeon_room.dungeon_room_id'} = $dungeon_room_id;	
+	}
 
 	$self->find(
-		{ 'dungeon_room.dungeon_id' => $dungeon_id, },
+		\%params,
 		{
 			order_by => 'rand()',
 			rows     => 1,

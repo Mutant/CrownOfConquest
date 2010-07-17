@@ -415,7 +415,29 @@ sub raid : Local {
     croak "Invalid town id" unless $town;
 
     croak "Not next to that town" unless $c->stash->{party_location}->next_to( $town->location );
+    
+    my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
+    	{
+    		'dungeon.land_id' => $town->land_id,
+    		'stairs_up' => 1,
+    	},
+    	{
+    		join => {'dungeon_room' => 'dungeon'},
+    	}
+    );
+    
+    confess "Castle not found for town " . $town->id unless $start_sector;
+    
+    $c->stash->{party}->dungeon_grid_id($start_sector->id);
+    $c->stash->{party}->update;
+    
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+}
 
+sub old_raid : Local {
+	my ( $self, $c ) = @_;
+	my $town;
+	
     my $turn_cost = round $town->prosperity / 4;
 
     if ( $turn_cost > $c->stash->{party}->turns ) {

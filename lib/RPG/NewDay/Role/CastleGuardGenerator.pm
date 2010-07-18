@@ -55,6 +55,7 @@ sub generate_guards {
 	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
 
 	while ( $levels_aggregate >= $lowest_level ) {
+		
 		my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id );
 
 		next if $random_sector->creature_group;

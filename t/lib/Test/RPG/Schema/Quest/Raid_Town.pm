@@ -51,6 +51,8 @@ sub test_set_quest_params : Tests(8) {
     is( $quest->gold_value,                        20,                "Gold value set correctly" );
     is( $quest->days_to_complete,                  4,                 "Days to complete set correctly" );
 
+ 	$self->unmock_dice;
+
 }
 
 1;

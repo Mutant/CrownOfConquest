@@ -411,6 +411,11 @@ sub sell_single_item : Private {
 
 		# If it's not a quantity item, give it back to the shop, except for item categories without "auto_add_to_shop"
 		if ( $item->item_type->category->auto_add_to_shop ) {
+			if ($item->has_variable('Durability')) {
+				# Reset the item's durability
+				$item->variable('Durability', $item->variable_max('Durability'));
+			}			
+			
 			$item->shop_id( $shop->id );
 			$item->update;
 		}

@@ -216,6 +216,12 @@ sub sell_price {
     $price = 1 if $price == 0;
 
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
+    
+    # Adjust for repair cost
+    if (my $repair_cost = $self->repair_cost) {
+    	$price -= $repair_cost;	
+    	$price = 0 if $price < 0;
+    }
 
     $price = int( $price / ( 100 / ( 100 + $modifier ) ) );
 
@@ -422,7 +428,7 @@ sub repair_cost {
 
     return 0 if !$variable_rec || !defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
 
-    my $repair_factor = $town->prosperity + $town->blacksmith_skill;
+    my $repair_factor = $town ? $town->prosperity + $town->blacksmith_skill : 100;
     $repair_factor = 100 if $repair_factor > 100;
 
     my $per_durability_point_cost =
@@ -434,10 +440,10 @@ sub repair_cost {
     my $party;
     $party = $character->party if $character;
         
-    if ($party && $town->discount_type && $town->discount_type eq 'blacksmith' && $party->prestige_for_town($town) >= $town->discount_threshold ) {
+    if ($party && $town && $town->discount_type && $town->discount_type eq 'blacksmith' && $party->prestige_for_town($town) >= $town->discount_threshold ) {
         $cost = round ($cost * ( 100 - $town->discount_value) / 100 );   
     }
-    
+        
     return $cost;
 }
 

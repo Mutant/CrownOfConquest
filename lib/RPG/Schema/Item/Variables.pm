@@ -36,6 +36,16 @@ sub variable_max {
 	return $variable->max_value;	
 }
 
+sub has_variable {
+	my $self = shift;
+	my $variable_name = shift;
+	
+	my $variable = $self->variable_row( $variable_name );
+	
+	return $variable ? 1 : 0;
+	
+}
+
 sub variable_row {
     my $self          = shift;
     my $variable_name = shift;

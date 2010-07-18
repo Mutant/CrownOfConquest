@@ -721,10 +721,13 @@ sub take_stairs : Local {
     my ( $self, $c ) = @_;
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
-
+    
     croak "No stairs here" unless $current_location->stairs_up;
 
-	$c->forward('exit');
+	my $dungeon = $current_location->dungeon_room->dungeon;
+    my $type = $dungeon->type;
+
+	$c->forward('/'. $type . '/exit', [undef, $dungeon]);
 
 }
 
@@ -823,8 +826,9 @@ sub open_chest : Local {
     	$c->detach('handle_chest_trap', [$current_location]);
     }
 
-	my @items = $current_location->treasure_chest->items;
-	
+	my $chest = $current_location->treasure_chest;
+	my @items = $chest->items;
+
 	my @characters = $c->stash->{party}->characters;
 	
 	my @items_found;
@@ -858,6 +862,7 @@ sub open_chest : Local {
                 template => 'dungeon/open_chest.html',
                 params   => {
                     items_found => \@items_found,
+                    gold_found => $chest->gold,
                 },
                 return_output => 1,
             }
@@ -871,8 +876,17 @@ sub open_chest : Local {
     
     push @{$c->stash->{messages}}, @$quest_messages;
 
+	$c->stash->{party}->increase_gold($chest->gold);
     $c->stash->{party}->turns( $c->stash->{party}->turns - 1 );
     $c->stash->{party}->update;
+    
+    if ($chest->gold && $current_location->dungeon_room->dungeon->type eq 'castle') {
+		my $messages = $c->forward( '/quest/check_action', ['town_raid', $current_location->dungeon_room->dungeon->town] );
+		push @{ $c->stash->{messages} }, @$messages;	
+    }
+    
+    $chest->gold(0);
+    $chest->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

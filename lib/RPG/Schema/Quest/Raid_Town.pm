@@ -97,7 +97,7 @@ sub check_action {
 
     return 0 if $self->param_current_value('Raided Town') == 1;
 
-    return 0 unless $town_raided == $self->param_start_value('Town To Raid');
+    return 0 unless $town_raided->id == $self->param_start_value('Town To Raid');
 
     my $quest_param = $self->param_record('Raided Town');
     $quest_param->current_value(1);

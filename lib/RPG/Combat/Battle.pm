@@ -217,7 +217,7 @@ sub _process_effects {
 
 		$effect->effect->time_left( $effect->effect->time_left - 1 );
 
-		if ( $effect->effect->time_left == 0 ) {
+		if ( $effect->effect->time_left <= 0 ) {
 			$effect->effect->delete;
 			$effect->delete;
 

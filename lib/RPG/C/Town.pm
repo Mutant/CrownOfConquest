@@ -10,6 +10,7 @@ use Math::Round qw(round);
 use JSON;
 use List::Util qw(shuffle);
 use Carp;
+use DateTime;
 
 sub main : Local {
     my ( $self, $c, $return_output ) = @_;
@@ -431,143 +432,18 @@ sub raid : Local {
     $c->stash->{party}->dungeon_grid_id($start_sector->id);
     $c->stash->{party}->update;
     
-    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
-}
-
-sub old_raid : Local {
-	my ( $self, $c ) = @_;
-	my $town;
-	
-    my $turn_cost = round $town->prosperity / 4;
-
-    if ( $turn_cost > $c->stash->{party}->turns ) {
-        $c->stash->{error} = "You need at least $turn_cost turns to raid this town";
-        $c->detach('/panel/refresh');
-    }
-
     my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
         {
             town_id  => $town->id,
             party_id => $c->stash->{party}->id,
         }
     );
-
-    my $party_raid_factor =
-        ( $c->stash->{party}->average_stat('intelligence') / 2 ) +
-        $c->stash->{party}->average_stat('agility') +
-        ( $c->stash->{party}->average_stat('divinity') / 2 );
-
-    my $town_raid_factor = $town->prosperity + ( ( $town->prosperity / 4 ) * ( $party_town->raids_today || 0 ) );
-
-    my $raid_factor = round $town_raid_factor - round $party_raid_factor;
-    my $raid_roll   = Games::Dice::Advanced->roll('1d100');
-
-    my $raid_quotient = $raid_factor - $raid_roll;
-
-    my $base_gold    = $town->prosperity * 6;
-    my $gold_to_gain = $base_gold + Games::Dice::Advanced->roll( '1d' . $base_gold );
-
-    $c->log->debug( "Town Prosp: "
-            . $town->prosperity
-            . " Town Raid Factor: $town_raid_factor, Party Raid Factor: $party_raid_factor, Raid Factor: $raid_factor, Raid Roll: $raid_roll, "
-            . "Raid Qiotient: $raid_quotient, Gold To Gain: $gold_to_gain" );
-
-    my $raid_successful = 0;
-    my $prestige_change = 0;
-    my $turns_lost;
-
-    given ($raid_quotient) {
-        when ( $_ < -60 ) {
-
-            # Success, no consequence
-            $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
-            $c->stash->{messages} = ["You charge past the guards without anyone ever noticing you. You steal $gold_to_gain gold from the treasury"];
-            $raid_successful = 1;
-        }
-        when ( $_ < -40 ) {
-
-            # Success, but prestige reduced
-            $c->stash->{party}->gold( $c->stash->{party}->gold + $gold_to_gain );
-            $c->stash->{messages} =
-                [     "You make it to the treasury and steal $gold_to_gain gold. On the way out, a guard spots you, and gives chase. You get "
-                    . "away, but this will surely affect your prestige with the town." ];
-            $raid_successful = 1;
-            $prestige_change = -8;
-        }
-        when ( $_ < -20 ) {
-
-            # Failure, prestige reduced
-            $c->stash->{messages} =
-                [     "You get halfway to the treasury only to run into a squard of guards. You turn on your heels, and run your hearts out, making "
-                    . " it out of the gates before the guards can catch you. It's not too likely they'll want to see you back there any time soon" ];
-            $prestige_change = -8;
-        }
-        default {
-
-            # Failure and imprisonment
-            $turns_lost = round $town->prosperity / 4;
-            $turns_lost = 2 if $turns_lost < 2;
-
-            $c->stash->{messages} =
-                [     "You're just loading up on sacks of gold when the guards burst through the door. You've been caught red-handed! "
-                    . "You're imprisoned for $turns_lost turns" ];
-
-            $c->stash->{party}->turns( $c->stash->{party}->turns - $turns_lost );
-
-            $prestige_change = -8;
-        }
-    }
-
-    my $news_message;
-
-    if ($raid_successful) {
-        my $quest_messages = $c->forward( '/quest/check_action', [ 'town_raid', $town->id ] );
-
-        if ($quest_messages) {
-            push @{ $c->stash->{messages} }, @$quest_messages;
-        }
-
-        $news_message =
-              'The party known as '
-            . $c->stash->{party}->name
-            . ' sucessfully raided the town of '
-            . $town->town_name
-            . " and got away with $gold_to_gain gold";
-    }
-    elsif ($turns_lost) {
-        $news_message =
-              'The party known as '
-            . $c->stash->{party}->name
-            . ' tried to raid the town of '
-            . $town->town_name
-            . " but were caught, and imprisioned!";
-    }
-    else {
-        $news_message =
-              'The party known as '
-            . $c->stash->{party}->name
-            . ' tried to raid the town of '
-            . $town->town_name
-            . ' but were intercepted by the '
-            . 'guards and fled empty-handed';
-    }
-
-    $c->model('DBIC::Town_History')->create(
-        {
-            town_id => $town->id,
-            day_id  => $c->stash->{today}->id,
-            message => $news_message,
-        }
-    );
-
-    $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
-    $c->stash->{party}->update;
-
-    $party_town->raids_today( ( $party_town->raids_today || 0 ) + 1 );
-    $party_town->prestige( $party_town->prestige + $prestige_change );
-    $party_town->update;
-
-    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+    $party_town->last_raid_start(DateTime->now());
+    $party_town->last_raid_end(undef);
+    $party_town->increment_raids_today;
+    $party_town->update;    
+    
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
 }
 
 1;

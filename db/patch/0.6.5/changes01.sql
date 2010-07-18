@@ -14,3 +14,10 @@ insert into `Creature_Type` ('creature_type', 'level', 'weapon', 'fire', 'ice', 
 
 ALTER TABLE `Dungeon_Grid` MODIFY COLUMN `dungeon_grid_id` BIGINT  NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `Treasure_Chest` ADD COLUMN `gold` INTEGER  NOT NULL DEFAULT 0 AFTER `trap`;
+
+ALTER TABLE `Party_Town` ADD COLUMN `last_raid_start` DATETIME  DEFAULT NULL AFTER `prestige`,
+ ADD COLUMN `last_raid_end` DATETIME  DEFAULT NULL AFTER `last_raid_start`;
+
+ALTER TABLE `Quest` MODIFY COLUMN `quest_id` BIGINT  NOT NULL AUTO_INCREMENT;
+

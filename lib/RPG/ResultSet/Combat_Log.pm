@@ -105,6 +105,25 @@ sub get_recent_logs_for_party {
     );
 }
 
+sub get_party_logs_since_date {
+    my $self  = shift;
+    my $party = shift;
+    my $date = shift;
+    
+    return unless $date;
+        
+    return $self->search(
+        {
+            $self->_party_criteria($party),
+            encounter_ended => {'>=', $date},
+        },
+        {
+            prefetch => 'day',
+            order_by => 'encounter_ended desc',
+        }
+    );
+}
+
 sub get_last_days_logs_for_garrisons {
     my $self  = shift;
     my $party = shift;

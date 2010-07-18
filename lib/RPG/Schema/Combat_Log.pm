@@ -46,6 +46,19 @@ sub opponent_2 {
     return $self->opponent(2);   
 }
 
+sub enemy_num_of {
+	my $self = shift;
+	my $group = shift;
+	
+	my $opp1 = $self->opponent_1;
+	if ($opp1->is($group)) {
+		return 2;	
+	}
+	else {
+		return 1;
+	}
+}
+
 sub opponent_stats {
     my $self = shift;
     

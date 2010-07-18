@@ -189,8 +189,6 @@ sub reconfigure_doors {
     }
 }
 
-my @TRAPS = qw/Curse Hypnotise Detonate/;
-
 sub generate_treasure_chests {
 	my $self = shift;
 	my $dungeon = shift;
@@ -286,8 +284,7 @@ sub fill_chest {
 	
 	# Add a trap
 	if (Games::Dice::Advanced->roll('1d100') <= 20) {
-		my $trap = (shuffle @TRAPS)[0];
-		$chest->trap($trap);
+		$chest->add_trap;
 		$chest->update;
 	}
 	else {

@@ -46,6 +46,19 @@ sub party_can_enter {
 	return ( $level - 1 ) * RPG::Schema->config->{dungeon_entrance_level_step} <= $party->level ? 1 : 0;
 }
 
+sub treasure_chests {
+	my $self = shift;
+	
+	return $self->result_source->schema->resultset('Treasure_Chest')->search(
+		{
+			'dungeon_room.dungeon_id' => $self->id,
+		},
+		{
+			join => {'dungeon_grid' => 'dungeon_room'},
+		}
+	);
+}
+
 sub find_path_to_sector {
 	my $self         = shift;
 	my $start_sector = shift;

@@ -17,7 +17,7 @@ sub _cast {
             target      => $target,
             effect_name    => 'Entangled',
             duration       => $duration,
-            modifier       => $duration,
+            modifier       => -10000,
             combat         => 1,
             modified_state => 'attack_frequency',
         }

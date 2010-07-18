@@ -22,7 +22,7 @@ use Test::RPG::Builder::Dungeon_Grid;
 sub dungeon_setup : Tests(setup) {
     my $self = shift;
 
-    $self->{dungeon} = RPG::NewDay::Action::Dungeon->new( context => $self->{context} );
+    $self->{dungeon} = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
 	
 }	
 
@@ -488,7 +488,7 @@ sub test_populate_sector_paths_1 : Tests(1) {
     }
 
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon );
+    $dungeon->populate_sector_paths();
     my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(1);
 
     # THEN
@@ -551,7 +551,7 @@ sub test_populate_sector_paths_2 : Tests(1) {
     my $start_sector = $sectors[12];    # 3,3
 
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon, 2 );
+    $dungeon->populate_sector_paths( );
     my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(2);
 
     # THEN
@@ -631,7 +631,7 @@ sub test_populate_sector_paths_3 : Tests(1) {
     $expected_allowed_to_move_to{$sectors_by_coord->[2][5]->id} = 1;
 
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon );
+    $dungeon->populate_sector_paths( );
     my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(3);
 
     # THEN
@@ -711,7 +711,7 @@ sub test_populate_sector_paths_4 : Tests(1) {
     $expected_allowed_to_move_to{$sectors_by_coord->[3][3]->id} = 1;
 
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon, 1 );
+    $dungeon->populate_sector_paths( 1 );
     my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(1);
 
     # THEN
@@ -753,7 +753,7 @@ sub test_populate_sector_paths_multiple_doors_in_path : Tests(2) {
    );    
 	
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon );
+    $dungeon->populate_sector_paths( );
 
     # THEN
     my $path1 = $self->{schema}->resultset('Dungeon_Sector_Path')->find(
@@ -812,7 +812,7 @@ sub test_populate_sector_paths_multiple_doors_in_path_diagonal : Tests(2) {
    );    
 	
     # WHEN
-    $self->{dungeon}->populate_sector_paths( $dungeon );
+    $dungeon->populate_sector_paths( );
 
     # THEN
     my $path1 = $self->{schema}->resultset('Dungeon_Sector_Path')->find(

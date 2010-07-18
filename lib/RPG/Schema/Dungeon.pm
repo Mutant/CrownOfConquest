@@ -73,7 +73,7 @@ sub find_path_to_sector {
 		$start,
 		$end,
 	);
-
+		
 	my ( $top_left, $bottom_right ) = RPG::Map->surrounds_by_range(
 		$start->{x},
 		$start->{y},
@@ -113,13 +113,13 @@ sub find_path_to_sector {
 		);
 
 		my $passable = 0;
-		if ( $distance_to_start <= 3 ) {
+		if ( $distance_to_start <= 3 && $distance_to_start > 0 ) {
 			$passable = 1 if $sectors_allowed_to_move_to->{ $sector->id };
 		}
 		else {
 			$passable = 1;
 		}
-		
+		#warn $sector->x . ", " . $sector->y . ": $passable";
 		$map->set_passability( $sector->x, $sector->y, $passable );
 	}
 

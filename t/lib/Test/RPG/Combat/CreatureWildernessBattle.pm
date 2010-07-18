@@ -518,7 +518,7 @@ sub test_check_for_flee_creatures_cant_flee : Tests(1) {
 
 }
 
-sub test_check_for_flee_successful_flee : Tests(10) {
+sub test_check_for_flee_successful_flee : Tests(9) {
 	my $self = shift;
 
 	# GIVEN
@@ -573,9 +573,6 @@ sub test_check_for_flee_successful_flee : Tests(10) {
 
 	$cg->discard_changes;
 	is( $cg->land_id, 1, "Fled to correct land" );
-
-	$party->discard_changes;
-	is( $party->in_combat_with, undef, "party no longer in combat" );
 
 	my ( $name, $args ) = $combat_log->next_call(3);
 	is( $name, "xp_awarded", "xp awarded in combat log set" );

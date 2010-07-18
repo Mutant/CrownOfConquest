@@ -161,7 +161,7 @@ sub check_for_end_of_combat {
 		if ( $opponents->number_alive <= 0 ) {
 			my $opp = 'opp' . ($self->opponent_number_of_group($opponents) == 1 ? 2 : 1);
 
-			$self->log->debug("Combat over, opp #$opp won"); 
+			#$self->log->debug("Combat over, opp #$opp won"); 
 
 			$self->combat_log->outcome( $opp . "_won" );
 			$self->combat_log->encounter_ended( DateTime->now() );
@@ -710,6 +710,7 @@ sub party_flee {
 		my $sector = $self->get_sector_to_flee_to($party);
 
 		$party->move_to($sector);
+		$party->update;
 
 		$self->combat_log->outcome( 'opp' . $opp_number . '_fled' );
 		$self->combat_log->encounter_ended( DateTime->now() );

@@ -34,6 +34,7 @@ sub test_generate_guards : Tests(3) {
 	# GIVEN
 	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
+	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
 	
 	my $mock = Test::MockObject->new();
@@ -56,7 +57,7 @@ sub test_generate_guards : Tests(3) {
 		}			
 	}
 	
-	my $level_aggr_expected = $town->prosperity * 10;
+	my $level_aggr_expected = $town->prosperity * 15;
 	cmp_ok($level_aggr, '<=', $level_aggr_expected, "Level aggregate less than or equal to town allows");
 	cmp_ok($level_aggr, '>', $level_aggr_expected - 5, "Level aggreate greater than expected minus lowest guard level");
 }

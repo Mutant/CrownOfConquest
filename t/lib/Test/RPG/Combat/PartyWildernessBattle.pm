@@ -100,7 +100,7 @@ sub test_finish : Tests(3) {
     is( $battle->result->{gold}, 10, "Gold found in result" );
 }
 
-sub test_party_flee : Tests(6) {
+sub test_party_flee : Tests(5) {
     my $self = shift;
 
     # GIVEN
@@ -143,14 +143,11 @@ sub test_party_flee : Tests(6) {
     $party2->discard_changes;
     is( $party2->land_id, 999, "Land id updated" );
 
-    $battle_record->discard_changes;
-    is( defined $battle_record->complete, 1, "Battle record marked as complete" );
-
     is( $battle->combat_log->outcome,                 'opp2_fled', "Combat log outcome set correctly" );
     is( defined $battle->combat_log->encounter_ended, 1,           "Combat log encounter ended set" );
 }
 
-sub test_offline_party_flee : Tests(7) {
+sub test_offline_party_flee : Tests(6) {
     my $self = shift;
 
     # GIVEN
@@ -200,9 +197,6 @@ sub test_offline_party_flee : Tests(7) {
 
     $party1->discard_changes;
     is( $party1->land_id, 999, "Land id updated" );
-
-    $battle_record->discard_changes;
-    is( defined $battle_record->complete, 1, "Battle record marked as complete" );
 
     is( $battle->combat_log->outcome,                 'opp1_fled', "Combat log outcome set correctly" );
     is( defined $battle->combat_log->encounter_ended, 1,           "Combat log encounter ended set" );

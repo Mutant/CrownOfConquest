@@ -89,13 +89,13 @@ sub test_find_path_to_sector_1 : Test(5) {
 		top_left => {x => 1, y => 1},
 		bottom_right => {x => 5, y => 5},		
 	);
+	$dungeon->populate_sector_paths;
 	
+	my ($sector) = grep { $_->x == 2 && $_->y == 1 } $dungeon_room->sectors; 
+		
 	# WHEN
 	my @path = $dungeon->find_path_to_sector(
-		{
-			x=>2,
-			y=>1,
-		},
+		$sector,
 		{
 			x=>4,
 			y=>5,
@@ -121,13 +121,13 @@ sub test_find_path_to_sector_2 : Test(5) {
 		top_left => {x => 11, y => 11},
 		bottom_right => {x => 15, y => 15},		
 	);
+	$dungeon->populate_sector_paths;
+	
+	my ($sector) = grep { $_->x == 13 && $_->y == 11 } $dungeon_room->sectors;
 	
 	# WHEN
 	my @path = $dungeon->find_path_to_sector(
-		{
-			x=>13,
-			y=>11,
-		},
+		$sector,
 		{
 			x=>15,
 			y=>15,

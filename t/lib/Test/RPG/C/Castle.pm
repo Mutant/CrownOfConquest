@@ -39,13 +39,14 @@ sub test_check_for_creature_move_party_spotted : Tests(1) {
 	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
-	
+
 	my @sectors = $room->sectors;
 	
 	$self->{mock_forward}{'/dungeon/move_creatures'} = sub {};
 
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, dungeon_grid_id => $sectors[0]->id);
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sectors[2]->id);
+	$self->{stash}{party} = $party;
 		
 	# WHEN
 	RPG::C::Castle->check_for_creature_move($self->{c}, $sectors[0]);
@@ -73,6 +74,8 @@ sub test_check_for_creature_move_guards_seek_party : Tests(1) {
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, dungeon_grid_id => $sectors[0]->id);
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sectors[9]->id);
 	$self->{session}{spotted}{$cg->id} = 1;
+
+	$self->{stash}{party} = $party;
 		
 	# WHEN
 	RPG::C::Castle->check_for_creature_move($self->{c}, $sectors[0]);
@@ -91,6 +94,9 @@ sub test_check_for_creature_move_party_not_spotted_as_out_of_range : Tests(1) {
 	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	
+	$self->{stash}{party} = $party;	
 	
 	my @sectors = $room->sectors;
 	

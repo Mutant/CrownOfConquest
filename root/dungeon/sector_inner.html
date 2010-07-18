@@ -43,10 +43,12 @@
 				<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
 			[% ELSIF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-			[% ELSIF cgs.$x.$y %]
+			[% END %]
+			
+			[% IF cgs.$x.$y %]
 				[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
 			
-				<span id="m_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
@@ -54,7 +56,7 @@
 					label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
 				[% END %]
 			[% ELSIF parties.$x.$y %]
-				<span id="p_[% x _ y %]"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0  width=[% size %] height=[% size %]></span>
+				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0  width=[% size %] height=[% size %]></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 

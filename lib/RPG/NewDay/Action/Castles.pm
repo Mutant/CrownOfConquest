@@ -112,7 +112,7 @@ sub fill_chests {
 		@chests = $self->generate_chests($dungeon) unless @chests;
 	}
 		
-	my $gold = $dungeon->town->prosperity * 10 + (250 - Games::Dice::Advanced->roll('1d500'));
+	my $gold = $dungeon->town->prosperity * 25 + Games::Dice::Advanced->roll('1d500');
 	
 	foreach my $chest (@chests) {
 		$chest->gold(int ($gold / scalar @chests));

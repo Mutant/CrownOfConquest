@@ -31,7 +31,10 @@ sub average_stat {
     my $stat     = shift;
 
     my ($rec) = $self->search(
-        { 'me.party_id' => $party_id, },
+        { 
+        	'me.party_id' => $party_id,
+        	'garrison_id' => undef, 
+        },
         {
             join   => 'characters',
             select => { avg => 'characters.' . $stat },

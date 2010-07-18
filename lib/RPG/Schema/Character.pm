@@ -868,7 +868,7 @@ sub value {
     $value += int $self->spell_points;
 
     foreach my $item ( $self->items ) {
-        $value += int $item->item_type->base_cost * 0.8;
+        $value += int $item->sell_price(0);
     }
 
     $self->{value} = $value;

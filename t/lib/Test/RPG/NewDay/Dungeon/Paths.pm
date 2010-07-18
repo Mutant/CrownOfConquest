@@ -551,7 +551,7 @@ sub test_populate_sector_paths_2 : Tests(1) {
     my $start_sector = $sectors[12];    # 3,3
 
     # WHEN
-    $dungeon->populate_sector_paths( );
+    $dungeon->populate_sector_paths();
     my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(2);
 
     # THEN

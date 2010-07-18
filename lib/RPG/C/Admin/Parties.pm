@@ -10,7 +10,10 @@ sub default : Path {
 	my @parties = $c->model('DBIC::Party')->search(
 		{
 			defunct => undef,
-		}
+		},
+		{
+			order_by => 'last_action desc',
+		},
 	);
 	
 

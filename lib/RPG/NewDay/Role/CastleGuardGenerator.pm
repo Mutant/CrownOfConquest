@@ -20,7 +20,7 @@ sub generate_guards {
 
 	my $levels_aggregate = $town->prosperity * 15;
 	
-	my $max_level = int $town->prosperity / 4;
+	my $max_level = int $town->prosperity / 2.5;
 	$max_level = 6 if $max_level < 6;
 
 	my @creature_types = $c->schema->resultset('CreatureType')->search(

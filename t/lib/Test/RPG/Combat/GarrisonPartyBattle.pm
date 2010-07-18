@@ -14,6 +14,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Effect;
+use Test::RPG::Builder::Land;
 
 sub startup : Tests( startup => 1 ) {
 	use_ok 'RPG::Combat::GarrisonPartyBattle';
@@ -121,6 +122,38 @@ sub test_garrison_flees : Tests(3) {
 	
 	$party1->discard_changes;
 	is($party1->in_combat_with, undef, "Party no longer in combat with garrison");
+}
+
+sub test_finish_garrison_lost : Test(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land[4]->id, character_count => 2);
+	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my @characters = $garrison->characters;
+	
+	my $battle = RPG::Combat::GarrisonPartyBattle->new(
+        schema             => $self->{schema},
+        garrison           => $garrison,
+        party			   => $party2,
+        log                => $self->{mock_logger},
+        config			   => {nearby_town_range => 1},
+    );	
+	
+	# WHEN
+	$battle->finish($garrison);
+	
+	# THEN
+	$garrison->discard_changes;
+	is($garrison->in_storage, 0, "Garrison deleted");
+	
+	foreach my $char (@characters) {
+		$char->discard_changes;
+		is($char->in_storage, 0, "Character deleted");
+	}
 }
 
 1;

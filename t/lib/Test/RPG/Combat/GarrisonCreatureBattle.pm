@@ -114,14 +114,16 @@ sub test_check_for_flee : Tests(8) {
 		
 }
 
-sub test_finish_garrison_lost : Test(1) {
+sub test_finish_garrison_lost : Test(3) {
 	my $self = shift;
 	
 	# GIVEN
 	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, character_count => 2);
+	
+	my @characters = $garrison->characters;
 	
 	my $battle = RPG::Combat::GarrisonCreatureBattle->new(
         schema             => $self->{schema},
@@ -137,6 +139,11 @@ sub test_finish_garrison_lost : Test(1) {
 	# THEN
 	$garrison->discard_changes;
 	is($garrison->in_storage, 0, "Garrison deleted");
+	
+	foreach my $char (@characters) {
+		$char->discard_changes;
+		is($char->in_storage, 0, "Character deleted");
+	}
 }
 
 sub test_finish_garrison_won : Test(1) {

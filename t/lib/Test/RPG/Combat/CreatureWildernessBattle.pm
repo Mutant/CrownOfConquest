@@ -926,7 +926,6 @@ sub test_finish : Tests(6) {
 	is( $battle->result->{gold},               30, "Gold returned in result correctly" );
 
 	$party->discard_changes;
-	is( $party->in_combat_with, undef, "No longer in combat" );
 	is( $party->gold,           130,   "Gold added to party" );
 
 	$cg->discard_changes;

@@ -750,7 +750,7 @@ sub end_of_combat_cleanup {
 	my $self = shift;
 	
 	foreach my $opponent ($self->opponents) {
-		if ($opponent->can('end_combat')) {
+		if ($opponent->can('end_combat') && $opponent->in_storage) {
 			$opponent->end_combat;	
 		}
 	}
@@ -776,8 +776,7 @@ sub distribute_xp {
 	my ( $self, $xp, $char_ids ) = @_;
 
 	my %awarded_xp;
-	$xp //= 0;    #/
-	              # Everyone gets 10% to start with
+	$xp //= 0;    # Everyone gets 10% to start with
 	my $min_xp = int $xp * 0.10;
 	@awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
 	$xp -= $min_xp * scalar @$char_ids;

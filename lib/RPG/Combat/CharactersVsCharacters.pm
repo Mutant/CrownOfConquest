@@ -79,8 +79,8 @@ sub finish {
 	my $gold = scalar( $losers->characters ) * $avg_character_level * Games::Dice::Advanced->roll('2d6');
 
 	$self->result->{gold} = $gold;
-
-	my @characters = $winners->can('characters_in_party') ? $winners->characters_in_party : $winners->characters;
+	
+	my @characters = $winners->members;
 	$self->check_for_item_found( \@characters, $avg_character_level );
 
 	$winners->gold( $winners->gold + $gold );
@@ -90,7 +90,13 @@ sub finish {
 	$self->combat_log->xp_awarded($xp);
 	$self->combat_log->encounter_ended( DateTime->now() );
 
-	$self->end_of_combat_cleanup;
+	if ($losers->group_type eq 'garrison') {
+    	foreach my $character ($losers->characters) {
+    		$character->delete;	
+    	}
+    	
+    	$losers->delete;		
+	}
 }
 
 sub _award_xp_for_characters_killed {

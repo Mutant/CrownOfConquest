@@ -134,8 +134,6 @@ sub creatures_lost {
 	$self->creature_group->update;
 
 	$self->combat_log->encounter_ended( DateTime->now() );
-
-	$self->end_of_combat_cleanup;
 }
 
 sub check_for_item_found {

@@ -69,6 +69,11 @@ sub finish {
 
     # Delete garrison if they lost
     if ($losers->group_type eq 'garrison') {
+    	my @characters = $losers->characters;
+    	foreach my $character (@characters) {
+    		$character->delete;	
+    	}
+    	
     	$losers->delete;
 
 	    $self->location->creature_threat( $self->location->creature_threat + 3 );

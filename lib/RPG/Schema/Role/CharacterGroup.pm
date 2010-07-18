@@ -50,7 +50,7 @@ sub is_over_flee_threshold {
 sub xp_gain {
     my ( $self, $awarded_xp ) = @_;
 
-    my @characters = $self->characters;
+    my @characters = $self->members;
 
     my @details;
 

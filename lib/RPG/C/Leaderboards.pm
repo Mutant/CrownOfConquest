@@ -25,7 +25,7 @@ sub default : Path {
             '+as'     => [ 'total_xp', 'average_xp', 'xp_per_turn', 'character_count' ],
             order_by  => $sort . ' desc',
             group_by  => 'me.party_id',
-            rows      => 10,
+            rows      => 20,
         },
     );
 

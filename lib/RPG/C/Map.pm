@@ -302,21 +302,22 @@ sub move_to : Local {
             {
                 party_id => $c->stash->{party}->id,
                 land_id  => $new_land->id,
-                'dungeon.type' => 'dungeon',
             },
             {
             	prefetch => { location => 'dungeon' },
             },
         );
         
+        my $has_dungeon = $mapped_sector->location->dungeon && $mapped_sector->location->dungeon->type eq 'dungeon' ? 1 : 0;
+        
         if ($mapped_sector) {
-        	if ($mapped_sector->known_dungeon && ! $mapped_sector->location->dungeon) {
+        	if ($mapped_sector->known_dungeon && ! $has_dungeon) {
             	# They thought there was a dungeon here, but there's not
             	$mapped_sector->update( { known_dungeon => 0 } );
             
             	$c->stash->{had_phantom_dungeon} = 1;
         	}
-        	elsif ($mapped_sector->location->dungeon) {
+        	elsif ($has_dungeon) {
         		# They've found a dungeon
         		$mapped_sector->known_dungeon( $mapped_sector->location->dungeon->level );
         		$mapped_sector->update;

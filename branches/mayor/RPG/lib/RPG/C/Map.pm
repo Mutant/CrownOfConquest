@@ -99,7 +99,7 @@ sub known_dungeons : Local {
     my $mapped_sectors_rs = $c->model('DBIC::Mapped_Sectors')->search(
         { 
         	'party_id' => $c->stash->{party}->id,
-        	'known_dungeon' => {'!=', 0}, 
+        	'known_dungeon' => {'!=', 0},        	
         },
         {
         	prefetch => 'location',
@@ -302,6 +302,7 @@ sub move_to : Local {
             {
                 party_id => $c->stash->{party}->id,
                 land_id  => $new_land->id,
+                'dungeon.type' => 'dungeon',
             },
             {
             	prefetch => { location => 'dungeon' },

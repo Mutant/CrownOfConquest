@@ -14,7 +14,8 @@ __PACKAGE__->table('Town');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Town');
 
-__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill discount_type discount_value discount_threshold/);
+__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill 
+						    discount_type discount_value discount_threshold mayor/);
 
 __PACKAGE__->set_primary_key('town_id');
 
@@ -29,6 +30,8 @@ __PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', { 'foreign.town_i
 __PACKAGE__->has_many( 'party_town', 'RPG::Schema::Party_Town', { 'foreign.town_id' => 'self.town_id' }, );
 
 __PACKAGE__->might_have( 'castle', 'RPG::Schema::Dungeon', { 'foreign.land_id' => 'self.land_id' }, );
+
+__PACKAGE__->might_have( 'mayor_character', 'RPG::Schema::Character', { 'foreign.character_id' => 'self.mayor' }, );
 
 sub tax_cost {
     my $self  = shift;

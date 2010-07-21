@@ -51,6 +51,20 @@ sub opponent_number_of_group {
 	}
 }
 
+sub opponents_of {
+	my $self  = shift;
+	my $being = shift;
+
+	my @opponents = $self->opponents;
+	
+	if ($opponents[0]->has_being($being)) {
+		return $opponents[1];
+	}
+	else {
+		return $opponents[0];
+	}
+}
+
 sub execute_round {
 	my $self = shift;
 

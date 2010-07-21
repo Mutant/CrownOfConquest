@@ -71,4 +71,11 @@ sub is {
 	return 1 if $self->id == $test_group->id && $self->group_type eq $test_group->group_type; 	
 }
 
+sub has_being {
+	my $self = shift;
+	my $test_being = shift;
+	
+	return 1 if $self->id == $test_being->group_id && $self->group_type eq $test_being->group->group_type;		
+}
+
 1;

@@ -22,7 +22,7 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance/
+        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
@@ -59,6 +59,8 @@ __PACKAGE__->has_many( 'character_effects', 'RPG::Schema::Character_Effect', { '
 __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_id' );
 
 __PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
+
+__PACKAGE__->might_have( 'mayor_of', 'RPG::Schema::Town', { 'foreign.mayor' => 'self.character_id' }, );
 
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);

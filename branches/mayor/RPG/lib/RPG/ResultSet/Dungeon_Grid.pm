@@ -61,6 +61,7 @@ sub find_random_sector {
 	my $self            = shift;
 	my $dungeon_id      = shift;
 	my $dungeon_room_id = shift;
+	my $no_cg_in_sector = shift // 0;
 	
 	my %params = (
 		'dungeon_room.dungeon_id' => $dungeon_id,
@@ -68,6 +69,10 @@ sub find_random_sector {
 	
 	if ($dungeon_room_id) {
 		$params{'dungeon_room.dungeon_room_id'} = $dungeon_room_id;	
+	}
+	
+	if ($no_cg_in_sector) {
+		$params{'creature_group.creature_id'} = undef;	
 	}
 
 	$self->find(

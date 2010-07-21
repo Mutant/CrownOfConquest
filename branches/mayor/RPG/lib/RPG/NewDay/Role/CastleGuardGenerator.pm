@@ -51,6 +51,7 @@ sub generate_guards {
 	$self->context->logger->debug("Generating $levels_aggregate levels of guards in town " . $town->id);
 
 	my $lowest_level = $creature_types[0]->level;
+	my $highest_level_type = $creature_types[$#creature_types];
 	
 	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
 
@@ -79,6 +80,41 @@ sub generate_guards {
 			last if $levels_aggregate < $type->level;
 		}
 	}
+	
+	# See if the mayor has a group (if there is one)
+	return unless $castle->town->mayor;
+	
+	my $mayors_group = $c->schema->resultset('Creature_Group')->find(
+		{
+			'mayor_of.town_id' => $castle->town->id,
+		},
+		{
+			join => {'characters' => 'mayor_of'},
+		}
+	);
+	
+	unless ($mayors_group) {
+		my $mayor = $castle->town->mayor_character;
+		
+		my $sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
+		
+		$mayors_group = $c->schema->resultset('Creature_Group')->create(
+			{
+				dungeon_grid_id => $sector->id,
+			}						
+		);
+		
+		$mayor->creature_group_id($mayors_group->id);
+		$mayor->update;
+	}
+	
+	my $number_of_guards = $mayors_group->creatures->count;
+	my $number_to_create = 6 - $number_of_guards;
+	
+	for my $count ( 1 .. $number_to_create ) {
+		$mayors_group->add_creature( $highest_level_type, $count );
+	}
+	
 }
 
 1;

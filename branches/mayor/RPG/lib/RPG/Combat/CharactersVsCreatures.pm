@@ -19,25 +19,13 @@ has 'creatures_initiated' => ( is => 'ro', isa => 'Bool', default => 0 );
 sub combatants {
 	my $self = shift;
 
-	return ( $self->character_group->characters, $self->creature_group->creatures );
+	return ( $self->character_group->members, $self->creature_group->members );
 }
 
 sub opponents {
 	my $self = shift;
 
 	return ( $self->character_group, $self->creature_group );
-}
-
-sub opponents_of {
-	my $self  = shift;
-	my $being = shift;
-
-	if ( $being->is_character ) {
-		return $self->creature_group;
-	}
-	else {
-		return $self->character_group;
-	}
 }
 
 sub opponent_of_by_id {

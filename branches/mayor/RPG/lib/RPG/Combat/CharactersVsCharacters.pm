@@ -27,18 +27,6 @@ sub opponents {
 	return ( $self->character_group_1, $self->character_group_2 );
 }
 
-sub opponents_of {
-	my $self  = shift;
-	my $being = shift;
-
-	if ( $being->group->id == $self->character_group_1->id ) {
-		return $self->character_group_2;
-	}
-	else {
-		return $self->character_group_1;
-	}
-}
-
 sub opponent_of_by_id {
 	my $self  = shift;
 	my $being = shift;

@@ -1,0 +1,36 @@
+[% PROCESS dungeon/map_vars.html %]
+[%
+	x = min_x - 1;
+	y = min_y - 1;
+
+	
+%]
+
+<div style="position: relative;" id="dungeon_outer">
+<div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
+[% WHILE y <= max_y %]
+	[% y = y+1 %]
+	[% x = min_x - 1 %]
+	[% WHILE x <= max_x %]
+		[% x = x+1 %]
+		[% sector = grid.$x.$y %]
+		
+		[% FILTER collapse %]
+		<div style="
+			left: [% (x - min_x) * size %]; 
+			top: [% (y - min_y) * size %];
+			width: [% size %]px; 
+			height: [% size %]px; 					
+			position: absolute;
+			"
+			id="sector_[% x %]_[% y %]"
+		>	
+		
+		[% INCLUDE dungeon/sector_inner.html %]
+		
+		</div>
+		[% END %]
+		
+	[% END %]	
+[% END %]
+</div>

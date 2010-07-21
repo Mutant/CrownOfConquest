@@ -1,0 +1,14 @@
+[% MACRO long_description(quest) BLOCK %]
+	[% desc_include = 'quest/description/' _ quest.type.quest_type _ '_long.html' %]
+	[% INCLUDE $desc_include %]
+[% END %]
+
+[% MACRO short_description(quest) BLOCK %]
+	[% desc_include = 'quest/description/' _ quest.type.quest_type _ '_short.html' %]
+	[% INCLUDE $desc_include %]
+[% END %]
+
+[% MACRO list_quest(quest) BLOCK %]
+	[% desc_include = 'quest/description/' _ quest.type.quest_type _ '_list.html' %]
+	[% INCLUDE $desc_include %]
+[% END %]

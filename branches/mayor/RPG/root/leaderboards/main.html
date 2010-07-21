@@ -1,0 +1,53 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE stats/subnav.html %]
+
+<h2>Top Parties</h2>
+
+Top Parties By:
+
+[% sort_params = [
+	{ param => 'xp_per_turn'  label => 'XP per Turn' },
+	{ param => 'average_xp', label => 'XP per Char' },
+	{ param => 'total_xp',   label => 'Total XP' },
+	{ param => 'turns_used'  label => 'Turns Used' },
+] %]
+
+[% FOREACH sort_param = sort_params %]
+	[% IF current_sort == sort_param.param %]
+		<span id="current-selection">[% sort_param.label %]</span>
+	[% ELSE %]
+		<a href="[% base %]/leaderboards?sort=[% sort_param.param %]">[% sort_param.label %]</a>
+	[% END %]
+[% END %]
+
+<table class="main" cellspacing=6>
+	<tr>
+		<th>Rank</th>
+		<th>Party</th>
+		<th>Player</th>
+		<th>XP per Turn</th>
+		<th>XP per Char</th>
+		<th>Total XP</th>
+		<th># of Chars</th>
+		<th>Turns Used</th>
+		<th>Date Created</th>
+		<th>Last Login</th>
+	</tr>
+[% FOREACH party IN parties %]
+	<tr>
+		<td>[% loop.count %]</td>		
+		<td>[% party.name %]</td>		
+		<td>[% party.player.player_name %]</td>
+		<td align="right">[% party.get_column('xp_per_turn') %]</td>
+		<td align="right">[% party.get_column('average_xp') %]</td>
+		<td align="right">[% party.get_column('total_xp') %]</td>
+		<td align="right">[% party.get_column('character_count') %]</td>
+		<td align="right">[% party.turns_used %]</td>
+		<td>[% party.created.ymd %]</td>
+		<td>[% party.player.last_login.ymd %]</td>
+	</tr>
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

@@ -1,0 +1,121 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+[%
+	x = min_x - 1;
+	y = min_y - 1;
+	size = 40;
+	door_thickness = size / 10;
+	door_length = size - 4;
+
+%]	
+
+<div style="position: relative; top: 300px">
+<br><br><br><br><br><br><br><br>	
+[% WHILE y <= max_y %]
+	[% y = y+1 %]
+	[% x = min_x - 1 %]
+	[% WHILE x <= max_x %]
+		[% FILTER collapse %]
+			[% x = x+1 %]
+			[% sector = grid.$x.$y %]
+			[% IF sector %]
+				[% border = "" %]
+				[% FOREACH side IN positions  %]
+					[% border_color = "#6B654E" %]
+					[% FOREACH side_with_wall IN sector.sides_with_walls %]
+						[% IF side_with_wall == side %]
+							[% border_color = "black" %]
+							[% border = border _ "border-" _ side _ ": 5px solid " _  border_color _ "; " %]
+						[% END %]
+					[% END %]				
+				
+					
+				[% END %] 
+				
+				[%
+					current_x = sector.x
+					current_y = sector.y
+				%]					
+					
+		
+				[% background_image = 'floor.PNG' %]
+				
+				<div style="
+					[% border %]
+					width: [% size %]px; 
+					height: [% size %]px; 
+					position: absolute;
+					left: [% (sector.x - min_x) * size %]; 
+					top: [% (sector.y - min_y) * size %];
+					background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
+					font-size: [% size / 2 %]px;
+					text-align: center"
+					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
+					>
+							
+						[% IF sector.stairs_up %]
+							<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0>
+						[% END %]
+						<span style="font-size: 12px">[% sector.x %], [% sector.y %]</span>
+					</div>
+										
+					[% FOREACH door IN sector.sides_with_doors %]
+						[% left_offset = 0 %]
+						[% width_offset = 0 %]
+						[% top_offset = 0 %]
+						[% height_offset = 0 %]
+						[% position = door %]
+					
+						[% IF position == 'right' ||  position == 'left' %]
+							[% height = door_length %]
+							[% width = door_thickness %]
+							[% height_offset = 2 %]
+						[% ELSE %]
+							[% height = door_thickness %]
+							[% width = door_length %]
+							[% width_offset = 2 %]
+						[% END %]
+					
+						[% IF position == 'right' %]
+							[% left_offset = 1 %]
+							[% width_offset = 0 - width + 1 %]
+						[% ELSIF position == 'left' %]
+							[% left_offset = 0 %]
+							[% width_offset = 1 %]
+						[% ELSIF position == 'bottom' %]
+							[% top_offset = 1 %]
+							[% height_offset = 0 - height + 1 %]
+						[% END %]
+						
+		         		<div 
+						   style="
+							position: absolute;
+							width: [% width %];
+							height: [% height %];
+							background: black;
+							left: [% ((sector.x - min_x) + left_offset) * size + width_offset %];
+							top: [% ((sector.y - min_y) + top_offset) * size + height_offset %];"
+						>							
+													
+						</div>						
+					[% END %]
+					
+			[% ELSE %]
+				<div style="
+					left: [% (x - min_x) * size %]; 
+					top: [% (y - min_y) * size %];
+					width: [% size - 2 %]px; 
+					height: [% size - 2 %]px; 					
+					position: absolute;
+				"
+				>					
+				</div>
+			[% END %]
+		[% END %]
+	[% END %]	
+[% END %]
+
+</div>
+
+
+[% INCLUDE bottom.html %]

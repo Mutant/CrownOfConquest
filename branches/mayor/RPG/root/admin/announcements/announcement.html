@@ -1,0 +1,28 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+<p>Make an announcement</p>
+
+<form method="POST" action="[% base %]/admin/announcement/submit">
+<table class="main">
+	<tr>
+		<td>Title</td>
+		<td><input type="text" name="title" size="70"></td>
+	</tr>
+	<tr>
+		<td>Body (in HTML!)</td>
+		<td><textarea name="announcement" rows="10" cols="70"></textarea></td>
+	</tr>
+		
+	<tr>
+		<td></td>
+		<td><input type="submit" name="action" value="Preview"><input type="submit" name="action" value="Submit"></td>
+	</tr>
+</table>
+
+[% IF preview %]
+Preview:
+<hr size=1>
+[% preview %]
+[% END %]
+
+[% INCLUDE bottom.html %]

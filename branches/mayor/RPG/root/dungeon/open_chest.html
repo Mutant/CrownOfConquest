@@ -1,0 +1,11 @@
+[% IF items_found.0 or gold_found != 0 %]
+	You open the chest, and grab the treasure!<br><br>
+
+	[% FOREACH item_found IN items_found %]
+	[% item_found.character.name %] found a [% item_found.item.display_name %]<br>
+	[% END %] 
+	
+	[% IF gold_found != 0 %]You find [% gold_found %] gold[% END %]
+[% ELSE %]
+	The chest is empty!
+[% END %]

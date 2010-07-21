@@ -1,0 +1,15 @@
+<table class="main">
+[% FOREACH character IN opposing_party.characters %]
+	<tr>
+		<td>[% character.name %] ([% character.class.class_name %])</td>
+		<td>[% character.health %]</td>		
+		[% IF character.character_effects %]
+			<td>(
+			[% FOREACH effect IN character.character_effects %]
+				[% effect.effect.effect_name %][% UNLESS loop.last() %],[% END %]
+			[% END %]				
+			)</td>
+		[% END %]
+	</tr>
+[% END %]
+</table>

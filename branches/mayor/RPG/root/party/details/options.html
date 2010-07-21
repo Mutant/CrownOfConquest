@@ -1,0 +1,45 @@
+<h3>Party Options</h3>
+
+<form method="POST" action="[% base %]/party/details/update_options">
+	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"> 
+	<input type="submit" value="Save Settings" name="save">	
+</form>
+
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband'">Disband Party</button>
+
+<br>
+
+<h3>Notification Options</h3>
+
+<form method="POST" action="[% base %]/party/details/update_email_options">
+<table>
+	<tr>
+		<td>Send emails from Kingdoms (unchecking overrides other email options):</td>
+		<td><input type="checkbox" name="send_email" value="1" onclick="toggle_disabled_checkboxes()" id="send_email"></td> 
+	</tr>
+	<tr>
+		<td>Send a "Daily Report" about your party via email:</td>
+		<td><input type="checkbox" name="send_daily_report" value="1" [% UNLESS send_email %]disabled[% END %]  id="send_daily_report"></td> 
+	</tr>	
+	<tr>
+		<td>Send email announcements about Kingdoms:</td>
+		<td><input type="checkbox" name="send_email_announcements" value="1" [% UNLESS send_email %]disabled[% END %] id="send_email_announcements"></td> 
+	</tr>
+	<tr>
+		<td>Display new announcements when logging in to Kingdoms:</td>
+		<td><input type="checkbox" name="display_announcements" value="1"></td> 
+	</tr>
+	<tr>
+		<td>Display Tip of the Day when logging into Kingdoms:</td>
+		<td><input type="checkbox" name="display_tip_of_the_day" value="1"></td> 
+	</tr>	
+</table>
+<input type="submit" value="Save Settings" name="save">
+</form>
+
+<br>
+
+<h3>Account Options</h3>
+
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/change_password'">Change Password</button><br>
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/delete_account'">Delete Account</button>

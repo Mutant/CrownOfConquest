@@ -1,0 +1,137 @@
+[% MACRO sector_title(position) BLOCK %]
+	[% IF ! position.town_id %]
+		[% position.terrain_name | ucfirst %]
+		[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
+		([% position.x %], [% position.y %])
+	[% END %]
+[% END %]
+
+[% MACRO town_tooltip(position) BLOCK %]
+<b>[% position.town_name %]</b> ([% position.x %], [% position.y %])<br>
+Prosperity: [% position.prosperity %]<br>
+[% IF click_to_move %]Movement Cost: [% position.party_movement_factor %]<br>[% END %]
+[% IF town_costs.${position.town_id}.paid %]
+	Paid Tax Today
+[% ELSE %]
+	Tax: [% town_costs.${position.town_id}.gold %] gold / [% town_costs.${position.town_id}.turns %] turns
+[% END %] 
+[% END %]
+
+[%
+	image_width = 96 / zoom_level
+	image_height = 80 / zoom_level
+	sector_width = image_width + 2;
+	sector_height = image_height + 2;
+	min_width = (sector_width + 3) * grid_size;
+	min_height = (sector_height + 2) * grid_size;
+%]
+
+<style>
+.container2 {position:relative; min-width:[% min_width %]px; min-height: [% min_height %];}
+.holder2 {display:block; color:#000;}
+
+* html .container2 {border-right:[% min_width + 200 %]px solid #000;}
+* html .holder2 {float:left; position:relative; margin-right:-[% min_width + 200 %]px;}
+</style>
+
+<div class="container2">
+<div class="holder2">
+
+[% FOREACH y IN y_range %]
+	<div style="clear: left;">
+	[% FOREACH x IN x_range %]
+		[% position = undef %]
+		[% IF x > 0 && y > 0 %]
+			[% position = grid.$x.$y %]
+		[% END %] 
+		<!-- pos [% x %], [% y %] - [% position.land_id %]-->
+		[% FILTER collapse %]
+        	[% border_colour = 'gray' %]
+        	[% IF position.land_id == current_position.id %]
+        		[% border_colour= 'blue' %]
+        	[% END %]
+	
+		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
+				[% IF position.town_id %]
+					[% IF ! town_costs.${position.town_id}.paid && party.turns >= position.party_movement_factor %]
+						<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
+					[% ELSE %]
+						<a href="#" onclick="getPanels('/town/enter?land_id=[% position.land_id %]')">
+					[% END %]
+				[% ELSE %]
+	       			<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')">
+				[% END %]
+	       	[% ELSIF ! click_to_move %]
+        		<a href="?center_x=[% x %]&center_y=[% y %]&zoom_level=[% zoom_level %]">
+	       	[% END %]    
+        	
+			<span style="			
+					width: [% sector_width %]px; 
+					height: [% sector_height %]px;
+					float: left; 			
+					text-align: center;
+					display: inline;					
+					font-size: 1px;
+					position: relative;					
+					[% IF position.town_id %]background: lightgrey;[% END %]
+					"
+					[% IF position.town_id %]id="town_[% position.town_id %]"[% END %]
+										
+					>
+					[% IF position %]
+						<span style = "
+							border: 1px solid [% border_colour %]; 
+							width: [% sector_width %]px; 
+							height: [% sector_height %]px;
+							top: 0px;
+							left: 0px; 
+							position: absolute;">
+						<img 
+							src="[% c.config.static_path %][% image_path %][% position.image %]" 
+							border=0 
+							title="[% sector_title(position) || collapse %]" 
+							width="[% image_width %]"
+							height="[% image_height %]"							
+						>
+						</span>
+					
+						[% FOREACH road IN position.roads %]
+							[% IF road.position %]
+								<img src="[% c.config.static_path %][% image_path %]road/[% road.position | replace('\s+', '_') %].gif" style="
+									position: absolute;
+									top: 0px;
+									left: 0px;							
+								"
+								border = 0
+								width="[% sector_width %]"
+								height="[% sector_height %]"
+								[% IF loop.last %]
+									title="[% sector_title(position) || collapse %]"
+								[% END %]
+								>
+			
+							[% END %]
+						[% END %]
+
+					[% END %]
+					
+				
+					</span>
+					
+
+					
+			[% IF position.town_id %]
+				<div dojoType="dijit.Tooltip"
+                   connectId="town_[% position.town_id %]"
+                   label="[% town_tooltip(position) | collapse %]">
+                   </div>
+			[% END %]					
+			[% IF ! click_to_move || position.next_to_centre %]
+				</a>
+        	[% END %]
+        [% END %]
+	[% END %]
+	</div>
+[% END %]
+</div>
+</div>

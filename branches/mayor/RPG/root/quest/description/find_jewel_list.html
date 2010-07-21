@@ -1,0 +1,5 @@
+[% UNLESS quest.param_current_value('Sold Jewel') %]
+	Find a [% quest.jewel_type_to_find.item_type %] and sell it to one of the shops in [% quest.town.town_name %].
+[% ELSE %]
+	You've sold a [% quest.jewel_type_to_find.item_type %] to a shop in [% quest.town.town_name %]. Now head to the town hall to collect your reward.
+[% END %]

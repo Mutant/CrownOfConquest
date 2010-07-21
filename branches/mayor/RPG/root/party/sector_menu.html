@@ -1,0 +1,48 @@
+[% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
+You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
+<br><br>
+[% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
+[% IF dungeon %]There is an entrance to a dungeon here. (Level [% dungeon.level %])<br><br>[% END %]
+[% IF had_phantom_dungeon %]The dungeon entrance you expected to see here has mysteriously disappeared.<br><br>[% END %]
+[% IF garrison %]
+	[% IF garrison.party_id == party.id %]
+		You have a garrison here.
+	[% ELSE %]
+		There is a garrison here owned by the party "[% garrison.party.name %]". [ <a href="javascript:getPanels('/garrison/combat/attack')">Attack</a> ]
+	[% END %]
+	<br><br>
+[% END %]
+[% IF items.0 %]
+	Items here (click to pick up):
+	[% FOREACH item IN items %]
+		<a href="javascript:getPanels('/party/pickup_item?item_id=[% item.id %]')">[% item.display_name %]</a>[% UNLESS loop.last %], [% END %]
+	[% END %]
+	<br><br>
+[% END %]
+
+[% IF graves.0 %]
+	[% INCLUDE graves/main.html %]
+[% END %]
+
+[% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
+
+<a href="javascript:getPanels('/party/camp')">Camp</a> 
+| <a href="javascript:getPanels('/party/scout')">Scout</a> 
+	[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
+	[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
+	[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
+	[% IF adjacent_towns %]
+		[% FOREACH town IN adjacent_towns %]
+			| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
+		[% END %]
+	[% END %]
+	[% IF can_build_garrison %]
+		| <a href="[% base %]/garrison/create">Create a Garrison</a>
+	[% ELSIF garrison.party_id == party.id %]
+		| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
+	[% END %]
+<br>
+
+[% IF creature_group %]
+	[% creature_group_display %]
+[% END %]

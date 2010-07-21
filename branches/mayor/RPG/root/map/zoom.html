@@ -1,0 +1,30 @@
+		[% 			
+			zoom_link = 2
+		%]
+		
+		[% WHILE zoom_link <= max_zoom %]
+			[% IF zoom_link == zoom_level %]
+				<img src="[% c.config.static_path %]/images/zoom_sel.gif">
+			[% ELSE %]
+				[% message = 'Zoom In' %]
+				[% IF zoom_link > zoom_level %]
+					[% message = 'Zoom Out' %]
+				[% END %]
+				<div 
+					dojoType="dijit.Tooltip" 
+					connectId="zoom_link_[% zoom_link %]"
+					label="[% message %]"
+					style="display: none"></div>
+					
+			[% IF main_screen %]
+				[% zoom_url = "javascript:getPanels('/party/zoom_change?zoom_level=" _ zoom_link _ "')" %]
+			[% ELSE %]
+				[% zoom_url = "?zoom_level=" _ zoom_link _ "&center_x=" _ center_x _ "&center_y=" _ center_y %]
+			[% END %]
+			
+			   <a href="[% zoom_url %]" style="text-decoration: none"><img src="[% c.config.static_path %]/images/zoom.gif" border=0 id="zoom_link_[% zoom_link %]">
+			   </a>
+			[% END %]
+			<br>
+			[% zoom_link = zoom_link + 1 %] 
+		[% END %] 

@@ -1,0 +1,3 @@
+[% IF town.discount_type == shop_type && town.discount_threshold <= party.prestige_for_town(town) %]
+	(Discount available: [% town.discount_value %]%[% IF town.discount_type == 'blacksmith' %] - repairs only[% END %])<br><br>
+[% END %]

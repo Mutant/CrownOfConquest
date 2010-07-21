@@ -1,0 +1,16 @@
+[% INCLUDE layout/guest_top.html %]
+
+
+<div class="outer">
+<div class="content">
+
+It seems an error has occured. The error message was:
+<br><br>
+[% db_err %]<br>
+[% FOREACH error_msg IN error_msgs %]
+[% error_msg %]<br>
+[% END %]
+<br>
+Please try what you were doing again. If the problem persists, please file a bug report. Thanks.
+</div>
+</div>

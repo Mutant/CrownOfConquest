@@ -1,0 +1,12 @@
+[% random_char.character_name %] steps forward.
+<br><br>
+"I will destroy this foul weapon of the underworld!", [% random_char.pronoun('subjective') %] proclaims.
+<br><br>
+With a mighty swing of [% random_char.pronoun('posessive-subjective') %] weapon, [% random_char.pronoun('subjective') %] shatters the Orb [% orb.name %] into a million pieces. There'll be no more creatures spawned in this sector...
+
+[% IF quest_messages %]
+	<br><br>
+	[% FOREACH message IN quest_messages %]
+		[% message %]<br>
+	[% END %]
+[% END %]

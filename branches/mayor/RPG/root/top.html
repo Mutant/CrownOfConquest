@@ -1,0 +1,96 @@
+<head>
+
+<title>Kingdoms - the web-based RPG</title>
+
+<meta http-equiv="pragma" content="no-cache" />
+
+[% INCLUDE layout/dojo.html %]
+
+<link rel="stylesheet" type="text/css" href="[% c.config.static_path %]/main.css" />
+
+</head>
+<body class="tundra" id="body">
+<script>
+	dojo.registerModulePath("rpg","[% c.config.static_path %]/dojo_cust/rpg");
+	dojo.require("dojo.parser");
+	dojo.require("dijit.form.Button");
+	dojo.require("dijit.Dialog");
+	dojo.require("dijit.form.TextBox");
+	dojo.require("dojox.layout.ContentPane");
+	dojo.require("dijit.layout.ContentPane");
+	dojo.require('dijit.Tooltip');
+    
+[% IF error %]
+function error_init() {
+	dojo.byId('error-message').innerHTML = "[% error | html_entity | html_line_break | collapse %]";
+	dijit.byId('error').show();
+}
+dojo.addOnLoad( error_init );
+[% END %]
+
+[% IF message %]
+function message_init() {
+	dojo.byId('message-span').innerHTML = "[% message | html_entity | html_line_break | collapse %]";
+	dijit.byId('main-message-diag').show();
+}
+dojo.addOnLoad( message_init );
+[% END %]
+
+function show_message(message) {
+	dojo.byId('message-span').innerHTML = message;
+	dijit.byId('main-message-diag').show();		
+}
+
+</script>
+
+<div dojoType="dijit.Dialog" id="error" style="display: none" title="Error">
+    <span id="error-message"></span><br>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+</div>
+
+<div dojoType="dijit.Dialog" id="main-message-diag" style="display: none" title="Message">
+    <span id="message-span"></span><br>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+</div>
+
+<div class="nav">
+	[% IF admin_screen %]
+		[% INCLUDE admin/left_hand_nav.html %]
+	[% ELSIF guest_screen %]	
+		[% INCLUDE player/left_hand_nav.html %]
+	[% ELSE %]
+		[% INCLUDE layout/left_hand_nav.html %]
+	[% END %]
+	
+	<br>
+		
+	<div style="font-size: 10px">
+		<a href="[% base %]/player/vote">Vote For Kingdoms!</a>
+	</div>
+	
+	<br>
+			
+	<div align="center">
+
+</div>
+	
+</div>
+
+<div id="content-outer" class="main" style="">
+	
+<div id="border-top"><div id="border-left"><div id="border-bottom"><div id="border-right" style="position: relative;">
+	<div style="right:0px; top: 0px; position: absolute">
+		<img src="/static/images/cornerpiece1.gif">
+	</div>
+	<div style="left:0px; top: 0px; position: absolute">
+		<img src="/static/images/cornerpiece1.gif">
+	</div>	
+	<div style="bottom:0px; left: 0px; position: absolute">
+		<img src="/static/images/cornerpiece1.gif">
+	</div>		
+	<div style="bottom:0px; right:0px; position: absolute">
+		<img src="/static/images/cornerpiece1.gif">
+	</div>		
+	
+	<div id="content-inner">	
+		

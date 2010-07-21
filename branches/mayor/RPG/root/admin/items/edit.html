@@ -1,0 +1,99 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+[% INCLUDE admin/items/subnav.html %]
+
+[% MACRO item_type_select(select_name, selected) BLOCK %]
+<select dojoType="dijit.form.FilteringSelect" name="[% select_name %]" autocomplete="false">
+		[% UNLESS selected %]<option></option>[% END %]
+        [% FOREACH item_type IN item_types %]        
+ 	        <option value="[% item_type.id %]" [% IF selected == item_type.id %]selected=selected[% END %]>[% item_type.item_type %]</option>
+ 	    [% END %]
+</select>
+[% END %]
+
+<script type="text/javascript">
+	dojo.require("dijit.form.FilteringSelect");
+</script>
+   
+<b>Create New Item In Category:</b>
+<form method="get" action="[% base %]/admin/items/new_item_type">
+<select dojoType="dijit.form.FilteringSelect" name="category_id" autocomplete="false">
+		<option></option>
+        [% FOREACH category IN categories %]        
+ 	        <option value="[% category.id %]">[% category.item_category %]</option>
+ 	    [% END %]
+</select>
+<input type="submit" value="Create">
+</form>
+
+<b>Edit Item Type</b><br>
+<form method="get" action="[% base %]/admin/items/edit_item_types">
+[% item_type_select('item_type_id') %]
+<input type="submit" value="Edit">
+</form>
+
+[% IF item_type_to_edit %]
+[% item_type = item_type_to_edit %]
+<form method="post" action="[% base %]/admin/items/update_item_type">
+<input type="hidden" name="item_type_id" value="[% item_type.id %]">
+<table>
+	<tr>
+		<td>Item Type:</td>
+		<td><input type="text" name="item_type" value="[% item_type.item_type %]"></td>
+	</tr>
+	<tr>
+		<td>Category:</td>
+		<td>[% item_type.category.item_category %]</td>
+	<tr>
+		<td>Base Cost:</td>
+		<td><input type="text" name="base_cost" value="[% item_type.base_cost %]"></td>
+	</tr>
+	<tr>
+		<td>Prevalence:</td>
+		<td><input type="text" name="prevalence" value="[% item_type.prevalence %]"></td>
+	</tr>
+	
+	[% FOREACH item_attribute_name IN item_attribute_names %]
+	[% item_attribute = item_type.attribute(item_attribute_name.item_attribute_name) %]
+	<tr>
+		<td>[% item_attribute_name.item_attribute_name %]:</td>
+		<td>
+			[% IF item_attribute_name.value_type == 'numeric' %]
+				<input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_attribute.item_attribute_value %]">
+			[% ELSIF item_attribute_name.value_type == 'string' %]
+				<input type="text" name="attribute_[% item_attribute_name.id %]" value="[% item_attribute.item_attribute_value %]">
+			[% ELSIF item_attribute_name.value_type == 'item_type' %]
+				[% item_type_select('attribute_' _ item_attribute_name.id, item_attribute.item_attribute_value) %]
+			[% ELSIF item_attribute_name.value_type == 'boolean' %]
+				<input type="checkbox" name="attribute_[% item_attribute_name.id %]" value="1"
+					[% IF item_attribute.item_attribute_value %]checked=checked[% END %]>
+			[% END %]
+		</td>
+	</tr>	
+	[% END %]
+	
+	[% FOREACH item_variable_name IN item_variable_names %]
+	[% item_variable_param = item_type.variable_param( item_variable_name.item_variable_name ) %]
+	<tr>
+		<td>[% item_variable_name.item_variable_name %]:</td>
+		<td>
+			[% IF item_variable_name.create_on_insert %]
+				Min: <input type="text" size="5" name="item_variable_param_min_[% item_variable_name.id %]" value="[% item_variable_param.min_value %]">
+				Max: <input type="text" size="5" name="item_variable_param_max_[% item_variable_name.id %]" value="[% item_variable_param.max_value %]">
+				Keep Max?
+				<input type="checkbox" name="item_variable_param_keep_max_[% item_variable_name.id %]" value="1"
+					[% IF item_variable_param.keep_max %]checked=checked[% END %]>
+			[% ELSE %]
+				(Not created on insert)
+			[% END %]
+		</td>
+	</tr>
+	[% END %]
+		
+</table>
+<input type="submit" value="Update">
+</form>
+<a href="[% base %]/admin/items/edit_item_types_in_category?category_id=[% item_type.category.item_category_id %]">Category Grid</a>
+[% END %]
+
+[% INCLUDE bottom.html %]

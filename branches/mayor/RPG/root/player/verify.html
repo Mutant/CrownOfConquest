@@ -1,0 +1,26 @@
+[% INCLUDE top.html, guest_screen = 1 %]
+
+<h1>Verify Your Account</h1>
+
+<p>You must verify your email address. You should have received a verification code via email. Enter it below to activate your account.</p>
+
+<div align="center">
+<form method="POST" action="[% base %]/player/verify">
+<table>
+	<tr>
+		<td nowrap>Email Address:</td>
+		<td><input type="text" name="email" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td nowrap>Verification Code:</td>
+		<td><input type="text" name="verification_code" style="width: 300px"></td>
+	</tr>
+	<tr>
+		<td></td>
+		<td><input type="submit" value="Verify Account"></td>
+	</tr>
+</table>
+</form>
+</div>
+
+[% INCLUDE bottom.html %]

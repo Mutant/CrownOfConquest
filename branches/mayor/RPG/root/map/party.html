@@ -1,0 +1,53 @@
+[% INCLUDE top.html %]
+
+<script>
+	dojo.require("dijit.layout.TabContainer");	
+</script>
+
+<div style="background: #898E73; position: relative; overflow: auto; min-height: 800px;">
+	[% FILTER collapse %]
+	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black; z-index: 5">
+		[% INCLUDE map/zoom.html max_zoom=7 %]
+
+
+			
+		<br>
+		<span id="party_center"><a href="?zoom_level=[% zoom_level %]"><img src="[% c.config.static_path %]/images/center.gif" border=0></a></span>
+		<div 
+			dojoType="dijit.Tooltip" 
+			connectId="party_center"
+			label="Centre on Party"></div>
+	</div>
+	[% END %]
+	
+	[% map %]
+
+</div>
+
+<br><br>
+
+<center>Click on a square to centre the map there</center>
+
+<h2>Landmarks</h2>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; min-height: 400px">
+    <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
+		<h3>Known Towns</h3>
+		
+		<table class="main" cellpadding="5" cellspacing="5">
+			<tr>
+		[% FOREACH town IN known_towns %]
+			<td>[% town.town_name %] ([% town.prosperity %]) ([% town.location.x %], [% town.location.y %])</td>
+			[% IF loop.count % 5 == 0 %]
+				</tr><tr>
+			[% END %]
+		[% END %]
+			</tr>
+		</table>
+	</div>
+	
+	<div dojoType="dijit.layout.ContentPane" title="Dungeons" style="display: none" href="[% base %]/map/known_dungeons">
+			
+	</div>
+
+[% INCLUDE bottom.html %]

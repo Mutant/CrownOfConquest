@@ -1,0 +1,5 @@
+[% IF ! quest.param_current_value('Raided Town') %]
+	Find and successfully raid the town of [% quest.town_to_raid.town_name %].
+[% ELSE %]
+	You've successfully raided the Town of [% quest.town_to_raid.town_name %]. Return to [% quest.town.town_name %] to collect your reward.
+[% END %]

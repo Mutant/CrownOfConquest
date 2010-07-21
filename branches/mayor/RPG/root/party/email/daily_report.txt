@@ -1,0 +1,127 @@
+<h2>Kingdoms Daily Report for "[% party.name %]", Game Day [% c.yesterday.day_number %]</h2>
+
+Current Turns: [% party.turns %]
+[% IF party.turns == c.config.maximum_turns %]
+   (<b>Note</b>: You're at the maximum number of turns allowed. Use some today to avoid losing turns!)
+[% END %]<br>
+Location: [% party.location.x %], [% party.location.y %]
+[% IF in_town %]
+    (In the town of [% party.location.town.town_name %])
+[% ELSE %]
+	(<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
+[% END %]<br>
+
+<h3>Battles</h3>
+
+[% MACRO battle_result(battle, party_num, group_num) BLOCK %]
+	[% IF battle.outcome == 'opp' _ party_num _ '_won' || battle.outcome == 'opp' _ opp_num _ '_fled' %]
+		[% xp = battle.xp_awarded %]
+	[% END %]
+	<td>
+	[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
+		Won
+		[% gold = battle.gold_found %]
+	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
+		Lost
+	[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
+	    We Fled
+	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
+		They Fled
+	[% END %]
+	</td>
+	<td align="center">
+		[% xp %]
+	</td>
+	<td align="center">
+		[% gold %]
+	</td>
+[% END %]
+
+[% IF offline_combat_count == 0 %]
+<p>You were not involved in any battles.</p>
+[% ELSE %]
+<table>
+	<tr>
+		<th>Opponent</th>
+		<th>Outcome</th>
+		<th>XP Awarded</th>
+		<th>Gold Found</th>
+	</tr>
+	[% FOREACH battle IN combat_logs %]
+	<tr>
+		<td>
+			[% party_num = battle.party_opponent_number(party) %]
+			[% opp_num = party_num == 1 ? 2 : 1 %]
+		
+			[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+		</td>
+			[% battle_result(battle, party_num, opp_num) %]
+	</tr>
+	[% END %]
+</table>
+[% END %]
+
+<h3>Quests</h3>
+
+[% IF quests.0 %]
+[% PROCESS quest/description.html %]
+<table cellspacing="3">
+	<tr>
+		<th>Quest</th>
+		<th>Town</th>
+		<th>Days Left</th>
+	</tr>
+	[% FOREACH quest IN quests %]
+	<tr>
+		<td>[% short_description(quest) %]</td>
+		<td>[% quest.town.town_name %]</td>
+		<td>[% quest.days_to_complete %]</td>
+	</tr>
+	[% END %]
+</table>
+[% ELSE %]
+You don't current have any active quests.
+[% END %]
+
+<h3>Garrisons</h3>
+
+[% IF ! garrisons %]
+	You do not have any garrisons
+[% ELSE %]
+	You have [% garrisons.size %] garrisons.<br><br>	
+
+	[% FOREACH garrison_log IN garrison_combat_logs %]
+		The Garrison at [% garrison_log.garrison.land.x %], [% garrison_log.garrison.land.y %] has the following characters: 
+		[% INCLUDE garrison/char_summary.html garrison = garrison_log.garrison %]<br>
+		
+		[% IF garrison_log.combat_logs.size != 0 %]
+			<br>
+			<table>
+				<tr>
+					<th>Opponent</th>
+					<th>Outcome</th>
+					<th>XP Awarded</th>
+					<th>Gold Found</th>
+				</tr>
+				[% FOREACH battle IN garrison_log.combat_logs %]
+				<tr>
+					<td>
+						[% garrison_num = battle.garrison_opponent_number(garrison_log.garrison) %]
+						[% opp_num = garrison_num == 1 ? 2 : 1 %]
+					
+						[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+					</td>
+   					[% battle_result(battle, garrison_num, opp_num) %]
+				</tr>
+				[% END %]
+			</table>
+			<br>
+		[% ELSE %]
+			No recent combat.<br>
+		[% END %]
+	[% END %]
+[% END %]
+<br><br>
+Note, you can disable this email by logging into Kingdoms, clicking on "Party", going to the "Options" tab, and un-checking the 
+"Send a Daily Report" option.  
+

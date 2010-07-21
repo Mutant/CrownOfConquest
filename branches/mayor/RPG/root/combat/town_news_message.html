@@ -1,0 +1,19 @@
+[% FILTER collapse %]
+	[% log.opponent_1.name %] were spotted in combat with
+		[% IF log.opponent_2_type == 'creature_group' %] 
+			a group of [% INCLUDE combat/creature_group_summary.html creature_group=log.opponent_2 include_dead_creatures=1 %]
+		[% ELSE %]
+			[% log.opponent_2.name %]
+		[% END %] 
+	at [% log.land.x %], [% log.land.y %]. Witnesses say 
+	[% IF log.outcome == 'opp1_won' %]
+		[% log.opponent_1.name %] crushed their opponents.
+	[% ELSIF log.outcome == 'opp1_fled' %]
+		[% log.opponent_1.name %] fled in disgrace.
+	[% ELSIF log.outcome == 'opp2_fled' %]
+		[% IF log.opponent_2.type == 'creature_group' %]the cowardly creatures[% ELSE %][% log.opponent_2.name %][% END %]
+			 fled with some of their number in tact.
+	[% ELSIF log.outcome == 'opp2_won' %]
+		[% log.opponent_1.name %] were destroyed by [% IF log.opponent_2.type == 'creature_group' %]the creatures[% ELSE %][% log.opponent_2.name %][% END %].
+	[% END %]
+[% END %]

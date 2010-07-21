@@ -1,0 +1,77 @@
+[% MACRO display_death(message) BLOCK %]
+	[% IF message.defender_killed %]
+		<span class="[% defender_class %]">[% message.defender.name %]</span> was killed!
+	[% END %]
+[% END %]
+
+[% FILTER collapse %]
+[% FOREACH message IN combat_messages %]
+	<li>
+	[% IF message.attacker.is_character && message.attacker.group_id == group.id %]
+		[% 
+			attacker_class  = "combat-party-attacker"
+			defender_class  = "combat-creature-defender"
+		%]
+	[% ELSE %]
+		[% 
+			attacker_class  = "combat-creature-attacker"
+			defender_class  = "combat-party-defender"
+		%]
+	[% END %]	
+
+	[% IF message.spell_name %]
+		[% INCLUDE magic/spell_result.html, message=message %]
+	[% ELSIF message.no_ammo %]
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because [% message.attacker.pronoun('subjective') %] had no ammo left for 
+			[% message.attacker.pronoun('posessive-subjective') %] 
+			<span class="combat-weapon">[% message.attacker.weapon %]</span>!</span>
+	[% ELSIF message.weapon_broken %]
+		<span class="attack_error"><span class="[% attacker_class %]">[% message.attacker.name %]</span> couldn't attack because [% message.attacker.pronoun('posessive-subjective') %] 
+			<span class="combat-weapon">[% message.attacker.weapon %]</span> is broken and needs to be repaired!</span>
+	[% ELSIF message.effect %]
+		<span class="[% defender_class %]">[% message.defender.name %]</span> took <span class="[% defender_class %]">[% message.damage %]</span> 
+		[% message.effect %] damage. [% display_death(message) %]
+	[% ELSE %]	
+		<span class="[% attacker_class %]">[% message.attacker.name %]</span> attacked <span class="[% defender_class %]">[% message.defender.name %]</span> 
+			with [% message.attacker.pronoun('posessive-subjective') %] <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
+		
+		[% IF message.damage > 0 %]
+			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of						
+			
+			[% IF message.magical_damage %]
+				[% magic_damage = message.magical_damage %]
+				standard damage
+				[% IF magic_damage.extra_damage %] and <span class="[% defender_class %]">[% magic_damage.extra_damage %]</span>
+					points of [% magic_damage.type %] damage 
+				[% END %].
+				[% IF magic_damage.effect %]
+					<span class="[% defender_class %]">[% message.defender.name %]</span> was [% magic_damage.effect %] by the attack for 
+					[% magic_damage.duration %] rounds!
+				[% END %]
+				[% IF magic_damage.resisted %]
+					<span class="[% defender_class %]">[% message.defender.name %]</span> resisted the [% magic_damage.type %] attack!
+				[% END %]
+				
+				[% display_death(message) %]
+				
+				[% FOREACH other_damage IN message.magical_damage.other_damages %]
+					The attack also [% other_damage.magical_damage.effect %] <span class="[% defender_class %]">[% other_damage.defender.name %]</span>
+					[% IF other_damage.magical_damage.extra_damage %]
+						for <span class="[% defender_class %]">[% other_damage.magical_damage.extra_damage %]</span> points of damage.
+						[% display_death(other_damage) %]
+					[% ELSIF other_damage.magical_damage.resisted %]
+						but [% other_damage.defender.pronoun('subjective') %] resisted!
+					[% END %] 
+				[% END %]				
+			[% ELSE %]
+				 damage.
+				 
+				 [% display_death(message) %]
+			[% END %]			
+		[% ELSE %]
+			missed.
+		[% END %]
+	[% END %]
+	</li>
+[% END %]
+[% END %]

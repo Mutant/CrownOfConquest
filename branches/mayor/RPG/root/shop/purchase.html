@@ -1,0 +1,193 @@
+[% INCLUDE top.html %]
+
+<script type="text/javascript">
+	dojo.require("dojo.dnd.Source");
+	dojo.require("dijit.form.NumberSpinner");
+	dojo.require("dijit.layout.TabContainer");
+	dojo.require("rpg.dnd.Target");
+	
+function init() {	
+	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+		var t = dojo.dnd.manager().target;
+
+		var purchasedItem = source.getItem(nodes[0].id).data;
+
+		tmp = t.node.id.split(/-/);
+		var char_id = tmp[1];
+	
+		var purchasingChar = dojo.byId(t.node.id).innerHTML;
+		
+    	tmp = nodes[0].id.split(/-/);
+    	
+    	var item_type_id = tmp[1];
+		
+		if (tmp[0] == 'item' || tmp[0] == 'enchanted') {			
+			dojo.byId('confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
+			dojo.byId('purchasing-char-id').value = char_id;
+			
+			if (tmp[0] == 'item') {
+			    dojo.byId('purchasing-item-id').value = null;
+				dojo.byId('purchasing-item-type-id').value = item_type_id;
+			}
+			else {
+				dojo.byId('purchasing-item-id').value = item_type_id;
+				dojo.byId('purchasing-item-type-id').value = null;
+			}
+			
+			dijit.byId('confirmation').show();
+		}
+		else if (tmp[0] == 'quantity') {
+			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
+			dojo.byId('quantity-char-id').value = char_id;
+			dojo.byId('quantity-item-type-id').value = item_type_id;
+			
+			dijit.byId('quantity-selection').show();
+		}
+		else {
+			alert("Invalid drag/drop");
+		}
+		
+		return true;
+	});	
+}
+
+function savePurchase(dialogFields) {
+	if (dialogFields.purchasing_item_id) {
+		url = "[% base %]/shop/buy_item?item_id=" + dialogFields.purchasing_item_id;
+	}
+	else {
+		url = "[% base %]/shop/buy_item?item_type_id=" + dialogFields.purchasing_item_type_id;
+	}
+	
+	url += "&character_id=" + dialogFields.purchasing_char_id 
+		+  "&shop_id=[% shop.id %]";
+
+	dojo.xhrGet( {
+        url: url, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('error-message').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
+			  
+			  if (responseObject.updated_stock.count == 0) {
+			    dojo.byId('item_outer_' + responseObject.updated_stock.item).style.display = 'none';
+			  }
+			  else {
+			    dojo.byId('item-quantity-' + responseObject.updated_stock.item).innerHTML = responseObject.updated_stock.count;
+			  }	  	  
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000 // Time in milliseconds	
+    });
+    	
+	return true;
+}
+
+function saveQuantityPurchase(dialogFields) {	
+	dojo.xhrGet( {
+        url: "[% base %]/shop/buy_quantity_item?character_id=" + dialogFields.purchasing_char_id 
+        	+ "&item_type_id=" + dialogFields.purchasing_item_type_id + "&shop_id=[% shop.id %]"
+        	+ "&quantity=" + dialogFields.quantity, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) {
+          if (responseObject.error) {
+          	dojo.byId('error-message').innerHTML = responseObject.error;
+          	dijit.byId('error').show();
+          }
+          else if (responseObject.gold) {
+			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
+		  }
+          return responseObject;
+        },
+
+	    timeout: 5000 // Time in milliseconds	
+    });
+    	
+	return true;
+}
+
+dojo.addOnLoad( init );
+	
+</script>
+
+<div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
+    <span id="confirmation-message"></span>
+    <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="purchasing-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirmation').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="saveQuantityPurchase(arguments[0]);">
+    <span id="quantity-selection-message"></span>
+    <input id="quantity-spinner" type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name= "quantity"
+        value="1"
+        constraints="{min:1,max:1000,places:0}"
+        promptMessage= "Enter a value between 1 and 1000"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+		style="width: 80px"
+        />
+    <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="quantity-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('quantity-selection').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="message-diag" style="display: none" title="Message">
+    <span id="message-text"></span>
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+[% INCLUDE shop/header.html shop_link='shop/purchase' %]
+
+<div align="center">
+<h3>Buy Items</h3>
+	
+[% FOREACH char = characters %]
+<span style="padding: 5px">
+	<span dojoType="rpg.dnd.Target" jsId="t[% char.character_id %]" id="char-[% char.character_id %]" 
+		class="target" accept="item" style="width: 70%;">
+			[% char.character_name %]
+	</span>
+</span>
+[% END %]
+</div>
+
+<br><br>
+<div align="center">Drag an item below onto a character's name to purchase it</div>
+<br>
+
+[% IF shop.has_enchanted_items %]
+	<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items" style="display: none;">
+[% END %]
+
+[% INCLUDE shop/item_list.html items=items %]
+
+[% IF shop.has_enchanted_items %]
+	</div>
+	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted Items" style="display: none;"
+		href="[% base %]/shop/enchanted_tab?shop_id=[% shop.id %]">
+	</div>
+</div>
+[% END %]
+	
+
+[% INCLUDE bottom.html %]

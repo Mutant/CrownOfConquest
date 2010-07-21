@@ -1,0 +1,5 @@
+[% IF ! quest.param_current_value('Destroyed Orb') %]
+	Find and destroy the Orb of [% quest.orb_to_destroy.name %], located to the [% quest.direction_from_town_to_orb %] of [% quest.town.town_name %].
+[% ELSE %]
+	You've destroyed the Orb of [% quest.orb_to_destroy.name %]. Return to [% quest.town.town_name %] to collect your reward.
+[% END %]

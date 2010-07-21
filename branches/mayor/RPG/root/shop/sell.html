@@ -1,0 +1,155 @@
+[% INCLUDE top.html %]
+
+[% INCLUDE shop/header.html shop_link='shop/sell' %]
+
+<script>
+	dojo.require("dijit.layout.TabContainer");
+	
+function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id) {
+	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
+
+	if (equip_place_id != "" && equip_place_id != 0) {
+		message += "<br>(Note, this item is currently equipped)";
+	}
+	
+	dojo.byId('confirm-sale-message').innerHTML = message;
+	dojo.byId('item-to-sell').value = item_id;
+	dojo.byId('character-id').value = char_id;
+	dijit.byId('confirm-sale').show();	
+}
+
+function sellItem(dialogFields) {
+	dojo.xhrGet( {
+        url: "[% base %]/shop/sell_item?item_id=" + dialogFields.item_id + "&shop_id=[% shop.id %]", 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) { sellCallback(responseObject, ioArgs, dialogFields.character_id) },
+		timeout: 5000 // Time in milliseconds	 
+    });
+}	
+
+var selectedForSale = Array();
+function sellItemSelect(itemId, characterId) {
+	if (selectedForSale[characterId]==undefined) {
+		selectedForSale[characterId] = Array();
+	}
+	
+	selectedColor = "#AFB9FF";
+	if (selectedForSale[characterId][itemId] == true) {
+		selectedColor = "#FFFFFF"; 	
+	}
+	
+	dojo.byId('item_image_' + itemId).style.backgroundColor = selectedColor;
+	
+	selectedForSale[characterId][itemId] = selectedForSale[characterId][itemId] == true ? false : true;
+}
+
+function sellSelectedItemsConfirm(characterId) {
+	var itemCount = 0;
+	for (itemIdx in selectedForSale[characterId]) {
+		if (selectedForSale[characterId][itemIdx] == true) {
+			itemCount++;
+		}
+	}
+		
+	if (itemCount > 0) {
+		dojo.byId('sell-multi-character-id').value = characterId;
+		dojo.byId("confirm-sale-multi-message").innerHTML = "Are you sure you want to sell the " + itemCount + " selected items?";
+		dijit.byId('confirm-sale-multi').show();
+	}
+}
+
+function sellMultiItem(dialogFields) {
+	item_str = '';
+	for (itemIdx in selectedForSale[dialogFields.character_id]) {
+		if (selectedForSale[dialogFields.character_id][itemIdx] == true) {
+			item_str += "&item_id=" + itemIdx
+		}
+	}	
+	
+	dojo.xhrGet( {
+        url: "[% base %]/shop/sell_multi_item?" + item_str + "&shop_id=[% shop.id %]", 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) { sellCallback(responseObject, ioArgs, dialogFields.character_id) },
+		timeout: 5000 // Time in milliseconds	 
+    });
+}
+
+function sellCallback(responseObject, ioArgs, characterId) {
+	if (responseObject.error) {
+	  	dojo.byId('error-message').innerHTML = responseObject.error;
+	  	dijit.byId('error').show();
+	}
+	else {
+	  	if (responseObject.gold) {
+		  dojo.byId('current-gold').innerHTML = responseObject.gold;
+		  dijit.byId('chartab_' + characterId).refresh();
+		}
+		if (responseObject.messages) {
+			var messages = responseObject.messages;
+			var message = "";
+			for ( var i in messages ) {
+				if (messages[i]) {
+					message += messages[i] + '<br>';
+				}
+			}
+			if (message) {
+				dojo.byId('message-text').innerHTML = message;
+				dijit.byId('message-diag').show();
+			}
+		}
+	}
+	selectedForSale = Array();
+	return responseObject;
+}
+
+
+</script>
+
+
+<div dojoType="dijit.Dialog" id="confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
+    <span id="confirm-sale-message"></span>
+    <input id="item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<input id="character-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-sale').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="confirm-sale-multi" style="display: none" title="Confirm Sale" execute="sellMultiItem(arguments[0]);">
+    <span id="confirm-sale-multi-message"></span>
+	<input id="sell-multi-character-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-sale-multi').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="message-diag" style="display: none" title="Message">
+    <span id="message-text"></span>
+    <button dojoType=dijit.form.Button type="submit">OK</button>
+</div>
+
+<h3 style="text-align: center">Sell Items</h3>
+
+<div align="center">
+	Click on an item to select it for sale, or double click to sell an individual item.
+	<br>The item will be sold to the shop for the indicated price
+</div>
+
+<br>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+[% FOREACH char = characters %]
+	[% FILTER collapse %]
+   		<div id="chartab_[% char.id %]" dojoType="dijit.layout.ContentPane" title="[% char.character_name %]" style="display: none;" 
+			href="[% base %]/shop/character_sell_tab?character_id=[% char.id %]&shop_id=[% shop.id %]"
+				[% IF current_tab == char.id %]selected=true[% END %]>
+      	</div>
+	[% END %]	
+[% END %]
+</div>
+
+[% INCLUDE bottom.html %]

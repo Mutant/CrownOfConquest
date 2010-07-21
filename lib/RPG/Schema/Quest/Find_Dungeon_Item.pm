@@ -29,6 +29,7 @@ sub set_quest_params {
     	{
    		    'location.x' => {'>=', $start_point->{x}, '<=', $end_point->{x}},
 			'location.y' => {'>=', $start_point->{y}, '<=', $end_point->{y}},
+			'type' => 'dungeon',
     	},
     	{
     		join => 'location',

@@ -292,6 +292,7 @@ sub find_dungeon : Local {
                 'location.x' => { '>=', $top->{x}, '<=', $bottom->{x} },
                 'location.y' => { '>=', $top->{y}, '<=', $bottom->{y} },
                 level        => $level,
+                type => 'dungeon',
             },
             { prefetch => ['location'] }
         );

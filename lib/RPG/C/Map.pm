@@ -302,6 +302,7 @@ sub move_to : Local {
             {
                 party_id => $c->stash->{party}->id,
                 land_id  => $new_land->id,
+                'dungeon.type' => 'dungeon',
             },
             {
             	prefetch => { location => 'dungeon' },

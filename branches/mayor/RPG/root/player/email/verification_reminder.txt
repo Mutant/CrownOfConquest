@@ -1,9 +1,0 @@
-<p>Hi,
-
-<p>You've signed up to Kingdoms ([% url %]), but haven't yet verified your account. This is a reminder of your verification code.</p>
-
-<p>Your code is: [% player.verification_code %].</p>
-
-<p>You can verify by clicking here: [% url %]/player/verify?verification_code=[% player.verification_code %]&email=[% player.email %]</p>
-
-<p>If you're having problems verifying, please reply to this email.</p>

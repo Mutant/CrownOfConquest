@@ -1,7 +1,0 @@
-[% FOREACH event IN history %]
-	[% IF event.day.day_number != last_day %]
-		<h4>Day [% event.day.day_number %]</h4>
-		[% last_day = event.day.day_number %]
-	[% END %]
-	<li>[% event.event %]<br>
-[% END %]

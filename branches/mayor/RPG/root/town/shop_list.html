@@ -1,9 +1,0 @@
-The following shops are available in [% town.town_name %]:
-
-<ul>
-[% FOREACH shop IN town.shops %]
-<li><a href="[% base %]/shop/purchase?shop_id=[% shop.id %]">[% shop.shop_name %]</a> ([% shop.status %])</li>
-[% END %]
-</ul>
-
-[% INCLUDE town/town_footer.html %]

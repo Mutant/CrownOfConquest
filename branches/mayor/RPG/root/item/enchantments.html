@@ -1,7 +1,0 @@
-[% enchantments = item.item_enchantments %]
-[% IF enchantments %]
-    <br><i>Enchantments</i>
-	[% FOREACH enchantment IN enchantments %]	
-		<li>[% enchantment.tooltip %]</li>		
-	[% END %]
-[% END %]

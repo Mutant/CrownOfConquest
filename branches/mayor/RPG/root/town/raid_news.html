@@ -1,9 +1,0 @@
-[% FILTER collapse %]
-The party "[% party.name %]" raided the town of [% town.town_name %]. 
-[% IF battle_count > 0 %]
-	They got into [% battle_count %] scuffles with the guards 
-	[% IF killed_count > 0 %](killing [% killed_count %] guards in the process!)[% END %]
-	[% IF captured %], but were captured, and jailed for [% captured %] turns[% END %]
-[% END %]
-. The towns people no longer think so highly of [% party.name %].
-[% END %]

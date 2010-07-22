@@ -1,7 +1,0 @@
-[% IF parties.0 %]
-Other parties here:<br><br>
-[% FOREACH party IN parties %]
-	[% INCLUDE party/summary.html party=party, attack=attack_allowed %]
-	[% UNLESS loop.last %]<br><br>[% END %]
-[% END %]
-[% END %]

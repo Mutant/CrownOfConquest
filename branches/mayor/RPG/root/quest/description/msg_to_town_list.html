@@ -1,5 +1,0 @@
-[% UNLESS quest.param_current_value('Been To Town') %]
-	Deliver a message from the authorities in [% quest.town.town_name %] to the town hall of [% quest.town_to_take_msg_to.town_name %].	
-[% ELSE %]
-	You've delivered a message to [% quest.town_to_take_msg_to.town_name %]. Now return to the town hall of [% quest.town.town_name %] to collect your reward.
-[% END %]

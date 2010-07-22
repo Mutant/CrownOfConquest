@@ -1,7 +1,0 @@
-[% TRY %]
-	[% item_cat = item_type.category.item_category | lower | replace('\s+', '_') %]
-	[% specific = "item/type/" _ item_cat _ ".html" %]
-	[% INCLUDE $specific %]
-[% CATCH %]
-	[% INCLUDE item/tooltip.html item_type=item_type, item=item %]
-[% END %]

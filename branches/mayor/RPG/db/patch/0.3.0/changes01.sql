@@ -1,1 +1,0 @@
-ALTER TABLE `game`.`Item_Type` ADD COLUMN `image` varchar(255)  DEFAULT NULL AFTER `prevalence`;

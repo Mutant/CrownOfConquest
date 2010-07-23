@@ -242,6 +242,9 @@ sub list : Private {
 	elsif ( my $opponent_party = $party->in_party_battle_with ) {
 		@opponents = $opponent_party->characters;
 	}
+	elsif ( $c->stash->{in_combat_with_garrison} ) {
+		@opponents = $c->stash->{in_combat_with_garrison}->members;
+	}
 	
 	$c->stats->profile("Got opponents");
 	

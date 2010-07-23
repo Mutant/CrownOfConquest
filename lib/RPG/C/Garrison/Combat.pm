@@ -24,6 +24,7 @@ sub attack : Local {
 		$c->stash->{error} = "The garrison is too weak to attack";
 	}
 	else {
+		$c->stash->{in_combat_with_garrison} = $garrison;
 		$c->stash->{party_initiated} = 1;
 		$c->stash->{party}->initiate_combat($garrison);
 	}

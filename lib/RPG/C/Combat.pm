@@ -255,7 +255,8 @@ sub process_round_result : Private {
 	my ( $self, $c, $result ) = @_;
 
 	my $display_messages = $result->{display_messages};
-	push @{ $c->stash->{combat_messages} }, @{ $display_messages->{1} };    # We only want messages for opp1, since that's always the online party
+	# We only want messages for opp1, since that's always the online party
+	push @{ $c->stash->{combat_messages} }, @{ $display_messages->{1} };
 
 	my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
 	if ( $result->{combat_complete} ) {

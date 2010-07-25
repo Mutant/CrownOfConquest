@@ -24,13 +24,13 @@ sub run {
     my $self = shift;
 
     # Spawn monsters
-    $self->spawn_monsters();
+    #$self->spawn_monsters();
 
     # Move monsters
-    $self->move_monsters();
+    #$self->move_monsters();
 
     # Spawn dungeon monsters
-    $self->spawn_dungeon_monsters();
+    #$self->spawn_dungeon_monsters();
     
     # Spawn town guards
     $self->spawn_town_guards();

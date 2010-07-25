@@ -170,6 +170,12 @@ function dungeonRefreshCallback(scroll_to) {
 	dungeonScroll(scroll_to); 
 }
 
+function dialogCallback(data) {
+	dojo.byId('dialog').innerHTML = data.content;
+	//dijit.byId('message').attr('execute', ');
+	dijit.byId('dialog').show();
+}
+
 var panel_init = [% panels %];
 
 function init() {
@@ -365,6 +371,9 @@ function unblockDoor(action) {
 </div>
 [% END %]
 
+<div dojoType="dijit.Dialog" id="dialog" style="display: none" title="Dialog">
+
+</div>
 
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
     <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>

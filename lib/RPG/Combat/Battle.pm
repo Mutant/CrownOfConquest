@@ -589,7 +589,7 @@ sub attack {
 		$damage = Games::Dice::Advanced->roll( '1d' . $dam_max )
 			unless $dam_max <= 0;
 
-		$defender->hit($damage);
+		$defender->hit($damage, $attacker);
 
 		$self->session->{stalemate_check} += $damage;
 

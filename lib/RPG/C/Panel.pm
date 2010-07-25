@@ -144,4 +144,20 @@ sub day_logs_check : Private {
     }
 }
 
+# Create a dialog when the panels are reloaded. Submits form values to a given URL
+# Uses a panel callback to do this
+sub create_submit_dialog : Private {
+	my ($self, $c, $params) = @_;
+	
+	my %callback = {
+		name => 'dialog',
+		data => {
+			content => $params->{content},
+			submit_url => $params->{submit_url},
+		}
+	};
+	
+	push @{$c->stash->{panel_callback}}, \%callback; 
+}
+
 1;

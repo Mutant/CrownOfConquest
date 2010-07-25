@@ -125,6 +125,8 @@ sub modified_cost {
 	my $modified_cost = int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));
 	
 	$modified_cost = 1 if $modified_cost < 1;	
+	
+	return $modified_cost;
 }
 
 sub attribute {

@@ -170,12 +170,10 @@ sub exit : Private {
 
 sub end_raid : Private {
 	my ( $self, $c, $castle ) = @_;
-	
-	my $town = $castle->town;
 
 	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
 		{
-			town_id  => $town->id,
+			town_id  => $castle->town->id,
 			party_id => $c->stash->{party}->id,
 		}
 	);
@@ -184,35 +182,6 @@ sub end_raid : Private {
 		$c->stash->{party},
 		$party_town->last_raid_start,
 	);
-	
-	# Check to see if party is now pending mayor of the town. i.e. the mayor was killed
-	my $mayor_killed = 0;
-	if ($town->pending_mayor == $c->stash->{party}->id) {
-		$mayor_killed = 1;
-		
-		my $message = $c->forward(
-			'RPG::V::TT',
-			[
-				{
-					template => 'town/mayor_killed.html',
-					params   => {
-						town => $town,
-						party => $c->stash->{party},
-					},
-					return_output => 1,
-				}
-			]
-		);
-		
-		$c->forward('/panel/create_submit_dialog', 
-			[
-				{
-					content => $message,
-					submit_url => 'town/become_mayor',
-				}
-			],
-		);
-	}
 
 	my $killed_count;
 	foreach my $battle (@battles) {
@@ -238,7 +207,7 @@ sub end_raid : Private {
 						killed_count => $killed_count,
 						captured     => $c->stash->{captured},
 						party => $c->stash->{party},
-						town => $town,
+						town => $castle->town,
 					},
 					return_output => 1,
 				}
@@ -247,7 +216,7 @@ sub end_raid : Private {
 
 		$c->model('DBIC::Town_History')->create(
 			{
-				town_id => $town->id,
+				town_id => $castle->town->id,
 				day_id  => $c->stash->{today}->id,
 				message => $news,
 			}

@@ -17,6 +17,7 @@ sub build_dungeon {
         {
             land_id => $params{land_id},
             level => $params{level} || 1,
+            type =>  $params{type} || 'dungeon',
         }   
     );
     

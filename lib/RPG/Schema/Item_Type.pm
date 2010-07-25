@@ -115,8 +115,12 @@ __PACKAGE__->has_many(
 sub modified_cost {
 	my $self = shift;
 	my $shop = shift;
+	
+	my $base_cost = $self->base_cost;
+	
+	$base_cost = 1 if $base_cost < 1;
 
-	return $self->base_cost unless $shop;
+	return $base_cost unless $shop;
 		
 	return int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));	
 }

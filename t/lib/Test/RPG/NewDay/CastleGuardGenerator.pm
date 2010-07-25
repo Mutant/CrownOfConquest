@@ -32,7 +32,7 @@ sub test_generate_guards : Tests(3) {
 	my $self = shift;
 	
 	# GIVEN
-	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle',);
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);

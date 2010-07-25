@@ -148,6 +148,7 @@ sub test_move_to_found_dungeon : Tests(2) {
 		{
 			level   => 3,
 			land_id => $land[0]->id,
+			type => 'dungeon',
 		}
 	);
 

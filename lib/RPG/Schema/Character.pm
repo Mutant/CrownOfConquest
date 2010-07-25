@@ -513,21 +513,12 @@ sub get_equipped_item {
 sub hit {
     my $self   = shift;
     my $damage = shift;
-    my $attacker = shift;
 
     my $new_hp_total = $self->hit_points - $damage;
     $new_hp_total = 0 if $new_hp_total < 0;
 
     $self->hit_points($new_hp_total);
     $self->update;
-    
-    if ($self->is_dead && $attacker) {
-    	if (my $town = $self->mayor_of) {
-    		# A mayor has died... the party that killed them is marked as 'pending mayor' of the town
-   			$town->pending_mayor($attacker->party_id);
-   			$town->update;
-    	}	
-    }
 }
 
 sub is_dead {

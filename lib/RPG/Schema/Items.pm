@@ -213,17 +213,16 @@ sub sell_price {
     	$price += ($enchantment->sell_price_adjustment || 0);	
     }
 
-    $price = 1 if $price == 0;
-
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
     
     # Adjust for repair cost
     if (my $repair_cost = $self->repair_cost) {
     	$price -= $repair_cost;	
-    	$price = 0 if $price < 0;
     }
 
     $price = int( $price / ( 100 / ( 100 + $modifier ) ) );
+
+    $price = 1 if $price <= 0;
 
     return $price;
 }

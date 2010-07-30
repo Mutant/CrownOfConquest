@@ -77,6 +77,7 @@ sub run {
             {
                 land_id => $sector_to_use->id,
                 level   => RPG::Maths->weighted_random_number( 1 .. $c->config->{dungeon_max_level} ),
+                type => 'dungeon',
             }
         );
         

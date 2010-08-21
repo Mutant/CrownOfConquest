@@ -239,6 +239,7 @@ function calculateSpellPoints() {
 	</div>
 </div>
 
+<img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %].png" style="float: left">
 
 <h1><span id="name-header">[% character.character_name %]</span> 
 	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
@@ -263,7 +264,7 @@ function calculateSpellPoints() {
 
 [% character_links(characters) %]
 [% IF garrison_characters.0 %]	
-	<br>
+	<br style="clear: right">
 	<b>Garrison Characters</b>:
 	[% character_links(garrison_characters) %]
 [% END %]

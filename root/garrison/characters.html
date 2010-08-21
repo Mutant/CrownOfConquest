@@ -3,14 +3,7 @@
 	
 	<table class="main" id="garrison-list">
 	<tr>
-		<th></th>
-	    <th>Name</th>
-	    <th>Race</th>
-	    <th>Class</th>
-	    <th>Level</th>
-	    <th>HP</th>
-		<th></th>
-	    <th>XP</th>
+	    [% INCLUDE party/party_list_header.html %]
 	    [% IF garrison %]<th>Orders</th>[% END %]
 	</tr>
 	
@@ -43,13 +36,7 @@
 	
 	<table class="main" id="party-list">
 	<tr>
-		<th></th>
-	    <th>Name</th>
-	    <th>Race</th>
-	    <th>Class</th>
-	    <th>Level</th>
-	    <th>HP</th>
-		<th></th>
+        [% INCLUDE party/party_list_header.html %]
 		[% IF garrison %]<th></th>[% END %]
 	    <th>XP</th>
 	</tr>

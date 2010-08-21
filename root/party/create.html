@@ -57,6 +57,7 @@ You've created [% characters.size %] of [% num_characters_to_create %] character
 <br><br>
 <table class="main" cellspacing="0" cellpadding="5">
 	<tr>
+		<th></th>
 		<th>Name</th>
 		<th>Class</th>
 		<th>Race</th>
@@ -69,6 +70,7 @@ You've created [% characters.size %] of [% num_characters_to_create %] character
 	</tr>
 	[% FOREACH char IN characters %]
 	<tr [% IF loop.count % 2 == 0 %]style="background: lightgrey"[% END %]>
+		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png"></td>
 		<td>[% char.character_name %]</td>
 	    <td>[% char.race.race_name %]</td>
 	    <td>[% char.class.class_name %]</td>

@@ -93,6 +93,12 @@ sub agility {
 	return $self->_stat_accessor('agility', @_);	
 }
 
+sub portrait {
+	my $self = shift;
+	
+	return lc($self->race->race_name) . lc(substr $self->class->class_name, 0, 3);
+}
+
 sub _stat_accessor {
 	my $self = shift;
 	my $stat = shift;

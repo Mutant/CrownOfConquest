@@ -95,7 +95,12 @@ sub save_party : Local {
 				'join' => 'player',
 			},
 		);
-		$start_turns+=$code->promo_org->extra_start_turns if $code;
+		
+		if ($code) {
+			$start_turns+=$code->promo_org->extra_start_turns;
+			$code->used(1);
+			$code->update;
+		}
 
         $c->stash->{party}->increase_turns( $start_turns );
         $c->stash->{party}->gold( $c->config->{start_gold} );

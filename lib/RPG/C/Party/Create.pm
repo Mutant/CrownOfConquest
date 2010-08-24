@@ -84,7 +84,20 @@ sub save_party : Local {
             $c->detach('create');
         }
 
-        $c->stash->{party}->increase_turns( $c->config->{starting_turns} );
+		my $start_turns = $c->config->{starting_turns};
+		my $code = $c->model('DBIC::Promo_Code')->find(
+			{
+				'player.player_id' => $c->session->{player}->id,
+				'used' => 0,
+			},
+			{
+				'prefetch' => 'promo_org',
+				'join' => 'player',
+			},
+		);
+		$start_turns+=$code->promo_org->extra_start_turns if $code;
+
+        $c->stash->{party}->increase_turns( $start_turns );
         $c->stash->{party}->gold( $c->config->{start_gold} );
         $c->stash->{party}->created( DateTime->now() );
 

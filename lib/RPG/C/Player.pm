@@ -158,6 +158,32 @@ sub register : Local {
             
             my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
             
+            my $code;
+            if ($c->req->param('promo_code')) {
+            	$code = $c->model('DBIC::Promo_Code')->find(
+            		{
+            			code => $c->req->param('promo_code'),
+            			used => 0,
+            		},
+            		{
+            			prefetch => 'promo_org',
+            		},            	
+            	);
+            	
+            	if ($code) {            		
+            		$c->flash->{promo_org_message} = $c->forward(
+	                    'RPG::V::TT',
+	                    [
+	                        {
+	                            template      => 'player/promo_org_message.html',
+	                            params        => { code => $code, },
+	                            return_output => 1,
+	                        }
+	                    ]
+	                );
+            	}
+            }
+            
             my $player = $c->model('DBIC::Player')->create(
                 {
                     player_name       => $c->req->param('player_name'),
@@ -165,6 +191,7 @@ sub register : Local {
                     password          => $c->req->param('password1'),
                     verification_code => $verification_code,
                     last_login        => DateTime->now(),
+                    $code ? (promo_code_id => $code->code_id) : (),
                 }
             );
  
@@ -381,6 +408,9 @@ sub verify : Local {
         else {
             $message = "Can't find that email address... make sure you've already registered";
         }
+    }    
+    elsif (my $org_message = $c->flash->{promo_org_message}) {
+    	$message = $org_message;
     }
 
     $c->forward(

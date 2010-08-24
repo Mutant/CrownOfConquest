@@ -12,7 +12,7 @@
 
 <div align="center">
 <form method="POST" action="[% base %]/player/register">
-<table>
+<table class="main">
 	<tr>
 		<td nowrap><b>Username:</b></td>
 		<td><input type="text" name="player_name" style="width: 300px"></td>
@@ -35,6 +35,10 @@
 		    <input type="text" name="captcha" style="width: 300px">
 		</td>
 	</tr>
+	<tr>
+		<td nowrap><b>Promo Code:</b><br>(If you were given a promo<br>code from another website,<br>please enter it here)</td>
+		<td><input type="text" name="promo_code" style="width: 300px"></td>
+	</tr>	
 	<tr>
 		<td></td>
 		<td><input type="submit" value="Register" name="submit"></td>

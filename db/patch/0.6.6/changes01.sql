@@ -40,7 +40,7 @@ ALTER TABLE `Creature_Type` ADD COLUMN `hire_cost` INTEGER  DEFAULT NULL AFTER `
 
 UPDATE `Creature_Type` set hire_cost = '20' where creature_type = 'Rookie Town Guard';
 UPDATE `Creature_Type` set hire_cost = '40' where creature_type = 'Seasoned Town Guard';
-UPDATE `Creature_Type` set hire_cost = '120' where creature_type = 'Veteran Town Guard';
+UPDATE `Creature_Type` set hire_cost = '85' where creature_type = 'Veteran Town Guard';
 
 ALTER TABLE `Garrison` DROP FOREIGN KEY `fk_Garrison_Land1`,
  DROP FOREIGN KEY `fk_Garrison_Party1`;

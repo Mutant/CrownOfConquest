@@ -65,7 +65,7 @@ sub run {
 		}
 				
 		if ($town->peasant_tax && ! $town->peasant_state) {
-			my $gold = int ((Games::Dice::Advanced->roll('2d20') * 10 + $town->prosperity) * ($town->peasant_tax / 100)) * 10;
+			my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
 			$self->context->logger->debug("Collecting $gold peasant tax");
 			$town->increase_gold($gold);
 			$town->update;

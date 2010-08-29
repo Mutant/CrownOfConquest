@@ -13,7 +13,7 @@ sub _cast {
 
     my $flame = Games::Dice::Advanced->roll( $dice_count . "d10" );
 
-    $target->change_hit_points( -$flame );
+    $target->hit( $flame, $character );
     $target->update;
 
     return {

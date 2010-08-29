@@ -14,6 +14,7 @@ sub get_by_player_id {
             player_id => $player_id,
             defunct   => undef,
             'characters.garrison_id' => undef,
+            'characters.mayor_of' => undef,
         },
         {
             prefetch => [
@@ -34,6 +35,7 @@ sub average_stat {
         { 
         	'me.party_id' => $party_id,
         	'garrison_id' => undef, 
+        	'characters.mayor_of' => undef,
         },
         {
             join   => 'characters',

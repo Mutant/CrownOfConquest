@@ -121,8 +121,11 @@ sub modified_cost {
 	$base_cost = 1 if $base_cost < 1;
 
 	return $base_cost unless $shop;
+	
+	my $town = $shop->in_town;
+	my $sales_tax = $town->mayor && $town->mayor->party_id ? $town->sales_tax : RPG::Schema->config->{default_sales_tax};
 		
-	my $modified_cost = int ($self->base_cost / (100 / (100 - $shop->cost_modifier)));
+	my $modified_cost = int ($self->base_cost + ($self->base_cost * ($sales_tax / 100))); 
 	
 	$modified_cost = 1 if $modified_cost < 1;	
 	

@@ -1,0 +1,25 @@
+[% MACRO display_rating(rating) BLOCK %]
+	[% IF rating < -80 %]
+		You expect a revolt any day now
+	[% ELSIF rating < -60 %]
+		Abysmal
+	[% ELSIF rating < -40 %]
+		Terrible
+	[% ELSIF rating < -20 %]
+		Very Poor
+	[% ELSIF rating < -10 %]
+		Poor
+	[% ELSIF rating < 10 %]
+		Neutral
+	[% ELSIF rating < 20 %]
+		Good
+	[% ELSIF rating < 40 %]
+		Very Good
+	[% ELSIF rating < 60 %]
+		Excellent
+	[% ELSIF rating < 80 %]
+		Astounding
+	[% ELSE %]
+		The peasants hold a daily parade in your honour
+	[% END %]		
+[% END %]

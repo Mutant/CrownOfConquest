@@ -6,20 +6,33 @@ package RPG::ResultSet::Character;
 use base 'DBIx::Class::ResultSet';
 
 use Carp;
-use List::Util qw(shuffle);
+use List::Util qw(max shuffle);
 use File::Slurp;
 use Games::Dice::Advanced;
+use RPG::Maths;
 
 sub generate_character {
     my $self        = shift;
-    my $race        = shift || croak "Race not supplied";
-    my $class       = shift || croak "Class not supplied";
-    my $level       = shift || croak "Level not supplied";
-    my $xp          = shift // croak "Xp not supplied";
-    my $roll_points = shift // 1;
+    my %params      = @_;
+    
+    my $race        = $params{race}  || $self->result_source->schema->resultset('Race')->random;
+    my $class       = $params{class} || $self->result_source->schema->resultset('Class')->random;
+    my $level       = $params{level};
+    my $roll_points = $params{roll_points} // 1;
+    my $allocate_equipment = $params{allocate_equipment} // 0;
     
     if ($level > 1 && $roll_points == 0) {
         croak "Can only turn off rolling points for level 1 characters";   
+    }
+    
+    my %levels = map { $_->level_number => $_->xp_needed } $self->result_source->schema->resultset('Levels')->search();
+    my $max_level = max keys %levels;
+
+    $level ||= RPG::Maths->weighted_random_number( 1 .. $max_level );    
+    
+    my $xp = 0;
+    if ($level != 1) {
+    	$xp = $self->_calculate_xp($level, $max_level, %levels);	
     }
 
     my %stats = (
@@ -35,7 +48,7 @@ sub generate_character {
 
     # Initial allocation of stat points
     %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
-    
+
     # Yes, we're quite sexist
     my $gender = Games::Dice::Advanced->roll('1d3') > 1 ? 'male' : 'female';
 
@@ -72,6 +85,10 @@ sub generate_character {
         $character->hit_points( $character->max_hit_points );
         $character->update;
     }
+    
+    if ($allocate_equipment) {
+    	$self->_allocate_equipment($character);	
+    }
 
     return $character;
 }
@@ -84,7 +101,8 @@ sub _allocate_stat_points {
     my $stats        = shift;
 
     my @stats = keys %$stats;
-    push @stats, $primary_stat;    # Primary stat goes in multiple times to make it more likely to get added
+    # Primary stat goes in multiple times to make it more likely to get added
+    push @stats, $primary_stat if defined $primary_stat;
 
     # Allocate 1 point to a random stat until the pool is used
     while ( $stat_pool > 0 ) {
@@ -119,6 +137,78 @@ sub _generate_name {
     @names = shuffle @names;
 
     return $names[0];
+}
+
+sub _calculate_xp {
+	my $self = shift;
+	my $level = shift;
+	my $max_level = shift;
+	my %levels = @_;
+	
+	my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
+	
+	my $dice_size = $xp_for_next_level - $levels{$level};
+	$dice_size = $levels{$level} if $level == $max_level;
+	
+    my $xp = $levels{$level} + Games::Dice::Advanced->roll( '1d' . $dice_size );
+    
+    return $xp;
+}
+
+sub _allocate_equipment {
+    my $self      = shift;
+    my $character = shift;
+
+    my %weapon = (
+        'Warrior' => 'Melee Weapon',
+        'Archer'  => 'Ranged Weapon',
+        'Priest'  => 'Melee Weapon',
+        'Mage'    => 'Melee Weapon',
+    );
+
+    my $min_primary_prevalance = 100 - $character->level * 10;
+
+    my $max_primary_prevalance = 100 - ( $character->level - 4 ) * 10;
+    $max_primary_prevalance = $min_primary_prevalance if $max_primary_prevalance < $min_primary_prevalance;
+    $max_primary_prevalance = 40 if $max_primary_prevalance < 40;
+
+    my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search( 
+    	{}, 
+    	{ 
+    		prefetch => { 'equip_place_categories' => 'item_category'}, 
+    	}, 
+    );
+
+    foreach my $equip_place (@equip_places) {
+        my @categories = map { $_->item_category } $equip_place->categories;
+
+        if ( $equip_place->equip_place_name eq 'Left Hand' ) {
+            @categories = $weapon{ $character->class->class_name };
+        }
+        elsif ( $equip_place->equip_place_name eq 'Right Hand' ) {
+            next;
+        }
+
+        my @item_types = $self->result_source->schema->resultset('Item_Type')->search(
+            {
+                prevalence               => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
+                'category.item_category' => \@categories,
+            },
+            { join => 'category', },
+        );
+
+        next unless @item_types;
+
+        @item_types = shuffle @item_types;
+
+		# TODO: generate enchanted items
+        my $item = $self->result_source->schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
+
+        $item->equip_item( $equip_place->equip_place_name, 0 );
+
+        $item->character_id( $character->id );
+        $item->update;
+    }
 }
 
 1;

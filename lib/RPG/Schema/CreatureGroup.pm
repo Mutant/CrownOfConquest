@@ -28,6 +28,8 @@ __PACKAGE__->might_have( 'in_combat_with', 'RPG::Schema::Party', { 'foreign.in_c
 
 __PACKAGE__->has_many( 'creatures', 'RPG::Schema::Creature', { 'foreign.creature_group_id' => 'self.creature_group_id' }, );
 
+__PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', 'creature_group_id' );
+
 has 'melee_weapons' => ( is => 'ro', isa => 'ArrayRef', init_arg => undef, builder => '_build_melee_weapons', lazy => 1, );
 
 sub _build_melee_weapons {
@@ -39,7 +41,7 @@ sub _build_melee_weapons {
 sub members {
 	my $self = shift;
 
-	return $self->creatures;
+	return ($self->creatures, $self->characters);
 }
 
 sub group_type {
@@ -54,6 +56,10 @@ sub current_location {
 	my $self = shift;
 
 	return $self->location;
+}
+
+sub is_online {
+	return 0;	
 }
 
 sub initiate_combat {
@@ -100,13 +106,14 @@ sub party_within_level_range {
 sub creature_summary {
 	my $self                   = shift;
 	my $include_dead_creatures = shift || 0;
-	my @creatures              = $self->creatures;
+	my @beings                 = $self->members;
 
 	my %summary;
 
-	foreach my $creature (@creatures) {
-		next if !$include_dead_creatures && $creature->is_dead;
-		$summary{ $creature->type->creature_type }++;
+	foreach my $being (@beings) {
+		next if !$include_dead_creatures && $being->is_dead;
+		my $type = $being->is_character ? $being->class->class_name : $being->type->creature_type;
+		$summary{ $type }++;
 	}
 
 	return \%summary;
@@ -117,12 +124,22 @@ sub number_alive {
 
 	# TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
 
-	return $self->result_source->schema->resultset('Creature')->count(
+	my $crets_alive = $self->result_source->schema->resultset('Creature')->count(
 		{
 			hit_points_current => { '>', 0 },
 			creature_group_id  => $self->id,
 		}
 	);
+
+	my $chars_alive = $self->result_source->schema->resultset('Character')->count(
+		{
+			hit_points => { '>', 0 },
+			creature_group_id  => $self->id,
+		}
+	);
+	
+	return $crets_alive + $chars_alive;
+
 }
 
 sub level {
@@ -130,13 +147,13 @@ sub level {
 
 	return $self->{level} if $self->{level};
 
-	my @creatures = $self->creatures;
+	my @creatures = $self->members;
 
 	return 0 unless @creatures;
 
 	my $level_aggr = 0;
 	foreach my $creature (@creatures) {
-		$level_aggr += $creature->type->level;
+		$level_aggr += $creature->level;
 	}
 
 	$self->{level} = int( $level_aggr / scalar @creatures );
@@ -148,7 +165,7 @@ sub level {
 sub add_creature {
 	my $self = shift;
 	my $type = shift;
-	my $count = shift;
+	my $count = shift // $self->number_alive+1;
 
 	my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
 	

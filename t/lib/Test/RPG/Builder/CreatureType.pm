@@ -9,7 +9,13 @@ sub build_creature_type {
     my %params  = @_;
 
 	my $category = $schema->resultset('Creature_Category')->find_or_create( { name => $params{category_name} || 'Test' });
-    my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1, creature_category_id => $category->id } );
+    my $type = $schema->resultset('CreatureType')->create( 
+    	{ 
+    		level => $params{creature_level} || 1, 
+    		creature_category_id => $category->id,
+    		hire_cost => $params{hire_cost} || 0, 
+    	} 
+    );
 
     return $type;
 }

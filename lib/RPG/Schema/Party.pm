@@ -7,6 +7,7 @@ extends 'DBIx::Class';
 use Data::Dumper;
 use List::Util qw(sum);
 use Math::Round qw(round);
+use DateTime;
 
 use RPG::Exception;
 
@@ -232,6 +233,7 @@ sub characters_in_party {
 	return $self->search_related('characters',
 		{
 			'garrison_id' => undef,
+			'mayor_of' => undef,
 		},
 		{
 			'order_by' => 'party_order',
@@ -368,6 +370,7 @@ sub number_alive {
             hit_points => { '>', 0 },
             party_id   => $self->id,
             garrison_id => undef,
+            mayor_of => undef,
         }
     );
 }
@@ -528,6 +531,26 @@ sub allowed_more_quests {
     my $number_of_quests_allowed = RPG::Schema->config->{base_allowed_quests} + ( RPG::Schema->config->{additional_quests_per_level} * $self->level );
 
     return $party_quests_rs->count >= $number_of_quests_allowed ? 0 : 1;
+}
+
+# Called when party is disbanded or wiped out
+sub disband {
+	my $self = shift;
+	
+	$self->defunct(DateTime->now());
+	$self->update;
+	
+	# Turn any mayors into NPCs
+	$self->search_related(
+		'characters',
+		{
+			mayor_of => {'!=', undef},
+		},
+	)->update(
+		{
+			'party_id' => undef,
+		}
+	);	
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

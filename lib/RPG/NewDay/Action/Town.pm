@@ -38,9 +38,6 @@ sub run {
     # Update prestige ratings
     $self->update_prestige;
 
-    # Clear all tax paid / raids today
-    $context->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0 } );
-
     $self->set_discount(@towns);
 }
 

@@ -14,7 +14,7 @@ sub _cast {
 
     my $beam = Games::Dice::Advanced->roll( $dice_count . "d6" );
     
-    $target_creature->change_hit_points( -$beam );
+    $target_creature->hit( $beam, $character );
     $target_creature->update;
 
     return {

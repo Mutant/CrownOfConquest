@@ -177,6 +177,8 @@ sub complete_quest : Private {
     $party_town->prestige($party_town->prestige+3);
     $party_town->update;
     
+    $party_quest->town->increase_mayor_rating(3);
+    $party_quest->town->update;    
     
     my $news_message = $c->forward(
         'RPG::V::TT',

@@ -26,6 +26,17 @@ sub run {
             $party->defunct( DateTime->now() );
             $party->in_combat_with( undef );
             $party->update;
+            
+            # They lose any mayoralties
+            $party->search_related('characters',
+            	{
+            		mayor_of => {'!=', undef},
+            	},
+            )->update(
+            	{
+            		mayor_of => undef,
+            	}
+            );
         }
     }
 

@@ -44,15 +44,6 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
-    'cost_modifier' => {
-      'data_type' => 'float',
-      'is_auto_increment' => 0,
-      'default_value' => '',
-      'is_foreign_key' => 0,
-      'name' => 'cost_modifier',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
     'status' => {
       'data_type' => 'varchar',
       'is_auto_increment' => 0,

@@ -171,9 +171,27 @@ function dungeonRefreshCallback(scroll_to) {
 }
 
 function dialogCallback(data) {
-	dojo.byId('dialog').innerHTML = data.content;
-	//dijit.byId('message').attr('execute', ');
+	dojo.byId('dialog-content').innerHTML = data.content;
+	
+	if (data.parse_content) {
+		dojo.parser.parse('dialog-content');
+	}	
+	
+	dijit.byId('dialog').attr('execute', function() { dialogSubmit(data.submit_url) });
+	dijit.byId('dialog').attr('title', data.dialog_title);
 	dijit.byId('dialog').show();
+}
+
+function dialogSubmit(submitUrl) {
+	var form = dijit.byId('dialog').attr('value');
+
+	var submitString = '';
+	for(var prop in form) {
+	    if(form.hasOwnProperty(prop))
+	        submitString += prop + '=' + form[prop] + '&';
+	}
+	
+	getPanels(submitUrl + '?' + submitString);
 }
 
 var panel_init = [% panels %];
@@ -363,7 +381,7 @@ function unblockDoor(action) {
 	dojo.addOnLoad(displayCreatedMessage);
 </script>
 
-<div dojoType="dijit.Dialog" id="created-message" style="display: none" title="Welcome To Kingdoms">
+<div dojoType="dijit.Dialog" id="created-message" style="display: none" title="Welcome To Kingdoms" execute="">
     [% created_message %]
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
@@ -372,8 +390,9 @@ function unblockDoor(action) {
 [% END %]
 
 <div dojoType="dijit.Dialog" id="dialog" style="display: none" title="Dialog">
-
+	<div id="dialog-content"></div>
 </div>
+
 
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
     <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>

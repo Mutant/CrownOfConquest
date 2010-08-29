@@ -934,7 +934,7 @@ sub test_finish : Tests(6) {
 	is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
 }
 
-sub test_finish_creates_town_history : Tests(3) {
+sub test_finish_creates_town_history : Tests(4) {
 	my $self = shift;
 
 	# GIVEN
@@ -970,6 +970,7 @@ sub test_finish_creates_town_history : Tests(3) {
 
 	is( scalar @history, 1, "One history item recorded" );
 	is( $history[0]->message, 'combat_log_message', "Message set correctly" );
+	is ($history[0]->type, 'news', "Message type set correctly");
 
 	my $party_town = $self->{schema}->resultset('Party_Town')->find(
 		{

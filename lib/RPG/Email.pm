@@ -11,6 +11,8 @@ sub send {
 	my $self = shift;
 	my $config = shift;
 	my $params = shift;
+	
+	return if $config->{no_email};
 
     my $email_footer = RPG::Template->process(
         $config,

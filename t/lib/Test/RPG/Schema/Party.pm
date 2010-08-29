@@ -12,6 +12,7 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Town;
 
 use Data::Dumper;
 use DateTime;
@@ -324,6 +325,27 @@ sub test_turns_cant_be_increased_above_maximum : Tests(1) {
     # THEN
     $party->discard_changes;
     is($party->turns, 105, "Turns set to maximum");
+}
+
+sub test_disband : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
+    my $character = ($party->characters)[0];
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $character->mayor_of($town->id);
+    $character->update;
+    
+    # WHEN
+    $party->disband;
+    
+    # THEN
+    is(defined $party->defunct, 1, "Party now defunct");
+    
+    $character->discard_changes;
+    is($character->party_id, undef, "Mayor now an NPC");
+    
 }
 
 1;

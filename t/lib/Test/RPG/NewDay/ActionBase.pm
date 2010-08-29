@@ -18,6 +18,7 @@ sub setup_context {
     $mock_context->set_always( 'schema',    $self->{schema} );
     $mock_context->set_always( 'config',    $self->{config} );
     $mock_context->set_always( 'yesterday', $day );
+    $mock_context->set_always( 'current_day', $day );
     $mock_context->set_always( 'logger',    $self->{mock_logger} );
     $mock_context->set_isa('RPG::NewDay::Context');
 

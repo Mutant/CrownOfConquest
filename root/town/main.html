@@ -29,6 +29,11 @@ Your prestige here:
 	The town mayor would like to thank you for your service, and offers you a [% town.discount_value %]% discount at the town [% town.discount_type %]
 	 for today only.<br><br>
 [% END %]
+
+[% IF mayor %]
+	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br><br>
+[% END %]
+	 
 	  
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
@@ -46,6 +51,7 @@ Your prestige here:
 <li><a href="javascript:getPanels('town/quests')">Quests</a></li>
 <li><a href="javascript:getPanels('town/news')">News</a></li>
 <li><a href="javascript:getPanels('town/cemetry')">Cemetry</a></li>
+[% IF mayor && mayor.party_id == party.id %]<li><a href="[% base %]/town/mayor?town_id=[% town.id %]">Mayor's Office</a></li>[% END %]
 </ul>
 
 [% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]

@@ -16,14 +16,19 @@ sub build_cg {
     $cg_params{creature_group_id} = $params{creature_group_id};
 
     my $cg = $schema->resultset('CreatureGroup')->create( {%cg_params} );
-    my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
+    
+    unless ($params{type_id}) {
+    	my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
+    	
+    	$params{type_id} = $type->id;
+    }
 
     my $creature_count = $params{creature_count} || 3;
     for ( 1 .. $creature_count ) {
         Test::RPG::Builder::Creature->build_creature(
             $schema,
             %params,
-            type_id => $type->id,
+            type_id => $params{type_id},
             cg_id   => $cg->id,
         );
     }

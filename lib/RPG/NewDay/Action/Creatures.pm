@@ -9,7 +9,6 @@ use Try::Tiny;
 
 with qw /
 	RPG::NewDay::Role::GarrisonCombat
-	RPG::NewDay::Role::CastleGuardGenerator
 /;
 
 use feature 'switch';
@@ -30,10 +29,7 @@ sub run {
     $self->move_monsters();
 
     # Spawn dungeon monsters
-    $self->spawn_dungeon_monsters();
-    
-    # Spawn town guards
-    $self->spawn_town_guards();
+    $self->spawn_dungeon_monsters();    
 }
 
 sub spawn_monsters {
@@ -355,20 +351,6 @@ sub _move_cg {
     }
 
     return $new_sector;
-}
-
-sub spawn_town_guards {
-	my $self = shift;
-	
-	my $dungeon_rs = $self->context->schema->resultset('Dungeon')->search(
-		{
-			type => 'castle',
-		}
-	);
-	
-	while (my $castle = $dungeon_rs->next) {
-		$self->generate_guards($castle);	
-	}	
 }
 
 sub _check_for_fight {

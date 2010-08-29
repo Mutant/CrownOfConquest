@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::C::Town_Int;
+package Test::RPG::C::Town;
 
 use base qw(Test::RPG::DB);
 
@@ -54,9 +54,9 @@ sub test_enter : Tests(4) {
         }
     );
     $party->discard_changes;
-    is($party->gold, 87, "Party gold reduced");
+    is($party->gold, 99, "Party gold reduced");
     is( defined $party_town,                1,  "party town record created" );
-    is( $party_town->tax_amount_paid_today, 13, "Gold amount recorded" );
+    is( $party_town->tax_amount_paid_today, 1, "Gold amount recorded" );
     is( $party_town->prestige, 1, "Prestige increased");
 
 }
@@ -182,6 +182,58 @@ sub test_calculate_heal_cost_discount_available : Tests(1) {
     # THEN
     is($cost_to_heal, 28, "Cost to heal returned correctly");
        
+}
+
+sub test_become_mayor : Tests(5) {
+	my $self = shift;
+	
+	# GIVEN
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+	$town->mayor_rating(10);
+	$town->peasant_state('revolt');
+	$town->update;
+	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
+	my @characters = $party->characters;
+	my $character = $characters[0];
+	
+	my $party_town = $self->{schema}->resultset('Party_Town')->create(
+		{
+			party_id => $party->id,
+			town_id  => $town->id,
+			prestige => -10,
+		},
+	);	
+	
+	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
+	$mayor->mayor_of($town->id);
+	$mayor->update;
+	
+	$self->{params}{character_id} = $character->id;
+	$self->{params}{town_id} = $town->id;
+	
+	$self->{stash}{party} = $party;
+	$self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	
+	# WHEN
+	RPG::C::Town->become_mayor($self->{c});	
+	
+	# THEN
+	$character->discard_changes;
+	is($character->mayor_of, $town->id, "Character now mayor of town");
+	
+	$mayor->discard_changes;
+	is($mayor->mayor_of, undef, "Old mayor updated correctly");
+	
+	$town->discard_changes;
+	is($town->mayor_rating, 0, "Approval rating reset");
+	is($town->peasant_state, undef, "Peasant state reset");
+	
+	$party_town->discard_changes;
+	is($party_town->prestige, 0, "Prestige reset");
+	
 }
 
 1;

@@ -215,4 +215,30 @@ sub garrisons : Local {
     );	
 }
 
+sub mayors : Local {
+	my ($self, $c) = @_;
+	
+	my @mayors = $c->stash->{party}->search_related(
+		'characters',
+		{
+			mayor_of => {'!=', undef},
+		},
+		{
+			prefetch => 'mayor_of_town',
+		}
+	);	
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/mayors.html',
+                params   => {
+                    mayors => \@mayors,
+                },
+            }
+        ]
+    );	
+}
+
 1;

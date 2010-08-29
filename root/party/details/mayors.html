@@ -1,0 +1,14 @@
+[% PROCESS town/mayor/display_approval.html %]
+
+<h4>Mayors</h4>
+
+[% UNLESS mayors.0 %]
+None of your characters are mayors of a town
+[% ELSE %]
+	[% FOREACH mayor IN mayors %]
+	<b><a href="[% base %]character/view?character_id=[% mayor.id %]">[% mayor.name %]</a></b><br>
+	Approval Rating: [% display_rating(mayor.mayor_of_town.mayor_rating) %]<br>
+	<a href="[% base %]town/mayor?town_id=[% mayor.mayor_of_town.id %]">Manage</a>
+	<br><br>
+	[% END %]
+[% END %]

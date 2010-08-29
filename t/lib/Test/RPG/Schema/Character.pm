@@ -564,6 +564,7 @@ sub test_check_for_offline_cast : Tests(10) {
 	
 	# GIVEN
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->party_id(1);
 	$character->offline_cast_chance(50);
 	$character->update;
 	

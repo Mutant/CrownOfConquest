@@ -12,6 +12,8 @@ Prosperity: [% position.prosperity %]<br>
 [% IF click_to_move %]Movement Cost: [% position.party_movement_factor %]<br>[% END %]
 [% IF town_costs.${position.town_id}.paid %]
 	Paid Tax Today
+[% ELSIF town_costs.${position.town_id}.mayor %]
+    Exempt From Tax
 [% ELSE %]
 	Tax: [% town_costs.${position.town_id}.gold %] gold / [% town_costs.${position.town_id}.turns %] turns
 [% END %] 
@@ -53,7 +55,7 @@ Prosperity: [% position.prosperity %]<br>
 	
 		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
 				[% IF position.town_id %]
-					[% IF ! town_costs.${position.town_id}.paid && party.turns >= position.party_movement_factor %]
+					[% IF town_costs.${position.town_id}.gold && party.turns >= position.party_movement_factor %]
 						<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
 					[% ELSE %]
 						<a href="#" onclick="getPanels('/town/enter?land_id=[% position.land_id %]')">

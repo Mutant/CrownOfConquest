@@ -12,7 +12,7 @@ use List::Util qw(shuffle);
 use Games::Dice::Advanced;
 use Data::Dumper;
 
-sub depends { qw/RPG::NewDay::Action::Town/ }
+sub depends { qw/RPG::NewDay::Action::Town RPG::NewDay::Action::Mayor/ }
 
 sub run {
 	my $self = shift;

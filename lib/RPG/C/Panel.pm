@@ -149,15 +149,19 @@ sub day_logs_check : Private {
 sub create_submit_dialog : Private {
 	my ($self, $c, $params) = @_;
 	
-	my %callback = {
+	my %callback = (
 		name => 'dialog',
 		data => {
 			content => $params->{content},
 			submit_url => $params->{submit_url},
+			parse_content => $params->{parse_content} // 1,
+			dialog_title => $params->{dialog_title},
 		}
-	};
+	);
 	
-	push @{$c->stash->{panel_callback}}, \%callback; 
+	$c->log->debug("Displaying dialog: " . Dumper \%callback);
+	
+	push @{$c->stash->{panel_callbacks}}, \%callback; 
 }
 
 1;

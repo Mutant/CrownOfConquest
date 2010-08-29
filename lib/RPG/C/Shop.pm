@@ -242,6 +242,10 @@ sub buy_item : Local {
 		$c->res->body( to_json( { error => "Your party doesn't have enough gold to buy this item" } ) );
 		return;
 	}
+	
+	# The town takes its cut
+	$town->take_sales_tax($cost);
+	$town->update;	
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters;
 
@@ -299,6 +303,11 @@ sub buy_quantity_item : Local {
 		$c->res->body( to_json( { error => "Your party doesn't have enough gold to buy this item" } ) );
 		return;
 	}
+	
+	# The town takes its cut
+	my $town = $shop->in_town;
+	$town->take_sales_tax($cost);
+	$town->update;	
 
 	# Create the item
 	my $item = $c->model('DBIC::Items')->create( { item_type_id => $c->req->param('item_type_id'), } );

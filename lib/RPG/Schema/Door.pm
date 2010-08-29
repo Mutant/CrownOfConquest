@@ -49,7 +49,7 @@ sub can_be_passed {
 
 sub opposite_door {
     my $self = shift;
-
+    
     my ( $opp_x, $opp_y ) = $self->opposite_sector;
     my $opp_door = $self->result_source->schema->resultset('Door')->find(
         {

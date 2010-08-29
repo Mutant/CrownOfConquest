@@ -39,8 +39,6 @@ sub run {
         foreach my $shop (@shops) {
             next unless $shop->status eq 'Open';
 
-            $self->_adjust_shops_modifier( $town, $shop );
-
             # Calculate items in shop
             my $ideal_items_value = $shop->shop_size * 200 + ( Games::Dice::Advanced->roll('1d40') - 20 );
             my $actual_items_value = 0;
@@ -290,41 +288,6 @@ sub _adjust_number_of_shops {
 
     return @shops;
 
-}
-
-sub _adjust_shops_modifier {
-    my $self = shift;
-    my $town = shift;
-    my $shop = shift;
-
-    my $c = $self->context;
-
-    # Calculate shop's cost_modifier
-    # TODO: the 100 below is max prosperity, the 60 is range of cost modifiers.
-    #  As the range is -30% to +30%, we subtract 30. These values should probably in the config
-    my $new_modifier = sprintf '%.2f', ( $town->prosperity / ( 100 / 60 ) ) - 30;
-
-    #warn "Unrandomised modifer: $new_modifier\n";
-
-    # Apply a random component
-    $new_modifier += Games::Dice::Advanced->roll('1d10') - 5;
-
-    my $modifier_difference = $new_modifier - $shop->cost_modifier;
-
-    # New modifier can't be too far away from the old one
-    if ( abs($modifier_difference) > $c->config->{max_cost_modifier_change} ) {
-        if ( $modifier_difference > 0 ) {
-            $new_modifier = $shop->cost_modifier + $c->config->{max_cost_modifier_change};
-        }
-        else {
-            $new_modifier = $shop->cost_modifier - $c->config->{max_cost_modifier_change};
-        }
-    }
-
-    $c->logger->info( "Shop: " . $shop->id . " modifier changed from " . $shop->cost_modifier . " to $new_modifier" );
-
-    $shop->cost_modifier($new_modifier);
-    $shop->update;
 }
 
 sub _remove_random_items_from_shop {

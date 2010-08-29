@@ -51,6 +51,20 @@ sub opponent_number_of_group {
 	}
 }
 
+sub opponents_of {
+	my $self  = shift;
+	my $being = shift;
+
+	my @opponents = $self->opponents;
+	
+	if ($opponents[0]->has_being($being)) {
+		return $opponents[1];
+	}
+	else {
+		return $opponents[0];
+	}
+}
+
 sub execute_round {
 	my $self = shift;
 
@@ -170,8 +184,7 @@ sub check_for_end_of_combat {
 
 			# TODO: should be in a role?
 			if ( $opponents->group_type eq 'party' ) {
-				$opponents->defunct( DateTime->now() );
-				$opponents->update;
+				$opponents->disband;
 			}
 			
 			$self->result->{losers} = $opponents;
@@ -436,11 +449,13 @@ sub apply_magical_damage {
 sub check_for_offline_cast {
 	my $self      = shift;
 	my $character = shift;
+	
+	return unless $character->is_spell_caster;
 
 	my $opp_group = $self->opponents_of($character);
 	my %opponents = map { $_->id => $_ } $opp_group->members;
 
-	if ( !$character->group->is_online && $character->is_spell_caster ) {
+	if ( $character->is_npc || !$character->group->is_online) {
 		if ( my $spell = $character->check_for_offline_cast ) {
 
 			# Change character's actions to cast the spell

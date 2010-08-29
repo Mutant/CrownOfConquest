@@ -52,6 +52,12 @@ sub gender {
 	return 'neuter';
 }
 
+sub level {
+	my $self = shift;
+	
+	return $self->type->level;	
+}
+
 sub effect_value {
 	my $self = shift;
 	my $effect = shift || croak "Effect not supplied";

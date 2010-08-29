@@ -9,12 +9,43 @@ use Carp;
 
 use Math::Round qw(round);
 
-__PACKAGE__->load_components(qw/Core/);
+__PACKAGE__->load_components(qw/Numeric InflateColumn::DateTime Core/);
 __PACKAGE__->table('Town');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Town');
 
-__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill discount_type discount_value discount_threshold/);
+__PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill 
+						    discount_type discount_value discount_threshold pending_mayor gold peasant_tax
+						    party_tax_level_step base_party_tax sales_tax tax_modified_today
+						    mayor_rating peasant_state/);
+						    
+__PACKAGE__->add_columns(
+	pending_mayor_date => {data_type => 'datetime'},
+);
+						    
+__PACKAGE__->numeric_columns(
+	peasant_tax => {
+		min_value => 0, 
+		max_value => 100,
+	},
+	gold => {
+		min_value => 0,
+	},
+	party_tax_level_step => {
+		min_value => 0,
+	},		
+	base_party_tax => {
+		min_value => 0,
+	},
+	sales_tax => {
+		min_value => 0, 
+		max_value => 100,
+	},
+	mayor_rating => {
+		min_value => -100,
+		max_value => 100,
+	},
+); 
 
 __PACKAGE__->set_primary_key('town_id');
 
@@ -30,26 +61,52 @@ __PACKAGE__->has_many( 'party_town', 'RPG::Schema::Party_Town', { 'foreign.town_
 
 __PACKAGE__->might_have( 'castle', 'RPG::Schema::Dungeon', { 'foreign.land_id' => 'self.land_id' }, );
 
+__PACKAGE__->might_have( 'mayor', 'RPG::Schema::Character', { 'foreign.mayor_of' => 'self.town_id' }, );
+
+__PACKAGE__->has_many( 'history', 'RPG::Schema::Town_History', 'town_id', );
+
 sub tax_cost {
     my $self  = shift;
     my $party = shift;
-
-    my $party_town_rec = $self->find_related( 'party_town', { 'party_id' => $party->id, }, );
-
-    if ( $party_town_rec && $party_town_rec->tax_amount_paid_today > 0 ) {
-        return { paid => 1 };
+    
+    my $party_level;
+    my $prestige = 0;
+    
+    my $mayor = $self->mayor;
+    if (ref $party && $mayor && $mayor->party_id == $party->id) {
+    	return { mayor => 1 };	
     }
     
-    my $prestige = 0;
-    $prestige = $party_town_rec->prestige if $party_town_rec;
+    if (ref $party) {
+    	my $party_town_rec = $self->find_related( 'party_town', { 'party_id' => $party->id, }, );
 
-    my $base_cost = $self->prosperity * RPG::Schema->config->{tax_per_prosperity};
-
-    my $multiplier = 1 + ( RPG::Schema->config->{tax_level_modifier} * ( $party->level - 1 ) );
+    	if ( $party_town_rec && $party_town_rec->tax_amount_paid_today > 0 ) {
+        	return { paid => 1 };
+    	}
+    	
+    	$party_level = $party->level;
+    	$prestige = $party_town_rec->prestige if $party_town_rec;
+    }
+    else {
+    	$party_level = $party;
+    }    
     
-    my $prestige_modifier = (0-$prestige) / 40;
+    my ($base_cost, $level_modifier);     
+    if ($mayor && $mayor->party_id) {
+    	$base_cost = $self->base_party_tax;
+    	$level_modifier = $self->party_tax_level_step;
+    }
+    else {
+    	$base_cost = $self->prosperity * RPG::Schema->config->{tax_per_prosperity};
+    	$level_modifier = $self->prosperity * RPG::Schema->config->{tax_level_modifier};
+    }
+    
+    my $level_cost = round ($level_modifier * ($party_level - 1 ));
+    
+    my $prestige_modifier = (0-$prestige) / 300;
 
-    my $gold_cost = round $base_cost * ($multiplier + $prestige_modifier); 
+    my $gold_cost = round ($base_cost + $level_cost);
+    $gold_cost += round ($gold_cost * $prestige_modifier); 
     $gold_cost = 1 if $gold_cost < 1;
 
     my $turn_cost = round $gold_cost / RPG::Schema->config->{tax_turn_divisor};
@@ -106,4 +163,20 @@ sub _find_roads {
     return 0;
 }
 
+sub take_sales_tax {
+	my $self = shift;
+	my $cost = shift;
+	
+	my $towns_cut = int ($cost * $self->sales_tax / 100);
+	$self->increase_gold($towns_cut);
+	$self->add_to_history(
+		{
+			type => 'income',
+			value => $towns_cut,
+			message => 'Sales Tax',
+			day_id => $self->result_source->schema->resultset('Day')->find_today->id,
+		}
+	);
+	
+}
 1;

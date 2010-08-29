@@ -356,7 +356,12 @@ sub autogenerate : Local {
         my $class = $c->model('DBIC::Class')->find( { 'class_name' => $class_name } );
         my $race = $c->model('DBIC::Race')->random;
 
-        my $character = $c->model('DBIC::Character')->generate_character( $race, $class, 1, 0, 0 );
+        my $character = $c->model('DBIC::Character')->generate_character( 
+        	race => $race, 
+        	class => $class, 
+        	level => 1,
+        	roll_points => 0
+        );
         $character->party_id( $c->stash->{party}->id );
         $character->party_order($order);
         $character->update;

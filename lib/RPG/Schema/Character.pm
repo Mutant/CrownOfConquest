@@ -11,6 +11,7 @@ use Data::Dumper;
 use List::Util qw(shuffle);
 use Math::Round qw(round);
 use Sub::Name;
+use DateTime;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
@@ -22,7 +23,8 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance/
+        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
+        mayor_of/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
@@ -38,7 +40,7 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key('character_id');
 
-__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
+__PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
 
 __PACKAGE__->belongs_to( 'class', 'RPG::Schema::Class', { 'foreign.class_id' => 'self.class_id' } );
 
@@ -59,6 +61,10 @@ __PACKAGE__->has_many( 'character_effects', 'RPG::Schema::Character_Effect', { '
 __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_id' );
 
 __PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
+
+__PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.mayor_of' }, );
+
+__PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id' );
 
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
@@ -151,20 +157,30 @@ sub hit_points_max {
 
 sub name {
     my $self = shift;
+    
+    my $town = $self->mayor_of ? $self->mayor_of_town : undef;
 
-    return $self->character_name;
+    return $self->character_name . ($town ? ', Mayor of ' . $town->town_name : '');
 }
 
 sub group_id {
     my $self = shift;
 
-    return $self->garrison_id || $self->party_id;
+    return $self->garrison_id || $self->party_id || $self->creature_group_id;
 }
 
 sub group {
 	my $self = shift;
 	
-	return $self->garrison_id ? $self->garrison : $self->party;
+	if ($self->garrison_id) {
+		return $self->garrison;
+	}
+	elsif ($self->creature_group_id) {
+		return $self->creature_group;	
+	}
+	else {
+		return $self->party;
+	}
 }
 
 sub is_spell_caster {
@@ -179,12 +195,21 @@ sub is_in_party {
 	
 	return 0 unless $self->party_id;
 	
-	return 1 unless $self->garrison_id;
+	return 1 if ! $self->garrison_id || ! $self->mayor_of;
 	
 	# They're in a garrison.. if the party is currently in the garrison's sector, consider the char to be in the party
 	return 1 if $self->garrison->land_id == $self->party->land_id;
 	
 	return 0;
+}
+
+# Returns true if character isn't owned by a player
+sub is_npc {
+	my $self = shift;
+	
+	return 0 if $self->party_id;
+	
+	return 1;
 }
 
 sub encumbrance {
@@ -519,12 +544,22 @@ sub get_equipped_item {
 sub hit {
     my $self   = shift;
     my $damage = shift;
+    my $attacker = shift;
 
     my $new_hp_total = $self->hit_points - $damage;
     $new_hp_total = 0 if $new_hp_total < 0;
 
     $self->hit_points($new_hp_total);
     $self->update;
+    
+    if ($self->is_dead && $attacker) {
+    	if (my $town = $self->mayor_of_town) {
+    		# A mayor has died... the party that killed them is marked as 'pending mayor' of the town
+   			$town->pending_mayor($attacker->party_id);
+   			$town->pending_mayor_date(DateTime->now());
+   			$town->update;
+    	}	
+    }
 }
 
 sub is_dead {
@@ -919,11 +954,15 @@ sub check_for_offline_cast {
 	
 	my $cast_roll = Games::Dice::Advanced->roll('1d100');
 	if ($cast_roll <= $self->offline_cast_chance) {
+		my %params;
+		unless ($self->is_npc) {
+			# pc chars restricted to spells they've marked to cast offline
+			$params{cast_offline} = 1;
+		}			
+		
 		my @spells = $self->search_related(
 			'memorised_spells',
-			{
-				cast_offline => 1,
-			},
+			\%params,
 			{
 				prefetch => 'spell',
 			}

@@ -70,7 +70,14 @@ sub sector_menu : Private {
 
 	my @adjacent_towns;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
-		@adjacent_towns = $c->stash->{party_location}->get_adjacent_towns;
+		# Remove any the party is a mayor of
+		my @party_mayoralties = map { $_->mayor_of ? $_->mayor_of : () } $c->stash->{party}->characters;
+		
+		foreach my $town ($c->stash->{party_location}->get_adjacent_towns) {
+			unless (grep { $_ == $town->id} @party_mayoralties) {
+				push @adjacent_towns, $town;	
+			}	
+		}
 	}
 
 	my $can_build_garrison = 0;
@@ -178,17 +185,7 @@ sub list : Private {
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
 	#  to be re-read.
 	# TODO: check if an update has occured, and only re-read if it has
-	my @characters = $c->model('DBIC::Character')->search(
-		{
-			'party_id'    => $c->stash->{party}->id,
-			'garrison_id' => undef,
-
-		},
-		{
-			prefetch => [ 'class', 'race', { 'character_effects' => 'effect' } ],
-			order_by => 'party_order',
-		},	
-	);
+	my @characters = map { $_->discard_changes; $_ } $party->characters_in_party;
 	
 	$c->stats->profile("Fetched characters");
 
@@ -237,10 +234,10 @@ sub list : Private {
 
 	my @opponents;
 	if ( $c->stash->{creature_group} ) {
-		@opponents = $c->stash->{creature_group}->creatures;
+		@opponents = $c->stash->{creature_group}->members;
 	}
 	elsif ( my $opponent_party = $party->in_party_battle_with ) {
-		@opponents = $opponent_party->characters;
+		@opponents = $opponent_party->members;
 	}
 	elsif ( $c->stash->{in_combat_with_garrison} ) {
 		@opponents = $c->stash->{in_combat_with_garrison}->members;
@@ -557,8 +554,7 @@ sub disband : Local {
 	# If this is a confirmation (and the referer details check out, disband the party. Otherwise check for confirmation
 	my $url_root = $c->config->{url_root};
 	if ( $c->req->param('confirmed') && $c->req->referer =~ /^$url_root/ && $c->req->referer =~ m|party/disband| ) {
-		$c->stash->{party}->defunct( DateTime->now() );
-		$c->stash->{party}->update;
+		$c->stash->{party}->disband;
 		$c->res->redirect( $c->config->{url_root} );
 		return;
 	}

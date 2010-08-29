@@ -41,14 +41,22 @@ sub build_quest {
         $create_params{party_id} = $params{party_id};
     }
 
-    my $quest = $schema->resultset('Quest')->create(
-        {
-            town_id       => $town->id,
-            quest_type_id => $quest_type->id,
-            status        => $params{status} || 'Not Started',
-            %create_params,
-        }
-    );
+    my $quest = eval {
+    	$schema->resultset('Quest')->create(
+	        {
+	            town_id       => $town->id,
+	            quest_type_id => $quest_type->id,
+	            status        => $params{status} || 'Not Started',
+	            %create_params,
+	        }
+	    );
+    };
+    
+    my $error = $@;
+    if ($error) {
+    	die $error->message if $error->isa('RPG::Exception');
+    	die $error;    		
+    }
 
     return $quest;
 

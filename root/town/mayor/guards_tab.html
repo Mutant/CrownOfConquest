@@ -1,0 +1,51 @@
+<h3>Town Guards</h3>
+
+Choose how many guards you'd like to hire to protect the town. Guards will be hired and fired immediately after tax is collected for the day.
+If there's not enough money in the town coffers to pay for all the guards, only the ones the town can afford will be hired.
+<br>
+<br>
+
+<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/update_guards" method="POST">
+<input type="hidden" name="town_id" value="[% town_id %]">
+
+<table class="main" cellpadding="2">
+	<tr>
+		<th>Guard Type</th>
+		<th>Number Currently<br>Hired</th>
+		<th>Amount To Hire</th>
+		<th>Cost Per Day</th>
+	</tr>
+	
+[% total_cost = 0 %]
+[% FOREACH guard_type IN guard_types %]
+	<tr>
+		<td>[% guard_type.creature_type %] ([% guard_type.hire_cost %] gold each)</td>
+		<td align="center">[% guard_type.count || 0 %]</td>
+		<td align="center">
+		    <input type="text" dojoType="dijit.form.NumberTextBox" name="type_[% guard_type.creature_type_id %]" style="width: 50px"
+				value="[% guard_type.to_hire %]" constraints="{min:0,places:0}" required="true"
+				invalidMessage="Amount of guards hired must be a number 0 or greater">
+		</td>
+		<td align="right">
+			[% cost = guard_type.hire_cost * guard_type.to_hire %]
+			[% total_cost = total_cost + cost %]
+			[% cost %] gold
+		</td>
+	</tr>
+[% END %]
+
+	<tr><td colspan="4"><hr size="1" width="100%"></td></tr>
+	<tr>
+		<td>
+			<b>Total:</b>
+		</td>
+		<td></td>
+		<td></td>
+		<td align="right">[% total_cost %] gold</td>
+	</tr>
+</table>
+
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+	Update
+</button>
+</div>

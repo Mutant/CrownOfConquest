@@ -49,13 +49,7 @@ sub auto : Private {
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
-    $c->stash->{today} = $c->model('DBIC::Day')->find(
-        {},
-        {
-            'rows'     => 1,
-            'order_by' => 'day_number desc'
-        },
-    );
+    $c->stash->{today} = $c->model('DBIC::Day')->find_today;
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
 

@@ -105,7 +105,7 @@ sub do_new_day {
 		logger   => $logger,
 		datetime => $dt,
 	);
-
+	
 	foreach my $action ( $self->plugins( context => $context ) ) {
 		if (@plugins) {
 			next unless grep { $action->isa($_) } @plugins;

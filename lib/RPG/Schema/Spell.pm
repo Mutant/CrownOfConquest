@@ -83,11 +83,12 @@ sub _cast_impl {
     confess "No target or character. ($character, $target)" unless $character && $target;
 
     my $result_params = $self->_cast( $character, $target, $level || $character->level );
-
+    
     my $result = RPG::Combat::SpellActionResult->new(
         spell_name => $self->spell_name,
         attacker   => $character,
         defender   => $target,
+        $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
         %$result_params,
     );
 

@@ -66,15 +66,19 @@ sub test_create_character_level_1 : Tests(12) {
     $self->{roll_result} = 5;
 
     # WHEN
-    my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 1, 0, );
+    my $character = $self->{schema}->resultset('Character')->generate_character( 
+    	race => $race, 
+    	class => $class, 
+    	level => 1, 
+    );
 
     # THEN
     is( $character->race_id,  $race->id,  "Character is correct race" );
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    1,          "Character is level 1" );
     is( $character->xp,       0,          "Character has 0 xp" );
-    ok( $character->max_hit_points >= 4, "Character has correct number of hit points" );
-    ok( $character->spell_points >= 5,   "Character has correct number of spell points" );
+    cmp_ok( $character->max_hit_points, '>=', 4, "Character has correct number of hit points" );
+    cmp_ok( $character->spell_points, '>=', 5,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );
     ok( $character->strength >= 5     && $character->strength <= 18,     "Character's strength in correct range" );
     ok( $character->agility >= 5      && $character->agility <= 18,      "Character's agility in correct range" );
@@ -100,7 +104,12 @@ sub test_create_character_level_1_points_not_rolled : Tests(12) {
     $self->{roll_result} = 5;
 
     # WHEN
-    my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 1, 0, 0, );
+    my $character = $self->{schema}->resultset('Character')->generate_character(     	
+    	race => $race, 
+    	class => $class, 
+    	level => 1,  
+    	roll_points => 0,
+    );
 
     # THEN
     is( $character->race_id,        $race->id,  "Character is correct race" );
@@ -135,13 +144,17 @@ sub test_create_character_level_5 : Tests(7) {
     $self->{roll_result} = 5;
 
     # WHEN
-    my $character = $self->{schema}->resultset('Character')->generate_character( $race, $class, 5, 100, );
+    my $character = $self->{schema}->resultset('Character')->generate_character(     	
+    	race => $race, 
+    	class => $class, 
+    	level => 5,  
+    );
 
     # THEN
     is( $character->race_id,  $race->id,  "Character is correct race" );
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    5,          "Character is level 5" );
-    is( $character->xp,       100,        "Character has 100 xp" );
+    is( $character->xp,       1405,        "Character has 100 xp" );
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );

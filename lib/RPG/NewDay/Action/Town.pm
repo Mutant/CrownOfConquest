@@ -122,13 +122,7 @@ sub scale_prosperity {
 
     $self->context->logger->info( "Changes required: " . Dumper \%changes_needed );
 
-	eval {
-    	$self->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );
-	};
-	if ($@) {
-		$self->context->logger->error("Error updating town's prosperity; $@");
-	}
-
+	$self->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );	
 }
 
 sub _calculate_changes_needed {
@@ -165,8 +159,6 @@ sub _select_town_from_category {
         next unless $town->prosperity >= $category && $town->prosperity <= $outer_bound;
         return $town;
     }
-
-    confess "Can't find town for category $category";
 }
 
 sub _change_prosperity_as_needed {
@@ -201,6 +193,13 @@ sub _change_prosperity_as_needed {
                 }
 
                 my $town_to_change = $self->_select_town_from_category( $from_category, @$towns );
+                
+                unless ($town_to_change) {
+                	# Couldn't find a town, skip this category
+                	$self->context->log->debug("Couldn't find any more towns for category $from_category");
+                	last;
+                }
+                
                 my $modifier = $category > $from_category ? 4 : -4;
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
@@ -235,7 +234,13 @@ sub _change_prosperity_as_needed {
                     }
                 }
 
-                my $town_to_change = $self->_select_town_from_category( $category, @$towns );
+                my $town_to_change = $self->_select_town_from_category( $to_category, @$towns );
+                unless ($town_to_change) {
+                	# Couldn't find a town, skip this category
+                	$self->context->log->debug("Couldn't find any more towns for category $to_category");
+                	last;
+                }                
+                
                 my $modifier = $category > $to_category ? -4 : 4;
 
                 $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );

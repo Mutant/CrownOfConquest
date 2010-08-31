@@ -30,7 +30,7 @@ sub test_run_loads_normal_config : Tests(1) {
     my $mock_logger = Test::MockObject::Extends->new('Log::Dispatch');
 
     my $mock_new_day = Test::MockObject->new();
-    $mock_new_day->set_always('do_new_day');
+    $mock_new_day->mock('do_new_day', sub{});
 
     RPG::NewDay::run($mock_new_day);
 

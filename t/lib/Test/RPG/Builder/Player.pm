@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::Player;
 
+use Digest::SHA1 qw(sha1_hex);
+
 sub build_player {
 	my $self = shift;
 	my $schema = shift;
@@ -12,7 +14,7 @@ sub build_player {
         { 
             player_name => 'name', 
             email => 'foo@bar.com', 
-            password => 'pass', 
+            password => sha1_hex('pass'), 
             verified => 1,
             warned_for_deletion => 1,
             deleted => 1, 

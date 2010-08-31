@@ -11,6 +11,7 @@ use Carp;
 use String::Random;
 use DateTime;
 use List::Util qw(shuffle);
+use Digest::SHA1 qw(sha1_hex);
 
 sub login : Local {
     my ( $self, $c ) = @_;
@@ -18,7 +19,10 @@ sub login : Local {
     my $message;
     
     if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), password => $c->req->param('password') } );
+        my $user = $c->model('DBIC::Player')->find( { 
+        	email => $c->req->param('email'), 
+        	password => sha1_hex $c->req->param('password') 
+        });
 
         if ($user) {
             $user->last_login( DateTime->now() );
@@ -188,7 +192,7 @@ sub register : Local {
                 {
                     player_name       => $c->req->param('player_name'),
                     email             => $c->req->param('email'),
-                    password          => $c->req->param('password1'),
+                    password          => sha1_hex($c->req->param('password1')),
                     verification_code => $verification_code,
                     last_login        => DateTime->now(),
                     $code ? (promo_code_id => $code->code_id) : (),

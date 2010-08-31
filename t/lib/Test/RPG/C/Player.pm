@@ -14,6 +14,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Player;
 
 use Data::Dumper;
+use Digest::SHA1 qw(sha1_hex);
 
 sub setup_player : Tests(startup => 1) {
     my $self = shift;
@@ -345,7 +346,7 @@ sub test_register_successful : Tests(6) {
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
     is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, 'pass', "Password set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
 }
 
@@ -384,7 +385,7 @@ sub test_register_successful_with_promo_code : Tests(7) {
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
     is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, 'pass', "Password set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
     is($new_player->promo_code_id, $promo_code->id, "Promo code recorded");
 }
@@ -424,7 +425,7 @@ sub test_register_successful_with_promo_code_non_exist : Tests(7) {
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
     is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, 'pass', "Password set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
     is($new_player->promo_code_id, undef, "No promo code recorded");
 }
@@ -464,7 +465,7 @@ sub test_register_successful_with_promo_code_used : Tests(7) {
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
     is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, 'pass', "Password set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
     is($new_player->promo_code_id, undef, "No promo code recorded");
 }
@@ -505,7 +506,7 @@ sub test_login_password_not_given : Tests(2) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => 'pass' } );
+    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass') } );
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
@@ -523,7 +524,7 @@ sub test_login_password_incorrect : Tests(2) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => 'pass' } );
+    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass') } );
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
@@ -542,7 +543,7 @@ sub test_login_not_verified : Tests(3) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => 'pass', verified => 0 } );
+    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass'), verified => 0 } );
     
     $self->{params}{email} = 'foo@bar.com';
     $self->{params}{password} = 'pass'; 
@@ -567,7 +568,7 @@ sub test_login_successful : Tests(4) {
         { 
             player_name => 'name', 
             email => 'foo@bar.com', 
-            password => 'pass', 
+            password => sha1_hex('pass'), 
             verified => 1,
             warned_for_deletion => 1,
             deleted => 0, 
@@ -601,7 +602,7 @@ sub test_login_was_deleted : Tests(5) {
         { 
             player_name => 'name', 
             email => 'foo@bar.com', 
-            password => 'pass', 
+            password => sha1_hex('pass'), 
             verified => 1,
             warned_for_deletion => 1,
             deleted => 1, 

@@ -5,6 +5,8 @@ use warnings;
 
 use base 'Catalyst::Controller';
 
+use Digest::SHA1 qw(sha1_hex);
+
 # Note, these may be called by a deleted (yet still logged in player)... so it's not safe to use $c->stash->{party}.
 
 sub change_password : Local {
@@ -13,7 +15,7 @@ sub change_password : Local {
     my $message;
 
     if ( $c->req->param('current_password') ) {
-        if ( $c->req->param('current_password') ne $c->session->{player}->password ) {
+        if ( sha1_hex($c->req->param('current_password')) ne $c->session->{player}->password ) {
             $c->stash->{error} = "Current password is incorrect";
         }
         elsif ( $c->req->param('new_password') ne $c->req->param('retyped_password') ) {
@@ -25,7 +27,7 @@ sub change_password : Local {
         else {
             my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id, } );
 
-            $player->password( $c->req->param('new_password') );
+            $player->password( sha1_hex $c->req->param('new_password') );
             $player->update;
 
             $c->session->{player} = $player;

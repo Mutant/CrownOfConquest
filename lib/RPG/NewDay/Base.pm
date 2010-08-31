@@ -12,6 +12,11 @@ sub cron_string {
     return $self->context->config->{default_cron_string};   
 }
 
+# If true, the other actions will keep processing if the current one returns an error
+sub continue_on_error {
+	return 1;	
+} 
+
 __PACKAGE__->meta->make_immutable;
 
 1;

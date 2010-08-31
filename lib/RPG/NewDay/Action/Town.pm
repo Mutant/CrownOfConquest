@@ -196,7 +196,7 @@ sub _change_prosperity_as_needed {
                 
                 unless ($town_to_change) {
                 	# Couldn't find a town, skip this category
-                	$self->context->log->debug("Couldn't find any more towns for category $from_category");
+                	$self->context->logger->debug("Couldn't find any more towns for category $from_category");
                 	last;
                 }
                 
@@ -237,7 +237,7 @@ sub _change_prosperity_as_needed {
                 my $town_to_change = $self->_select_town_from_category( $to_category, @$towns );
                 unless ($town_to_change) {
                 	# Couldn't find a town, skip this category
-                	$self->context->log->debug("Couldn't find any more towns for category $to_category");
+                	$self->context->logger->debug("Couldn't find any more towns for category $to_category");
                 	last;
                 }                
                 

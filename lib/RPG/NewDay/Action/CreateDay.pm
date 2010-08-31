@@ -3,6 +3,10 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
+sub continue_on_error {
+	return 0;	
+} 
+
 sub run {
     my $self = shift;
 

@@ -58,23 +58,27 @@ sub run {
 	}
 
 	while (1) {
-		eval { $self->do_new_day( $config, $logger, $dt, @plugins ); };
-		if ($@) {
-			my $error = $@;
-			if ( ref $error && $error->isa('RPG::Exception') ) {
-				$error = $error->message;
+		my @errors = $self->do_new_day( $config, $logger, $dt, @plugins );;
+		if (@errors) {
+			my $error_str;
+			foreach my $error (@errors) {
+				if ( ref $error && $error->isa('RPG::Exception') ) {
+					$error_str .= $error->message . "\n";
+				}
+				else {
+					$error_str .= "$error\n";
+				}
 			}
-			$logger->error("Error running new day script: $error");
 
 			my $msg = MIME::Lite->new(
 				From    => $config->{send_email_from},
 				To      => $config->{send_email_from},
 				Subject => '[Kingdoms] Error running new day script',
-				Data    => "Error was: $error",
+				Data    => "Error was: $error_str",
 			);
 			$msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );
 
-			return $error;
+			return $error_str;
 		}
 
 		# If more than a minute has elapsed, run again with an incremented time to avoid missing any actions
@@ -106,6 +110,8 @@ sub do_new_day {
 		datetime => $dt,
 	);
 	
+	my @errors;
+	
 	foreach my $action ( $self->plugins( context => $context ) ) {
 		if (@plugins) {
 			next unless grep { $action->isa($_) } @plugins;
@@ -115,11 +121,23 @@ sub do_new_day {
 
 		if ( $cron->validate_time($dt) ) {
 			$logger->info( "Running action: " . $action->meta->name );
-			$action->run();
+			
+			eval {
+				$action->run();
+			};
+			if ($@) {
+				push @errors, $@;
+				
+				$logger->error("Error occured when running " . $action->meta->name . ": $@");
+				
+				last unless $action->continue_on_error;
+			}				
 		}
 	}
 
 	$logger->info( "Successfully completed ticker script run for: " . $dt->datetime() );
+	
+	return @errors;
 }
 
 __PACKAGE__->meta->make_immutable;

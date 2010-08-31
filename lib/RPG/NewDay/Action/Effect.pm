@@ -22,8 +22,8 @@ sub run {
         
         if ($effect->time_left <= 0) {
             # TODO: could be other types of day effects (i.e. non party)
-            #$effect->party_effect->delete;
-            #$effect->delete;
+            $effect->party_effect->delete;
+            $effect->delete;
         }
         else {
             $effect->update;

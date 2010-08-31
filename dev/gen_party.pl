@@ -5,6 +5,7 @@ use warnings;
 
 use RPG::Schema;
 use YAML;
+use Digest::SHA1 qw(sha1_hex);
 
 my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", { AutoCommit => 1 }, );
 my $home = $ENV{RPG_HOME};
@@ -19,7 +20,7 @@ my $player = $schema->resultset('Player')->create(
 	{
 		player_name => $player_name,
 		email => $player_name . '@email.com',
-		password => 'pass',		
+		password => sha1_hex('pass'),		
 		verified => 1,
 	},
 );

@@ -88,7 +88,11 @@ The town of [% town.town_name %] has the following characters available for recr
 	</tr>
 [% END %]
 
-<tr><td colspan="14"><br><br>Or you can sell one of your characters:<br><br></td></tr>
+<tr><td colspan="14"><br><br>
+[% IF party_characters.size <= 1 %]
+	You only have one character in your party, so can't sell anyone.</td></tr>
+[% ELSE %]
+Or you can sell one of your characters:<br><br></td></tr>
 
 
 	<tr>
@@ -127,6 +131,7 @@ The town of [% town.town_name %] has the following characters available for recr
 			[% END %]
 		</td>
 	</tr>
+[% END %]
 [% END %]
 
 </table>

@@ -79,6 +79,11 @@ sub buy : Local {
 
 sub sell : Local {
     my ( $self, $c ) = @_;
+    
+    my @party_characters = $c->stash->{party}->characters;
+    if (scalar @party_characters <= 1) {
+    	croak "Can't sell last character in the party";
+    }
 
     my $character = $c->model('DBIC::Character')->find( $c->req->param('character_id') );
 
@@ -90,11 +95,9 @@ sub sell : Local {
         croak "Can't sell a dead character\n";
     }   
     
-    if ($character->garrison_id) {
-    	croak "Can't sell a character in a garrison\n";	
+    unless ($character->is_in_party) {
+    	croak "Can't sell a character not in party\n";	
     }
-    
-    
 
     $c->stash->{party}->gold( $c->stash->{party}->gold + $character->sell_value );
     $c->stash->{party}->update;

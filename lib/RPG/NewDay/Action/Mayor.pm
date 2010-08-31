@@ -139,7 +139,7 @@ sub calculate_approval {
 	
 	$town->decrease_mayor_rating($party_town_rec->get_column('raids_today') * 3);
 	$town->increase_mayor_rating(int $party_town_rec->get_column('tax_collected') / 100);
-	$town->decrease_mayor_rating($town->peasant_tax - 3);
+	$town->decrease_mayor_rating($town->peasant_tax - 3); # The -3 stops it trending down for npc mayors
 	
  	my $creature_rec = $self->context->schema->resultset('Creature')->search(
 		{
@@ -152,10 +152,12 @@ sub calculate_approval {
 		}
 	);
 	
-	my $guard_increase = int ($creature_rec->get_column('level_aggregate') / $town->prosperity);
-	$guard_increase = 8 if $guard_increase > 8;
-	
+	my $guard_increase = int ($creature_rec->get_column('level_aggregate') / $town->prosperity);	
 	$town->increase_mayor_rating($guard_increase);
+	
+	# A random components to approval
+	my $random = Games::Dice::Advanced->roll('1d11') - 6;
+	$town->increase_mayor_rating($random);
 	
 	$town->add_to_history(
 		{

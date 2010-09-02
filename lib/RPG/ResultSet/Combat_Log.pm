@@ -30,14 +30,15 @@ sub get_offline_log_count {
     my $self  = shift;
     my $party = shift;
     my $date_range_start = shift;
+    my $party_or_garrison_only = shift // 0;
     
     $date_range_start = $party->last_action unless $date_range_start;
     
     return 0 unless $date_range_start;
-
+    
     return $self->search(
         {
-            $self->_party_criteria($party),
+            $self->_party_criteria($party, $party_or_garrison_only),
             encounter_ended => { '>', $date_range_start },
         },
     )->count;
@@ -167,8 +168,9 @@ sub get_recent_logs_for_garrison {
 sub _party_criteria {
     my $self  = shift;
     my $party = shift;
+    my $party_or_garrison_only = shift || 0;
 
-	return $self->_group_type_critiera($party, 'party');
+	return $self->_group_type_critiera($party, 'party', $party_or_garrison_only);
 }
 
 sub _group_type_critiera {
@@ -177,15 +179,19 @@ sub _group_type_critiera {
 
 	my $group_type = shift || $group->group_type;	
 	
+	my $party_or_garrison_only = shift || 0;
+	
     return (
         -nest => [
             '-and' => {
                 opponent_1_type => $group_type,
                 opponent_1_id   => $group->id,
+                ($party_or_garrison_only ? (opponent_2_type => ['party', 'garrison']) : ()),
             },
             '-and' => {
                 opponent_2_type => $group_type,
                 opponent_2_id   => $group->id,
+                ($party_or_garrison_only ? (opponent_1_type => ['party', 'garrison']) : ()),
             }
         ]
     );	

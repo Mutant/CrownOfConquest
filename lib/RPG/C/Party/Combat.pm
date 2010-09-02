@@ -15,14 +15,21 @@ sub attack : Local {
 
     croak "Opponent party not found" unless defined $party_attacked;
 
-    if ($party_attacked->dungeon_grid_id) {
-        $c->stash->{error} = "Can't attack a party in a dungeon";           
+    if ($party_attacked->land_id != $c->stash->{party}->land_id) {
+		croak "Can't attack a party in a different sector";
     }
-    if ( $party_attacked->in_combat ) {
+
+    if ($party_attacked->dungeon_grid_id) {
+        $c->stash->{error} = "Can't attack a party in a dungeon";
+    }
+    elsif ( $party_attacked->in_combat ) {
         $c->stash->{error} = 'That party is already in combat';
     }
     elsif ( $c->stash->{party}->level - $party_attacked->level > $c->config->{max_party_level_diff_for_attack} ) {
         $c->stash->{error} = 'The party is too low level to attack';
+    }
+    elsif ( $c->model('DBIC::Combat_Log')->get_offline_log_count( $party_attacked, undef, 1 ) >= $c->config->{max_party_offline_attacks} ) {
+    	$c->stash->{error} = 'This party has been attacked too many times recently';
     }
     else {
 

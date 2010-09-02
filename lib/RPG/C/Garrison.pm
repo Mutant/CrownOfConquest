@@ -146,6 +146,12 @@ sub update : Local {
 		$c->stash->{error} = "You must have at least one living character in your party";
 		$c->detach('manage');		
 	}	
+
+	if (scalar @chars_left_in_party > $c->config->{max_party_characters}) {
+		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " characters in your party";
+		$c->detach( 'manage' );
+		return;		
+	}
 	
 	my @chars_to_remove;
 	foreach my $current_char (@current_garrison_chars) {
@@ -153,11 +159,6 @@ sub update : Local {
 			# Char removed
 			push @chars_to_remove, $current_char;
 		}
-	}
-	
-	if (scalar @chars_to_remove + scalar @chars_in_party > $c->config->{max_party_characters}) {
-		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " in your party";
-		$c->detach( 'manage' );		
 	}
 	
 	foreach my $char (@current_garrison_chars) {

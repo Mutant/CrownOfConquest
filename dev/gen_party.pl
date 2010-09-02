@@ -15,6 +15,7 @@ RPG::Schema->config($config);
 
 my $player_name = shift || die "Please provide a player name\n";
 my $level = shift || die "Please provide a level";
+my $char_count = shift // 6;
 
 my $player = $schema->resultset('Player')->create(
 	{
@@ -44,7 +45,7 @@ my $party = $schema->resultset('Party')->create(
 	}
 );
 
-for (1..6) {
+for (1..$char_count) {
 	my $character = $schema->resultset('Character')->generate_character(
 		allocate_equipment => 1,
 		level              => $level,

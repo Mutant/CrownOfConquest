@@ -54,6 +54,16 @@ sub insert {
     return $ret;
 }
 
+sub delete {
+    my ( $self, @args ) = @_;
+
+	$self->cleanup;
+	
+    my $ret = $self->next::method(@args);
+
+    return $ret;
+}
+
 sub _bless_into_type_class {
     my $self = shift;
 
@@ -168,5 +178,8 @@ sub interested_actions_by_quest_type {
 
 # Called when the quest is completed (i.e. town hall)
 sub finish_quest {}
+
+# Called before deleting a quest
+sub cleanup {}
 
 1;

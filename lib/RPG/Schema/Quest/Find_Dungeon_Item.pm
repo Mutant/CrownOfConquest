@@ -166,7 +166,13 @@ sub ready_to_complete {
 sub finish_quest {
 	my $self = shift;
 	
-	$self->item->delete;	
+	$self->item->delete;
+}
+
+sub cleanup {
+	my $self = shift;
+	
+	$self->item->delete;
 }
 
 1;

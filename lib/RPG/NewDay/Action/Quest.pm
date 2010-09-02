@@ -93,6 +93,7 @@ sub update_days_left {
 
             # Time's up!
             $quest->status('Terminated');
+            $quest->cleanup;
 
             my $message = RPG::Template->process( $c->config, 'newday/quest/time_run_out.html', { quest => $quest, }, );
 

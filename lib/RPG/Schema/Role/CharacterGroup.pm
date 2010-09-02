@@ -30,16 +30,15 @@ sub _median {
 sub is_over_flee_threshold {
     my $self = shift;
 
-    my $rec = $self->find_related(
-        'characters',
-        {},
-        {
-            select => [ { sum => 'max_hit_points' }, { sum => 'hit_points' }, ],
-            'as'   => [ 'total_hps', 'current_hps' ],
-        }
-    );
+    my @characters = $self->members;
+    
+    my ($current_hp, $total_hp) = (0,0);
+    foreach my $character (@characters) {
+    	$current_hp += $character->hit_points;
+    	$total_hp   += $character->max_hit_points;
+    }
 
-    my $percentage = int( ( $rec->get_column('current_hps') / $rec->get_column('total_hps') ) * 100 );
+    my $percentage = ( $current_hp / $total_hp ) * 100;
 
     return $percentage < $self->flee_threshold ? 1 : 0;
 }

@@ -13,6 +13,7 @@ use Test::MockObject;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Town;
+use Test::RPG::Builder::Garrison;
 
 use Data::Dumper;
 use DateTime;
@@ -148,6 +149,23 @@ sub test_over_flee_threshold_below_threshold : Tests(1) {
     # THEN
     is($over, 1, "Party over threshold");    
 }
+
+sub test_over_flee_threshold_below_threshold_garrison_chars : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, hit_points => 69, max_hit_points => 100);
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, character_count => 1, hit_points => 100, max_hit_points => 100, party_id => $party->id);
+    $party->flee_threshold(70);
+    $party->update;
+    
+    # WHEN
+    my $over = $party->is_over_flee_threshold;
+    
+    # THEN
+    is($over, 1, "Party over threshold");    
+}
+
 
 sub test_is_online_party_online : Tests(1) {
     my $self = shift;

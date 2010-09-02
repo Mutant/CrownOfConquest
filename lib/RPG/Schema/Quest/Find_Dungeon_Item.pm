@@ -166,13 +166,17 @@ sub ready_to_complete {
 sub finish_quest {
 	my $self = shift;
 	
-	$self->item->delete;
+	my $item = $self->item;
+	$item->character_id(undef);
+	$item->treasure_chest_id(undef);
+	$item->land_id(undef);
+	$item->update;
 }
 
 sub cleanup {
 	my $self = shift;
 	
-	$self->item->delete;
+	$self->finish_quest;
 }
 
 1;

@@ -341,7 +341,7 @@ sub forgot_password : Local {
         my $player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
 
         if ($player) {
-            $player->password($new_password);
+            $player->password(sha1_hex($new_password));
             $player->update;
 
             my $email_message = $c->forward(

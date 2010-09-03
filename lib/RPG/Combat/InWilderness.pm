@@ -55,12 +55,6 @@ sub _build_nearby_towns {
 after 'finish' => sub {
     my $self = shift;
     
-    # XXX: For some reason, when running tests, after finish gets called twice
-    #  only seems to happen when running the entire test suite, not just the indiviual test
-    #  No idea why this happens.. so this workaround is here. Hopefully doesn't break anything else 
-    return if $self->{_iw_after_finish_called};
-    $self->{_iw_after_finish_called} = 1;
-    
     if (defined @{$self->nearby_towns}) {
         my $message = RPG::Template->process( $self->config, 'combat/town_news_message.html', { log => $self->combat_log, }, );
 

@@ -34,7 +34,7 @@
 			[% ELSIF opp_stats.$opp_num.type == 'party' %]
 				party known as [% battle.opponent(opp_num).name %]
 			[% ELSE %]
-				a garrison owned by the party [% battle.opponent(opp_num).party.name %]
+				garrison known as [% battle.opponent(opp_num).display_name %]
 			[% END %]
 			
 			[% IF show_location %]

@@ -35,8 +35,6 @@ sub attack : Local {
 sub main : Private {
 	my ( $self, $c ) = @_;
 	
-	warn $c->stash->{party_location}->garrison;
-
 	my $output = $c->forward(
 		'RPG::V::TT',
 		[

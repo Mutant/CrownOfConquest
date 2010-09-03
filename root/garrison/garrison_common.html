@@ -77,7 +77,14 @@ function postGarrisonForm() {
         form.appendChild(hiddenField);
     }
     
+	var hiddenField = document.createElement("input");
+    hiddenField.setAttribute("type", "hidden");
+    hiddenField.setAttribute("name", "name");
+    hiddenField.setAttribute("value", dojo.byId('garrison-name').value);
+    form.appendChild(hiddenField);
+    
 	document.body.appendChild(form);
     form.submit();	
 }
+
 </script>

@@ -7,11 +7,7 @@ extends 'DBIx::Class';
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Garrison');
 
-__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold/);
-
-__PACKAGE__->add_columns( 
-	name => { accessor => '_name' },
-);
+__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name/);
 
 __PACKAGE__->numeric_columns(qw/gold/);
 
@@ -120,20 +116,17 @@ sub end_combat {
 	$self->update;	
 }
 
-sub name {
-	my $self = shift;
-	
-	return "A garrison owned by " . $self->party->name;	
-}
-
 sub display_name {
 	my $self = shift;
+	my $exclude_party = shift // 0;
 	
-	return $self->_name if $self->_name;
+	my $party_name = $exclude_party ? '' : ' (' . $self->party->name . ')';
+	
+	return $self->name . $party_name if $self->name;
 	
 	my $land = $self->land;
 	
-	return "The garrison at " . $land->x . ", " . $land->y;
+	return "The garrison at " . $land->x . ", " . $land->y . $party_name;
 }
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

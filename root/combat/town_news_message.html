@@ -3,7 +3,7 @@
 		[% IF log.opponent_2_type == 'creature_group' %] 
 			a group of [% INCLUDE combat/creature_group_summary.html creature_group=log.opponent_2 include_dead_creatures=1 %]
 		[% ELSE %]
-			[% log.opponent_2.name %]
+			[[% log.opponent_2.display_group_type %]] [% log.opponent_2.display_name %]
 		[% END %] 
 	at [% log.land.x %], [% log.land.y %]. Witnesses say 
 	[% IF log.outcome == 'opp1_won' %]

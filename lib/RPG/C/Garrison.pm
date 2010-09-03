@@ -86,6 +86,7 @@ sub add : Local {
 			party_id => $c->stash->{party}->id,
 			creature_attack_mode => 'Attack Weaker Opponents',
 			party_attack_mode => 'Defensive Only',
+			name => $c->req->param('name') || undef,
 		}
 	);
 	
@@ -179,6 +180,9 @@ sub update : Local {
 	);	
 	
 	$c->stash->{party}->adjust_order;
+	
+	$c->stash->{garrison}->name($c->req->param('name') || undef);
+	$c->stash->{garrison}->update;
 	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
 	
@@ -509,6 +513,13 @@ sub change_gold : Local {
 			}
 		),
 	);
+}
+
+sub update_garrison_name : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{garrison}->name($c->req->param('name') || undef);
+	$c->stash->{garrison}->update;
 }
 
 1;

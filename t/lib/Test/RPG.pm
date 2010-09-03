@@ -29,6 +29,8 @@ sub aa_init_params : Test(startup) {
     $self->{base_config} = $config; 
     
     $self->{config} = $config;
+    
+    $ENV{RPG_TEST_MODE} = 1;
 }
 
 sub aa_setup_context : Test(setup) {

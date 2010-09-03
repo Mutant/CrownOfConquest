@@ -3,6 +3,7 @@ package RPG::Schema::Role::BeingGroup;
 use Moose::Role;
 
 use Carp;
+use Text::Autoformat;
 
 requires qw/members number_alive after_land_move group_type current_location is_online/;
 
@@ -76,6 +77,18 @@ sub has_being {
 	my $test_being = shift;
 	
 	return 1 if $self->id == $test_being->group_id && $self->group_type eq $test_being->group->group_type;		
+}
+
+sub display_group_type {
+	my $self = shift;
+	
+	my $type = $self->group_type;
+	$type =~ s/_/ /g;
+	$type = autoformat $type, { case => 'title' };
+	$type =~ s/\s*$//;
+	
+	return $type;
+;
 }
 
 1;

@@ -79,6 +79,14 @@ function removeGarrison() {
 	changes=false;
 	document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]';
 }
+
+function updateGarrisonName(input) {
+	dojo.xhrGet( {
+        url: "[% base %]/garrison/update_garrison_name?garrison_id=[% garrison.id %]&name=" + input.value, 
+        handleAs: "json",        
+		timeout: 5000	 
+    }); 
+}
 </script>
 
 <style>
@@ -104,15 +112,15 @@ function removeGarrison() {
 	</div>
 </div>
 
-<h3>Manage Garrison at [% garrison.land.x %], [% garrison.land.y %]</h3>
+<h3>Manage "[% garrison.display_name(1) %]"</h3>
 
 [% IF party_garrisons.size > 1 %]
 	Other Garrisons:
 	[% FOREACH other_garrison IN party_garrisons %]
 		[% IF other_garrison.id != garrison.id %]
-			<a href="[% base %]garrison/manage?garrison_id=[% other_garrison.id %]">[% other_garrison.land.x %], [% other_garrison.land.y %]</a>
+			<a href="[% base %]garrison/manage?garrison_id=[% other_garrison.id %]">[% other_garrison.display_name(1) %]</a>
 		[% ELSE %]
-			[% other_garrison.land.x %], [% other_garrison.land.y %]
+			[% other_garrison.display_name(1) %]
 		[% END %]
 		&nbsp;
 	[% END %]

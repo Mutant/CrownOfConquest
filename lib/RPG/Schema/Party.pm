@@ -207,6 +207,12 @@ sub group_type {
 	return 'party';	
 }
 
+sub display_name {
+	my $self = shift;
+	
+	return $self->name;	
+}
+
 sub movement_factor {
     my $self = shift;
 

@@ -18,6 +18,7 @@ sub auto : Private {
 		{
 			garrison_id => $c->req->param('garrison_id'),
 			party_id => $c->stash->{party}->id,
+			land_id => {'!=', undef},
 		},
 		{
 			prefetch => ['characters', 'land'],
@@ -224,7 +225,8 @@ sub remove : Local {
 		$c->stash->{party}->increase_gold($c->stash->{garrison}->gold);
 		$c->stash->{party}->update;
 
-		$c->stash->{garrison}->delete;
+		$c->stash->{garrison}->land_id(undef);
+		$c->stash->{garrison}->update;
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];
 		

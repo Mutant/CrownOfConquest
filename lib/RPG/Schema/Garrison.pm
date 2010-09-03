@@ -9,20 +9,25 @@ __PACKAGE__->table('Garrison');
 
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold/);
 
+__PACKAGE__->add_columns( 
+	name => { accessor => '_name' },
+);
+
 __PACKAGE__->numeric_columns(qw/gold/);
 
 __PACKAGE__->set_primary_key('garrison_id');
 
 __PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', 'garrison_id', {cascade_delete => 0});
 
-__PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'garrison_id');
+__PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'garrison_id', {cascade_delete => 0});
 
-__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', 'party_id', );
+__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', 'party_id', {cascade_delete => 0} );
 
 __PACKAGE__->belongs_to(
     'land',
     'RPG::Schema::Land',
-    { 'foreign.land_id' => 'self.land_id' }
+    { 'foreign.land_id' => 'self.land_id' },
+    {cascade_delete => 0}
 );
 
 with qw/
@@ -119,6 +124,16 @@ sub name {
 	my $self = shift;
 	
 	return "A garrison owned by " . $self->party->name;	
+}
+
+sub display_name {
+	my $self = shift;
+	
+	return $self->_name if $self->_name;
+	
+	my $land = $self->land;
+	
+	return "The garrison at " . $land->x . ", " . $land->y;
 }
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

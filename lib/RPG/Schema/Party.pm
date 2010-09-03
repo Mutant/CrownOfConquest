@@ -185,7 +185,10 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
 __PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
-__PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 'party_id', );
+__PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 
+	{ 'foreign.party_id' => 'self.party_id' },
+	{ where => {'land_id' => {'!=', undef}} }, 
+);
 
 __PACKAGE__->numeric_columns(qw/gold/); # Can't use this for turns..
 

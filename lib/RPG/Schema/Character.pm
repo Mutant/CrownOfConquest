@@ -40,7 +40,7 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key('character_id');
 
-__PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
+__PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' }, {cascade_delete => 0} );
 
 __PACKAGE__->belongs_to( 'class', 'RPG::Schema::Class', { 'foreign.class_id' => 'self.class_id' } );
 
@@ -62,9 +62,9 @@ __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_i
 
 __PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
 
-__PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.mayor_of' }, );
+__PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.mayor_of' }, {cascade_delete => 0} );
 
-__PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id' );
+__PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id', {cascade_delete => 0} );
 
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);

@@ -79,11 +79,7 @@ sub finish {
 	$self->combat_log->encounter_ended( DateTime->now() );
 
 	if ($losers->group_type eq 'garrison') {
-    	foreach my $character ($losers->characters) {
-    		$character->delete;	
-    	}
-    	
-    	$losers->delete;		
+    	$self->wipe_out_garrison;
 	}
 }
 

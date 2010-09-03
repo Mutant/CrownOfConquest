@@ -114,7 +114,7 @@ sub test_check_for_flee : Tests(8) {
 		
 }
 
-sub test_finish_garrison_lost : Test(3) {
+sub test_finish_garrison_lost : Test(5) {
 	my $self = shift;
 	
 	# GIVEN
@@ -125,12 +125,13 @@ sub test_finish_garrison_lost : Test(3) {
 	
 	my @characters = $garrison->characters;
 	
+	$self->{config}{nearby_town_range} = 1;
 	my $battle = RPG::Combat::GarrisonCreatureBattle->new(
         schema             => $self->{schema},
         garrison           => $garrison,
         creature_group     => $cg,
         log                => $self->{mock_logger},
-        config			   => {nearby_town_range => 1},
+        config			   => $self->{config},
     );	
 	
 	# WHEN
@@ -138,11 +139,12 @@ sub test_finish_garrison_lost : Test(3) {
 	
 	# THEN
 	$garrison->discard_changes;
-	is($garrison->in_storage, 0, "Garrison deleted");
+	is($garrison->land_id, undef, "Garrison removed");
 	
 	foreach my $char (@characters) {
 		$char->discard_changes;
-		is($char->in_storage, 0, "Character deleted");
+		is($char->party_id, undef, "Character removed from party");
+		is($char->garrison_id, undef, "Character removed from garrison");
 	}
 }
 

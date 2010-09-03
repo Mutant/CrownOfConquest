@@ -39,7 +39,7 @@ sub test_remove : Tests(6) {
 	
 	# THEN
 	$garrison->discard_changes;
-	is($garrison->in_storage, 0, "Garrison deleted");
+	is($garrison->land_id, undef, "Garrison removed");
 	my @characters = $party->characters;
 	is(scalar @characters, 4, "4 characters still in party");
 	

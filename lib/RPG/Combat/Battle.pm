@@ -493,7 +493,7 @@ sub creature_action {
 
 	my $party = $self->opponents_of($creature);
 
-	my @characters = sort { $a->party_order <=> $b->party_order } $party->characters;
+	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $party->characters;
 	@characters = grep { !$_->is_dead } @characters;    # Get rid of corpses
 
 	# Figure out whether creature will target front or back rank

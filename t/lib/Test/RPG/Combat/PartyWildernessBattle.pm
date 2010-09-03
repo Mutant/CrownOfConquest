@@ -16,6 +16,8 @@ use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Party_Battle;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Garrison;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 sub startup : Tests(startup => 1) {
     use_ok 'RPG::Combat::PartyWildernessBattle';
@@ -59,12 +61,14 @@ sub test_opponent_of : Tests(2) {
 
 }
 
-sub test_finish : Tests(3) {
+sub test_finish : Tests(4) {
     my $self = shift;
 
     # GIVEN
-    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[0]->id );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $party1->land_id );
 
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
         $self->{schema},
@@ -299,5 +303,39 @@ sub test_characters_in_garrison_not_included_in_attackers : Tests(3) {
 	is($combat_messages[0]->defender->id, $char2->id, "Correct defender");
 }
 
+sub test_end_of_combat_cleanup_creates_news : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[0]->id );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $party1->land_id );
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[1]->id );
+    
+    my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
+        $self->{schema},
+        party_1 => $party1,
+        party_2 => $party2,
+    );
+
+    my $battle = RPG::Combat::PartyWildernessBattle->new(
+        schema        => $self->{schema},
+        party_1       => $party1,
+        party_2       => $party2,
+        log           => $self->{mock_logger},
+        battle_record => $battle_record,
+        config        => $self->{config},
+    );    
+
+    # WHEN
+    $battle->end_of_combat_cleanup();
+    
+    # THEN
+    my @history = $town->history;
+    is(scalar @history, 1, "History created in town");
+	
+	
+}
 
 1;

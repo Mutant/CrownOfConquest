@@ -9,8 +9,6 @@ with qw/
 	RPG::Combat::HasParty
 /;
 
-use Carp qw(cluck);
-
 after 'finish' => sub {
     my $self = shift;
             

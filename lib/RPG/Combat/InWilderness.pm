@@ -52,9 +52,9 @@ sub _build_nearby_towns {
     return \@towns;
 }
 
-after 'finish' => sub {
+after 'end_of_combat_cleanup' => sub {
     my $self = shift;
-    
+
     if (defined @{$self->nearby_towns}) {
         my $message = RPG::Template->process( $self->config, 'combat/town_news_message.html', { log => $self->combat_log, }, );
 

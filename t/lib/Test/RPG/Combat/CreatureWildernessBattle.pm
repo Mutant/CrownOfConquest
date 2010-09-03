@@ -934,7 +934,7 @@ sub test_finish : Tests(6) {
 	is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
 }
 
-sub test_finish_creates_town_history : Tests(4) {
+sub test_end_of_combat_cleanup_creates_town_history : Tests(3) {
 	my $self = shift;
 
 	# GIVEN
@@ -963,7 +963,7 @@ sub test_finish_creates_town_history : Tests(4) {
 	$self->{roll_result} = 10;
 
 	# WHEN
-	$battle->finish($cg);
+	$battle->end_of_combat_cleanup();
 
 	# THEN
 	my @history = $self->{schema}->resultset('Town_History')->search( town_id => $town->id, );
@@ -978,8 +978,6 @@ sub test_finish_creates_town_history : Tests(4) {
 			town_id  => $town->id,
 		}
 	);
-
-	is( $party_town->prestige, 1, "Prestige increased" );
 
 	$mock_template->unfake_module();
 	require RPG::Template;

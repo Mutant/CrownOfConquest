@@ -217,7 +217,7 @@ sub test_make_scaling_changes_pushes_town_down_with_smallest_adjustment : Tests(
     is($prosp_changes{$towns[2]->id}{prosp_change}, -12, "Prosperity change recorded");
 }
 
-sub test_make_scaling_changes_pulls_towns_up_with_smallest_adjustment : Tests(7) {
+sub test_make_scaling_changes_pulls_towns_up_with_smallest_adjustment : Tests(8) {
 	my $self = shift;
 	
 	# GIVEN
@@ -241,6 +241,10 @@ sub test_make_scaling_changes_pulls_towns_up_with_smallest_adjustment : Tests(7)
 		{
 			current => 84, 
 			adjustment => 0,
+		},
+		{
+			current => 89, 
+			adjustment => 5,
 		},
 	);
 	
@@ -278,9 +282,114 @@ sub test_make_scaling_changes_pulls_towns_up_with_smallest_adjustment : Tests(7)
     $towns[4]->discard_changes;
     is($towns[4]->prosperity, 91, "Town with smallest adjustment scaled");
 
+    $towns[5]->discard_changes;
+    is($towns[5]->prosperity, 89, "Town with highest prosperity but large adjustment left alone");
+
     is($prosp_changes{$towns[3]->id}{prosp_change}, 8, "Prosperity change for first move recorded");
     is($prosp_changes{$towns[4]->id}{prosp_change}, 7, "Prosperity change for second move recorded");
 }
+
+sub test_make_scaling_changes_pushes_lower_props_towns_first : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my @towns_to_create = (
+		{
+			current => 91, 
+			adjustment => 5,
+		},
+		{
+			current => 90, 
+			adjustment => 5,
+		},
+	);
+	
+	my @towns;
+	my %prosp_changes;
+	
+    foreach my $town_rec (@towns_to_create) {
+        my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => $town_rec->{current}, );
+        $prosp_changes{$town->id} = {
+        	prosp_change => $town_rec->{adjustment},
+        };
+        push @towns, $town;
+    }
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 2;
+    
+    # WHEN
+    $town_action->_make_scaling_changes(90, -1, \%prosp_changes, @towns);
+    
+    # THEN
+    $towns[0]->discard_changes;
+    is($towns[0]->prosperity, 91, "Town with higher prosp not scaled");
+
+    $towns[1]->discard_changes;
+    is($towns[1]->prosperity, 88, "Town with lower prosp scaled");
+
+    is($prosp_changes{$towns[1]->id}{prosp_change}, 3, "Prosperity change for move recorded");
+}
+
+sub test_make_scaling_changes_pulls_higher_prosp_towns_first : Tests(6) {
+	my $self = shift;
+	
+	# GIVEN
+	my @towns_to_create = (
+		{
+			current => 47, 
+			adjustment => 5,
+		},		
+		{
+			current => 48, 
+			adjustment => 5,
+		},
+		{
+			current => 49, 
+			adjustment => 8,
+		},
+		{
+			current => 49, 
+			adjustment => 5,
+		},
+	);
+	
+	my @towns;
+	my %prosp_changes;
+	
+    foreach my $town_rec (@towns_to_create) {
+        my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => $town_rec->{current}, );
+        $prosp_changes{$town->id} = {
+        	prosp_change => $town_rec->{adjustment},
+        };
+        push @towns, $town;
+    }
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 2;
+    
+    # WHEN
+    $town_action->_make_scaling_changes(50, 2, \%prosp_changes, @towns);
+    
+    # THEN
+    $towns[0]->discard_changes;
+    is($towns[0]->prosperity, 47, "Lower prosp town not scaled");
+
+    $towns[1]->discard_changes;
+    is($towns[1]->prosperity, 51, "Town with lower prosp and adjustment scaled");
+
+    $towns[2]->discard_changes;
+    is($towns[2]->prosperity, 49, "Town with high prosp and high adjustment not scaled");
+
+    $towns[3]->discard_changes;
+    is($towns[3]->prosperity, 51, "Town with high prosp and low adjustment scaled");
+
+    is($prosp_changes{$towns[1]->id}{prosp_change}, 8, "Prosperity change for first move recorded");
+    is($prosp_changes{$towns[3]->id}{prosp_change}, 7, "Prosperity change for second move recorded");
+}
+
 
 sub test_update_prestige : Tests(4) {
     my $self = shift;

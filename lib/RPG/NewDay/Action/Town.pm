@@ -69,7 +69,7 @@ sub calculate_prosperity {
     	$raids_today = $party_town_rec->get_column('raids_today');
     }
     
-    my $approval_change = round ($town->mayor_rating / 20);
+    my $approval_change = round (($town->mayor_rating // 0) / 20);
 
     my $prosp_change =
         ( ( $tax_collected || 0 ) / 10 ) +
@@ -183,7 +183,12 @@ sub _make_scaling_changes {
 	
 	my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
 
-	@towns_to_move = sort { abs $prosp_changes->{$a->id}->{prosp_change} <=> abs $prosp_changes->{$b->id}->{prosp_change} } @towns_to_move;
+	@towns_to_move = sort { 
+			abs $prosp_changes->{$a->id}->{prosp_change} <=> abs $prosp_changes->{$b->id}->{prosp_change} ||
+			($changes_needed < 0 ?
+				$a->prosperity <=> $b->prosperity :
+				$b->prosperity <=> $a->prosperity)
+	} @towns_to_move;
 	
 	# See if there are more changes needed than towns in this category
 	# TODO: if we're moving up from the category below, should we get more from the category below that?

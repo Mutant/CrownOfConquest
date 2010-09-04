@@ -78,7 +78,7 @@ sub calculate_prosperity {
         $approval_change;
 
     $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};
-    $prosp_change = -$context->config->{max_prosp_change} if $prosp_change > -$context->config->{max_prosp_change};
+    $prosp_change = -$context->config->{max_prosp_change} if $prosp_change < -$context->config->{max_prosp_change};
 
     if ( $prosp_change == 0 ) {
         if ( Games::Dice::Advanced->roll('1d3') == 1 ) {

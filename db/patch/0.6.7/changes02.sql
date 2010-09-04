@@ -2,3 +2,6 @@ ALTER TABLE `Garrison` ADD COLUMN `name` VARCHAR(100)  DEFAULT NULL AFTER `gold`
 
 ALTER TABLE `Garrison` MODIFY COLUMN `land_id` INTEGER  DEFAULT NULL;
 
+ALTER TABLE `Party_Town` ADD COLUMN `guards_killed` INTEGER  NOT NULL DEFAULT 0 AFTER `last_raid_end`;
+
+

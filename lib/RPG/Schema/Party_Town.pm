@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
 __PACKAGE__->table('Party_Town');
 
-__PACKAGE__->add_columns(qw/party_id town_id tax_amount_paid_today raids_today prestige/);
+__PACKAGE__->add_columns(qw/party_id town_id tax_amount_paid_today raids_today prestige guards_killed/);
 
 __PACKAGE__->add_columns(
 	last_raid_start => { data_type => 'datetime' },
@@ -23,6 +23,7 @@ __PACKAGE__->numeric_columns(
 		max_value => 100,
 	},
 	'raids_today',
+	'guards_killed',
 );
 
 1;

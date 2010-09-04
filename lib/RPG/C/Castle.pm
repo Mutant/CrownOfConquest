@@ -229,8 +229,6 @@ sub end_raid : Private {
 
 		$killed_count += $stats->{$enemy_num}{deaths};
 		$c->log->debug( $stats->{$enemy_num}{deaths} . " guards killed in battle, reducing prosperity" );
-
-		$party_town->decrease_prestige( $stats->{$enemy_num}{deaths} * 8 );
 	}
 
 	if ( $c->session->{spotted} || @battles ) {
@@ -260,6 +258,8 @@ sub end_raid : Private {
 		);
 	}
 
+	$party_town->decrease_prestige( $killed_count * 8 );
+	$party_town->increase_guards_killed($killed_count);
 	$party_town->last_raid_end( DateTime->now() );
 	$party_town->update;
 }

@@ -104,7 +104,7 @@ sub run {
 	}
 	
 	# Clear all tax paid / raids today
-    $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0 } );	
+    $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0, guards_killed => 0 } );	
 }
 
 sub create_mayor {
@@ -135,14 +135,16 @@ sub calculate_approval {
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' } ],
+            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }, {sum => 'guards_killed'} ],
             as     => [ 'tax_collected', 'raids_today' ],
         }
     );   
 	
-	my $adjustment = $party_town_rec->get_column('raids_today') * 3;
+	my $adjustment = - $party_town_rec->get_column('raids_today') * 3;
+	$adjustment -= $party_town_rec->get_column('guaurds_killed');
+		
 	$adjustment += int $party_town_rec->get_column('tax_collected') / 100;
-	$adjustment += $town->peasant_tax - 3; # The -3 stops it trending down for npc mayors
+	$adjustment -= $town->peasant_tax - 3; # The -3 stops it trending down for npc mayors
 	
  	my $creature_rec = $self->context->schema->resultset('Creature')->search(
 		{
@@ -164,6 +166,7 @@ sub calculate_approval {
 	$adjustment =  10 if $adjustment >  10;
 	
 	$town->adjust_mayor_rating($adjustment);
+	$town->update;
 	
 	$town->add_to_history(
 		{
@@ -172,9 +175,8 @@ sub calculate_approval {
 			message => 'Party Entrance Tax',
 			day_id => $self->context->current_day->id,
 		}
-	); 
-		
-	$town->update;
+	);	
+
 }
 
 sub check_for_revolt {

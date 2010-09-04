@@ -45,6 +45,10 @@ __PACKAGE__->numeric_columns(
 		min_value => -100,
 		max_value => 100,
 	},
+	prosperity => {
+		min_value => 1,
+		max_value => 100,
+	},
 ); 
 
 __PACKAGE__->set_primary_key('town_id');

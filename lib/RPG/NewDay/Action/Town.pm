@@ -51,7 +51,7 @@ sub calculate_prosperity {
     my $party_town_rec = $context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [                  { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' } ],
+            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' } ],
             as     => [ 'tax_collected', 'raids_today' ],
         }
     );
@@ -86,9 +86,7 @@ sub calculate_prosperity {
 
     $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change" );
 
-    $town->prosperity( $town->prosperity + $prosp_change );
-    $town->prosperity(1)   if $town->prosperity < 1;
-    $town->prosperity(100) if $town->prosperity > 100;
+    $town->adjust_prosperity( $prosp_change );
     $town->update;
 
     return $prosp_change;
@@ -102,27 +100,38 @@ sub scale_prosperity {
     # Needs to add up to 100
     # TODO: config this
     my %target_prosp = (
-        90 => 4,
-        80 => 6,
-        70 => 8,
-        60 => 8,
+        90 => 7,
+        80 => 9,
+        70 => 11,
+        60 => 11,
         50 => 10,
-        40 => 14,
-        30 => 14,
-        20 => 13,
-        10 => 13,
+        40 => 11,
+        30 => 11,
+        20 => 10,
+        10 => 10,
         0  => 10,
     );
 
-    my %actual_prosp = $self->_get_prosperty_percentages(@towns);
+	my $logged;
 
-    $self->context->logger->info( "Current Prosperity percentages: " . Dumper \%actual_prosp );
+	for my $category (reverse sort keys %target_prosp) {
+    	my %actual_prosp = $self->_get_prosperity_percentages(@towns);
 
-    my %changes_needed = $self->_calculate_changes_needed( \%target_prosp, \%actual_prosp, scalar @towns );
+    	$self->context->logger->info( "Current Prosperity percentages: " . Dumper \%actual_prosp )
+    		unless $logged;
 
-    $self->context->logger->info( "Changes required: " . Dumper \%changes_needed );
+    	my %changes_needed = $self->_calculate_changes_needed( \%target_prosp, \%actual_prosp, scalar @towns );
 
-	$self->_change_prosperity_as_needed( $prosp_changes, \%actual_prosp, \@towns, %changes_needed );	
+	    $self->context->logger->info( "Changes required: " . Dumper \%changes_needed )
+	    	unless $logged;	    
+	    
+	    $logged = 1;
+    	
+    	$self->_make_scaling_changes( $category, $changes_needed{$category}, $prosp_changes, @towns );	    	
+	}
+	
+	my %actual_prosp = $self->_get_prosperity_percentages(@towns);
+	$self->context->logger->info( "Percentages post scaling: " . Dumper \%actual_prosp )
 }
 
 sub _calculate_changes_needed {
@@ -131,7 +140,7 @@ sub _calculate_changes_needed {
     my $actual_prosp = shift;
     my $town_count   = shift;
 
-    my %changes_needed;
+    my %changes_needed;    
     foreach my $category ( keys %$target_prosp ) {
         $actual_prosp->{$category} ||= 0;
         if ( $target_prosp->{$category} < $actual_prosp->{$category} - 2 ) {
@@ -147,123 +156,71 @@ sub _calculate_changes_needed {
     return %changes_needed;
 }
 
-sub _select_town_from_category {
-    my $self     = shift;
-    my $category = shift;
-    my @towns    = @_;
+sub _make_scaling_changes {
+	my $self = shift;
+	my $category = shift;
+	my $changes_needed = shift;
+	my $prosp_changes = shift;
+	my @towns = @_;
 
-    my $outer_bound = $category + 9;
-    $outer_bound = 100 if $outer_bound == 99;
+	# Scaling involves adding or removing from lower category. Can't do that if category is 0
+	return if $category == 0;
+	
+	# Check there are actually some changes to make
+	return if $changes_needed == 0;
 
-    foreach my $town ( shuffle @towns ) {
-        next unless $town->prosperity >= $category && $town->prosperity <= $outer_bound;
-        return $town;
-    }
+	my $lower_category = $category - 10;
+	
+	# If changes needed is less than 0, we push towns from this category into the next one
+	#  Otherwise we pull towns up from the lower category
+	my $category_to_move_from = $changes_needed < 0 ? $category : $lower_category;
+	
+	# Get all the towns from this category, sorted by the adjustments they've made today (least adjusted first)
+	my $category_upper_bound = $category_to_move_from == 90 ? 100 : $category_to_move_from+9; 
+	
+	my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
+
+	@towns_to_move = sort { abs $prosp_changes->{$a->id}->{prosp_change} <=> abs $prosp_changes->{$b->id}->{prosp_change} } @towns_to_move;
+	
+	# See if there are more changes needed than towns in this category
+	# TODO: if we're moving up from the category below, should we get more from the category below that?
+	$changes_needed = scalar @towns_to_move if $changes_needed > scalar @towns_to_move;
+
+	for (1..abs $changes_needed) {
+		my $town = shift @towns_to_move;
+		my $prosperity = $town->prosperity;
+		
+		# Random component ensure we don't get a huge cluster of towns around the edge of the category
+		my $random = Games::Dice::Advanced->roll('1d3');
+
+		my $new_prosperity;
+		
+		if ($changes_needed < 0) {
+			$new_prosperity = $category - $random;		
+		}
+		else {
+			$new_prosperity = $category + $random - 1;
+		}
+		
+		my $change = $new_prosperity - $prosperity;
+
+		$self->context->logger->debug("Scaling town " . $town->id . " from $prosperity to $new_prosperity");
+		
+		$prosp_changes->{$town->id}{prosp_change} += $change;
+		
+		$town->prosperity($new_prosperity);
+		$town->update;
+	} 
 }
 
-sub _change_prosperity_as_needed {
-    my $self           = shift;
-    my $prosp_changes  = shift;
-    my $actual_prosp   = shift;
-    my $towns          = shift;
-    my %changes_needed = @_;
-
-    foreach my $category ( sort keys %changes_needed ) {
-        no warnings 'uninitialized';
-
-        # Add more towns to category
-        if ( $changes_needed{$category} > 0 ) {
-            for ( 1 .. $changes_needed{$category} ) {
-                my $from_category;
-                if ( $changes_needed{ $category - 10 } < 0 ) {
-                    $from_category = $category - 10;
-                    $changes_needed{$from_category}++;
-                }
-                elsif ( $changes_needed{ $category + 10 } < 0 ) {
-                    $from_category = $category + 10;
-                    $changes_needed{$from_category}++;
-                }
-                else {
-                    if ( defined $actual_prosp->{ $category - 10 } ) {
-                        $from_category = $category - 10;
-                    }
-                    else {
-                        $from_category = $category + 10;
-                    }
-                }
-
-                my $town_to_change = $self->_select_town_from_category( $from_category, @$towns );
-                
-                unless ($town_to_change) {
-                	# Couldn't find a town, skip this category
-                	$self->context->logger->debug("Couldn't find any more towns for category $from_category");
-                	last;
-                }
-                
-                my $modifier = $category > $from_category ? 4 : -4;
-
-                $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
-
-                $prosp_changes->{ $town_to_change->id }{prosp_change} += $modifier;
-
-                $town_to_change->prosperity( $town_to_change->prosperity + $modifier );
-                $town_to_change->update;
-
-                $changes_needed{$category}--;
-            }
-        }
-
-        # Remove towns from category
-        if ( $changes_needed{$category} < 0 ) {
-            for ( 1 .. abs $changes_needed{$category} ) {
-                my $to_category;
-                if ( $changes_needed{ $category - 10 } > 0 ) {
-                    $to_category = $category - 10;
-                    $changes_needed{$to_category}--;
-                }
-                elsif ( $changes_needed{ $category + 10 } > 0 ) {
-                    $to_category = $category + 10;
-                    $changes_needed{$to_category}--;
-                }
-                else {
-                    if ( defined $actual_prosp->{ $category + 10 } ) {
-                        $to_category = $category + 10;
-                    }
-                    else {
-                        $to_category = $category - 10;
-                    }
-                }
-
-                my $town_to_change = $self->_select_town_from_category( $to_category, @$towns );
-                unless ($town_to_change) {
-                	# Couldn't find a town, skip this category
-                	$self->context->logger->debug("Couldn't find any more towns for category $to_category");
-                	last;
-                }                
-                
-                my $modifier = $category > $to_category ? -4 : 4;
-
-                $self->context->logger->debug( "Modifying town with prosp: " . $town_to_change->prosperity . " by $modifier" );
-
-                $prosp_changes->{ $town_to_change->id }{prosp_change} += $modifier;
-
-                $town_to_change->prosperity( $town_to_change->prosperity + $modifier );
-                $town_to_change->update;
-
-                $changes_needed{$category}++;
-            }
-        }
-    }
-}
-
-sub _get_prosperty_percentages {
+sub _get_prosperity_percentages {
     my $self  = shift;
     my @towns = @_;
 
     my %actual_prosp;
     foreach my $town (@towns) {
         my $category;
-        if ( length $town->prosperity == 1 ) {
+        if ( $town->prosperity <= 9 ) {
             $category = 0;
         }
         elsif ( $town->prosperity >= 100 ) {

@@ -68,11 +68,14 @@ sub calculate_prosperity {
     	$tax_collected = $party_town_rec->get_column('tax_collected');
     	$raids_today = $party_town_rec->get_column('raids_today');
     }
+    
+    my $approval_change = round ($town->mayor_rating / 20);
 
     my $prosp_change =
         ( ( $tax_collected || 0 ) / 10 ) +
         ( $ctr_diff / 20 ) -
-        ( ( $raids_today || 0 ) / 4 );
+        ( ( $raids_today || 0 ) / 4 ) +
+        $approval_change;
 
     $prosp_change = $context->config->{max_prosp_change} if $prosp_change > $context->config->{max_prosp_change};
 
@@ -84,7 +87,7 @@ sub calculate_prosperity {
 
     $prosp_change = round $prosp_change;
 
-    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change" );
+    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')');
 
     $town->adjust_prosperity( $prosp_change );
     $town->update;

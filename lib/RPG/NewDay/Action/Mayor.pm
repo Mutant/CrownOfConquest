@@ -57,7 +57,10 @@ sub run {
 		
 		if ($mayor->is_npc) {
 			# Set default tax rates
-			$town->peasant_tax(12);
+			if ($town->peasant_tax < 8 || $town->peasant_tax > 15) {
+				$town->peasant_tax(Games::Dice::Advanced->roll('1d8') + 7);
+			}  
+			
 			$town->sales_tax(10);
 			$town->base_party_tax(20);
 			$town->party_tax_level_step(30);

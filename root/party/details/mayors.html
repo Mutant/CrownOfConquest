@@ -7,6 +7,8 @@ None of your characters are mayors of a town
 [% ELSE %]
 	[% FOREACH mayor IN mayors %]
 	<b><a href="[% base %]character/view?character_id=[% mayor.id %]">[% mayor.name %]</a></b><br>
+	[% town = mayor.mayor_of_town %]
+	Town: [% town.town_name %] ([% town.location.x %], [% town.location.y %])<br>
 	Approval Rating: [% display_rating(mayor.mayor_of_town.mayor_rating) %]<br>
 	<a href="[% base %]town/mayor?town_id=[% mayor.mayor_of_town.id %]">Manage</a>
 	<br><br>

@@ -13,6 +13,7 @@ use Test::MockObject;
 use Test::More;
 
 use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Party;
 
 use RPG::C::Character;
 
@@ -130,6 +131,33 @@ sub test_update_spells : Tests(14) {
     is( $memorised_spell3->memorised_today,         1, "Spell 3 memorised today unaffected" );
     is( $memorised_spell3->memorise_count,          1, "Spell 3 memorised count unaffected" );
 
+}
+
+sub test_bury : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
+	$party->rank_separator_position(3);
+	my @characters = $party->characters;
+	
+	$self->{stash}{character} = $characters[2];
+	$self->{stash}{party_location} = $party->location;
+	$self->{params}{epitaph} = 'epitaph';
+	$self->{stash}{party} = $party;
+	
+	# WHEN
+	RPG::C::Character->bury( $self->{c} );
+	
+	# THEN
+	my @graves = $self->{schema}->resultset('Grave')->search;
+	is(scalar @graves, 1, "Grave created");
+	
+	is($characters[2]->in_storage, 0, "Character deleted");
+	
+	$party->discard_changes;
+	is($party->rank_separator_position, 1, "Rank separator moved");
+	
 }
 
 1;

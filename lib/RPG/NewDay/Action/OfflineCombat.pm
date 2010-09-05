@@ -123,7 +123,7 @@ sub initiate_battles {
     	
     	next if $garrison->level - $party->level > $c->config->{max_party_garrison_level_difference};
     
-    	next if $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, 1 ) >= $c->config->{max_party_offline_attacks};
+    	next if $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, 1 ) > $c->config->{max_party_offline_attacks};
     	
     	if ($self->check_for_garrison_fight($party, $garrison, $garrison->party_attack_mode)) {
     		$party->initiate_combat($garrison);

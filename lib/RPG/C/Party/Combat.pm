@@ -28,7 +28,7 @@ sub attack : Local {
     elsif ( $c->stash->{party}->level - $party_attacked->level > $c->config->{max_party_level_diff_for_attack} ) {
         $c->stash->{error} = 'The party is too low level to attack';
     }
-    elsif ( $c->model('DBIC::Combat_Log')->get_offline_log_count( $party_attacked, undef, 1 ) >= $c->config->{max_party_offline_attacks} ) {
+    elsif ( $c->model('DBIC::Combat_Log')->get_offline_log_count( $party_attacked, undef, 1 ) > $c->config->{max_party_offline_attacks} ) {
     	$c->stash->{error} = 'This party has been attacked too many times recently';
     }
     else {

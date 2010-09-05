@@ -1072,7 +1072,32 @@ sub test_oppoent_number_of_group : Tests(2) {
 	# THEN
 	is( $party_opp_number, 1, "Party opp number correct" );
 	is( $cg_opp_number,    2, "CG opp number correct" );
+}
 
+sub test_combatants_always_gives_same_objects : Tests(3) {
+	my $self = shift;
+
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+
+	# WHEN
+	my @combatants1 = $battle->combatants;
+	my @combatants2 = $battle->combatants;
+	
+	# THEN
+	is(scalar @combatants1, scalar @combatants2, "Combatants lists the same size");
+	is($combatants1[0], $combatants2[0], "Character is the same object");
+	is($combatants1[1], $combatants2[1], "Creature is the same object");
+	
 }
 
 1;

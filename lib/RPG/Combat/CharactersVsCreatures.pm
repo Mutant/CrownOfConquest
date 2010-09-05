@@ -16,10 +16,21 @@ requires qw/character_group party_flee distribute_xp/;
 has 'creature_group' => ( is => 'rw', isa => 'RPG::Schema::CreatureGroup', required => 1 );
 has 'creatures_initiated' => ( is => 'ro', isa => 'Bool', default => 0 );
 
-sub combatants {
+has 'combatants_list' => ( 
+	traits     => ['Array'],
+    is         => 'ro',
+    isa        => 'ArrayRef',
+    handles    => {
+    	'combatants'    => 'elements',
+    },
+    lazy => 1,
+    builder => '_build_combatants',
+);
+
+sub _build_combatants {
 	my $self = shift;
 
-	return ( $self->character_group->members, $self->creature_group->members );
+	return [ $self->character_group->members, $self->creature_group->members ];
 }
 
 sub opponents {

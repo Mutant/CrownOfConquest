@@ -4,7 +4,7 @@ use Moose;
 
 with qw/
     RPG::Combat::Battle
-    RPG::Combat::CreatureBattle 
+    RPG::Combat::CreatureBattle
     RPG::Combat::InWilderness
 	RPG::Combat::HasParty
 /;

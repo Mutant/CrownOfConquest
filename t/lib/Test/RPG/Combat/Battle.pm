@@ -543,8 +543,7 @@ sub test_check_for_offline_cast_online_so_no_cast : Tests(3) {
 	# THEN
 	is($character->last_combat_action, 'Defend', "Last combat action set correctly");
 	is($character->last_combat_param1, undef, "No spell id");
-	is($character->last_combat_param2, undef, "No spell target");	
-
+	is($character->last_combat_param2, undef, "No spell target");
 }
 
 1;

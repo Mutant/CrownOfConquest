@@ -13,12 +13,23 @@ requires 'deduct_turns';
 
 has 'character_group_1'       => ( is => 'rw', required => 1 );
 has 'character_group_2'       => ( is => 'rw', required => 1 );
-has 'initiated_by_opp_number' => ( is => 'ro', isa  => 'Maybe[Int]',                        default  => 0 );
+has 'initiated_by_opp_number' => ( is => 'ro', isa  => 'Maybe[Int]', default  => 0 );
 
-sub combatants {
+has 'combatants_list' => ( 
+	traits     => ['Array'],
+    is         => 'ro',
+    isa        => 'ArrayRef',
+    handles    => {
+    	'combatants'    => 'elements',
+    },
+    lazy => 1,
+    builder => '_build_combatants',
+);
+
+sub _build_combatants {
 	my $self = shift;
 
-	return ( $self->character_group_1->members, $self->character_group_2->members );
+	return [ $self->character_group_1->members, $self->character_group_2->members ];
 }
 
 sub opponents {

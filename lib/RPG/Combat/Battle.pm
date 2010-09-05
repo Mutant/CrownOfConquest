@@ -16,7 +16,7 @@ use RPG::Combat::EffectResult;
 
 use feature 'switch';
 
-requires qw/combatants process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by is_online/;
+requires qw/process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by is_online/;
 
 has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
 has 'config' => ( is => 'ro', isa => 'HashRef',     required => 0 );
@@ -413,6 +413,9 @@ sub character_action {
 		# Since effects could have changed an af or df, we delete any id's in the cache matching the second param
 		#  (the target's id) and then recompute.
 		$self->refresh_factor_cache( $character->last_combat_param2 );
+		
+		# Make sure any healing/damage etc. is taken into account
+		$target->discard_changes;
 
 		$character->last_combat_action('Defend');
 		$character->update;

@@ -11,6 +11,8 @@ use Carp;
 use Data::Dumper;
 use Math::Round qw(round);
 
+use RPG::Template;
+
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Items');
 
@@ -190,6 +192,16 @@ sub insert {
     }
 
     return $self;
+}
+
+sub delete {
+    my ( $self, @args ) = @_;
+
+	$self->_check_for_quest_item_removal();
+	
+    my $ret = $self->next::method(@args);
+
+    return $ret;
 }
 
 sub sell_price {
@@ -493,6 +505,41 @@ sub enchantments_count {
 	my $self = shift;
 	
 	return $self->search_related('item_enchantments')->count();	
+}
+
+# Check if the item is for a quest before it's deleted.
+#  If so, the quest needs to be terminated, and a message left for the party.
+sub _check_for_quest_item_removal {
+	my $self = shift;		
+	
+	return unless $self->item_type->item_type eq 'Artifact';
+	
+	my $quest = $self->result_source->schema->resultset('Quest')->find(
+		{
+			status => 'In Progress',
+			'type.quest_type' => 'find_dungeon_item',
+			'quest_param_name.quest_param_name' => 'Item',
+			'quest_params.start_value' => $self->id,
+		},
+		{
+			join => ['type', {'quest_params' => 'quest_param_name'}],
+		}
+	);
+	
+	if ($quest) {
+		# Terminate this quest, and add a party message
+		my $message = RPG::Template->process(
+			RPG::Schema->config,
+			'quest/misc/find_dungeon_item_lost_item.html',
+			{
+				quest => $quest,
+			}
+		);		
+		
+		$quest->terminate($message);
+		$quest->update;
+	}
+
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

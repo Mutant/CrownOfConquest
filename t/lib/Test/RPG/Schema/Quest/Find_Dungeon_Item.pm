@@ -17,6 +17,8 @@ use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Treasure_Chest;
 use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Quest::Find_Dungeon_Item;
+use Test::RPG::Builder::Party;
 
 use RPG::Schema::Quest::Find_Dungeon_Item;
 
@@ -130,8 +132,44 @@ sub test_check_action_item_found : Tests(3) {
 	# THEN
 	is($result, 1, "Item found in chest");
 	is($current_value, 1, "Value of 'Item Found' param set to true");
-	$param_record->called_ok('update', "Update called on param record");
+	$param_record->called_ok('update', "Update called on param record");		
+}
+
+sub test_check_quest_terminated_when_item_deleted : Tests() {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	$quest->party_id($party->id);
+	$quest->status('In Progress');
+	$quest->update;
 		
+	my $item = $quest->item;
+	
+	# WHEN
+	$item->delete;
+	
+	# THEN
+	$quest->discard_changes;
+	is($quest->status, 'Terminated', "Quest terminated");
+	
+	my $party_town = $self->{schema}->resultset('Party_Town')->find_or_create(
+    	{
+			town_id  => $quest->town_id,
+			party_id => $party->id,
+		},
+	);
+	is($party_town->prestige, -3, "Prestige lowered with town");
+	
+	my @messages = $self->{schema}->resultset('Party_Messages')->search(
+		{
+			party_id => $party->id,
+		}
+	);
+	
+	is(scalar @messages, 1, "One party message created");
+	like($messages[0]->message, qr{You've lost the item needed to complete the quest}m, "Correct message text");
 }
 
 1;

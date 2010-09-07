@@ -18,7 +18,7 @@ sub build_quest {
 
     my @land   = Test::RPG::Builder::Land->build_land($schema);
 
-    my $town = $schema->resultset('Town')->create( { land_id => $land[4]->id, } );
+    my $town = $schema->resultset('Town')->create( { land_id => $land[4]->id, town_name => 'test town' } );
     my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($schema, land_id => $land[8]->id, level => 2);
     
     my $quest_type = $schema->resultset('Quest_Type')->find( { 'quest_type' => 'find_dungeon_item' } );

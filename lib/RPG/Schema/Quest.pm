@@ -176,6 +176,37 @@ sub interested_actions_by_quest_type {
     return %actions_by_quest_type;
 }
 
+# Called when a quest is terminated (non-amicably)
+sub terminate {
+	my $self = shift;
+	my $message = shift;
+	
+    $self->status('Terminated');
+	$self->cleanup;
+
+	if ($message) {
+	    $self->result_source->schema->resultset('Party_Messages')->create(
+			{
+				party_id    => $self->party_id,
+	            message     => $message,
+				alert_party => 1,
+	            day_id      => $self->result_source->schema->resultset('Day')->find_today,
+	        }
+		);
+	}
+
+	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
+    	{
+			town_id  => $self->town_id,
+			party_id => $self->party_id,
+		},
+	);
+	
+	$party_town->decrease_prestige(3);
+	$party_town->update;	
+}
+
+
 # Called when the quest is completed (i.e. town hall)
 sub finish_quest {}
 

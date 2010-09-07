@@ -92,28 +92,9 @@ sub update_days_left {
         if ( $quest->days_to_complete == 0 ) {
 
             # Time's up!
-            $quest->status('Terminated');
-            $quest->cleanup;
-
             my $message = RPG::Template->process( $c->config, 'newday/quest/time_run_out.html', { quest => $quest, }, );
-
-            $c->schema->resultset('Party_Messages')->create(
-                {
-                    party_id    => $quest->party_id,
-                    message     => $message,
-                    alert_party => 1,
-                    day_id      => $c->current_day->id,
-                }
-            );
-
-            my $party_town = $c->schema->resultset('Party_Town')->find_or_create(
-                {
-                    town_id  => $quest->town_id,
-                    party_id => $quest->party_id,
-                },
-            );
-            $party_town->prestige( ($party_town->prestige || 0) - 3 );
-            $party_town->update;
+            
+			$quest->terminate($message)
         }
 
         $quest->update;

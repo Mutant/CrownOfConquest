@@ -68,6 +68,7 @@ sub test_attack_error_when_too_many_offline_combats : Tests(1) {
     $self->{mock_forward}{'/panel/refresh'} = sub {};
     
     my $log = Test::RPG::Builder::Combat_Log->build_log($self->{schema}, opp_1 => $party2);
+    my $log2 = Test::RPG::Builder::Combat_Log->build_log($self->{schema}, opp_1 => $party2);
     
     # WHEN
     RPG::C::Party::Combat->attack($self->{c});

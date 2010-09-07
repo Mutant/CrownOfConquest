@@ -160,7 +160,25 @@ sub dungeon {
 sub ready_to_complete {
     my $self = shift;
 
-    return $self->param_current_value('Item Found');
+    return 0 unless $self->param_current_value('Item Found');
+    
+    # Check the item is in a character's inventory, and that character is in the party
+    #  (i.e. not in a garrison, etc)
+    my $item = $self->result_source->schema->resultset('Items')->find(
+    	{
+    		'party.party_id' => $self->party_id,
+    		'item_id' => $self->param_start_value('Item'), 
+    	},
+    	{
+    		join => {'belongs_to_character' => 'party'},
+    	}
+    );
+
+    return 0 unless $item;
+    
+    return 0 unless $item->belongs_to_character->is_in_party;
+    
+    return 1;
 }
 
 sub finish_quest {

@@ -19,6 +19,7 @@ use Test::RPG::Builder::Treasure_Chest;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Quest::Find_Dungeon_Item;
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Garrison;
 
 use RPG::Schema::Quest::Find_Dungeon_Item;
 
@@ -135,7 +136,7 @@ sub test_check_action_item_found : Tests(3) {
 	$param_record->called_ok('update', "Update called on param record");		
 }
 
-sub test_check_quest_terminated_when_item_deleted : Tests() {
+sub test_check_quest_terminated_when_item_deleted : Tests(4) {
 	my $self = shift;
 	
 	# GIVEN
@@ -170,6 +171,62 @@ sub test_check_quest_terminated_when_item_deleted : Tests() {
 	
 	is(scalar @messages, 1, "One party message created");
 	like($messages[0]->message, qr{You've lost the item needed to complete the quest}m, "Correct message text");
+}
+
+sub test_check_quest_ready_to_complete_when_item_is_on_party : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1);
+	$quest->party_id($party->id);
+	$quest->status('In Progress');
+	$quest->update;
+	
+    my $quest_param = $quest->param_record('Item Found');
+    $quest_param->current_value(1);
+    $quest_param->update;	
+		
+	my ($character) = $party->characters;
+	my $item = $quest->item;
+	$item->character_id($character->id);
+	$item->update;
+	
+	# WHEN
+	my $result = $quest->ready_to_complete;
+	
+	# THEN
+	is($result, 1, "Quest is ready to complete");
+}
+
+sub test_check_quest_not_ready_to_complete_when_item_is_on_character_outside_of_party : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1);
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id);
+	$quest->party_id($party->id);
+	$quest->status('In Progress');
+	$quest->update;
+	
+    my $quest_param = $quest->param_record('Item Found');
+    $quest_param->current_value(1);
+    $quest_param->update;	
+		
+	my ($character) = $party->characters;
+	$character->garrison_id($garrison->id);
+	$character->update;
+	
+	my $item = $quest->item;
+	$item->character_id($character->id);
+	$item->update;
+	
+	# WHEN
+	my $result = $quest->ready_to_complete;
+	
+	# THEN
+	is($result, 0, "Quest is not ready to complete");
 }
 
 1;

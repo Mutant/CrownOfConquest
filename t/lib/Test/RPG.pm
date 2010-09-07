@@ -110,8 +110,6 @@ sub aa_setup_context : Test(setup) {
     $self->{mock_stats} = Test::MockObject->new();
     $self->{mock_stats}->set_true('profile');
     $self->{c}->set_always('stats',$self->{mock_stats});
-    
-    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});	
 }
 
 sub clear_data : Test(teardown) {

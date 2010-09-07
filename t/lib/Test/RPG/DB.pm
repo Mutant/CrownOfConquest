@@ -47,6 +47,8 @@ sub aa_setup_context : Test(setup) {
             return $self->{schema}->resultset( $resultset );
         }
     );
+    
+    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});
 }
 
 sub roll_back : Test(teardown) {

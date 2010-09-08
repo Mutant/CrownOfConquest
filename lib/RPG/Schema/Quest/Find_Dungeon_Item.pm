@@ -185,6 +185,7 @@ sub finish_quest {
 	my $self = shift;
 	
 	my $item = $self->item;
+	return unless $item;
 	$item->character_id(undef);
 	$item->treasure_chest_id(undef);
 	$item->land_id(undef);

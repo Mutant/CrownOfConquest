@@ -835,7 +835,8 @@ sub open_chest : Local {
 	
 	foreach my $item (@items) {
 		# XXX: call find_dungeon_item quest hack, see method for details
-		if ($c->forward('check_for_quest_item', [$item])) {
+		if ($self->hide_item_from_party($c, $item)) {
+			$c->log->debug("Found a quest item for a quest not owned by this party.... skipping");
 			next;			
 		}
 		
@@ -894,10 +895,11 @@ sub open_chest : Local {
 # XXX: this is a hack to get around the problem of parties picking up an item created for an item quest for a particular party
 #  If an item has a name, we check if it's involved in a quest, and if the current party is the correct one. If not, the item
 #  effectively invisible to this party.
-sub check_for_quest_item : Private {
+sub hide_item_from_party {
 	my ($self, $c, $item) = @_;
 	
 	return 0 unless $item->name;
+	$c->log->debug("Deciding whether to hide item with id : " . $item->id);
 	
 	my $quest = $c->model('DBIC::Quest')->find(
 		{
@@ -910,11 +912,14 @@ sub check_for_quest_item : Private {
 				'type',
 				{'quest_params' => 'quest_param_name'},
 			],
-		}		
+		}
 	);
 	
 	return 0 unless $quest;
-	return 0 if $quest->party_id == $c->stash->{party}->id;
+	$c->log->debug("Found quest with id: " . $quest->id);
+	
+	return 0 if ! $quest->party_id && $quest->party_id == $c->stash->{party}->id;
+	$c->log->debug("Quest has party id: " . $quest->party_id);
 	
 	return 1;
 }

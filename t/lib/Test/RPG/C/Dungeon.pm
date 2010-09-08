@@ -24,7 +24,7 @@ use Test::RPG::Builder::Day;
 use Data::Dumper;
 use List::Util qw(shuffle);
 
-sub test_check_for_quest_item_with_no_name : Tests(1) {
+sub test_hide_item_from_party_with_no_name : Tests(1) {
 	my $self = shift;
 	
 	my $schema = $self->{schema};
@@ -33,13 +33,13 @@ sub test_check_for_quest_item_with_no_name : Tests(1) {
 	my $item = Test::RPG::Builder::Item->build_item($schema);
 	
 	# WHEN
-	my $result = RPG::C::Dungeon->check_for_quest_item($self->{c}, $item);
+	my $result = RPG::C::Dungeon->hide_item_from_party($self->{c}, $item);
 	
 	# THEN
 	is($result, 0, "Item has no name, so cannot be a quest item");
 }
 
-sub test_check_for_quest_item_with_no_quest : Tests(1) {
+sub test_hide_item_from_party_with_no_quest : Tests(1) {
 	my $self = shift;
 	
 	my $schema = $self->{schema};
@@ -48,13 +48,13 @@ sub test_check_for_quest_item_with_no_quest : Tests(1) {
 	my $item = Test::RPG::Builder::Item->build_item($schema, name => 'foo');
 	
 	# WHEN
-	my $result = RPG::C::Dungeon->check_for_quest_item($self->{c}, $item);
+	my $result = RPG::C::Dungeon->hide_item_from_party($self->{c}, $item);
 	
 	# THEN
 	is($result, 0, "Item has no related quest, so cannot be a quest item");
 }
 
-sub test_check_for_quest_item_with_quest : Tests(1) {
+sub test_hide_item_from_party_with_quest : Tests(1) {
 	my $self = shift;
 	
 	my $schema = $self->{schema};
@@ -75,13 +75,13 @@ sub test_check_for_quest_item_with_quest : Tests(1) {
     my $item = $quest->item;
 	
 	# WHEN
-	my $result = RPG::C::Dungeon->check_for_quest_item($self->{c}, $item);
+	my $result = RPG::C::Dungeon->hide_item_from_party($self->{c}, $item);
 	
 	# THEN
 	is($result, 0, "Item has related quest, and quest is owned by this party, therefore don't hide item");
 }
 
-sub test_check_for_quest_item_with_quest_by_other_party : Tests(1) {
+sub test_hide_item_from_party_with_quest_by_other_party : Tests(1) {
 	my $self = shift;
 	
 	my $schema = $self->{schema};
@@ -102,10 +102,30 @@ sub test_check_for_quest_item_with_quest_by_other_party : Tests(1) {
     my $item = $quest->item;
 	
 	# WHEN
-	my $result = RPG::C::Dungeon->check_for_quest_item($self->{c}, $item);
+	my $result = RPG::C::Dungeon->hide_item_from_party($self->{c}, $item);
 	
 	# THEN
 	is($result, 1, "Item has related quest, but quest is owned by another party, therefore hide item");
+}
+
+sub test_hide_item_from_party_with_quest_not_started : Tests(1) {
+	my $self = shift;
+	
+	my $schema = $self->{schema};
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party($schema);
+	$self->{stash}{party} = $party;
+	    
+    my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($schema);
+    
+    my $item = $quest->item;
+	
+	# WHEN
+	my $result = RPG::C::Dungeon->hide_item_from_party($self->{c}, $item);
+	
+	# THEN
+	is($result, 1, "Item has related quest, but quest is not owned by a party, therefore hide item");
 }
 
 sub test_open_chest_with_quest_item : Tests(2) {
@@ -136,7 +156,7 @@ sub test_open_chest_with_quest_item : Tests(2) {
 	
 	my $day = Test::RPG::Builder::Day->build_day($self->{schema});
 	
-	$self->{mock_forward}{'check_for_quest_item'} = sub {  
+	$self->{mock_forward}{'hide_item_from_party'} = sub {  
 		my $item = $_[0]->[0];
 		$item->id == $item2->id ? 1 : 0;
 	};

@@ -24,16 +24,31 @@
 
 <table class="main">
 [% FOREACH creature IN creature_group.members %]
+	[% IF loop.count % 2 == 1 %]
 	<tr>
-		<td>[% creature.name %]</td>
-		<td>[% creature.health %]</td>		
-		[% IF creature_effects_by_id.${creature.id} %]
-			<td>[
+	[% END %]
+	    <td><img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]"></td>
+		<td nowrap>[% creature.name %]</td>
+		<td nowrap>[% creature.health %]</td>
+		<td>		
+		[% IF creature_effects_by_id.${creature.id} %]		
+			[% label = '' %]
 			[% FOREACH effect IN creature_effects_by_id.${creature.id} %]
-				[% effect.effect.effect_name %] ([% effect.effect.time_left %])[% UNLESS loop.last() %],[% END %]
-			[% END %]				
-			]</td>
+				[% label = label _ effect.effect.effect_name _ ' (' _ effect.effect.time_left _ ')' %]
+				[% UNLESS loop.last() %][% label = label _ ', ' %][% END %]
+			[% END %]
+		
+			<span id="cret-effects-[% creature.id %]">[!]</span>
+			<div dojoType="dijit.Tooltip"
+                   connectId="cret-effects-[% creature.id %]"
+                   label="[% label %]">
+            </div>				
 		[% END %]
+		</td>
+	[% IF loop.count % 2 == 0 %]
 	</tr>
+	[% ELSE %]
+		<td style="width: 10px"></td>	
+	[% END %]
 [% END %]
 </table>

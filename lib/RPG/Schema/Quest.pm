@@ -185,12 +185,13 @@ sub terminate {
 	$self->cleanup;
 
 	if ($message) {
+		my $day = $self->result_source->schema->resultset('Day')->find_today;
 	    $self->result_source->schema->resultset('Party_Messages')->create(
 			{
 				party_id    => $self->party_id,
 	            message     => $message,
 				alert_party => 1,
-	            day_id      => $self->result_source->schema->resultset('Day')->find_today,
+	            day_id      => $day->id,
 	        }
 		);
 	}

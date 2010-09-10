@@ -559,7 +559,17 @@ sub disband {
 		{
 			'party_id' => undef,
 		}
-	);	
+	);
+	
+	# Remove any garrisons
+	$self->search_related(
+		'garrisons',
+		{},
+	)->update(
+		{
+			'land_id' => undef,
+		}
+	);
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

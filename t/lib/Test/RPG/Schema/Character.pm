@@ -529,7 +529,7 @@ sub test_level_up : Tests(6) {
     my $self = shift;
     
     # GIVEN
-    my $today = Test::RPG::Builder::Day->build_day($self->{schema});
+    my $today = $self->{stash}{today};
 
     my $next_level = $self->{schema}->resultset('Levels')->find(
         {

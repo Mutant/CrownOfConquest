@@ -149,17 +149,14 @@ sub test_open_chest_with_quest_item : Tests(2) {
 	
 	my $item1 = Test::RPG::Builder::Item->build_item($self->{schema}, treasure_chest_id => $chest->id);
 	my $item2 = Test::RPG::Builder::Item->build_item($self->{schema}, treasure_chest_id => $chest->id);
-	my $item3 = Test::RPG::Builder::Item->build_item($self->{schema}, treasure_chest_id => $chest->id);
+	
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($schema);
+	my $item3 = $quest->item;
 	
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, dungeon_grid_id => $sector->id, character_count => 2);
 	$self->{stash}{party} = $party;
 	
 	my $day = Test::RPG::Builder::Day->build_day($self->{schema});
-	
-	$self->{mock_forward}{'hide_item_from_party'} = sub {  
-		my $item = $_[0]->[0];
-		$item->id == $item2->id ? 1 : 0;
-	};
 	
 	$self->{mock_forward}{'/quest/check_action'} = sub { [] };
 	$self->{mock_forward}{'/panel/refresh'} = sub {};
@@ -172,7 +169,7 @@ sub test_open_chest_with_quest_item : Tests(2) {
 	my @items_found = @{ $template_params->{items_found} };
 	is(scalar @items_found, 2, "only 2 items found, as other is invisible because it's a quest item");
 	
-	my @expected = sort ($item1->id, $item3->id);
+	my @expected = sort ($item1->id, $item2->id);
 	my @got = sort ($items_found[0]->{item}->id, $items_found[1]->{item}->id);
 	
 	is_deeply(\@got, \@expected, "Correct items found");  

@@ -918,8 +918,8 @@ sub hide_item_from_party {
 	return 0 unless $quest;
 	$c->log->debug("Found quest with id: " . $quest->id);
 	
-	return 0 if ! $quest->party_id && $quest->party_id == $c->stash->{party}->id;
-	$c->log->debug("Quest has party id: " . $quest->party_id);
+	return 0 if $quest->party_id && $quest->party_id == $c->stash->{party}->id;
+	$c->log->debug("Quest has party id: " . $quest->party_id) if defined $quest->party_id;
 	
 	return 1;
 }

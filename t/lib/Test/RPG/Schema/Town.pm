@@ -166,7 +166,6 @@ sub test_take_sales_tax : Tests(5) {
 	
 	# GIVEN
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema});
-	my $day = Test::RPG::Builder::Day->build_day($self->{schema});
 	$town->sales_tax(20);
 	$town->update;
 	
@@ -179,7 +178,7 @@ sub test_take_sales_tax : Tests(5) {
 	is(scalar @logs, 1, "One history line added");
 	is($logs[0]->type, 'income', "History line correct type");
 	is($logs[0]->value, 20, "History line correct value");
-	is($logs[0]->day_id, $day->id, "Correct day used for history");
+	is($logs[0]->day_id, $self->{stash}{today}->id, "Correct day used for history");
 		
 }
 

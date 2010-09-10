@@ -27,7 +27,7 @@ sub test_update_days_left : Tests(6) {
     my $mock_context = Test::MockObject->new();
     $mock_context->set_always( 'schema',      $self->{schema} );
     $mock_context->set_always( 'config',      $self->{config} );
-    $mock_context->set_always( 'current_day', Test::RPG::Builder::Day->build_day( $self->{schema} ) );
+    $mock_context->set_always( 'current_day', $self->{stash}{today} );
     $mock_context->set_isa('RPG::NewDay::Context');
 
     $self->{config}{quest_type_vars}{destroy_orb}{initial_search_range} = 3;

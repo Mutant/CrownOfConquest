@@ -345,12 +345,12 @@ sub test_turns_cant_be_increased_above_maximum : Tests(1) {
     is($party->turns, 105, "Turns set to maximum");
 }
 
-sub test_disband : Tests(3) {
+sub test_disband : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN	
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
-    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id,);
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id);
     my $character = ($party->characters)[0];
     my $town = Test::RPG::Builder::Town->build_town($self->{schema});
     $character->mayor_of($town->id);
@@ -367,7 +367,6 @@ sub test_disband : Tests(3) {
     
     $garrison->discard_changes;
     is($garrison->land_id, undef, "Garrison removed from map");
-    
 }
 
 1;

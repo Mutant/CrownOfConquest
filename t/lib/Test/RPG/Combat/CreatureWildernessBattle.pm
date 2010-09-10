@@ -956,7 +956,7 @@ sub test_end_of_combat_cleanup_creates_town_history : Tests(3) {
 		log            => $self->{mock_logger},
 	);
 
-	my $mock_template = Test::MockObject->new();
+	my $mock_template = Test::MockObject::Extra->new();
 	$mock_template->fake_module( 'RPG::Template', process => sub { 'combat_log_message' }, );
 
 	$self->mock_dice;

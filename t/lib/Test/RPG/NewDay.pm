@@ -24,7 +24,7 @@ sub test_run_loads_normal_config : Tests(1) {
     my $self = shift;
 
     my $mock_config = { log_file_dir => 'bar' };
-    my $mock_yaml = Test::MockObject->new();
+    my $mock_yaml = Test::MockObject::Extra->new();
     $mock_yaml->fake_module( 'YAML', LoadFile => sub { $mock_config }, );
 
     my $mock_logger = Test::MockObject::Extends->new('Log::Dispatch');

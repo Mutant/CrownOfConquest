@@ -32,7 +32,7 @@ sub test_fight : Tests(5) {
     # GIVEN
     my $result = { display_messages => {1 => ['messages from combat']}, };
 
-    my $mock_battle = Test::MockObject->new();
+    my $mock_battle = Test::MockObject::Extra->new();
     my %new_args;
     $mock_battle->fake_module(
     	'RPG::Combat::CreatureWildernessBattle',
@@ -81,7 +81,7 @@ sub test_flee_flee_successful : Tests(7) {
     # GIVEN
     my $result = { party_fled => 1, };
 
-    my $mock_battle = Test::MockObject->new();
+    my $mock_battle = Test::MockObject::Extra->new();
     my %new_args;
     $mock_battle->fake_module(
     	'RPG::Combat::CreatureWildernessBattle',

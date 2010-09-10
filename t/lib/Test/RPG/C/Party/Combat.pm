@@ -31,7 +31,7 @@ sub test_fight : Tests(2) {
         party_2 => $party2,
     );
     
-    my $mock_battle = Test::MockObject->new();    
+    my $mock_battle = Test::MockObject::Extra->new();    
     my %new_args;
     $mock_battle->fake_module(
     	'RPG::Combat::PartyWildernessBattle',

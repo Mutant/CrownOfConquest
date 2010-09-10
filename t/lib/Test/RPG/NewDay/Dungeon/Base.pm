@@ -18,7 +18,7 @@ use Test::RPG::Builder::Dungeon_Room;
 sub dungeon_startup : Test(startup => 1) {
     my $self = shift;
 
-    $self->{dice} = Test::MockObject->new();
+    $self->{dice} = Test::MockObject::Extra->new();
 
     $self->{dice}->fake_module(
         'Games::Dice::Advanced',

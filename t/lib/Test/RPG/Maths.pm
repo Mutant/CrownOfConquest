@@ -17,7 +17,7 @@ use RPG::Maths;
 sub startup : Test(startup) {
 	my $self = shift;
 	
-	$self->{dice} = Test::MockObject->new();
+	$self->{dice} = Test::MockObject::Extra->new();
 	$self->{dice}->fake_module( 
 		'Games::Dice::Advanced',
 		roll => sub { $self->{roll_result} || 0 }, 

@@ -9,7 +9,7 @@ use Carp;
 use Data::Dumper;
 
 use Test::More;
-use Test::MockModule;
+use Test::MockObject::Extra;
 
 use Test::RPG::Builder::Day;
 
@@ -134,7 +134,7 @@ sub clear_dice_data : Tests(shutdown) {
 sub mock_dice {
     my $self = shift;   
 
-    my $dice = Test::MockObject->new();
+    my $dice = Test::MockObject::Extra->new();
 
     $dice->fake_module(
     	'Games::Dice::Advanced',        
@@ -151,7 +151,7 @@ sub mock_dice {
             }
         }
     );
-    
+        
     $self->{dice} = $dice;
     
     return $dice;
@@ -160,6 +160,7 @@ sub mock_dice {
 sub unmock_dice {
 	my $self = shift;
 	
+	confess 'wrong' unless $self->{dice} =~ /Test::MockObject::Extra/;
 	$self->{dice}->unfake_module if $self->{dice};
 	$SIG{__WARN__} = sub {
 		my ($msg) = @_;

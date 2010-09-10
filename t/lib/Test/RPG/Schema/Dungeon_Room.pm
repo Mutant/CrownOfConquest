@@ -13,7 +13,7 @@ use Test::MockObject;
 sub startup : Test(startup => 1) {
     my $self = shift;
 
-    $self->{mock_rpg_schema} = Test::MockObject->new();
+    $self->{mock_rpg_schema} = Test::MockObject::Extra->new();
     $self->{mock_rpg_schema}->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, );
 
     use_ok 'RPG::Schema::Dungeon_Room';

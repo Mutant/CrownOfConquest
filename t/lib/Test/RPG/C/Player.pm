@@ -19,13 +19,13 @@ use Digest::SHA1 qw(sha1_hex);
 sub setup_player : Tests(startup => 1) {
     my $self = shift;
     
-    $self->{mock_mime_lite} = Test::MockObject->new();
+    $self->{mock_mime_lite} = Test::MockObject::Extra->new();
     $self->{mock_mime_lite}->fake_module('MIME::Lite',
         send => sub {},
         'new' => sub { $self->{mock_mime_lite} }
     );
     
-    $self->{rpg_template} = Test::MockObject->new();
+    $self->{rpg_template} = Test::MockObject::Extra->new();
     $self->{rpg_template}->fake_module('RPG::Template',
         process => sub {},
     );

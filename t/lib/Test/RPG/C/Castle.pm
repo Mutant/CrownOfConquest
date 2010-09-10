@@ -102,7 +102,7 @@ sub test_check_for_creature_move_party_not_spotted_as_out_of_range : Tests(1) {
 	
 	$self->{mock_forward}{'/dungeon/move_creatures'} = sub {};
 
-	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, dungeon_grid_id => $sectors[0]->id);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, dungeon_grid_id => $sectors[0]->id);
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sectors[24]->id);
 		
 	# WHEN

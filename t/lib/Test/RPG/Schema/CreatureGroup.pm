@@ -14,10 +14,10 @@ use Test::MockObject;
 sub startup : Test(startup => 1) {
     my $self = shift;
 
-    $self->{mock_rpg_schema} = Test::MockObject->new();
+    $self->{mock_rpg_schema} = Test::MockObject::Extra->new();
     $self->{mock_rpg_schema}->fake_module( 'RPG::Schema', 'config' => sub { $self->{config} }, );
 
-	$self->{dice} = Test::MockObject->new();
+	$self->{dice} = Test::MockObject::Extra->new();
     $self->{dice}->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
 
     use_ok 'RPG::Schema::CreatureGroup';

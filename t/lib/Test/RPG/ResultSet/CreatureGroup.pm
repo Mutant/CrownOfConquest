@@ -15,7 +15,7 @@ use Test::MockObject;
 sub startup : Tests(startup) {
     my $self = shift;
     
-    my $mock_maths = Test::MockObject->new();
+    my $mock_maths = Test::MockObject::Extra->new();
     $mock_maths->fake_module(
         'RPG::Maths',
         weighted_random_number => sub {

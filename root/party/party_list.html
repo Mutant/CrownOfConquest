@@ -233,7 +233,7 @@
 	accept="character"
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]" 
-	[% IF char.is_dead %]style="background: #D3D3D3"[% END %]
+	[% IF char.is_dead %]style="background: black"[% END %]
 >	
 	[% INCLUDE party/party_list_char_line.html %]
     <td nowrap="nowrap">[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %] ([% effect.effect.time_left %])[% UNLESS loop.last() %],[% END %][% END %]</td>

@@ -3,7 +3,7 @@
 		[% item = equipped_items.$slot_orig %]
 		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
 			accept="[% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %],[% END %][% END %]"
-			align="center" style="border: black 1px dashed" 
+			align="center" style="border: lightgray 1px dashed" 
 			width="50">			
 			<span id="[% slot %]-item-id" style="display: none">[% item.id %]</span>
 			<span onMouseOver="saveCurrentItemId(dojo.byId('[% slot %]-item-id').innerHTML)">
@@ -25,7 +25,7 @@
 
 <table class="main" cellpadding="5">
 	<tr>
-		<td valign="top" width="250" style="background: lightgray">
+		<td valign="top" width="250">
 
 <script>
 	// Hack to get around dojo deficiency

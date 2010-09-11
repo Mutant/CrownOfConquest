@@ -30,7 +30,7 @@ sub view : Private {
     $grid_params->{click_to_move} = 1;
     $grid_params->{x_size}        = $c->config->{map_x_size};
     $grid_params->{y_size}        = $c->config->{map_y_size};
-    $grid_params->{grid_size}     = $c->config->{map_x_size};
+    $grid_params->{grid_size}     = $grid_size;
     $grid_params->{zoom_level}    = $zoom_level;
 
     $c->forward( 'render_grid', [ $grid_params, ] );

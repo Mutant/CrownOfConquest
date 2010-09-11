@@ -482,20 +482,28 @@ function unblockDoor(action) {
 	</div>
 </div>
 
+<div id="main-top-section">
+
 <h2>[% party.name %]</h2>
 
 <div id="party_status-pane" dojoType="dijit.layout.ContentPane">
 [% INCLUDE party/status.html %]
 </div>
 
+</div>
+
+<div id="border-top" style="width: 100%">&nbsp;</div>
+
+<div id="main-middle-section">
+
 <div dojoType="dijit.layout.ContentPane" id="dungeon-pane" style="display: none"></div>
 
 <div dojoType="dijit.layout.BorderContainer"
 				design="sidebar"                
-                style="border: 1px solid #bfbfbf; width: 98%; height: 380px; margin:0px auto;"
+                style="width: 98%; height: 320px; margin:0px auto;"
 				class="content-background">
 
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" region="left" style="width: 430px; height: 350px;">
+	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" region="left" style="width: 400px;">
 		
 			<div dojoType="dijit.layout.BorderContainer"
 				design="sidebar" gutter=false
@@ -503,18 +511,21 @@ function unblockDoor(action) {
 					<div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px;">					
 					</div>
 
-					<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="center" style="width: 400px; background: #898E73;">					
+					<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="center" style="height: 320px;">					
 				</div>
 			</div>
 	</div>
 
 	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" region="center" 
-		style="padding-left: 5px;" class="content-background">
-
+		style="padding-left: 5px; height: 320px" class="content-background">
+		&nbsp;
 	</div>
 </div>
 
-<br><br>
+
+</div>
+
+<div id="border-top" style="width: 100%">&nbsp;</div>
 
 <div dojoType="dojox.layout.ContentPane" id="party-pane" style="overflow: visible;" class="content-background">
 

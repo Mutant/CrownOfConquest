@@ -48,21 +48,29 @@ br {
 .main, .dijitMenuItemLabel {
 	font-size: 9pt;
 	font-family: verdana, kalimati, helvetica;
+        color: #EECAA2;
 }
 
-.tundra .dijitSplitContainer-dijitContentPane, .tundra .dijitBorderContainer-dijitContentPane, .content-background {
-	background: #9F8D77;
+.tabLabel {
+        color: black;
+}
+
+.tundra .dijitSplitContainer-dijitContentPane, .content-background {
 	border: 0px;		
 }
 
 .tundra .dijitSplitterV, .tundra .dijitGutterV {
-	background: #9F8D77;
+	background: black;
 	border: 0px;	
 }
 
-.tundra .dijitBorderContainer {
-	background: #9F8D77;
+.tundra .dijitBorderContainer, .tundra .dijitBorderContainer-dijitContentPane {
+
 	border: 0px;
+}
+
+.tundra .dijitTabContainerTop-dijitContentPane, .tundra .dijitTabContainerLeft-dijitContentPane, .tundra .dijitTabContainerBottom-dijitContentPane, .tundra .dijitTabContainerRight-dijitContentPane, .tundra .dijitAccordionContainer-dijitContentPane {
+	background-color: #2F2F2F;
 }
 
 #content-outer {
@@ -71,7 +79,7 @@ br {
 	min-height: 250px;
 	float: left;
 	margin-left: 15px;	
-	background: #9F8D77;			
+	background-image:url('/static/images/layout/bgtexgrey.png');			
 }
 
 #content-inner {
@@ -82,38 +90,57 @@ br {
 
 #border-left {
 	background: 
-		url(/static/images/vertical1.gif) 
+		url(/static/images/layout/bordleft.png) 
    		top left repeat-y;	
 }
 
 #border-right {
 	background: 
-		url(/static/images/vertical1.gif) 
+		url(/static/images/layout/bordright.png) 
     	top right repeat-y;
 }
 
 #border-bottom {
 	background: 
-		url(/static/images/horizontal1.gif) 
+		url(/static/images/layout/bordtopdown.png) 
     	bottom left repeat-x;
 }
 
 #border-top {	
 	background:		 
-		url(/static/images/horizontal1.gif) 
+		url(/static/images/layout/bordtopdown.png) 
    		top left repeat-x;			
 }
 
 a {
-	color: #2F2620;
+	color: #FFFFFF;
 }
 
 a:visited {
-	color: #2F2620;
+	color: #FFFFFF;
 }
 
 #body {
-	background: #D3D3D3;
+        background-color: #0B0B0B;
+        color: white;
+}
+
+h2 {margin: 0; padding: 0}
+h1 {margin: 0; padding: 1px}
+
+/* Main Screen */
+#main-top-section {
+  background: url(/static/images/layout/bgtexred.png);
+  color: white;
+  padding: 0px; 
+  margin: 0px;
+}
+
+#main-middle-section, .tundra .dijitBorderContainer-dijitContentPane, .tundra .dijitBorderContainer {
+  background-color: black;
+  background-url: '';
+  padding: 0px; 
+  margin: 0px;
 }
 
 /* Left Nav */
@@ -140,12 +167,11 @@ html>body .nav a {width: auto}
 }
 
 .nav a:hover {
-	background: #9FB7FF;
 	color: white;
 }
 
 .main-nav a:hover {
-	background: #D3D3D3;
+
 }
 
 /* DnD */
@@ -155,7 +181,7 @@ html>body .nav a {width: auto}
 }
 
 .target {border: 1px dotted gray; padding: 5px;-moz-border-radius:8pt 8pt;radius:8pt;}
-.source {border: 1px dotted skyblue;-moz-border-radius:8pt 8pt;radius:8pt;}
+.source {}
 .dojoDndItemOver {background: #feb;border: 1px dotted gray; }
 .dojoDndItemBefore {border-left: 2px dotted gray; }
 .dojoDndItemAfter {border-right: 2px dotted gray; }
@@ -193,7 +219,7 @@ html>body .nav a {width: auto}
 }
 
 .combat-party-attacker, .combat-party-defender {
-	color: #000AA3;
+	color: #4F5D9F;
 }
 
 .combat-creature-attacker, .combat-creature-defender {
@@ -205,6 +231,23 @@ html>body .nav a {width: auto}
 	color: white;
 }
 
+/* Dialog */
+
+.tundra .dijitDialog .dijitDialogPaneContent {
+	background: black;
+        font-family: verdana, kalimati, helvetica;
+        font-size: 9pt;
+}
+
+.tundra .dijitDialogTitleBar, .tundra .dijitDialogTitle, .tundra .dijitButtonContents, .tundra .dijitMenuItemLabel {
+	color: black;
+}
+
+.tundra .dijitDialogTitle {
+        font-family: verdana, kalimati, helvetica;
+        font-size: 9pt;
+}
+
 /* Misc */
 
 #rank_separator {
@@ -213,7 +256,7 @@ html>body .nav a {width: auto}
 }
 
 #current-selection {
-	background: #D3D3D3;
+	background: #5F5F5F;
 }
 
 .login-info {

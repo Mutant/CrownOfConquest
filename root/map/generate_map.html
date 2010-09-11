@@ -24,20 +24,20 @@ Prosperity: [% position.prosperity %]<br>
 	image_height = 80 / zoom_level
 	sector_width = image_width + 2;
 	sector_height = image_height + 2;
-	min_width = (sector_width + 3) * grid_size;
-	min_height = (sector_height + 2) * grid_size;
+	height = sector_height * grid_size + 2;
+	width =  sector_width * grid_size + 2;
 %]
 
 <style>
-.container2 {position:relative; min-width:[% min_width %]px; min-height: [% min_height %];}
+.container2 {position:relative; width: [% width %]px; height: [% height %]px; min-height: [% height %]px; min-width: [% width %]px; }
 .holder2 {display:block; color:#000;}
 
-* html .container2 {border-right:[% min_width + 200 %]px solid #000;}
-* html .holder2 {float:left; position:relative; margin-right:-[% min_width + 200 %]px;}
+* html .container2 {border-right:[% width + 200 %]px solid #000;}
+* html .holder2 {float:left; position:relative; margin-right:-[% width + 200 %]px;}
 </style>
 
-<div class="container2">
-<div class="holder2">
+<div class="container2" style="background: #898E73;">
+<div class="holder2"">
 
 [% FOREACH y IN y_range %]
 	<div style="clear: left;">
@@ -91,7 +91,8 @@ Prosperity: [% position.prosperity %]<br>
 						<img 
 							src="[% c.config.static_path %][% image_path %][% position.image %]" 
 							border=0 
-							title="[% sector_title(position) || collapse %]" 
+							[% title = sector_title(position) | trim | collapse %]
+							[% IF title %]title="[% title %]"[% END %]
 							width="[% image_width %]"
 							height="[% image_height %]"							
 						>
@@ -108,7 +109,8 @@ Prosperity: [% position.prosperity %]<br>
 								width="[% sector_width %]"
 								height="[% sector_height %]"
 								[% IF loop.last %]
-									title="[% sector_title(position) || collapse %]"
+								    [% title = sector_title(position) %]
+									[% IF title %]title="[% title %]"[% END %]
 								[% END %]
 								>
 			

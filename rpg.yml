@@ -1,0 +1,475 @@
+---
+name: RPG
+
+# DB connect info
+Model::DBIC:
+  schema_class: RPG::Schema
+  connect_info: 
+    - dbi:mysql:game
+    - root
+    - ''
+    - { AutoCommit: 1, mysql_connect_timeout: 12000 }
+
+DBIC::Schema::Profiler:
+  MODEL_NAME: DBIC
+
+map_image_path: /images/map/
+
+url_root: http://kingdoms-game.com/
+
+forum_url: http://forum.kingdoms-game.com/index.php
+
+static_path: http://kingdoms-game.com/static
+
+dojo_url: http://ajax.googleapis.com/ajax/libs/dojo/1.5
+dojo_path: /dojo/dojo.xd.js
+
+home: /home/sam/RPG/
+
+log_file_dir: /home/sam/RPG/log/
+
+data_file_path: /home/sam/RPG/script/data/
+
+smtp_server: localhost
+send_email_from: mutant.nz@gmail.com
+
+Log::Dispatch:
+  - class: File
+    name: file1
+    min_level: debug
+    filename: __path_to(log/debug.log)__
+    mode: append
+    format: '[%d] [%p] (%P:%L) %m %n'
+  - class: File
+    name: file2
+    min_level: error
+    filename: __path_to(log/error.log)__
+    mode: append
+    format: '[%d] [%p] %m %n'
+
+# -------------------------------
+# Game params
+# -------------------------------
+
+# ----- Ticker Params ------ #
+
+# Default cron string for ticker action (mostly used by new day stuff)
+default_cron_string: 5 4 * * *
+
+# Spawning of creature orbs
+creature_orb_cron_string: 35 */2 * * *
+
+# Spawning / moving of creatures
+creatures_cron_string: 50 * * * *
+
+# Re-closing of dungeon doors
+dungeon_doors_cron_string: "*/30 * * * *"
+
+# ----- Character / Party Generation Params ----- #
+
+# Pool of points to add to stats for new character
+stats_pool: 30
+
+# Maximum stat for new character
+stat_max: 18
+
+# Maximum amount of hit points class gets when going up a level
+level_hit_points_max:
+  Warrior: 10
+  Archer: 8
+  Priest: 6
+  Mage: 4
+
+# Maximum amount of magic points a priest/mage gets when going up a level
+level_spell_points_min: 3
+level_spell_points_max: 6
+
+# The amount to divide a stat by to give the bonus for a points total 
+# (e.g. divide con by this to get bonus hit points)
+point_dividend: 10
+
+# Number of characters in a new party
+new_party_characters: 5
+
+# Maximum number of characters allowed in a party
+max_party_characters: 8
+
+# How many stat points a character gets per level
+stat_points_per_level: 3
+
+# Amount of gold to start with
+start_gold: 150
+
+# Min / Max prosperity of the town a party starts in
+min_starting_prosperity: 20
+max_starting_prosperity: 40
+
+# Max number of players allowed to register
+max_number_of_players: 75
+
+minimum_password_length: 4
+
+# Number of turns a new party starts with
+starting_turns: 400
+
+# Number of days to give the watcher effect for new parties
+new_party_watcher_days: 20
+
+# ----- Player Params ----- #
+
+# Number of days of inactivity before sending a warning to a player
+inactivity_warning_days: 21
+
+# Number of days of inactivity before deleting a player
+inactivity_deletion_days: 28
+
+# Number of days after last attempting to login to remind player if they haven't verified
+verification_reminder_days: 7
+
+# ----- Party Params ----- #
+
+# Size of map to display
+map_x_size: 7
+map_y_size: 7
+
+# Area party can "view" (i.e. how far they can see on main map)
+party_viewing_range: 3
+
+# Number of turns a party gets each day
+daily_turns: 150
+
+# Maximum number of turns a party is allowed to have
+maximum_turns: 500
+
+# Min / Max percentage amount to heal characters each day (based on rest)
+min_heal_percentage: 2
+max_heal_percentage: 30
+
+# Number of turns used for normal camping
+camping_turns: 3
+
+# Chance of successful scout per avg intelligence point
+scout_chance_per_int: 5
+
+# Maximum chance of successful scout
+max_chance_scout: 80
+
+# Number of mins since last action for a party to be considered online
+online_threshold: 20
+
+# Minimum party level for raiding towns
+minimum_raid_level: 8
+
+# Minimum party level for creating a garrison
+minimum_garrison_level: 6
+
+# ----- Combat Params ----- #
+
+# Chance creatures will notice a party in their sector, and decide to attack
+creature_attack_chance: 40
+
+# Size of 'roll' for attack
+attack_dice_roll: 15
+defence_dice_roll: 15
+
+# Bonus a char gets for choosing to defend
+defend_bonus: 5
+
+# Base creature attack/defence factor
+creature_attack_base: 8
+creature_defence_base: 8
+
+# Amount af/df increases in a creature per level
+create_attack_factor_increment: 2
+create_defence_factor_increment: 2
+
+# Add 1 more to the af increment every x levels 
+creature_factor_level_increase_step: 6
+
+# Amount to multiply creature's level by to get it's base XP value
+xp_multiplier: 10
+
+# Amount to multiply character's level by to get it's base XP value
+xp_multiplier_character: 10
+
+# Base chance a party can flee from an encounter
+base_flee_chance: 50
+
+# Modifier on flee chance, per level creature group is higher than party level
+flee_chance_level_modifier: 5
+
+# Modifier on flee chance, per attempt made to flee in current battle
+flee_chance_attempt_modifier: 5
+
+# Bonus modifier on flee chance for level 1 parties
+flee_chance_low_level_bonus: 10
+
+# Chance creatures will attack the front rank
+front_rank_attack_chance: 70
+
+# Chance per level of finding an item on defeated creatures
+chance_to_find_item: 10
+
+# Amount of item prevalence per level to find
+prevalence_per_creature_level_to_find: 10
+
+# Chance per level below the party's level that a creature group will flee
+chance_creatures_flee_per_level_diff: 7
+
+# Max difference in factor aggregates before a cg will attack (or party will be warned if they attack)
+cg_attack_max_factor_difference: -5
+
+# Max levels below a party before a cg will attack
+cg_attack_max_level_below_party: 4
+
+# Max levels above another party where a party is allowed to attack
+max_party_level_diff_for_attack: 2
+
+# Range around towns where combat etc can be "seen" (i.e. could have an affect, e.g. prestige, news)
+nearby_town_range: 7
+
+# Change a CG will initiate offline combat
+offline_combat_chance: 35
+
+# Maximum number of offline combats allowed between logins
+max_offline_combat_count: 3
+
+# Number of rounds per turn cost
+combat_rounds_per_turn: 3
+
+# Max number of times a party can be attacked by another party when offline
+max_party_offline_attacks: 3
+
+# ----- Shop Params ----- #
+
+# Usual prosperity per shop in a particular town
+prosperity_per_shop: 15
+
+# Maximum amount a shop's cost modifier can move in a day
+max_cost_modifier_change: 5
+
+# Percentage shops take off the base cost of an item when party sells it to them
+shop_sell_modifier: -20
+
+# Percentage chance an item in a shop will be enchanted
+shop_enchanted_item_chance: 5
+
+# Percentage sales tax for towns with NPC mayors
+default_sales_tax: 10
+
+# ----- Town Params ----- #
+
+# Minimum / Maximum cost to heal at the healer, per hit point (actual is based on prosperity)
+min_healer_cost: 1
+max_healer_cost: 6
+
+# Cost per character level for resurrection
+resurrection_cost: 100
+
+# Percentage of xp a char loses when resurrected
+ressurection_percent_xp_to_lose: 5
+
+# Number of days worth of news to display 
+news_day_range: 4
+
+# Cost of sage
+sage_direction_cost: 100
+sage_distance_cost: 200
+sage_location_cost: 800
+sage_item_find_cost: 100
+sage_find_dungeon_cost_per_level: 300
+
+# Range from the town where a dungeon can be found
+sage_dungeon_find_range: 40
+
+# Number of characters per prosperity point (ideally) for recruitment
+characters_per_prosperity: 10
+
+# Chance a blacksmith's skill will go up on a given day
+blacksmith_skill_increase_chance: 33
+
+# Chance a blacksmith will retire
+blacksmith_retire_chance: 15
+
+# Max blacksmith starting skill
+blacksmith_max_start_skill: 5
+
+# Base cost to upgrade an item 
+base_item_upgrade_cost: 200
+
+# Minimum / Maximum cost to repair items at the blacksmith, per durability point (actual is based on prosperity)
+min_repair_cost: 1
+max_repair_cost: 5
+
+# Minimum Durability an item can have to be allowed to upgrade it
+min_upgrade_durability: 20
+
+# Amount of tax per prosperity point a town charges
+tax_per_prosperity: 0.3
+
+# Additional multiplier for tax based on party's level (above level 1)
+tax_level_modifier: 0.25
+
+# Amount to divide tax gold cost by to get cost in turns
+tax_turn_divisor: 8
+
+# Range to look for CTR for prosperity calculation
+prosperity_calc_ctr_range: 9
+
+# Max amount of prosp change allowed per day
+max_prosp_change: 5
+
+# Types of discounts available
+discount_types:
+  - sage
+  - healer
+  - blacksmith
+  
+# Range of discounts available (%)
+min_discount_value: 10
+max_discount_value: 30
+
+# Percentage chance of being captured when raiding a castle, and fleeing from combat
+castle_capture_chance: 66 
+
+# ----- Dungeon Params ----- #
+
+# Amount of land per dungeon
+land_per_dungeon: 200
+
+# Min distance from a town or another dungeon each dungeon must be
+min_distance_from_dungeon_or_town: 5
+
+# Maximum level of a dungeon
+dungeon_max_level: 4 
+
+# Max sizes of rooms
+max_x_dungeon_room_size: 6
+max_y_dungeon_room_size: 6
+
+# Maximum amount of sector's a party can move in one turn
+dungeon_move_maximum: 3
+
+# Ratios of sectors per creature
+dungeon_sectors_per_creature: 5
+
+# Number of party levels required to enter a dungeon per level (with level 1 dungeons = 0, level 2 = step * 1, level 3 = step * 2, etc) 
+dungeon_entrance_level_step: 5
+
+# ----- Creature Params ----- #
+
+# Ratio of number of creature groups to parties
+creature_groups_to_parties: 10
+
+# Max number of creature groups per sectors in the world
+max_creature_groups_per_sector: 0.5
+
+# Min number of creature groups per sectors in the world
+min_creature_groups_per_sector: 0.4
+
+# Percentage chance a creature should move somewhere
+creature_move_chance: 50
+
+# Chance monsters will move when a party moves within a dungeon
+creature_move_chance_on_party_move: 20
+
+# Number of land per creature orb
+land_per_orb: 100
+
+# Minimum distance an orb must be from a town per level of the orb (x & y)
+orb_distance_from_town_per_level: 2.5
+
+# Minimum distance an orb must be from another orb
+orb_distance_from_other_orb: 2
+
+# Max number of squares a CG can hop if it's blocked by towns, ctr or other cgs
+max_hops: 3
+
+# Max level of orb to spawn
+max_orb_level: 3
+
+# Amount to multiply orb level by to get the party level allowed to destroy the orb
+orb_level_multiplier_to_destroy_orb: 3
+
+# ----- Quests ----- #
+
+# Number of prosperity points per quest offered by a town
+prosperity_per_quest: 10
+
+# Base number of quests allowed per party
+base_allowed_quests: 2
+
+# Number of quests per level allowed per party
+additional_quests_per_level: 1
+
+quest_type_vars:
+  ### Kill Creatures Near Town Quest Type
+  kill_creatures_near_town:
+    # Min/max number of creature groups to kill
+    min_cgs_to_kill: 2
+    max_cgs_to_kill: 6
+
+    # Range from town to consider creature kills (number of sectors)
+    range: 3
+    
+    # Gold awarded per CG to kill
+    gold_per_cg: 75
+    xp_per_cg: 50
+
+  ### Take msg to a town quest types
+  msg_to_town:
+    initial_search_range: 45
+    
+    gold_per_distance: 35
+    
+    xp_per_distance: 20
+    
+  ### Find a jewel
+  find_jewel:
+    search_range: 25
+    jewels_to_create: 3
+    gold_value: 250
+    xp_value: 100
+
+  ### Destroy a creature orb
+  destroy_orb:
+    initial_search_range: 11
+    max_search_range: 30
+    
+    gold_per_distance: 60
+    
+    xp_per_distance: 40
+    
+  ### Raid town
+  raid_town:
+    initial_search_range: 11
+    max_search_range: 30
+    
+    gold_per_distance: 65
+    
+    xp_per_distance: 35    
+
+  ### Find dungeon item
+  find_dungeon_item:
+    search_range: 35
+    gold_per_distance: 85    
+    xp_per_distance: 30
+
+# ----- Garrison Params ----- #
+
+# Chance a creature will attack a garrison
+garrison_combat_chance: 35
+
+# Max level above a party can attack a garrison (and vice verca)
+max_party_garrison_level_difference: 5
+
+# Turn cost for creating a garrison
+garrison_creation_turn_cost: 15
+
+# ----- Enchantment Params ----- #
+
+# Minimum creature level that has enchanted items
+minimum_enchantment_creature_level: 6
+
+# Step in chance for creature levels for finding enchanted items
+enchantment_creature_level_step: 2

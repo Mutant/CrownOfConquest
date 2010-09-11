@@ -1,0 +1,26 @@
+---
+# DB connect info
+Model::DBIC:
+  schema_class: RPG::Schema
+  connect_info: 
+    - dbi:mysql:game
+    - root
+    - ''
+    - { AutoCommit: 1, mysql_connect_timeout: 12000 }
+
+url_root: http://ubuntu/game/
+
+static_path: http://ubuntu/static/
+
+dojo_url: http://ubuntu/dojo
+dojo_path: /dojo/dojo.js
+
+home: /home/sam/RPG/
+
+log_file_dir: /home/sam/RPG/log/
+
+data_file_path: /home/sam/RPG/script/data/
+
+online_threshold: 1
+
+no_email: 1

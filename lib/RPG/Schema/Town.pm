@@ -77,7 +77,7 @@ sub tax_cost {
     my $prestige = 0;
     
     my $mayor = $self->mayor;
-    if (ref $party && $mayor && $mayor->party_id == $party->id) {
+    if (ref $party && $mayor && defined $mayor->party_id && $mayor->party_id == $party->id) {
     	return { mayor => 1 };	
     }
     

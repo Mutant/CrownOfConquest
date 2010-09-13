@@ -136,12 +136,12 @@ sub calculate_approval {
         { town_id => $town->id, },
         {
             select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }, {sum => 'guards_killed'} ],
-            as     => [ 'tax_collected', 'raids_today' ],
+            as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
         }
     );   
 	
 	my $adjustment = - $party_town_rec->get_column('raids_today') * 3;
-	$adjustment -= $party_town_rec->get_column('guaurds_killed');
+	$adjustment -= $party_town_rec->get_column('guards_killed');
 		
 	$adjustment += int $party_town_rec->get_column('tax_collected') / 100;
 	$adjustment -= $town->peasant_tax - 3; # The -3 stops it trending down for npc mayors
@@ -240,7 +240,7 @@ sub process_revolt {
 			}
 	    );
 	    
-	    $guard_bonus = int $guards_rec->get_column('level_aggregate') / 100;
+	    $guard_bonus = int ($guards_rec->get_column('level_aggregate') // 0) / 100;
 	}
 	
     my $prosp_penalty = int $town->prosperity / 10;

@@ -112,6 +112,8 @@ sub generate_guards {
 		# Add any guards that need to be added
 		while ($guards_to_hire{$type_id} > 0) {
 			my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id, 1 );
+			
+			last unless $random_sector;
 		
 			$last_cg ||= $c->schema->resultset('CreatureGroup')->create(
 				{

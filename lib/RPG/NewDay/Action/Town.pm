@@ -88,7 +88,8 @@ sub calculate_prosperity {
 
     $prosp_change = round $prosp_change;
 
-    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')');
+    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')'. 
+    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change]");
 
     $town->adjust_prosperity( $prosp_change );
     $town->update;
@@ -163,7 +164,7 @@ sub _calculate_changes_needed {
 sub _make_scaling_changes {
 	my $self = shift;
 	my $category = shift;
-	my $changes_needed = shift;
+	my $changes_needed = shift // 0;
 	my $prosp_changes = shift;
 	my @towns = @_;
 

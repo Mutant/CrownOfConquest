@@ -3,10 +3,10 @@
 		[% border = "" %]
 		[% sides_with_walls = sector.sides_with_walls %]
 		[% FOREACH side IN positions  %]
-			[% border_color = "#6B654E" %]
+			[% border_color = "#777157" %]
 			[% FOREACH side_with_wall IN sides_with_walls %]
 				[% IF side_with_wall == side %]
-					[% border_color = "black" %]
+					[% border_color = "#9F9F9F" %]
 				[% END %]
 			[% END %]				
 		
@@ -110,7 +110,7 @@
 						position: absolute;
 						width: [% width %];
 						height: [% height %];
-						background: black;
+						background: #9F9F9F;
 						left: [% left_offset * size + width_offset %];
 						top: [% top_offset * size + height_offset %];"
 					>					

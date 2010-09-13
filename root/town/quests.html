@@ -23,7 +23,7 @@ The following quests are available:
 		</tr>
 	[% FOREACH quest IN quests %]
 		<tr style="cursor:pointer;cursor:hand; 
-			[% IF loop.count % 2 == 0 %]background: lightgrey;[% END %]"
+			[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]"
 			onClick="document.location='[% base %]/quest/offer?quest_id=[% quest.id %]'">
 			<td>[% short_description(quest) %]</a></td>
 			<td align="center">[% quest.min_level %]</td>

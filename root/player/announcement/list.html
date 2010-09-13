@@ -11,8 +11,7 @@
 <h2>Announcements</h2>
 
 [% FOREACH announcement IN announcements %]
-	<div style="border: 1px solid black; background: white; color: black; -moz-border-radius-bottomleft:14pt; -moz-border-radius-bottomright:14pt;
-		-moz-border-radius-topleft:14pt; -moz-border-radius-topright:14pt; padding: 5px">
+	<div class="text-block">
 	[% INCLUDE player/announcement/announcement.html title=announcement.title, announcement=announcement.announcement, date=announcement.date %]
 	</div>
 	<br>

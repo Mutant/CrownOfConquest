@@ -233,7 +233,7 @@ html>body .nav a {width: auto}
 
 /* Dialog */
 
-.tundra .dijitDialog .dijitDialogPaneContent, .tundra .dijitMenu {
+.tundra .dijitDialog .dijitDialogPaneContent {
 	background: black;
         font-family: verdana, kalimati, helvetica;
         font-size: 9pt;

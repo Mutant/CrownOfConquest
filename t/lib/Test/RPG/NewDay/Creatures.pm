@@ -45,11 +45,18 @@ sub setup_creature_config : Test(setup) {
         min_creature_groups_per_sector   => 0,
         max_hops                         => 2,
     };
+    
+    $self->{cret_category} = $self->{schema}->resultset('Creature_Category')->create(
+    	{
+    		name => 'Test',
+    	},
+    );    
 
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
         {
             creature_type => 'creature type',
             level         => 1,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 
@@ -57,6 +64,7 @@ sub setup_creature_config : Test(setup) {
         {
             creature_type => 'creature type',
             level         => 2,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 
@@ -64,6 +72,7 @@ sub setup_creature_config : Test(setup) {
         {
             creature_type => 'creature type',
             level         => 3,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 }

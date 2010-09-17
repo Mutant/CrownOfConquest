@@ -52,7 +52,14 @@ sub _create_group {
     return if $sector->creature_group;
 
     unless ( $self->{creature_types_by_level} ) {
-        my @creature_types = $self->result_source->schema->resultset('CreatureType')->search();
+        my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
+        	{
+        		'category.name' => {'!=', 'Guards'},
+        	},
+        	{
+        		join => 'category',
+        	},
+        );
 
         croak "No types found\n" unless @creature_types;
 

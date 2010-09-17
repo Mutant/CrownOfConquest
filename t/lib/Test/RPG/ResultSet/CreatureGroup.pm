@@ -25,12 +25,19 @@ sub startup : Tests(startup) {
         },
     );
     $self->{mock_maths} = $mock_maths; 
+ 
 }
 
 sub setup : Tests(setup) {
 	my $self = shift;
 	
 	$self->{counter} = 0;	
+
+    $self->{cret_category} = $self->{schema}->resultset('Creature_Category')->create(
+    	{
+    		name => 'Test',
+    	},
+    );
 }
 
 sub shutdown : Tests(shutdown) {
@@ -45,11 +52,12 @@ sub test_create_in_wilderness_simple : Tests(5) {
 
     # GIVEN
     my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-
+    
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
         {
             creature_type => 'creature type',
             level         => 1,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 
@@ -57,6 +65,7 @@ sub test_create_in_wilderness_simple : Tests(5) {
         {
             creature_type => 'creature type',
             level         => 2,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 
@@ -64,6 +73,7 @@ sub test_create_in_wilderness_simple : Tests(5) {
         {
             creature_type => 'creature type',
             level         => 3,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
     
@@ -97,6 +107,7 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
         {
             creature_type => 'creature type',
             level         => 2,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
 
@@ -104,6 +115,7 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
         {
             creature_type => 'creature type',
             level         => 2,
+            creature_category_id   => $self->{cret_category}->id,
         }
     );
     

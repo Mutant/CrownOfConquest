@@ -210,6 +210,11 @@ sub is_in_party {
 	return 0;
 }
 
+# Returns a list of columns that, if null, indicate the character is in the party 
+sub in_party_columns {
+	return qw/garrison_id mayor_of/;
+}
+
 # Returns true if character isn't owned by a player
 sub is_npc {
 	my $self = shift;

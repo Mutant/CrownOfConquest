@@ -12,19 +12,40 @@ sub party_items_requiring_repair {
     my $party_id = shift;
     my $only_eqipped_items = shift // 0;
     
-    my %extra_params;
+    my %extra_params = map { 'belongs_to_character.'.$_ => undef } RPG::Schema::Character->in_party_columns;
     $extra_params{equip_place_id} = {'!=',undef} if $only_eqipped_items;
-    
+        
     return $self->search(
         {
             'item_variables.item_variable_value' => \'< item_variables.max_value',
             'item_variable_name.item_variable_name' => 'Durability',
-            'belongs_to_character.party_id'         => $party_id,
-            'belongs_to_character.garrison_id'      => undef,
+            'belongs_to_character.party_id'         => $party_id,            
             %extra_params,
         },
-        { join => [ { 'item_variables' => 'item_variable_name' }, 'belongs_to_character' ], }
+        { join => [ { 'item_variables' => 'item_variable_name' }, 'belongs_to_character'], }
     );   
+}
+
+sub party_items_in_category {
+	my $self = shift;
+	my $party_id = shift;
+	my $category_id = shift;
+	
+	my %extra_params = map { 'belongs_to_character.'.$_ => undef } RPG::Schema::Character->in_party_columns;
+	
+	return $self->search(
+		{
+			'belongs_to_character.party_id'    => $party_id,
+			'item_type.item_category_id'       => $category_id,
+			%extra_params,
+		},
+		{
+			prefetch => [ 'belongs_to_character', 'item_type', { 'item_variables', => 'item_variable_name' }, ],
+			order_by => 'belongs_to_character.party_order',
+			distinct => 1,
+		},
+	);
+		
 }
 
 sub create_enchanted {

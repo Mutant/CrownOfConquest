@@ -69,18 +69,7 @@ sub category_tab : Local {
 	my @upgrade_variables = $category->variables_in_property_category( 'Upgrade',    1 );
 	my @repair_variables  = $category->variables_in_property_category( 'Durability', 1 );
 
-	my @items = $c->model('DBIC::Items')->search(
-		{
-			'belongs_to_character.party_id'    => $c->stash->{party}->id,
-			'belongs_to_character.garrison_id' => undef,
-			'item_type.item_category_id'       => $c->req->param('category_id'),
-		},
-		{
-			prefetch => [ 'belongs_to_character', 'item_type', { 'item_variables', => 'item_variable_name' }, ],
-			order_by => 'belongs_to_character.party_order',
-			distinct => 1,
-		},
-	);
+	my @items = $c->model('DBIC::Items')->party_items_in_category($c->stash->{party}->id,  $c->req->param('category_id'));
 
 	$c->forward(
 		'RPG::V::TT',
@@ -109,15 +98,20 @@ sub item_valid_check : Private {
 		croak "No blacksmith in this town\n";
 	}
 
-	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => [ 'belongs_to_character', 'item_type' ] } );
+	my %extra_params = map { 'belongs_to_character.'.$_ => undef } RPG::Schema::Character->in_party_columns;
+	my $item = $c->model('DBIC::Items')->find( 
+		{ 
+			item_id => $c->req->param('item_id'),
+			party_id => $c->stash->{party}->id,
+			%extra_params, 
+		}, 
+		{ 
+			prefetch => [ 'belongs_to_character', 'item_type' ] 
+		}
+	);
 
-	my $character = $item->belongs_to_character;
-	if ( $character->party_id != $c->stash->{party}->id ) {
-		croak "Attempting to upgrade weapon from different party\n";
-	}
-
-	if ( $character->garrison_id ) {
-		croak "Can't upgrade weapons from garrison chars";
+	unless ($item) {
+		croak "Attempting to upgrade weapon for a character not in the party\n";
 	}
 
 	return $item;

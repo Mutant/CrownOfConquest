@@ -782,8 +782,7 @@ sub end_of_combat_cleanup {
 		}
 
 		# Remove last_combat_actions that can't be carried between combats
-		#  (currently just 'cast')
-		if ( $combatant->last_combat_action eq 'Cast' ) {
+		if ( $combatant->last_combat_action eq 'Cast' || $combatant->last_combat_action eq 'Use' ) {
 			$combatant->last_combat_action('Defend');			
 		}
 		$combatant->last_combat_param1(undef);

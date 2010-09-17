@@ -15,6 +15,8 @@ use Test::More;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Item_Type;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -91,7 +93,43 @@ sub test_check_for_pending_mayor_expiry : Tests(2) {
 	$town->discard_changes;
 	is($town->pending_mayor, undef, "Pending mayor cleared");
 	is($town->pending_mayor_date, undef, "Pending mayor date cleared");
+}
 
+sub test_refresh_mayor : Tests(5) {
+	my $self = shift;
+	
+	# GIVEN
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, max_hit_point => 10 );
+	my $ammo = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
+		variables => [{name => 'Quantity', create_on_insert => 1}],
+	);
+	my $ranged = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
+		category_name => 'Ranged Weapon',
+		attributes => [{item_attribute_name => 'Ammunition', item_attribute_value => $ammo->id}]
+	);
+	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, 
+		item_type_id => $ranged->id, 
+		char_id => $character->id,
+		variables => [{item_variable_name=>'Durability', item_variable_value => 10, max_value => 100}],
+		
+	);	
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->refresh_mayor($character);
+	
+	# THEN
+	$character->discard_changes;
+	is($character->hit_points, 10, "Mayor healed to full hit points");
+	my @items = $character->items;
+	is(scalar @items, 2, "Mayor now has 2 items");
+	my ($new_ammo) = grep { $_->id != $item->id } @items;
+	is($new_ammo->item_type_id, $ammo->id, "Ammo created with correct item type");
+	is($new_ammo->variable('Quantity'), 200, "Quantity of ammo set correctly");
+	
+	$item->discard_changes;
+	is($item->variable('Durability'), 100, "Weapon repaired");
 }
 
 1;

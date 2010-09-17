@@ -5,6 +5,7 @@ extends 'RPG::NewDay::Base';
 
 use Data::Dumper;
 use Games::Dice::Advanced;
+use List::Util qw(sum);
 
 with 'RPG::NewDay::Role::CastleGuardGenerator';
 
@@ -47,8 +48,7 @@ sub run {
 		}
 		
 		if ($mayor->is_dead && ! $town->pending_mayor) {
-			$mayor->hit_points($mayor->max_hit_points);
-			$mayor->update;
+			$self->refresh_mayor($mayor);
 		}
 		
 		if ($town->pending_mayor) {
@@ -64,7 +64,7 @@ sub run {
 			$town->sales_tax(10);
 			$town->base_party_tax(20);
 			$town->party_tax_level_step(30);
-			$town->update;			
+			$town->update;
 		}
 				
 		if ($town->peasant_tax && ! $town->peasant_state) {
@@ -334,6 +334,45 @@ sub check_for_pending_mayor_expiry {
 		$town->pending_mayor(undef);
 		$town->pending_mayor_date(undef);
 		$town->update;	
+	}	
+}
+
+sub refresh_mayor {
+	my $self = shift;
+	my $mayor = shift;
+		
+	$mayor->hit_points($mayor->max_hit_points);
+	$mayor->update;
+	
+	# Mayor gets items auto-repaired, and ammo stocked up
+	my @items = $mayor->items;
+	foreach my $item (@items) {
+		next unless $item->equipped;
+		
+		if (my $variable = $item->variable_row('Durability')) {
+			$variable->item_variable_value($variable->max_value);
+			$variable->update;
+		}
+				
+		if ($item->item_type->category->item_category eq 'Ranged Weapon') {
+			my @ammo = $mayor->ammunition_for_item($item);
+			
+			my $total_ammo = (sum map { $_->quantity } @ammo) // 0;
+			
+			if ($total_ammo < 100) {
+				# Create some more ammo
+				my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;
+				
+				my $new_ammo = $self->context->schema->resultset('Items')->create(
+					{
+						item_type_id => $ammunition_item_type_id,
+						character_id => $mayor->id,
+					},
+				);
+				
+				$new_ammo->variable( 'Quantity', 200 );
+			}
+		}
 	}	
 }
 

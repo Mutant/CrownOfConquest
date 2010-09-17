@@ -1,3 +1,4 @@
 .project
 .includepath
 rpg_local.yml
+log/*

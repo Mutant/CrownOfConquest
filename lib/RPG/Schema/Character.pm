@@ -40,7 +40,7 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key('character_id');
 
-__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' }, {cascade_delete => 0} );
+__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' }, {cascade_delete => 0, join_type => 'LEFT'} );
 
 __PACKAGE__->belongs_to( 'class', 'RPG::Schema::Class', { 'foreign.class_id' => 'self.class_id' } );
 

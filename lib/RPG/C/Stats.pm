@@ -16,8 +16,13 @@ sub game : Local {
     my $parties_count = grep { !defined $_->defunct } @parties;
     my $defunct_parties_count = scalar @parties - $parties_count;
 
+	my %character_count_clause = (
+       	'party.defunct' => undef,
+       	'me.party_id' => {'!=', undef},	
+	);
+
     my $character_count_rs = $c->model('DBIC::Character')->find(
-        { 'party.defunct' => undef, },
+      	\%character_count_clause,
         {
             'select' => [          { count => '*' }, { round => { avg => 'level' } } ],
             'as'     => [ 'count', 'average_level' ],
@@ -26,7 +31,7 @@ sub game : Local {
     );
 
     my $class_rs = $c->model('DBIC::Character')->search(
-        { 'party.defunct' => undef, },
+        \%character_count_clause,
         {
             'select'   => [ 'class_name', \'count(*) as count' ],
             'as'       => [ 'class_name', 'count' ],
@@ -37,7 +42,7 @@ sub game : Local {
     );
 
     my $race_rs = $c->model('DBIC::Character')->search(
-        { 'party.defunct' => undef, },
+        \%character_count_clause,
         {
             'select'   => [ 'race_name', \'count(*) as count' ],
             'as'       => [ 'race_name', 'count' ],

@@ -67,6 +67,9 @@ sub opponents_of {
 
 sub execute_round {
 	my $self = shift;
+	
+	# Clear any messages from the last round
+	$self->result->{messages} = undef;
 
 	# Check for stalemates, fleeing or no one alive in one of the groups
 	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
@@ -261,9 +264,6 @@ sub record_messages {
 			result   => $self->result
 		);
 
-		$self->log->debug('Recording messages:');
-		$self->log->debug( join "", @messages );
-
 		$self->schema->resultset('Combat_Log_Messages')->create(
 			{
 				combat_log_id   => $self->combat_log->id,
@@ -277,7 +277,6 @@ sub record_messages {
 	}
 
 	$self->result->{display_messages} = \%display_messages;
-
 }
 
 sub get_combatant_list {

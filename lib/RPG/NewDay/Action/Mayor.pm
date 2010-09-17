@@ -140,30 +140,38 @@ sub calculate_approval {
         }
     );   
 	
-	my $adjustment = - $party_town_rec->get_column('raids_today') * 3;
-	$adjustment -= $party_town_rec->get_column('guards_killed');
+	my $raids_adjustment = - $party_town_rec->get_column('raids_today') * 3;
+	my $guards_killed_adjustment = - $party_town_rec->get_column('guards_killed');
 		
-	$adjustment += int $party_town_rec->get_column('tax_collected') / 100;
-	$adjustment -= $town->peasant_tax - 3; # The -3 stops it trending down for npc mayors
+	my $party_tax_adjustment = int $party_town_rec->get_column('tax_collected') / 100;
+	my $peasant_tax_adjustment = - $town->peasant_tax / 2; # The -3 stops it trending up for npc mayors
 	
- 	my $creature_rec = $self->context->schema->resultset('Creature')->search(
+ 	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 		{
 			'dungeon_room.dungeon_id' => $town->castle->id,
 		},
 		{
 			join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
 			select => 'sum(type.level)',
-			as => 'level_aggregate',
+			as => 'level_aggregate',			
 		}
 	);
 	
-	$adjustment += int ($creature_rec->get_column('level_aggregate') / $town->prosperity);	
+	$self->context->logger->debug("Level aggregate: " . $creature_rec->get_column('level_aggregate'));
+	my $guards_hired_adjustment = int ($creature_rec->get_column('level_aggregate') / $town->prosperity);	
 		
 	# A random component to approval
-	$adjustment += Games::Dice::Advanced->roll('1d11') - 6;
+	my $random_adjustment += Games::Dice::Advanced->roll('1d11') - 6;
+	
+	my $adjustment = $raids_adjustment + $guards_killed_adjustment + $party_tax_adjustment + 
+		$peasant_tax_adjustment + $guards_hired_adjustment + $random_adjustment;
 
 	$adjustment = -10 if $adjustment < -10;
 	$adjustment =  10 if $adjustment >  10;
+	
+	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
+		"[Raid: $raids_adjustment; Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
+		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Random: $random_adjustment]");
 	
 	$town->adjust_mayor_rating($adjustment);
 	$town->update;

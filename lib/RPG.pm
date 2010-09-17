@@ -56,9 +56,19 @@ BEGIN {
         'View::TT' => { INCLUDE_PATH => [ __PACKAGE__->path_to('root'), ] },
     );    
     
-  __PACKAGE__->config( 'Plugin::Session' => {
-     cookie_expires  => 60 * 60 * 48,
-  });    
+    __PACKAGE__->config( 'Plugin::Session' => {
+       cookie_expires  => 60 * 60 * 48,
+    });
+  
+    __PACKAGE__->config(
+        static => {
+            include_path => [
+                __PACKAGE__->config->{home} . '/docroot',
+            ],
+        },
+    );  
+    
+    __PACKAGE__->config->{static}->{logging} = 1;
     
 }
 
@@ -73,6 +83,7 @@ __PACKAGE__->setup(
         DBIC::Schema::Profiler
         Captcha
         Log::Dispatch
+        Static::Simple
         /
 );
 

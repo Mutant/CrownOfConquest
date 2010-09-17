@@ -126,7 +126,12 @@ sub display_name {
 	
 	my $land = $self->land;
 	
-	return "The garrison at " . $land->x . ", " . $land->y . $party_name;
+	if ($land) {	
+		return "The garrison at " . $land->x . ", " . $land->y . $party_name;
+	}
+	else {
+		return "A garrison $party_name";
+	}
 }
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

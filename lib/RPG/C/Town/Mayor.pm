@@ -263,4 +263,27 @@ sub change_gold : Local {
 	);
 }
 
+sub party_tax_preview : Local {
+	my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	my $base_cost = $c->req->param('base_cost') // $town->base_party_tax;
+	my $level_step = $c->req->param('level_step') // $town->party_tax_level_step;
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/party_tax_preview.html',
+				params => {					
+					town => $town,
+					base_cost => $base_cost,
+					level_step => $level_step,
+				}
+			}
+		]
+	);			
+}
+
 1;

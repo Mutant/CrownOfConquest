@@ -72,6 +72,8 @@ __PACKAGE__->has_many( 'history', 'RPG::Schema::Town_History', 'town_id', );
 sub tax_cost {
     my $self  = shift;
     my $party = shift;
+    my $base_cost = shift;
+    my $level_modifier = shift;
     
     my $party_level;
     my $prestige = 0;
@@ -95,14 +97,15 @@ sub tax_cost {
     	$party_level = $party;
     }    
     
-    my ($base_cost, $level_modifier);     
-    if ($mayor && $mayor->party_id) {
-    	$base_cost = $self->base_party_tax;
-    	$level_modifier = $self->party_tax_level_step;
-    }
-    else {
-    	$base_cost = $self->prosperity * RPG::Schema->config->{tax_per_prosperity};
-    	$level_modifier = $self->prosperity * RPG::Schema->config->{tax_level_modifier};
+    if (! defined $base_cost && ! defined $level_modifier) {     
+	    if ($mayor && $mayor->party_id) {
+	    	$base_cost = $self->base_party_tax;
+	    	$level_modifier = $self->party_tax_level_step;
+	    }
+	    else {
+	    	$base_cost = $self->prosperity * RPG::Schema->config->{tax_per_prosperity};
+	    	$level_modifier = $self->prosperity * RPG::Schema->config->{tax_level_modifier};
+	    }
     }
     
     my $level_cost = round ($level_modifier * ($party_level - 1 ));

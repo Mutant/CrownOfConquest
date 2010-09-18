@@ -263,7 +263,7 @@ sub process_round_result : Private {
 
 		push @panels_to_refesh, 'map';
 
-		if ( !$c->stash->{party}->defunct ) {
+		if ( !$c->stash->{party}->defunct && ! $result->{creatures_fled} ) {
 
 			# Check for state of quests
 			# TODO: should do this in offline combat too

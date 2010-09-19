@@ -283,7 +283,55 @@ sub party_tax_preview : Local {
 				}
 			}
 		]
-	);			
+	);
+}
+
+sub elections : Local {
+	my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/elections.html',
+				params => {
+					town => $town,
+					current_election => $town->current_election,
+				}
+			}
+		]
+	);	
+}
+
+sub schedule_election : Local {
+	my ($self, $c) = @_;	
+	
+	my $town = $c->stash->{town};
+	
+	croak "Already have an election scheduled\n" if $town->current_election;
+	
+	croak "Invalid day\n" if $c->req->param('election_day') < 5;
+	
+	my $day = $c->stash->{today}->id + $c->req->param('election_day');
+		
+	my $election = $c->model('DBIC::Election')->create(
+		{
+			town_id => $town->id,
+			scheduled_day => $day,
+			status => 'Open',
+		}
+	);
+	
+	$c->model('DBIC::Election_Candidate')->create(
+		{
+			character_id => $town->mayor->id,
+			election_id => $election->id,
+		},
+	);
+	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections' );	
 }
 
 1;

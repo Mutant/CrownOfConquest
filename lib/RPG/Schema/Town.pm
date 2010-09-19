@@ -69,6 +69,10 @@ __PACKAGE__->might_have( 'mayor', 'RPG::Schema::Character', { 'foreign.mayor_of'
 
 __PACKAGE__->has_many( 'history', 'RPG::Schema::Town_History', 'town_id', );
 
+__PACKAGE__->has_many( 'elections', 'RPG::Schema::Election', 'town_id', );
+
+__PACKAGE__->might_have( 'current_election', 'RPG::Schema::Election', 'town_id', { where => {'status' => 'Open'}} );
+
 sub tax_cost {
     my $self  = shift;
     my $party = shift;

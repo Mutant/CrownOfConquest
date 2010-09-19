@@ -72,9 +72,9 @@ sub calculate_prosperity {
     my $approval_change = round (($town->mayor_rating // 0) / 20);
 
     my $prosp_change =
-        ( ( $tax_collected || 0 ) / 10 ) +
+        ( ( $tax_collected || 0 ) / 100 ) +
         ( $ctr_diff / 20 ) -
-        ( ( $raids_today || 0 ) / 4 ) +
+        ( $raids_today || 0 ) +
         $approval_change;
 
     $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};

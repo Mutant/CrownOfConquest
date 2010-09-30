@@ -567,7 +567,11 @@ sub hit {
     if ($self->is_dead && $attacker) {
     	if (my $town = $self->mayor_of_town) {
     		# A mayor has died... the party that killed them is marked as 'pending mayor' of the town
-   			$town->pending_mayor($attacker->party_id);
+    		
+    		# Attacker might be a party or a character
+    		my $party_id = $attacker->isa('RPG::Schema::Party') ? $attacker->id : $attacker->party_id;
+    		
+   			$town->pending_mayor($party_id);
    			$town->pending_mayor_date(DateTime->now());
    			$town->update;
     	}	

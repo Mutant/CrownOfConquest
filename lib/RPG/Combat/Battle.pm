@@ -215,8 +215,8 @@ sub _process_effects {
 
 		if ( !$being->is_dead && $effect->effect->modified_stat eq 'poison' ) {
 			my $damage = Games::Dice::Advanced->roll( '1d' . $effect->effect->modifier );
-
-			$being->hit($damage);
+			
+			$being->hit($damage, $self->oppponent_of($being));
 
 			my $result = RPG::Combat::EffectResult->new(
 				defender => $being,

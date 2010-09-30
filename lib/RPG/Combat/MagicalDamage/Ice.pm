@@ -24,7 +24,7 @@ sub apply {
 	my $roll         = 2 * $params{level};
 	my $extra_damage = Games::Dice::Advanced->roll( '1d' . $roll );
 
-	$params{opponent}->hit($extra_damage);
+	$params{opponent}->hit($extra_damage, $params{character});
 
 	$magical_damage_result->extra_damage($extra_damage);
 

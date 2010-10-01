@@ -31,10 +31,12 @@ Your prestige here:
 [% END %]
 
 [% IF mayor %]
-	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br><br>
-[% END %]
-	 
-	  
+	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br>
+	[% IF current_election %]
+	    The town will hold an election on day [% current_election.scheduled_day %] (<a href="[% base %]town/election">Details</a>)
+	[% END %]
+	<br><br>
+[% END %]	  
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 <b>Shops & Services</b>

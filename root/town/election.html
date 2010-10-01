@@ -1,0 +1,23 @@
+[% INCLUDE top.html %]
+
+<h2>[% town.town_name %] Election</h2>
+
+The election is scheduled for day [% election.scheduled_day %].
+
+<h3>Candidates</h3>
+
+<table class="main" cellspacing="4">
+	<tr>
+		<th>Candidate Name</th>
+		<th>Party</th>
+	</tr>
+[% FOREACH candidate IN candidates %]
+	[% character = candidate.character %]
+	<tr>
+		<td>[% character.name %]</td>
+		<td>[% IF character.is_npc %]NPC[% ELSE %][% character.party.name %][% END %]</td>
+	</tr>
+[% END %] 
+</table>
+
+[% INCLUDE bottom.html %]

@@ -576,30 +576,4 @@ sub become_mayor : Local {
 	$c->forward( '/panel/refresh', [ 'messages', 'party', 'map' ] );
 }
 
-sub election : Local {
-	my ($self, $c) = @_;
-	
-	my $town = $c->stash->{party_location}->town;
-	
-	my $election = $town->current_election;
-	
-	croak "No current election\n" unless $election;
-
-	my @candidates = $election->candidates; 
-	
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template      => 'town/election.html',
-				params        => { 
-					election => $election,
-					candidates => \@candidates,
-					town => $town,
-				},
-			}
-		]
-	);	
-}
-
 1;

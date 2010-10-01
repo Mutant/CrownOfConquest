@@ -1,0 +1,21 @@
+<h3>Campaign</h3>
+
+[% IF candidate %]
+	Your candidate is: [% candidate.name %]
+[% ELSE %]
+	[% IF allowed_candidates %]
+		You don't have a candidate in this election. Click one of your eligible characters to run for mayor:
+		
+		<table class="main">
+		[% FOREACH character IN allowed_candidates %]
+			<tr onClick="confirmCandidate('[% character.name %]', '[% character.id %]')" style="cursor:pointer">
+				<td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png" 
+	    			title="[% character.race.race_name %] [% character.class.class_name %]"></td>
+				<td>[% character.name %]</td>
+			</tr>
+		[% END %]
+		</table>
+	[% ELSE %]
+		None of your characters are eligible to run for mayor. (They must be at least level [% c.config.min_character_mayoral_candidate_level %] to qualify)
+	[% END %]
+[% END %]

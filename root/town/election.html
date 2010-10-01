@@ -1,23 +1,58 @@
 [% INCLUDE top.html %]
 
+<script>
+	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.layout.ContentPane");
+	
+function confirmCandidate(name, id) {
+	dojo.byId('candidate-name').innerHTML = name;
+	dojo.byId('candidate-id').value = id;
+	dijit.byId('confirm-candidate-diag').show();
+}
+
+function createCandidate(arguments) {
+	document.location = '[% base %]town/election/create_candidate?character_id=' + arguments.candidate_id;
+}
+</script>
+
+<div dojoType="dijit.Dialog" id="confirm-candidate-diag" style="display: none" title="Confirm Candidate" execute="createCandidate(arguments[0]);">
+	Are you sure you want <span id="candidate-name"></span> to run for mayor of [% town.town_name %]?
+	<input id="candidate-id" name="candidate_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<div align="center">
+		<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-candidate-diag').hide()">Cancel</button>
+	</div>
+</div>
+
 <h2>[% town.town_name %] Election</h2>
 
-The election is scheduled for day [% election.scheduled_day %].
+The election is scheduled for day [% election.scheduled_day %].<br><br>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
+
+<div dojoType="dijit.layout.ContentPane" title="Candidates">
 
 <h3>Candidates</h3>
 
-<table class="main" cellspacing="4">
+<table class="main">
 	<tr>
+		<th></th>
 		<th>Candidate Name</th>
 		<th>Party</th>
 	</tr>
 [% FOREACH candidate IN candidates %]
 	[% character = candidate.character %]
 	<tr>
+		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png" 
+    	title="[% character.race.race_name %] [% character.class.class_name %]"></td>
 		<td>[% character.name %]</td>
 		<td>[% IF character.is_npc %]NPC[% ELSE %][% character.party.name %][% END %]</td>
 	</tr>
 [% END %] 
 </table>
+
+</div>
+
+<div dojoType="dijit.layout.ContentPane" title="Campaign" href="[% base %]/town/election/campaign?town_id=[% town.id %]" [% IF tab == 'campaign' %]selected=true[% END %]></div>
 
 [% INCLUDE bottom.html %]

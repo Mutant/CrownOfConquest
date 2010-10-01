@@ -66,6 +66,8 @@ __PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_i
 
 __PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id', {cascade_delete => 0} );
 
+__PACKAGE__->might_have( 'mayoral_candidacy', 'RPG::Schema::Election_Candidate', 'character_id', {cascade_delete => 0} );
+
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
 

@@ -332,6 +332,9 @@ max_discount_value: 30
 # Percentage chance of being captured when raiding a castle, and fleeing from combat
 castle_capture_chance: 66 
 
+# Minimum level a character must be in order to run for mayor
+min_character_mayoral_candidate_level: 8
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

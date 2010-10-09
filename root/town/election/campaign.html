@@ -3,7 +3,9 @@
 [% IF candidate %]
 	Your candidate is: [% candidate.name %]
 [% ELSE %]
-	[% IF allowed_candidates %]
+	[% IF ! new_candidates_allowed %]
+		It's too late to register a candidate for this election.
+	[% ELSIF allowed_candidates %]
 		You don't have a candidate in this election. Click one of your eligible characters to run for mayor:
 		
 		<table class="main">

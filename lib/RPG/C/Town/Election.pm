@@ -38,6 +38,13 @@ sub campaign : Local {
 	
 	my $town = $c->stash->{party_location}->town;
 	
+	my $election = $town->current_election;
+	
+	my $new_candidates_allowed = 1;
+	if ($election->scheduled_day - $c->stash->{today}->day_number <= $c->config->{min_days_for_election_candidacy}) {
+		$new_candidates_allowed = 0;
+	}
+	
 	my $candidate = $c->model('DBIC::Character')->find(
 		{
 			'election.town_id' => $town->id,
@@ -50,7 +57,7 @@ sub campaign : Local {
 	
 	# If they don't have a candidate already, see if they have any chars that qualify
 	my @allowed_candidates;	
-	unless ($candidate) {
+	unless ($candidate && $new_candidates_allowed) {
 		foreach my $character ($c->stash->{party}->members) {
 			if ($character->level >= $c->config->{min_character_mayoral_candidate_level} && ! $character->mayoral_candidacy) {
 				push @allowed_candidates, $character;	
@@ -67,6 +74,7 @@ sub campaign : Local {
 					candidate => $candidate,
 					town => $town,
 					allowed_candidates => \@allowed_candidates,
+					new_candidates_allowed => $new_candidates_allowed,
 				},
 			}
 		]

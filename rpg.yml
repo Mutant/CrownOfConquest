@@ -335,6 +335,9 @@ castle_capture_chance: 66
 # Minimum level a character must be in order to run for mayor
 min_character_mayoral_candidate_level: 8
 
+# Minimum days before an election a character is allowed to declare candidacy
+min_days_for_election_candidacy: 2
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

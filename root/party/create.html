@@ -69,7 +69,7 @@ You've created [% characters.size %] of [% num_characters_to_create %] character
 		<th>Con</th>
 	</tr>
 	[% FOREACH char IN characters %]
-	<tr [% IF loop.count % 2 == 0 %]style="background: lightgrey"[% END %]>
+	<tr [% IF loop.count % 2 == 0 %]style="background: #5F5F5F"[% END %]>
 		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png"></td>
 		<td>[% char.character_name %]</td>
 	    <td>[% char.race.race_name %]</td>

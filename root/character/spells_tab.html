@@ -34,7 +34,7 @@
 	
 [% FOREACH spell IN available_spells %]	
 	[% spell_id = spell.id %]
-	<tr [% IF loop.count % 2 == 0 %]style="background: lightgrey"[% END %]>
+	<tr [% IF loop.count % 2 == 0 %]style="background: #5F5F5F"[% END %]>
 		<td>[% spell.spell_name %]</td>
 		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
 		<td>

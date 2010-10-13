@@ -13,3 +13,5 @@ CREATE TABLE `Election_Candidate` (
 )
 ENGINE = InnoDB;
 
+ALTER TABLE `Election_Candidate` ADD COLUMN `campaign_spend` INTEGER  NOT NULL DEFAULT 0 AFTER `character_id`;
+

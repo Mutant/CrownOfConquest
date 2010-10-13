@@ -2,6 +2,20 @@
 
 [% IF candidate %]
 	Your candidate is: [% candidate.name %]
+	<br><br>
+	Amount spent on campaign so far: [% candidacy.campaign_spend || 0 %] gold
+	<br><br>
+	Party Gold: [% party.gold %]<br><br>
+	<div dojoType="dijit.form.Form" action="[% base %]/town/election/add_to_spend" method="POST">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	Spend more on campaign: 
+		<input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 50px"
+				constraints="{min:0,places:0}" required="true"
+				invalidMessage="Enter a positive number of gold to spend on the campaign">
+	<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+		Update
+	</button>
+	</div>
 [% ELSE %]
 	[% IF ! new_candidates_allowed %]
 		It's too late to register a candidate for this election.

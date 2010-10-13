@@ -6,16 +6,22 @@ use base 'Catalyst::Controller';
 
 use Carp;
 
+sub auto : Private {
+	my ($self, $c) = @_;
+	
+	$c->stash->{town} = $c->stash->{party_location}->town;
+	
+	croak "Party not in a town" unless $c->stash->{town};
+	
+	$c->stash->{election} = $c->stash->{town}->current_election;
+	
+	croak "No election in town" unless $c->stash->{election};
+}
+
 sub default : Local {
 	my ($self, $c) = @_;
 	
-	my $town = $c->stash->{party_location}->town;
-	
-	my $election = $town->current_election;
-	
-	croak "No current election\n" unless $election;
-
-	my @candidates = $election->candidates; 
+	my @candidates = $c->stash->{election}->candidates; 
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -23,10 +29,11 @@ sub default : Local {
 			{
 				template      => 'town/election.html',
 				params        => { 
-					election => $election,
+					election => $c->stash->{election},
 					candidates => \@candidates,
-					town => $town,
-					tab => $c->flash->{tab},
+					town => $c->stash->{town},
+					tab => $c->flash->{tab} || '',
+					error => $c->flash->{error} || '',
 				},
 			}
 		]
@@ -36,24 +43,29 @@ sub default : Local {
 sub campaign : Local {
 	my ($self, $c) = @_;
 	
-	my $town = $c->stash->{party_location}->town;
-	
-	my $election = $town->current_election;
 	
 	my $new_candidates_allowed = 1;
-	if ($election->scheduled_day - $c->stash->{today}->day_number <= $c->config->{min_days_for_election_candidacy}) {
+	if ($c->stash->{election}->scheduled_day - $c->stash->{today}->day_number <= $c->config->{min_days_for_election_candidacy}) {
 		$new_candidates_allowed = 0;
 	}
 	
 	my $candidate = $c->model('DBIC::Character')->find(
 		{
-			'election.town_id' => $town->id,
+			'election.town_id' => $c->stash->{town}->id,
 			'party_id' => $c->stash->{party}->id,
+			'election.status' => 'Open',
 		},
 		{
 			join => {'mayoral_candidacy' => 'election'},
 		}
 	);
+	
+	my $candidacy = $c->model('DBIC::Election_Candidate')->find(
+		{
+			'election_id' => $c->stash->{election}->id,
+			'character_id' => $candidate->character_id,
+		}		
+	);	
 	
 	# If they don't have a candidate already, see if they have any chars that qualify
 	my @allowed_candidates;	
@@ -72,9 +84,11 @@ sub campaign : Local {
 				template      => 'town/election/campaign.html',
 				params        => { 
 					candidate => $candidate,
-					town => $town,
+					candidacy => $candidacy,
+					town => $c->stash->{town},
 					allowed_candidates => \@allowed_candidates,
 					new_candidates_allowed => $new_candidates_allowed,
+					party => $c->stash->{party},
 				},
 			}
 		]
@@ -83,12 +97,7 @@ sub campaign : Local {
 
 sub create_candidate : Local {
 	my ($self, $c) = @_;
-	
-	my $town = $c->stash->{party_location}->town;
-	my $election = $town->current_election;
-	
-	croak "No current election" unless $election;
-	
+
 	my $character = $c->model('DBIC::Character')->find(
 		{
 			character_id => $c->req->param('character_id'),
@@ -101,13 +110,57 @@ sub create_candidate : Local {
 	$c->model('DBIC::Election_Candidate')->create(
 		{
 			character_id => $character->id,
-			election_id => $election->id,
+			election_id => $c->stash->{election}->id,
 		},
 	);
 	
 	$c->flash->{tab} = 'campaign';
 	
 	$c->res->redirect( $c->config->{url_root} . '/town/election' );	
+}
+
+sub add_to_spend : Local {
+	my ($self, $c) = @_;
+	
+	croak "Invalid amount" if $c->req->param('campaign_spend') < 0;
+	
+	$c->flash->{tab} = 'campaign';
+	
+	if ($c->req->param('campaign_spend') > $c->stash->{party}->gold) {
+		$c->flash->{error} = "You don't have enough gold to spend that much on the campaign";
+			
+		$c->res->redirect( $c->config->{url_root} . '/town/election' );	
+		
+		return;			
+	}
+	
+	my $candidate = $c->model('DBIC::Character')->find(
+		{
+			'election.town_id' => $c->stash->{town}->id,
+			'party_id' => $c->stash->{party}->id,
+			'election.status' => 'Open',
+		},
+		{
+			join => {'mayoral_candidacy' => 'election'},
+		}
+	);
+	
+	croak "No candidate for this election" unless $candidate;
+	
+	my $candidacy = $c->model('DBIC::Election_Candidate')->find(
+		{
+			'election_id' => $c->stash->{election}->id,
+			'character_id' => $candidate->character_id,
+		}		
+	);
+	$candidacy->increase_campaign_spend($c->req->param('campaign_spend'));
+	$candidacy->update;
+	
+	$c->stash->{party}->decrease_gold($c->req->param('campaign_spend'));
+	$c->stash->{party}->update;
+	
+	$c->res->redirect( $c->config->{url_root} . '/town/election' );
+		
 }
 
 1;

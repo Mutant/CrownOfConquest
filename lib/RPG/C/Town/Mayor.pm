@@ -331,6 +331,17 @@ sub schedule_election : Local {
 		},
 	);
 	
+	my $mayor = $town->mayor;
+	
+	$c->model('DBIC::Town_History')->create(
+		{
+			town_id => $c->stash->{town}->id,
+			day_id  => $c->stash->{today}->id,
+	        message => $mayor->name . " has called an election for day $day. " . ucfirst $mayor->pronoun('subjective') 
+	        	. " invites prospective candidates to register to run.",
+		}
+    );		
+	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections' );	
 }
 

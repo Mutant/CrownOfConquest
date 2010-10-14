@@ -48,6 +48,14 @@ sub run {
 						election_id => $election->id,
 					},
 				);
+				
+				$c->schema->resultset('Town_History')->create(
+	                {
+	                    town_id => $election->town_id,
+	                    day_id  => $c->current_day->id,
+	                    message => $character->name . " announces " . $character->pronoun('posessive-subjective') . " candidacy for the upcoming election",
+	                }
+	            );				
     		}
     	}
     }

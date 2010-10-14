@@ -114,6 +114,14 @@ sub create_candidate : Local {
 		},
 	);
 	
+	$c->model('DBIC::Town_History')->create(
+		{
+			town_id => $c->stash->{town}->id,
+			day_id  => $c->stash->{today}->id,
+	        message => $character->name . " announces " . $character->pronoun('posessive-subjective') . " candidacy for the upcoming election",
+		}
+    );	
+	
 	$c->flash->{tab} = 'campaign';
 	
 	$c->res->redirect( $c->config->{url_root} . '/town/election' );	

@@ -105,7 +105,20 @@ sub create_candidate : Local {
 		}
 	);
 	
-	croak "Invalid character" if ! $character || ! $character->is_in_party || $character->mayoral_candidacy;
+	croak "Invalid character" if ! $character || ! $character->is_in_party;
+	
+	# Make sure they're not already a candidate in another current election
+	my $existing_candidacy = $c->model('DBIC::Election_Candidate')->find(
+		{
+			character_id => $character->id,
+			'election.status' => 'Open',
+		},
+		{
+			join => 'election',
+		}
+	);
+	
+	croak "Character already candidate in an election" if $existing_candidacy;
 	
 	$c->model('DBIC::Election_Candidate')->create(
 		{

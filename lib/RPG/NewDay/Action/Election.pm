@@ -5,6 +5,7 @@ extends 'RPG::NewDay::Base';
 
 use Games::Dice::Advanced;
 use Math::Round qw(round);
+use List::Util qw(shuffle);
 
 sub run {
     my $self = shift;
@@ -20,6 +21,11 @@ sub run {
     $c->logger->debug(scalar @elections . " open elections");
     
     foreach my $election (@elections) {
+    	if ($election->scheduled_day == $c->current_day->day_number) {
+    		$self->run_election($election);
+    		next;	
+    	}    	
+    	
     	my $npc_candidates = grep { $_->character->is_npc } $election->candidates;
     	my $expected_npcs = round ($election->town->prosperity / 20);
     	$expected_npcs = 2 if $expected_npcs < 2;
@@ -59,6 +65,113 @@ sub run {
     		}
     	}
     }
+}
+
+sub run_election {
+	my $self = shift;
+	my $election = shift;
+	
+	my $c = $self->context;
+	
+	my $town = $election->town;
+	my $mayor = $town->mayor;
+	
+	my @candidates = $election->candidates;
+	my $highest_score;
+	my $winner;
+	
+	$c->logger->debug("Running election for town: " . $town->id);
+	
+	# We shuffle the candidates, in case there is a tie
+	#  The first one we find with that score will win
+	foreach my $candidate (shuffle @candidates) {
+		my $campaign_spend = $candidate->campaign_spend / 20;
+		my $rating_bonus;
+
+		my $character = $candidate->character;
+		
+		if ($character->id == $mayor->id) {
+			$rating_bonus = $town->mayor_rating;
+		}
+		elsif (! $character->is_npc) {
+			my $party_town = $c->schema->resultset('Party_Town')->find(
+				{
+					town_id => $town->id,
+					party_id => $character->party->id,
+				}
+			);
+			
+			$rating_bonus = $party_town->prestige;
+		}
+		else {
+			# NPC's get a bump based on the town's prosperity
+			my $prosp = $town->prosperity;
+			
+			if ($prosp > 25) {
+				$rating_bonus = round ($prosp / 10);
+			}
+		}
+		
+		my $random = Games::Dice::Advanced->roll('1d20') - 10;
+		
+		my $score = $campaign_spend + $rating_bonus + $random;
+		
+		$c->logger->debug("Character " . $character->id . " scores: $score [spend: $campaign_spend, rating: $rating_bonus, random: $random]"); 
+		
+		if (! defined $highest_score || $highest_score < $score) {
+			$winner	= $character;
+			$highest_score = $score;
+		}
+	}
+	
+	if ($winner->id == $mayor->id) {
+		$c->logger->debug("Mayor retains office");
+		$town->increase_approval(10);
+		$town->update;	
+		
+		$c->schema->resultset('Town_History')->create(
+        	{
+				town_id => $election->town_id,
+				day_id  => $c->current_day->id,
+                message => $mayor->character_name . " wins the election, retaining office",
+			}
+		);
+	}
+	else {
+		$c->logger->debug("Mayor loses to character: " . $winner->id);
+		
+		$mayor->mayor_of(undef);
+		$mayor->update;
+		
+		unless ($mayor->is_npc) {
+			$c->schema->resultset('Party_Messages')->create(
+				{
+					message => $mayor->character_name . " lost the recent election in " . $town->town_name . '. ' . ucfirst $mayor->pronoun('subjective') 
+						. " has returned to the party in shame",
+					alert_party => 1,
+					party_id => $mayor->party_id,
+					day_id => $c->current_day->id,
+				}
+			);
+		}
+		
+		$winner->mayor_of($town->id);
+		$winner->update;
+		
+		$town->mayor_rating(0);
+		$town->update;
+		
+		$election->status('Closed');
+		$election->update;
+
+		$c->schema->resultset('Town_History')->create(
+        	{
+				town_id => $election->town_id,
+				day_id  => $c->current_day->id,
+                message => $winner->character_name . " wins the election, ousting the incumbant, " . $mayor->character_name,
+			}
+		);
+	}
 }
 
 __PACKAGE__->meta->make_immutable;

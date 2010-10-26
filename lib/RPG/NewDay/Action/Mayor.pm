@@ -282,7 +282,7 @@ sub process_revolt {
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " was overthown by the peasants of " . $town->town_name . " and is no longer mayor. " 
-						. lcfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
+						. ucfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,

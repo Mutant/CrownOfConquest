@@ -310,37 +310,7 @@ sub schedule_election : Local {
 	
 	my $town = $c->stash->{town};
 	
-	croak "Already have an election scheduled\n" if $town->current_election;
-	
-	croak "Invalid day\n" if $c->req->param('election_day') < 5;
-	
-	my $day = $c->stash->{today}->id + $c->req->param('election_day');
-		
-	my $election = $c->model('DBIC::Election')->create(
-		{
-			town_id => $town->id,
-			scheduled_day => $day,
-			status => 'Open',
-		}
-	);
-	
-	$c->model('DBIC::Election_Candidate')->create(
-		{
-			character_id => $town->mayor->id,
-			election_id => $election->id,
-		},
-	);
-	
-	my $mayor = $town->mayor;
-	
-	$c->model('DBIC::Town_History')->create(
-		{
-			town_id => $c->stash->{town}->id,
-			day_id  => $c->stash->{today}->id,
-	        message => $mayor->name . " has called an election for day $day. " . ucfirst $mayor->pronoun('subjective') 
-	        	. " invites prospective candidates to register to run.",
-		}
-    );		
+	my $election = $c->model('DBIC::Election')->schedule( $town, $c->req->param('election_day') );
 	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections' );	
 }

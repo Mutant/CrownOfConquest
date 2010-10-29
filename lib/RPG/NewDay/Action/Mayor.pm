@@ -65,6 +65,8 @@ sub run {
 			$town->base_party_tax(20);
 			$town->party_tax_level_step(30);
 			$town->update;
+			
+			$self->check_for_npc_election($town);
 		}
 				
 		if ($town->peasant_tax && ! $town->peasant_state) {
@@ -374,6 +376,20 @@ sub refresh_mayor {
 			}
 		}
 	}	
+}
+
+sub check_for_npc_election {
+	my $self = shift;
+	my $town = shift;
+	
+	return if $town->current_election || ! $town->mayor;
+		
+	return unless Games::Dice::Advanced->roll('1d100') <= 5;
+	
+	my $days = Games::Dice::Advanced->roll('1d11') + 4;
+	
+	$self->context->logger->debug("NPC Mayor in town " . $town->id . " schedules election for $days days time");
+	$self->context->schema->resultset('Election')->schedule( $town, $days );		
 }
 
 1;

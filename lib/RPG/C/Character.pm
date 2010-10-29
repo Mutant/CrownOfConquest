@@ -37,12 +37,20 @@ sub view : Local {
 
 	my @characters;
 	my @garrison_characters;
+	my @mayor_characters;
 	if ( $character->party_id ) {
 		@characters          = $c->stash->{party}->characters;
 		@garrison_characters = $c->model('DBIC::Character')->search(
 			{
 				party_id    => $c->stash->{party}->id,
 				garrison_id => { '!=', undef },
+			}
+		);
+		
+		@mayor_characters = $c->model('DBIC::Character')->search(
+			{
+				party_id    => $c->stash->{party}->id,
+				mayor_of => { '!=', undef },
 			}
 		);
 	}
@@ -59,6 +67,7 @@ sub view : Local {
 					character           => $character,
 					characters          => \@characters,
 					garrison_characters => \@garrison_characters,
+					mayor_characters    => \@mayor_characters,					
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 				}
@@ -654,7 +663,7 @@ sub bury : Local {
 sub check_action_allowed : Local {
 	my ( $self, $c ) = @_;
 
-	unless ( $c->stash->{character}->party_id ) {
+	unless ( $c->stash->{character}->is_in_party ) {
 		croak "Can only make changes to a character in your party\n";
 	}
 }

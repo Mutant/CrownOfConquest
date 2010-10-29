@@ -260,6 +260,12 @@ sub characters_in_sector {
 		push @chars, $garrison->characters;
 	}
 	
+	my $town = $self->location->town;
+	my $mayor;
+	if ($town and $mayor = $town->mayor and $mayor->party_id == $self->id) {
+		push @chars, $mayor;
+	}
+	
 	return @chars;		
 }
 

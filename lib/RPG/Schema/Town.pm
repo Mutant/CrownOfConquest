@@ -17,7 +17,7 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Town');
 __PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill 
 						    discount_type discount_value discount_threshold pending_mayor gold peasant_tax
 						    party_tax_level_step base_party_tax sales_tax tax_modified_today
-						    mayor_rating peasant_state/);
+						    mayor_rating peasant_state last_election/);
 						    
 __PACKAGE__->add_columns(
 	pending_mayor_date => {data_type => 'datetime'},

@@ -95,7 +95,9 @@ sub run {
 
     	$self->generate_guards($town->castle);
 		
-		$self->calculate_approval($town);	
+		$self->calculate_approval($town);
+
+		$self->check_if_election_needed($town);
 
     	if ($town->peasant_state) {
     		$self->process_revolt($town);
@@ -278,6 +280,7 @@ sub process_revolt {
     	);
     	$town->mayor_rating(0);
     	$town->peasant_state(undef);
+    	$town->last_election(undef);
     	$town->update;
     	
     	if ($mayor->party_id) {
@@ -335,7 +338,7 @@ sub check_for_pending_mayor_expiry {
 	if (DateTime->compare($town->pending_mayor_date, DateTime->now()->subtract( hours => 24 )) == -1) {
 		$town->pending_mayor(undef);
 		$town->pending_mayor_date(undef);
-		$town->update;	
+		$town->update;
 	}	
 }
 
@@ -390,6 +393,28 @@ sub check_for_npc_election {
 	
 	$self->context->logger->debug("NPC Mayor in town " . $town->id . " schedules election for $days days time");
 	$self->context->schema->resultset('Election')->schedule( $town, $days );		
+}
+
+sub check_if_election_needed {
+	my $self = shift;
+	my $town = shift;
+	
+	return unless $town->last_election;
+	
+	my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
+	
+	if ($days_since_last_election >= 15 && $days_since_last_election % 3 == 0) {
+		my $mayor = $town->mayor;
+		$mayor->reduce_approval(10);
+		$mayor->update;
+		
+    	$town->add_to_history(
+    		{
+				day_id  => $self->context->current_day->id,
+	            message => "There hasn't been an election in $days_since_last_election days! The peasants demand their right to vote be honoured",
+    		}
+    	);		
+	}	
 }
 
 1;

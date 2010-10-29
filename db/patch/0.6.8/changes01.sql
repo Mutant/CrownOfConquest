@@ -15,3 +15,6 @@ ENGINE = InnoDB;
 
 ALTER TABLE `Election_Candidate` ADD COLUMN `campaign_spend` INTEGER  NOT NULL DEFAULT 0 AFTER `character_id`;
 
+
+ALTER TABLE `Town` ADD COLUMN `last_election` INTEGER  DEFAULT NULL AFTER `pending_mayor_date`;
+

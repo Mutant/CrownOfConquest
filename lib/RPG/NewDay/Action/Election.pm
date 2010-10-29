@@ -158,12 +158,8 @@ sub run_election {
 		$winner->mayor_of($town->id);
 		$winner->update;
 		
-		$town->mayor_rating(0);
-		$town->update;
+		$town->mayor_rating(0);		
 		
-		$election->status('Closed');
-		$election->update;
-
 		$c->schema->resultset('Town_History')->create(
         	{
 				town_id => $election->town_id,
@@ -172,6 +168,13 @@ sub run_election {
 			}
 		);
 	}
+
+	$election->status('Closed');
+	$election->update;
+	
+	$town->last_election($election->scheduled_day);
+	$town->update;
+
 }
 
 __PACKAGE__->meta->make_immutable;

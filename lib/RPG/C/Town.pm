@@ -560,6 +560,7 @@ sub become_mayor : Local {
 	$town->peasant_state(undef);
 	$town->pending_mayor(undef);
 	$town->pending_mayor_date(undef);
+	$town->last_election(undef);
 	$town->update;		
    	
 	$c->model('DBIC::Party_Messages')->create(

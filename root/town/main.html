@@ -24,7 +24,7 @@ Your prestige here:
 	[% ELSE %]
 		the mayor wants to marry you.
 	[% END %]
-<br><br>
+<br>
 [% IF allowed_discount %]
 	The town mayor would like to thank you for your service, and offers you a [% town.discount_value %]% discount at the town [% town.discount_type %]
 	 for today only.<br><br>
@@ -34,8 +34,9 @@ Your prestige here:
 	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br>
 	[% IF current_election %]
 	    The town will hold an election on day [% current_election.scheduled_day %] (<a href="[% base %]town/election">Details</a>)
+	    <br>
 	[% END %]
-	<br><br>
+	<br>
 [% END %]	  
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]

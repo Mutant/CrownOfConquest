@@ -141,6 +141,7 @@ sub run_election {
 		$c->logger->debug("Mayor loses to character: " . $winner->id);
 		
 		$mayor->mayor_of(undef);
+		$mayor->creature_group(undef);
 		$mayor->update;
 		
 		unless ($mayor->is_npc) {

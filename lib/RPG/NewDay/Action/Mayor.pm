@@ -267,6 +267,7 @@ sub process_revolt {
         
     if ($roll < 20) {
     	$mayor->mayor_of(undef);
+    	$mayor->creature_group(undef);
     	$mayor->update;
     	
     	my $new_mayor = $self->create_mayor($town);
@@ -280,9 +281,9 @@ sub process_revolt {
     	);
     	$town->mayor_rating(0);
     	$town->peasant_state(undef);
-    	$town->last_election(undef);
+    	$town->last_election(undef);    	
     	$town->update;
-    	
+    	    	    	
     	if ($mayor->party_id) {
 			$c->schema->resultset('Party_Messages')->create(
 				{

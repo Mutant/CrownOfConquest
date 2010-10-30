@@ -54,10 +54,12 @@ sub main : Private {
 
 sub fight : Local {
 	my ( $self, $c ) = @_;
+	
+	$c->stash->{in_combat_with_garrison} = $c->stash->{party_location}->garrison;
 
 	my $battle = RPG::Combat::GarrisonPartyBattle->new(
 		party                   => $c->stash->{party},
-		garrison                => $c->stash->{party_location}->garrison,
+		garrison                => $c->stash->{in_combat_with_garrison},
 		schema                  => $c->model('DBIC')->schema,
 		config                  => $c->config,
 		log                     => $c->log,
@@ -72,9 +74,11 @@ sub fight : Local {
 sub flee : Local {
 	my ( $self, $c ) = @_;
 
+	$c->stash->{in_combat_with_garrison} = $c->stash->{party_location}->garrison;
+
 	my $battle = RPG::Combat::GarrisonPartyBattle->new(
 		party              => $c->stash->{party},
-		garrison           => $c->stash->{party_location}->garrison,
+		garrison           => $c->stash->{in_combat_with_garrison},
 		schema             => $c->model('DBIC')->schema,
 		config             => $c->config,
 		log                => $c->log,

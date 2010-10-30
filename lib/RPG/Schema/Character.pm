@@ -104,7 +104,8 @@ sub agility {
 sub portrait {
 	my $self = shift;
 	
-	return lc($self->race->race_name) . lc(substr $self->class->class_name, 0, 3);
+	return lc($self->race->race_name) . lc(substr $self->class->class_name, 0, 3) 
+		. ($self->gender eq 'female' ? 'f' : '');
 }
 
 sub _stat_accessor {

@@ -4,7 +4,8 @@
 You do not have any garrisons
 [% ELSE %]
 	[% FOREACH garrison IN garrisons %]
-	<b>Garrison at [% garrison.land.x %], [% garrison.land.y %]</b><br>
+	<b>[% garrison.display_name(1) %]</b><br>
+	Location: [% garrison.land.x %], [% garrison.land.y %]<br> 
 	Characters: [% INCLUDE garrison/char_summary.html %]<br>
 	Battles: [% garrison.recent_battles_count || 0 %]<br> 
 	<a href="[% base %]garrison/manage?garrison_id=[% garrison.id %]">Manage</a>

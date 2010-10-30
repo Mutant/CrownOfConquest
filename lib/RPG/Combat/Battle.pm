@@ -681,23 +681,27 @@ sub check_character_attack {
 		my $ammo_found = 0;
 		foreach my $ammo ( @{ $self->character_weapons->{ $attacker->id }{ammunition} } ) {
 			next unless $ammo;
-			if ( $ammo->{quantity} == 0 ) {
+			
+			$ammo_found = 1 if $ammo->{quantity} > 0;
+						
+			$ammo->{quantity}--;
+			if ( $ammo->{quantity} <= 0 ) {
+				# Ammo used up, so deleted it
 				$self->schema->resultset('Items')->find( { item_id => $ammo->{id}, }, )->delete;
 				$ammo = undef;
-				next;
+			}
+			else {
+				# Update with new ammo amount
+				$self->schema->resultset('Item_Variable')->find(
+					{
+						item_id                                 => $ammo->{id},
+						'item_variable_name.item_variable_name' => 'Quantity',
+					},
+					{ join => 'item_variable_name', }
+				)->update( { item_variable_value => $ammo->{quantity}, } );
 			}
 
-			$ammo->{quantity}--;
-			$self->schema->resultset('Item_Variable')->find(
-				{
-					item_id                                 => $ammo->{id},
-					'item_variable_name.item_variable_name' => 'Quantity',
-				},
-				{ join => 'item_variable_name', }
-			)->update( { item_variable_value => $ammo->{quantity}, } );
-
-			$ammo_found = 1;
-			last;
+			last if $ammo_found;
 		}
 
 		if ( !$ammo_found ) {

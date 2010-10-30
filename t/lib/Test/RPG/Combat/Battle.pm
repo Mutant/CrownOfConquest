@@ -230,10 +230,60 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
     my $ret = RPG::Combat::Battle::check_character_attack($battle, $attacker);
     
     # THEN
-    is_deeply($ret, { no_ammo => 1 }, "No messages returned");
+    is_deeply($ret, { no_ammo => 1 }, "No ammo message returned");
     
     $ammo1->discard_changes;
-    is($ammo1->in_storage, 0, "Quantity of ammo updated");    
+    is($ammo1->in_storage, 0, "Ammo deleted");    
+        
+}
+
+sub test_check_character_attack_with_ammo_last_shot : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $attacker = Test::MockObject->new();
+    $attacker->set_always('id',2);
+
+    my $ammo1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => 2,
+        super_category_name => 'Ammo',
+        category_name       => 'Ammo',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 0,
+            
+            },
+        ]
+    );
+            
+    my $character_weapons = {};              
+    $character_weapons->{2}{id} = 1;
+    $character_weapons->{2}{durability} = 1;
+    $character_weapons->{2}{ammunition} = [
+        {
+            id => $ammo1->id,
+            quantity => 1,
+        },
+    ];
+    
+    my $battle = Test::MockObject->new();
+    $battle->set_always('character_weapons', $character_weapons);    
+    $battle->set_always('schema', $self->{schema});    
+    $battle->set_always('log', $self->{mock_logger});
+    
+    $self->mock_dice;    
+    $self->{roll_result} = 2;
+  
+    # WHEN
+    my $ret = RPG::Combat::Battle::check_character_attack($battle, $attacker);
+    
+    # THEN
+    is($ret, undef, "No message returned");
+    
+    $ammo1->discard_changes;
+    is($ammo1->in_storage, 0, "Ammo deleted");    
         
 }
 

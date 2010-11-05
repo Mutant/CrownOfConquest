@@ -122,6 +122,37 @@ You don't current have any active quests.
 	[% END %]
 [% END %]
 <br><br>
+
+<h3>Mayors</h3>
+
+[% IF ! mayors %]
+	None of your characters are mayors of a town.
+[% ELSE %]
+	[% PROCESS town/mayor/display_approval.html %]
+
+	<table cellspacing="6">
+		<tr>
+			<th>Mayor</th>
+			<th>Town</th>
+			<th>Approval Rating</th>
+			<th>Coffers</th>
+			<th>Peasant's Mood</th>
+		</tr>
+		
+	[% FOREACH mayor IN mayors %]
+		<tr>
+			[% mayor_town = mayor.mayor_of_town %]
+			<td>[% mayor.character_name %]</td>
+			<td>[% mayor_town.town_name %] ([% mayor_town.location.x %], [% mayor_town.location.y %])</td>			
+			<td>[% display_rating(mayor_town.mayor_rating) %]</td>
+			<td>[% mayor_town.gold %]</td>
+			<td>[% IF mayor_town.peasant_state == 'revolt' %]In revolt[% ELSE %]Ok[% END %]</td>
+		</tr>
+	[% END %]
+	</table>
+[% END %]
+
+<br><br>
 Note, you can disable this email by logging into Kingdoms, clicking on "Party", going to the "Options" tab, and un-checking the 
 "Send a Daily Report" option.  
 

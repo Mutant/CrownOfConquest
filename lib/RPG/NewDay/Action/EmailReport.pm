@@ -44,6 +44,16 @@ sub run {
 				prefetch => 'town',
 			}
 		);
+		
+		my @mayors = $party->search_related(
+			'characters',
+			{
+				mayor_of => {'!=', undef},
+			},
+			{
+				prefetch => 'mayor_of_town',
+			}
+		);		
 
 		my $message = RPG::Template->process(
 			$context->config,
@@ -52,6 +62,7 @@ sub run {
 				url                  => $context->config->{url_root},
 				party                => $party,
 				garrisons            => [$party->garrisons],
+				mayors               => \@mayors,
 				offline_combat_count => $offline_combat_count,
 				garrison_combat_logs => \@garrison_combat_logs,
 				combat_logs          => \@combat_logs,

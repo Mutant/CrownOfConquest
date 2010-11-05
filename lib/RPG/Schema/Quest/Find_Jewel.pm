@@ -197,7 +197,7 @@ sub check_action {
 	
 	return 0 if $self->param_current_value('Sold Jewel') == 1;
 	
-	if ($item->item_type->id == $self->param_current_value('Jewel To Find')) {
+	if ($item->item_type->id == $self->param_current_value('Jewel To Find') && $party->location->land_id == $self->town->land_id) {
 		my $quest_param = $self->param_record('Sold Jewel');
 		$quest_param->current_value(1);
 		$quest_param->update;

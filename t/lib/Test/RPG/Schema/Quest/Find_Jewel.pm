@@ -15,6 +15,8 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Shop;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Quest::Find_Jewel;
+use Test::RPG::Builder::Party;
 
 use RPG::Schema::Quest::Find_Jewel;
 
@@ -144,6 +146,42 @@ sub test_create_jewels_in_range_basic : Tests(2) {
 	is(scalar @items_in_shop, 1, "One item in target town's shop");
 	is($items_in_shop[0]->item_type_id, $jewel_type1->id, "Item of correct type");
 			
+}
+
+sub test_check_action_success : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $quest = Test::RPG::Builder::Quest::Find_Jewel->build_quest($self->{schema}, party_id => $party->id);
+	$party->land_id($quest->town->land_id);
+	$party->update;
+	
+	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, item_type_id => $quest->jewel_type_to_find->id); 
+	
+	# WHEN
+	my $result = $quest->check_action($party, 'sell_item', $item);
+	
+	# THEN
+	is($result, 1, "Item sold in town, so quest completed");
+	is($quest->param_current_value('Sold Jewel'), 1, "Jewel recorded as sold");
+}
+
+sub test_check_action_not_in_town : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $quest = Test::RPG::Builder::Quest::Find_Jewel->build_quest($self->{schema}, party_id => $party->id);
+	
+	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, item_type_id => $quest->jewel_type_to_find->id); 
+	
+	# WHEN
+	my $result = $quest->check_action($party, 'sell_item', $item);
+	
+	# THEN
+	is($result, 0, "Action not in town belong to this quest, so not successful");
+	is($quest->param_current_value('Sold Jewel'), 0, "Jewel not recorded as sold");
 }
 
 1;

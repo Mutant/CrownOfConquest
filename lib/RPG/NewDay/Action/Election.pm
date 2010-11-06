@@ -101,7 +101,9 @@ sub run_election {
 				}
 			);
 			
-			$rating_bonus = $party_town->prestige;
+			# Bit of a penalty so mayors are harder to oust
+			$rating_bonus = $party_town->prestige - 20;
+			$rating_bonus = 0 if $rating_bonus < 0;
 		}
 		else {
 			# NPC's get a bump based on the town's prosperity
@@ -126,7 +128,7 @@ sub run_election {
 	
 	if ($winner->id == $mayor->id) {
 		$c->logger->debug("Mayor retains office");
-		$town->increase_approval(10);
+		$town->increase_mayor_rating(10);
 		$town->update;	
 		
 		$c->schema->resultset('Town_History')->create(
@@ -135,7 +137,7 @@ sub run_election {
 				day_id  => $c->current_day->id,
                 message => $mayor->character_name . " wins the election, retaining office",
 			}
-		);
+		);		
 	}
 	else {
 		$c->logger->debug("Mayor loses to character: " . $winner->id);
@@ -147,8 +149,8 @@ sub run_election {
 		unless ($mayor->is_npc) {
 			$c->schema->resultset('Party_Messages')->create(
 				{
-					message => $mayor->character_name . " lost the recent election in " . $town->town_name . '. ' . ucfirst $mayor->pronoun('subjective') 
-						. " has returned to the party in shame",
+					message => $mayor->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '. '
+						. ucfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,
@@ -168,6 +170,23 @@ sub run_election {
                 message => $winner->character_name . " wins the election, ousting the incumbant, " . $mayor->character_name,
 			}
 		);
+	}
+	
+	# Alert any player characters if they lost
+	foreach my $candidate (@candidates) {
+		my $character = $candidate->character;
+		
+		# Skip npcs, the winner, and the previous mayor
+		next if $character->is_npc || $character->id == $winner->id || $character->id == $mayor->id;
+		
+		$c->schema->resultset('Party_Messages')->create(
+			{
+				message => $character->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '.',
+				alert_party => 1,
+				party_id => $character->party_id,
+				day_id => $c->current_day->id,
+			}
+		);		
 	}
 
 	$election->status('Closed');

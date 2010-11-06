@@ -61,8 +61,8 @@
 			<li>In return, we took [% opp_stats.$opp_num.damage_inflicted %] in damage, and inflicted
 				[% FILTER inflect %]NO(death, [% opp_stats.$opp_num.deaths %])[% END %].</li>	
 			[% IF battle.outcome == 'opp' _ party_num _ '_won' or battle.outcome == 'opp' _ opp_num _ '_fled' %]
-				[% IF battle.xp_awarded > 0 %]
-					<li>We gained a total of [% battle.xp_awarded %] xp from the battle</li>
+				[% IF battle.xp_awarded > 0 || battle.gold_found > 0 %]
+					<li>We gained a total of [% battle.xp_awarded %] xp and [% battle.gold_found %] gold from the battle</li>
 				[% END %]
 			[% END %]
 			[% IF battle.has_messages %]

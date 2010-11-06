@@ -248,6 +248,11 @@ html>body .nav a {width: auto}
         font-size: 9pt;
 }
 
+.dijitDialogUnderlay {
+	background:none repeat scroll 0 0 #000000;
+	opacity:0.5;
+}
+
 .text-block {
 	border: 1px solid black; 
 	background: white; 

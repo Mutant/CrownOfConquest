@@ -71,7 +71,9 @@ sub initiate_battles {
     CG: while (my $cg = $cg_rs->next) {
         my @parties = $cg->location->parties;
         
-        foreach my $party (shuffle @parties) {            
+        foreach my $party (shuffle @parties) {
+        	next if $party->is_online;
+        	
             my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party );
             
             next if $offline_combat_count >= $c->config->{max_offline_combat_count};

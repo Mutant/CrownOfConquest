@@ -60,12 +60,13 @@ sub campaign : Local {
 		}
 	);
 	
-	my $candidacy = $c->model('DBIC::Election_Candidate')->find(
+	my $candidacy;
+	$candidacy = $c->model('DBIC::Election_Candidate')->find(
 		{
 			'election_id' => $c->stash->{election}->id,
 			'character_id' => $candidate->character_id,
 		}		
-	);	
+	) if $candidate;
 	
 	# If they don't have a candidate already, see if they have any chars that qualify
 	my @allowed_candidates;	

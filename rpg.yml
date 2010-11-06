@@ -105,7 +105,7 @@ min_starting_prosperity: 20
 max_starting_prosperity: 40
 
 # Max number of players allowed to register
-max_number_of_players: 75
+max_number_of_players: 150
 
 minimum_password_length: 4
 
@@ -232,7 +232,7 @@ nearby_town_range: 7
 offline_combat_chance: 35
 
 # Maximum number of offline combats allowed between logins
-max_offline_combat_count: 3
+max_offline_combat_count: 5
 
 # Number of rounds per turn cost
 combat_rounds_per_turn: 3

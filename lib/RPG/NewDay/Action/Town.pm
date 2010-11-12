@@ -59,7 +59,6 @@ sub calculate_prosperity {
     my $ctr_avg = $town->location->get_surrounding_ctr_average( $context->config->{prosperity_calc_ctr_range} );
 
     my $ctr_diff = $global_avg_ctr - $ctr_avg;
-    $ctr_diff = 0 if $ctr_diff < 0;
     
     my $tax_collected = 0;
     my $raids_today = 0;

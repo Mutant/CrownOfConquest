@@ -85,7 +85,7 @@ sub test_calculate_prosperity : Tests(1) {
 
     # THEN
     $town->discard_changes;
-    is( $town->prosperity, 53, "Town prosperity increased correctly" );
+    is( $town->prosperity, 50, "Town prosperity increased correctly" );
 }
 
 sub test_get_prosperty_percentages : Tests(10) {

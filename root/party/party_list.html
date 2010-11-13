@@ -89,9 +89,17 @@
 				dijit.byId('actionMenu_[% char_id %]').destroyRecursive();
 			}
 			
-			[% action_function = 'selectActionNonCombat' %]
+			[% character_spells = spells.$char_id %]
+			[% use_actions = char.get_item_actions(in_combat) %]
+			
 			[% IF in_combat %]
 				[% action_function = 'selectActionCombat' %]
+			[% ELSE %]
+				[% IF ! character_spells && ! use_actions %]
+					[%# Nothing to display, so don't create a menu %]
+					[% NEXT %]
+				[% END %]
+				[% action_function = 'selectActionNonCombat' %]
 			[% END %]
 
 			var params = {id:"actionMenu_[% char_id %]"};
@@ -142,9 +150,7 @@
 				menu.addChild(targetPopupMenu);
 				
 			[% END %]  
-
-			[% character_spells = spells.$char_id %]
-			
+	
 			[% IF character_spells %]
 				var castSubMenu = new dijit.Menu();
 			
@@ -166,7 +172,6 @@
 				menu.addChild(castPopupMenu);				
 			[% END %]
 			
-			[% use_actions = char.get_item_actions(in_combat) %]			
 			[% IF use_actions %]
 			    var useSubMenu = new dijit.Menu();
 				[% FOREACH action IN use_actions %]

@@ -143,7 +143,7 @@ sub check_for_dungeon_deletion {
 
             if ( $party_rs->count > 0 ) {
                 $c->logger->info(
-                    'Note deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside" );
+                    'Not deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside" );
                 next;
             }
 

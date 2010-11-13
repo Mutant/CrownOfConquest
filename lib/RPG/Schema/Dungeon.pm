@@ -26,6 +26,28 @@ __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' =>
 
 __PACKAGE__->might_have( 'town', 'RPG::Schema::Town', { 'foreign.land_id' => 'self.land_id' } );
 
+sub delete {
+    my ( $self, @args ) = @_;
+
+	# Check for any quests relating to this dungeon, and delete them
+	my @quests = $self->result_source->schema->resultset('Quest')->search(
+		{
+			'type.quest_type' => 'find_dungeon_item',
+			'quest_param_name.quest_param_name' => 'Dungeon',
+			'start_value' => $self->id,
+		},
+		{
+			join => ['type', {'quest_params' => 'quest_param_name'}],
+		}
+	);
+	
+	map { $_->delete } @quests;
+	
+    my $ret = $self->next::method(@args);
+
+    return $ret;
+}
+
 sub party_can_enter {
 	my $self = shift;
 

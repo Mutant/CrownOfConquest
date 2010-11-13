@@ -194,6 +194,22 @@ sub finish_quest {
 
 sub cleanup {
 	my $self = shift;
+		
+	# Any in progress quests send a message to party
+	if ($self->status eq 'In Progress' && ! $self->param_current_value('Item Found')) {
+        my $today = $self->result_source->schema->resultset('Day')->find_today;
+		
+        $self->result_source->schema->resultset('Party_Messages')->create(
+            {
+                party_id => $self->party->id,
+                message  => "The town of " . $self->town->town_name
+                    . " sends you a message that the local town watch has managed to retrieve the "
+                    . $self->item->name . " from the dungeon themselves. Your quest has therefore been terminated amicably.",
+                alert_party => 1,
+                day_id      => $today->id,
+            }
+        );		
+	}
 	
 	$self->finish_quest;
 }

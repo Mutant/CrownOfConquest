@@ -34,7 +34,15 @@ sub build_quest {
     
     my $chest = Test::RPG::Builder::Treasure_Chest->build_chest($schema, dungeon_grid_id => $chest_sector->id);
     
-    my $item_type = Test::RPG::Builder::Item_Type->build_item_type($schema, item_type => 'Artifact');    
+	my $item_type = $schema->resultset('Item_Type')->find(
+    	{
+    		item_type => 'Artifact',
+    	}
+   	);
+   	
+   	if (! $item_type) {    
+    	$item_type = Test::RPG::Builder::Item_Type->build_item_type($schema, item_type => 'Artifact');
+   	}    
 
     my %create_params;
     if ( $params{party_id} ) {

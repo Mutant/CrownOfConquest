@@ -11,6 +11,10 @@ use Test::More;
 use Test::MockObject;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::Quest::Find_Dungeon_Item;
+use Test::RPG::Builder::Quest::Find_Jewel;
+use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Party;
 
 use Data::Dumper;
 
@@ -140,6 +144,55 @@ sub test_find_path_to_sector_2 : Test(5) {
 	is_deeply($path[1], {x=>15,y=>13}, "Second step correct");
 	is_deeply($path[2], {x=>15,y=>14}, "Third step correct");
 	is_deeply($path[3], {x=>15,y=>15}, "Forth step correct");
+}
+
+sub test_delete : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $quest2 = Test::RPG::Builder::Quest::Find_Jewel->build_quest($self->{schema});
+	my $dungeon = $quest->dungeon;
+	
+	# WHEN
+	$dungeon->delete;
+	
+	# THEN
+	$quest->discard_changes;
+	is($quest->in_storage, 0, "Quest deleted when dungeon deleted");
+		
+	$quest2->discard_changes;
+	is($quest2->in_storage, 1, "Non-dungeon quest not deleted");	
+}
+
+sub test_delete_inprogress_quest : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $day = Test::RPG::Builder::Day->build_day($self->{schema});
+	
+	$quest->party_id($party->id);
+	$quest->status('In Progress');
+	$quest->update;
+	
+	my $dungeon = $quest->dungeon;
+	
+	# WHEN
+	$dungeon->delete;
+	
+	# THEN
+	$quest->discard_changes;
+	is($quest->in_storage, 0, "Quest deleted when dungeon deleted");
+		
+	my $message = $self->{schema}->resultset('Party_Messages')->find(
+		{
+			party_id => $party->id,
+		}
+	);
+	
+	is(defined $message, 1, "message added for party"); 
 }
 
 1;

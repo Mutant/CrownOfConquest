@@ -334,8 +334,13 @@ sub _move_cg {
             $cg->land_id( $sector_record->id );
             $cg->update;
 
-            $sector_record->creature_threat( $sector_record->creature_threat + 1 );
-            $sector_record->update;
+			# Chance of CG increasing CTR is CG level * 2
+			my $chance = $cg->level * 2;
+
+			if (Games::Dice::Advanced->roll('1d100') <= $chance) {
+            	$sector_record->creature_threat( $sector_record->creature_threat + 1 );
+            	$sector_record->update;
+			}
 
             $c->land_grid->set_land_object( 'creature_group', $sector->{x}, $sector->{y} );
             $c->land_grid->clear_land_object( 'creature_group', $orig_x, $orig_y );

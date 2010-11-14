@@ -75,7 +75,7 @@ sub finish {
 
 	$self->_award_xp_for_characters_killed( $losers, $winners );
 
-	my $gold = scalar( $losers->characters ) * $avg_character_level * Games::Dice::Advanced->roll('2d6');
+	my $gold = scalar( $losers->members ) * $avg_character_level * Games::Dice::Advanced->roll('2d6');
 
 	$self->result->{gold} = $gold;
 	
@@ -119,7 +119,7 @@ sub _award_xp_for_characters_killed {
 		$xp += int( $character->level * $rand * $self->config->{xp_multiplier_character} );
 	}
 
-	my @characters = $winners->characters;
+	my @characters = $winners->members;
 	$self->result->{awarded_xp} = $self->distribute_xp( $xp, [ map { $_->is_dead ? () : $_->id } @characters ] );
 	$self->combat_log->xp_awarded($xp);
 

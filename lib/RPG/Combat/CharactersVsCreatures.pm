@@ -58,7 +58,7 @@ sub process_effects {
 
 	my @character_effects = $self->schema->resultset('Character_Effect')->search(
 		{
-			character_id => [ map { $_->id } $self->character_group->characters ],
+			character_id => [ map { $_->id } $self->character_group->members ],
 		},
 		{ prefetch => 'effect', },
 	);
@@ -122,7 +122,7 @@ sub creatures_lost {
 	$self->_award_xp_for_creatures_killed();
 
 	my $group = $self->character_group;
-	my @characters = $group->can('characters_in_party') ? $group->characters_in_party : $group->characters;
+	my @characters = $group->members;
 	$self->check_for_item_found( \@characters, $avg_creature_level );
 
 	# Don't delete creature group, since it's needed by news
@@ -217,7 +217,7 @@ sub _award_xp_for_creatures_killed {
 		$xp += int( $creature->type->level * $rand * $self->config->{xp_multiplier} );
 	}
 
-	my @characters = $self->character_group->characters;
+	my @characters = $self->character_group->members;
 
 	$self->result->{awarded_xp} = $self->distribute_xp( $xp, [ map { $_->is_dead ? () : $_->id } @characters ] );
 

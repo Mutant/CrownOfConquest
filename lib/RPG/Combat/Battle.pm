@@ -477,7 +477,7 @@ sub check_for_offline_cast {
 					$character->last_combat_param2( $target->id );
 				}
 				when ('character') {
-					my $target = ( shuffle grep { !$_->is_dead } $character->group->characters )[0];
+					my $target = ( shuffle grep { !$_->is_dead } $character->group->members )[0];
 					$character->last_combat_param2( $target->id );
 				}
 				default {
@@ -518,7 +518,7 @@ sub creature_action {
 	}
 
 	# Go back to original list if there's nothing in characters (i.e. there are only dead (or no) chars in this rank)
-	@characters = $party->characters unless scalar @characters > 0;
+	@characters = $party->members unless scalar @characters > 0;
 
 	my $character;
 	foreach my $char_to_check ( shuffle @characters ) {

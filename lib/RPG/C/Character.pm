@@ -308,7 +308,7 @@ sub equip_item : Local {
 sub give_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_action_allowed');
+	$c->forward('check_character_is_in_party');
 
 	my $character = $c->stash->{character};
 
@@ -348,7 +348,7 @@ sub give_item : Local {
 sub drop_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_action_allowed');
+	$c->forward('check_character_is_in_party');
 
 	my $character = $c->stash->{character};
 
@@ -394,7 +394,7 @@ sub drop_item : Local {
 sub unequip_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_action_allowed');
+	$c->forward('check_character_is_in_party');
 
 	my $character = $c->stash->{character};
 
@@ -660,11 +660,19 @@ sub bury : Local {
 
 }
 
-sub check_action_allowed : Local {
+sub check_action_allowed : Private {
+	my ( $self, $c ) = @_;
+
+	unless ( $c->stash->{character}->party_id == $c->stash->{party}->id ) {
+		croak "Can only make changes to a character in your party\n";
+	}
+}
+
+sub check_character_is_in_party : Private {
 	my ( $self, $c ) = @_;
 
 	unless ( $c->stash->{character}->is_in_party ) {
-		croak "Can only make changes to a character in your party\n";
+		croak "Can only make changes to a character in the same sector as your party\n";
 	}
 }
 

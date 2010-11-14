@@ -216,11 +216,13 @@ sub display_name {
 sub movement_factor {
     my $self = shift;
 
-    my $avg_con = $self->average_stat('constitution');
+    my $base_mf;
+    my @characters = $self->characters_in_party;
+    foreach my $character (@characters) {
+    	$base_mf +=	$character->movement_factor;
+    }
 
-	my $base_mf = int $avg_con / 4; 
-
-    return $base_mf;
+    return round ($base_mf / scalar @characters);
 }
 
 sub after_land_move {

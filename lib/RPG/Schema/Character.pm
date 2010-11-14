@@ -227,6 +227,34 @@ sub is_npc {
 	return 1;
 }
 
+sub natural_movement_factor {
+	my $self = shift;
+	
+	return round ($self->constitution / 4);
+} 
+
+sub movement_factor {
+	my $self = shift;
+	
+	my $base = $self->natural_movement_factor;
+	
+	my $enc_ratio = ($self->encumbrance / $self->encumbrance_allowance);
+	
+	my $enc_penalty = 0;
+	if ($enc_ratio > 0.2) {
+		$enc_penalty = round($base * $enc_ratio);	
+	}
+	
+	my $modified = $base - $enc_penalty;
+	
+	$modified = 0 if $modified < 0;
+	
+	# Always have a movement factor of 1 if not compeltely overencumbered
+	$modified = 1 if $modified < 1 && ! $self->is_overencumbered;
+	
+	return $modified;
+}
+
 sub encumbrance {
 	my $self = shift;
 	

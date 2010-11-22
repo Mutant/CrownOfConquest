@@ -277,12 +277,15 @@ sub _adjust_number_of_shops {
         );
     }
     else {
-        # Check there are no closing shops, these should close now
+        # Closing shops should close, closed shops should be deleted
         foreach my $shop (@shops) {
             if ($shop->status eq 'Closing') {
                 $shop->status('Closed');
                 $shop->update;   
-            }   
+            }
+            elsif ($shop->status eq 'Closed') {
+            	$shop->delete;	
+            }
         } 
     }
 

@@ -85,7 +85,7 @@ sub test_move_to_successful_move : Tests(4) {
 
 	# THEN
 	$party->discard_changes;
-	is( $party->turns,   97,           "Turns reduced" );
+	is( $party->turns,   98,           "Turns reduced" );
 	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
 
 	$land[0]->discard_changes;
@@ -123,7 +123,7 @@ sub test_move_to_successful_town_entrance : Tests(4) {
 
 	# THEN
 	$party->discard_changes;
-	is( $party->turns,   97,           "Turns reduced" );
+	is( $party->turns,   98,           "Turns reduced" );
 	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
 
 	$land[0]->discard_changes;

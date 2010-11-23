@@ -541,12 +541,19 @@ sub become_mayor : Local {
 		$party_town->update;	
 	}
 		
-	
 	my $town_history_msg = "Mayor " . $mayor->character_name . " was disgraced in combat by " . $c->stash->{party}->name . ". The party appoints " .
 		$character->character_name . " the new mayor.";
            		
     if ($town->peasant_state eq 'revolt') {
-    	$town_history_msg .= " The peasants have given up their revolt now that there's a new mayor"; 
+    	$town_history_msg .= " The peasants have given up their revolt now that there's a new mayor."; 
+    }
+    
+    # Cancel election, if there's one in progress
+    my $election = $town->current_election;
+    if ($election) {
+    	$election->status("Cancelled");
+    	$election->update;
+    	$town_history_msg .= " The upcoming election is cancelled.";
     }
            		
 	$town->add_to_history(

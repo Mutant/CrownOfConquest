@@ -14,6 +14,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Election;
 
 use Test::More;
 use Test::Exception;
@@ -184,7 +185,7 @@ sub test_calculate_heal_cost_discount_available : Tests(1) {
        
 }
 
-sub test_become_mayor : Tests(5) {
+sub test_become_mayor : Tests(6) {
 	my $self = shift;
 	
 	# GIVEN
@@ -192,6 +193,8 @@ sub test_become_mayor : Tests(5) {
 	$town->mayor_rating(10);
 	$town->peasant_state('revolt');
 	$town->update;
+	
+	my $election = Test::RPG::Builder::Election->build_election($self->{schema}, town_id => $town->id, candidate_count => 2);
 	
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
 	my @characters = $party->characters;
@@ -233,6 +236,9 @@ sub test_become_mayor : Tests(5) {
 	
 	$party_town->discard_changes;
 	is($party_town->prestige, 0, "Prestige reset");
+	
+	$election->discard_changes;
+	is($election->status, 'Cancelled', "Election cancelled");
 	
 }
 

@@ -14,7 +14,12 @@ sub db_startup : Test(startup) {
 
     return if $ENV{TEST_NO_DB};
 
-    my $schema = RPG::Schema->connect( $self->{config}, "dbi:mysql:game-test", "root", "", { AutoCommit => 0 }, );
+	my $schema;
+	if (defined $self->{config}->{'TestModel::DBIC'}) {
+		$schema = RPG::Schema->connect( $self->{config}, @{$self->{config}->{'TestModel::DBIC'}{connect_info}}, );
+	} else {
+   		$schema = RPG::Schema->connect( $self->{config}, "dbi:mysql:game_test", "root", "", { AutoCommit => 0 }, );
+	}
 
     # Wrap in T::M::E so we can mock the config
     $schema = Test::MockObject::Extends->new($schema);

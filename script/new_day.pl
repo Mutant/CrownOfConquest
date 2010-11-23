@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 
-use lib '/home/sam/RPG/lib';
+my $home = $ENV{RPG_HOME} . "/lib";
+eval "use lib '$home';";
 
 use RPG::NewDay;
 

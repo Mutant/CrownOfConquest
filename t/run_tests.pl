@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
-use lib '../lib','lib';
+#use lib '../lib','lib';
+my $home = $ENV{RPG_HOME} . "/lib";
+eval "use lib '$home';";
 
 use Test::Harness;
 
@@ -12,9 +14,18 @@ if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 	
 	print "# Refreshing schema...\n";
 	
-	system("mysqldump -u root -d game > /tmp/db_dump");	
-	system("mysqldump -u root -t game Equip_Places Class Race Spell Quest_Type Quest_Param_Name Levels Dungeon_Position Enchantments >> /tmp/db_dump");
-	system("mysql -u root game-test < /tmp/db_dump; rm /tmp/db_dump");
+	my $dumpFile; my $rmProg;
+	if ( $^O =~ /MSWin32/ ) {
+		$dumpFile = $ENV{RPG_HOME} . "\\db_dump";
+		$rmProg = 'del';
+	} else {
+		$dumpFile = '/tmp/db_dump';
+		$rmProg = 'rm';
+	}
+	system("mysqldump -u root -d game > $dumpFile");	
+	system("mysqldump -u root -t game Equip_Places Class Race Spell Quest_Type Quest_Param_Name Levels Dungeon_Position Enchantments >> $dumpFile");
+	system("mysql -u root game_test < $dumpFile");
+	system("$rmProg $dumpFile");
 }
 
 runtests('run_test_classes.pl');

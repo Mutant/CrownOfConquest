@@ -12,7 +12,7 @@ use Games::Dice::Advanced;
 use RPG::Map;
 
 my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
-#my $dbh = DBI->connect("dbi:mysql:game-test","root","root");
+#my $dbh = DBI->connect("dbi:mysql:game_test","root","root");
 $dbh->{RaiseError} = 1;
 
 my $min_x = 1;

@@ -187,6 +187,7 @@ sub test_execute_round : Tests(1) {
 	$character->garrison_id($garrison->id);
 	$character->update;
 	
+	my $home = $ENV{RPG_HOME};
     $self->{config} = {
         attack_dice_roll                      => 10,
         defence_dice_roll                     => 10,
@@ -200,7 +201,7 @@ sub test_execute_round : Tests(1) {
         prevalence_per_creature_level_to_find => 1,
         nearby_town_range                     => 5,
         front_rank_attack_chance              => 5,
-        home => '/home/sam/RPG',
+        home => $home,
     };
 
     my $battle = RPG::Combat::GarrisonCreatureBattle->new(

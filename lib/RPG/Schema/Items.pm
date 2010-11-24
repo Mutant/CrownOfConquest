@@ -208,6 +208,7 @@ sub sell_price {
     my $self = shift;
     my $shop = shift;
     my $use_modifier = shift // 1;
+    my $adjust_for_damage = shift // 1;
 
     my $modifier = $use_modifier ? RPG::Schema->config->{shop_sell_modifier} : 0;
 
@@ -228,7 +229,7 @@ sub sell_price {
     $price *= $self->variable('Quantity') if $self->variable('Quantity');
     
     # Adjust for repair cost
-    if (my $repair_cost = $self->repair_cost) {
+    if ($adjust_for_damage and my $repair_cost = $self->repair_cost) {
     	$price -= $repair_cost;	
     }
 
@@ -439,14 +440,14 @@ sub repair_cost {
 
     return 0 if !$variable_rec || !defined $variable_rec->max_value || $variable_rec->max_value == $variable_rec->item_variable_value;
 
-    my $repair_factor = $town ? $town->prosperity + $town->blacksmith_skill : 100;
-    $repair_factor = 100 if $repair_factor > 100;
+    my $full_repair_cost = $self->sell_price(undef, 0, 0) * 0.25;
 
-    my $per_durability_point_cost =
-        round( RPG::Schema->config->{min_repair_cost} + ( 100 - $repair_factor ) / 100 * RPG::Schema->config->{max_repair_cost} );
-
-    my $cost = ( $variable_rec->max_value - $variable_rec->item_variable_value ) * $per_durability_point_cost;
+    my $percent_damaged = ( $variable_rec->max_value - $variable_rec->item_variable_value ) / $variable_rec->max_value;
     
+    my $cost = $full_repair_cost * $percent_damaged;
+    
+    $cost -= $cost * ($town->blacksmith_skill / 100) if $town;
+      
     my $character = $self->belongs_to_character;
     my $party;
     $party = $character->party if $character;
@@ -455,7 +456,9 @@ sub repair_cost {
         $cost = round ($cost * ( 100 - $town->discount_value) / 100 );   
     }
         
-    return $cost;
+    $cost = 1 if $cost < 1;
+        
+    return round($cost);
 }
 
 # Returns the currently usable actions for this item. Each enchantment on the item (if any) is checked to see

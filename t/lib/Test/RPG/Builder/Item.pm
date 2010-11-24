@@ -26,6 +26,7 @@ sub build_item {
 	        {
 	            item_type        => 'Test1',
 	            item_category_id => $item_cat->id,
+	            base_cost => $params{base_cost} // 1,
 	        }
 	    );
 	    

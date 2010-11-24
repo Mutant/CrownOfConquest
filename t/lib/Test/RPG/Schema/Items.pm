@@ -168,7 +168,7 @@ sub test_equip_item_with_non_exististant_equip_place : Tests(2) {
     is($item->equip_place_id, undef, "Item has not been moved into equip place");   
 }
 
-sub test_repair_cost : Tests(1) {
+sub test_repair_cost_basic : Tests(1) {
     my $self = shift;
     
     # GIVEN
@@ -180,7 +180,39 @@ sub test_repair_cost : Tests(1) {
                 item_variable_value  => 5,
                 max_value => 10,
             }
-        ]
+        ],
+        base_cost => 100,
+    );
+    
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $town->blacksmith_skill(10);
+    $town->update;
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    $item->character_id(($party->characters)[0]->id);
+    $item->update;
+    
+    # WHEN
+    my $repair_cost = $item->repair_cost($town);
+    
+    # THEN
+    is($repair_cost, 11, "Repair cost correct");
+}
+
+sub test_repair_cost_with_discount : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value  => 5,
+                max_value => 10,
+            }
+        ],
+        base_cost => 100,
     );
     
     my $town = Test::RPG::Builder::Town->build_town($self->{schema});
@@ -209,7 +241,7 @@ sub test_repair_cost : Tests(1) {
     my $repair_cost = $item->repair_cost($town);
     
     # THEN
-    is($repair_cost, 14, "Repair cost correct");
+    is($repair_cost, 8, "Repair cost correct");
 }
 
 sub test_usable_actions_with_one_usable_enchantment : Tests(2) {

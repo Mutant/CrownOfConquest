@@ -199,6 +199,28 @@ sub get_adjacent_towns {
     return @towns;
 }
 
+sub get_adjacent_garrisons {
+    my $self = shift;
+    my $range = shift || 1;
+
+    my %criteria = ( 'garrison.garrison_id' => { '!=', undef }, );
+
+    my %attrs = ( 'prefetch' => 'garrison', );
+
+    my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => ($range * 2) + 1,
+        increment_search_by => 0,
+        criteria            => \%criteria,
+        attrs               => \%attrs,
+    );
+
+    my @garrisons = map { $_->garrison } @land_rec;
+    return @garrisons;
+}
+
 sub has_road_joining_to {
     my $self = shift;
     my $sector_to_check = shift || confess "sector_to_check not supplied";
@@ -290,6 +312,10 @@ sub garrison_allowed {
 	
 	# Not allowed if adjacent to a town
 	return 0 if $self->get_adjacent_towns;
+	
+	# Not allowed if too close to a garrison
+	my $garrisonRange = RPG->config->{garrison_min_spacing};
+	return 0 if $self->get_adjacent_garrisons($garrisonRange);
 	
 	# Ok, it's allowed
 	return 1;

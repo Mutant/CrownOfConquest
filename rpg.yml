@@ -480,6 +480,9 @@ max_party_garrison_level_difference: 5
 # Turn cost for creating a garrison
 garrison_creation_turn_cost: 15
 
+# Minimum distance between garrisons - 1=one empty space min between
+garrison_min_spacing: 1
+
 # ----- Enchantment Params ----- #
 
 # Minimum creature level that has enchanted items

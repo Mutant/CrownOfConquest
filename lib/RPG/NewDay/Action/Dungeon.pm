@@ -301,7 +301,7 @@ sub fill_empty_chests {
 	my @chests = $self->context->schema->resultset('Treasure_Chest')->all;
 	
 	foreach my $chest (@chests) {
-		unless ($chest->items) {
+		if ($chest->is_empty) {
 			if (Games::Dice::Advanced->roll('1d100') <= 50) {
 				$self->fill_chest($chest);
 			} 	

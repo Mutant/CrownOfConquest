@@ -10,7 +10,7 @@ sub build_chest {
     
     my $chest = $schema->resultset('Treasure_Chest')->create(
         {
-            dungeon_grid_id => $params{dungeon_grid_id},
+            dungeon_grid_id => $params{dungeon_grid_id} // 1,
         }   
     );
     

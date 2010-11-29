@@ -24,4 +24,13 @@ sub add_trap {
 	$self->trap($trap);	
 }
 
+# True if the chest is empty, ignoring things like quest artifacts
+sub is_empty {
+	my $self = shift;
+	
+	my @items = grep { $_->item_type->item_type ne 'Artifact' } $self->items;
+	
+	return @items ? 1 : 0;
+}
+
 1;

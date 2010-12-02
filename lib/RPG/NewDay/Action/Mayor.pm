@@ -406,7 +406,7 @@ sub check_if_election_needed {
 	
 	if ($days_since_last_election >= 15 && $days_since_last_election % 3 == 0) {
 		my $mayor = $town->mayor;
-		$mayor->reduce_approval(10);
+		$mayor->decrease_mayor_rating(10);
 		$mayor->update;
 		
     	$town->add_to_history(

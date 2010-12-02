@@ -6,10 +6,5 @@ use warnings;
 use base qw/Catalyst::Model::DBIC::Schema/;
 
 __PACKAGE__->config->{schema_class} = 'RPG::Schema';
-__PACKAGE__->config->{connect_info} = [
-	'dbi:mysql:game',
-    'root',
-    'root',
-];
 
 1;

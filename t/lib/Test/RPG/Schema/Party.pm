@@ -21,7 +21,7 @@ use DateTime;
 sub startup : Tests(startup=>1) {
     my $self = shift;
 
-    my $mock_config = Test::MockObject->new();
+    my $mock_config = Test::MockObject::Extra->new();
 
     $self->{config} = {};
 

@@ -41,6 +41,7 @@ sub test_run_loads_normal_config : Tests(1) {
     is_deeply( $mock_config, $config_passed );
     
     $mock_yaml->unfake_module();
+    require YAML;
 
 }
 

@@ -13,20 +13,12 @@ use Test::MockObject::Extra;
 
 use Test::RPG::Builder::Day;
 
-use YAML;
-
-my $config;
-BEGIN {
-    my $home = $ENV{RPG_HOME};
-    $config = YAML::LoadFile("$home/rpg.yml");
-    if ( -f "$home/rpg_local.yml" ) {
-        my $local_config = YAML::LoadFile("$home/rpg_local.yml");
-        $config = { %$config, %$local_config };
-    }    
-}	
+use RPG::LoadConf;
 
 sub aa_init_params : Test(startup) {
     my $self = shift;
+    
+    my $config = RPG::LoadConf->load();
     
     $self->{base_config} = $config; 
     

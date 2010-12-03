@@ -4,6 +4,7 @@ use Moose;
 
 use RPG::Schema;
 use RPG::NewDay::Context;
+use RPG::LoadConf;
 
 use YAML;
 use DateTime;
@@ -34,12 +35,7 @@ sub run {
 
 	my $home = $ENV{RPG_HOME};
 
-	my $config = YAML::LoadFile("$home/rpg.yml");
-	if ( -f "$home/rpg_local.yml" ) {
-		my $suffix = $ENV{CATALYST_CONFIG_LOCAL_SUFFIX} // 'local';
-		my $local_config = YAML::LoadFile("$home/rpg_$suffix.yml");
-		$config = { %$config, %$local_config };
-	}
+	my $config = RPG::LoadConf->load();
 
 	my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$] " . $_[1] . "\n" } );
 	$logger->add(

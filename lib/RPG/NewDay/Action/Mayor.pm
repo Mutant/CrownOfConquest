@@ -405,9 +405,8 @@ sub check_if_election_needed {
 	my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
 	
 	if ($days_since_last_election >= 15 && $days_since_last_election % 3 == 0) {
-		my $mayor = $town->mayor;
-		$mayor->decrease_mayor_rating(10);
-		$mayor->update;
+		$town->decrease_mayor_rating(10);
+		$town->update;
 		
     	$town->add_to_history(
     		{

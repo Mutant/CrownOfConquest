@@ -201,8 +201,7 @@ sub get_adjacent_towns {
 
 sub get_adjacent_garrisons {
     my $self = shift;
-    my $range = shift || 1;
-
+    my $range = shift || RPG->config->{garrison_min_spacing};
     my %criteria = ( 'garrison.garrison_id' => { '!=', undef }, );
 
     my %attrs = ( 'prefetch' => 'garrison', );
@@ -314,8 +313,7 @@ sub garrison_allowed {
 	return 0 if $self->get_adjacent_towns;
 	
 	# Not allowed if too close to a garrison
-	my $garrisonRange = RPG->config->{garrison_min_spacing};
-	return 0 if $self->get_adjacent_garrisons($garrisonRange);
+	return 0 if $self->get_adjacent_garrisons();
 	
 	# Ok, it's allowed
 	return 1;

@@ -33,15 +33,20 @@ function sellItemSelect(itemId, characterId) {
 	if (selectedForSale[characterId]==undefined) {
 		selectedForSale[characterId] = Array();
 	}
-	
-	selectedColor = "#AFB9FF";
-	if (selectedForSale[characterId][itemId] == true) {
-		selectedColor = "#FFFFFF"; 	
-	}
-	
-	dojo.byId('item_image_' + itemId).style.backgroundColor = selectedColor;
-	
+
+	//  Toggle the 'selected for sale' value.
 	selectedForSale[characterId][itemId] = selectedForSale[characterId][itemId] == true ? false : true;
+
+	//  Set the item class name.  This class determines the visual aspects (e.g. background).
+	var imageItem = dojo.byId('item_image_' + itemId);
+	var newClass = imageItem.className;
+
+	if (selectedForSale[characterId][itemId] == true) {
+		newClass += " sellItemSelected"; 	
+	} else {
+		newClass = newClass.replace(/[ ]*sellItemSelected/, "");
+	}
+	imageItem.className = newClass;
 }
 
 function sellSelectedItemsConfirm(characterId) {

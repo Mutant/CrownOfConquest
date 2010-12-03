@@ -7,10 +7,26 @@ use RPG::Schema;
 use YAML;
 use Digest::SHA1 qw(sha1_hex);
 
-my $schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", { AutoCommit => 1 }, );
+#  Find and read the correct local config file.
 my $home = $ENV{RPG_HOME};
+my $suffix = $ENV{CATALYST_CONFIG_LOCAL_SUFFIX};
+my $localConfigFile = "$home/rpg_" . $suffix . ".yml";
 
+#  Read the default config file.  Then, check for a local config file.  If it exists, also read it
+#   and combine the config values.
 my $config = YAML::LoadFile("$home/rpg.yml");
+if (-f $localConfigFile) {
+	my $local_config = YAML::LoadFile($localConfigFile);
+	$config = { %$config, %$local_config };
+}
+
+#  Use the local config values to connect to the game database.
+my $schema;
+if (defined $config->{'Model::DBIC'}) {
+	$schema = RPG::Schema->connect( $config, @{$config->{'Model::DBIC'}{connect_info}}, );
+} else {
+	$schema = RPG::Schema->connect( "dbi:mysql:game", "root", "", { AutoCommit => 1 }, );
+}
 RPG::Schema->config($config);
 
 my $player_name = shift || die "Please provide a player name\n";

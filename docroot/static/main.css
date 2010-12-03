@@ -298,6 +298,10 @@ html>body .nav a {width: auto}
 	background: inherit;
 }
 
+.sellItemSelected {
+	background: #AFB9FF;
+}
+
 .stat-label {
 	font-weight: bold;
 }

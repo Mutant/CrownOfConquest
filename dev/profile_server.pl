@@ -18,7 +18,7 @@ use lib "$FindBin::Bin/../lib";
 
 $SIG{INT} = sub { warn "Exiting...\n"; DB::_finish(); exit };
 
-$ENV{ RPG_HOME } = '/home/sam/RPG/';
+#$ENV{ RPG_HOME } = '/home/sam/RPG/';
 
 my $debug             = 0;
 my $fork              = 0;

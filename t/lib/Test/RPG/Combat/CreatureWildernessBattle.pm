@@ -903,6 +903,7 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	$cg = Test::MockObject::Extends->new($cg);
 	$cg->set_always( 'number_alive', 0 );
 
+	my $home = $ENV{RPG_HOME};
 	$self->{config} = {
 		attack_dice_roll                      => 10,
 		defence_dice_roll                     => 10,
@@ -917,7 +918,7 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 		nearby_town_range                     => 5,
 		online_threshold                      => 10,
 		combat_rounds_per_turn                => 3,
-		home                                  => '/home/sam/RPG/',
+		home                                  => $home,
 	};
 
 	my $battle = RPG::Combat::CreatureWildernessBattle->new(

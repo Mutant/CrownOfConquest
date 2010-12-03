@@ -10,6 +10,14 @@ Model::DBIC:
     - ''
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
+TestModel::DBIC:
+  schema_class: RPG::Schema
+  connect_info: 
+    - dbi:mysql:game_test
+    - root
+    - 'megalmadic'
+    - { AutoCommit: 0 }
+
 DBIC::Schema::Profiler:
   MODEL_NAME: DBIC
 
@@ -471,6 +479,9 @@ max_party_garrison_level_difference: 5
 
 # Turn cost for creating a garrison
 garrison_creation_turn_cost: 15
+
+# Minimum distance between garrisons - 1=one empty space min between
+garrison_min_spacing: 1
 
 # ----- Enchantment Params ----- #
 

@@ -40,7 +40,8 @@ sub test_display : Tests() {
     };
     
     my $config;
-    $config->{home} = '/home/sam/RPG';
+    my $home = $ENV{RPG_HOME};
+    $config->{home} = $home;
     
     # WHEN
     my $messages = join "\n", RPG::Combat::MessageDisplayer->display(

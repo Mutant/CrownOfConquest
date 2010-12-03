@@ -8,6 +8,14 @@ Model::DBIC:
     - ''
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
+TestModel::DBIC:
+  schema_class: RPG::Schema
+  connect_info: 
+    - dbi:mysql:game-test
+    - root
+    - ''
+    - { AutoCommit: 0 }
+
 url_root: http://sam-pc:3000/
 
 static_path: /static/

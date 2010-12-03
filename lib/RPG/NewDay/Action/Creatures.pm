@@ -106,7 +106,10 @@ sub spawn_monsters {
                 { prefetch => 'creature_group', },
             );
 
-            $c->schema->resultset('CreatureGroup')->create_in_wilderness( $land_record, 1, $creature_orb->{level} * 3  );
+			my $min_level = ($creature_orb->{level} - 1) * 2 + 1;
+			my $max_level = $creature_orb->{level} * 3;
+			
+            $c->schema->resultset('CreatureGroup')->create_in_wilderness( $land_record, $min_level, $max_level );
 
             $c->land_grid->set_land_object( 'creature_group', $land->{x}, $land->{y} );
 
@@ -167,12 +170,10 @@ sub spawn_dungeon_monsters {
             $level_range_start = 1 if $level_range_start < 1;
             my $level_range_end = $dungeon->{level} * 5;
 
-            my $level = RPG::Maths->weighted_random_number( $level_range_start .. $level_range_end );
-
             my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->{dungeon_id} );
 
 			try {
-            	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level, $level );
+            	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
 			}
 			catch {
 				if (ref $_ && $_->isa('RPG::Exception')) {

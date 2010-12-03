@@ -23,6 +23,11 @@ sub startup : Tests(startup) {
             $self->{counter}++;
             return $ret;
         },
+        roll_in_range => sub {
+            my $ret = $self->{roll_in_range}[$self->{roll_in_range_counter}];
+            $self->{roll_in_range_counter}++;
+            return $ret;
+        },        
     );
     $self->{mock_maths} = $mock_maths; 
  
@@ -31,7 +36,8 @@ sub startup : Tests(startup) {
 sub setup : Tests(setup) {
 	my $self = shift;
 	
-	$self->{counter} = 0;	
+	$self->{counter} = 0;
+	$self->{roll_in_range_counter} = 0;	
 
     $self->{cret_category} = $self->{schema}->resultset('Creature_Category')->create(
     	{
@@ -77,7 +83,8 @@ sub test_create_in_wilderness_simple : Tests(5) {
         }
     );
     
-    $self->{weighted_random_number} = [3,1,2,3];
+    $self->{weighted_random_number} = [3];
+    $self->{roll_in_range} = [1,2,3];
   
     # WHEN
     my $cg = $self->{schema}->resultset('CreatureGroup')->create_in_wilderness(
@@ -119,7 +126,8 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
         }
     );
     
-    $self->{weighted_random_number} = [2,2,2];
+    $self->{weighted_random_number} = [2];
+    $self->{roll_in_range} = [2,2];
   
     # WHEN
     my $cg = $self->{schema}->resultset('CreatureGroup')->create_in_wilderness(

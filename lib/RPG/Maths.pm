@@ -7,6 +7,7 @@ use Games::Dice::Advanced;
 use Math::Round qw(round);
 
 use Data::Dumper;
+use Carp;
 
 # Returns a random number with a weighting given to the lower numbers
 #  The numbers to be chosen from must be passed in an array
@@ -50,6 +51,20 @@ sub _calculate_weights {
     }
     
     return (round($cumulative_chance), %chances);
+}
+
+# Random number between a max and min
+sub roll_in_range {
+	my $package = shift;
+	my $min = shift // confess "min not provided";
+	my $max = shift // confess "max not provided";
+	
+	my $dice_size = $max - $min + 1;
+	
+	my $roll = Games::Dice::Advanced->roll('1d' . $dice_size) + $min - 1;
+	
+	return $roll;
+	
 }
 
 1;

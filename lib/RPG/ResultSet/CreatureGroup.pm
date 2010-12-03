@@ -82,7 +82,7 @@ sub _create_group {
     my %types_used;
 
     for ( 1 .. $number_of_types ) {
-        my $level = RPG::Maths->weighted_random_number( $min_level .. $max_level );
+        my $level = RPG::Maths->roll_in_range( $min_level, $max_level );
 
         my $type;
         foreach my $available_type ( shuffle @{ $self->{creature_types_by_level}->[$level] } ) {

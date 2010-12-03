@@ -11,22 +11,29 @@ with qw/
 
 after 'finish' => sub {
     my $self = shift;
-            
-    # Improve prestige with nearby towns   
-    foreach my $town ($self->nearby_towns) {
-        my $party_town_recs = $self->schema->resultset('Party_Town')->find_or_create(
-            {
-                town_id => $town->id,
-                party_id => $self->party->id,   
-            }
-        );
-      
-        $party_town_recs->prestige(($party_town_recs->prestige || 0 )+1);
-        $party_town_recs->update;
-    }
+    my $losers = shift;
     
-    $self->location->creature_threat( $self->location->creature_threat - 5 );
-    $self->location->update;
+    if ($losers->id == $self->creature_group->id) {            
+	    # Improve prestige with nearby towns   
+	    foreach my $town ($self->nearby_towns) {
+	        my $party_town_recs = $self->schema->resultset('Party_Town')->find_or_create(
+	            {
+	                town_id => $town->id,
+	                party_id => $self->party->id,   
+	            }
+	        );
+	      
+	        $party_town_recs->prestige(($party_town_recs->prestige || 0 )+1);
+	        $party_town_recs->update;
+	    }
+	    
+	    $self->location->creature_threat( $self->location->creature_threat - 8 );
+	    $self->location->update;
+    }
+    else {
+	    $self->location->creature_threat( $self->location->creature_threat + 8 );
+	    $self->location->update;    	
+    }
 };    
 
 __PACKAGE__->meta->make_immutable;

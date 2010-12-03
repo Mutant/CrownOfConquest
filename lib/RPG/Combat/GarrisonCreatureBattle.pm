@@ -71,7 +71,7 @@ sub finish {
     if ($losers->group_type eq 'garrison') {
 		$self->wipe_out_garrison;
 
-	    $self->location->creature_threat( $self->location->creature_threat + 3 );
+	    $self->location->creature_threat( $self->location->creature_threat + 5 );
 	    $self->location->update;
     }
     else {
@@ -80,7 +80,7 @@ sub finish {
     	$self->garrison->gold( ($self->garrison->gold || 0) + $self->result->{gold} );
     	$self->garrison->update;
     	
-	    $self->location->creature_threat( $self->location->creature_threat - 3 );
+	    $self->location->creature_threat( $self->location->creature_threat - 5 );
 	    $self->location->update;
     }
 }

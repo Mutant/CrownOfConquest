@@ -947,12 +947,13 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	like( $combat_log_message->message, qr/You fled the battle!/, "Flee message set" );
 }
 
-sub test_finish : Tests(6) {
+sub test_finish_creatures_lost : Tests(6) {
 	my $self = shift;
 
 	# GIVEN
-	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	my ($land) = Test::RPG::Builder::Land->build_land( $self->{schema}, x_size => 1, 'y_size' => 1 );
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land->id );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, land_id => $land->id );
 	$party->in_combat_with( $cg->id );
 	$party->update;
 
@@ -983,6 +984,41 @@ sub test_finish : Tests(6) {
 	is( $cg->land_id, undef, "CG no longer in land" );
 
 	is( defined $battle->combat_log->encounter_ended, 1, "Combat log records combat ended" );
+	
+	$land->discard_changes;
+	is($land->creature_threat, 2, "Creature threat reduced");
+}
+
+sub test_finish_party_lost : Tests(4) {
+	my $self = shift;
+
+	# GIVEN
+	my ($land) = Test::RPG::Builder::Land->build_land( $self->{schema}, x_size => 1, 'y_size' => 1 );
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land->id );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, land_id => $land->id );
+	$party->in_combat_with( $cg->id );
+	$party->update;
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+
+	# WHEN
+	$battle->finish($party);
+
+	# THEN
+	is( defined $battle->result->{awarded_xp}, '', "No xp returned" );
+	is( $battle->result->{gold},               undef, "No gold found" );
+
+	$party->discard_changes;
+	is( $party->gold,           100,   "Gold still the same" );
+	
+	$land->discard_changes;
+	is($land->creature_threat, 18, "Creature threat increased");
 }
 
 sub test_end_of_combat_cleanup_creates_town_history : Tests(3) {

@@ -242,4 +242,73 @@ sub test_become_mayor : Tests(6) {
 	
 }
 
+sub test_res_from_morgue : Test(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 10, character_count => 3, land_id => $land[0]->id, gold => 10000 );
+	my @characters = $party->characters;
+	my $character = $characters[0];
+	
+	$character->hit_points(0);
+	$character->status('morgue');
+	$character->status_context($town->id);
+	$character->update;
+	
+	$self->{params}{character_id} = $character->id;
+	
+	$self->{stash}{party} = $party;
+	$self->{stash}{party_location} = $party->location;	
+	
+	$self->{mock_forward}{'/town/cemetery'} = sub {};
+	$self->{mock_forward}{'res_impl'} = sub { return RPG::C::Town->res_impl($self->{c}, @{ $_[0] }) };
+	
+	# WHEN
+	RPG::C::Town->res_from_morgue($self->{c});
+	
+	# THEN
+	$character->discard_changes;
+	is($character->status, undef, "Character returned to party");
+	is($character->status_context, undef, "Status context cleared");
+	cmp_ok($character->hit_points, '>=', 1, "Character has positive hit points"); 
+}
+
+sub test_res_from_morgue_party_full : Test(4) {
+	my $self = shift;
+	
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 10, character_count => 9, land_id => $land[0]->id, gold => 10000 );
+	my @characters = $party->characters;
+	my $character = $characters[0];
+	
+	$character->hit_points(0);
+	$character->status('morgue');
+	$character->status_context($town->id);
+	$character->update;
+	
+	$self->{params}{character_id} = $character->id;
+	
+	$self->{stash}{party} = $party;
+	$self->{stash}{party_location} = $party->location;	
+	
+	$self->{mock_forward}{'/town/cemetery'} = sub {};
+	$self->{mock_forward}{'res_impl'} = sub { return RPG::C::Town->res_impl($self->{c}, @{ $_[0] }) };
+	
+	# WHEN
+	RPG::C::Town->res_from_morgue($self->{c});
+	
+	# THEN
+	$character->discard_changes;
+	is($character->status, 'morgue', "Character still in morgue");
+	is($character->status_context, $town->id, "Status context unchanged");
+	is($character->hit_points, 0, "Character hps unchanged");
+	is(defined $self->{stash}{error}, 1, "Error message set"); 
+}
+
 1;

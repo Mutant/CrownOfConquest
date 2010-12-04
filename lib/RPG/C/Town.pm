@@ -174,14 +174,57 @@ sub heal_party : Local {
 
 sub resurrect : Local {
 	my ( $self, $c ) = @_;
-
-	my $town = $c->stash->{party_location}->town;
-
+	
 	my @characters = $c->stash->{party}->characters_in_party;
 
 	my @dead_chars = grep { $_->is_dead } @characters;
 
-	my ($char_to_res) = grep { $_->id eq $c->req->param('character_id') } @dead_chars;
+	my ($char_to_res) = grep { $_->id == $c->req->param('character_id') } @dead_chars;	
+
+	$c->forward('res_impl', [$char_to_res]);
+
+	$c->forward('/town/healer');
+}
+
+sub res_from_morgue : Local {
+	my ( $self, $c ) = @_;
+	
+	my $town = $c->stash->{party_location}->town;
+	
+	my @characters = $c->stash->{party}->characters_in_party;
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+			status => 'morgue',
+			status_context => $town->id,
+		}
+	);
+	
+	croak "Invalid character" unless $character;
+	
+	if (scalar @characters >= $c->config->{max_party_characters}) {
+		$c->stash->{error} = "You already have " . $c->config->{max_party_characters} 
+			. " characters in your party - you can't add another from the morgue";
+	}
+	else {
+		if ($c->forward('res_impl', [$character])) {
+			$character->status(undef);
+			$character->status_context(undef);
+			$character->update;	
+		}		
+	}
+	
+	$c->forward('/town/cemetery');
+	
+}
+
+sub res_impl : Private {
+	my ( $self, $c, $char_to_res ) = @_;
+
+	my $town = $c->stash->{party_location}->town;
+	
+	my $ressed = 0;
 
 	if ($char_to_res) {
 		if ( $char_to_res->resurrect_cost > $c->stash->{party}->gold ) {
@@ -193,7 +236,7 @@ sub resurrect : Local {
 
 			$char_to_res->hit_points( round $char_to_res->max_hit_points * 0.1 );
 			$char_to_res->hit_points(1) if $char_to_res->hit_points < 1;
-			my $xp_to_lose = int( $char_to_res->xp * RPG->config->{ressurection_percent_xp_to_lose} / 100 );
+			my $xp_to_lose = int( $char_to_res->xp * $c->config->{ressurection_percent_xp_to_lose} / 100 );
 			$char_to_res->xp( $char_to_res->xp - $xp_to_lose );
 			$char_to_res->update;
 
@@ -214,12 +257,14 @@ sub resurrect : Local {
 			);
 
 			$c->stash->{messages} = $message;
+			
+			$ressed = 1;
 		}
 	}
 
 	push @{ $c->stash->{refresh_panels} }, ( 'party', 'party_status' );
-
-	$c->forward('/town/healer');
+	
+	return $ressed;	
 }
 
 sub calculate_heal_cost : Private {
@@ -353,17 +398,30 @@ sub quests : Local {
 	$c->forward('/panel/refresh');
 }
 
-sub cemetry : Local {
+sub cemetery : Local {
 	my ( $self, $c ) = @_;
 
+	my $town = $c->model('DBIC::Town')->find( { land_id => $c->stash->{party_location}->id } );
+
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
+	
+	my @morgue = $c->model('DBIC::Character')->search(
+		{
+			'status' => 'morgue',
+			'status_context' => $town->id,
+		}
+	);
 
 	my $panel = $c->forward(
 		'RPG::V::TT',
 		[
 			{
 				template      => 'town/cemetery.html',
-				params        => { graves => \@graves, },
+				params        => { 
+					graves => \@graves,
+					morgue => \@morgue,
+					party => $c->stash->{party},					 
+				},
 				return_output => 1,
 			}
 		]
@@ -509,20 +567,25 @@ sub become_mayor : Local {
 		}
 	);
 	$mayor->mayor_of(undef);
-	$mayor->update;
-	
+
 	# Leave a message for the mayor's party
 	if ($mayor->party_id) {
+		$mayor->status('morgue');
+		$mayor->status_context($town->id);
+
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
-				. $town->town_name . ". " . lcfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
+				. $town->town_name . ". " . lcfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
+				. $mayor->pronoun('posessive') . " may be ressurrected there.",
 				alert_party => 1,
 				party_id => $mayor->party_id,
 				day_id => $c->stash->{today}->id,
 			}
 		);		
 	}
+
+	$mayor->update;
 
 	$character->mayor_of( $town->id );	
 	$character->update;

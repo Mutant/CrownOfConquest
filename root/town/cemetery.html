@@ -4,4 +4,18 @@
 	No one is buried in the cemetery (yet).
 	<br><br>
 [% END %]
+
+[% IF morgue %]
+	The following bodies have been interred in the morgue:
+	<ul>
+	[% FOREACH character IN morgue %]
+		<li>[% character.name %] [[% character.party.name %]] 
+			[% IF character.party_id == party.id %]
+				(<a href="javascript:getPanels('town/res_from_morgue?character_id=[% character.id %]')">Resurrect</a> - [% character.resurrect_cost %] gold)
+			[% END %]
+		<br>
+	[% END %]
+	</ul>
+[% END %]
+
 [% INCLUDE town/town_footer.html %]

@@ -241,11 +241,10 @@ sub current_location {
 sub characters_in_party {
 	my $self = shift;
 	
+	my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
+	
 	return $self->search_related('characters',
-		{
-			'garrison_id' => undef,
-			'mayor_of' => undef,
-		},
+		\%null_fields,
 		{
 			'order_by' => 'party_order',
 		},

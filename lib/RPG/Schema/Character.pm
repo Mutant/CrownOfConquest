@@ -24,7 +24,7 @@ __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
-        mayor_of/
+        mayor_of status status_context/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
@@ -215,7 +215,7 @@ sub is_in_party {
 
 # Returns a list of columns that, if null, indicate the character is in the party 
 sub in_party_columns {
-	return qw/garrison_id mayor_of/;
+	return qw/garrison_id mayor_of status/;
 }
 
 # Returns true if character isn't owned by a player

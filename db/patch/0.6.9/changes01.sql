@@ -7,3 +7,9 @@ update Creature_Type set image = 'hobgoblinsmall.png' where creature_type = 'Hob
 update Creature_Type set image = 'firedragonsmall.png' where creature_type = 'Fire Dragon';
 update Creature_Type set image = 'golddragonsmall.png' where creature_type = 'Gold Dragon';
 update Creature_Type set image = 'silverdragonsmall.png' where creature_type = 'Silver Dragon';
+
+ALTER TABLE `Character` ADD COLUMN `status` VARCHAR(20)  DEFAULT NULL AFTER `mayor_of`,
+ ADD COLUMN `status_context` BIGINT  DEFAULT NULL AFTER `status`;
+
+ALTER TABLE `Character` ADD INDEX `status_context_id`(`status`, `status_context`);
+

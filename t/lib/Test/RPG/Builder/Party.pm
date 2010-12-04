@@ -37,7 +37,7 @@ sub build_party {
             player_id               => $params{player_id},
             rank_separator_position => 2,
             turns                   => 100,
-            gold                    => 100,
+            gold                    => $params{gold} // 100,
             defunct                 => $params{defunct} || undef,
             last_action             => $params{last_action} || undef,
             in_combat_with          => $params{in_combat_with} || undef,

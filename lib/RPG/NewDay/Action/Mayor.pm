@@ -268,7 +268,6 @@ sub process_revolt {
     if ($roll < 20) {
     	$mayor->mayor_of(undef);
     	$mayor->creature_group(undef);
-    	$mayor->update;
     	
     	my $new_mayor = $self->create_mayor($town);
     	
@@ -285,16 +284,22 @@ sub process_revolt {
     	$town->update;
     	    	    	
     	if ($mayor->party_id) {
+    		$mayor->status('morgue');
+			$mayor->status_context($town->id);
+			$mayor->hit_points(0);
+    		
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " was overthown by the peasants of " . $town->town_name . " and is no longer mayor. " 
-						. ucfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
+						. ucfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
+						. $mayor->pronoun('posessive') . " may be ressurrected there.",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,
 				}
 			);
     	}
+    	$mayor->update;
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);

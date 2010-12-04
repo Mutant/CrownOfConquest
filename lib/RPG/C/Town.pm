@@ -576,7 +576,7 @@ sub become_mayor : Local {
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
-				. $town->town_name . ". " . lcfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
+				. $town->town_name . ". " . ucfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
 				. $mayor->pronoun('posessive') . " may be ressurrected there.",
 				alert_party => 1,
 				party_id => $mayor->party_id,

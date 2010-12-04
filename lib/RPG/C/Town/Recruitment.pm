@@ -14,7 +14,7 @@ sub default : Path {
     my $town = $c->stash->{party_location}->town;
 
     my @town_characters  = $town->characters;
-    my @party_characters = $c->stash->{party}->characters;
+    my @party_characters = $c->stash->{party}->members;
 
     my $party_full = scalar @party_characters >= $c->config->{max_party_characters};
 
@@ -48,7 +48,7 @@ sub buy : Local {
         croak "Can't afford that character\n";
     }
 
-    if ( scalar $c->stash->{party}->characters >= $c->config->{max_party_characters} ) {
+    if ( scalar $c->stash->{party}->members >= $c->config->{max_party_characters} ) {
         croak "Already enough characters in your party\n";
     }
 

@@ -388,7 +388,7 @@ sub check_for_npc_election {
 	
 	return if $town->current_election || ! $town->mayor;
 		
-	return unless Games::Dice::Advanced->roll('1d100') <= 5;
+	return unless Games::Dice::Advanced->roll('1d100') <= 1;
 	
 	my $days = Games::Dice::Advanced->roll('1d11') + 4;
 	

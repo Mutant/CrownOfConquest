@@ -8,6 +8,7 @@ use base 'DBIx::Class::ResultSet';
 use DBIx::Class::ResultClass::HashRefInflator;
 
 use Data::Dumper;
+use Carp;
 
 # Get a dungeon grid... range is optional. If party_id is supplied, only returns sectors in that party's mapped_dungeon_grid
 sub get_party_grid {
@@ -60,7 +61,7 @@ sub get_party_grid {
 sub find_random_sector {
 	my $self            = shift;
 	my $dungeon_id      = shift;
-	my $dungeon_room_id = shift;
+	my $dungeon_room_id = shift // confess "Dungeon room id not supplied";
 	my $no_cg_in_sector = shift // 0;
 	
 	my %params = (

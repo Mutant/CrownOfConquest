@@ -144,10 +144,10 @@ map_y_size: 7
 party_viewing_range: 3
 
 # Number of turns a party gets each day
-daily_turns: 150
+daily_turns: 300
 
 # Maximum number of turns a party is allowed to have
-maximum_turns: 500
+maximum_turns: 700
 
 # Min / Max percentage amount to heal characters each day (based on rest)
 min_heal_percentage: 2

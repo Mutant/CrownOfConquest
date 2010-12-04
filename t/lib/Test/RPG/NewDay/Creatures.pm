@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::NewDay::Creature;
+package Test::RPG::NewDay::Creatures;
 
 use base qw(Test::RPG::DB);
 
@@ -508,7 +508,7 @@ sub _create_land {
                     x               => $x,
                     y               => $y,
                     terrain_id      => $non_town_terrain->id,
-                    creature_threat => 10,
+                    creature_threat => -80,
                 }
             );
         }

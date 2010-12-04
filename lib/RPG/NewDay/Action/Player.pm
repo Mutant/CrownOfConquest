@@ -35,6 +35,7 @@ sub run {
             )->update(
             	{
             		mayor_of => undef,
+            		party_id => undef,
             	}
             );
         }

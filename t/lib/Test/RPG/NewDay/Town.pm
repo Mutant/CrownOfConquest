@@ -505,4 +505,34 @@ sub test_set_discount_doesnt_use_blacksmith_type_if_no_blacksmith : Test(3) {
     is($town->discount_threshold, 75, "Discount threshold set correectly");
 }
 
+sub test_decay_ctr : Test(9) {
+	my $self = shift;
+	
+	# GIVEN	
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    $land[8]->creature_threat(60);
+    $land[8]->update;
+
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, land_id => $land[4]->id );    
+    
+    $self->{rolls} = [1, 1, 40, 5, 1, 50, 1, 1, 1, 50, 1];
+    
+    $self->{config}{decay_ctr_range} = 1;   
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $town_action->decay_ctr($town);
+    
+    # THEN
+    my @expected_ctr = (10, 10, 5, 10, 10, 9, 10, 10, 60);
+    
+    for my $i (0..$#land) {
+    	$land[$i]->discard_changes;
+    	is($land[$i]->creature_threat, $expected_ctr[$i], "Correct ctr for " . $land[$i]->x . ', ' . $land[$i]->y);   		
+    }
+	
+}
+
 1;

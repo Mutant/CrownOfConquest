@@ -346,6 +346,9 @@ min_character_mayoral_candidate_level: 8
 # Minimum days before an election a character is allowed to declare candidacy
 min_days_for_election_candidacy: 2
 
+# Range to decay the CTR of sectors around a town
+decay_ctr_range: 3
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

@@ -39,6 +39,8 @@ sub run {
     $self->update_prestige;
 
     $self->set_discount(@towns);
+    
+    $self->decay_ctr(@towns);
 }
 
 sub calculate_prosperity {
@@ -333,6 +335,44 @@ sub set_discount {
 
         $town->update;
     }
+}
+
+# Randomly reduce CTR around a town, based on prosperity.
+#  Eventually will be replaced by a 'town watch' to fight monsters
+sub decay_ctr {
+	my $self = shift;
+	my @towns = @_;
+	
+	my $c = $self->context;
+	
+	foreach my $town (@towns) {
+		my ($town_x, $town_y) = ($town->location->x, $town->location->y);
+		my ($top_left, $bottom_right) = RPG::Map->surrounds_by_range(
+			$town_x, $town_y, $c->config->{decay_ctr_range},
+		);
+		
+		for my $x ($top_left->{x} .. $bottom_right->{x}) {
+			for my $y ($top_left->{y} .. $bottom_right->{y}) {
+				next if $x == $town_x && $y == $town_y;
+						
+				my $land = $c->schema->resultset('Land')->find(
+					{
+						x => $x,
+						y => $y,
+					}
+				);
+				
+				# Any sectors with a ctr above town's prosperity are not change
+				# (i.e. can't get safer)
+				next if $land->creature_threat > $town->prosperity;
+				
+				if (Games::Dice::Advanced->roll('1d100') > 30) {
+					$land->decrease_creature_threat(Games::Dice::Advanced->roll('1d8'));
+					$land->update;	
+				}	
+			}	
+		}
+	}
 }
 
 __PACKAGE__->meta->make_immutable;

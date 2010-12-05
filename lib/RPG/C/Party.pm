@@ -127,6 +127,7 @@ sub parties_in_sector : Private {
 
 	if ($land_id) {
 		$query_params{land_id} = $land_id;
+		$query_params{dungeon_grid_id} = undef;
 	}
 	else {
 		$query_params{dungeon_grid_id} = $dungeon_grid_id;

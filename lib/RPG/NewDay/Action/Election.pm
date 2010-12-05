@@ -143,10 +143,13 @@ sub run_election {
 		$c->logger->debug("Mayor loses to character: " . $winner->id);
 		
 		$mayor->mayor_of(undef);
-		$mayor->creature_group(undef);
-		$mayor->update;
+		$mayor->creature_group(undef);		
 		
 		unless ($mayor->is_npc) {
+			# TODO: they go to the morgue for now, but shouldn't really be such a harsh punishment 
+			$mayor->status('morgue');
+			$mayor->status_context($town->id);			
+			
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '. '
@@ -157,6 +160,7 @@ sub run_election {
 				}
 			);
 		}
+		$mayor->update;
 		
 		$winner->mayor_of($town->id);
 		$winner->update;

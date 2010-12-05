@@ -796,7 +796,7 @@ sub xp {
     # Check if we should level up
     my $level_rec = $self->result_source->schema->resultset('Levels')->find( { level_number => $self->level + 1, }, );
 
-    if ( ref $level_rec && $new_xp > $level_rec->xp_needed ) {
+    if ( ref $level_rec && $new_xp >= $level_rec->xp_needed ) {
         $self->level( $self->level + 1 );
 
         my %rolls = $self->roll_all;

@@ -17,7 +17,7 @@ sub generate_character {
     
     my $race        = $params{race}  || $self->result_source->schema->resultset('Race')->random;
     my $class       = $params{class} || $self->result_source->schema->resultset('Class')->random;
-    my $level       = $params{level};
+    my $level       = $params{level} // 1;
     my $roll_points = $params{roll_points} // 1;
     my $allocate_equipment = $params{allocate_equipment} // 0;
     

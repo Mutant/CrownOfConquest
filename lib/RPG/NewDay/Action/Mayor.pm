@@ -143,11 +143,15 @@ sub calculate_approval {
             as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
         }
     );   
-	
-	my $raids_adjustment = - $party_town_rec->get_column('raids_today') * 3;
-	my $guards_killed_adjustment = - $party_town_rec->get_column('guards_killed');
+
+    my $raids_today = $party_town_rec->get_column('raids_today') // 0;
+    my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;
+    my $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
+
+	my $raids_adjustment = - $raids_today * 3;
+	my $guards_killed_adjustment = - $guards_killed;
 		
-	my $party_tax_adjustment = int $party_town_rec->get_column('tax_collected') / 100;
+	my $party_tax_adjustment = int $tax_collected / 100;
 	my $peasant_tax_adjustment = - $town->peasant_tax / 2; # The -3 stops it trending up for npc mayors
 	
  	my $creature_rec = $self->context->schema->resultset('Creature')->find(
@@ -160,9 +164,10 @@ sub calculate_approval {
 			as => 'level_aggregate',			
 		}
 	);
-	
-	$self->context->logger->debug("Level aggregate: " . $creature_rec->get_column('level_aggregate'));
-	my $guards_hired_adjustment = int ($creature_rec->get_column('level_aggregate') / $town->prosperity);	
+
+	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
+	$self->context->logger->debug("Level aggregate: " . $creature_level);
+	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);	
 		
 	# A random component to approval
 	my $random_adjustment += Games::Dice::Advanced->roll('1d11') - 6;
@@ -183,7 +188,7 @@ sub calculate_approval {
 	$town->add_to_history(
 		{
 			type => 'income',
-			value => $party_town_rec->get_column('tax_collected') || 0,
+			value => $tax_collected,
 			message => 'Party Entrance Tax',
 			day_id => $self->context->current_day->id,
 		}

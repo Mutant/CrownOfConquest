@@ -53,7 +53,7 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 
-	return 45 * $self->variable('Daily Heal') + ( $self->must_be_equipped ? 0 : 125 );
+	return 45 * ($self->variable('Daily Heal') // 1) + ( $self->must_be_equipped ? 0 : 125 );
 }
 
 sub new_day {

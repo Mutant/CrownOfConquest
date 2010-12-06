@@ -12,7 +12,7 @@ sub send {
 	my $config = shift;
 	my $params = shift;
 	
-	return if $config->{no_email};
+	return if ($config->{no_email} && ! $config->{email_log_file});
 
     my $email_footer = RPG::Template->process(
         $config,
@@ -41,6 +41,29 @@ sub send {
         Data    => $params->{body} . $email_footer,
         Type    => 'text/html',
     );
+
+	#  If debug logging of emails enabled.
+	if ($config->{email_log_file}) {
+		if (! $config->{email_log_file_handle}) {
+			$config->{email_log_file_handle} = Log::Dispatch->new(
+				outputs => [
+						[
+							'File',
+							min_level => 'debug',
+							filename  => $config->{email_log_file},
+							mode      => '>>',
+							newline   => 1
+						]
+					],
+				);
+		}
+		my $eheader = $msg->header_as_string;
+		$eheader =~ s/\n/<br \/>/g;
+		$config->{email_log_file_handle}->debug("<br>===========================<br>Header:<br>" . $eheader);
+		$config->{email_log_file_handle}->debug("Body:<br>" . $msg->body_as_string);
+	}
+
+	return if $config->{no_email};
     
     $msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );	
 }

@@ -41,6 +41,9 @@ data_file_path: /home/sam/RPG/script/data/
 smtp_server: localhost
 send_email_from: mutant.nz@gmail.com
 
+# Use the following to log sent emails (e.g. for debugging)
+#email_log_file: /home/sam/RPG/log/email_log.html
+
 Log::Dispatch:
   - class: File
     name: file1

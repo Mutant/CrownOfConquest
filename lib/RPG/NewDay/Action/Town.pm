@@ -66,8 +66,8 @@ sub calculate_prosperity {
     my $raids_today = 0;
     
     if ($party_town_rec) {
-    	$tax_collected = $party_town_rec->get_column('tax_collected');
-    	$raids_today = $party_town_rec->get_column('raids_today');
+    	$tax_collected = $party_town_rec->get_column('tax_collected') // 0;
+    	$raids_today = $party_town_rec->get_column('raids_today') // 0;
     }
     
     my $approval_change = round (($town->mayor_rating // 0) / 20);

@@ -86,7 +86,7 @@ sub run_election {
 	#  The first one we find with that score will win
 	foreach my $candidate (shuffle @candidates) {
 		my $campaign_spend = $candidate->campaign_spend / 20;
-		my $rating_bonus;
+		my $rating_bonus = 0;
 
 		my $character = $candidate->character;
 		

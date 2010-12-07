@@ -54,7 +54,7 @@ sub run {
 		if ($town->pending_mayor) {
 			$self->check_for_pending_mayor_expiry($town);
 		}
-		
+	
 		if ($mayor->is_npc) {
 			# Set default tax rates
 			if ($town->peasant_tax < 8 || $town->peasant_tax > 15) {
@@ -68,7 +68,9 @@ sub run {
 			
 			$self->check_for_npc_election($town);
 		}
-				
+
+		my $revolt_started = $self->check_for_revolt($town);
+		
 		if ($town->peasant_tax && ! $town->peasant_state) {
 			my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
 			$self->context->logger->debug("Collecting $gold peasant tax");
@@ -99,12 +101,9 @@ sub run {
 
 		$self->check_if_election_needed($town);
 
-    	if ($town->peasant_state) {
+    	if (! $revolt_started && $town->peasant_state) {
     		$self->process_revolt($town);
     	}
-    	else {
-    		$self->check_for_revolt($town);
-    	}   	
 	}
 	
 	# Clear all tax paid / raids today
@@ -200,15 +199,24 @@ sub check_for_revolt {
 	my $self = shift;
 	my $town = shift;
 	
+	return if $town->peasant_state eq 'revolt';
+	
 	my $c = $self->context;
 	
-	return if $town->mayor_rating >= 0;
+	my $start_revolt = 0;
 	
-	my $rating = $town->mayor_rating + 100;
+	if ($town->mayor_rating < 0) {
+		my $rating = $town->mayor_rating + 100;
 	
-	my $roll = Games::Dice::Advanced->roll('1d100');
-	
-	if ($roll >= $rating) {
+		my $roll = Games::Dice::Advanced->roll('1d100');
+		
+		$start_revolt = 1 if $roll > $rating;
+	}	
+	elsif ($town->peasant_tax >= 35) {
+		$start_revolt = 1;	
+	}
+		
+	if ($start_revolt) {
 		$town->peasant_state('revolt');
 		$town->update;
 		
@@ -232,6 +240,8 @@ sub check_for_revolt {
 			);
 		}		
 	}
+	
+	return $start_revolt;
 }
 
 sub process_revolt {

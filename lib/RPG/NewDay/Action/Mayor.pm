@@ -199,7 +199,7 @@ sub check_for_revolt {
 	my $self = shift;
 	my $town = shift;
 	
-	return if $town->peasant_state eq 'revolt';
+	return if defined $town->peasant_state && $town->peasant_state eq 'revolt';
 	
 	my $c = $self->context;
 	

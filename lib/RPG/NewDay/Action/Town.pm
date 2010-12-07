@@ -362,6 +362,8 @@ sub decay_ctr {
 					}
 				);
 				
+				next unless $land;
+				
 				# Any sectors with a ctr above town's prosperity are not change
 				# (i.e. can't get safer)
 				next if $land->creature_threat > $town->prosperity;

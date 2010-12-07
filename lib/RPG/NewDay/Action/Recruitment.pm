@@ -23,6 +23,8 @@ sub run {
 
     while ( my $town = $town_rs->next ) {
         my @characters = $town->characters;
+        
+        @characters = $self->randomly_delete_characters(@characters);
 
         my $ideal_number_of_characters = int( $town->prosperity / $c->config->{characters_per_prosperity} );
         $ideal_number_of_characters = 1 if $ideal_number_of_characters < 1;
@@ -37,6 +39,19 @@ sub run {
             }
         }
     }
+}
+
+sub randomly_delete_characters {
+	my $self = shift;
+	my @characters = @_;
+	
+	if (Games::Dice::Advanced->roll('1d100') <= 10) {
+		@characters = shuffle @characters;
+		my $unlucky = shift @characters;
+		$unlucky->delete;
+	}
+	
+	return @characters;
 }
 
 sub generate_character {

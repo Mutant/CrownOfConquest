@@ -44,6 +44,7 @@ sub build_item_type {
             item_category_id => $item_cat->id,
             prevalence => $params{prevalence} || 10,
             base_cost => $params{base_cost} || 0,
+            weight => $params{weight} || 0,
         }
     );
     

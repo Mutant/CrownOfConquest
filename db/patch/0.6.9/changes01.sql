@@ -13,3 +13,13 @@ ALTER TABLE `Character` ADD COLUMN `status` VARCHAR(20)  DEFAULT NULL AFTER `may
 
 ALTER TABLE `Character` ADD INDEX `status_context_id`(`status`, `status_context`);
 
+insert into Enchantments (enchantment_name, must_be_equipped, one_per_item) values ('featherweight', 0, 1);
+
+set @ench_id = (select enchantment_id from Enchantments where enchantment_name = 'featherweight');
+
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Melee Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category= 'Armour'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Head Gear'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
+

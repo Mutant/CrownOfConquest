@@ -51,9 +51,15 @@ sub variable_row {
     my $variable_name = shift;
     my $new_val       = shift;
 
-    $self->{_variables} = { map { ($_->name || $_->item_variable_name->item_variable_name) => $_ } $self->variables }
-        unless $self->{_variables};
+	my @vars = $self->variables;
+	
+	# Note, due to some edge cases (mostly used in tests), it's possible variables could be accessed before they've actually
+	#  been inserted into the db. (i.e. when insert trigger is called). The result gets cached below, meaning we never re-read
+	#  them.. so if there are no vars, we just return immediately.
+	return unless @vars;
 
+    $self->{_variables} = { map { ($_->name || $_->item_variable_name->item_variable_name) => $_ } @vars }
+        unless $self->{_variables};
     my $variable = $self->{_variables}{$variable_name};
 
     return unless $variable;

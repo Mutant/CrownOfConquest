@@ -3,13 +3,12 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
-use Games::Dice::Advanced;
-
 use Moose;
 
 use Carp;
 use Data::Dumper;
 use Math::Round qw(round);
+use Games::Dice::Advanced;
 
 use RPG::Template;
 
@@ -61,6 +60,7 @@ __PACKAGE__->add_columns(
         'default_value'     => undef,
         'is_foreign_key'    => 0,
         'name'              => 'character_id',
+        'accessor'          => '_character_id',
         'is_nullable'       => 1,
         'size'              => '11'
     },
@@ -157,23 +157,36 @@ sub display_name {
 
 sub weight {
     my $self = shift;
-
+	
 	my $base_weight = $self->item_type->weight;
+
+	my $featherweight = $self->find_related(
+		'item_enchantments',
+		{
+			'enchantment.enchantment_name' => 'featherweight',
+		},
+		{
+			join => 'enchantment',
+		}
+	);
+	
+	if ($featherweight) {
+		$base_weight -= round($base_weight * $featherweight->variable('Featherweight') / 100);	
+	}
 
     if ( my $quantity = $self->variable('Quantity') ) {
 		return $quantity  * $base_weight;
     }
     else {
 	    return $base_weight;
-    }
-	
+    }	
 }
 
 # Override insert to populate item_variable data
 sub insert {
     my ( $self, @args ) = @_;
-
-    $self->next::method(@args);
+    
+    $self->next::method(@args);    
 
     my @item_variable_params = $self->item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
 
@@ -190,8 +203,18 @@ sub insert {
             }
         );
     }
-
+    
     return $self;
+}
+
+sub new {
+	my ( $class, $attr ) = @_;
+
+    my $self = $class->next::method($attr);
+    
+    $self->_encumbrace_trigger($self->_character_id) if $self->_character_id;
+
+    return $self;	
 }
 
 sub delete {
@@ -199,9 +222,57 @@ sub delete {
 
 	$self->_check_for_quest_item_removal();
 	
+	$self->_encumbrace_trigger(undef);
+	
     my $ret = $self->next::method(@args);
 
     return $ret;
+}
+
+sub update {
+	my ( $self, $attr ) = @_;
+
+	if (exists $attr->{character_id}) {
+		$self->_encumbrace_trigger($attr->{character_id});	
+	}
+	
+    my $ret = $self->next::method($attr);
+
+    return $ret;	
+}
+
+
+sub character_id {
+	my $self = shift;
+
+	$self->_encumbrace_trigger(@_) if @_;
+	
+	return $self->_character_id;	
+}
+
+sub _encumbrace_trigger {
+	my $self = shift;
+	my $new_char_id = shift;
+
+	my $current_char_id = $self->_character_id;
+ 
+	if (defined $current_char_id) {
+		my $character = $self->belongs_to_character;
+		$character->calculate_encumbrance(-$self->weight) if $character;
+	}
+
+	if (defined $new_char_id) {
+		my $character = $self->result_source->schema->resultset('Character')->find(
+			{
+				character_id => $new_char_id,
+			}
+		);
+		$character->calculate_encumbrance($self->weight) if $character;
+	}	
+
+	
+	$self->_character_id($new_char_id);
+	
 }
 
 sub sell_price {

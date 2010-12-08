@@ -15,6 +15,7 @@ use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Character;
 
 sub startup : Tests(startup=>1) {
     my $self = shift;
@@ -315,6 +316,98 @@ sub test_sell_price_enchanted : Tests(2) {
 	is($sell_price, 145, "Correct sell price returned");
 	is($sell_price_modified, 116, "Correct modified sell price returned");
 		
+}
+
+sub test_adding_item_updates_encumbrance : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema});
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    # WHEN
+    $item->character_id($character->id);
+    $item->update;
+    
+    # THEN
+    is($character->encumbrance, 0, "Correct encumbrance before update");
+    $character->discard_changes;
+    is($character->encumbrance, 100, "Item's weight added to character's encumbrance");
+}
+
+sub test_removing_item_updates_encumbrance : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id);
+    $character->discard_changes;
+    
+    # WHEN
+    $item->character_id(undef);
+    $item->update;
+    
+    # THEN
+    is($character->encumbrance, 100, "Correct encumbrance before update");
+    $character->discard_changes;
+    is($character->encumbrance, 0, "Item's weight removed to character's encumbrance");
+}
+
+sub test_swapping_item_updates_encumbrance : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character1 = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character1->id);
+    $character1->discard_changes;    
+    my $character2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    # WHEN
+    $item->character_id($character2->id);
+    $item->update;
+    
+    # THEN
+    is($character1->encumbrance, 100, "Char1: Correct encumbrance before update");
+    $character1->discard_changes;
+    is($character1->encumbrance, 0, "Char1: Item's weight removed to character's encumbrance");
+
+    is($character2->encumbrance, 0, "Char2: Correct encumbrance before update");
+    $character2->discard_changes;
+    is($character2->encumbrance, 100, "Char2: Item's weight added to character's encumbrance");
+}
+
+sub test_deleting_item_updates_encumbrance : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id);
+    $character->discard_changes;
+    
+    # WHEN
+    $item->delete;
+    
+    # THEN
+    is($character->encumbrance, 100, "Correct encumbrance before update");
+    $character->discard_changes;
+    is($character->encumbrance, 0, "Item's weight removed to character's encumbrance");
+}
+
+sub test_updating_via_method_item_updates_encumbrance : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id);
+    $character->discard_changes;
+    
+    # WHEN
+    $item->update({character_id => undef});
+    
+    # THEN
+    is($character->encumbrance, 100, "Correct encumbrance before update");
+    $character->discard_changes;
+    is($character->encumbrance, 0, "Item's weight removed to character's encumbrance");
 }
 
 1;

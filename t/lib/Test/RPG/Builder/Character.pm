@@ -32,6 +32,7 @@ sub build_character {
 			divinity       => $params{divinity} || 10,
 			stat_points    => 0,
 			garrison_id    => $params{garrison_id},
+			encumbrance    => 0,
 		}
 	);
 

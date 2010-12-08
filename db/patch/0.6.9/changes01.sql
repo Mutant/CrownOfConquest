@@ -23,3 +23,5 @@ insert into Enchantment_Item_Category (enchantment_id, item_category_id) values 
 insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
 insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
 
+ALTER TABLE `Character` ADD COLUMN `encumbrance` INTEGER  NOT NULL DEFAULT 0 AFTER `status_context`;
+

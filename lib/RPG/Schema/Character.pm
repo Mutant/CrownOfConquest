@@ -24,7 +24,7 @@ __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
-        mayor_of status status_context/
+        mayor_of status status_context encumbrance/
 );
 
 __PACKAGE__->numeric_columns(qw/hit_points spell_points/);
@@ -255,42 +255,22 @@ sub movement_factor {
 	return $modified;
 }
 
-sub encumbrance {
+sub calculate_encumbrance {
 	my $self = shift;
-	
-	my $total_weight_rs = $self->result_source->schema->resultset('Items')->search(
-		{
-			'character_id' => $self->id,
-		},
-		{
-			prefetch => [
-				'item_type',
-				{ 'item_variables' => 'item_variable_name' },
-			],
-		},
-	);
-	
-	$total_weight_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-	
-	my $total_weight = 0;
-	
-	while (my $item = $total_weight_rs->next) {
-		my $quantity = 1;
-
-		if ($item->{item_variables}) {
-			my @item_variables = @{$item->{item_variables}};
+	my $weight_change = shift // 0;
 			
-			
-			foreach my $variable (@item_variables) {
-				$quantity = $variable->{item_variable_value} 
-					if ($variable->{item_variable_name}{item_variable_name} || '') eq 'Quantity';	
-			}
-		}
-		
-		$total_weight += ($item->{item_type}{weight} * $quantity);
+	my $weight = 0;
+	foreach my $item ($self->items) {
+		$weight += $item->weight;	
 	}
 	
-	return $total_weight;
+	# Modify by weight change occuring on the trigger (if any)
+	$weight += $weight_change;
+		
+	$self->encumbrance($weight);
+	$self->update;
+	
+	return $weight;
 }
 
 sub encumbrance_allowance {

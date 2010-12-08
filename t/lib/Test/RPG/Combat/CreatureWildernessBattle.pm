@@ -346,7 +346,7 @@ sub test_character_action_use_item : Tests(5) {
 	$target->update;
 
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'] );
-	$item->variable_row( 'Spell',         'Heal' );
+	$item->variable_row( 'Spell', 'Heal' );
 	$item->variable_row( 'Casts Per Day', 2 );
 
 	$character->last_combat_param1( $item->variable_row('Spell')->item_enchantment_id );

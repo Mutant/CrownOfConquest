@@ -686,7 +686,7 @@ sub check_character_attack {
 						
 			$ammo->{quantity}--;
 			if ( $ammo->{quantity} <= 0 ) {
-				# Ammo used up, so deleted it
+				# Ammo used up, so delete it
 				$self->schema->resultset('Items')->find( { item_id => $ammo->{id}, }, )->delete;
 				$ammo = undef;
 			}

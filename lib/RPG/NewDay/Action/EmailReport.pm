@@ -29,6 +29,11 @@ sub run {
 	);
 
 	while ( my $party = $party_rs->next ) {
+		my @party_messages = $context->schema->resultset('Party_Messages')->search(
+			party_id => $party->id,
+			day_id => $context->yesterday->day_id,
+		);
+		
 		my $offline_combat_count = $context->schema->resultset('Combat_Log')->get_offline_log_count( $party, $context->yesterday->date_started );
 
 		my @combat_logs = $context->schema->resultset('Combat_Log')->get_recent_logs_for_party( $party, $offline_combat_count );
@@ -66,9 +71,11 @@ sub run {
 				offline_combat_count => $offline_combat_count,
 				garrison_combat_logs => \@garrison_combat_logs,
 				combat_logs          => \@combat_logs,
+				party_messages       => \@party_messages,				
 				c                    => $context,
 				quests               => \@quests,
 				in_town              => $party->location->town ? 1 : 0,
+				in_dungeon           => $party->dungeon_grid_id ? 1 : 0,
 			}
 		);
 

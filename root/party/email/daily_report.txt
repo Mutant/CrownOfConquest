@@ -8,8 +8,16 @@ Location: [% party.location.x %], [% party.location.y %]
 [% IF in_town %]
     (In the town of [% party.location.town.town_name %])
 [% ELSE %]
-	(<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
+	([% IF in_dungeon %]In a dungeon. [% END %]<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
 [% END %]<br>
+
+[% IF party_messages %]
+	<h3>Recent Messages</h3>
+	
+	[% FOREACH message IN party_messages %]
+		<li>[% message.message %]</li>
+	[% END %]
+[% END %]
 
 <h3>Battles</h3>
 

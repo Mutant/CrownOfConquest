@@ -29,3 +29,5 @@ data_file_path: /home/sam/RPG/script/data/
 online_threshold: 1
 
 no_email: 1
+
+email_log_file: /home/sam/RPG/log/email_log.html

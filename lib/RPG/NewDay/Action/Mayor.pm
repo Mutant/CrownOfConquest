@@ -420,7 +420,7 @@ sub check_if_election_needed {
 	my $self = shift;
 	my $town = shift;
 	
-	return unless $town->last_election;
+	return if ! $town->last_election || $town->current_election;
 	
 	my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
 	

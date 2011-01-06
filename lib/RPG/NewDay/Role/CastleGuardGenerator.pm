@@ -184,6 +184,19 @@ sub generate_guards {
 		$mayor->creature_group_id($mayors_group->id);
 		$mayor->update;
 	}
+	
+	# Add any garrisoned chars into the group
+	my @garrison_chars = $c->schema->resultset('Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+		}
+	);
+	
+	foreach my $character (@garrison_chars) {
+		$character->creature_group_id($mayors_group->id);
+		$character->update;
+	}	
 }
 
 sub calculate_guards_to_hire {

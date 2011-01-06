@@ -364,6 +364,7 @@ sub add_to_garrison : Local {
 	
 	$character->status('mayor_garrison');
 	$character->status_context($town->id);
+	$character->creature_group_id($town->mayor->creature_group_id);
 	$character->update;
 	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );

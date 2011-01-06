@@ -53,6 +53,11 @@ sub create : Local {
 
 sub save_party : Local {
     my ( $self, $c ) = @_;
+    
+    if ( $c->req->param('add_character') ) {
+        $c->stash->{party}->update;
+        $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
+    }    
 
     unless ( $c->req->param('name') ) {
         $c->stash->{error} = "You must enter a party name!";
@@ -74,92 +79,86 @@ sub save_party : Local {
 
     $c->stash->{party}->name( $c->req->param('name') );
 
-    if ( $c->req->param('add_character') ) {
-        $c->stash->{party}->update;
-        $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
-    }
-    else {
-        if ( $c->stash->{party}->characters->count < $c->config->{new_party_characters} ) {
-            $c->stash->{error} = "You still have more character's to create!";
-            $c->detach('create');
-        }
+    if ( $c->stash->{party}->characters->count < $c->config->{new_party_characters} ) {
+		$c->stash->{error} = "You still have more character's to create!";
+		$c->detach('create');
+	}
 
-		my $start_turns = $c->config->{starting_turns};
-		my $code = $c->model('DBIC::Promo_Code')->find(
-			{
-				'player.player_id' => $c->session->{player}->id,
-				'used' => 0,
-			},
-			{
-				'prefetch' => 'promo_org',
-				'join' => 'player',
-			},
-		);
+	my $start_turns = $c->config->{starting_turns};
+	my $code = $c->model('DBIC::Promo_Code')->find(
+		{
+			'player.player_id' => $c->session->{player}->id,
+			'used' => 0,
+		},
+		{
+			'prefetch' => 'promo_org',
+			'join' => 'player',
+		},
+	);
 		
-		if ($code) {
-			$start_turns+=$code->promo_org->extra_start_turns;
-			$code->used(1);
-			$code->update;
-		}
+	if ($code) {
+		$start_turns+=$code->promo_org->extra_start_turns;
+		$code->used(1);
+		$code->update;
+	}
 
-        $c->stash->{party}->increase_turns( $start_turns );
-        $c->stash->{party}->gold( $c->config->{start_gold} );
-        $c->stash->{party}->created( DateTime->now() );
+    $c->stash->{party}->increase_turns( $start_turns );
+    $c->stash->{party}->gold( $c->config->{start_gold} );
+    $c->stash->{party}->created( DateTime->now() );
 
-        foreach my $character ( $c->stash->{party}->characters ) {
-            $character->roll_all;
+    foreach my $character ( $c->stash->{party}->characters ) {
+        $character->roll_all;
 
-            $character->set_default_spells;
+        $character->set_default_spells;
 
-            $character->set_starting_equipment;
+        $character->set_starting_equipment;
 
-            $c->model('DBIC::Character_History')->create(
-                {
-                    character_id => $character->id,
-                    day_id       => $c->stash->{today}->id,
-                    event        => $character->character_name
-                        . " joined "
-                        . $c->stash->{party}->name
-                        . " as a fresh-faced level 1 "
-                        . $character->class->class_name,
-                },
-            );
-        }
-
-        # Find starting town
-        my @towns = shuffle $c->model('DBIC::Town')->search( 
-            { 
-                prosperity => { 
-                    '<=', $c->config->{max_starting_prosperity},
-                    '>=', $c->config->{min_starting_prosperity},
-                }, 
-            } 
-        );
-
-        my $town = shift @towns;
-        $c->stash->{party}->land_id( $town->land_id );
-
-        $c->stash->{party}->update;
-
-        # Create Watcher effect
-        my $effect = $c->model('DBIC::Effect')->create(
+        $c->model('DBIC::Character_History')->create(
             {
-                effect_name => 'Watcher',
-                time_left   => $c->config->{new_party_watcher_days},
-                time_type   => 'day',
-                combat      => 0,
+                character_id => $character->id,
+                day_id       => $c->stash->{today}->id,
+                event        => $character->character_name
+                    . " joined "
+                    . $c->stash->{party}->name
+                    . " as a fresh-faced level 1 "
+                    . $character->class->class_name,
             },
         );
-
-        $c->model('DBIC::Party_Effect')->create(
-            {
-                party_id  => $c->stash->{party}->id,
-                effect_id => $effect->id,
-            }
-        );
-
-        $c->res->redirect( $c->config->{url_root} . '/party/new_party_message' );
     }
+
+    # Find starting town
+    my @towns = shuffle $c->model('DBIC::Town')->search( 
+        { 
+            prosperity => { 
+                '<=', $c->config->{max_starting_prosperity},
+                '>=', $c->config->{min_starting_prosperity},
+            }, 
+        } 
+    );
+
+    my $town = shift @towns;
+    $c->stash->{party}->land_id( $town->land_id );
+
+    $c->stash->{party}->update;
+
+    # Create Watcher effect
+    my $effect = $c->model('DBIC::Effect')->create(
+        {
+            effect_name => 'Watcher',
+            time_left   => $c->config->{new_party_watcher_days},
+            time_type   => 'day',
+            combat      => 0,
+        },
+    );
+
+    $c->model('DBIC::Party_Effect')->create(
+        {
+            party_id  => $c->stash->{party}->id,
+            effect_id => $effect->id,
+        }
+    );
+
+    $c->res->redirect( $c->config->{url_root} . '/party/new_party_message' );
 }
 
 sub new_character : Local {
@@ -252,7 +251,7 @@ sub create_character : Local {
         my $mod_points = $c->req->param( 'mod_' . $stat ) || 0;
 
         if ( $mod_points < 0 ) {
-            $c->stash->{error} = "You've set a  modifier to a negative value! Modifiers must be positive or zero";
+            $c->stash->{error} = "You've set a modifier to a negative value! Modifiers must be positive or zero";
             $c->detach('/party/create/new_character');
         }
 

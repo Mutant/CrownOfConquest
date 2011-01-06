@@ -57,6 +57,7 @@ sub save_party : Local {
     if ( $c->req->param('add_character') ) {
         $c->stash->{party}->update;
         $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
+        return;
     }    
 
     unless ( $c->req->param('name') ) {

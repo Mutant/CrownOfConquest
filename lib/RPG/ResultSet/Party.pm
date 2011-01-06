@@ -8,13 +8,14 @@ use base 'DBIx::Class::ResultSet';
 sub get_by_player_id {
     my $self      = shift;
     my $player_id = shift;
+    
+    my %null_fields = map { 'characters.' . $_ => undef } RPG::Schema::Character->in_party_columns;
 
     return $self->find(
         {
             player_id => $player_id,
             defunct   => undef,
-            'characters.garrison_id' => undef,
-            'characters.mayor_of' => undef,
+			%null_fields,
         },
         {
             prefetch => [

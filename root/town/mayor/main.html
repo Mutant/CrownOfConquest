@@ -155,6 +155,8 @@ You can change tax settings once per day. [% IF town.tax_modified_today %]You've
 
 </div>
 	
+<div dojoType="dijit.layout.ContentPane" title="Garrison" href="[% base %]/town/mayor/garrison?town_id=[% town.id %]" [% IF tab == 'garrison' %]selected=true[% END %]></div>
+	
 <div dojoType="dijit.layout.ContentPane" title="Guards" href="[% base %]/town/mayor/guards?town_id=[% town.id %]" [% IF tab == 'guards' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Balance Sheet" href="[% base %]/town/mayor/balance_sheet?town_id=[% town.id %]&day_id=[% day_id %]" [% IF tab == 'balance_sheet' %]selected=true[% END %]></div>

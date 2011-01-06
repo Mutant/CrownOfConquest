@@ -315,4 +315,85 @@ sub schedule_election : Local {
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections' );	
 }
 
+sub garrison : Local {
+	my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	my @garrison_chars = $c->model('DBIC::Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/garrison_tab.html',
+				params => {
+					town => $town,
+					garrison_chars => \@garrison_chars,
+					party_in_sector => $c->stash->{party_location}->id == $town->land_id ? 1 : 0,
+					party => $c->stash->{party},
+					last_character => $c->stash->{party}->characters_in_party->count <= 1 ? 1 : 0,
+				}
+			}
+		]
+	);
+}
+
+sub add_to_garrison : Local {
+	my ($self, $c) = @_;
+		
+	my $town = $c->stash->{town};
+	
+	croak "Party not in sector" unless $c->stash->{party_location}->id == $town->land_id;
+	
+	my @characters = $c->stash->{party}->characters;
+	
+	croak "Can't garrison last party character" if scalar @characters <= 1;
+	
+	# Make sure the character is 'available' (i.e. loaded by the main party query)
+	#  Ensures the char is not in a garrison, etc.
+	my ($character) = grep { $_->id == $c->req->param('character_id') } @characters;
+	
+	croak "Invalid character" unless $character;
+	
+	$character->status('mayor_garrison');
+	$character->status_context($town->id);
+	$character->update;
+	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
+}
+
+sub remove_from_garrison : Local {
+	my ($self, $c) = @_;
+	
+	croak "Party full\n" if $c->stash->{party}->is_full;
+	
+	my $town = $c->stash->{town};
+	
+	my @garrison_chars = $c->model('DBIC::Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+			party_id => $c->stash->{party}->id,
+		}
+	);	
+	
+	my ($character) = grep { $_->id == $c->req->param('character_id') } @garrison_chars;
+	
+	croak "Invalid character" unless $character;
+	
+	$character->status(undef);
+	$character->status_context(undef);
+	$character->creature_group_id(undef);
+	$character->update;
+	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );	
+}
+
 1;

@@ -16,8 +16,6 @@ sub default : Path {
     my @town_characters  = $town->characters;
     my @party_characters = $c->stash->{party}->members;
 
-    my $party_full = scalar @party_characters >= $c->config->{max_party_characters};
-
     $c->forward(
         'RPG::V::TT',
         [
@@ -27,7 +25,7 @@ sub default : Path {
                     town_characters      => \@town_characters,
                     party_characters     => \@party_characters,
                     party                => $c->stash->{party},
-                    party_full           => $party_full,
+                    party_full           => $c->stash->{party}->is_full,
                     max_party_characters => $c->config->{max_party_characters},
                 },
             }

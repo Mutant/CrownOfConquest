@@ -1,0 +1,50 @@
+<h3>Garrisoned Characters</h3>
+
+Any characters garrisoned in the town will fight alongside the mayor.
+
+<br><br>
+
+[% IF garrison_chars.0 %]
+	Garrisoned characters:
+	
+	<table class="main">
+	<tr>
+	    [% INCLUDE party/party_list_header.html %]
+	</tr>
+
+	[% FOREACH char IN garrison_chars %]
+		<tr>
+		[% INCLUDE party/party_list_char_line.html %]
+		[% IF ! party.is_full %]
+			<td><a href="[% base %]town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Remove</a></td>
+		[% END %]
+		</tr>		
+	[% END %]
+
+	</table>	
+[% ELSE %]
+	You don't have any characters garrisoned in this town.
+[% END %]
+
+[% IF party_in_sector %]
+<br><br><hr size=1><br><br>
+
+Add characters to garrison:
+
+	<table class="main">
+	<tr>
+	    [% INCLUDE party/party_list_header.html %]
+	</tr>
+
+	[% FOREACH char IN party.characters %]
+		<tr>
+		[% INCLUDE party/party_list_char_line.html %]
+		[% IF ! last_character %]
+			<td><a href="[% base %]town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Add</a></td>
+		[% END %]
+		</tr>		
+	[% END %]
+
+	</table>
+
+[% END %]

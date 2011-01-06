@@ -251,6 +251,12 @@ sub characters_in_party {
 	);
 }
 
+sub is_full {
+	my $self = shift;
+	
+	return $self->characters_in_party->count >= RPG::Schema->config->{max_party_characters};	
+}
+
 sub characters_in_sector {
 	my $self = shift;
 	

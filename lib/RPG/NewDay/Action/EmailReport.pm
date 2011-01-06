@@ -6,7 +6,14 @@ extends 'RPG::NewDay::Base';
 
 use RPG::Email;
 
-sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Party/ }
+sub depends { qw/
+	RPG::NewDay::Action::CreateDay
+	RPG::NewDay::Action::Party
+	RPG::NewDay::Action::Election
+	RPG::NewDay::Action::Mayor
+	RPG::NewDay::Action::Player
+	RPG::NewDay::Action::Quest
+/ }
 
 sub run {
 	my $self    = shift;

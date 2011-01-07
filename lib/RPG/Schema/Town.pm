@@ -187,7 +187,14 @@ sub take_sales_tax {
 			message => 'Sales Tax',
 			day_id => $self->result_source->schema->resultset('Day')->find_today->id,
 		}
-	);
-	
+	);	
 }
+
+sub inn_cost {
+	my $self = shift;
+	my $character = shift || confess "Character not supplied";
+	
+	return int ($self->prosperity / 10 * $character->level / 4) + 15;	
+}
+
 1;

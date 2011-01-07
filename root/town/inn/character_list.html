@@ -1,0 +1,21 @@
+[% IF characters.0 %]
+	The following characters are staying at the inn:
+	<ul>
+	[% FOREACH character IN characters %]
+		<li>[% character.character_name %] ([% character.party.name %]) 
+			[% IF ! party.is_full && character.party.id == party.id %] 
+				- Daily Cost: [% town.inn_cost(character) %]
+				- <a href="javascript:getPanels('town/inn/remove_character?character_id=[% character.id %]')">Remove from Inn</a>
+			[% END %]
+		</li>
+	[% END %]
+	</ul>
+[% ELSE %]
+	No one is staying at the inn.
+	<br><br>	
+[% END %]
+
+<a href="[% base %]town/inn/add_character">Add Character</a>
+
+<br><br>
+[% INCLUDE town/town_footer.html %]

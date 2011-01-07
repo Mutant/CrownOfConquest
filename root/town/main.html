@@ -40,21 +40,26 @@ Your prestige here:
 [% END %]	  
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
+<div style="float: left; width: 25%">
 <b>Shops & Services</b>
 <ul>
 <li><a href="javascript:getPanels('town/shop_list')">Equipment Shops</a></li>
 <li><a href="javascript:getPanels('town/healer')">Healer</a></li>
 <li><a href="javascript:getPanels('town/sage')">Sage</a></li>
-<li><a href="[% base %]/town/blacksmith">Blacksmith</a></li>
-<li><a href="[% base %]/town/recruitment">Recruitment Office</a></li>
+<li><a href="[% base %]town/blacksmith">Blacksmith</a></li>
+<li><a href="[% base %]town/recruitment">Recruitment Office</a></li>
+<li><a href="javascript:getPanels('town/inn')">Inn</a></li>
 </ul>
+</div>
 
+<div style="float: left; width: 25%">
 <b>Town Hall</b>
 <ul>
 <li><a href="javascript:getPanels('town/quests')">Quests</a></li>
 <li><a href="javascript:getPanels('town/news')">News</a></li>
 <li><a href="javascript:getPanels('town/cemetery')">Cemetery</a></li>
-[% IF mayor && mayor.party_id == party.id %]<li><a href="[% base %]/town/mayor?town_id=[% town.id %]">Mayor's Office</a></li>[% END %]
+[% IF mayor && mayor.party_id == party.id %]<li><a href="[% base %]town/mayor?town_id=[% town.id %]">Mayor's Office</a></li>[% END %]
 </ul>
+</div>
 
 [% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]

@@ -6,6 +6,7 @@ use Moose::Role;
 
 sub lose_mayoralty {
 	my $self = shift;
+	my $killed = shift // 1;
 	
 	confess "Not a mayor" unless $self->mayor_of;
 
@@ -15,9 +16,15 @@ sub lose_mayoralty {
 	$self->creature_group_id(undef);
 	
 	unless ($self->is_npc) {
-   		$self->status('morgue');
-		$self->status_context($town->id);
-		$self->hit_points(0);
+		if ($killed) {
+	   		$self->status('morgue');
+			$self->status_context($town->id);
+			$self->hit_points(0);
+		}
+		else {
+			$self->status('inn');
+			$self->status_context($town->id);
+		}
 	}		
 	
 	$self->update;
@@ -31,9 +38,15 @@ sub lose_mayoralty {
 	);
 	
 	foreach my $char (@garrison_chars) {
-   		$char->status('morgue');
-		$char->status_context($town->id);
-		$char->hit_points(0);
+		if ($killed) {			
+	   		$char->status('morgue');
+			$char->status_context($town->id);
+			$char->hit_points(0);
+		}
+		else {
+			$char->status('inn');
+			$char->status_context($town->id);			
+		}
 		$char->update;
 	}
 	

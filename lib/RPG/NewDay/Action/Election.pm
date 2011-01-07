@@ -142,13 +142,13 @@ sub run_election {
 	else {
 		$c->logger->debug("Mayor loses to character: " . $winner->id);
 		
-		$mayor->lose_mayoralty();
+		$mayor->lose_mayoralty(0);
 				
 		unless ($mayor->is_npc) {					
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '. '
-						. ucfirst $mayor->pronoun('subjective') . " has returned to the party in shame",
+						. ucfirst $mayor->pronoun('subjective') . " is now at the town inn.",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,

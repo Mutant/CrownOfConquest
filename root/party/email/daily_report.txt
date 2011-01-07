@@ -133,7 +133,7 @@ You don't current have any active quests.
 
 <h3>Mayors</h3>
 
-[% IF ! mayors %]
+[% IF ! mayors.0 %]
 	None of your characters are mayors of a town.
 [% ELSE %]
 	[% PROCESS town/mayor/display_approval.html %]
@@ -142,6 +142,7 @@ You don't current have any active quests.
 		<tr>
 			<th>Mayor</th>
 			<th>Town</th>
+			<th>Town Prosperity</th>
 			<th>Approval Rating</th>
 			<th>Coffers</th>
 			<th>Peasant's Mood</th>
@@ -151,7 +152,8 @@ You don't current have any active quests.
 		<tr>
 			[% mayor_town = mayor.mayor_of_town %]
 			<td>[% mayor.character_name %]</td>
-			<td>[% mayor_town.town_name %] ([% mayor_town.location.x %], [% mayor_town.location.y %])</td>			
+			<td>[% mayor_town.town_name %] ([% mayor_town.location.x %], [% mayor_town.location.y %])</td>
+			<td>[% mayor_town.prosperity %]</td>
 			<td>[% display_rating(mayor_town.mayor_rating) %]</td>
 			<td>[% mayor_town.gold %]</td>
 			<td>[% IF mayor_town.peasant_state == 'revolt' %]In revolt[% ELSE %]Ok[% END %]</td>

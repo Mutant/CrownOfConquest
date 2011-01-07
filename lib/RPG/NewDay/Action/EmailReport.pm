@@ -13,6 +13,7 @@ sub depends { qw/
 	RPG::NewDay::Action::Mayor
 	RPG::NewDay::Action::Player
 	RPG::NewDay::Action::Quest
+	RPG::NewDay::Action::Inn
 / }
 
 sub run {

@@ -9,6 +9,9 @@ use List::Util qw(shuffle);
 use Data::Dumper;
 use Carp;
 
+# Run after Inn, so calculations of inn costs are applied before prosperity changes
+sub depends { qw/RPG::NewDay::Action::Inn/ }
+
 sub run {
     my $self    = shift;
     my $context = $self->context;

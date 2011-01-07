@@ -190,6 +190,8 @@ __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison',
 	{ where => {'land_id' => {'!=', undef}} }, 
 );
 
+__PACKAGE__->has_many( 'messages', 'RPG::Schema::Party_Messages', 'party_id', );
+
 __PACKAGE__->numeric_columns(qw/gold/); # Can't use this for turns..
 
 with qw/

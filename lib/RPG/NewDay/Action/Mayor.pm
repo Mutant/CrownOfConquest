@@ -136,6 +136,8 @@ sub calculate_approval {
 	my $self = shift;
 	my $town = shift;
 	
+	my $mayor = $town->mayor;
+	
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
@@ -168,6 +170,7 @@ sub calculate_approval {
 	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
 	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);
+	$guards_hired_adjustment++ unless $mayor->is_npc; # Make a few less guards required
 	
 	my $garrison_chars_adjustment = 0;
 	

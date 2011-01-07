@@ -22,7 +22,9 @@ sub setup_player : Tests(startup => 1) {
     $self->{mock_mime_lite} = Test::MockObject::Extra->new();
     $self->{mock_mime_lite}->fake_module('MIME::Lite',
         send => sub {},
-        'new' => sub { $self->{mock_mime_lite} }
+        'new' => sub { $self->{mock_mime_lite} },
+        header_as_string => sub {},
+        body_as_string => sub {},
     );
     
     $self->{rpg_template} = Test::MockObject::Extra->new();

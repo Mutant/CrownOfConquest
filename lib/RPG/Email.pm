@@ -6,6 +6,7 @@ package RPG::Email;
 use RPG::Template;
 
 use MIME::Lite;
+use Log::Dispatch;
 
 sub send {
 	my $self = shift;

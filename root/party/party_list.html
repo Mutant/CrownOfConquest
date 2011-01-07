@@ -48,7 +48,7 @@
 	[% SWITCH action.target %]
 		[% CASE ['self','none'] %]
 			[% single_target(caster, '', action, num_left, action_type, inprogress_label) %]
-		[% CASE 'party' %]			
+		[% CASE 'party' %]
 			[% single_target(caster, party.id, action, num_left, action_type, inprogress_label) %]
 		[% CASE ['creature', 'character'] %]
 			[% targets = action.target == 'creature' ? opponents : characters %]

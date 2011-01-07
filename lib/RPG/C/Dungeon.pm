@@ -745,7 +745,7 @@ sub exit : Private {
     
     undef $c->session->{spotted};
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party' ] );
 }
 
 sub search_room : Local {

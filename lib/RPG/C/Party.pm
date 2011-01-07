@@ -226,6 +226,8 @@ sub list : Private {
 		$party->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
 
 		my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
+		
+		@spells = grep { $_->spell->can_cast($character) } @spells;
 
 		$spells{ $character->id } = \@spells if @spells;
 
@@ -470,7 +472,7 @@ sub select_action : Local {
 
 	$c->stash->{messages} = $message;	
 
-	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party', 'map' ] );
 }
 
 sub scout : Local {
@@ -700,7 +702,7 @@ sub enter_dungeon : Local {
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
 
-	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom' ] );
+	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party' ] );
 }
 
 sub zoom : Private {

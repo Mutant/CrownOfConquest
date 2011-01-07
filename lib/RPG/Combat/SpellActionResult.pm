@@ -9,7 +9,7 @@ extends 'RPG::Combat::ActionResult';
 has 'type' => ( is => 'ro', isa => 'Str', required => 1 );    # TODO: enforce allowed values
 has 'duration'   => ( is => 'ro', isa => 'Int' );
 has 'time_type'  => ( is => 'ro', isa => 'Str', default => 'round' );
-has 'effect'     => ( is => 'ro', isa => 'Str', required => 1 );
+has 'effect'     => ( is => 'ro', isa => 'Str', required => 0 );
 has 'spell_name' => ( is => 'ro', isa => 'Str', required => 1 );
 
 __PACKAGE__->meta->make_immutable;

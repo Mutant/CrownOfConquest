@@ -117,4 +117,11 @@ sub label {
 	return $self->spell_name;	
 }
 
+sub can_cast {
+	my $self = shift;
+	my $caster = shift;
+	
+	return 1;	
+}
+
 1;

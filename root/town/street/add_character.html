@@ -1,0 +1,28 @@
+[% INCLUDE top.html %]
+
+<h3>Add a Character to the Streets of [% town.town_name %]</h3>
+
+[% IF characters.size > 1 %]
+	Leave a character on the town streets. They'll sleep rough, so it won't cost a thing. But be warned - they might face thieves, or worse!
+	<br><br>
+	<table class="main">
+	<tr>
+	    [% INCLUDE party/party_list_header.html %]
+	</tr>
+	
+	[% FOREACH char IN characters %]
+		<tr>
+		[% INCLUDE party/party_list_char_line.html %]
+		<td><a href="?character_id=[% char.id %]">Add to Streets</a></td>
+		</tr>
+	[% END %]
+	
+	</table>
+[% ELSE %]
+	You only have one character in your party, so can't add anyone to the streets.
+[% END %]
+
+<br><br>
+<a href="[% base %]">Back To Town</a>
+
+[% INCLUDE bottom.html %]

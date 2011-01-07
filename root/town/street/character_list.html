@@ -1,0 +1,20 @@
+[% IF characters.0 %]
+	The following characters are sleeping rough on the streets:
+	<ul>
+	[% FOREACH character IN characters %]
+		<li>[% character.character_name %] ([% character.party.name %]) 
+			[% IF ! party.is_full && character.party.id == party.id %] 
+				- <a href="javascript:getPanels('town/street/remove_character?character_id=[% character.id %]')">Remove from Street</a>
+			[% END %]
+		</li>
+	[% END %]
+	</ul>
+[% ELSE %]
+	No one is living on the streets
+	<br><br>	
+[% END %]
+
+<a href="[% base %]town/street/add_character">Add Character</a>
+
+<br><br>
+[% INCLUDE town/town_footer.html %]

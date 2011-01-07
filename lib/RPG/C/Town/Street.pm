@@ -1,4 +1,4 @@
-package RPG::C::Town::Inn;
+package RPG::C::Town::Street;
 
 use strict;
 use warnings;
@@ -15,20 +15,20 @@ sub default : Local {
 sub character_list : Private {
 	my ($self, $c) = @_;
 	
-	$c->forward('/town/characterhold/character_list', ['inn']);
+	$c->forward('/town/characterhold/character_list', ['street']);
 	
 }
 
 sub add_character : Local {
 	my ($self, $c) = @_;
 
-	$c->forward('/town/characterhold/add_character', ['inn']);
+	$c->forward('/town/characterhold/add_character', ['street']);
 }
 
 sub remove_character : Local {
 	my ($self, $c) = @_;
 	
-	$c->forward('/town/characterhold/remove_character', ['inn']);
+	$c->forward('/town/characterhold/remove_character', ['street']);
 }
 
 1;

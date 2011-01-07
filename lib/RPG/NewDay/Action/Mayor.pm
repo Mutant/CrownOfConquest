@@ -298,11 +298,20 @@ sub process_revolt {
 	    $guard_bonus = int ($guards_rec->get_column('level_aggregate') // 0) / 100;
 	}
 	
+	my $garrison_aggregate = $self->context->schema->resultset('Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+		}
+	)->count;
+	
+	my $garrison_bonus = int $garrison_aggregate / 15;
+	
     my $prosp_penalty = int $town->prosperity / 10;
 
-	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty");
+	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus");
 
-    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty;
+    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus;
     
     $c->logger->debug("Overthrow roll: $roll");
 

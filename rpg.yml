@@ -352,6 +352,9 @@ min_days_for_election_candidacy: 2
 # Range to decay the CTR of sectors around a town
 decay_ctr_range: 3
 
+# Max number of characters that can be garrisoned in a town (by mayor)
+mayor_garrison_max_characters: 5
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

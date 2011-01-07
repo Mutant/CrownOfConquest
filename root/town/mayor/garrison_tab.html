@@ -1,6 +1,6 @@
 <h3>Garrisoned Characters</h3>
 
-Any characters garrisoned in the town will fight alongside the mayor.
+Any characters garrisoned in the town will fight alongside the mayor. You can garrison up to [% max_chars %] characters in the town.
 
 <br><br>
 
@@ -39,7 +39,7 @@ Add characters to garrison:
 	[% FOREACH char IN party.characters %]
 		<tr>
 		[% INCLUDE party/party_list_char_line.html %]
-		[% IF ! last_character %]
+		[% IF ! last_character && ! garrison_full %]
 			<td><a href="[% base %]town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Add</a></td>
 		[% END %]
 		</tr>		

@@ -339,6 +339,8 @@ sub garrison : Local {
 					party_in_sector => $c->stash->{party_location}->id == $town->land_id ? 1 : 0,
 					party => $c->stash->{party},
 					last_character => $c->stash->{party}->characters_in_party->count <= 1 ? 1 : 0,
+					garrison_full => scalar @garrison_chars >= $c->config->{mayor_garrison_max_characters} ? 1 : 0,
+					max_chars =>  $c->config->{mayor_garrison_max_characters},
 				}
 			}
 		]
@@ -355,6 +357,16 @@ sub add_to_garrison : Local {
 	my @characters = $c->stash->{party}->characters;
 	
 	croak "Can't garrison last party character" if scalar @characters <= 1;
+	
+	my $garrison_chars = $c->model('DBIC::Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+			party_id => $c->stash->{party}->id,
+		}
+	)->count;
+	
+	croak "Garrison full\n" if $garrison_chars >= $c->config->{mayor_garrison_max_characters};
 	
 	# Make sure the character is 'available' (i.e. loaded by the main party query)
 	#  Ensures the char is not in a garrison, etc.

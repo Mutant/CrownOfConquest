@@ -40,7 +40,7 @@ sub shutdown : Test(shutdown) {
 	$self->unmock_dice;	
 }
 
-sub test_process_revolt_overthrow : Tests(4) {
+sub test_process_revolt_overthrow : Tests(7) {
 	my $self = shift;
 	
 	# GIVEN
@@ -54,7 +54,14 @@ sub test_process_revolt_overthrow : Tests(4) {
 	$character->mayor_of($town->id);
 	$character->update;
 	
+	my $garrison_character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$garrison_character->status('mayor_garrison');
+	$garrison_character->status_context($town->id);
+	$garrison_character->update;
+	
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	$self->{config}{level_hit_points_max}{test_class} = 6;
 	
 	# WHEN
 	$action->process_revolt($town);
@@ -73,6 +80,11 @@ sub test_process_revolt_overthrow : Tests(4) {
 		}
 	);
 	is(defined $new_mayor, 1, "New mayor generated");
+	
+	$garrison_character->discard_changes;
+	is($garrison_character->status, 'morgue', "Garrison character placed in morgue");
+	is($garrison_character->status_context, $town->id, "Garrsion character has correct status context");
+	is($garrison_character->hit_points, 0, "Garrison character has 0 hps");
 }
 
 sub test_check_for_pending_mayor_expiry : Tests(2) {

@@ -71,6 +71,19 @@ __PACKAGE__->might_have( 'mayoral_candidacy', 'RPG::Schema::Election_Candidate',
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
 
+sub inflate_result {
+    my $pkg = shift;
+
+    my $self = $pkg->next::method(@_);
+
+    if ($self->mayor_of) {
+    	$self->ensure_class_loaded('RPG::Schema::Role::Character::Mayor');
+    	RPG::Schema::Role::Character::Mayor->meta->apply($self);		
+    }
+
+    return $self;
+}
+
 sub strength {
 	my $self = shift;
 	
@@ -318,6 +331,8 @@ sub roll_hit_points {
     }
 
     my $point_max = RPG::Schema->config->{level_hit_points_max}{$class};
+    
+    confess "Couldn't find max hit points for $class" unless $point_max;
 
     if ( ref $self ) {
         my $points = $self->_roll_points( 'constitution', $point_max );

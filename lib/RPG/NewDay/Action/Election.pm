@@ -142,14 +142,9 @@ sub run_election {
 	else {
 		$c->logger->debug("Mayor loses to character: " . $winner->id);
 		
-		$mayor->mayor_of(undef);
-		$mayor->creature_group(undef);		
-		
-		unless ($mayor->is_npc) {
-			# TODO: they go to the morgue for now, but shouldn't really be such a harsh punishment 
-			$mayor->status('morgue');
-			$mayor->status_context($town->id);			
-			
+		$mayor->lose_mayoralty();
+				
+		unless ($mayor->is_npc) {					
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '. '
@@ -160,13 +155,10 @@ sub run_election {
 				}
 			);
 		}
-		$mayor->update;
 		
 		$winner->mayor_of($town->id);
 		$winner->update;
-		
-		$town->mayor_rating(0);		
-		
+				
 		$c->schema->resultset('Town_History')->create(
         	{
 				town_id => $election->town_id,
@@ -195,10 +187,9 @@ sub run_election {
 
 	$election->status('Closed');
 	$election->update;
-	
-	$town->last_election($election->scheduled_day);
-	$town->update;
 
+	$town->last_election($election->scheduled_day);
+	$town->update;	
 }
 
 __PACKAGE__->meta->make_immutable;

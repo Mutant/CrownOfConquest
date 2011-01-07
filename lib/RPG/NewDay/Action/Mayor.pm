@@ -309,8 +309,7 @@ sub process_revolt {
     my $mayor = $town->mayor;
         
     if ($roll < 20) {
-    	$mayor->mayor_of(undef);
-    	$mayor->creature_group(undef);
+    	$mayor->lose_mayoralty;
     	
     	my $new_mayor = $self->create_mayor($town);
     	
@@ -321,16 +320,8 @@ sub process_revolt {
 	            	' much more agreeable ' . $new_mayor->character_name,
     		}
     	);
-    	$town->mayor_rating(0);
-    	$town->peasant_state(undef);
-    	$town->last_election(undef);    	
-    	$town->update;
     	    	    	
-    	if ($mayor->party_id) {
-    		$mayor->status('morgue');
-			$mayor->status_context($town->id);
-			$mayor->hit_points(0);
-    		
+    	if ($mayor->party_id) {    		
 			$c->schema->resultset('Party_Messages')->create(
 				{
 					message => $mayor->character_name . " was overthown by the peasants of " . $town->town_name . " and is no longer mayor. " 
@@ -342,7 +333,6 @@ sub process_revolt {
 				}
 			);
     	}
-    	$mayor->update;
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);

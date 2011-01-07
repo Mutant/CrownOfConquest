@@ -566,13 +566,10 @@ sub become_mayor : Local {
 			mayor_of => $town->id,
 		}
 	);
-	$mayor->mayor_of(undef);
+	$mayor->lose_mayoralty;
 
 	# Leave a message for the mayor's party
 	if ($mayor->party_id) {
-		$mayor->status('morgue');
-		$mayor->status_context($town->id);
-
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
@@ -584,8 +581,6 @@ sub become_mayor : Local {
 			}
 		);		
 	}
-
-	$mayor->update;
 
 	$character->mayor_of( $town->id );	
 	$character->update;

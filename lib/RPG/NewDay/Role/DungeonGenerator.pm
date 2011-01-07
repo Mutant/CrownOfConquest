@@ -22,6 +22,18 @@ sub _build_positions {
 	return { map { $_->position => $_->position_id } $self->context->schema->resultset('Dungeon_Position')->search };
 }
 
+sub get_door_type {
+	my $self = shift;
+	
+	my $door_type = 'standard';
+	
+	if ( Games::Dice::Advanced->roll('1d100') <= 15 ) {
+		$door_type = ( shuffle( $self->alternative_door_types ) )[0];
+	}
+	
+	return $door_type;
+}
+
 sub generate_dungeon_grid {
 	my $self      = shift;
 	my $dungeon   = shift;
@@ -42,7 +54,7 @@ sub generate_dungeon_grid {
 		my ( $start_x, $start_y );
 
 		my $wall_to_join;
-		my $door_type = 'standard';
+		my $door_type;
 
 		if ( $current_room_number == 1 ) {
 
@@ -64,9 +76,7 @@ sub generate_dungeon_grid {
 			( $start_x, $start_y ) = $wall_to_join->opposite_sector;
 
 			# Create existing side of the door
-			if ( Games::Dice::Advanced->roll('1d100') <= 15 ) {
-				$door_type = ( shuffle( $self->alternative_door_types ) )[0];
-			}
+			$door_type = $self->get_door_type;
 
 			my $door = $c->schema->resultset('Door')->create(
 				{
@@ -114,6 +124,20 @@ sub generate_dungeon_grid {
 				}
 			);
 		}
+	}
+	
+	my @all_sectors;
+	foreach my $y_line (@$sectors_created) {
+		foreach my $sector (@$y_line) {
+			next unless defined $sector;
+			push @all_sectors, $sector;
+		}
+	}	
+	
+	my $extra_doors = Games::Dice::Advanced->roll('1d6') + int $number_of_rooms / 10 + 3;
+	$c->logger->debug("Generating $extra_doors extra doors");
+	for (1 .. $extra_doors) {
+		$self->_generate_extra_doors(\@all_sectors);
 	}
 }
 
@@ -483,6 +507,74 @@ sub populate_sector_paths {
 	
 	$dungeon->populate_sector_paths($max_moves);
 		
+}
+
+# Find random sectors joining two rooms (i.e. with walls between them) that don't already have doors, 
+#  and create a new door there. This creates dungeons with multiple paths between rooms
+sub _generate_extra_doors {
+	my $self = shift;
+	my $sectors = shift;
+	
+	SECTOR: foreach my $sector (shuffle @$sectors) {
+		# Find the walls for this sector, if any
+		my @walls = $sector->walls;
+		next unless @walls;
+		
+		# We have some walls, find one that doesn't already have a door, if any
+		foreach my $wall (shuffle @walls) {
+			my $pos = $wall->position->position;
+			
+			next if $sector->has_door($pos);
+			
+			# Now see if there's already a door in this room in the same
+			#  position, on the same x/y access (depending on position).
+			#  This avoids two doors opening into the same room in the same
+			#  direction (which is pretty much pointless)
+			
+			my $axis;
+			$axis = 'y';
+			$axis = 'x' if $pos eq 'right' or $pos eq 'left';
+			
+			my $other_doors = $self->context->schema->resultset('Door')->search(
+				{
+					"dungeon_grid.$axis" => $sector->$axis,
+					'position.position' => $pos,
+					'dungeon_grid.dungeon_room_id' => $sector->dungeon_room_id,
+				},
+				{
+					join => ['dungeon_grid', 'position'],
+				},
+			)->count;
+			
+			next if $other_doors >= 1;
+			
+			# Looks good, now see if there's a sector on the other side of the wall
+			my $opposite_wall = $wall->opposite_wall;
+			
+			next unless $opposite_wall;
+			
+			# Ok, we've got an opposite wall - we can create a door now.
+			my $door_type = $self->get_door_type;
+			
+			my $door1 = $self->context->schema->resultset('Door')->create(
+				{
+					position_id     => $wall->position_id,
+					dungeon_grid_id => $wall->dungeon_grid_id,
+					type            => $door_type,
+				}
+			);
+
+			my $door2 = $self->context->schema->resultset('Door')->create(
+				{
+					position_id     => $opposite_wall->position_id,
+					dungeon_grid_id => $opposite_wall->dungeon_grid_id,
+					type            => $door_type,
+				}
+			);
+			
+			last SECTOR;
+		}
+	}
 }
 
 1;

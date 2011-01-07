@@ -4,12 +4,15 @@
 	x = min_x - 1;
 	y = min_y - 1;
 	size = 40;
-	door_thickness = size / 10;
+	door_thickness = 3;
 	door_length = size - 4;
 
 %]	
 
-<div style="position: relative; top: 300px">
+<form method="GET">Dungeon id: <input type="text" size="3" name="dungeon_id"> <input type="submit"> </form>
+
+<div style="position: relative; top: 300px; background: white">
+
 <br><br><br><br><br><br><br><br>	
 [% WHILE y <= max_y %]
 	[% y = y+1 %]
@@ -25,7 +28,7 @@
 					[% FOREACH side_with_wall IN sector.sides_with_walls %]
 						[% IF side_with_wall == side %]
 							[% border_color = "black" %]
-							[% border = border _ "border-" _ side _ ": 5px solid " _  border_color _ "; " %]
+							[% border = border _ "border-" _ side _ ": 2px solid " _  border_color _ "; " %]
 						[% END %]
 					[% END %]				
 				
@@ -48,7 +51,7 @@
 					left: [% (sector.x - min_x) * size %]; 
 					top: [% (sector.y - min_y) * size %];
 					background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
-					font-size: [% size / 2 %]px;
+					font-size: [% size / 3 %]px;
 					text-align: center"
 					[% IF scroll_to_x == sector.x && scroll_to_y == sector.y %]id="scroll-to"[% END %]
 					>
@@ -107,6 +110,7 @@
 					width: [% size - 2 %]px; 
 					height: [% size - 2 %]px; 					
 					position: absolute;
+					background: white;
 				"
 				>					
 				</div>

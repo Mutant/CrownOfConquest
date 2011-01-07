@@ -121,6 +121,22 @@ sub get_door_at {
     }	
 }
 
+# Returns the wall at a particular position, or undef if none exists
+sub get_wall_at {
+	my $self = shift;
+	my $wall_side = shift;
+	
+	return undef unless $self->has_wall($wall_side);
+	
+	my @walls = $self->walls;
+	
+    foreach my $wall (@walls) {
+        if ($wall->position->position eq $wall_side) {
+        	return $wall;	
+        }
+    }	
+}
+
 sub sectors_allowed_to_move_to {
     my $self      = shift;
     my $max_moves = shift;

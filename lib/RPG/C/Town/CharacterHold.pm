@@ -51,6 +51,7 @@ sub add_character : Local {
 	confess "Hold not supplied" unless $hold;
 
 	my @characters = grep { ! $c->req->param('character_id') || $_->id != $c->req->param('character_id') } $c->stash->{party}->characters;
+	@characters = grep { ! $_->is_dead } @characters;
 		
 	if ($c->req->param('character_id')) {
 		croak "Can't empty party\n" unless @characters;
@@ -58,6 +59,8 @@ sub add_character : Local {
 		my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
 		
 		croak "Invalid character\n" unless $character;
+		
+		croak "Character is dead\n" if $character->is_dead;
 		
 		$character->status($hold);
 		$character->status_context($c->stash->{party_location}->town->id);

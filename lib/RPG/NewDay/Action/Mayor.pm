@@ -6,6 +6,7 @@ extends 'RPG::NewDay::Base';
 use Data::Dumper;
 use Games::Dice::Advanced;
 use List::Util qw(sum);
+use Math::Round qw(round);
 
 with 'RPG::NewDay::Role::CastleGuardGenerator';
 
@@ -151,7 +152,7 @@ sub calculate_approval {
 	my $guards_killed_adjustment = - $guards_killed;
 		
 	my $party_tax_adjustment = int $tax_collected / 100;
-	my $peasant_tax_adjustment = - $town->peasant_tax / 2; # The -3 stops it trending up for npc mayors
+	my $peasant_tax_adjustment = - $town->peasant_tax / 2;
 	
  	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 		{
@@ -165,21 +166,48 @@ sub calculate_approval {
 	);
 
 	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
-	$self->context->logger->debug("Level aggregate: " . $creature_level);
-	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);	
+	#$self->context->logger->debug("Level aggregate: " . $creature_level);
+	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);
+	
+	my $garrison_chars_adjustment = 0;
+	
+	# Adjustment for garrison characters - not applied to npc mayors
+	if (! $town->mayor->is_npc) {
+		my $expected_garrison_chars_level = 0;
+		$expected_garrison_chars_level = 12 if $town->prosperity > 35;
+		$expected_garrison_chars_level = 25 if $town->prosperity > 65;
+		$expected_garrison_chars_level = 40 if $town->prosperity > 85;
+		
+		my @garrison_chars = $self->context->schema->resultset('Character')->search(
+			{
+				status => 'mayor_garrison',
+				status_context => $town->id,
+			}
+		);
+		
+		my $actual_garrison_chars_level = 0;
+		foreach my $char (@garrison_chars) {
+			$actual_garrison_chars_level += $char->level;	
+		}
+		
+		#$self->context->logger->debug("Garrison expected: " . $expected_garrison_chars_level . "; actual: $actual_garrison_chars_level");
+		
+		$garrison_chars_adjustment = round(($actual_garrison_chars_level - $expected_garrison_chars_level) / 10);
+	}
 		
 	# A random component to approval
-	my $random_adjustment += Games::Dice::Advanced->roll('1d11') - 6;
+	my $random_adjustment += Games::Dice::Advanced->roll('1d5') - 3;
 	
 	my $adjustment = $raids_adjustment + $guards_killed_adjustment + $party_tax_adjustment + 
-		$peasant_tax_adjustment + $guards_hired_adjustment + $random_adjustment;
+		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $random_adjustment;
 
 	$adjustment = -10 if $adjustment < -10;
 	$adjustment =  10 if $adjustment >  10;
 	
 	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
 		"[Raid: $raids_adjustment; Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
-		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Random: $random_adjustment]");
+		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Garrison Chars: $garrison_chars_adjustment; " .
+		"Random: $random_adjustment]");
 	
 	$town->adjust_mayor_rating($adjustment);
 	$town->update;

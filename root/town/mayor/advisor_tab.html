@@ -6,3 +6,16 @@ Here you can hire an advisor, paying him the nominated sum each day. The more yo
 <input type="hidden" name="town_id" value="[% town.id %]">
 Daily advisor payment: <input type="text" size="4" value="[% town.advisor_fee %]" name="advisor_fee"> <input type="submit" value="Update">
 </form>
+<br><br>
+[% IF advice.0 %]
+<b>Recent Advice:</b>
+
+<table class="main">
+	[% FOREACH advice_item IN advice %]
+	<tr>
+		<td width="80" nowrap>Day [% advice_item.day.day_number %]</td>
+		<td>[% advice_item.message %]</td>
+	</tr>
+	[% END %]
+</table>
+[% END %]

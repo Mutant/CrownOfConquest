@@ -414,6 +414,20 @@ sub advisor : Local {
 	
 	my $town = $c->stash->{town};
 	
+	my $current_day = $c->stash->{today}->day_number;
+
+	my @advice = $c->model('DBIC::Town_History')->search(
+		{
+			town_id          => $town->id,
+			'day.day_number' => { '<=', $current_day, '>=', $current_day - 7 },
+			type => 'advice',
+		},
+		{
+			prefetch => 'day',
+			order_by => 'day_number desc, date_recorded',
+		}
+	);
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -421,6 +435,7 @@ sub advisor : Local {
 				template => 'town/mayor/advisor_tab.html',
 				params => {
 					town => $town,
+					advice => \@advice,
 				}
 			}
 		]

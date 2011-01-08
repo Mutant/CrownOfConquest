@@ -551,7 +551,7 @@ sub generate_advice {
 				}					
 			);
 						
-			if ($town->expected_garrison_chars_level < $garrison_char_rec->get_column('level_aggregate')) {
+			if ($town->expected_garrison_chars_level > $garrison_char_rec->get_column('level_aggregate')) {
 				$advice = "You could use some more protection. Adding more characters to the town's garrison will give you an edge";
 				last;	
 			}

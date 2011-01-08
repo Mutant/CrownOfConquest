@@ -5,8 +5,10 @@ extends 'RPG::NewDay::Base';
 
 use Data::Dumper;
 use Games::Dice::Advanced;
-use List::Util qw(sum);
+use List::Util qw(sum shuffle);
 use Math::Round qw(round);
+
+use feature 'switch';
 
 with 'RPG::NewDay::Role::CastleGuardGenerator';
 
@@ -65,6 +67,7 @@ sub run {
 			$town->sales_tax(10);
 			$town->base_party_tax(20);
 			$town->party_tax_level_step(30);
+			$town->advisor_fee(0);
 			$town->update;
 			
 			$self->check_for_npc_election($town);
@@ -105,6 +108,8 @@ sub run {
     	if (! $revolt_started && $town->peasant_state) {
     		$self->process_revolt($town);
     	}
+    	
+    	$self->generate_advice($town);
 	}
 	
 	# Clear all tax paid / raids today
@@ -176,10 +181,7 @@ sub calculate_approval {
 	
 	# Adjustment for garrison characters - not applied to npc mayors
 	if (! $town->mayor->is_npc) {
-		my $expected_garrison_chars_level = 0;
-		$expected_garrison_chars_level = 12 if $town->prosperity > 35;
-		$expected_garrison_chars_level = 25 if $town->prosperity > 65;
-		$expected_garrison_chars_level = 40 if $town->prosperity > 85;
+		my $expected_garrison_chars_level = $town->expected_garrison_chars_level;
 		
 		my @garrison_chars = $self->context->schema->resultset('Character')->search(
 			{
@@ -465,6 +467,131 @@ sub check_if_election_needed {
     		}
     	);		
 	}	
+}
+
+sub generate_advice {
+	my $self = shift;
+	my $town = shift;
+		
+	my $advisor_fee = $town->advisor_fee;
+	if ($town->gold < $advisor_fee) {
+		$advisor_fee = $town->gold;
+	}
+	
+	$town->decrease_gold($advisor_fee);
+	$town->update;
+	
+	$town->add_to_history(
+		{
+			type => 'expense',
+			value => $advisor_fee,
+			message => 'Advisor Fee',
+			day_id => $self->context->current_day->id,
+		}
+	);  	
+	
+	my $advice_chance = int $advisor_fee / ($town->prosperity / 10);
+	
+	if (Games::Dice::Advanced->roll('1d100') > $advice_chance) {
+		# No advice given
+		return;	
+	}
+	
+	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt/;
+
+	my $advice;	
+	for (shuffle @checks) {
+		# Do they need more guards?
+		when ('guards') {
+		 	my $creature_rec = $self->context->schema->resultset('Creature')->find(
+				{
+					'dungeon_room.dungeon_id' => $town->castle->id,
+				},
+				{
+					join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
+					select => 'sum(type.level)',
+					as => 'level_aggregate',			
+				}
+			);
+			
+			my $creature_level = $creature_rec->get_column('level_aggregate') || 0;
+			
+			if ($creature_level / $town->prosperity < 5) {
+				$advice = "The townsfolk don't feel safe, perhaps you should hire some more guards";
+				last;	
+			}
+		}
+		
+		# Is peasant tax too high?
+		when ('peasant_tax') {
+			if ($town->peasant_tax > 25) {
+				$advice = "The taxes seem very high, the peasants are not happy.";
+				last;	
+			}	
+		}
+		
+		# Is sales tax too high?
+		when ('sales_tax') {
+			if ($town->sales_tax > 25) {
+				$advice = "The local merchants are complaining that the sales tax is putting them out of business. Perhaps you should reduce it. ";
+				last; 	
+			}	
+		}
+		
+		# Do they need more garrison chars
+		when ('garrison') {
+			my $garrison_char_rec = $self->context->schema->resultset('Character')->find(
+				{
+					status => 'mayor_garrison',
+					status_context => $town->id,
+				},
+				{
+					select => 'sum(level)',
+					as => 'level_aggregate',	
+				}					
+			);
+						
+			if ($town->expected_garrison_chars_level < $garrison_char_rec->get_column('level_aggregate')) {
+				$advice = "You could use some more protection. Adding more characters to the town's garrison will give you an edge";
+				last;	
+			}
+		}
+		
+		# Does an election need to be scheduled
+		when ('election') {
+			next unless $town->last_election;
+			my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
+			if ($days_since_last_election >= 12) {
+				$advice = "The town hasn't run an election in a while - schedule one before the towns people become restless";
+				last;	
+			}
+		}
+		
+		when ('approval') {
+			if ($town->mayor_rating < -50) {
+				$advice = "Your approval rating is very low. Hire more guards, lower the taxes or schedule an election to help appease the peasants";
+				last;	
+			}	
+		}
+		
+		when ('revolt') {
+			if ($town->peasant_state eq 'revolt') {
+				$advice = "The peasants are in revolt - it must be crushed! Garrison more characters and hire more guards";
+				last; 
+			}					
+		}
+	}
+	
+	$advice ||= "No advice necessary - you're doing a great job!";
+	
+	$town->add_to_history(
+		{
+			type => 'advice',
+			message => $advice,
+			day_id => $self->context->current_day->id,
+		}
+	);	
+	
 }
 
 1;

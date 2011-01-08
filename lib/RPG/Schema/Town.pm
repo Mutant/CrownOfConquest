@@ -200,4 +200,15 @@ sub inn_cost {
 	return int ($self->prosperity / 10 * $character->level / 4) + 15;	
 }
 
+sub expected_garrison_chars_level {
+	my $self = shift;
+	
+	my $expected_garrison_chars_level = 0;
+	$expected_garrison_chars_level = 12 if $self->prosperity > 35;
+	$expected_garrison_chars_level = 25 if $self->prosperity > 65;
+	$expected_garrison_chars_level = 40 if $self->prosperity > 85;
+	
+	return $expected_garrison_chars_level;
+}
+
 1;

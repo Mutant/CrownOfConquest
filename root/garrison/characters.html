@@ -1,6 +1,20 @@
-<b>Garrison Name (optional)</b>: <input type="text" id="garrison-name" value="[% garrison.name %]" size="50" 
-	[% IF ! editable %]onBlur="updateGarrisonName(this)"[% END %]>	
+
+[% IF ! garrison %]
+<b>Garrison Name (optional)</b>: <input type="text" id="garrison-name" value="[% garrison.name %]" size="50">
 <br><br>
+[% ELSE %]
+<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Garrison's Name" execute="changeName(arguments[0]);">
+    Change Garrison's Name To: <input type="text" value="[% garrison.name | html_entity %]" dojoType=dijit.form.TextBox id="garrison-name" name="garrison_name">
+    <input id="garrison-id" name="garrison_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="[% garrison.id %]">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+</div>
+
+<h1><span id="name-header">[% garrison.display_name(1) %]</span> <a href="javascript:dijit.byId('change-name-diag').show()" class="main">Change</a></h1>
+[% END %]
 
 <div [% UNLESS garrison.characters %]style="display: none"[% END %] id="garrison-list-outer">
 	<h3>Characters in the Garrison</h3>

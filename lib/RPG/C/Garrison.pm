@@ -181,9 +181,6 @@ sub update : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
-	$c->stash->{garrison}->name($c->req->param('name') || undef);
-	$c->stash->{garrison}->update;
-	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
 	
 }
@@ -520,6 +517,14 @@ sub update_garrison_name : Local {
 	
 	$c->stash->{garrison}->name($c->req->param('name') || undef);
 	$c->stash->{garrison}->update;
+	
+	$c->res->body(
+		to_json(
+			{
+				new_name => $c->stash->{garrison}->display_name(1),
+			}
+		)
+	);
 }
 
 1;

@@ -80,12 +80,16 @@ function removeGarrison() {
 	document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]';
 }
 
-function updateGarrisonName(input) {
+function changeName(arguments) {
+	var new_name = arguments.garrison_name;
+
 	dojo.xhrGet( {
-        url: "[% base %]/garrison/update_garrison_name?garrison_id=[% garrison.id %]&name=" + input.value, 
-        handleAs: "json",        
-		timeout: 5000	 
-    }); 
+        url: "[% base %]/garrison/update_garrison_name?name=" + new_name + "&garrison_id=" + arguments.garrison_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+        	dojo.byId('name-header').innerHTML = responseObject.new_name;
+        }
+    });
 }
 </script>
 

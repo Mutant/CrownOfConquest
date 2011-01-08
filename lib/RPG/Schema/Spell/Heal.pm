@@ -14,7 +14,7 @@ sub _cast {
 
     my $heal = Games::Dice::Advanced->roll( $dice_count . "d6" );
 
-    $target->change_hit_points($heal);
+    $target->change_hit_points($heal) unless $target->is_dead;
     $target->update;
 
     return {

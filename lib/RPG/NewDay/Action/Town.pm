@@ -371,8 +371,8 @@ sub decay_ctr {
 				# (i.e. can't get safer)
 				next if $land->creature_threat > $town->prosperity;
 				
-				if (Games::Dice::Advanced->roll('1d100') > 30) {
-					$land->decrease_creature_threat(Games::Dice::Advanced->roll('1d8'));
+				if (Games::Dice::Advanced->roll('1d100') > 10) {
+					$land->decrease_creature_threat(Games::Dice::Advanced->roll('1d4'));
 					$land->update;	
 				}	
 			}	

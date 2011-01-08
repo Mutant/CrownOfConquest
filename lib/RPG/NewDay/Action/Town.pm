@@ -189,8 +189,11 @@ sub _make_scaling_changes {
 	
 	my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
 
-	@towns_to_move = sort { 
+	# Scale towns based on the prosp change they've had today (the bigger the movement, the less likely to scale),
+	#  then on mayor approval rating, and finally on prosperity
+	@towns_to_move = sort {
 			abs $prosp_changes->{$a->id}->{prosp_change} <=> abs $prosp_changes->{$b->id}->{prosp_change} ||
+			$a->mayor_rating <=> $b->mayor_rating ||
 			($changes_needed < 0 ?
 				$a->prosperity <=> $b->prosperity :
 				$b->prosperity <=> $a->prosperity)

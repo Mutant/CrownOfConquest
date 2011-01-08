@@ -20,6 +20,7 @@ sub build_town {
             blacksmith_age => $params{blacksmith_age} || 0,
             gold => $params{gold} || 0,
             town_name => "Test Town",
+            mayor_rating => $params{mayor_rating} || 0,
         }   
     );
     

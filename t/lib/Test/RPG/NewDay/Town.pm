@@ -390,6 +390,51 @@ sub test_make_scaling_changes_pulls_higher_prosp_towns_first : Tests(6) {
     is($prosp_changes{$towns[3]->id}{prosp_change}, 7, "Prosperity change for second move recorded");
 }
 
+sub test_make_scaling_changes_pushes_lower_approval_towns_first : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my @towns_to_create = (
+		{
+			current => 91,
+			mayor_rating => 50, 
+			adjustment => 5,
+		},
+		{
+			current => 90,
+			mayor_rating => 51, 
+			adjustment => 5,
+		},
+	);
+	
+	my @towns;
+	my %prosp_changes;
+	
+    foreach my $town_rec (@towns_to_create) {
+        my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => $town_rec->{current}, mayor_rating => $town_rec->{mayor_rating} );
+        $prosp_changes{$town->id} = {
+        	prosp_change => $town_rec->{adjustment},
+        };
+        push @towns, $town;
+    }
+    
+    my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 2;
+    
+    # WHEN
+    $town_action->_make_scaling_changes(90, -1, \%prosp_changes, @towns);
+    
+    # THEN
+    $towns[0]->discard_changes;
+    is($towns[0]->prosperity, 88, "Town with lower rating scaled");
+
+    $towns[1]->discard_changes;
+    is($towns[1]->prosperity, 90, "Town with higher rating not scaled");
+
+    is($prosp_changes{$towns[0]->id}{prosp_change}, 2, "Prosperity change for move recorded");
+}
+
 
 sub test_update_prestige : Tests(4) {
     my $self = shift;

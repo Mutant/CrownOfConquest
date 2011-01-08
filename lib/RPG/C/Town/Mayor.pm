@@ -406,7 +406,37 @@ sub remove_from_garrison : Local {
 	$character->creature_group_id(undef);
 	$character->update;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
+}
+
+sub advisor : Local {
+	my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/advisor_tab.html',
+				params => {
+					town => $town,
+				}
+			}
+		]
+	);
+}
+
+sub update_advisor_fee : Local {
+	my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	$town->advisor_fee($c->req->param('advisor_fee'));
+	$town->update;
+	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=advisor' );
+		
 }
 
 1;

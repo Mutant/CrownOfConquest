@@ -38,6 +38,7 @@ sub view : Local {
 	my @characters;
 	my @garrison_characters;
 	my @mayor_characters;
+	my @other_characters;
 	if ( $character->party_id ) {
 		@characters          = $c->stash->{party}->characters;
 		@garrison_characters = $c->model('DBIC::Character')->search(
@@ -51,6 +52,13 @@ sub view : Local {
 			{
 				party_id    => $c->stash->{party}->id,
 				mayor_of => { '!=', undef },
+			}
+		);
+		
+		@other_characters = $c->model('DBIC::Character')->search(
+			{
+				party_id    => $c->stash->{party}->id,
+				status => { '!=', undef },
 			}
 		);
 	}
@@ -67,7 +75,8 @@ sub view : Local {
 					character           => $character,
 					characters          => \@characters,
 					garrison_characters => \@garrison_characters,
-					mayor_characters    => \@mayor_characters,					
+					mayor_characters    => \@mayor_characters,
+					other_characters    => \@other_characters,			
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 				}

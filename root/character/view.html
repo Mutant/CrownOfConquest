@@ -273,6 +273,11 @@ function calculateSpellPoints() {
 	<b>Mayors</b>:
 	[% character_links(mayor_characters) %]
 [% END %]
+[% IF other_characters.0 %]
+	<br style="clear: right">
+	<b>Others</b>:
+	[% character_links(other_characters) %]
+[% END %]
 <br><br>
 
 <div dojoType="dijit.layout.ContentPane" href="[% base %]/character/stats?character_id=[% character.id %]" 

@@ -240,6 +240,43 @@ sub is_npc {
 	return 1;
 }
 
+sub status_description {
+	my $self = shift;
+
+	if ($self->garrison_id) {
+		my $garrison = $self->garrison;
+		return "In the garrison at " . $garrison->land->x . ", " . $garrison->land->y;	
+	}
+	elsif ($self->mayor_of) {
+		my $town = $self->mayor_of_town;
+		return "Mayor of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+	}
+	elsif ($self->status eq 'morgue' || $self->status eq 'inn' || $self->status eq 'street') {
+		my $town = $self->result_source->schema->resultset('Town')->find(
+			{
+				town_id => $self->status_context,
+			}
+		);
+		
+		return "In the " . $self->status . " of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+	}
+	elsif ($self->status eq 'mayor_garrison') {
+		my $town = $self->result_source->schema->resultset('Town')->find(
+			{
+				town_id => $self->status_context,
+			}
+		);
+		
+		return "Garrisoned in the town of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+	}
+	elsif (! defined $self->status) {
+		return "With the party";	
+	}
+	else {
+		return "Unknown";	
+	}		
+}
+
 sub natural_movement_factor {
 	my $self = shift;
 	

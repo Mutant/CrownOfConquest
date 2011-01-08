@@ -18,8 +18,11 @@ use Test::RPG::Builder::Party;
 use Data::Dumper;
 use DateTime;
 
+my @categories;
 sub startup : Test(startup => 1) {
     my $self = shift;
+    
+    @categories = qw(90 80 70 60 50 40 30 20 10 0);
 
     use_ok 'RPG::NewDay::Action::Town';
     
@@ -102,7 +105,7 @@ sub test_get_prosperty_percentages : Tests(10) {
     my $town_action = RPG::NewDay::Action::Town->new( context => $self->{mock_context} );
 
     # WHEN
-    my %actual_prosp = $town_action->_get_prosperity_percentages(@towns);
+    my %actual_prosp = $town_action->_get_prosperity_percentages({map { $_ => 1 } qw/90 80 70 60 50 40 30 20 10 0/ }, @towns);
 
     # THEN
     is( $actual_prosp{0},  13,    "Percent correct for 0 - 9" );
@@ -202,7 +205,7 @@ sub test_make_scaling_changes_pushes_town_down_with_smallest_adjustment : Tests(
     $self->{roll_result} = 2;
     
     # WHEN
-    $town_action->_make_scaling_changes(90, -1, \%prosp_changes, @towns);
+    $town_action->_make_scaling_changes(90, -1, \@categories, \%prosp_changes, @towns);
     
     # THEN
     $towns[0]->discard_changes;
@@ -264,7 +267,7 @@ sub test_make_scaling_changes_pulls_towns_up_with_smallest_adjustment : Tests(8)
     $self->{roll_result} = 2;
     
     # WHEN
-    $town_action->_make_scaling_changes(90, 2, \%prosp_changes, @towns);
+    $town_action->_make_scaling_changes(90, 2, \@categories, \%prosp_changes, @towns);
     
     # THEN
     $towns[0]->discard_changes;
@@ -320,7 +323,7 @@ sub test_make_scaling_changes_pushes_lower_props_towns_first : Tests(3) {
     $self->{roll_result} = 2;
     
     # WHEN
-    $town_action->_make_scaling_changes(90, -1, \%prosp_changes, @towns);
+    $town_action->_make_scaling_changes(90, -1, \@categories, \%prosp_changes, @towns);
     
     # THEN
     $towns[0]->discard_changes;
@@ -371,7 +374,7 @@ sub test_make_scaling_changes_pulls_higher_prosp_towns_first : Tests(6) {
     $self->{roll_result} = 2;
     
     # WHEN
-    $town_action->_make_scaling_changes(50, 2, \%prosp_changes, @towns);
+    $town_action->_make_scaling_changes(50, 2, \@categories, \%prosp_changes, @towns);
     
     # THEN
     $towns[0]->discard_changes;
@@ -423,7 +426,7 @@ sub test_make_scaling_changes_pushes_lower_approval_towns_first : Tests(3) {
     $self->{roll_result} = 2;
     
     # WHEN
-    $town_action->_make_scaling_changes(90, -1, \%prosp_changes, @towns);
+    $town_action->_make_scaling_changes(90, -1, \@categories, \%prosp_changes, @towns);
     
     # THEN
     $towns[0]->discard_changes;

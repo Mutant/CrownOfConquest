@@ -5,7 +5,8 @@ use Moose;
 extends 'RPG::NewDay::Base';
 
 use Math::Round qw(round);
-use List::Util qw(shuffle);
+use List::Util qw(shuffle sum);
+use List::MoreUtils qw(first_index);
 use Data::Dumper;
 use Carp;
 
@@ -37,7 +38,7 @@ sub run {
     $self->scale_prosperity( $prosp_changes, @towns );
 
     $self->record_prosp_changes($prosp_changes);
-
+    
     # Update prestige ratings
     $self->update_prestige;
 
@@ -107,24 +108,37 @@ sub scale_prosperity {
     my @towns         = @_;
 
     # Needs to add up to 100
-    # TODO: config this
     my %target_prosp = (
-        90 => 7,
-        80 => 9,
-        70 => 11,
-        60 => 11,
-        50 => 10,
-        40 => 11,
-        30 => 11,
-        20 => 10,
-        10 => 10,
-        0  => 10,
+        95 => 3,
+        90 => 4,
+        85 => 4,
+        80 => 5,
+        75 => 5,
+        70 => 6,
+        65 => 5,
+        60 => 6,
+        55 => 5,
+        50 => 5,
+        45 => 6,
+        40 => 5,
+        35 => 6, 
+        30 => 7,
+        25 => 5,
+        20 => 5,
+        15 => 5,
+        10 => 5,
+        5  => 5,
+        0  => 3,
     );
+    
+    die "Target prosp %'s don't add up to 100" unless sum(values %target_prosp) == 100;
 
 	my $logged;
+	
+	my @categories = reverse sort { $a <=> $b } keys %target_prosp;
 
-	for my $category (reverse sort keys %target_prosp) {
-    	my %actual_prosp = $self->_get_prosperity_percentages(@towns);
+	for my $category (@categories) {
+    	my %actual_prosp = $self->_get_prosperity_percentages(\%target_prosp, @towns);
 
     	$self->context->logger->info( "Current Prosperity percentages: " . Dumper \%actual_prosp )
     		unless $logged;
@@ -136,10 +150,10 @@ sub scale_prosperity {
 	    
 	    $logged = 1;
     	
-    	$self->_make_scaling_changes( $category, $changes_needed{$category}, $prosp_changes, @towns );	    	
+    	$self->_make_scaling_changes( $category, $changes_needed{$category}, \@categories, $prosp_changes, @towns );	    	
 	}
 	
-	my %actual_prosp = $self->_get_prosperity_percentages(@towns);
+	my %actual_prosp = $self->_get_prosperity_percentages(\%target_prosp, @towns);
 	$self->context->logger->info( "Percentages post scaling: " . Dumper \%actual_prosp )
 }
 
@@ -169,6 +183,7 @@ sub _make_scaling_changes {
 	my $self = shift;
 	my $category = shift;
 	my $changes_needed = shift // 0;
+	my $categories = shift;
 	my $prosp_changes = shift;
 	my @towns = @_;
 
@@ -178,14 +193,19 @@ sub _make_scaling_changes {
 	# Check there are actually some changes to make
 	return if $changes_needed == 0;
 
-	my $lower_category = $category - 10;
-	
+	my $cat_idx = first_index { $_ == $category } @$categories;
+	my $lower_category = $categories->[$cat_idx+1];
+		
 	# If changes needed is less than 0, we push towns from this category into the next one
 	#  Otherwise we pull towns up from the lower category
 	my $category_to_move_from = $changes_needed < 0 ? $category : $lower_category;
-	
+
 	# Get all the towns from this category, sorted by the adjustments they've made today (least adjusted first)
-	my $category_upper_bound = $category_to_move_from == 90 ? 100 : $category_to_move_from+9; 
+	my $cat_to_move_from_idx = first_index { $_ == $category_to_move_from } @$categories;
+	my $upper_category = $categories->[$cat_to_move_from_idx-1];
+	my $category_upper_bound = $upper_category ? $upper_category-1 : 100;
+	
+	#$self->context->logger->debug("Category: $category; changes needed: $changes_needed; lower: $lower_category; upper: $upper_category; moving from: $category_to_move_from; bound: $category_upper_bound");
 	
 	my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
 
@@ -208,7 +228,7 @@ sub _make_scaling_changes {
 		my $prosperity = $town->prosperity;
 		
 		# Random component ensure we don't get a huge cluster of towns around the edge of the category
-		my $random = Games::Dice::Advanced->roll('1d3');
+		my $random = Games::Dice::Advanced->roll('1d2');
 
 		my $new_prosperity;
 		
@@ -232,25 +252,22 @@ sub _make_scaling_changes {
 
 sub _get_prosperity_percentages {
     my $self  = shift;
+    my $target_prosp = shift;
     my @towns = @_;
+    
+    my @categories = reverse sort { $a <=> $b } keys %$target_prosp;
+    
+    #$self->context->logger->debug("Categories: " . Dumper \@categories); 
 
     my %actual_prosp;
     foreach my $town (@towns) {
-        my $category;
-        if ( $town->prosperity <= 9 ) {
-            $category = 0;
-        }
-        elsif ( $town->prosperity >= 100 ) {
-            $category = 90;
-        }
-        else {
-            $town->prosperity =~ /^(\d)\d$/;
-            $category = $1 . '0';
-        }
+        my ($category) = grep { $town->prosperity >= $_ } @categories;
+
+		#$self->context->logger->debug("Prosp: " . $town->prosperity . ", Category: " . $category); 
 
         $actual_prosp{$category}++;
     }
-
+        
     map { $actual_prosp{$_} = round( $actual_prosp{$_} / scalar(@towns) * 100 ) } keys %actual_prosp;
 
     return %actual_prosp;

@@ -3,5 +3,15 @@ INSERT into Spell (spell_name, description, points, class_id, target, combat, no
 
 UPDATE Land set creature_threat = -60 where creature_threat <= -60;
 
-ALTER TABLE `game`.`Town` ADD COLUMN `advisor_fee` INTEGER  NOT NULL DEFAULT 0 AFTER `last_election`;
+ALTER TABLE `Town` ADD COLUMN `advisor_fee` INTEGER  NOT NULL DEFAULT 0 AFTER `last_election`;
+
+CREATE TABLE `Dungeon_Teleporter` (
+  `teleporter_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `dungeon_grid_id` INTEGER  NOT NULL,
+  `destination_id` INTEGER ,
+  `invisible` TINYINT  NOT NULL DEFAULT 0,
+  PRIMARY KEY (`teleporter_id`),
+  INDEX `dungeon_fk`(`dungeon_grid_id`)
+)
+ENGINE = InnoDB;
 

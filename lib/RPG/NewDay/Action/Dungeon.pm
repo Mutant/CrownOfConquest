@@ -33,6 +33,11 @@ sub run {
     # Fill empty dungeon chests
     $self->fill_empty_chests();
 
+	# Generate teleporters
+	while (my $dungeon = $dungeons_rs->next) {
+		$self->generate_teleporters($dungeon);
+	}
+
     my $land_rs = $c->schema->resultset('Land')->search(
         {},
         {
@@ -307,6 +312,84 @@ sub fill_empty_chests {
 			} 	
 		}	
 	}	
+}
+
+sub generate_teleporters {
+	my $self = shift;
+	my $dungeon = shift;	
+
+	my $room_count = $dungeon->rooms->count;
+	
+	my @teleporters = $self->context->schema->resultset('Dungeon_Teleporter')->search(
+		{
+			'dungeon_room.dungeon_id' => $dungeon->id,
+		},
+		{
+			join => {'dungeon_grid' => 'dungeon_room'},
+		}
+	);
+	
+	my $delete_teleporter = Games::Dice::Advanced->roll('1d100') <= 10 ? 1 : 0; 
+	
+	if ($delete_teleporter && @teleporters) {
+		shuffle @teleporters;
+		my $teleporter = shift @teleporters;
+		$teleporter->delete;
+	}
+	
+	my $optimal_teleporters = int $room_count / 12 + 1;
+	my $teleporters_to_create = $optimal_teleporters - scalar @teleporters;
+	
+	for (1 .. $teleporters_to_create) {			
+		my $sector = $self->_get_sector_for_teleporter($dungeon);
+		my $target = $self->_get_sector_for_teleporter($dungeon, $sector->dungeon_room_id);
+		
+		my $invisible = Games::Dice::Advanced->roll('1d100') < 30 ? 1 : 0;
+		
+		$self->context->schema->resultset('Dungeon_Teleporter')->create(
+			{
+				dungeon_grid_id => $sector->id,
+				destination_id => $target->id,
+				invisible => $invisible,
+			}
+		);
+		
+		# Create two-way teleporter?
+		my $two_way = Games::Dice::Advanced->roll('1d100') <= 25 ? 1 : 0;
+		if ($two_way) {
+			$self->context->schema->resultset('Dungeon_Teleporter')->create(
+				{
+					dungeon_grid_id => $target->id,
+					destination_id => $sector->id,
+					invisible => $invisible,
+				}
+			);				
+		}
+	}
+}
+
+sub _get_sector_for_teleporter {
+	my $self = shift;
+	my $dungeon = shift;
+	my $not_in_room = shift;
+	
+	my $sector;
+	
+	my $count = 0;
+	while (! $sector) {
+		$count++;
+		die "Can't find sector to create teleporter in" if $count > 500;				
+		
+		my $test_sector = $self->context->schema->resultset('Dungeon_Grid')->find_random_sector($dungeon->id);
+		
+		next if $test_sector->treasure_chest || $test_sector->teleporter;
+		
+		next if defined $not_in_room && $test_sector->dungeon_room_id == $not_in_room; 
+		
+		$sector = $test_sector;
+	}
+	
+	return $sector;	
 }
 
 __PACKAGE__->meta->make_immutable;

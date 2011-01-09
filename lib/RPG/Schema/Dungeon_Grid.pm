@@ -36,6 +36,8 @@ __PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.dungeon_grid_
 
 __PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->might_have( 'teleporter', 'RPG::Schema::Dungeon_Teleporter', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
 sub sides_with_walls {
     my $self = shift;
 

@@ -342,24 +342,33 @@ sub generate_teleporters {
 	
 	for (1 .. $teleporters_to_create) {			
 		my $sector = $self->_get_sector_for_teleporter($dungeon);
-		my $target = $self->_get_sector_for_teleporter($dungeon, $sector->dungeon_room_id);
+		my $target_id;
+		
+		my $random_destination = Games::Dice::Advanced->roll('1d100') <= 20 ? 1 : 0;
+		if (! $random_destination) {		
+			my $target = $self->_get_sector_for_teleporter($dungeon, $sector->dungeon_room_id);
+			$target_id = $target->id;
+		}
 		
 		my $invisible = Games::Dice::Advanced->roll('1d100') < 30 ? 1 : 0;
 		
 		$self->context->schema->resultset('Dungeon_Teleporter')->create(
 			{
 				dungeon_grid_id => $sector->id,
-				destination_id => $target->id,
+				destination_id => $target_id,
 				invisible => $invisible,
 			}
 		);
 		
 		# Create two-way teleporter?
+		# Can't be two-way if destination is random
+		next if $random_destination;
+		
 		my $two_way = Games::Dice::Advanced->roll('1d100') <= 25 ? 1 : 0;
 		if ($two_way) {
 			$self->context->schema->resultset('Dungeon_Teleporter')->create(
 				{
-					dungeon_grid_id => $target->id,
+					dungeon_grid_id => $target_id,
 					destination_id => $sector->id,
 					invisible => $invisible,
 				}

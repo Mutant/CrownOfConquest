@@ -38,7 +38,7 @@ sub test_generate_teleporter_basic : Tests(3) {
 	);	
 	
 	$self->mock_dice;
-	$self->{rolls} = [1, 40, 30];
+	$self->{rolls} = [1, 30, 40, 30];
 	
 	my $action = RPG::NewDay::Action::Dungeon->new( context => $self->{mock_context} );
 	
@@ -77,7 +77,7 @@ sub test_generate_teleporter_two_way : Tests(7) {
 	);	
 	
 	$self->mock_dice;
-	$self->{rolls} = [1, 40, 25];
+	$self->{rolls} = [1, 30, 40, 25];
 	
 	my $action = RPG::NewDay::Action::Dungeon->new( context => $self->{mock_context} );
 	
@@ -133,7 +133,7 @@ sub test_generate_teleporter_deletion : Tests(3) {
 	);
 	
 	$self->mock_dice;
-	$self->{rolls} = [1, 40, 30];
+	$self->{rolls} = [1, 30, 40, 30];
 	
 	my $action = RPG::NewDay::Action::Dungeon->new( context => $self->{mock_context} );
 	

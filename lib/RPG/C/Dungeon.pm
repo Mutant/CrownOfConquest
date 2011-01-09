@@ -261,6 +261,12 @@ sub move_to : Local {
     	if (my $teleporter = $sector->teleporter) {
     		$sector_id = $teleporter->destination_id;
     		
+    		unless ($sector_id) {
+    			# Random teleporter - find a destination
+    			my $random_dest = $c->model('DBIC::Dungeon_Grid')->find_random_sector( $sector->dungeon_room->dungeon_id );
+    			$sector_id = $random_dest->id;
+    		}
+    		
     		push @{$c->stash->{messages}}, "You are teleported to elsewhere in the dungeon....";
     	}
     	else {    	

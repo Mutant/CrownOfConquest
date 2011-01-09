@@ -43,6 +43,8 @@
 				<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
 			[% ELSIF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
+			[% ELSIF sector.teleporter %]
+				<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>				
 			[% END %]
 			
 			[% IF cgs.$x.$y %]

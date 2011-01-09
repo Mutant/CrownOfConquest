@@ -435,7 +435,7 @@ sub build_updated_sectors_data : Private {
         },
         {
             join     => [ 'dungeon_room', 'mapped_dungeon_grid' ],
-            prefetch => 'treasure_chest',
+            prefetch => ['treasure_chest', 'teleporter'],
         },
     );
 	my $old_sectors_grid;

@@ -37,7 +37,7 @@ sub get_party_grid {
 		\%params,
 		{
 			join     => \@join,
-			prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' }, 'treasure_chest' ],
+			prefetch => [ { 'dungeon_room' => 'dungeon' }, { 'doors' => 'position' }, { 'walls' => 'position' }, 'treasure_chest', 'teleporter' ],
 		}
 	);
 

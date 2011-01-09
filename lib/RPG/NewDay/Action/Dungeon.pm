@@ -382,7 +382,7 @@ sub _get_sector_for_teleporter {
 		
 		my $test_sector = $self->context->schema->resultset('Dungeon_Grid')->find_random_sector($dungeon->id);
 		
-		next if $test_sector->treasure_chest || $test_sector->teleporter;
+		next if $test_sector->treasure_chest || $test_sector->teleporter || $test_sector->stairs_up || $test_sector->sides_with_doors;
 		
 		next if defined $not_in_room && $test_sector->dungeon_room_id == $not_in_room; 
 		

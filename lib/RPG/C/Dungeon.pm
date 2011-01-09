@@ -257,14 +257,22 @@ sub move_to : Local {
 	}   
     
     else {
-    	$c->forward( '/' . $c->stash->{dungeon_type} . '/check_for_creature_move', [$sector] );
-
-       	my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
-
-        # If creatures attacked, refresh party panel
-        if ($creature_group) {
-            push @{ $c->stash->{refresh_panels} }, 'party';
-        }
+    	# If there's a teleporter here, they actually get moved to the destination of the teleporter
+    	if (my $teleporter = $sector->teleporter) {
+    		$sector_id = $teleporter->destination_id;
+    		
+    		push @{$c->stash->{messages}}, "You are teleported to elsewhere in the dungeon....";
+    	}
+    	else {    	
+	    	$c->forward( '/' . $c->stash->{dungeon_type} . '/check_for_creature_move', [$sector] );
+	
+	       	my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
+	
+	        # If creatures attacked, refresh party panel
+	        if ($creature_group) {
+	            push @{ $c->stash->{refresh_panels} }, 'party';
+	        }
+    	}
 
         $c->stash->{party}->dungeon_grid_id($sector_id);
         $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );
@@ -479,8 +487,8 @@ sub build_updated_sectors_data : Private {
 		}
 	}
 		
-	my $scroll_to = $c->forward('calculate_scroll_to', [$new_location]);
-	
+	my $scroll_to = $c->forward('calculate_scroll_to', [$new_location, $current_location]);
+		
 	return {
 		sectors => $sectors,
 		scroll_to => $scroll_to,
@@ -490,11 +498,23 @@ sub build_updated_sectors_data : Private {
 }
 
 sub calculate_scroll_to : Private {
-	my ($self, $c, $location) = @_;
+	my ($self, $c, $location, $from) = @_;
+	
+	my $x_modifier = 4;
+	my $y_modifier = 4;
+	
+	if ($from) {
+		if ($from->x > $location->x) {
+			$x_modifier = -4;
+		}
+		if ($from->y > $location->y) {
+			$y_modifier = -4;
+		}
+	}
 	
 	my $scroll_to = {
-		x => $location->x + 6,
-		y => $location->y + 4,
+		x => $location->x + $x_modifier,
+		y => $location->y + $y_modifier,
 	};
 	
 	my $boundaries = $c->session->{mapped_dungeon_boundaries};

@@ -337,7 +337,7 @@ sub generate_teleporters {
 		$teleporter->delete;
 	}
 	
-	my $optimal_teleporters = int $room_count / 12 + 1;
+	my $optimal_teleporters = int $room_count / 20 + 1;
 	my $teleporters_to_create = $optimal_teleporters - scalar @teleporters;
 	
 	for (1 .. $teleporters_to_create) {			

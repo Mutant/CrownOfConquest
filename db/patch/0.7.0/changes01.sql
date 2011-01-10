@@ -15,3 +15,11 @@ CREATE TABLE `Dungeon_Teleporter` (
 )
 ENGINE = InnoDB;
 
+ALTER TABLE `Character` ADD COLUMN `strength_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `encumbrance`,
+ ADD COLUMN `intelligence_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `strength_bonus`,
+ ADD COLUMN `agility_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `intelligence_bonus`,
+ ADD COLUMN `divinity_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `agility_bonus`,
+ ADD COLUMN `constitution_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `divinity_bonus`;
+
+
+

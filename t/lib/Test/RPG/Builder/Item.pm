@@ -34,14 +34,14 @@ sub build_item {
 	    $item_type_id = $item_type->id;
 	}
 
-    my $eq_place = $schema->resultset('Equip_Places')->find(1);
+    my $eq_place_id = $params{no_equip_place} ? undef : $schema->resultset('Equip_Places')->find(1)->id;
 
     my $item = $schema->resultset('Items')->create(
         {
             item_type_id   => $item_type_id,
             character_id   => $params{char_id} || undef,
             treasure_chest_id => $params{treasure_chest_id} || undef,
-            equip_place_id => $eq_place->id,
+            equip_place_id => $eq_place_id,
             name => $params{name} || '',
             shop_id => $params{shop_id} || undef,
             garrison_id => $params{garrison_id} || undef,

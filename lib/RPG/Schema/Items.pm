@@ -79,6 +79,7 @@ __PACKAGE__->add_columns(
         'default_value'     => undef,
         'is_foreign_key'    => 0,
         'name'              => 'equip_place_id',
+        'accessor'          => '_equip_place_id',
         'is_nullable'       => 0,
         'size'              => '11'
     },
@@ -222,7 +223,7 @@ sub delete {
 
 	$self->_check_for_quest_item_removal();
 	
-	$self->_encumbrace_trigger(undef);
+	$self->_encumbrace_trigger(undef, $self->_character_id);
 	
     my $ret = $self->next::method(@args);
 
@@ -233,7 +234,7 @@ sub update {
 	my ( $self, $attr ) = @_;
 
 	if (exists $attr->{character_id}) {
-		$self->_encumbrace_trigger($attr->{character_id});	
+		$self->_encumbrace_trigger($attr->{character_id}, $self->_character_id);	
 	}
 	
     my $ret = $self->next::method($attr);
@@ -245,16 +246,29 @@ sub update {
 sub character_id {
 	my $self = shift;
 
-	$self->_encumbrace_trigger(@_) if @_;
+	if (@_) {
+		my $new_char_id = shift;
 	
+		no warnings 'uninitialized';
+	
+		# Equip place always gets cleared when character changes
+		#  This makes sure the trigger is run correctly
+		$self->equip_place_id(undef) if $new_char_id != $self->character_id;
+
+		my $current_char_id = $self->_character_id;
+	
+		$self->_encumbrace_trigger($new_char_id, $current_char_id);
+	
+		$self->_character_id($new_char_id);
+	}
+		
 	return $self->_character_id;	
 }
 
 sub _encumbrace_trigger {
 	my $self = shift;
 	my $new_char_id = shift;
-
-	my $current_char_id = $self->_character_id;
+	my $current_char_id = shift;
  
 	if (defined $current_char_id) {
 		my $character = $self->belongs_to_character;
@@ -269,10 +283,60 @@ sub _encumbrace_trigger {
 		);
 		$character->calculate_encumbrance($self->weight) if $character;
 	}	
+}
 
+sub equip_place_id {
+	my $self = shift;
+
+	if (@_) {
+		my $new_equip_place_id = shift;
+		
+		no warnings 'uninitialized';
+		if ($new_equip_place_id != $self->_equip_place_id) {	
+			$self->_stat_bonus_trigger($new_equip_place_id);
+		
+			$self->_equip_place_id($new_equip_place_id);
+		}
+	}
+		
+	return $self->_equip_place_id;	
+}
+
+sub _stat_bonus_trigger {
+	my $self = shift;
+	my $new_equip_place_id = shift;
+
+	my $character_id = $self->_character_id;
+	return unless $character_id;
 	
-	$self->_character_id($new_char_id);
+	my @stat_bonuses = $self->search_related(
+		'item_enchantments',
+		{
+			'enchantment.enchantment_name' => 'stat_bonus',
+		},
+		{
+			join => 'enchantment',
+		}
+	);
 	
+	my $character = $self->result_source->schema->resultset('Character')->find(
+		{
+			character_id => $character_id,
+		}
+	);			
+		
+	foreach my $stat_bonus (@stat_bonuses) {
+		my $stat  = $stat_bonus->variable('Stat Bonus');
+		my $bonus = $stat_bonus->variable('Bonus');
+
+		my $method = "adjust_" . $stat . "_bonus";
+		
+		$bonus = -$bonus unless defined $new_equip_place_id; 
+		
+		$character->$method($bonus);		
+	}
+	
+	$character->update;
 }
 
 sub sell_price {

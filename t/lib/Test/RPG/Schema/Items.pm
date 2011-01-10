@@ -410,4 +410,167 @@ sub test_updating_via_method_item_updates_encumbrance : Tests(2) {
     is($character->encumbrance, 0, "Item's weight removed to character's encumbrance");
 }
 
+sub test_equipping_item_updates_stat_bonus : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->update;
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->strength_bonus, 2, "Stat bonus increased correctly");		
+}
+
+sub test_unequipping_item_updates_stat_bonus : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->equip_place_id(1);
+    $item->update;
+        
+    # WHEN
+    $item->equip_place_id(undef);
+    $item->update;	
+    
+    # THEN
+    $character->discard_changes;
+    is($character->strength_bonus, 0, "Stat bonus decreased correctly");		
+}
+
+sub test_giving_item_to_char_updates_stat_bonus : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->unmock_dice();
+	
+    my $character1 = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $character2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character1->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->equip_place_id(1);
+    $item->update;
+        
+    # WHEN
+    $item->character_id($character2->id);
+    $item->update;
+    
+    # THEN
+    $character1->discard_changes;
+    is($character1->strength_bonus, 0, "Stat bonus decreased for char 1 correctly");
+    $character2->discard_changes;
+    is($character2->strength_bonus, 0, "Stat bonus not increased for char 2");	
+}
+
+sub test_setting_equip_place_id_to_null_against_doesnt_decrease_stat_bonus : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->unmock_dice();
+	
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->update;
+        
+    # WHEN
+    $item->equip_place_id(undef);
+    $item->update;	
+    
+    # THEN
+    $character->discard_changes;
+    is($character->strength_bonus, 0, "Stat bonus still 0 for character");		
+}
+
+sub test_clearning_char_id_and_equip_place_works_correctly : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->unmock_dice();
+	
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus']);
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->update;
+        
+    # WHEN
+	$item->character_id(undef);
+    #$item->equip_place_id(undef);
+    $item->update;
+    
+    # THEN
+	$item->discard_changes;
+	is($item->character_id, undef, "Character id cleared correctly");
+	is($item->equip_place_id, undef, "Equip place id cleared correctly");		
+}
+
+sub test_equipping_item_updates_stat_bonus_multiple : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus', 'stat_bonus'], no_equip_place => 1);
+    
+    my @enchantments = $item->item_enchantments;
+    $enchantments[0]->variable('Stat Bonus', 'strength');
+    $enchantments[0]->variable('Bonus', 2);
+    $enchantments[0]->update;
+
+    $enchantments[1]->variable('Stat Bonus', 'agility');
+    $enchantments[1]->variable('Bonus', 3);
+    $enchantments[1]->update;    
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->strength_bonus, 2, "Stat bonus 1 increased correctly");
+    is($character->agility_bonus, 3, "Stat bonus 2 increased correctly");			
+}
+
+sub test_unequipping_item_updates_stat_bonus_multiple : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus', 'stat_bonus'], no_equip_place => 1);
+    
+    my @enchantments = $item->item_enchantments;
+    $enchantments[0]->variable('Stat Bonus', 'strength');
+    $enchantments[0]->variable('Bonus', 2);
+    $enchantments[0]->update;
+
+    $enchantments[1]->variable('Stat Bonus', 'agility');
+    $enchantments[1]->variable('Bonus', 3);
+    $enchantments[1]->update;    
+    
+    $item->equip_place_id(1);
+    $item->update;    
+    
+    # WHEN
+    $item->equip_place_id(undef);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->strength_bonus, 0, "Stat bonus 1 decreased correctly");
+    is($character->agility_bonus, 0, "Stat bonus 2 decreased correctly");			
+}
+
 1;

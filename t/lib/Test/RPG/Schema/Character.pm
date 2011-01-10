@@ -702,9 +702,13 @@ sub test_stat_bonus : Tests(2) {
 	
 	# GIVEN	
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10, agility => 4);
-	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'] );
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1 );
 	$item->variable_row('Stat Bonus', 'strength');	
 	$item->variable_row('Bonus', 5);
+	$item->equip_place_id(1);
+	$item->update;
+	
+	$character->discard_changes;
 	
 	# WHEN
 	my $str = $character->strength;

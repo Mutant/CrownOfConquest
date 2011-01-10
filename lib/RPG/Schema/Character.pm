@@ -24,10 +24,11 @@ __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
-        mayor_of status status_context encumbrance/
+        mayor_of status status_context encumbrance
+        strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus/
 );
 
-__PACKAGE__->numeric_columns(qw/hit_points spell_points/);
+__PACKAGE__->numeric_columns(qw/hit_points spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus/);
 
 __PACKAGE__->add_columns( 
 	xp => { accessor => '_xp' },
@@ -125,33 +126,13 @@ sub _stat_accessor {
 	my $self = shift;
 	my $stat = shift;
 
-	my $value;
-	{
-		no strict 'refs';
-		my $accessor = '_' . $stat; 
-		$value = $self->$accessor(@_);
-	}
+	my $accessor = '_' . $stat; 
+	my $value = $self->$accessor(@_);
 	
-	my @items_with_stat_bonuses = $self->search_related(
-		'items',
-		{
-			'enchantment.enchantment_name' => 'stat_bonus',
-			'equip_place_id' => {'!=', undef},
-		},
-		{
-			prefetch => {'item_enchantments' => 'enchantment'},
-		}
-	);
-	
-	foreach my $item (@items_with_stat_bonuses) {
-		foreach my $enchantment ($item->item_enchantments) {
-			next if ! $enchantment->variable('Stat Bonus') || $enchantment->variable('Stat Bonus') ne $stat;
-			
-			$value+= $enchantment->variable('Bonus');
-		} 
-	}
-	
-	return $value;
+	$accessor = $stat . '_bonus';
+	my $bonus = $self->$accessor || 0;
+		
+	return $value + $bonus;
 }
 
 sub long_stats {

@@ -750,9 +750,8 @@ sub test_build_character_weapons : Tests(3) {
 			}
 		],
 		super_category_name => 'Weapon',
+		char_id => $character->id,
 	);
-	$item->character_id( $character->id );
-	$item->update;
 
 	# WHEN
 	my $battle = RPG::Combat::CreatureWildernessBattle->new(

@@ -38,7 +38,7 @@ sub tooltip {
 }
 
 sub sell_price_adjustment {
-	return 125;	
+	return 500;	
 }
 
 1;

@@ -21,5 +21,16 @@ ALTER TABLE `Character` ADD COLUMN `strength_bonus` INTEGER  NOT NULL DEFAULT 0 
  ADD COLUMN `divinity_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `agility_bonus`,
  ADD COLUMN `constitution_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `divinity_bonus`;
 
+insert into Enchantments (enchantment_name, must_be_equipped, one_per_item) values ('movement_bonus', 1, 1);
+
+set @ench_id = (select enchantment_id from Enchantments where enchantment_name = 'movement_bonus');
+
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Melee Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category= 'Armour'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Head Gear'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
+
+ALTER TABLE `Character` ADD COLUMN `movement_factor_bonus` INTEGER  NOT NULL DEFAULT 0 AFTER `constitution_bonus`;
 
 

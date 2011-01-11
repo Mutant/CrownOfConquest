@@ -25,10 +25,12 @@ __PACKAGE__->add_columns(
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
         mayor_of status status_context encumbrance
-        strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus/
+        strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
+        movement_factor_bonus/
 );
 
-__PACKAGE__->numeric_columns(qw/hit_points spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus/);
+__PACKAGE__->numeric_columns(qw/hit_points spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
+								movement_factor_bonus/);
 
 __PACKAGE__->add_columns( 
 	xp => { accessor => '_xp' },
@@ -232,6 +234,9 @@ sub status_description {
 		my $town = $self->mayor_of_town;
 		return "Mayor of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
 	}
+	elsif (! defined $self->status) {
+		return "With the party";	
+	}
 	elsif ($self->status eq 'morgue' || $self->status eq 'inn' || $self->status eq 'street') {
 		my $town = $self->result_source->schema->resultset('Town')->find(
 			{
@@ -250,9 +255,6 @@ sub status_description {
 		
 		return "Garrisoned in the town of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
 	}
-	elsif (! defined $self->status) {
-		return "With the party";	
-	}
 	else {
 		return "Unknown";	
 	}		
@@ -261,7 +263,7 @@ sub status_description {
 sub natural_movement_factor {
 	my $self = shift;
 	
-	return round ($self->constitution / 4);
+	return round ($self->constitution / 4) + $self->movement_factor_bonus;
 } 
 
 sub movement_factor {

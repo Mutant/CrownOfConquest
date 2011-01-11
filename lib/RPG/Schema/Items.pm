@@ -292,8 +292,19 @@ sub equip_place_id {
 		my $new_equip_place_id = shift;
 		
 		no warnings 'uninitialized';
-		if ($new_equip_place_id != $self->_equip_place_id) {	
-			$self->_stat_bonus_trigger($new_equip_place_id);
+		if ($new_equip_place_id != $self->_equip_place_id) {
+			if ($self->_character_id) {
+				my $character = $self->result_source->schema->resultset('Character')->find(
+					{
+						character_id => $self->_character_id,
+					}
+				);	
+				
+				$self->_stat_bonus_trigger($new_equip_place_id, $character);
+				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
+				
+				$character->update;
+			}
 		
 			$self->_equip_place_id($new_equip_place_id);
 		}
@@ -305,9 +316,7 @@ sub equip_place_id {
 sub _stat_bonus_trigger {
 	my $self = shift;
 	my $new_equip_place_id = shift;
-
-	my $character_id = $self->_character_id;
-	return unless $character_id;
+	my $character = shift;
 	
 	my @stat_bonuses = $self->search_related(
 		'item_enchantments',
@@ -318,12 +327,6 @@ sub _stat_bonus_trigger {
 			join => 'enchantment',
 		}
 	);
-	
-	my $character = $self->result_source->schema->resultset('Character')->find(
-		{
-			character_id => $character_id,
-		}
-	);			
 		
 	foreach my $stat_bonus (@stat_bonuses) {
 		my $stat  = $stat_bonus->variable('Stat Bonus');
@@ -334,9 +337,30 @@ sub _stat_bonus_trigger {
 		$bonus = -$bonus unless defined $new_equip_place_id; 
 		
 		$character->$method($bonus);		
-	}
+	}	
+}
+
+sub _movement_factor_bonus_trigger {
+	my $self = shift;
+	my $new_equip_place_id = shift;
+	my $character = shift;	
 	
-	$character->update;
+	my @bonuses = $self->search_related(
+		'item_enchantments',
+		{
+			'enchantment.enchantment_name' => 'movement_bonus',
+		},
+		{
+			join => 'enchantment',
+		}
+	);
+	
+	foreach my $bonus (@bonuses) {
+		my $bonus = $bonus->variable('Movement Bonus');
+		$bonus = -$bonus unless defined $new_equip_place_id;
+		
+		$character->adjust_movement_factor_bonus($bonus);
+	}
 }
 
 sub sell_price {

@@ -302,6 +302,10 @@ html>body .nav a {width: auto}
 	background: #AFB9FF;
 }
 
+div.enlargedTitle {
+	font-size: 20px;
+}
+
 .stat-label {
 	font-weight: bold;
 }

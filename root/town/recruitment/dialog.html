@@ -1,0 +1,30 @@
+<script>
+function confirmPurchase(charName, charId, charCost) {
+	dojo.byId('confirmation-message').innerHTML = "Are you sure you want to recruit " + charName + " for " + charCost + " gold?";
+	dojo.byId('rchar-id').value = charId;
+	dojo.byId('action').value = "buy";
+	dijit.byId('recruitment-confirmation').show();
+}
+
+function confirmSale(charName, charId, charValue) {
+	dojo.byId('confirmation-message').innerHTML = "Are you sure you want to sell " + charName + " for " + charValue + " gold?";
+	dojo.byId('rchar-id').value = charId;
+	dojo.byId('action').value = "sell";
+	dijit.byId('recruitment-confirmation').show();
+}
+
+function saveRecruitment(dialogFields) {
+	window.location = '[% base %]/town/recruitment/' + dialogFields.action + '?character_id=' + dialogFields.char_id;
+}
+</script>
+
+<div dojoType="dijit.Dialog" id="recruitment-confirmation" style="display: none" title="Confirm Recruitment" execute="saveRecruitment(arguments[0]);">
+    <span id="confirmation-message"></span>
+	<input id="action" name="action" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="rchar-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('recruitment-confirmation').hide()">Cancel</button>
+	</div>
+</div>

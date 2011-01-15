@@ -223,6 +223,8 @@ function calculateSpellPoints() {
 
 </script>
 
+[% INCLUDE town/recruitment/dialog.html %]
+
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
     <span id="message-text"></span>
     <button dojoType=dijit.form.Button type="submit">OK</button>
@@ -244,7 +246,7 @@ function calculateSpellPoints() {
 <h1><span id="name-header">[% character.character_name %]</span> 
 	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
 
-[% IF character.town_id %]<a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
+[% IF character.town_id %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | <a href="[% base %]/town/recruitment">Back To Recruitment Office</a><br><br>[% END %]
 
 <b>[% IF character.party_id %]Party[% ELSE %]Other Characters Available to Recruit[% END %]:</b>
 

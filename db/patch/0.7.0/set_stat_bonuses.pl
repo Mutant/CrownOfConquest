@@ -12,16 +12,21 @@ my $schema = RPG::Schema->connect( @{$config->{'Model::DBIC'}{connect_info}} );
 
 my @chars = $schema->resultset('Character')->search();
 
-my @items_with_stat_bonuses = $schema->resultset('Items')->search(
-		{
-			'enchantment.enchantment_name' => 'stat_bonus',
-			'equip_place_id' => {'!=', undef},
-		},
-		{
-			prefetch => {'item_enchantments' => 'enchantment'},
-		}
-);
-
-foreach my $item (@items_with_stat_bonuses) {
-	$item->_stat_bonus_trigger($item->equip_place_id);
+foreach my $char (@chars) {
+	$char->strength_bonus(0);
+	$char->intelligence_bonus(0);
+	$char->agility_bonus(0);
+	$char->constitution_bonus(0);
+	$char->divinity_bonus(0);
+	
+	my @items = $char->items;
+	
+	foreach my $item (@items) {
+		next unless $item->equip_place_id;
+		
+		$item->_stat_bonus_trigger($item->equip_place_id, $char);
+	}
+	
+	$char->update;
+		
 }

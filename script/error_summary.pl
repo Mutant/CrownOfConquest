@@ -4,11 +4,11 @@ use strict;
 use warnings;
 
 use MIME::Lite;
-use YAML;
+use RPG::LoadConf;
 
 my $home = $ENV{RPG_HOME};
 
-my $config = YAML::LoadFile("$home/rpg.yml");
+my $config = RPG::LoadConf->load();
 
 my $errors = `grep '\\[error\\]' $home/log/debug.log.1`;
 

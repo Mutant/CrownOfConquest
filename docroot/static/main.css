@@ -264,11 +264,7 @@ html>body .nav a {width: auto}
 	padding: 5px
 }
 
-.text-block a:visited {
-	color: black;
-}
-
-.text-block a:hover {
+.text-block a {
 	color: black;
 }
 

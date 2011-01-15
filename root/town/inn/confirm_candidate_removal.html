@@ -1,0 +1,10 @@
+<input type="hidden" dojoType=dijit.form.TextBox name="character_id" value="[% character.id %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="confirm_candidate_removal" value="1">
+
+Are you sure you want to remove [% character.name %] from the inn of [% town.town_name %]? [% character.pronoun('subjective') | ucfirst %]'s
+a candidate in the upcoming election, and will be forced to drop out if [% character.pronoun('subjective') %] leaves town.
+
+<div align="center">
+	<button dojoType=dijit.form.Button type="submit">Yes</button>
+	<button dojoType=dijit.form.Button onClick="dijit.byId('dialog').hide()">No</button>
+</div>

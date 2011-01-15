@@ -19,8 +19,9 @@
 [% ELSE %]
 	[% IF ! new_candidates_allowed %]
 		It's too late to register a candidate for this election.
-	[% ELSIF allowed_candidates %]
-		You don't have a candidate in this election. Click one of your eligible characters to run for mayor:
+	[% ELSIF allowed_candidates.0 %]
+		You don't have a candidate in this election. Click one of your eligible characters to run for mayor. The candidate will have to stay at the town's inn until
+		the election.
 		
 		<table class="main">
 		[% FOREACH character IN allowed_candidates %]

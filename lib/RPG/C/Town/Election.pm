@@ -72,7 +72,7 @@ sub campaign : Local {
 	my @allowed_candidates;	
 	unless ($candidate && $new_candidates_allowed) {
 		foreach my $character ($c->stash->{party}->members) {
-			if ($character->level >= $c->config->{min_character_mayoral_candidate_level} && ! $character->mayoral_candidacy) {
+			if ($character->level >= $c->config->{min_character_mayoral_candidate_level} && $character->is_in_party) {
 				push @allowed_candidates, $character;	
 			};
 		}
@@ -107,26 +107,17 @@ sub create_candidate : Local {
 	);
 	
 	croak "Invalid character" if ! $character || ! $character->is_in_party;
-	
-	# Make sure they're not already a candidate in another current election
-	my $existing_candidacy = $c->model('DBIC::Election_Candidate')->find(
-		{
-			character_id => $character->id,
-			'election.status' => 'Open',
-		},
-		{
-			join => 'election',
-		}
-	);
-	
-	croak "Character already candidate in an election" if $existing_candidacy;
-	
+
 	$c->model('DBIC::Election_Candidate')->create(
 		{
 			character_id => $character->id,
 			election_id => $c->stash->{election}->id,
 		},
 	);
+	
+	$character->status('inn');
+	$character->status_context($c->stash->{town}->id);
+	$character->update;
 	
 	$c->model('DBIC::Town_History')->create(
 		{

@@ -146,6 +146,7 @@ sub day_logs_check : Private {
 
 # Create a dialog when the panels are reloaded. Submits form values to a given URL
 # Uses a panel callback to do this
+# Just needs to be forward to by the controller before calling 'refresh_panels'
 sub create_submit_dialog : Private {
 	my ($self, $c, $params) = @_;
 	

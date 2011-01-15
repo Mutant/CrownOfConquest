@@ -370,8 +370,10 @@ sub decay_ctr {
 	
 	foreach my $town (@towns) {
 		my ($town_x, $town_y) = ($town->location->x, $town->location->y);
+		my $range = int $town->prosperity / $c->config->{decay_ctr_ratio};
+		$range = 1 if $range < 1;
 		my ($top_left, $bottom_right) = RPG::Map->surrounds_by_range(
-			$town_x, $town_y, $c->config->{decay_ctr_range},
+			$town_x, $town_y, $range,
 		);
 		
 		for my $x ($top_left->{x} .. $bottom_right->{x}) {

@@ -27,8 +27,6 @@ sub generate_character {
     
     my %levels = map { $_->level_number => $_->xp_needed } $self->result_source->schema->resultset('Levels')->search();
     my $max_level = max keys %levels;
-
-    $level ||= RPG::Maths->weighted_random_number( 1 .. $max_level );    
     
     my $xp = 0;
     if ($level != 1) {

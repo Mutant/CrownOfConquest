@@ -62,6 +62,7 @@ sub generate_character {
 
     my $character = $c->schema->resultset('Character')->generate_character(
     	allocate_equipment => 1,
+    	level => Games::Dice::Advanced->roll('1d20'),
     );
     
     $character->set_default_spells;

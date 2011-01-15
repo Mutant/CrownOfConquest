@@ -84,6 +84,7 @@ sub run {
 				quests               => \@quests,
 				in_town              => $party->location->town ? 1 : 0,
 				in_dungeon           => $party->dungeon_grid_id ? 1 : 0,
+				broken_weapons       => {$party->broken_equipped_items_hash},
 			}
 		);
 

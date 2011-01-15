@@ -587,6 +587,34 @@ sub disband {
 	);
 }
 
+# Return a hash of characters with broken items
+sub broken_equipped_items_hash {
+	my $self = shift;
+	
+	# See if any chars have broken weapons equipped
+	my @broken_equipped_items = $self->result_source->schema->resultset('Items')->search(
+		{
+			'belongs_to_character.party_id' => $self->id,
+			'equip_place_id'                => { '!=', undef },
+			-and                            => [
+				'item_variables.item_variable_value'    => '0',
+				'item_variable_name.item_variable_name' => 'Durability',
+			],
+		},
+		{
+			join     => [ 'belongs_to_character', { 'item_variables' => 'item_variable_name', } ],
+			prefetch => 'item_type',
+		}
+	);
+
+	my %broken_items_by_char_id;
+	foreach my $broken_item (@broken_equipped_items) {
+		push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
+	}
+	
+	return %broken_items_by_char_id;
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

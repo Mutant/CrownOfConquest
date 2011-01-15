@@ -190,26 +190,7 @@ sub list : Private {
 	
 	$c->stats->profile("Fetched characters");
 
-	# See if any chars have broken weapons equipped
-	my @broken_equipped_items = $c->model('DBIC::Items')->search(
-		{
-			'belongs_to_character.party_id' => $c->stash->{party}->id,
-			'equip_place_id'                => { '!=', undef },
-			-and                            => [
-				'item_variables.item_variable_value'    => '0',
-				'item_variable_name.item_variable_name' => 'Durability',
-			],
-		},
-		{
-			join     => [ 'belongs_to_character', { 'item_variables' => 'item_variable_name', } ],
-			prefetch => 'item_type',
-		}
-	);
-
-	my %broken_items_by_char_id;
-	foreach my $broken_item (@broken_equipped_items) {
-		push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
-	}
+	my %broken_items_by_char_id = $c->stash->{party}->broken_equipped_items_hash;
 
 	$c->stats->profile("Got Broken weapons");
 

@@ -11,12 +11,32 @@ Location: [% party.location.x %], [% party.location.y %]
 	([% IF in_dungeon %]In a dungeon. [% END %]<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
 [% END %]<br>
 
-[% IF party_messages %]
+[% IF party_messages.0 %]
 	<h3>Recent Messages</h3>
 	
 	[% FOREACH message IN party_messages %]
 		<li>[% message.message %]</li>
 	[% END %]
+[% END %]
+
+[% MACRO character_status(character) BLOCK %]
+	[% IF character.run_out_of_ammo %]
+		<li>[% character.name %] has run out of ammo for [% character.pronoun('posessive-subjective') %] [% character.weapon %]</li>
+	[% END %]
+	[% IF broken_weapons.${character.id} %]
+		<li>[% character.name %] has equipped items that need to be repaired:
+				[% FOREACH item IN broken_weapons.${character.id} %]
+					[% item.display_name %]
+					[% UNLESS loop.last %],[% END %]
+				[% END %]</li>
+	[% END %]
+[% END %]
+
+
+<h3>Party Status</h3>
+
+[% FOREACH character IN party.members %]
+	[% character_status(character) %]
 [% END %]
 
 <h3>Battles</h3>
@@ -99,8 +119,13 @@ You don't current have any active quests.
 	You have [% garrisons.size %] garrisons.<br><br>	
 
 	[% FOREACH garrison_log IN garrison_combat_logs %]
+		[% garrison = garrison_log.garrison %]
 		The Garrison at [% garrison_log.garrison.land.x %], [% garrison_log.garrison.land.y %] has the following characters: 
-		[% INCLUDE garrison/char_summary.html garrison = garrison_log.garrison %]<br>
+		[% INCLUDE garrison/char_summary.html garrison = garrison %]<br><br>
+		
+		[% FOREACH character IN garrison.members %]
+			[% character_status(character) %]
+		[% END %]
 		
 		[% IF garrison_log.combat_logs.size != 0 %]
 			<br>
@@ -125,7 +150,7 @@ You don't current have any active quests.
 			</table>
 			<br>
 		[% ELSE %]
-			No recent combat.<br>
+			No recent combat.<br><br>
 		[% END %]
 	[% END %]
 [% END %]

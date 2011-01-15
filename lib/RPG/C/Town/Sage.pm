@@ -322,13 +322,16 @@ sub find_dungeon : Local {
         }
 
         # Add to mapped sectors
-        $c->model('DBIC::Mapped_Sectors')->create(
+        my $mapped_sector = $c->model('DBIC::Mapped_Sectors')->find_or_create(
             {
                 land_id  => $dungeon_to_find->land_id,
                 party_id => $party->id,
-                known_dungeon => $dungeon_to_find->level,
+
             }
         );
+        
+		$mapped_sector->known_dungeon($dungeon_to_find->level);
+		$mapped_sector->update;
 
         # Deduct money
         $party->gold( $c->stash->{party}->gold - $cost );

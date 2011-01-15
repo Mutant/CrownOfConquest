@@ -126,6 +126,8 @@ sub auto : Private {
        	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
        	return 0;
     }
+    
+    $c->log->debug("End of /auto");
 
     return 1;
 

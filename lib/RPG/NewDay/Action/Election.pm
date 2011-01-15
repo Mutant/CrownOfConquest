@@ -93,7 +93,7 @@ sub run_election {
 		if ($character->id == $mayor->id) {
 			$rating_bonus = $town->mayor_rating;
 		}
-		elsif (! $character->is_npc) {
+		elsif (! $character->is_npc) {			
 			my $party_town = $c->schema->resultset('Party_Town')->find(
 				{
 					town_id => $town->id,
@@ -117,6 +117,10 @@ sub run_election {
 		my $random = Games::Dice::Advanced->roll('1d20') - 10;
 		
 		my $score = $campaign_spend + $rating_bonus + $random;
+		
+		# If character is in the morgue, they get a score of 0.
+		#  This can happen if they were at the inn, couldn't pay, then went to the street and got killed.
+		$score = 0 if $character->status eq 'morgue';
 		
 		$c->logger->debug("Character " . $character->id . " scores: $score [spend: $campaign_spend, rating: $rating_bonus, random: $random]"); 
 		

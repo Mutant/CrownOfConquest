@@ -105,7 +105,7 @@ sub item_types_made {
 sub grouped_items_in_shop {
 	my $self = shift;
 	
-	return $self->search_related('items_in_shop',
+	my @items = $self->search_related('items_in_shop',
 		{
 			'item_enchantments.enchantment_id' => undef,
 		},
@@ -118,12 +118,16 @@ sub grouped_items_in_shop {
 			join => 'item_enchantments',
 		},
 	);
+	
+	@items = grep { ! $_->upgraded } @items;
+	
+	return @items;
 }
 
 sub has_enchanted_items {
 	my $self = shift;
 	
-	return $self->search_related('items_in_shop',
+	my $enchanted = $self->search_related('items_in_shop',
 		{
 			'item_enchantments.enchantment_id' => {'!=', undef},
 		},
@@ -131,20 +135,56 @@ sub has_enchanted_items {
 			join => 'item_enchantments',
 		}
 	)->count > 0 ? 1 : 0;
+	
+	my $upgraded = $self->search_related('items_in_shop',
+		{
+			'property_category.category_name' => 'Upgrade',
+			'item_variables.item_variable_value' => {'>',0},
+		},	
+		{
+			join => [
+				{'item_variables' => {'item_variable_name' => 'property_category'}},
+			],
+		},
+	)->count > 0 ? 1 : 0;
+	
+	
+	return $enchanted || $upgraded;	
 }
 
 sub enchanted_items_in_shop {
 	my $self = shift;
 	
-	return $self->search_related('items_in_shop',
+	my @enchanted = $self->search_related('items_in_shop',
 		{
 			'item_enchantments.enchantment_id' => {'!=', undef},
 		},
 		{
-			prefetch => ['item_enchantments', {'item_type' => 'category'},],
-			order_by => 'item_category',
+			prefetch => [
+				'item_enchantments', 
+				{'item_type' => 'category'},
+			],
 		}
-	);	
+	);
+	
+	my @upgraded = $self->search_related('items_in_shop',
+		{
+			'property_category.category_name' => 'Upgrade',
+			'item_variables.item_variable_value' => {'>',0},
+		},	
+		{
+			prefetch => [
+				{'item_type' => 'category'},
+				{'item_variables' => {'item_variable_name' => 'property_category'}},
+			],
+		},
+	);
+	
+	my %found;
+	my @items = grep { $found{$_->id}++; $found{$_->id}-1 == 0 ? 1 : 0 } (@enchanted, @upgraded);
+	
+	return sort { $a->item_type->category->item_category cmp $b->item_type->category->item_category } @items;
+			
 }
 
 sub shop_name {

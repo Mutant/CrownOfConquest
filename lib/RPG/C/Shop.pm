@@ -410,9 +410,9 @@ sub sell_single_item : Private {
 	$item->character_id(undef);
 	$item->equip_place_id(undef);
 
-	if ( $item->variable('Quantity') || $item->upgraded ) {
+	if ( $item->variable('Quantity') ) {
 
-		# Qunatity and upgraded items get deleted
+		# Qunatity items get deleted
 		$item->delete;
 	}
 

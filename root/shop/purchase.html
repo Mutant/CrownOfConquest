@@ -174,20 +174,18 @@ dojo.addOnLoad( init );
 <div align="center">Drag an item below onto a character's name to purchase it</div>
 <br>
 
-[% IF shop.has_enchanted_items %]
-	<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
 		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items" style="display: none;">
-[% END %]
 
 [% INCLUDE shop/item_list.html items=items %]
 
+		</div>
+
 [% IF shop.has_enchanted_items %]
-	</div>
-	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted Items" style="display: none;"
+	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted & Upgraded Items" style="display: none;"
 		href="[% base %]/shop/enchanted_tab?shop_id=[% shop.id %]">
 	</div>
-</div>
 [% END %]
-	
+</div>	
 
 [% INCLUDE bottom.html %]

@@ -222,7 +222,7 @@ sub end_raid : Private {
 
 	my $killed_count;
 	foreach my $battle (@battles) {
-		$party_town->decrease_prestige(5);
+		$party_town->decrease_prestige(7);
 		
 		my $enemy_num = $battle->enemy_num_of( $c->stash->{party} );
 		my $stats     = $battle->opponent_stats;
@@ -258,7 +258,7 @@ sub end_raid : Private {
 		);
 	}
 
-	$party_town->decrease_prestige( $killed_count * 8 );
+	$party_town->decrease_prestige( $killed_count * 10 );
 	$party_town->increase_guards_killed($killed_count);
 	$party_town->last_raid_end( DateTime->now() );
 	$party_town->update;

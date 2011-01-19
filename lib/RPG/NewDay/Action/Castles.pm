@@ -27,17 +27,20 @@ sub run {
 	);
 	
 	while (my $town = $town_rs->next) {
-		if ($town->castle) {
-			$self->fill_chests($town->castle);
+		my $level = int ($town->prosperity / 20);
+		$level = 4 if $level > 4;
+		$level = 1 if $level < 1;
+
+		if (my $castle = $town->castle) {
+			$self->fill_chests($castle);
+			$castle->level($level);
+			$castle->update;
 			next;
 		}
 		
 		$c->logger->debug("Creating castle for town " . $town->id);
 		
-		my $level = int ($town->prosperity / 20);
-		$level = 4 if $level > 4;
-		$level = 1 if $level < 1;
-		my $dungeon = $c->schema->resultset('Dungeon')->find_or_create(
+		my $dungeon = $c->schema->resultset('Dungeon')->create(
             {
                 land_id => $town->land_id,
                 type => 'castle',

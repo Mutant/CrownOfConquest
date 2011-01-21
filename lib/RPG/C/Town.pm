@@ -137,6 +137,9 @@ sub heal_party : Local {
 	unless ( $cost_to_heal == 0 ) {
 		$percent_to_heal = $amount_to_spend / $cost_to_heal * 100;
 	}
+	
+	$amount_to_spend = $cost_to_heal if $amount_to_spend > $cost_to_heal;
+	$percent_to_heal = 100 if $percent_to_heal > 100;
 
 	if ( $amount_to_spend <= $c->stash->{party}->gold ) {
 		$c->stash->{party}->gold( $c->stash->{party}->gold - $amount_to_spend );

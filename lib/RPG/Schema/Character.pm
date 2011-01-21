@@ -15,7 +15,7 @@ use DateTime;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
-__PACKAGE__->load_components(qw/Core Numeric/);
+__PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('`Character`');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Character');
@@ -29,8 +29,12 @@ __PACKAGE__->add_columns(
         movement_factor_bonus/
 );
 
-__PACKAGE__->numeric_columns(qw/hit_points spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-								movement_factor_bonus/);
+__PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
+								movement_factor_bonus/,
+								hit_points => {
+							 		upper_bound_col => 'max_hit_points',
+							 	},
+);
 
 __PACKAGE__->add_columns( 
 	xp => { accessor => '_xp' },

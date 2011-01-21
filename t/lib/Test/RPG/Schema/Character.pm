@@ -31,22 +31,6 @@ sub character_shutdown : Tests(shutdown) {
 	$self->unmock_dice;
 }
 
-sub test_numeric : Tests() {
-	my $self = shift;	
-	
-    my $char = $self->{schema}->resultset('Character')->create(
-        {
-			hit_points => 5,
-        }
-    );
-    
-    $char->increase_hit_points(5);
-    $char->increase_spell_points(11);
-    
-    is($char->hit_points, 10, "Yep");
-    is($char->spell_points, 11, "Sure");	
-}
-
 sub test_get_equipped_item : Tests(2) {
     my $self = shift;
 
@@ -717,6 +701,19 @@ sub test_stat_bonus : Tests(2) {
 	# THEN
 	is($str, 15, "Bonus added to strength correctly");
 	is($agl, 4, "No bonus added to agility");
+}
+
+sub test_cant_increase_hps_above_max : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 10, max_hit_points => 20);
+	
+	# WHEN
+	$character->hit_points(21);
+	
+	# THEN
+	is($character->hit_points, 20, "Character's hps not increased above max");
 }
 
 1;

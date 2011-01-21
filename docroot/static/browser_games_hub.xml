@@ -1,0 +1,13 @@
+<browsergameshub version="0.1">
+	<name>Kingdoms</name>
+	<site_url>http://www.kingdoms-game.com/</site_url>
+	<descriptions>
+		<description lang="en">Kingdoms is an online "persistent world" role-playing game. In Kingdoms, you control a party of characters, 
+		adventuring around a grid-based world, discovering new towns, exploring dungeons, fighting all manner of foul creatures, and much more. </description>
+	</descriptions>
+	<genre>rpg</genre>
+	<setting>fantasy</setting>
+	<effort>high</effort>
+	<status>beta</status>
+	<timing>rounds</timing>		
+</browsergameshub>

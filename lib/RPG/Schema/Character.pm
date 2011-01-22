@@ -238,6 +238,9 @@ sub status_description {
 		my $town = $self->mayor_of_town;
 		return "Mayor of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
 	}
+	elsif ($self->town_id) {
+		return "Awaiting recruitment";	
+	}
 	elsif (! defined $self->status) {
 		return "With the party";	
 	}

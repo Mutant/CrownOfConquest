@@ -12,6 +12,8 @@ use String::Random;
 use DateTime;
 use List::Util qw(shuffle);
 use Digest::SHA1 qw(sha1_hex);
+use MIME::Lite;
+use Data::Dumper;
 
 sub login : Local {
     my ( $self, $c ) = @_;
@@ -455,9 +457,8 @@ sub survey : Local {
 	
 	my $reason = join ',', $c->req->param('reason');
 	$reason .= ','.$c->req->param('reason_other');
-	
-	my $survey_resp = $c->model('DBIC::Survey_Response')->create(
-		{
+
+	my $survey = {
 			reason => $reason,
 			favourite => $c->req->param('favourite'),
 			least_favourite => $c->req->param('least_favourite'),
@@ -465,8 +466,19 @@ sub survey : Local {
 			email => $c->req->param('email'),
 			party_level => $c->session->{party_level},
 			turns_used => $c->session->{turns_used},
-		}
+	};
+	
+	my $survey_resp = $c->model('DBIC::Survey_Response')->create(
+		$survey,
 	);
+	
+	my $msg = MIME::Lite->new(
+		From    => $c->config->{send_email_from},
+		To      => $c->config->{send_email_from},
+		Subject => '[Kingdoms] Survey Response',
+		Data    => "A survey was completed. The response was:\n\n" . Dumper $survey,
+	);
+	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );	
 	
 	$c->forward( 'RPG::V::TT', [ { template => 'player/survey_thanks.html', } ] );
 	

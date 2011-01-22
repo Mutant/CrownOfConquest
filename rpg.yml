@@ -180,8 +180,8 @@ minimum_garrison_level: 6
 creature_attack_chance: 40
 
 # Size of 'roll' for attack
-attack_dice_roll: 15
-defence_dice_roll: 15
+attack_dice_roll: 18
+defence_dice_roll: 18
 
 # Bonus a char gets for choosing to defend
 defend_bonus: 5

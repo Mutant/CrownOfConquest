@@ -318,11 +318,17 @@ sub move_to : Local {
             	$c->stash->{had_phantom_dungeon} = 1;
         	}
         	elsif ($has_dungeon) {
-        		# They've found a dungeon
-        		$mapped_sector->known_dungeon( $mapped_sector->location->dungeon->level );
-        		$mapped_sector->update;
+        		# They in a sector with a dungeon - add it to known dungeons if they're high enough level
+        		my $dungeon = $mapped_sector->location->dungeon;
+        		
+        		if ($dungeon->party_can_enter($c->stash->{party})) {
+        			$mapped_sector->known_dungeon( $dungeon->level );
+        			$mapped_sector->update;
+        		}
         	}
-        } 
+        }
+        
+        $c->stash->{mapped_sector} = $mapped_sector;
         
         if (my $garrison = $new_land->garrison) {
         	# Garrison records a party sighting (unless it's the owner)

@@ -141,6 +141,7 @@ sub test_move_to_found_dungeon : Tests(2) {
 	my $party = Test::RPG::Builder::Party->build_party(
 		$self->{schema},
 		character_count => 2,
+		level => 15,
 		land_id         => $land[1]->id
 	);
 
@@ -214,6 +215,51 @@ sub test_move_to_phantom_dungeon : Tests(3) {
 	$mapped_sector->discard_changes;
 	is($mapped_sector->known_dungeon, 0, "Dungeon no longer there");
 	is($self->{stash}{had_phantom_dungeon}, 1, "Record that there was a phantom");
+}
+
+sub test_move_to_found_dungeon_not_high_enough_level : Tests(2) {
+	my $self = shift;
+
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		level => 8,
+		land_id => $land[1]->id
+	);
+
+	my $dungeon = $self->{schema}->resultset('Dungeon')->create(
+		{
+			level   => 3,
+			land_id => $land[0]->id,
+			type => 'dungeon',
+		}
+	);
+
+	$self->{params}{land_id} = $land[0]->id;
+
+	$self->{stash}{party}          = $party;
+	$self->{stash}{party_location} = $party->location;
+
+	$self->{mock_forward}{'/combat/check_for_attack'} = sub { };
+	$self->{mock_forward}{'/panel/refresh'}           = sub { };
+
+	# WHEN
+	RPG::C::Map->move_to( $self->{c} );
+
+	# THEN
+	$party->discard_changes;
+	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
+
+	my $mapped_sector = $self->{schema}->resultset('Mapped_Sectors')->find(
+		{
+			land_id => $land[0]->id,	
+			party_id => $party->id,
+		}
+	);
+	is($mapped_sector->known_dungeon, 0, "Dungeon not found, party not high enough level");
 }
 
 sub test_known_dungeons : Tests(7) {

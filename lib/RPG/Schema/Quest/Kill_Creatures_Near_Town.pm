@@ -51,6 +51,9 @@ sub check_action {
 	
 	return 0 unless $action eq 'creature_group_killed';
 	
+	# Doesn't count if they're in a dungeon/castle
+	return 0 if $party->dungeon_grid_id;
+	
 	return 0 if $self->param_current_value('Number Of Creatures To Kill') == 0;
 	
 	my $sector_in_range = RPG::Map->is_in_range(

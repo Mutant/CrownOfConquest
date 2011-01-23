@@ -305,9 +305,9 @@ sub equip_place_id {
 				
 				$character->update;
 			}
-		
-			$self->_equip_place_id($new_equip_place_id);
 		}
+		
+		$self->_equip_place_id($new_equip_place_id);
 	}
 		
 	return $self->_equip_place_id;	
@@ -434,7 +434,7 @@ sub equip_item {
         croak "Can't equip an item of that type there\n";
     }
 
-    # If the item is alredy equipped there, return straight away
+    # If the item is already equipped there, return straight away
     if ( $self->equip_place_id && $self->equip_place_id == $equip_place->id ) {
         return;
     }
@@ -453,7 +453,6 @@ sub equip_item {
             $equipped_item->update;
         }
         else {
-
             # We're not replacing existing items, so nothing more to do here
             return;
         }

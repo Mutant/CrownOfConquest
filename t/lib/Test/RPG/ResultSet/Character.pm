@@ -9,6 +9,7 @@ __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 use Test::Resub;
+use Test::RPG::Builder::Item_Type;
 
 use Data::Dumper;
 
@@ -158,6 +159,43 @@ sub test_create_character_level_5 : Tests(7) {
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );
+}
+
+sub test_create_character_level_10_allocate_equipment : Tests(10) {
+    my $self = shift;
+
+    # GIVEN
+    my $race = $self->{schema}->resultset('Race')->find( { race_name => 'Elf', } );
+    my $class = $self->{schema}->resultset('Class')->find( { class_name => 'Priest', } );
+    
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, 
+    	category_name => 'Melee Weapon',
+    	equip_places_allowed => ['Left Hand', 'Right Hand'],
+    );
+    
+    $self->{roll_result} = 5;
+
+    # WHEN
+    my $character = $self->{schema}->resultset('Character')->generate_character(     	
+    	race => $race, 
+    	class => $class, 
+    	level => 10,  
+    	allocate_equipment => 1,
+    );
+
+    # THEN
+    is( $character->race_id,  $race->id,  "Character is correct race" );
+    is( $character->class_id, $class->id, "Character is correct class" );
+    is( $character->level,    10,          "Character is level 5" );
+    is( $character->xp,       5005,        "Character has 100 xp" );
+    ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
+    ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
+    is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );
+    
+    my @items = $character->items;
+    is(scalar @items, 1, "1 item allocated to character");
+    is($items[0]->item_type_id, $item_type->id, "Item created in correct category");
+    is($items[0]->equipped, 1, "Item is equipped");
 }
 
 1;

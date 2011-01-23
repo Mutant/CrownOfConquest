@@ -202,10 +202,10 @@ sub _allocate_equipment {
 		# TODO: generate enchanted items
         my $item = $self->result_source->schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
 
-        $item->equip_item( $equip_place->equip_place_name, 0 );
-
         $item->character_id( $character->id );
         $item->update;
+
+        $item->equip_item( $equip_place->equip_place_name, 0 );
     }
 }
 

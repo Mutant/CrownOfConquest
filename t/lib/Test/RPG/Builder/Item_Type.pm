@@ -19,6 +19,23 @@ sub build_item_type {
         }
     );
     
+    if ($params{equip_places_allowed}) {
+    	foreach my $equip_place (@{$params{equip_places_allowed}}) {
+    		my $equip_place_record = $schema->resultset('Equip_Places')->find(
+    			{
+    				equip_place_name => $equip_place,
+    			}
+    		);
+    		
+    		$schema->resultset('Equip_Place_Category')->create(
+    			{
+    				equip_place_id => $equip_place_record->id,
+    				item_category_id => $item_cat->id,
+    			}
+    		);
+    	}
+    }
+    
     if ($params{enchantments}) {
     	foreach my $enchantment_type (@{$params{enchantments}}) {
     		my $enchantment = $schema->resultset('Enchantments')->find(

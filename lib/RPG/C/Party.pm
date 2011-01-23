@@ -60,7 +60,21 @@ sub sector_menu : Private {
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
 	my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
-	$dungeon = undef if $dungeon && !$dungeon->party_can_enter( $c->stash->{party} );
+	
+	# If they know about the dungeon we display a message in the sector menu.
+	#  Note, they may not be able to enter the dungeon, but still know about it (i.e. they found the entrance
+	#  when they were higher level, but have dropped levels since then). We still display them the message,
+	#  but refuse entry.
+	if ($dungeon) {
+		my $mapped_sector = $c->stash->{mapped_sector} || $c->model('DBIC::Mapped_Sectors')->find_or_create(
+	        {
+	            party_id => $c->stash->{party}->id,
+	            land_id  => $c->stash->{party_location}->id,
+	        },
+	    );
+	
+		$dungeon = undef unless $mapped_sector->known_dungeon;
+	}
 
 	my $parties_in_sector = $c->forward( 'parties_in_sector', [ $c->stash->{party_location}->id ] );
 
@@ -666,7 +680,9 @@ sub enter_dungeon : Local {
 	my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
 
 	unless ( $dungeon->party_can_enter( $c->stash->{party} ) ) {
-		croak "Party not allowed to enter this dungeon";
+		$c->stash->{error} = "Your party is not high enough level to enter this dungeon";
+		$c->forward( '/panel/refresh', [ 'messages' ]);
+		return;
 	}
 
 	# Reset zoom level

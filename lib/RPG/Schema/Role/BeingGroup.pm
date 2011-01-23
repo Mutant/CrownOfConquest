@@ -33,7 +33,7 @@ sub compare_to_party {
     my ( $cg_members, $cg_af, $cg_df, $cg_hp, $cg_dam ) = $self->factor_aggregates;
 
     my $factor_comparison =
-        ( ( $party_members - $cg_members ) * 5 ) +
+        ( ( $party_members - $cg_members ) ) +
         ( $party_af - $cg_df ) +
         ( $party_df - $cg_af ) +
         ( ( $party_hp - $cg_hp ) / 2 ) +

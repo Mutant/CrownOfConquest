@@ -268,6 +268,33 @@ html>body .nav a {width: auto}
 	color: black;
 }
 
+/* Action buttons */
+.actionButton .dijitButtonNode {
+    border-width: 0px;
+    padding: 0;
+}
+
+.actionButton .dijitButtonText {
+    padding: 0;
+}
+
+.actionButton .dijitTooltipConnector {
+    display: none;
+}
+
+.dijitTooltipDialogPopup .dijitTooltipBelow {
+    padding-top: 1px;
+}
+
+.actionButton .dijitTooltipContainer {
+    background: black;
+    padding: 1px;
+}
+
+.actionButtonOption a:hover {
+    background: lightslategray;
+}
+
 /* Misc */
 
 #rank_separator {

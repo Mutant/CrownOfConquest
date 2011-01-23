@@ -14,6 +14,7 @@ use RPG::Combat::CreatureWildernessBattle;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use DateTime;
+use JSON;
 
 # Check to see if creatures attack party (if there are any in their current sector)
 sub check_for_attack : Local {
@@ -312,6 +313,25 @@ sub process_flee_result : Private {
 
 		$c->forward( '/combat/process_round_result', [$result] );
 	}
+}
+
+sub target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	# TODO: handle party & garrison combat
+	my $group = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+	
+	my @opponents;
+	foreach my $opponent ($group->members) {
+		next if $opponent->is_dead;
+		push @opponents, {
+			name => $opponent->name,
+			id => $opponent->id,
+		};
+	}
+	
+	$c->res->body(to_json {opponents => \@opponents});
+	
 }
 
 1;

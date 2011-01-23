@@ -1,35 +1,77 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
 <script>
+
+function loadFightMenu(charId) {
+	var menu = dijit.byId('fightMenu_' + charId);
+	clearMenu(menu);
+	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: block');
+
+	dojo.xhrGet( {
+        url: "[% base %]combat/target_list",
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        	clearMenu(menu);
+			
+			for (var i in responseObject.opponents) {
+				itemId = "fightOpponent_" + charId + "_" + responseObject.opponents[i].id;
+			
+				menuItem = dijit.byId(itemId);
+				
+				if (menuItem) {
+					menuItem.attr('style', 'display: block');
+				}
+				else {
+				
+					menuItem = new dijit.MenuItem({
+				        label: responseObject.opponents[i].name,
+				        onClick: function() { var id = responseObject.opponents[i].id; console.log(id); alert(id) },
+				        id: itemId
+				    });
+				    menu.addChild(menuItem);
+			    }			
+			}
+		},
+        
+	    timeout: 15000 // Time in milliseconds	
+    });	
+}
+
+function clearMenu(menu) {
+	var children = menu.getChildren();
+	for (var i in children) {				
+		children[i].attr('style','display: none');
+	}
+}
+
 function createMenus() {
 	if (dijit.byId('action_menu') != undefined) {
 		dijit.byId('action_menu').destroyRecursive();			
 	}
 	
-	var params = {id:"action_menu" };
+
+   [% FOREACH character IN characters %]    
+	var params = {id:"fightMenu_[% character.id %]" };
 
 	var menu = new dijit.Menu(params,document.createElement("div"));
-	
-	[% FOREACH opponent IN opponents %]
-		var menuItem = new dijit.MenuItem({
-            label: "[% opponent.name %]",
-            onClick: function() {
-                alert("[% opponent.name %]");
-            }
-        });
-        menu.addChild(menuItem);
+
+	var menuItem = new dijit.MenuItem({
+        label: "Loading...",
+        id: "fightMenuLoading_[% character.id %]",
+    });
+    menu.addChild(menuItem);
+
+    var button[% character.id %] = new dijit.form.DropDownButton({
+        label: "<img src=[% c.config.static_path %]/images/actions/attack.png>",
+        dropDown: menu,
+        class: "actionButton",
+        id: "fightButton_[% character.id %]"         
+	});        
+
+    dojo.byId("fightMenu_[% character.id %]").appendChild(button[% character.id %].domNode);
+    dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
     [% END %]
-    
-     var button = new dijit.form.DropDownButton({
-            label: "<img src=[% c.config.static_path %]/images/actions/attack.png>",
-            dropDown: menu,
-            class: "actionButton" 
-           
-        });
-        
-     [% FOREACH character IN characters %]
-     dojo.byId("fightMenu_[% character.id %]").appendChild(dojo.clone(button.domNode));
-     [% END %]
 
 }
 

@@ -50,11 +50,14 @@ sub can_be_passed {
 sub opposite_door {
     my $self = shift;
     
+    confess "No room for sector " . $self->dungeon_grid->id unless $self->dungeon_grid->dungeon_room;
+    
     my ( $opp_x, $opp_y ) = $self->opposite_sector;
     my $opp_door = $self->result_source->schema->resultset('Door')->find(
         {
             'dungeon_grid.x'          => $opp_x,
             'dungeon_grid.y'          => $opp_y,
+            'dungeon_room.floor'      => $self->dungeon_grid->dungeon_room->floor,
             'dungeon_room.dungeon_id' => $self->dungeon_grid->dungeon_room->dungeon_id,
             'position.position'       => $self->opposite_position,
         },

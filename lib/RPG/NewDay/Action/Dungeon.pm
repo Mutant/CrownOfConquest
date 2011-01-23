@@ -86,10 +86,16 @@ sub run {
             }
         );
         
-		my $number_of_rooms = Games::Dice::Advanced->roll( $dungeon->level + 1 . 'd20' ) + 20;
+        my $floors = RPG::Maths->weighted_random_number( 1 .. 3 );
+        my @number_of_rooms;
+        for (1..$floors) {
+			push @number_of_rooms, Games::Dice::Advanced->roll( $dungeon->level + 1 . 'd20' ) + 20;
+        }
 
-        $self->generate_dungeon_grid( $dungeon, $number_of_rooms );
+        $self->generate_dungeon_grid( $dungeon, \@number_of_rooms );
+        $c->logger->debug("Generating chests");
         $self->generate_treasure_chests( $dungeon );
+        $c->logger->debug("Populating sector paths");
         $self->populate_sector_paths( $dungeon ); 
     }
 }
@@ -171,6 +177,8 @@ sub reconfigure_doors {
 
     foreach my $door (@doors) {
         unless ( $processed_doors->[ $door->id ] ) {
+        	next unless $door->dungeon_grid->dungeon_room;
+        	        	
             my $opp_door = $door->opposite_door;
 
             my $door_type;
@@ -235,7 +243,11 @@ sub fill_chest {
 	my $self = shift;
 	my $chest = shift;
 	
+	return unless $chest->dungeon_grid->dungeon_room;
+	
 	my $dungeon = $chest->dungeon_grid->dungeon_room->dungeon;
+	
+	return unless $dungeon;
 	
 	unless (%item_types_by_prevalence) {
 		my @item_types = $self->context->schema->resultset('Item_Type')->search(
@@ -387,11 +399,11 @@ sub _get_sector_for_teleporter {
 	my $count = 0;
 	while (! $sector) {
 		$count++;
-		die "Can't find sector to create teleporter in" if $count > 500;				
+		die "Can't find sector to create teleporter in (dungeon id: " . $dungeon->id . ')' if $count > 500;				
 		
 		my $test_sector = $self->context->schema->resultset('Dungeon_Grid')->find_random_sector($dungeon->id);
 		
-		next if $test_sector->treasure_chest || $test_sector->teleporter || $test_sector->stairs_up || $test_sector->sides_with_doors;
+		next if ! $test_sector || $test_sector->treasure_chest || $test_sector->teleporter || $test_sector->stairs_up || $test_sector->sides_with_doors;
 		
 		next if defined $not_in_room && $test_sector->dungeon_room_id == $not_in_room; 
 		

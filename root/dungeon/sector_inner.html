@@ -41,6 +41,8 @@
 									
 			[% IF sector.stairs_up %]
 				<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
+			[% ELSIF sector.stairs_down %]
+			    D
 			[% ELSIF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
 			[% ELSIF sector.teleporter && ! sector.teleporter.invisible %]

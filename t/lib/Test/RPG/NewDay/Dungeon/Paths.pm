@@ -832,4 +832,139 @@ sub test_populate_sector_paths_multiple_doors_in_path_diagonal : Tests(2) {
     is($path1->doors_in_path->count, 1, "door in path recorded"); 
 }
 
+sub test_populate_sector_paths_multiple_floors : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+    	dungeon_id => $dungeon->id, 
+    	floor => 1,
+    	create_walls => 1,
+    	top_left => {x=>1, y=>1},
+    	bottom_right => {x=>3, y=>3},
+    	sector_walls => {
+    		'1,1' => 'right',
+    		'1,2' => 'right',
+    		'1,3' => 'right',
+    		'2,1' => 'left',
+    		'2,2' => 'left',
+    		'2,3' => 'left',
+    	}
+    );
+
+    my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+    	dungeon_id => $dungeon->id, 
+    	floor => 2,
+    	create_walls => 1,
+    	top_left => {x=>1, y=>1},
+    	bottom_right => {x=>3, y=>3},    	
+    	sector_walls => {
+    		'2,1' => 'right',
+    		'2,2' => 'right',
+    		'2,3' => 'right',
+    		'3,1' => 'left',
+    		'3,2' => 'left',
+    		'3,3' => 'left',    		
+    	}
+    );    
+        
+    my @expected_allowed_to_move_to = ( {x=>2,y=>1}, {x=>2,y=>3}, {x=>3,y=>1}, {x=>3,y=>2}, {x=>3,y=>3} );
+    
+    my $start_sector;
+    
+    my %expected_sectors_by_id;
+    my %sectors_by_id;
+
+	# Create first room
+    foreach my $sector ($dungeon_room1->sectors) {
+    	#warn $sector->x . "," . $sector->y;
+    	$sectors_by_id{$sector->id} = {x=>$sector->x, y=>$sector->y};
+        if (grep { $_->{x} == $sector->x && $_->{y} == $sector->y } @expected_allowed_to_move_to ) {
+          	$expected_sectors_by_id{$sector->id} = 1;
+        }
+            
+        if ($sector->x==2 && $sector->y==2) {
+        	$start_sector = $sector;
+        }
+    }
+
+    # WHEN
+    $dungeon->populate_sector_paths();
+    my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(1);
+    # THEN
+	is_deeply( $allowed_to_move_sectors, \%expected_sectors_by_id, "Correct sectors are allowed to move to")
+		or diag Dumper \%sectors_by_id;
+}
+
+sub test_populate_sector_paths_multiple_floors_with_doors : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+    	dungeon_id => $dungeon->id, 
+    	floor => 2,
+    	create_walls => 1,
+    	top_left => {x=>1, y=>1},
+    	bottom_right => {x=>3, y=>3},
+    	sector_doors => {
+    		'2,3' => 'bottom',
+    	},
+    );
+    my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+    	dungeon_id => $dungeon->id, 
+    	floor => 2,
+    	create_walls => 1,
+    	top_left => {x=>1, y=>4},
+    	bottom_right => {x=>3, y=>6},
+    	sector_doors => {
+    		'2,4' => 'top',
+    	},
+    );
+
+    my $dungeon_room3 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+    	dungeon_id => $dungeon->id, 
+    	floor => 1,
+    	create_walls => 1,
+    	top_left => {x=>1, y=>1},
+    	bottom_right => {x=>3, y=>6},
+    );    
+        
+    my @expected_allowed_to_move_to = ( {x=>1,y=>2}, {x=>2,y=>2}, {x=>3,y=>2}, {x=>1,y=>3}, {x=>3,y=>3},
+    	{x=>1,y=>4}, {x=>2, y=>4}, {x=>3, y=>4} 
+    );
+    
+    my $start_sector;
+    
+    my %expected_sectors_by_id;
+    my %sectors_by_id;
+
+	# Create first room
+    foreach my $sector ($dungeon_room1->sectors, $dungeon_room2->sectors) {
+    	#warn $sector->x . "," . $sector->y;
+    	$sectors_by_id{$sector->id} = {x=>$sector->x, y=>$sector->y};
+        if (grep { $_->{x} == $sector->x && $_->{y} == $sector->y } @expected_allowed_to_move_to ) {
+          	$expected_sectors_by_id{$sector->id} = 1;
+        }
+            
+        if ($sector->x==2 && $sector->y==3) {
+        	$start_sector = $sector;
+        }
+    }
+
+    # WHEN
+    $dungeon->populate_sector_paths();
+    my $allowed_to_move_sectors = $start_sector->sectors_allowed_to_move_to(1);
+    
+    # THEN
+    my $result=	is_deeply( $allowed_to_move_sectors, \%expected_sectors_by_id, "Correct sectors are allowed to move to");
+    
+   	unless ($result) {
+		diag "All sectors: " . Dumper \%sectors_by_id;
+		diag "Expected sectors: " . Dumper \%expected_sectors_by_id;
+		diag  "Actual sectors: " . Dumper $allowed_to_move_sectors;
+   	}
+}
+
 1;

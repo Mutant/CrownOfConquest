@@ -10,7 +10,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Room');
 
-__PACKAGE__->add_columns(qw/dungeon_room_id dungeon_id/);
+__PACKAGE__->add_columns(qw/dungeon_room_id dungeon_id floor/);
 
 __PACKAGE__->set_primary_key('dungeon_room_id');
 
@@ -54,6 +54,7 @@ sub connected_to_room {
                     x => $sector_to_check_x,
                     y => $sector_to_check_y,
                     'dungeon_room.dungeon_id' => $self->dungeon_id,
+                    'dungeon_room.floor' => $self->floor,
                 },
                 {
                     join => 'dungeon_room',

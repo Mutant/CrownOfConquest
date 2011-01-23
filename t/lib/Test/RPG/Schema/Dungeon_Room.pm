@@ -42,6 +42,7 @@ sub test_connected_to_room : Tests(2) {
     my $room1 = $self->{schema}->resultset('Dungeon_Room')->create( 
         {
             dungeon_id => $dungeon->id,
+            floor => 1,
         } 
     );
 

@@ -675,6 +675,7 @@ sub enter_dungeon : Local {
 	my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
 		{
 			'dungeon_room.dungeon_id' => $dungeon->id,
+			'dungeon_room.floor'      => 1,
 			'stairs_up'               => 1,
 		},
 		{ join => 'dungeon_room', }

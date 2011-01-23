@@ -16,7 +16,7 @@ __PACKAGE__->table('Dungeon_Grid');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Dungeon_Grid');
 
-__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id stairs_up/);
+__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id stairs_up stairs_down/);
 
 __PACKAGE__->set_primary_key('dungeon_grid_id');
 

@@ -132,65 +132,62 @@ sub spawn_dungeon_monsters {
     		type => 'dungeon',
     	}
     );
-
-    $dungeon_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-
-    my $level_rs = $c->schema->resultset('CreatureType')->find(
-        {},
-        {
-            select => [              { max => 'level' }, { min => 'level' }, ],
-            as     => [ 'max_level', 'min_level' ],
-        }
-    );
-
     while ( my $dungeon = $dungeon_rs->next ) {
-        $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->{dungeon_id} );
-
-        my $creature_count =
-            $c->schema->resultset('CreatureGroup')
-            ->search( { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, }, { join => { 'dungeon_grid' => 'dungeon_room' }, } )->count;
-
-        my $sector_count =
-            $c->schema->resultset('Dungeon_Grid')->search( { 'dungeon_room.dungeon_id' => $dungeon->{dungeon_id}, }, { join => 'dungeon_room', } )
-            ->count;
-
-        $c->logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
-
-        my $number_of_groups_to_spawn = ( int $sector_count / $c->config->{dungeon_sectors_per_creature} ) - $creature_count;
-
-        $c->logger->info( "Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->{dungeon_id} );
-
-        next if $number_of_groups_to_spawn <= 0;
-
-        # Spawn random groups
-        my $spawned = {};
-
-        for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
-            my $level_range_start = $dungeon->{level} * 5 - 7;
-            $level_range_start = 1 if $level_range_start < 1;
-            my $level_range_end = $dungeon->{level} * 5;
-
-            my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->{dungeon_id} );
-
-			try {
-            	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
-			}
-			catch {
-				if (ref $_ && $_->isa('RPG::Exception')) {
-					if ($_->type eq 'creature_type_error') {
-						# Couldn't find a creature type.. just skip this group
-						next;	
-					}
-				}
-				
-				die $_;	
-			};
-
-            if ( $group_number % 50 == 0 ) {
-                $c->logger->info("Spawned $group_number groups...");
-            }
-        }
+		$self->_spawn_in_dungeon($c, $dungeon);
     }
+}
+
+sub _spawn_in_dungeon {
+	my $self = shift;
+	my $c = shift;
+	my $dungeon = shift;
+	
+    $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->dungeon_id );
+
+    my $creature_count =
+        $c->schema->resultset('CreatureGroup')
+        ->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => { 'dungeon_grid' => 'dungeon_room' }, } )->count;
+
+    my $sector_count =
+        $c->schema->resultset('Dungeon_Grid')->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => 'dungeon_room', } )
+        ->count;
+
+    $c->logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
+
+    my $number_of_groups_to_spawn = ( int $sector_count / $c->config->{dungeon_sectors_per_creature} ) - $creature_count;
+
+    $c->logger->info( "Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->dungeon_id );
+
+    return if $number_of_groups_to_spawn <= 0;
+
+    # Spawn random groups
+    my $spawned = {};
+
+    for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
+        my $level_range_start = $dungeon->level * 5 - 7;
+        $level_range_start = 1 if $level_range_start < 1;
+        my $level_range_end = $dungeon->level * 5;
+
+        my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->dungeon_id );
+
+		try {
+           	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
+		}
+		catch {
+			if (ref $_ && $_->isa('RPG::Exception')) {
+				if ($_->type eq 'creature_type_error') {
+					# Couldn't find a creature type.. just skip this group
+					next;	
+				}
+			}
+				
+			die $_;	
+		};
+
+        if ( $group_number % 50 == 0 ) {
+            $c->logger->info("Spawned $group_number groups...");
+        }
+    }		
 }
 
 sub _calculate_number_of_groups_to_spawn {

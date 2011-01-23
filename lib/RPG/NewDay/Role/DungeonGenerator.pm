@@ -39,105 +39,131 @@ sub generate_dungeon_grid {
 	my $dungeon   = shift;
 	my $number_of_rooms = shift;
 	my $corridor_chance = shift // 15;
+
+	# Number of rooms is an array ref, with each element the number of rooms on that floor
+	if (! ref $number_of_rooms) {
+		$number_of_rooms = [$number_of_rooms];	
+	}
 	
 	my $positions = $self->positions;
 
 	my $c = $self->context;
 
-	my $sectors_created;
+	my $floor = 0;
+	foreach my $room_count (@$number_of_rooms) {
+		$floor++; 
+		$c->logger->debug("Creating $room_count rooms in floor $floor of dungeon");
 
-	$c->logger->debug("Creating $number_of_rooms rooms in dungeon");
-
-	for my $current_room_number ( 1 .. $number_of_rooms ) {
-		$c->logger->debug("Creating room # $current_room_number");
-
-		my ( $start_x, $start_y );
-
-		my $wall_to_join;
-		my $door_type;
-
-		if ( $current_room_number == 1 ) {
-
-			# Pick a spot for the first room
-			$start_x = 15;
-			$start_y = 15;
-		}
-		else {
-
-			# Find a wall to join
-			$wall_to_join = $self->_find_wall_to_join($sectors_created);
-
-			$c->logger->debug( "Joining wall at "
-					. $wall_to_join->dungeon_grid->x . ", "
-					. $wall_to_join->dungeon_grid->y
-					. " position: "
-					. $wall_to_join->position->position );
-
-			( $start_x, $start_y ) = $wall_to_join->opposite_sector;
-
-			# Create existing side of the door
-			$door_type = $self->get_door_type;
-
-			my $door = $c->schema->resultset('Door')->create(
-				{
-					position_id     => $wall_to_join->position_id,
-					dungeon_grid_id => $wall_to_join->dungeon_grid_id,
-					type            => $door_type,
-				}
-			);
-		}
-
-		$c->logger->debug("Creating room with start pos of $start_x, $start_y");
-
-		# Create the room or corridor
-		my @new_sectors;
-		my $corridor_roll = Games::Dice::Advanced->roll('1d100');
-		if ( $corridor_roll <= $corridor_chance ) {
-			@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $sectors_created, $positions );
-		}
-		else {
-			@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $sectors_created, $positions );
-		}
-
-		croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
-
-		# Create the stairs if this is the first room
-		if ( $current_room_number == 1 ) {
-			my $sector_for_stairs = ( shuffle @new_sectors )[0];
-
-			$sector_for_stairs->stairs_up(1);
-			$sector_for_stairs->update;
-		}
-
-		# Keep track of sectors and rooms created
-		foreach my $new_sector (@new_sectors) {
-			$sectors_created->[ $new_sector->x ][ $new_sector->y ] = $new_sector;
-		}
-
-		# Create other side of door to join
-		if ($wall_to_join) {
-			my $door = $c->schema->resultset('Door')->create(
-				{
-					position_id     => $positions->{ $wall_to_join->opposite_position },
-					dungeon_grid_id => $sectors_created->[$start_x][$start_y]->id,
-					type            => $door_type,
-				}
-			);
-		}
-	}
+		my $sectors_created;
 	
-	my @all_sectors;
-	foreach my $y_line (@$sectors_created) {
-		foreach my $sector (@$y_line) {
-			next unless defined $sector;
-			push @all_sectors, $sector;
-		}
-	}	
+		for my $current_room_number ( 1 .. $room_count ) {
+
+			$c->logger->debug("Creating room # $current_room_number");
 	
-	my $extra_doors = Games::Dice::Advanced->roll('1d6') + int $number_of_rooms / 10 + 3;
-	$c->logger->debug("Generating $extra_doors extra doors");
-	for (1 .. $extra_doors) {
-		$self->_generate_extra_doors(\@all_sectors);
+			my ( $start_x, $start_y );
+	
+			my $wall_to_join;
+			my $door_type;
+	
+			if ( $current_room_number == 1 ) {
+	
+				# Pick a spot for the first room
+				$start_x = 35;
+				$start_y = 35;
+			}
+			else {
+	
+				# Find a wall to join
+				$wall_to_join = $self->_find_wall_to_join($sectors_created);
+	
+				$c->logger->debug( "Joining wall at "
+						. $wall_to_join->dungeon_grid->x . ", "
+						. $wall_to_join->dungeon_grid->y
+						. " position: "
+						. $wall_to_join->position->position );
+	
+				( $start_x, $start_y ) = $wall_to_join->opposite_sector;
+	
+				# Create existing side of the door
+				$door_type = $self->get_door_type;
+	
+				my $door = $c->schema->resultset('Door')->create(
+					{
+						position_id     => $wall_to_join->position_id,
+						dungeon_grid_id => $wall_to_join->dungeon_grid_id,
+						type            => $door_type,
+					}
+				);
+			}
+	
+			$c->logger->debug("Creating room with start pos of $start_x, $start_y");
+	
+			# Create the room or corridor
+			my @new_sectors;
+			my $corridor_roll = Games::Dice::Advanced->roll('1d100');
+			if ( $corridor_roll <= $corridor_chance ) {
+				@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions );
+			}
+			else {
+				@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions );
+			}
+	
+			croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
+	
+			# Create the stairs if this is the first room
+			if ( $current_room_number == 1 ) {
+				my $sector_for_stairs = ( shuffle @new_sectors )[0];
+	
+				$sector_for_stairs->stairs_up(1);
+				$sector_for_stairs->update;
+			}
+	
+			# Keep track of sectors and rooms created
+			foreach my $new_sector (@new_sectors) {
+				$sectors_created->[ $new_sector->x ][ $new_sector->y ] = $new_sector;
+			}
+	
+			# Create other side of door to join
+			if ($wall_to_join) {
+				my $door = $c->schema->resultset('Door')->create(
+					{
+						position_id     => $positions->{ $wall_to_join->opposite_position },
+						dungeon_grid_id => $sectors_created->[$start_x][$start_y]->id,
+						type            => $door_type,
+					}
+				);
+			}
+		}
+		
+		my @all_sectors;
+		foreach my $y_line (@$sectors_created) {
+			foreach my $sector (@$y_line) {
+				next unless defined $sector;
+				push @all_sectors, $sector;
+			}
+		}	
+		
+		my $extra_doors = Games::Dice::Advanced->roll('1d6') + int $room_count / 10 + 3;
+		$c->logger->debug("Generating $extra_doors extra doors");
+		for (1 .. $extra_doors) {
+			$self->_generate_extra_doors(\@all_sectors);
+		}
+		
+		# If there's a floor below this one, create the stairs down
+		if ($number_of_rooms->[$floor]) {
+			foreach my $sector (shuffle @all_sectors) {
+				# Want a sector without stairs and doors
+				next if $sector->stairs_up;
+				next if $sector->sides_with_doors;
+				
+				# TODO: also no teleporter or chest
+				
+				$sector->stairs_down(1);
+				$sector->update;
+				
+				last;
+			}
+		}		
 	}
 }
 
@@ -146,6 +172,7 @@ sub _create_room {
 	my $dungeon         = shift;
 	my $start_x         = shift;
 	my $start_y         = shift;
+	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
 
@@ -158,7 +185,7 @@ sub _create_room {
 	#warn "$top_x, $top_y, $bottom_x, $bottom_y\n";
 	#warn Dumper $sectors_created;
 
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, } );
 
 	my $coords_created;
 	my @sectors;
@@ -171,7 +198,7 @@ sub _create_room {
 				{
 					x               => $x,
 					y               => $y,
-					dungeon_room_id => $room->id,
+					dungeon_room_id => $room->id,					
 				}
 			);
 
@@ -228,12 +255,13 @@ sub _create_corridor {
 	my $dungeon         = shift;
 	my $start_x         = shift;
 	my $start_y         = shift;
+	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
 
 	my $c = $self->context;
 
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor,} );
 
 	my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
 

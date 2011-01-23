@@ -108,6 +108,7 @@ sub find_path_to_sector {
 			'x'                                => { '>=', $top_left->{x}, '<=', $bottom_right->{x}, },
 			'y'                                => { '>=', $top_left->{y}, '<=', $bottom_right->{y}, },
 			'dungeon_room.dungeon_id'          => $self->id,
+			'dungeon_room.floor'               => $start_sector->dungeon_room->floor,
 			'creature_group.creature_group_id' => undef,
 		},
 		{
@@ -167,77 +168,91 @@ sub populate_sector_paths {
 	# TODO: we only calculate paths up to 3 moves. This may need to change if we allow parties to move further in one go
 	my $max_moves = shift || 3;
 
-	my @sectors = $self->result_source->schema->resultset('Dungeon_Grid')->search(
+	my $floors = $self->result_source->schema->resultset('Dungeon_Room')->find(
 		{
-			'dungeon_room.dungeon_id' => $self->id,
+			'dungeon_id' => $self->id,
 		},
-		{
-			join     => 'dungeon_room',
-			prefetch => [
-				{ 'doors' => 'position' },
-				{ 'walls' => 'position' },
-			],
+		{ select => [
+			{ max => 'floor' },
+		  ],
+		  as => ['floor_count'],		  	
 		},
-	);
-	
-	my $sectors_by_coord;
-	foreach my $sector (@sectors) {
-		$sectors_by_coord->[ $sector->x ][ $sector->y ] = $sector;
-	}
-
-	my $count = 0;
-
-	foreach my $sector (@sectors) {
-		my ( $top_left, $bottom_right ) = RPG::Map->surrounds_by_range( $sector->x, $sector->y, $max_moves );
-
-		# Build a sector grid of all the sectors within the max_move range
-		my $sector_grid;
-		my @sectors_to_check;
-		for my $grid_x ( $top_left->{x} .. $bottom_right->{x} ) {
-			for my $grid_y ( $top_left->{y} .. $bottom_right->{y} ) {
-				my $check_sector = $sectors_by_coord->[$grid_x][$grid_y];
-
-				next unless $check_sector;
-
-				$sector_grid->[$grid_x][$grid_y] = $check_sector;
-				push @sectors_to_check, $check_sector;
-			}
+	)->get_column('floor_count');
+		
+	for my $floor (1..$floors) {
+		my @sectors = $self->result_source->schema->resultset('Dungeon_Grid')->search(
+			{
+				'dungeon_room.dungeon_id' => $self->id,
+				'dungeon_room.floor' => $floor,
+			},
+			{
+				join     => 'dungeon_room',
+				prefetch => [
+					{ 'doors' => 'position' },
+					{ 'walls' => 'position' },
+				],
+			},
+		);
+		
+		my $sectors_by_coord;
+		foreach my $sector (@sectors) {
+			$sectors_by_coord->[ $sector->x ][ $sector->y ] = $sector;
 		}
-
-		# Check all the sectors in range to see if they have a path
-		foreach my $sector_to_check (@sectors_to_check) {
-
-			#warn "Top level, find path for: " . $sector->x . ", " . $sector->y . " -> " . $sector_to_check->x . ", " . $sector_to_check->y . "\n";
-
-			my $result = $self->check_has_path( $sector, $sector_to_check, $sector_grid, $max_moves );
-
-			#warn "Got result, has_path: " . $result->{has_path} . ", doors_in_path: " .
-			#	(ref $result->{doors_in_path} eq 'ARRAY' ? scalar @{ $result->{doors_in_path} } : 'none' ) . "\n";
-
-			if ( $result->{has_path} ) {
-
-				# This one has a path, write it to the DB
-				$count++;
-
-				#warn $result->{moves_made};
-				$self->result_source->schema->resultset('Dungeon_Sector_Path')->create(
-					{
-						sector_id   => $sector->id,
-						has_path_to => $sector_to_check->id,
-						distance    => $result->{moves_made},
-					}
-				);
-
-				foreach my $door_in_path ( @{ $result->{doors_in_path} } ) {
-
-					#warn ref $door_in_path;
-					$self->result_source->schema->resultset('Dungeon_Sector_Path_Door')->find_or_create(
+	
+		my $count = 0;
+	
+		foreach my $sector (@sectors) {
+			my ( $top_left, $bottom_right ) = RPG::Map->surrounds_by_range( $sector->x, $sector->y, $max_moves );
+	
+			# Build a sector grid of all the sectors within the max_move range
+			my $sector_grid;
+			my @sectors_to_check;
+			for my $grid_x ( $top_left->{x} .. $bottom_right->{x} ) {
+				for my $grid_y ( $top_left->{y} .. $bottom_right->{y} ) {
+					my $check_sector = $sectors_by_coord->[$grid_x][$grid_y];
+	
+					next unless $check_sector;
+	
+					$sector_grid->[$grid_x][$grid_y] = $check_sector;
+					push @sectors_to_check, $check_sector;
+				}
+			}
+	
+			# Check all the sectors in range to see if they have a path
+			foreach my $sector_to_check (@sectors_to_check) {
+	
+				#warn "Top level, find path for: " . $sector->x . ", " . $sector->y . " -> " . $sector_to_check->x . ", " . $sector_to_check->y . "\n";
+	
+				my $result = $self->check_has_path( $sector, $sector_to_check, $sector_grid, $max_moves );
+	
+				#warn "Got result, has_path: " . $result->{has_path} . ", doors_in_path: " .
+				#	(ref $result->{doors_in_path} eq 'ARRAY' ? scalar @{ $result->{doors_in_path} } : 'none' ) . "\n";
+	
+				if ( $result->{has_path} ) {
+	
+					# This one has a path, write it to the DB
+					$count++;
+	
+					#warn $result->{moves_made};
+					$self->result_source->schema->resultset('Dungeon_Sector_Path')->create(
 						{
 							sector_id   => $sector->id,
 							has_path_to => $sector_to_check->id,
-							door_id     => $door_in_path->id,
+							distance    => $result->{moves_made},
 						}
 					);
+	
+					foreach my $door_in_path ( @{ $result->{doors_in_path} } ) {
+	
+						#warn ref $door_in_path;
+						$self->result_source->schema->resultset('Dungeon_Sector_Path_Door')->find_or_create(
+							{
+								sector_id   => $sector->id,
+								has_path_to => $sector_to_check->id,
+								door_id     => $door_in_path->id,
+							}
+						);
+					}
 				}
 			}
 		}

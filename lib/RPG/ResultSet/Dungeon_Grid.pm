@@ -15,10 +15,14 @@ sub get_party_grid {
 	my $self       = shift;
 	my $party_id   = shift;
 	my $dungeon_id = shift;
+	my $floor      = shift;
 	my $range      = shift;
+	
+	confess "Floor not supplied" if ! defined $floor || ref $floor;
 
 	my %params = (
 		'dungeon.dungeon_id' => $dungeon_id,
+		'dungeon_room.floor' => $floor,
 	);
 
 	my @join;

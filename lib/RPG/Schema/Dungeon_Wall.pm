@@ -54,6 +54,7 @@ sub opposite_wall {
 		{
 			'x' => $x,
 			'y' => $y,
+			'dungeon_room.floor' => $self->dungeon_grid->dungeon_room->floor,
 			'dungeon_room.dungeon_id' => $dungeon_id,
 		},
 		{

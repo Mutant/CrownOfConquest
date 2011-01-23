@@ -110,7 +110,7 @@ sub test_create_room_simple : Test(28) {
     $expected_sectors->[3][3] = [ 'bottom', 'right' ];
 
     # WHEN
-    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, 1, [], $self->{positions} );
 
     # THEN
     is( scalar @sectors, 9, "9 new sectors created" );
@@ -151,7 +151,7 @@ sub test_create_room_with_offset : Test(28) {
     $expected_sectors->[7][5] = [ 'bottom', 'right' ];
 
     # WHEN
-    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 5, 5, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 5, 5, 1, [], $self->{positions} );
 
     # THEN
     is( scalar @sectors, 9, "9 new sectors created" );
@@ -180,7 +180,7 @@ sub test_create_room_with_rooms_blocking : Test(17) {
     $self->{counter} = 0;
     $self->{rolls} = [ 3, 2, 1, 1 ];
 
-    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, 1, [], $self->{positions} );
 
     is( scalar @sectors, 6, "Sanity check existing room" );
 
@@ -200,7 +200,7 @@ sub test_create_room_with_rooms_blocking : Test(17) {
     $expected_sectors->[4][3] = [ 'bottom', 'right' ];
 
     # WHEN
-    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 3, 3, $existing_sectors, $self->{positions} );
+    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 3, 3, 1, $existing_sectors, $self->{positions} );
 
     # THEN
     is( scalar @sectors, 5, "5 new sectors created" );
@@ -229,7 +229,7 @@ sub test_create_room_with_non_contiguous_sectors : Test(11) {
     $self->{counter} = 0;
     $self->{rolls} = [ 3, 1, 1, 1 ];
 
-    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 2, [], $self->{positions} );
+    my @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 2, 1, [], $self->{positions} );
 
     is( scalar @sectors, 3, "Sanity check existing room" );
 
@@ -247,7 +247,7 @@ sub test_create_room_with_non_contiguous_sectors : Test(11) {
     $expected_sectors->[3][1] = [ 'bottom', 'right', 'top' ];
 
     # WHEN
-    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, $existing_sectors, $self->{positions} );
+    @sectors = $self->{dungeon}->_create_room( $mock_dungeon, 1, 1, 1, $existing_sectors, $self->{positions} );
 
     # THEN
     is( scalar @sectors, 3, "3 new sectors created" );
@@ -670,7 +670,7 @@ sub test_create_corridor : Tests(1) {
     $mock_dungeon->set_always( 'id', 88 );
     
     # WHEN
-    my @sectors = $self->{dungeon}->_create_corridor($mock_dungeon, 10, 10, [], $self->{positions});
+    my @sectors = $self->{dungeon}->_create_corridor($mock_dungeon, 10, 10, 1, [], $self->{positions});
     
     # THEN
     is(scalar @sectors, 20, "Correct number of sectors created");    

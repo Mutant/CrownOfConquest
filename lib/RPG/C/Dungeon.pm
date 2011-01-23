@@ -31,7 +31,11 @@ sub view : Local {
 
     # Get all sectors that the party has mapped
     $c->log->debug("Getting mapped sectors");
-    my @mapped_sectors = $c->model('DBIC::Dungeon_Grid')->get_party_grid( $c->stash->{party}->id, $current_location->dungeon_room->dungeon_id );
+    my @mapped_sectors = $c->model('DBIC::Dungeon_Grid')->get_party_grid( 
+    	$c->stash->{party}->id, 
+    	$current_location->dungeon_room->dungeon_id,
+    	$current_location->dungeon_room->floor, 
+    );
 
     $c->stats->profile("Queried map sectors");
 
@@ -68,6 +72,7 @@ sub build_viewable_sector_grids : Private {
     my @sectors = $c->model('DBIC::Dungeon_Grid')->get_party_grid(
     	undef, # Don't supply party_id as we want sectors whether they're mapped by the party or not
     	$current_location->dungeon_room->dungeon_id,
+    	$current_location->dungeon_room->floor,
     	{
     		top_corner => $top_corner,
     		bottom_corner => $bottom_corner,
@@ -87,6 +92,7 @@ sub build_viewable_sector_grids : Private {
             x                              => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
+            'dungeon_room.floor'           => $current_location->dungeon_room->floor,
         },
         {
             prefetch => [ { 'creature_group' => { 'creatures' => 'type' } }, ],
@@ -108,6 +114,7 @@ sub build_viewable_sector_grids : Private {
             x                              => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
+            'dungeon_room.floor'           => $current_location->dungeon_room->floor,
             'party.party_id'               => { '!=', $c->stash->{party}->id },
             'party.defunct'				   => undef,
         },
@@ -179,9 +186,9 @@ sub render_dungeon_grid : Private {
     	min_y => $min_y,
     	max_y => $max_y,	
     };
-        
+
     my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
-    
+   
     $c->stash->{panel_callbacks} = [
     	{
         	name => 'dungeonRefresh',
@@ -445,6 +452,7 @@ sub build_updated_sectors_data : Private {
             x                         => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
             y                         => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
+            'dungeon_room.floor'      => $current_location->dungeon_room->floor,
             party_id                  => $c->stash->{party}->id,
         },
         {
@@ -508,6 +516,7 @@ sub calculate_scroll_to : Private {
 	
 	my $x_modifier = 4;
 	my $y_modifier = 4;
+	my $boundaries = $c->session->{mapped_dungeon_boundaries};
 	
 	if ($from) {
 		if ($from->x > $location->x) {
@@ -517,14 +526,23 @@ sub calculate_scroll_to : Private {
 			$y_modifier = -4;
 		}
 	}
+	else {
+		# Not moving from a location. Make sure we scroll in the right
+		#  direction if it's near the edge of the map
+		if ($location->x - $x_modifier < $boundaries->{min_x}) {
+			$x_modifier = -4;	
+		}
+		if ($location->y - $y_modifier < $boundaries->{min_y}) {
+			$y_modifier = -4;	
+		}
+	}
+		
 	
 	my $scroll_to = {
 		x => $location->x + $x_modifier,
 		y => $location->y + $y_modifier,
 	};
-	
-	my $boundaries = $c->session->{mapped_dungeon_boundaries};
-	
+
 	if ($scroll_to->{x} < $boundaries->{min_x}) {
 		$scroll_to->{x} = $boundaries->{min_x};
 	}
@@ -565,7 +583,7 @@ sub move_creatures : Private {
             'dungeon_room_id'                  => $current_location->dungeon_room_id,
             'creature_group.creature_group_id' => undef,
         },
-        { join => 'creature_group', }
+        { join => 'creature_group' }
     );
 
     foreach my $cg (@$creatures_in_room) {
@@ -611,6 +629,7 @@ sub open_door : Local {
             x                         => $opposite_x,
             y                         => $opposite_y,
             'dungeon_room.dungeon_id' => $door->dungeon_grid->dungeon_room->dungeon_id,
+            'dungeon_room.floor'      => $door->dungeon_grid->dungeon_room->floor,
         },
         { join => 'dungeon_room', }
     );
@@ -748,12 +767,35 @@ sub take_stairs : Local {
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( { dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, );
     
-    croak "No stairs here" unless $current_location->stairs_up;
-
+    croak "No stairs here" unless $current_location->stairs_up || $current_location->stairs_down;
+		
 	my $dungeon = $current_location->dungeon_room->dungeon;
-    my $type = $dungeon->type;
 
-	$c->forward('/'. $type . '/exit', [undef, $dungeon]);
+	if ($current_location->stairs_up && $current_location->dungeon_room->floor == 1) {		
+    	my $type = $dungeon->type;
+
+		$c->forward('/'. $type . '/exit', [undef, $dungeon]);
+	}
+	else {
+		my $direction = $current_location->stairs_up ? -1 : 1;
+		my $column = $current_location->stairs_up ? 'stairs_down' : 'stairs_up';
+		
+		my $new_sector = $c->model('DBIC::Dungeon_Grid')->find(
+			{
+				'dungeon_room.dungeon_id' => $dungeon->id,
+				'dungeon_room.floor' => $current_location->dungeon_room->floor + $direction,
+				$column => 1,
+			},
+			{
+				join => 'dungeon_room',
+			}
+		);
+		
+		$c->stash->{party}->dungeon_grid_id($new_sector->id);
+		$c->stash->{party}->update;
+		
+		$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+	}
 
 }
 

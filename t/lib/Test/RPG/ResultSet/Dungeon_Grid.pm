@@ -28,7 +28,7 @@ sub test_get_party_grid_simple : Tests(5) {
 
     # GIVEN
     my $dungeon = $self->{schema}->resultset('Dungeon')->create( {} );
-    my $room = $self->{schema}->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, } );
+    my $room = $self->{schema}->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => 1 } );
 
     my $sector1 = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid(
         $self->{schema},
@@ -56,7 +56,7 @@ sub test_get_party_grid_simple : Tests(5) {
     );
 
     # WHEN
-    my @sectors = $self->{schema}->resultset('Dungeon_Grid')->get_party_grid($party->id, $dungeon->id,  );
+    my @sectors = $self->{schema}->resultset('Dungeon_Grid')->get_party_grid($party->id, $dungeon->id, $room->floor );
 
     # THEN
     is( scalar @sectors, 1, "1 sector returned" );

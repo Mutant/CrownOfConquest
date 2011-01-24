@@ -321,6 +321,7 @@ sub target_list : Local {
 	my $party = $c->stash->{party};
 	
 	my @opponents;
+
 	if ( $party->combat_type eq 'creature_group' ) {
 		@opponents = $c->model('DBIC::CreatureGroup')->get_by_id( $party->in_combat_with )->members;
 	}
@@ -334,13 +335,13 @@ sub target_list : Local {
 	my @opponents_data;
 	foreach my $opponent (@opponents) {
 		next if $opponent->is_dead;
-		push @opponents, {
+		push @opponents_data, {
 			name => $opponent->name,
 			id => $opponent->id,
 		};
 	}
 	
-	$c->res->body(to_json {opponents => \@opponents});
+	$c->res->body(to_json {opponents => \@opponents_data});
 }
 
 sub spell_list : Local {

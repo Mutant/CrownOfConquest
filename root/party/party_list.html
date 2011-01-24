@@ -276,12 +276,12 @@ function highlightAction(char_id, action) {
 }
 
 function createMenus() {
-	if (dijit.byId('action_menu') != undefined) {
-		dijit.byId('action_menu').destroyRecursive();			
-	}
+	console.log("Creating menus");
 	
 
    [% FOREACH character IN characters %]    
+   
+   [% IF in_combat %]
 	var params = {id:"fightMenu_[% character.id %]" };
 
 	var menu = new dijit.Menu(params,document.createElement("div"));
@@ -293,7 +293,8 @@ function createMenus() {
     menu.addChild(menuItem);
 
     var button[% character.id %] = new dijit.form.DropDownButton({
-        label: '',
+        label: '<img id="attackOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/attack.png">' +
+        	   '<img id="attackOn_[% character.id %]" style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">',
         dropDown: menu,
         class: "actionButton",
         id: "fightButton_[% character.id %]"         
@@ -301,6 +302,7 @@ function createMenus() {
 
     dojo.byId("fightSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
+    [% END %]
     
     [% IF character.is_spell_caster %]
     	var params = {id:"castMenu_[% character.id %]" };
@@ -321,7 +323,7 @@ function createMenus() {
 		});
 		
 		dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
-    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
+    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]', '[% in_combat %]') });
 		
     [% END %]
     
@@ -411,19 +413,16 @@ dojo.addOnLoad( createMenus );
 
 	</td>
 
-    [% IF in_combat %]
     	<td>
-    		<span onClick="selectActionCombat('Attack', '[% char.id %]')" style="cursor: pointer; margin-right: 0px">
-    			<img id="attackOff_[% char.id %]" src="[% c.config.static_path %]/images/actions/attack.png"> 
-        	    <img id="attackOn_[% char.id %]" style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">
-        	</span>
         	<span id="fightSpan_[% char.id %]"></span>
         </td>
-        <td>    		    	
+        <td>
+        	[% IF in_combat %]    	
     		<span onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
     			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
     			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
     		</span>
+    		[% END %]
     	</td>
     	<td>
     		<span id="castSpan_[% char.id %]"></span>
@@ -431,7 +430,6 @@ dojo.addOnLoad( createMenus );
     	<td>
     		<span id="useSpan_[% char.id %]"></span>
     	</td>
-    [% END %]
 
     [% IF party.rank_separator_position == char.party_order %]
     	</tr>

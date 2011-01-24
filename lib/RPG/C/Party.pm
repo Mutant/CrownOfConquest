@@ -193,41 +193,6 @@ sub list : Private {
 	my %broken_items_by_char_id = $c->stash->{party}->broken_equipped_items_hash;
 
 	$c->stats->profile("Got Broken weapons");
-
-	my %spells;
-	foreach my $character (@characters) {
-		next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
-
-		my %search_criteria = (
-			memorised_today   => 1,
-			number_cast_today => \'< memorise_count',
-			character_id      => $character->id,
-		);
-
-		$party->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
-
-		my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
-		
-		@spells = grep { $_->spell->can_cast($character) } @spells;
-
-		$spells{ $character->id } = \@spells if @spells;
-
-	}
-	
-	$c->stats->profile("Got Spells");
-
-	my @opponents;
-	if ( $c->stash->{creature_group} ) {
-		@opponents = $c->stash->{creature_group}->members;
-	}
-	elsif ( my $opponent_party = $party->in_party_battle_with ) {
-		@opponents = $opponent_party->members;
-	}
-	elsif ( $c->stash->{in_combat_with_garrison} ) {
-		@opponents = $c->stash->{in_combat_with_garrison}->members;
-	}
-	
-	$c->stats->profile("Got opponents");
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -238,9 +203,6 @@ sub list : Private {
 					party          => $party,
 					in_combat      => $party->in_combat,
 					characters     => \@characters,
-					combat_actions => $c->session->{combat_action},
-					opponents      => \@opponents,
-					spells         => \%spells,
 					broken_items   => \%broken_items_by_char_id,
 				},
 				return_output => 1,

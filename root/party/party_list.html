@@ -132,24 +132,11 @@ function selectAction(menuItem, action) {
 	selectActionCombat(action, parts[1], parts[2], parts[3]);
 }
 
-var buttons = Array('attack', 'defend', 'cast', 'use'); 
 function selectActionCombat(action, char_id, action_param, action_param2) {		
 	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
 		        "&action_param=" + (action_param2 || '')
 	
-	for (x in buttons) {
-	    var button = buttons[x];
-		var display = (button == action.toLowerCase() ? 'On' : 'Off');
-		var hide = (display == 'On' ? 'Off' : 'On'); 
-		
-		//console.log("display: " + button + display + "_" + char_id);
-		var imgDisplay = dojo.byId(button + display + "_" + char_id);
-		if (imgDisplay) imgDisplay.style.display = 'inline'; 
-
-		//console.log("hide: " + button + hide + "_" + char_id);
-		var imgHide = dojo.byId(button + hide + "_" + char_id);
-		if (imgHide) imgHide.style.display = 'none';
-	} 
+	highlightAction(char_id, action);
 	
 	dojo.xhrGet( {
         url: "[% base %]" + url,
@@ -181,6 +168,23 @@ function clearMenu(menu) {
 	for (var i in children) {				
 		children[i].attr('style','display: none');
 	}
+}
+
+var buttons = Array('attack', 'defend', 'cast', 'use');
+function highlightAction(char_id, action) {
+	for (x in buttons) {
+	    var button = buttons[x];
+		var display = (button == action.toLowerCase() ? 'On' : 'Off');
+		var hide = (display == 'On' ? 'Off' : 'On'); 
+		
+		//console.log("display: " + button + display + "_" + char_id);
+		var imgDisplay = dojo.byId(button + display + "_" + char_id);
+		if (imgDisplay) imgDisplay.style.display = 'inline'; 
+
+		//console.log("hide: " + button + hide + "_" + char_id);
+		var imgHide = dojo.byId(button + hide + "_" + char_id);
+		if (imgHide) imgHide.style.display = 'none';
+	} 
 }
 
 function createMenus() {
@@ -232,6 +236,8 @@ function createMenus() {
     	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
 		
     [% END %]
+    
+    highlightAction('[% character.id %]', '[% character.last_combat_action %]');
     
     [% END %]
 

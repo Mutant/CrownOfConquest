@@ -318,11 +318,21 @@ sub process_flee_result : Private {
 sub target_list : Local {
 	my ( $self, $c ) = @_;
 	
-	# TODO: handle party & garrison combat
-	my $group = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+	my $party = $c->stash->{party};
 	
 	my @opponents;
-	foreach my $opponent ($group->members) {
+	if ( $party->combat_type eq 'creature_group' ) {
+		@opponents = $c->model('DBIC::CreatureGroup')->get_by_id( $party->in_combat_with )->members;
+	}
+	elsif ( my $opponent_party = $party->in_party_battle_with ) {
+		@opponents = $opponent_party->members;
+	}
+	elsif ( $party->combat_type eq 'garrison' ) {
+		@opponents = $c->model('DBIC::Garrison')->get_by_id( $party->in_combat_with )->members;
+	}	
+		
+	my @opponents_data;
+	foreach my $opponent (@opponents) {
 		next if $opponent->is_dead;
 		push @opponents, {
 			name => $opponent->name,

@@ -38,7 +38,11 @@ Any characters garrisoned in the town will fight alongside the mayor. You can ga
 		</tr>		
 	[% END %]
 
-	</table>	
+	</table>
+	
+	[% IF party.is_full %]
+		(Note: you can't remove any characters at the moment, as your party is full)
+	[% END %]
 [% ELSE %]
 	You don't have any characters garrisoned in this town.
 [% END %]

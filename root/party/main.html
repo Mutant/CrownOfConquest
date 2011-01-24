@@ -219,17 +219,7 @@ function dungeonScroll(scroll_to) {
 }
 
 
-function selectActionCombat(action, char_id, action_param, action_param2, action_label){
-	if (! action_label) {
-		action_label = action;
-	}
-	
-	if (! action_param) {
-		action_param = '';
-	}
-
-	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
-		
+function selectActionCombat(action, char_id, action_param, action_param2) {		
 	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
 		        "&action_param=" + (action_param2 || '')
 	

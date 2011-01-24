@@ -5,7 +5,7 @@
 function loadFightMenu(charId) {
 	var menu = dijit.byId('fightMenu_' + charId);
 	clearMenu(menu);
-	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: block');
+	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
 
 	dojo.xhrGet( {
         url: "[% base %]combat/target_list",
@@ -20,13 +20,13 @@ function loadFightMenu(charId) {
 				menuItem = dijit.byId(itemId);
 				
 				if (menuItem) {
-					menuItem.attr('style', 'display: block');
+					menuItem.attr('style', 'display: block; padding: 0px');
 				}
 				else {
 				
 					menuItem = new dijit.MenuItem({
 				        label: responseObject.opponents[i].name,
-				        onClick: function() { var id = responseObject.opponents[i].id; console.log(id); alert(id) },
+				        onClick: function() { selectAction(this, 'Attack') },
 				        id: itemId
 				    });
 				    menu.addChild(menuItem);
@@ -36,6 +36,11 @@ function loadFightMenu(charId) {
         
 	    timeout: 15000 // Time in milliseconds	
     });	
+}
+
+function selectAction(menuItem, action) {
+	var parts = menuItem.id.split('_');
+	selectActionCombat(action, parts[1], parts[2]);
 }
 
 function clearMenu(menu) {

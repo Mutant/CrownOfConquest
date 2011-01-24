@@ -43,6 +43,50 @@ function selectAction(menuItem, action) {
 	selectActionCombat(action, parts[1], parts[2]);
 }
 
+var buttons = Array('attack', 'defend', 'cast', 'use'); 
+function selectActionCombat(action, char_id, action_param, action_param2) {		
+	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+		        "&action_param=" + (action_param2 || '')
+	
+	for (x in buttons) {
+	    var button = buttons[x];
+		var display = (button == action.toLowerCase() ? 'On' : 'Off');
+		var hide = (display == 'On' ? 'Off' : 'On'); 
+		
+		//console.log("display: " + button + display + "_" + char_id);
+		var imgDisplay = dojo.byId(button + display + "_" + char_id);
+		if (imgDisplay) imgDisplay.style.display = 'inline'; 
+
+		//console.log("hide: " + button + hide + "_" + char_id);
+		var imgHide = dojo.byId(button + hide + "_" + char_id);
+		if (imgHide) imgHide.style.display = 'none';
+	} 
+	
+	dojo.xhrGet( {
+        url: "[% base %]" + url,
+        handleAs: "json",        
+
+	    timeout: 15000 // Time in milliseconds	
+    });
+}
+
+function selectActionNonCombat(action, char_id, action_param, action_param2, action_label){
+	if (! action_label) {
+		action_label = action;
+	}
+	
+	if (! action_param) {
+		action_param = '';
+	}
+
+	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
+
+	getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+		        "&action_param=" + (action_param2 || ''));
+	        
+	return false;
+}
+
 function clearMenu(menu) {
 	var children = menu.getChildren();
 	for (var i in children) {				
@@ -68,13 +112,13 @@ function createMenus() {
     menu.addChild(menuItem);
 
     var button[% character.id %] = new dijit.form.DropDownButton({
-        label: "<img src=[% c.config.static_path %]/images/actions/attack.png>",
+        label: '',
         dropDown: menu,
         class: "actionButton",
         id: "fightButton_[% character.id %]"         
 	});        
 
-    dojo.byId("fightMenu_[% character.id %]").appendChild(button[% character.id %].domNode);
+    dojo.byId("fightSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
     [% END %]
 
@@ -86,7 +130,7 @@ dojo.addOnLoad( createMenus );
 <div style=""> 
 
 <table [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] 
-	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2>
+	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2 border=0>
 
 	<tr>
 		<td colspan="8">
@@ -139,9 +183,16 @@ dojo.addOnLoad( createMenus );
 	</td>
 
     [% IF in_combat %]
-    	<td>
-    		<span id="fightMenu_[% char.id %]"></span>
-    		<img src="[% c.config.static_path %]/images/actions/defend.png">
+    	<td valign="top">
+    		<span onClick="selectActionCombat('Attack', '[% char.id %]')" style="cursor: pointer; margin-right: 0px">
+    			<img id="attackOff_[% char.id %]" border=0 src="[% c.config.static_path %]/images/actions/attack.png"> 
+        	    <img id="attackOn_[% char.id %]" border=0 style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">
+        	</span>
+    		<span id="fightSpan_[% char.id %]" style="height: 100%; margin-left: 0px"></span>
+    		<span onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
+    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
+    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
+    		</span>
     		<img src="[% c.config.static_path %]/images/actions/cast.png">
     		<img src="[% c.config.static_path %]/images/actions/use.png">
     	</td>

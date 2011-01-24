@@ -272,6 +272,7 @@ html>body .nav a {width: auto}
 .actionButton .dijitButtonNode {
     border-width: 0px;
     padding: 0;
+    height: 100%;
 }
 
 .actionButton .dijitButtonText {
@@ -291,8 +292,17 @@ html>body .nav a {width: auto}
     padding: 1px;
 }
 
-.actionButtonOption a:hover {
-    background: lightslategray;
+.actionButton .dijitDropDownButton {
+    margin: 0;
+}
+
+.actionButton .dijitArrowButtonInner {
+    height: 100%;
+}
+
+.actionButton {
+    vertical-align: top;
+    height: 30px;
 }
 
 /* Misc */

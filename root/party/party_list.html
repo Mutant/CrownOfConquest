@@ -2,36 +2,34 @@
 
 <script>
 
+var loaded = {};
+
 function loadFightMenu(charId) {
+	if (! loaded.fightMenu) loaded.fightMenu = {};
+	
+	if (loaded.fightMenu[charId]) return;
+
 	var menu = dijit.byId('fightMenu_' + charId);
-	clearMenu(menu);
-	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
 
 	dojo.xhrGet( {
         url: "[% base %]combat/target_list",
         handleAs: "json",
         
-        load: function(responseObject, ioArgs){
-        	clearMenu(menu);
-			
+        load: function(responseObject, ioArgs){		
+        	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: none;');
+        
 			for (var i in responseObject.opponents) {
 				itemId = "fightOpponent_" + charId + "_" + responseObject.opponents[i].id;
-			
-				menuItem = dijit.byId(itemId);
 				
-				if (menuItem) {
-					menuItem.attr('style', 'display: block; padding: 0px');
-				}
-				else {
-				
-					menuItem = new dijit.MenuItem({
-				        label: responseObject.opponents[i].name,
-				        onClick: function() { selectAction(this, 'Attack') },
-				        id: itemId
-				    });
-				    menu.addChild(menuItem);
-			    }			
+				menuItem = new dijit.MenuItem({
+			        label: responseObject.opponents[i].name,
+			        onClick: function() { selectAction(this, 'Attack') },
+			        id: itemId
+			    });
+			    menu.addChild(menuItem);
 			}
+			
+			loaded.fightMenu[charId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -52,39 +50,32 @@ function loadUseMenu(charId) {
 }
 
 function loadTargetBasedMenu(charId, type) {
+	if (! loaded[type + "Menu"]) loaded[type + "Menu"] = {};
+	
+	if (loaded[type + "Menu"][charId]) return;
+
 	var menu = dijit.byId(type + 'Menu_' + charId);
-	clearMenu(menu);
-	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
 
 	dojo.xhrGet( {
         url: "[% base %]combat/" + type +  "_list?character_id=" + charId,
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
-        	clearMenu(menu);
+        	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: none');
 			
 			for (var i in responseObject.list) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
 				menuItem = dijit.byId(listId);
 				
-				if (responseObject.list[i].target == 'party') {
-					if (menuItem) {
-						menuItem.attr('style', 'display: block; padding: 0px');
-					}
-					else {				
-						menuItem = new dijit.MenuItem({
-					        label: responseObject.spells[i].label,
-					        onClick: function() { selectAction(this, ucFirst(type)) },
-					        id: listId
-					    });
-					    menu.addChild(menuItem);
-				    }				
+				if (responseObject.list[i].target == 'party') {		
+					menuItem = new dijit.MenuItem({
+				        label: responseObject.spells[i].label,
+				        onClick: function() { selectAction(this, ucFirst(type)) },
+				        id: listId
+				    });
+				    menu.addChild(menuItem);
 				}
 				else {
-					if (menuItem) {
-						menuItem.destroyRecursive();
-					}
-		
 					var subMenuId = type + "SubMenu_" + charId + "_" + responseObject.list[i].id;
 					var listSubMenu = new dijit.Menu({id: subMenuId});	
 					
@@ -107,6 +98,8 @@ function loadTargetBasedMenu(charId, type) {
 				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
 				}
 			}
+			
+			loaded[type + "Menu"][charId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -118,37 +111,33 @@ function loadCastSubMenu(subMenuId) {
     var charId = parts[1];
     var spellId = parts[2];
 
-    menu = this;
-	clearMenu(menu);
-
-	dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: block; padding: 0px');
+	if (! loaded.castSubMenu) loaded.castSubMenu = {};
+	if (! loaded.castSubMenu[charId]) loaded.castSubMenu[charId] = {};
 	
+	if (loaded.castSubMenu[charId][spellId]) return;
+
+    menu = this;	
 	
 	dojo.xhrGet( {
         url: "[% base %]combat/spell_target_list?character_id=" + charId + "&spell_id=" + spellId,
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
-        	clearMenu(menu);
+        	dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: none');
         	
         	for (var i in responseObject.spell_targets) {
 			
-				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;
-			
-				menuItem = dijit.byId(targetId);
-				
-				if (menuItem) {
-					menuItem.attr('style', 'display: block; padding: 0px');
-				}
-				else {			
-					menuItem = new dijit.MenuItem({
-				        label: responseObject.spell_targets[i].name,
-				        onClick: function() { selectAction(this, 'Cast') },
-				        id: targetId
-				    });
-				    menu.addChild(menuItem);
-			    }	
+				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;			
+		
+				menuItem = new dijit.MenuItem({
+			        label: responseObject.spell_targets[i].name,
+			        onClick: function() { selectAction(this, 'Cast') },
+			        id: targetId
+			    });
+			    menu.addChild(menuItem);			    
 			}
+			
+			loaded.castSubMenu[charId][spellId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -161,35 +150,32 @@ function loadUseSubMenu(subMenuId) {
     var actionId = parts[2];
 
     menu = this;
-	clearMenu(menu);
-
-	dijit.byId("useSubMenuLoading_" + charId + "_" + actionId).attr('style', 'display: block; padding: 0px');	
+    
+	if (! loaded.useSubMenu) loaded.useSubMenu = {};
+	if (! loaded.useSubMenu[charId]) loaded.useSubMenu[charId] = {};
 	
+	if (loaded.useSubMenu[charId][actionId]) return;    
+    
 	dojo.xhrGet( {
         url: "[% base %]combat/use_target_list?character_id=" + charId + "&action_id=" + actionId,
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
-        	clearMenu(menu);
+        	dijit.byId("useSubMenuLoading_" + charId + "_" + actionId).attr('style', 'display: none;');
         	
         	for (var i in responseObject.spell_targets) {
 			
 				targetId = "useTarget_" + charId + "_" + actionId + "_" + responseObject.spell_targets[i].id;
-			
-				menuItem = dijit.byId(targetId);
-				
-				if (menuItem) {
-					menuItem.attr('style', 'display: block; padding: 0px');
-				}
-				else {			
-					menuItem = new dijit.MenuItem({
-				        label: responseObject.spell_targets[i].name,
-				        onClick: function() { selectAction(this, 'Use') },
-				        id: targetId
-				    });
-				    menu.addChild(menuItem);
-			    }	
+		
+				menuItem = new dijit.MenuItem({
+			        label: responseObject.spell_targets[i].name,
+			        onClick: function() { selectAction(this, 'Use') },
+			        id: targetId
+			    });
+			    menu.addChild(menuItem);
 			}
+			
+			loaded.useSubMenu[charId][actionId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -226,13 +212,6 @@ function selectActionNonCombat(action, char_id, action_param, action_param2) {
 	return false;
 }
 
-function clearMenu(menu) {
-	var children = menu.getChildren();
-	for (var i in children) {				
-		children[i].attr('style','display: none');
-	}
-}
-
 var buttons = Array('attack', 'defend', 'cast', 'use');
 function highlightAction(char_id, action) {
 	for (x in buttons) {
@@ -252,6 +231,10 @@ function highlightAction(char_id, action) {
 
 function createMenus() {
    [% FOREACH character IN characters %]    
+   
+   [% IF character.is_dead %]
+      [% NEXT %]
+   [% END %]
    
    [% IF in_combat %]
 	var params = {id:"fightMenu_[% character.id %]" };
@@ -389,7 +372,7 @@ dojo.addOnLoad( createMenus );
         	<span id="fightSpan_[% char.id %]"></span>
         </td>
         <td>
-        	[% IF in_combat %]    	
+        	[% IF in_combat && ! char.is_dead %]    	
     		<span onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
     			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
     			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">

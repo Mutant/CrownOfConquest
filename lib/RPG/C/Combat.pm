@@ -394,8 +394,15 @@ sub spell_target_list : Local {
 	
 	my $spell = $c->model('DBIC::Spell')->find({ spell_id => $c->req->param('spell_id') });
 	
+	$c->forward('build_target_list', [$spell->target]);
+
+}
+
+sub build_target_list : Private {
+	my ( $self, $c, $target ) = @_;
+	
 	my @targets;
-	given ($spell->target) {
+	given ($target) {
 		when ('creature') {
 			my $cg = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 			@targets = $cg->members;
@@ -413,7 +420,49 @@ sub spell_target_list : Local {
 		};	
 	}
 	
-	$c->res->body(to_json {spell_targets => \@target_data});
+	$c->res->body(to_json {spell_targets => \@target_data});	
+}
+
+sub use_action_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my @actions;
+	foreach my $action ($character->get_item_actions(1)) {
+		push @actions, {
+			id => $action->id,
+			label => $action->label,
+		};
+	}
+	
+	$c->res->body(to_json {action_list => \@actions});
+		
+}
+
+sub use_target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my $action = $c->model('DBIC::Item_Enchantment')->find({ item_enchantment_id => $c->req->param('action_id') });
+	
+	$c->forward('build_target_list', [$action->target]);
+
 }
 
 1;

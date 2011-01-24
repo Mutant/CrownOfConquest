@@ -127,6 +127,94 @@ function loadCastSubMenu(subMenuId) {
     });	
 }
 
+function loadUseMenu(charId) {
+	var menu = dijit.byId('useMenu_' + charId);
+	clearMenu(menu);
+	dijit.byId("useMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
+
+	dojo.xhrGet( {
+        url: "[% base %]combat/use_action_list?character_id=" + charId,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        	clearMenu(menu);
+			
+			for (var i in responseObject.action_list) {
+				useId = "useItem_" + charId + "_" + responseObject.action_list[i].id;
+				menuItem = dijit.byId(useId);
+				
+				if (menuItem) {
+					menuItem.destroyRecursive();
+				}
+	
+				var subMenuId = "useSubMenu_" + charId + "_" + responseObject.action_list[i].id;
+				var useSubMenu = new dijit.Menu({id: subMenuId});	
+				
+				var loadingItem = new dijit.MenuItem({
+			        label: "Loading...",
+			        id: "useSubMenuLoading_" + charId + "_" + responseObject.action_list[i].id,
+			    });
+			    useSubMenu.addChild(loadingItem); 								
+
+				var popupItem = new dijit.PopupMenuItem(
+					{
+						label: responseObject.action_list[i].label,
+						popup: useSubMenu, 
+						id: useId,
+						iconClass: "menuExpandIcon"
+					}
+				);
+											
+			    menu.addChild(popupItem);
+			    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, loadUseSubMenu);
+			}
+		},
+        
+	    timeout: 15000 // Time in milliseconds	
+    });	
+}
+
+function loadUseSubMenu(subMenuId) {
+    var parts = this.id.split('_');
+    var charId = parts[1];
+    var actionId = parts[2];
+
+    menu = this;
+	clearMenu(menu);
+
+	dijit.byId("useSubMenuLoading_" + charId + "_" + actionId).attr('style', 'display: block; padding: 0px');	
+	
+	dojo.xhrGet( {
+        url: "[% base %]combat/use_target_list?character_id=" + charId + "&action_id=" + actionId,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        	clearMenu(menu);
+        	
+        	for (var i in responseObject.spell_targets) {
+			
+				targetId = "useTarget_" + charId + "_" + actionId + "_" + responseObject.spell_targets[i].id;
+			
+				menuItem = dijit.byId(targetId);
+				
+				if (menuItem) {
+					menuItem.attr('style', 'display: block; padding: 0px');
+				}
+				else {			
+					menuItem = new dijit.MenuItem({
+				        label: responseObject.spell_targets[i].name,
+				        onClick: function() { selectAction(this, 'Use') },
+				        id: targetId
+				    });
+				    menu.addChild(menuItem);
+			    }	
+			}
+		},
+        
+	    timeout: 15000 // Time in milliseconds	
+    });	
+}
+
 function selectAction(menuItem, action) {
 	var parts = menuItem.id.split('_');
 	selectActionCombat(action, parts[1], parts[2], parts[3]);
@@ -237,6 +325,28 @@ function createMenus() {
 		
     [% END %]
     
+    [% IF character.get_item_actions(in_combat) %]
+    	params = {id:"useMenu_[% character.id %]" };
+    	var menu = new dijit.Menu(params,document.createElement("div"));
+    	
+		var menuItem = new dijit.MenuItem({
+	        label: "Loading...",
+	        id: "useMenuLoading_[% character.id %]",
+	    });
+	    menu.addChild(menuItem);   
+	    
+	    var button[% character.id %] = new dijit.form.DropDownButton({
+	        label: '<img id="useOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/use.png">' + 
+	               '<img id="useOn_[% character.id %]"  style="display: none" src="[% c.config.static_path %]/images/actions/use_glow.png">',
+	        dropDown: menu,
+	        class: "actionButton",
+	        id: "useButton_[% character.id %]"         
+		});
+		
+		dojo.byId("useSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
+    	dojo.connect(dijit.byId("useMenu_[% character.id %]"), 'onOpen', null, function() { loadUseMenu('[% character.id %]') });
+    [% END %]
+    
     highlightAction('[% character.id %]', '[% character.last_combat_action %]');
     
     [% END %]
@@ -319,7 +429,7 @@ dojo.addOnLoad( createMenus );
     		<span id="castSpan_[% char.id %]"></span>
     	</td>
     	<td>
-    		<img src="[% c.config.static_path %]/images/actions/use.png">
+    		<span id="useSpan_[% char.id %]"></span>
     	</td>
     [% END %]
 

@@ -395,15 +395,15 @@ sub spell_target_list : Local {
 	
 	my $spell = $c->model('DBIC::Spell')->find({ spell_id => $c->req->param('spell_id') });
 	
-	$c->forward('build_target_list', [$spell->target]);
+	$c->forward('build_target_list', [$spell]);
 
 }
 
 sub build_target_list : Private {
-	my ( $self, $c, $target ) = @_;
+	my ( $self, $c, $spell ) = @_;
 	
 	my @targets;
-	given ($target) {
+	given ($spell->target) {
 		when ('creature') {
 			my $cg = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 			@targets = $cg->members;
@@ -415,6 +415,7 @@ sub build_target_list : Private {
 	
 	my @target_data;
 	foreach my $target (@targets) {
+		next unless $spell->can_be_cast_on($target);
 		push @target_data, {
 			name => $target->name,
 			id => $target->id,
@@ -463,7 +464,7 @@ sub use_target_list : Local {
 	
 	my $action = $c->model('DBIC::Item_Enchantment')->find({ item_enchantment_id => $c->req->param('action_id') });
 	
-	$c->forward('build_target_list', [$action->target]);
+	$c->forward('build_target_list', [$action->spell]);
 
 }
 

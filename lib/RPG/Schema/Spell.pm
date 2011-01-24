@@ -124,4 +124,11 @@ sub can_cast {
 	return 1;	
 }
 
+sub can_be_cast_on {
+	my $self = shift;
+	my $target = shift;
+	
+	return 1;	
+}
+
 1;

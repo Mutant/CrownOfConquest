@@ -273,6 +273,7 @@ html>body .nav a {width: auto}
     border-width: 0px;
     padding: 0;
     height: 100%;
+    background: none;
 }
 
 .actionButton .dijitButtonText {

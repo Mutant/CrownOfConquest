@@ -331,7 +331,79 @@ sub target_list : Local {
 	}
 	
 	$c->res->body(to_json {opponents => \@opponents});
+}
+
+sub spell_list : Local {
+	my ( $self, $c ) = @_;
 	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;	
+	
+	my %search_criteria = (
+		memorised_today   => 1,
+		number_cast_today => \'< memorise_count',
+		character_id      => $character->id,
+	);
+
+	$c->stash->{party}->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
+
+	my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
+		
+	@spells = grep { $_->spell->can_cast($character) } @spells;
+	
+	my @spells_data;
+	foreach my $mem_spell (@spells) {
+		my $spell = $mem_spell->spell;
+		push @spells_data, {
+			spell_name => $spell->spell_name,
+			number_left => $mem_spell->casts_left_today,
+			id => $spell->id,
+		};
+	}
+	
+	$c->res->body(to_json {spells => \@spells_data});
+}
+
+sub spell_target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my $spell = $c->model('DBIC::Spell')->find({ spell_id => $c->req->param('spell_id') });
+	
+	my @targets;
+	given ($spell->target) {
+		when ('creature') {
+			my $cg = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+			@targets = $cg->members;
+		}	
+		when ('character') {
+			@targets = $c->stash->{party}->members;
+		}
+	}
+	
+	my @target_data;
+	foreach my $target (@targets) {
+		push @target_data, {
+			name => $target->name,
+			id => $target->id,
+		};	
+	}
+	
+	$c->res->body(to_json {spell_targets => \@target_data});
 }
 
 1;

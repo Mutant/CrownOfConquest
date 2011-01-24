@@ -38,9 +38,100 @@ function loadFightMenu(charId) {
     });	
 }
 
+function loadCastMenu(charId) {
+	var menu = dijit.byId('castMenu_' + charId);
+	clearMenu(menu);
+	dijit.byId("castMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
+
+	dojo.xhrGet( {
+        url: "[% base %]combat/spell_list?character_id=" + charId,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        	clearMenu(menu);
+			
+			for (var i in responseObject.spells) {
+				spellId = "castSpell_" + charId + "_" + responseObject.spells[i].id;
+				menuItem = dijit.byId(spellId);
+				
+				if (menuItem) {
+					menuItem.attr('style', 'display: block; padding: 0px');
+				}
+				else {	
+					var subMenuId = "spellSubMenu_" + charId + "_" + responseObject.spells[i].id;
+					var spellSubMenu = new dijit.Menu({id: subMenuId});	
+					
+					var loadingItem = new dijit.MenuItem({
+				        label: "Loading...",
+				        id: "castSubMenuLoading_" + charId + "_" + responseObject.spells[i].id,
+				    });
+				    spellSubMenu.addChild(loadingItem); 								
+	
+					var popupItem = new dijit.PopupMenuItem(
+						{
+							label: responseObject.spells[i].spell_name + " (" + responseObject.spells[i].number_left + ")",
+							popup: spellSubMenu, 
+							id: spellId,
+							iconClass: "menuExpandIcon"
+						}
+					);
+												
+				    menu.addChild(popupItem);
+				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, loadCastSubMenu);
+			    
+			    }			
+			}
+		},
+        
+	    timeout: 15000 // Time in milliseconds	
+    });	
+}
+
+function loadCastSubMenu(subMenuId) {
+    var parts = this.id.split('_');
+    var charId = parts[1];
+    var spellId = parts[2];
+
+    menu = this;
+	clearMenu(menu);
+
+	dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: block; padding: 0px');  
+	
+	dojo.xhrGet( {
+        url: "[% base %]combat/spell_target_list?character_id=" + charId + "&spell_id=" + spellId,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        	clearMenu(menu);
+        	
+        	for (var i in responseObject.spell_targets) {
+			
+				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;
+			
+				menuItem = dijit.byId(targetId);
+				
+				if (menuItem) {
+					menuItem.attr('style', 'display: block; padding: 0px');
+				}
+				else {
+				
+					menuItem = new dijit.MenuItem({
+				        label: responseObject.spell_targets[i].name,
+				        onClick: function() { selectAction(this, 'Cast') },
+				        id: targetId
+				    });
+				    menu.addChild(menuItem);
+			    }	
+			}
+		},
+        
+	    timeout: 15000 // Time in milliseconds	
+    });	
+}
+
 function selectAction(menuItem, action) {
 	var parts = menuItem.id.split('_');
-	selectActionCombat(action, parts[1], parts[2]);
+	selectActionCombat(action, parts[1], parts[2], parts[3]);
 }
 
 var buttons = Array('attack', 'defend', 'cast', 'use'); 
@@ -53,11 +144,11 @@ function selectActionCombat(action, char_id, action_param, action_param2) {
 		var display = (button == action.toLowerCase() ? 'On' : 'Off');
 		var hide = (display == 'On' ? 'Off' : 'On'); 
 		
-		//console.log("display: " + button + display + "_" + char_id);
+		console.log("display: " + button + display + "_" + char_id);
 		var imgDisplay = dojo.byId(button + display + "_" + char_id);
 		if (imgDisplay) imgDisplay.style.display = 'inline'; 
 
-		//console.log("hide: " + button + hide + "_" + char_id);
+		console.log("hide: " + button + hide + "_" + char_id);
 		var imgHide = dojo.byId(button + hide + "_" + char_id);
 		if (imgHide) imgHide.style.display = 'none';
 	} 
@@ -120,6 +211,30 @@ function createMenus() {
 
     dojo.byId("fightSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
+    
+    [% IF character.is_spell_caster %]
+    	var params = {id:"castMenu_[% character.id %]" };
+    	var menu = new dijit.Menu(params,document.createElement("div"));
+    	
+		var menuItem = new dijit.MenuItem({
+	        label: "Loading...",
+	        id: "castMenuLoading_[% character.id %]",
+	    });
+	    menu.addChild(menuItem);   
+	    
+	    var button[% character.id %] = new dijit.form.DropDownButton({
+	        label: '<img id="castOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/cast.png">' + 
+	               '<img id="castOn_[% character.id %]"  style="display: none" src="[% c.config.static_path %]/images/actions/cast.png">',
+	        dropDown: menu,
+	        class: "actionButton",
+	        id: "castButton_[% character.id %]"         
+		});
+		
+		dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
+    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
+		
+    [% END %]
+    
     [% END %]
 
 }
@@ -183,17 +298,23 @@ dojo.addOnLoad( createMenus );
 	</td>
 
     [% IF in_combat %]
-    	<td valign="top">
+    	<td>
     		<span onClick="selectActionCombat('Attack', '[% char.id %]')" style="cursor: pointer; margin-right: 0px">
-    			<img id="attackOff_[% char.id %]" border=0 src="[% c.config.static_path %]/images/actions/attack.png"> 
-        	    <img id="attackOn_[% char.id %]" border=0 style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">
+    			<img id="attackOff_[% char.id %]" src="[% c.config.static_path %]/images/actions/attack.png"> 
+        	    <img id="attackOn_[% char.id %]" style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">
         	</span>
-    		<span id="fightSpan_[% char.id %]" style="height: 100%; margin-left: 0px"></span>
+        	<span id="fightSpan_[% char.id %]"></span>
+        </td>
+        <td>    		    	
     		<span onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
     			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
     			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
     		</span>
-    		<img src="[% c.config.static_path %]/images/actions/cast.png">
+    	</td>
+    	<td>
+    		<span id="castSpan_[% char.id %]"></span>
+    	</td>
+    	<td>
     		<img src="[% c.config.static_path %]/images/actions/use.png">
     	</td>
     [% END %]

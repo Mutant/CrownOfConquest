@@ -38,46 +38,74 @@ function loadFightMenu(charId) {
     });	
 }
 
+function ucFirst(string)
+{
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function loadCastMenu(charId) {
-	var menu = dijit.byId('castMenu_' + charId);
+	loadTargetBasedMenu(charId, 'cast');
+}
+
+function loadUseMenu(charId) {
+	loadTargetBasedMenu(charId, 'use');
+}
+
+function loadTargetBasedMenu(charId, type) {
+	var menu = dijit.byId(type + 'Menu_' + charId);
 	clearMenu(menu);
-	dijit.byId("castMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
+	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
 
 	dojo.xhrGet( {
-        url: "[% base %]combat/spell_list?character_id=" + charId,
+        url: "[% base %]combat/" + type +  "_list?character_id=" + charId,
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
         	clearMenu(menu);
 			
-			for (var i in responseObject.spells) {
-				spellId = "castSpell_" + charId + "_" + responseObject.spells[i].id;
-				menuItem = dijit.byId(spellId);
+			for (var i in responseObject.list) {
+				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
+				menuItem = dijit.byId(listId);
 				
-				if (menuItem) {
-					menuItem.destroyRecursive();
-				}
-	
-				var subMenuId = "spellSubMenu_" + charId + "_" + responseObject.spells[i].id;
-				var spellSubMenu = new dijit.Menu({id: subMenuId});	
-				
-				var loadingItem = new dijit.MenuItem({
-			        label: "Loading...",
-			        id: "castSubMenuLoading_" + charId + "_" + responseObject.spells[i].id,
-			    });
-			    spellSubMenu.addChild(loadingItem); 								
-
-				var popupItem = new dijit.PopupMenuItem(
-					{
-						label: responseObject.spells[i].spell_name + " (" + responseObject.spells[i].number_left + ")",
-						popup: spellSubMenu, 
-						id: spellId,
-						iconClass: "menuExpandIcon"
+				if (responseObject.list[i].target == 'party') {
+					if (menuItem) {
+						menuItem.attr('style', 'display: block; padding: 0px');
 					}
-				);
-											
-			    menu.addChild(popupItem);
-			    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, loadCastSubMenu);
+					else {				
+						menuItem = new dijit.MenuItem({
+					        label: responseObject.spells[i].label,
+					        onClick: function() { selectAction(this, ucFirst(type)) },
+					        id: listId
+					    });
+					    menu.addChild(menuItem);
+				    }				
+				}
+				else {
+					if (menuItem) {
+						menuItem.destroyRecursive();
+					}
+		
+					var subMenuId = type + "SubMenu_" + charId + "_" + responseObject.list[i].id;
+					var listSubMenu = new dijit.Menu({id: subMenuId});	
+					
+					var loadingItem = new dijit.MenuItem({
+				        label: "Loading...",
+				        id: type + "SubMenuLoading_" + charId + "_" + responseObject.list[i].id,
+				    });
+				    listSubMenu.addChild(loadingItem); 								
+	
+					var popupItem = new dijit.PopupMenuItem(
+						{
+							label: responseObject.list[i].label,
+							popup: listSubMenu, 
+							id: listId,
+							iconClass: "menuExpandIcon"
+						}
+					);
+												
+				    menu.addChild(popupItem);
+				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
+				}
 			}
 		},
         
@@ -120,53 +148,6 @@ function loadCastSubMenu(subMenuId) {
 				    });
 				    menu.addChild(menuItem);
 			    }	
-			}
-		},
-        
-	    timeout: 15000 // Time in milliseconds	
-    });	
-}
-
-function loadUseMenu(charId) {
-	var menu = dijit.byId('useMenu_' + charId);
-	clearMenu(menu);
-	dijit.byId("useMenuLoading_" + charId).attr('style', 'display: block; padding: 0px');
-
-	dojo.xhrGet( {
-        url: "[% base %]combat/use_action_list?character_id=" + charId,
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs){
-        	clearMenu(menu);
-			
-			for (var i in responseObject.action_list) {
-				useId = "useItem_" + charId + "_" + responseObject.action_list[i].id;
-				menuItem = dijit.byId(useId);
-				
-				if (menuItem) {
-					menuItem.destroyRecursive();
-				}
-	
-				var subMenuId = "useSubMenu_" + charId + "_" + responseObject.action_list[i].id;
-				var useSubMenu = new dijit.Menu({id: subMenuId});	
-				
-				var loadingItem = new dijit.MenuItem({
-			        label: "Loading...",
-			        id: "useSubMenuLoading_" + charId + "_" + responseObject.action_list[i].id,
-			    });
-			    useSubMenu.addChild(loadingItem); 								
-
-				var popupItem = new dijit.PopupMenuItem(
-					{
-						label: responseObject.action_list[i].label,
-						popup: useSubMenu, 
-						id: useId,
-						iconClass: "menuExpandIcon"
-					}
-				);
-											
-			    menu.addChild(popupItem);
-			    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, loadUseSubMenu);
 			}
 		},
         
@@ -217,7 +198,7 @@ function loadUseSubMenu(subMenuId) {
 
 function selectAction(menuItem, action) {
 	var parts = menuItem.id.split('_');
-	selectActionCombat(action, parts[1], parts[2], parts[3]);
+	[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3]);
 }
 
 function selectActionCombat(action, char_id, action_param, action_param2) {		
@@ -234,16 +215,10 @@ function selectActionCombat(action, char_id, action_param, action_param2) {
     });
 }
 
-function selectActionNonCombat(action, char_id, action_param, action_param2, action_label){
-	if (! action_label) {
-		action_label = action;
-	}
-	
+function selectActionNonCombat(action, char_id, action_param, action_param2) {
 	if (! action_param) {
 		action_param = '';
 	}
-
-	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
 
 	getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
 		        "&action_param=" + (action_param2 || ''));
@@ -276,9 +251,6 @@ function highlightAction(char_id, action) {
 }
 
 function createMenus() {
-	console.log("Creating menus");
-	
-
    [% FOREACH character IN characters %]    
    
    [% IF in_combat %]
@@ -323,7 +295,7 @@ function createMenus() {
 		});
 		
 		dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
-    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]', '[% in_combat %]') });
+    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
 		
     [% END %]
     

@@ -344,7 +344,7 @@ sub target_list : Local {
 	$c->res->body(to_json {opponents => \@opponents_data});
 }
 
-sub spell_list : Local {
+sub cast_list : Local {
 	my ( $self, $c ) = @_;
 	
 	my $character = $c->model('DBIC::Character')->find(
@@ -372,13 +372,13 @@ sub spell_list : Local {
 	foreach my $mem_spell (@spells) {
 		my $spell = $mem_spell->spell;
 		push @spells_data, {
-			spell_name => $spell->spell_name,
-			number_left => $mem_spell->casts_left_today,
+			label => $spell->spell_name . " (" . $mem_spell->casts_left_today . ")",
 			id => $spell->id,
+			target => $spell->target,
 		};
 	}
 	
-	$c->res->body(to_json {spells => \@spells_data});
+	$c->res->body(to_json {list => \@spells_data});
 }
 
 sub spell_target_list : Local {
@@ -424,7 +424,7 @@ sub build_target_list : Private {
 	$c->res->body(to_json {spell_targets => \@target_data});	
 }
 
-sub use_action_list : Local {
+sub use_list : Local {
 	my ( $self, $c ) = @_;
 	
 	my $character = $c->model('DBIC::Character')->find(
@@ -437,14 +437,15 @@ sub use_action_list : Local {
 	return unless $character;
 	
 	my @actions;
-	foreach my $action ($character->get_item_actions(1)) {
+	foreach my $action ($character->get_item_actions($c->stash->{party}->in_combat)) {
 		push @actions, {
 			id => $action->id,
 			label => $action->label,
+			target => $action->target,
 		};
 	}
 	
-	$c->res->body(to_json {action_list => \@actions});
+	$c->res->body(to_json {list => \@actions});
 		
 }
 

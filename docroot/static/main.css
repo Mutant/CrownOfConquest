@@ -306,6 +306,15 @@ html>body .nav a {width: auto}
     height: 30px;
 }
 
+.tundra .dijitButtonHover .dijitButtonNode, .tundra .dijitButtonNodeHover, .tundra .dijitToggleButtonHover .dijitButtonNode, .tundra .dijitDropDownButtonHover .dijitButtonNode, .tundra .dijitComboButton .dijitButtonContentsHover, .tundra .dijitComboButton .dijitDownArrowButtonHover {
+    background: none;
+}
+
+.tundra .dijitButtonActive .dijitButtonNode, .tundra .dijitButtonNodeActive, .tundra .dijitToggleButtonActive .dijitButtonNode, .tundra .dijitDropDownButtonActive .dijitButtonNode, .tundra .dijitComboButton .dijitButtonContentsActive, .tundra .dijitComboButton .dijitDownArrowButtonActive {
+    background: none;
+}
+
+
 /* Misc */
 
 #rank_separator {

@@ -125,6 +125,13 @@ function loadCastSubMenu(subMenuId) {
         load: function(responseObject, ioArgs){
         	dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: none');
         	
+        	if (responseObject.spell_targets.length == 0) {
+ 				menuItem = new dijit.MenuItem({
+			        label: "<em>(No-one)</em>",
+			    });
+			    menu.addChild(menuItem);       	
+        	}
+        	
         	for (var i in responseObject.spell_targets) {
 			
 				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;			
@@ -369,7 +376,7 @@ dojo.addOnLoad( createMenus );
 	</td>
 
     	<td>
-        	<span id="fightSpan_[% char.id %]"></span>
+        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
         </td>
         <td>
         	[% IF in_combat && ! char.is_dead %]    	
@@ -390,7 +397,7 @@ dojo.addOnLoad( createMenus );
     	</tr>
     	<tr>
     		<tr [% UNLESS in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
-    			<td colspan="10"></td>
+    			<td colspan="13"></td>
     [% END %]
    
 </tr>

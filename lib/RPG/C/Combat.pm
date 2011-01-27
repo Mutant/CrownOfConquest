@@ -320,18 +320,8 @@ sub target_list : Local {
 	
 	my $party = $c->stash->{party};
 	
-	my @opponents;
-
-	if ( $party->combat_type eq 'creature_group' ) {
-		@opponents = $c->model('DBIC::CreatureGroup')->get_by_id( $party->in_combat_with )->members;
-	}
-	elsif ( my $opponent_party = $party->in_party_battle_with ) {
-		@opponents = $opponent_party->members;
-	}
-	elsif ( $party->combat_type eq 'garrison' ) {
-		@opponents = $c->model('DBIC::Garrison')->get_by_id( $party->in_combat_with )->members;
-	}	
-		
+	my @opponents = $party->opponents->members;
+	
 	my @opponents_data;
 	foreach my $opponent (@opponents) {
 		next if $opponent->is_dead;
@@ -400,7 +390,7 @@ sub spell_target_list : Local {
 }
 
 sub build_target_list : Private {
-	my ( $self, $c, $spell ) = @_;
+	my ( $self, $c, $spell, $item ) = @_;
 	
 	my @targets;
 	given ($spell->target) {
@@ -422,7 +412,12 @@ sub build_target_list : Private {
 		};	
 	}
 	
-	$c->res->body(to_json {spell_targets => \@target_data});	
+	my $spell_name = $spell->spell_name;
+	if ($item) {
+		$spell_name .= ' [' . $item->display_name . ']';	
+	}
+	
+	$c->res->body(to_json {spell_targets => \@target_data, spell_name => $spell_name});	
 }
 
 sub use_list : Local {
@@ -462,9 +457,16 @@ sub use_target_list : Local {
 	
 	return unless $character;
 	
-	my $action = $c->model('DBIC::Item_Enchantment')->find({ item_enchantment_id => $c->req->param('action_id') });
+	my $action = $c->model('DBIC::Item_Enchantment')->find(
+		{ 
+			item_enchantment_id => $c->req->param('action_id'),			
+		},
+		{
+			prefetch => 'item',
+		},
+	);
 	
-	$c->forward('build_target_list', [$action->spell]);
+	$c->forward('build_target_list', [$action->spell, $action->item]);
 
 }
 

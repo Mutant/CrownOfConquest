@@ -306,7 +306,7 @@ html>body .nav a {width: auto}
     height: 30px;
 }
 
-.tundra .dijitButtonHover .dijitButtonNode, .tundra .dijitButtonNodeHover, .tundra .dijitToggleButtonHover .dijitButtonNode, .tundra .dijitDropDownButtonHover .dijitButtonNode, .tundra .dijitComboButton .dijitButtonContentsHover, .tundra .dijitComboButton .dijitDownArrowButtonHover {
+.tundra .dijitDropDownButtonHover .dijitButtonNode, .tundra .dijitComboButton .dijitButtonContentsHover, .tundra .dijitComboButton .dijitDownArrowButtonHover {
     background: none;
 }
 

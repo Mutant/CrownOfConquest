@@ -458,6 +458,26 @@ sub initiate_combat {
 	$self->update;	
 }
 
+sub opponents {
+	my $self = shift;
+	
+	my $opponents;
+	
+	my $schema = $self->result_source->schema;
+	
+	if ( $self->combat_type eq 'creature_group' ) {
+		$opponents = $schema->resultset('CreatureGroup')->get_by_id( $self->in_combat_with );
+	}
+	elsif ( my $opponent_party = $self->in_party_battle_with ) {
+		$opponents = $opponent_party;
+	}
+	elsif ( $self->combat_type eq 'garrison' ) {
+		$opponents = $schema->resultset('DBIC::Garrison')->get_by_id( $self->in_combat_with );
+	}
+	
+	return $opponents;
+}
+
 sub in_party_battle_with {
     my $self = shift;
 

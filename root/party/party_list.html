@@ -23,7 +23,7 @@ function loadFightMenu(charId) {
 				
 				menuItem = new dijit.MenuItem({
 			        label: responseObject.opponents[i].name,
-			        onClick: function() { selectAction(this, 'Attack') },
+			        onClick: dojo.partial(window["selectActionCombat"], 'Attack', charId, responseObject.opponents[i].id, null, responseObject.opponents[i].name, null),
 			        id: itemId
 			    });
 			    menu.addChild(menuItem);
@@ -136,9 +136,11 @@ function loadCastSubMenu(subMenuId) {
 			
 				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;			
 		
+				var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
+		
 				menuItem = new dijit.MenuItem({
 			        label: responseObject.spell_targets[i].name,
-			        onClick: function() { selectAction(this, 'Cast') },
+			        onClick: dojo.partial(window[method], 'Cast', charId, spellId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name), 
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);			    
@@ -174,9 +176,11 @@ function loadUseSubMenu(subMenuId) {
 			
 				targetId = "useTarget_" + charId + "_" + actionId + "_" + responseObject.spell_targets[i].id;
 		
+				var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
+		
 				menuItem = new dijit.MenuItem({
 			        label: responseObject.spell_targets[i].name,
-			        onClick: function() { selectAction(this, 'Use') },
+			        onClick: dojo.partial(window[method], 'Use', charId, actionId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name), 
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);
@@ -189,16 +193,17 @@ function loadUseSubMenu(subMenuId) {
     });	
 }
 
-function selectAction(menuItem, action) {
+function selectAction(menuItem, action, target, name) {
+	console.log("target: " + target);
 	var parts = menuItem.id.split('_');
-	[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3]);
+	[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3], target, name);
 }
 
-function selectActionCombat(action, char_id, action_param, action_param2) {		
+function selectActionCombat(action, char_id, action_param, action_param2, target, name) {
 	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
 		        "&action_param=" + (action_param2 || '')
 	
-	highlightAction(char_id, action);
+	highlightAction(char_id, action, target, name);
 	
 	dojo.xhrGet( {
         url: "[% base %]" + url,
@@ -220,7 +225,7 @@ function selectActionNonCombat(action, char_id, action_param, action_param2) {
 }
 
 var buttons = Array('attack', 'defend', 'cast', 'use');
-function highlightAction(char_id, action) {
+function highlightAction(char_id, action, target, name) {
 	for (x in buttons) {
 	    var button = buttons[x];
 		var display = (button == action.toLowerCase() ? 'On' : 'Off');
@@ -233,7 +238,26 @@ function highlightAction(char_id, action) {
 		//console.log("hide: " + button + hide + "_" + char_id);
 		var imgHide = dojo.byId(button + hide + "_" + char_id);
 		if (imgHide) imgHide.style.display = 'none';
-	} 
+		
+		console.log(button + "Tooltip_" + char_id);
+		var tooltip = dijit.byId(button + "Tooltip_" + char_id);
+		if (tooltip) tooltip.label = ucFirst(button);
+	}
+	
+	var gerund = ucFirst(action);
+	if (gerund == 'Use') gerund = 'Us';
+	
+	var tooltip_label = gerund + "ing";
+	if (name) {
+		tooltip_label += " " + ucFirst(name) + " on";  
+	}
+	if (target) {
+		tooltip_label += " " + target;
+	}
+		
+	console.log(action + "Tooltip_" + char_id);
+	var tooltip = dijit.byId(action.toLowerCase() + "Tooltip_" + char_id);
+	if (tooltip) tooltip.label = tooltip_label;
 }
 
 function createMenus() {
@@ -311,7 +335,7 @@ function createMenus() {
     	dojo.connect(dijit.byId("useMenu_[% character.id %]"), 'onOpen', null, function() { loadUseMenu('[% character.id %]') });
     [% END %]
     
-    highlightAction('[% character.id %]', '[% character.last_combat_action %]');
+    highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 %]', '[% combat_params.${character.id}.1 %]');
     
     [% END %]
 
@@ -377,20 +401,24 @@ dojo.addOnLoad( createMenus );
 
     	<td>
         	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
+        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
         </td>
         <td>
         	[% IF in_combat && ! char.is_dead %]    	
-    		<span onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
+    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
     			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
     			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
     		</span>
+    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
     		[% END %]
     	</td>
     	<td>
     		<span id="castSpan_[% char.id %]"></span>
+    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
     	</td>
     	<td>
     		<span id="useSpan_[% char.id %]"></span>
+    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
     	</td>
 
     [% IF party.rank_separator_position == char.party_order %]

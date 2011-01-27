@@ -352,7 +352,7 @@ sub add_to_garrison : Local {
 		
 	my $town = $c->stash->{town};
 	
-	croak "Party not in sector" unless $c->stash->{party_location}->id == $town->land_id;
+	croak "Party not in sector\n" unless $c->stash->{party_location}->id == $town->land_id;
 	
 	my @characters = $c->stash->{party}->characters;
 	
@@ -386,8 +386,10 @@ sub remove_from_garrison : Local {
 	my ($self, $c) = @_;
 	
 	croak "Party full\n" if $c->stash->{party}->is_full;
-	
+
 	my $town = $c->stash->{town};
+
+	croak "Party not in sector\n" unless $c->stash->{party_location}->id == $town->land_id;
 	
 	my @garrison_chars = $c->model('DBIC::Character')->search(
 		{

@@ -32,7 +32,7 @@ Any characters garrisoned in the town will fight alongside the mayor. You can ga
 				[% END %]
 			</select>
 		</td>		
-		[% IF ! party.is_full %]
+		[% IF ! party.is_full && party_in_sector %]
 			<td><a href="[% base %]town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Remove</a></td>
 		[% END %]
 		</tr>		

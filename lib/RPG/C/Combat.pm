@@ -387,8 +387,7 @@ sub build_target_list : Private {
 	my @targets;
 	given ($spell->target) {
 		when ('creature') {
-			my $cg = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
-			@targets = $cg->members;
+			@targets = $c->stash->{party}->opponents->members;
 		}	
 		when ('character') {
 			@targets = $c->stash->{party}->members;

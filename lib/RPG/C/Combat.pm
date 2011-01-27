@@ -346,15 +346,7 @@ sub cast_list : Local {
 	
 	return unless $character;	
 	
-	my %search_criteria = (
-		memorised_today   => 1,
-		number_cast_today => \'< memorise_count',
-		character_id      => $character->id,
-	);
-
-	$c->stash->{party}->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
-
-	my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
+	my @spells = $character->castable_spells($c->stash->{party}->in_combat ? 1 : 0);
 		
 	@spells = grep { $_->spell->can_cast($character) } @spells;
 	

@@ -66,10 +66,10 @@ function loadTargetBasedMenu(charId, type) {
 			for (var i in responseObject.list) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
 				menuItem = dijit.byId(listId);
-				
+
 				if (responseObject.list[i].target == 'party') {		
 					menuItem = new dijit.MenuItem({
-				        label: responseObject.spells[i].label,
+				        label: responseObject.list[i].label,
 				        onClick: function() { selectAction(this, ucFirst(type)) },
 				        id: listId
 				    });
@@ -194,7 +194,6 @@ function loadUseSubMenu(subMenuId) {
 }
 
 function selectAction(menuItem, action, target, name) {
-	console.log("target: " + target);
 	var parts = menuItem.id.split('_');
 	[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3], target, name);
 }
@@ -231,15 +230,12 @@ function highlightAction(char_id, action, target, name) {
 		var display = (button == action.toLowerCase() ? 'On' : 'Off');
 		var hide = (display == 'On' ? 'Off' : 'On'); 
 		
-		//console.log("display: " + button + display + "_" + char_id);
 		var imgDisplay = dojo.byId(button + display + "_" + char_id);
 		if (imgDisplay) imgDisplay.style.display = 'inline'; 
 
-		//console.log("hide: " + button + hide + "_" + char_id);
 		var imgHide = dojo.byId(button + hide + "_" + char_id);
 		if (imgHide) imgHide.style.display = 'none';
 		
-		console.log(button + "Tooltip_" + char_id);
 		var tooltip = dijit.byId(button + "Tooltip_" + char_id);
 		if (tooltip) tooltip.label = ucFirst(button);
 	}
@@ -255,7 +251,6 @@ function highlightAction(char_id, action, target, name) {
 		tooltip_label += " " + target;
 	}
 		
-	console.log(action + "Tooltip_" + char_id);
 	var tooltip = dijit.byId(action.toLowerCase() + "Tooltip_" + char_id);
 	if (tooltip) tooltip.label = tooltip_label;
 }
@@ -290,7 +285,7 @@ function createMenus() {
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
     [% END %]
     
-    [% IF character.is_spell_caster %]
+    [% IF character.is_spell_caster && character.has_castable_spells(in_combat) %]
     	var params = {id:"castMenu_[% character.id %]" };
     	var menu = new dijit.Menu(params,document.createElement("div"));
     	

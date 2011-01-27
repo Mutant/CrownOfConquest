@@ -188,7 +188,7 @@ sub list : Private {
 	# TODO: check if an update has occured, and only re-read if it has
 	my @characters = map { $_->discard_changes; $_ } $party->characters_in_party;
 	
-	my $in_combat = $party->in_combat;
+	my $in_combat = $party->in_combat ? 1 : 0;
 	
 	my %combat_params;
 	if ($in_combat) {
@@ -201,13 +201,16 @@ sub list : Private {
 						
 			given ($character->last_combat_action) {
 				when ('Attack') {
-					$combat_params{$character->id} = [$opponents_by_id{$character->last_combat_param1}->name];
+					$combat_params{$character->id} = [$opponents_by_id{$character->last_combat_param1}->name]
+						if $opponents_by_id{$character->last_combat_param1};
 				}
 				when ('Cast') {
 					my $spell = $c->model('DBIC::Spell')->find({spell_id => $character->last_combat_param1});
 					my $target = $spell->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
 						$opponents_by_id{$character->last_combat_param2};
+					
+					next unless $target;
 						
 					$combat_params{$character->id} = [$target->name, $spell->spell_name];
 				}
@@ -224,6 +227,8 @@ sub list : Private {
 					my $target = $spell->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
 						$opponents_by_id{$character->last_combat_param2};
+						
+					next unless $target;
 						
 					my $spell_name = $spell->spell_name . ' [' . $action->item->display_name . ']';
 												

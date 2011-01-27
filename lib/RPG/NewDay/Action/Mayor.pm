@@ -143,6 +143,8 @@ sub calculate_approval {
 	
 	my $mayor = $town->mayor;
 	
+	return unless $mayor;
+	
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {

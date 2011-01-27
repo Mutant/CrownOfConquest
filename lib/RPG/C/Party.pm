@@ -208,6 +208,7 @@ sub list : Private {
 		},
 		{
 			prefetch => ['class', 'race'],
+			order_by => 'party_order',
 		}
 	);	
 			

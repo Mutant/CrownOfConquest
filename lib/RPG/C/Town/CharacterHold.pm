@@ -24,6 +24,8 @@ sub character_list : Private {
 		}
 	);
 	
+	$c->stash->{template_params} ||= {};
+	
 	my $panel = $c->forward(
 		'RPG::V::TT',
 		[
@@ -33,6 +35,7 @@ sub character_list : Private {
 					characters => \@characters,
 					party => $c->stash->{party},
 					town => $c->stash->{party_location}->town,
+					%{ $c->stash->{template_params} },
 				},
 				return_output => 1,
 			}

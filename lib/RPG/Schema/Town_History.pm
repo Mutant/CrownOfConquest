@@ -8,6 +8,8 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Town_History');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Town_History');
+
 __PACKAGE__->add_columns(qw/town_history_id message town_id day_id date_recorded type value/);
 
 __PACKAGE__->set_primary_key('town_history_id');

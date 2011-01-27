@@ -315,17 +315,7 @@ sub generate_news : Private {
 
 	my $current_day = $c->stash->{today}->day_number;
 
-	my @logs = $c->model('DBIC::Town_History')->search(
-		{
-			town_id          => $town->id,
-			'day.day_number' => { '<=', $current_day, '>=', $current_day - $day_range },
-			type => 'news',
-		},
-		{
-			prefetch => 'day',
-			order_by => 'day_number desc, date_recorded',
-		}
-	);
+	my @logs = $c->model('DBIC::Town_History')->recent_history($town->id, 'news', $current_day, $day_range);
 
 	my $news = $c->forward(
 		'RPG::V::TT',

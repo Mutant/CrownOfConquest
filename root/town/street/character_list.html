@@ -16,5 +16,18 @@
 
 <a href="[% base %]town/street/add_character">Add Character</a>
 
+[% IF graffiti.0 %]
+<br><br>
+You see the following messages scrawled on a wall...<br><br>
+
+	[% FOREACH message IN graffiti %]
+	~~ [% message.message %] ~~ <br>
+	[% END %]
+[% ELSE %]
+	<br>
+[% END %]
+<br>
+<a href="javascript:getPanels('town/street/graffiti')">Leave Your Mark</a>
+
 <br><br>
 [% INCLUDE town/town_footer.html %]

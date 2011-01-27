@@ -37,6 +37,7 @@ sub refresh : Private {
 		unless (ref $panel eq 'ARRAY') {
 			if ($panel eq 'messages') {
 				$c->forward('day_logs_check');
+                $c->forward('messages');
 			}
 			
 			my $panel_path = $c->forward('find_panel_path', [$panel]);
@@ -72,7 +73,7 @@ sub find_panel_path : Private {
 	
     my $party = $c->stash->{party};
     
-    if ($panel eq 'messages') {
+    if ($panel eq 'messages') {   	
         if ($c->stash->{messages_path}) {
             return $c->stash->{messages_path};
         }        
@@ -142,6 +143,42 @@ sub day_logs_check : Private {
 	        }]		       
    		);   			
     }
+}
+
+sub messages : Private {
+	my ($self, $c) = @_;
+	
+    # Get recent combat count if party has been offline
+    if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
+        my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
+        if ( $offline_combat_count > 0 ) {
+            push @{ $c->stash->{messages} }, $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template      => 'party/offline_combat_message.html',
+                        params        => { offline_combat_count => $offline_combat_count },
+                        return_output => 1,
+                    }
+                ]
+            );
+        }  
+
+    }	
+    
+    my @garrison_counts = $c->model('DBIC::Combat_Log')->get_offline_garrison_log_count( $c->stash->{party} );
+    if (@garrison_counts) {
+        push @{ $c->stash->{messages} }, $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => 'party/offline_garrison_combat_message.html',
+                    params        => { garrison_counts => \@garrison_counts },
+                    return_output => 1,
+                }
+            ]
+        );
+    }    
 }
 
 # Create a dialog when the panels are reloaded. Submits form values to a given URL

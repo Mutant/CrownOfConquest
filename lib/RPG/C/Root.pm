@@ -52,37 +52,6 @@ sub auto : Private {
     $c->stash->{today} = $c->model('DBIC::Day')->find_today;
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
-
-        # Get recent combat count if party has been offline
-        if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
-            my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
-            if ( $offline_combat_count > 0 ) {
-                push @{ $c->stash->{messages} }, $c->forward(
-                    'RPG::V::TT',
-                    [
-                        {
-                            template      => 'party/offline_combat_message.html',
-                            params        => { offline_combat_count => $offline_combat_count },
-                            return_output => 1,
-                        }
-                    ]
-                );
-            }
-            
-            my @garrison_counts = $c->model('DBIC::Combat_Log')->get_offline_garrison_log_count( $c->stash->{party} );
-            if (@garrison_counts) {
-                push @{ $c->stash->{messages} }, $c->forward(
-                    'RPG::V::TT',
-                    [
-                        {
-                            template      => 'party/offline_garrison_combat_message.html',
-                            params        => { garrison_counts => \@garrison_counts },
-                            return_output => 1,
-                        }
-                    ]
-                );
-            }
-        }
         
         # Display announcements if relevant
         if ($c->session->{announcements}) {

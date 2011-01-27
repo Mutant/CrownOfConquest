@@ -14,6 +14,7 @@ use RPG::Combat::CreatureWildernessBattle;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use DateTime;
+use JSON;
 
 # Check to see if creatures attack party (if there are any in their current sector)
 sub check_for_attack : Local {
@@ -312,6 +313,153 @@ sub process_flee_result : Private {
 
 		$c->forward( '/combat/process_round_result', [$result] );
 	}
+}
+
+sub target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $party = $c->stash->{party};
+	
+	my @opponents = $party->opponents->members;
+	
+	my @opponents_data;
+	foreach my $opponent (@opponents) {
+		next if $opponent->is_dead;
+		push @opponents_data, {
+			name => $opponent->name,
+			id => $opponent->id,
+		};
+	}
+	
+	$c->res->body(to_json {opponents => \@opponents_data});
+}
+
+sub cast_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;	
+	
+	my @spells = $character->castable_spells($c->stash->{party}->in_combat ? 1 : 0);
+		
+	@spells = grep { $_->spell->can_cast($character) } @spells;
+	
+	my @spells_data;
+	foreach my $mem_spell (@spells) {
+		my $spell = $mem_spell->spell;
+		push @spells_data, {
+			label => $spell->spell_name . " (" . $mem_spell->casts_left_today . ")",
+			id => $spell->id,
+			target => $spell->target,
+		};
+	}
+	
+	$c->res->body(to_json {list => \@spells_data});
+}
+
+sub spell_target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my $spell = $c->model('DBIC::Spell')->find({ spell_id => $c->req->param('spell_id') });
+	
+	$c->forward('build_target_list', [$spell]);
+
+}
+
+sub build_target_list : Private {
+	my ( $self, $c, $spell, $item ) = @_;
+	
+	my @targets;
+	given ($spell->target) {
+		when ('creature') {
+			my $cg = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+			@targets = $cg->members;
+		}	
+		when ('character') {
+			@targets = $c->stash->{party}->members;
+		}
+	}
+	
+	my @target_data;
+	foreach my $target (@targets) {
+		next unless $spell->can_be_cast_on($target);
+		push @target_data, {
+			name => $target->name,
+			id => $target->id,
+		};	
+	}
+	
+	my $spell_name = $spell->spell_name;
+	if ($item) {
+		$spell_name .= ' [' . $item->display_name . ']';	
+	}
+	
+	$c->res->body(to_json {spell_targets => \@target_data, spell_name => $spell_name});	
+}
+
+sub use_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my @actions;
+	foreach my $action ($character->get_item_actions($c->stash->{party}->in_combat)) {
+		push @actions, {
+			id => $action->id,
+			label => $action->label,
+			target => $action->target,
+		};
+	}
+	
+	$c->res->body(to_json {list => \@actions});
+		
+}
+
+sub use_target_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+		{
+			character_id => $c->req->param('character_id'),
+			party_id => $c->stash->{party}->id,
+		}
+	);
+	
+	return unless $character;
+	
+	my $action = $c->model('DBIC::Item_Enchantment')->find(
+		{ 
+			item_enchantment_id => $c->req->param('action_id'),			
+		},
+		{
+			prefetch => 'item',
+		},
+	);
+	
+	$c->forward('build_target_list', [$action->spell, $action->item]);
+
 }
 
 1;

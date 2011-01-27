@@ -200,48 +200,76 @@ sub list : Private {
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
 	#  to be re-read.
 	# TODO: check if an update has occured, and only re-read if it has
-	my @characters = map { $_->discard_changes; $_ } $party->characters_in_party;
+	my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
+	my @characters = $c->model('DBIC::Character')->search(
+		{
+			party_id => $c->stash->{party}->id,
+			%null_fields,
+		},
+		{
+			prefetch => ['class', 'race'],
+		}
+	);	
+			
+	$c->stats->profile("Queried characters");
 	
-	$c->stats->profile("Fetched characters");
+	my $in_combat = $party->in_combat ? 1 : 0;
+	
+	my %combat_params;
+	if ($in_combat) {
+		my (%opponents_by_id, %chars_by_id);
+		
+		# Get params for tooltips
+		foreach my $character (@characters) {
+			next unless $character->last_combat_param1;
+			
+			%opponents_by_id = map { $_->id => $_ } $party->opponents->members unless %opponents_by_id;
+			%chars_by_id = map { $_->id => $_ } @characters unless %chars_by_id; 
+						
+			given ($character->last_combat_action) {
+				when ('Attack') {
+					$combat_params{$character->id} = [$opponents_by_id{$character->last_combat_param1}->name]
+						if $opponents_by_id{$character->last_combat_param1};
+				}
+				when ('Cast') {
+					my $spell = $c->model('DBIC::Spell')->find({spell_id => $character->last_combat_param1});
+					my $target = $spell->target eq 'character' ? 
+						$chars_by_id{$character->last_combat_param2} :
+						$opponents_by_id{$character->last_combat_param2};
+					
+					next unless $target;
+						
+					$combat_params{$character->id} = [$target->name, $spell->spell_name];
+				}
+				when ('Use') {
+					my $action = $c->model('DBIC::Item_Enchantment')->find(
+						{ 
+							item_enchantment_id => $character->last_combat_param1,			
+						},
+						{
+							prefetch => 'item',
+						},						
+					);	
+					my $spell = $action->spell;
+					my $target = $spell->target eq 'character' ? 
+						$chars_by_id{$character->last_combat_param2} :
+						$opponents_by_id{$character->last_combat_param2};
+						
+					next unless $target;
+						
+					my $spell_name = $spell->spell_name . ' [' . $action->item->display_name . ']';
+												
+					$combat_params{$character->id} = [$target->name, $spell_name];					
+				}
+			}				
+		}
+	}
+	
+	$c->stats->profile("Got tooltips");
 
 	my %broken_items_by_char_id = $c->stash->{party}->broken_equipped_items_hash;
 
 	$c->stats->profile("Got Broken weapons");
-
-	my %spells;
-	foreach my $character (@characters) {
-		next unless $character->class->class_name eq 'Priest' || $character->class->class_name eq 'Mage';
-
-		my %search_criteria = (
-			memorised_today   => 1,
-			number_cast_today => \'< memorise_count',
-			character_id      => $character->id,
-		);
-
-		$party->in_combat ? $search_criteria{'spell.combat'} = 1 : $search_criteria{'spell.non_combat'} = 1;
-
-		my @spells = $c->model('DBIC::Memorised_Spells')->search( \%search_criteria, { prefetch => 'spell', }, );
-		
-		@spells = grep { $_->spell->can_cast($character) } @spells;
-
-		$spells{ $character->id } = \@spells if @spells;
-
-	}
-	
-	$c->stats->profile("Got Spells");
-
-	my @opponents;
-	if ( $c->stash->{creature_group} ) {
-		@opponents = $c->stash->{creature_group}->members;
-	}
-	elsif ( my $opponent_party = $party->in_party_battle_with ) {
-		@opponents = $opponent_party->members;
-	}
-	elsif ( $c->stash->{in_combat_with_garrison} ) {
-		@opponents = $c->stash->{in_combat_with_garrison}->members;
-	}
-	
-	$c->stats->profile("Got opponents");
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -250,12 +278,10 @@ sub list : Private {
 				template => 'party/party_list.html',
 				params   => {
 					party          => $party,
-					in_combat      => $party->in_combat,
+					in_combat      => $in_combat,
 					characters     => \@characters,
-					combat_actions => $c->session->{combat_action},
-					opponents      => \@opponents,
-					spells         => \%spells,
 					broken_items   => \%broken_items_by_char_id,
+					combat_params  => \%combat_params,
 				},
 				return_output => 1,
 			}

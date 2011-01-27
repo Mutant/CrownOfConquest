@@ -192,6 +192,29 @@ sub is_spell_caster {
 	return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
 }
 
+sub has_castable_spells {
+	my $self = shift;
+	my $in_combat = shift;
+	
+	return $self->castable_spells($in_combat)->count >= 1;
+}
+
+sub castable_spells {
+	my $self = shift;
+	my $in_combat = shift;
+	
+	return $self->search_related('memorised_spells',
+		{
+			memorised_today   => 1,
+			number_cast_today => \'< memorise_count',
+			$in_combat ? 'spell.combat' : 'spell.non_combat' => 1,
+		},
+		{
+			prefetch => 'spell',
+		}
+	);	
+}
+
 # Returns true if character is in a party (any party), and not a garrison
 sub is_in_party {
 	my $self = shift;
@@ -1055,7 +1078,7 @@ sub get_item_actions {
 			'item_enchantments.enchantment_id' => {'!=', undef},
 		},
 		{
-			prefetch => 'item_enchantments',
+			prefetch => {'item_enchantments' => 'enchantment'},
 		}			
 	);
 		

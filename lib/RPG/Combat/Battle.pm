@@ -416,7 +416,7 @@ sub character_action {
 		# Make sure any healing/damage etc. is taken into account
 		$target->discard_changes;
 
-		$character->last_combat_action('Defend');
+		$character->last_combat_action('Attack');
 		$character->update;
 
 		$self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );

@@ -4,6 +4,7 @@
 dojo.require('dijit.layout.BorderContainer');
 dojo.require('dijit.form.FilteringSelect');
 dojo.require("dijit.form.Textarea");
+dojo.require("dijit.form.DropDownButton");
 
 function getPanels(url) {
 	//console.profile();
@@ -216,45 +217,6 @@ function dungeonScroll(scroll_to) {
 	}
 }
 
-
-function selectActionCombat(action, char_id, action_param, action_param2, action_label){
-	if (! action_label) {
-		action_label = action;
-	}
-	
-	if (! action_param) {
-		action_param = '';
-	}
-
-	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
-		
-	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
-		        "&action_param=" + (action_param2 || '')
-	
-	dojo.xhrGet( {
-        url: "[% base %]" + url,
-        handleAs: "json",        
-
-	    timeout: 15000 // Time in milliseconds	
-    });
-}
-
-function selectActionNonCombat(action, char_id, action_param, action_param2, action_label){
-	if (! action_label) {
-		action_label = action;
-	}
-	
-	if (! action_param) {
-		action_param = '';
-	}
-
-	dijit.byId('char_action_button_' + char_id).setLabel(action_label);
-
-	getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
-		        "&action_param=" + (action_param2 || ''));
-	        
-	return false;
-}
 
 dojo.require("dojo.dnd.Source");
 dojo.require("dijit.Menu");

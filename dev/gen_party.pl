@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use RPG::Schema;
-use YAML;
+use RPG::LoadConf;
 use Digest::SHA1 qw(sha1_hex);
 
 #  Find and read the correct local config file.
@@ -14,11 +14,7 @@ my $localConfigFile = "$home/rpg_" . $suffix . ".yml";
 
 #  Read the default config file.  Then, check for a local config file.  If it exists, also read it
 #   and combine the config values.
-my $config = YAML::LoadFile("$home/rpg.yml");
-if (-f $localConfigFile) {
-	my $local_config = YAML::LoadFile($localConfigFile);
-	$config = { %$config, %$local_config };
-}
+my $config = RPG::LoadConf->load();
 
 #  Use the local config values to connect to the game database.
 my $schema;

@@ -186,18 +186,31 @@ sub list : Private {
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
 	#  to be re-read.
 	# TODO: check if an update has occured, and only re-read if it has
-	my @characters = map { $_->discard_changes; $_ } $party->characters_in_party;
+	my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
+	my @characters = $c->model('DBIC::Character')->search(
+		{
+			party_id => $c->stash->{party}->id,
+			%null_fields,
+		},
+		{
+			prefetch => ['class', 'race'],
+		}
+	);	
+			
+	$c->stats->profile("Queried characters");
 	
 	my $in_combat = $party->in_combat ? 1 : 0;
 	
 	my %combat_params;
 	if ($in_combat) {
-		my %opponents_by_id = map { $_->id => $_ } $party->opponents->members;
-		my %chars_by_id = map { $_->id => $_ } @characters; 
+		my (%opponents_by_id, %chars_by_id);
 		
 		# Get params for tooltips
 		foreach my $character (@characters) {
 			next unless $character->last_combat_param1;
+			
+			%opponents_by_id = map { $_->id => $_ } $party->opponents->members unless %opponents_by_id;
+			%chars_by_id = map { $_->id => $_ } @characters unless %chars_by_id; 
 						
 			given ($character->last_combat_action) {
 				when ('Attack') {
@@ -238,7 +251,7 @@ sub list : Private {
 		}
 	}
 	
-	$c->stats->profile("Fetched characters");
+	$c->stats->profile("Got tooltips");
 
 	my %broken_items_by_char_id = $c->stash->{party}->broken_equipped_items_hash;
 

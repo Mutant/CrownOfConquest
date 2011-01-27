@@ -212,8 +212,7 @@ sub castable_spells {
 		{
 			prefetch => 'spell',
 		}
-	);
-	
+	);	
 }
 
 # Returns true if character is in a party (any party), and not a garrison
@@ -1079,7 +1078,7 @@ sub get_item_actions {
 			'item_enchantments.enchantment_id' => {'!=', undef},
 		},
 		{
-			prefetch => 'item_enchantments',
+			prefetch => {'item_enchantments' => 'enchantment'},
 		}			
 	);
 		

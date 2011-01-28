@@ -65,6 +65,11 @@ sub view : Local {
 	else {
 		@characters = $c->stash->{party_location}->town->characters;
 	}
+	
+	my $can_buy = 0;
+	if ($character->town_id) {
+	   $can_buy = 1 if $c->stash->{party}->gold >= $character->value; 	          
+	}
 
 	$c->forward(
 		'RPG::V::TT',
@@ -79,6 +84,7 @@ sub view : Local {
 					other_characters    => \@other_characters,			
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
+					can_buy => $can_buy,
 				}
 			}
 		]

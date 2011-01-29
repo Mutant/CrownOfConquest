@@ -67,8 +67,8 @@ sub view : Local {
 	}
 	
 	my $can_buy = 0;
-	if ($character->town_id) {
-	   $can_buy = 1 if $c->stash->{party}->gold >= $character->value; 	          
+	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
+	   $can_buy = 1; 	          
 	}
 
 	$c->forward(

@@ -31,15 +31,25 @@ sub get_offline_log_count {
     my $party = shift;
     my $date_range_start = shift;
     my $party_or_garrison_only = shift // 0;
+    my $land_or_dungeon_only = shift; # undef = both
     
     $date_range_start = $party->last_action unless $date_range_start;
     
     return 0 unless $date_range_start;
     
+    my %params;
+    if ($land_or_dungeon_only eq 'land') {
+        $params{dungeon_grid_id} = undef;
+    }
+    elsif ($land_or_dungeon_only eq 'dungeon') {
+        $params{dungeon_grid_id} = {'!=', undef};
+    }
+ 
     return $self->search(
         {
             $self->_party_criteria($party, $party_or_garrison_only),
             encounter_ended => { '>', $date_range_start },
+            %params,
         },
     )->count;
 }

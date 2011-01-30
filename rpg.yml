@@ -382,6 +382,12 @@ dungeon_entrance_level_step: 5
 # Chance an empty chest will get refilled
 empty_chest_fill_chance: 60
 
+# Max number of offline combats per dungeon level
+max_offline_combat_per_dungeon_level: 4
+
+# Offline combat chance in a dungeon
+dungeon_offline_combat_chance: 100
+
 # ----- Creature Params ----- #
 
 # Ratio of number of creature groups to parties

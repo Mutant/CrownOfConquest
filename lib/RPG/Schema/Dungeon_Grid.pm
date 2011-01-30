@@ -32,7 +32,7 @@ __PACKAGE__->has_many( 'mapped_dungeon_grid', 'RPG::Schema::Mapped_Dungeon_Grid'
 
 __PACKAGE__->might_have( 'creature_group', 'RPG::Schema::CreatureGroup', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
-__PACKAGE__->might_have( 'party', 'RPG::Schema::Party', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+__PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
@@ -139,9 +139,11 @@ sub get_wall_at {
     }	
 }
 
+# Given a maximum number of moves from this sector, calculate the list of sectors allowed to move from
+#  Returns a hashref of sector ids with a value of true if the sector can be moved to.
 sub sectors_allowed_to_move_to {
     my $self      = shift;
-    my $max_moves = shift;
+    my $max_moves = shift // 2;
     my $consider_doors = shift // 1;
     
     my %extra_params;

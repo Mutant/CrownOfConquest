@@ -30,6 +30,9 @@ sub run {
 
     # Spawn dungeon monsters
     $self->spawn_dungeon_monsters();    
+    
+    # Move dungeon moonsters
+    $self->move_dungeon_monsters();
 }
 
 sub spawn_monsters {
@@ -290,6 +293,55 @@ sub move_monsters {
     $c->logger->debug( Dumper \%cant_move_reason );
 }
 
+sub move_dungeon_monsters {
+    my $self = shift;
+    my $c    = $self->context;    
+
+    my $cg_rs = $c->schema->resultset('CreatureGroup')->search( 
+        {}, 
+        { prefetch => [ { 'dungeon_grid' => 'dungeon_room' }, 'in_combat_with' ], }, 
+    );
+
+    my $cg_count = $cg_rs->count;
+
+    $c->logger->info("Moving dungeon monsters ($cg_count available)");
+
+    my $moved = 0;
+
+    my $cg;
+    my @cgs_to_retry;
+    while ( $cg = $cg_rs->next ) {
+
+        # Don't move creatures in combat
+        next if $cg->in_combat_with;
+
+        next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+
+        # Find sector to move to (if we can)
+        my $allowed_sectors = $cg->dungeon_grid->sectors_allowed_to_move_to( 3, 0 );
+
+        foreach my $sector_id (shuffle keys %$allowed_sectors) {
+            next unless $allowed_sectors->{$sector_id};
+
+            my $sector = $c->schema->resultset('Dungeon_Grid')->find({ dungeon_grid_id => $sector_id });
+
+            if ( ! $sector->creature_group ) {
+                $cg->dungeon_grid_id( $sector_id );
+                $cg->update;
+
+                $moved++;
+                if ( $moved % 100 == 0 ) {
+                    $c->logger->info("Moved $moved so far...");
+                }                
+
+                last;
+            }
+        }
+    }
+
+    $c->logger->info("Moved $moved groups in dungeons");
+}
+
 sub _move_cg {
     my $self = shift;
     my $c       = $self->context;
@@ -334,7 +386,7 @@ sub _move_cg {
             $cg->update;
 
 			# Chance of CG increasing CTR is CG level * 2
-			my $chance = $cg->level * 2;
+			my $chance = $cg->level * 5;
 
 			if (Games::Dice::Advanced->roll('1d100') <= $chance) {
             	$sector_record->creature_threat( $sector_record->creature_threat + 1 );

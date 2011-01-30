@@ -115,16 +115,16 @@ sub build_viewable_sector_grids : Private {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'dungeon_room.floor'           => $current_location->dungeon_room->floor,
-            'party.party_id'               => { '!=', $c->stash->{party}->id },
-            'party.defunct'				   => undef,
+            'parties.party_id'             => { '!=', $c->stash->{party}->id },
+            'parties.defunct'              => undef,
         },
         {
-            prefetch => [ { 'party' => { 'characters' => 'class' } }, ],
+            prefetch => [ { 'parties' => { 'characters' => 'class' } }, ],
             join     => 'dungeon_room',
         },
     );
     foreach my $party_rec (@party_recs) {
-        $parties->[ $party_rec->x ][ $party_rec->y ] = $party_rec->party;
+        $parties->[ $party_rec->x ][ $party_rec->y ] = $party_rec->parties;
     }
  
     $c->stats->profile("Got Parties");	    

@@ -6,6 +6,7 @@ extends 'RPG::NewDay::Base';
 with 'RPG::NewDay::Role::GarrisonCombat';
 
 use RPG::Combat::CreatureWildernessBattle;
+use RPG::Combat::CreatureDungeonBattle;
 use RPG::Combat::GarrisonCreatureBattle;
 
 use List::Util qw(shuffle);
@@ -54,7 +55,8 @@ sub initiate_battles {
     
 	my $combat_count = 0;
 	my $garrison_cg_combat_count = 0;
-	my $garrison_party_combat_count = 0;    
+	my $garrison_party_combat_count = 0; 
+	my $dungeon_combat_count = 0;   
     
     # Get all CGs in a sector with one or more active parties
     my $cg_rs = $c->schema->resultset('CreatureGroup')->search(
@@ -66,15 +68,17 @@ sub initiate_battles {
         {
             prefetch => [ { 'creatures' => 'type' }, { 'location' => 'parties' }, ],
         },
-    ); 		
+    );
+    
+    $c->logger->info("CGs in same wilderness sector as party: " . $cg_rs->count);
      
     CG: while (my $cg = $cg_rs->next) {
         my @parties = $cg->location->parties;
         
         foreach my $party (shuffle @parties) {
-        	next if $party->is_online;
+        	next if $party->is_online || $party->in_combat;
         	
-            my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party );
+            my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, undef, 'land' );
             
             next if $offline_combat_count >= $c->config->{max_offline_combat_count};
 
@@ -99,9 +103,14 @@ sub initiate_battles {
         },
     );
     
+    $c->logger->info("CGs in same wilderness sector as garrison: " . $cg_rs->count);
+    
     while (my $cg = $cg_rs->next) {
+        my $garrison = $cg->location->garrison;
+        next if $garrison->in_combat;
+        
 		if (Games::Dice::Advanced->roll('1d100') <= $c->config->{garrison_combat_chance}) {
-        	$self->execute_garrison_battle( $cg->location->garrison, $cg, 1 );
+        	$self->execute_garrison_battle( $garrison, $cg, 1 );
             $garrison_cg_combat_count++;
 		}
     }    
@@ -119,8 +128,10 @@ sub initiate_battles {
     	},
     );
     
+    $c->logger->info("Parties in same wilderness sector as garrison: " . $party_rs->count);
+    
     while (my $party = $party_rs->next) {
-    	next if $party->is_online;
+    	next if $party->is_online || $party->in_combat;
     	my $garrison = $party->location->garrison;
     	
     	next if $garrison->level - $party->level > $c->config->{max_party_garrison_level_difference};
@@ -134,7 +145,47 @@ sub initiate_battles {
     	}	
     }
     
-    $c->logger->info($combat_count . " battles executed");
+    # Now combat in dungeons
+    $cg_rs = $c->schema->resultset('CreatureGroup')->search(
+        { 
+            'parties.party_id' => { '!=', undef },
+            'parties.defunct' => undef, 
+        },
+        {
+            prefetch => [ { 'creatures' => 'type' }, { 'dungeon_grid' => 'parties' }, ],
+        },
+    );
+    
+    $c->logger->info("CGs in same dungeon sector as party: " . $cg_rs->count);
+    
+    CG: while (my $cg = $cg_rs->next) {
+        my @parties = $cg->dungeon_grid->parties;
+
+        foreach my $party (shuffle @parties) {
+            warn $party->is_online;
+            warn $party->in_combat;
+        	next if $party->is_online || $party->in_combat;
+        	
+            my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, undef, 'dungeon' );
+            
+            warn $offline_combat_count;
+            
+            my $dungeon = $party->location->dungeon;
+            
+            next if $offline_combat_count >= $c->config->{max_offline_combat_per_dungeon_level} * $dungeon->level;
+
+            if (Games::Dice::Advanced->roll('1d100') <= $c->config->{dungeon_offline_combat_chance}) {
+            	$party->initiate_combat($cg);
+                $self->execute_offline_dungeon_battle( $party, $cg, 1 );
+                $dungeon_combat_count++;
+                
+                next CG;
+            }
+        }
+    }    
+    
+    $c->logger->info($combat_count . " wilderness battles executed");
+    $c->logger->info($dungeon_combat_count . " dungeon battles executed");
     $c->logger->info($garrison_cg_combat_count . " garrison cg battles executed");
     $c->logger->info($garrison_party_combat_count . " garrison party battles executed");
 }
@@ -163,6 +214,31 @@ sub execute_offline_battle {
 
         last if $result->{combat_complete};
     }
+}
+
+sub execute_offline_dungeon_battle {
+    my $self  = shift;
+    my $party = shift;
+    my $cg    = shift;
+    my $creatures_initiated = shift || 0;
+
+    my $c      = $self->context;
+    my $battle = RPG::Combat::CreatureDungeonBattle->new(
+        creature_group      => $cg,
+        party               => $party,
+        schema              => $c->schema,
+        config              => $c->config,
+        creatures_initiated => $creatures_initiated,
+        log                 => $c->logger,
+    );
+
+    while (1) {
+        last if $party->is_online;
+
+        my $result = $battle->execute_round;
+
+        last if $result->{combat_complete};
+    }    
 }
 
 __PACKAGE__->meta->make_immutable;

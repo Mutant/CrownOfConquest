@@ -30,7 +30,7 @@ sub is_empty {
 	
 	my @items = grep { $_->item_type->item_type ne 'Artifact' } $self->items;
 	
-	return @items ? 1 : 0;
+	return @items ? 0 : 1;
 }
 
 1;

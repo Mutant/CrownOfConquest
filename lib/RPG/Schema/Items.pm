@@ -187,9 +187,13 @@ sub weight {
 sub insert {
     my ( $self, @args ) = @_;
     
-    $self->next::method(@args);    
+    $self->next::method(@args);
+    
+    my $item_type = $self->item_type;
+    
+    confess "No item_type found for item id " . $self->id unless $item_type;
 
-    my @item_variable_params = $self->item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
+    my @item_variable_params = $item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
 
     foreach my $item_variable_param (@item_variable_params) {
         next unless $item_variable_param->item_variable_name->create_on_insert;

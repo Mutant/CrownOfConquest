@@ -56,7 +56,7 @@ sub create_enchanted {
 	my $item;
 	my $creation_tries = 0;
 	
-	while (! defined $item) {
+	while (! defined $item) {	    
 		$item = $self->create($params);
 		
 		return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;

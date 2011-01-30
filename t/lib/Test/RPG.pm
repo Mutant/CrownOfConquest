@@ -152,7 +152,7 @@ sub mock_dice {
 sub unmock_dice {
 	my $self = shift;
 	
-	confess 'wrong' unless $self->{dice} =~ /Test::MockObject::Extra/;
+	return unless $self->{dice} =~ /Test::MockObject::Extra/;
 	$self->{dice}->unfake_module if $self->{dice};
 	$SIG{__WARN__} = sub {
 		my ($msg) = @_;

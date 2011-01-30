@@ -379,6 +379,9 @@ dungeon_sectors_per_creature: 5
 # Number of party levels required to enter a dungeon per level (with level 1 dungeons = 0, level 2 = step * 1, level 3 = step * 2, etc) 
 dungeon_entrance_level_step: 5
 
+# Chance an empty chest will get refilled
+empty_chest_fill_chance: 60
+
 # ----- Creature Params ----- #
 
 # Ratio of number of creature groups to parties

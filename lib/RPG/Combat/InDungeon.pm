@@ -11,53 +11,32 @@ sub get_sector_to_flee_to {
     my $self = shift;
     my $fleeing_group = shift;
     
-    my $exclude_creatures = $fleeing_group->group_type eq 'creature' ? 1 : 0;
+    my $exclude_creatures = $fleeing_group->group_type eq 'creature' ? 1 : 0;    
     
-    my @sectors_to_flee_to;
-    my $range     = 3;
-    my $max_range = 10;
-
-    # TODO: refactor to use RowsInSectorRange
-    while ( !@sectors_to_flee_to ) {
-        my ( $start_point, $end_point ) = RPG::Map->surrounds( $self->location->x, $self->location->y, $range, $range, );
-
-        my %params;
-        if ($exclude_creatures) {
-            $params{'creature_group.creature_group_id'} = undef;
-        }
-
-        my @sectors_in_range = $self->schema->resultset('Dungeon_Grid')->search(
-            {
-                %params,
-                'dungeon_room.dungeon_id' => $self->location->dungeon_room->dungeon_id,
-                'x'                       => { '>=', $start_point->{x}, '<=', $end_point->{x}, },
-                'y'                       => { '>=', $start_point->{y}, '<=', $end_point->{y}, },
-                -nest                     => [
-                    'x' => { '!=', $self->location->x },
-                    'y' => { '!=', $self->location->y },
-                ],
-            },
-            { join => [ 'creature_group', 'dungeon_room' ] },
-        );
-
-        foreach my $sector_in_range (@sectors_in_range) {
-            if ( $self->location->has_path_to($sector_in_range->id) ) {
-                push @sectors_to_flee_to, $sector_in_range;
-            }
-        }
-
+    my $sector = $fleeing_group->dungeon_grid;
+    my $flee_sector;
+    
+    my $range = 1;
+    OUTER: while (my $allowed_sectors = $sector->sectors_allowed_to_move_to( $range, $fleeing_group->group_type eq 'party' ? 1 : 0 ) ) {
+        foreach my $sector_id (shuffle keys %$allowed_sectors) {
+            next unless $allowed_sectors->{$sector_id};
+            
+            $flee_sector = $self->schema->resultset('Dungeon_Grid')->find( { dungeon_grid_id => $sector_id, } );
+            
+            next if $exclude_creatures && $flee_sector->creature_group;
+            
+            last OUTER;
+        }        
+        
         $range++;
-        last if $range == $max_range;
-    }
+        last if $range > 3;
+    }    
 
-    @sectors_to_flee_to = shuffle @sectors_to_flee_to;
-    my $land = shift @sectors_to_flee_to;
+    confess "Couldn't find land to flee to" unless $flee_sector;
 
-    confess "Couldn't find land to flee to" unless $land;
+    $self->log->debug( "Fleeing to " . $flee_sector->x . ", " . $flee_sector->y );
 
-    $self->log->debug( "Fleeing to " . $land->x . ", " . $land->y );
-
-    return $land;
+    return $flee_sector;
 }
 
 sub _build_location {

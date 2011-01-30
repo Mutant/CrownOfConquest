@@ -150,7 +150,7 @@ sub check_for_dungeon_deletion {
             # Make sure no parties are in the dungeon
             my $party_rs =
                 $c->schema->resultset('Party')
-                ->search( { 'dungeon.dungeon_id' => $dungeon->id, }, { join => { 'dungeon_location' => { 'dungeon_room' => 'dungeon' } }, }, );
+                ->search( { 'dungeon.dungeon_id' => $dungeon->id, }, { join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' } }, }, );
 
             if ( $party_rs->count > 0 ) {
                 $c->logger->info(

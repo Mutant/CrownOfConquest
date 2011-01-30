@@ -183,7 +183,7 @@ __PACKAGE__->has_many( 'party_effects', 'RPG::Schema::Party_Effect', 'party_id',
 
 __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
-__PACKAGE__->might_have( 'dungeon_location', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+__PACKAGE__->might_have( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 
 	{ 'foreign.party_id' => 'self.party_id' },

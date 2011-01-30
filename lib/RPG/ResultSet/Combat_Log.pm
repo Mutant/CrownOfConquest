@@ -38,13 +38,15 @@ sub get_offline_log_count {
     return 0 unless $date_range_start;
     
     my %params;
-    if ($land_or_dungeon_only eq 'land') {
-        $params{dungeon_grid_id} = undef;
+    if (defined $land_or_dungeon_only) {
+        if ($land_or_dungeon_only eq 'land') {
+            $params{dungeon_grid_id} = undef;
+        }
+        elsif ($land_or_dungeon_only eq 'dungeon') {
+            $params{dungeon_grid_id} = {'!=', undef};
+        }
     }
-    elsif ($land_or_dungeon_only eq 'dungeon') {
-        $params{dungeon_grid_id} = {'!=', undef};
-    }
- 
+     
     return $self->search(
         {
             $self->_party_criteria($party, $party_or_garrison_only),

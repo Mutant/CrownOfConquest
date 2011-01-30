@@ -82,7 +82,7 @@ sub flee : Local {
 
     my $result = $battle->execute_round;
     
-    my $castle = $c->stash->{party}->dungeon_location->dungeon_room->dungeon;
+    my $castle = $c->stash->{party}->dungeon_grid->dungeon_room->dungeon;
     $c->log->debug('castle id ' . $castle->id);
     if ($castle->type eq 'castle' && $result->{party_fled}) {
     	$c->forward('/castle/successful_flee', [$castle]);

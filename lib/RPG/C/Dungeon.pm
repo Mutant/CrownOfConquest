@@ -101,7 +101,18 @@ sub build_viewable_sector_grids : Private {
     );
     foreach my $cg_rec (@cg_recs) {
         my $cg = $cg_rec->creature_group;
-        $cg->{group_size} = scalar $cg->creatures if $cg;
+        
+        if ($cg) {
+            my @creatures = sort { $a->id <=> $b->id } grep { $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
+            
+            if (@creatures) {
+                $cg->{portrait} = $creatures[0]->type->image;
+            }
+            else {
+                $cg->{portrait} = 'defaultportsmall.png';
+            }
+        }
+        
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
     }
  

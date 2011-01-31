@@ -32,7 +32,7 @@
 	    		<img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png" 
     				title="[% creature.race.race_name %] [% creature.class.class_name %]">
     		[% ELSE %]
-	    		<img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]" [% IF creature.type.image == 'defaultportsmall.png'%]title="Merry Xmas!"[% END %]></td>
+	    		<img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]"></td>
 	    	[% END %]
 		<td nowrap>[% creature.name %]</td>
 		<td nowrap>[% creature.health %]</td>

@@ -3,7 +3,7 @@
 		[% border = "" %]
 		[% sides_with_walls = sector.sides_with_walls %]
 		[% FOREACH side IN positions  %]
-			[% border_color = "#777157" %]
+			[% border_color = "#000" %]
 			[% FOREACH side_with_wall IN sides_with_walls %]
 				[% IF side_with_wall == side %]
 					[% border_color = "#9F9F9F" %]
@@ -23,10 +23,23 @@
 				style="text-decoration: none;">
 		[% END %]
 		
-		[% background_image = 'floor.PNG' %]
-		[% IF viewable_sectors.$x.$y || current_location.id == sector.dungeon_grid_id %]
-		 	[% background_image = 'brightfloor.PNG' %]
-		[% END %]		
+		[% IF sector.stairs_up %]
+			[% background_image = "dungeonstairsup1.png" %]
+		[% ELSIF sector.stairs_down %]
+			[% background_image = "dungeonstairsdown1.png" %]
+		[% ELSE %]
+			[% number = 1 %]
+			[% IF x % 4 == 0 && y % 3 == 0 %]
+				[% number = 2 %]
+			[% END %]
+			[% IF x % 6 == 0 && y % 5 == 0 %]
+				[% number = 3 %]
+			[% END %]
+			[% IF x % 8 == 0 && y % 6 == 0 %]
+				[% number = 3 %]
+			[% END %]
+			[% background_image = 'dungeonfloor' _ number _ '.png' %] 
+		[% END %]					
 	
 		<div style="
 			[% border %]
@@ -39,20 +52,18 @@
 			"
 			>
 									
-			[% IF sector.stairs_up %]
-				<img src="[% c.config.static_path %]/images/dungeon/stairs.PNG" border=0 width=[% size %] height=[% size %]>
-			[% ELSIF sector.stairs_down %]
-			    D
-			[% ELSIF sector.treasure_chest %]
+			[% IF ! viewable_sectors.$x.$y && current_location.id != sector.dungeon_grid_id %]
+				<span style="z-index: 60; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/dungeonshroud.png" border=0 width=[% size %] height=[% size %]></span>
+			[% END %]
+									
+			[% IF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
 			[% ELSIF sector.teleporter && ! sector.teleporter.invisible %]
 				<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>				
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
-				[% monster_image = cgs.$x.$y.group_size > 5 ? 'monsters-lot.PNG' : 'monsters-few.PNG' %]
-			
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% monster_image %]" border=0 width=[% size %] height=[% size %]></span>
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: 3px; top: 2px"><img src="[% c.config.static_path %]/images/creatures/[% cgs.$x.$y.portrait %]" border=0 width=[% size / 1.2 %] height=[% size / 1.2 %]></div></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 

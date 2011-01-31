@@ -125,6 +125,7 @@ sub test_defence_factor : Tests(1) {
     );
 
     # WHEN
+    $char->discard_changes;
     my $df = $char->defence_factor;
 
     # THEN
@@ -234,11 +235,11 @@ sub test_execute_defence_decrement_durability : Tests(2) {
     is( $item1->variable('Durability'), 4, "Durability decremented" );
 }
 
-sub test_execute_defence_armour_broken : Tests(2) {
+sub test_execute_defence_armour_broken : Tests(3) {
     my $self = shift;
 
     # GIVEN
-    my $char = $self->{schema}->resultset('Character')->create( {} );
+    my $char = $self->{schema}->resultset('Character')->create( {agility => 10} );
 
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
@@ -250,6 +251,12 @@ sub test_execute_defence_armour_broken : Tests(2) {
                 item_variable_value => 1,
             },
         ],
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 2,
+            }
+        ],        
     );
 
     # Force decrement
@@ -262,6 +269,9 @@ sub test_execute_defence_armour_broken : Tests(2) {
     is_deeply( $result, { armour_broken => 1 }, "Message returned to indicate broken armour" );
     $item1->discard_changes;
     is( $item1->variable('Durability'), 0, "Durability now 0" );
+    
+    $char->discard_changes;
+    is($char->defence_factor, 10, "Defence factor of armour no longer included");
 }
 
 sub test_attack_factor_melee_weapon : Tests(1) {
@@ -288,6 +298,7 @@ sub test_attack_factor_melee_weapon : Tests(1) {
     );
 
     # WHEN
+    $char->discard_changes;
     my $af = $char->attack_factor;
 
     # THEN
@@ -319,8 +330,11 @@ sub test_attack_factor_ranged_weapon_with_upgrade : Tests(1) {
             }
         ],
     );
+    $item->equip_place_id(2);
+    $item->update;
 
     # WHEN
+    $char->discard_changes;
     my $af = $char->attack_factor;
 
     # THEN
@@ -354,6 +368,7 @@ sub test_attack_factor_melee_weapon_from_back_rank : Tests(1) {
     );
 
     # WHEN
+    $char->discard_changes;
     my $af = $mock_char->attack_factor;
 
     # THEN

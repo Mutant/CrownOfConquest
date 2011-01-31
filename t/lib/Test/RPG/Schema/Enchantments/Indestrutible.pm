@@ -99,6 +99,7 @@ sub test_indestructible_armour : Tests(2) {
 	$item->add_to_characters_inventory($character);	
 	
 	# WHEN
+	$character->discard_changes;
 	my $df = $character->defence_factor;
 	my $exe_result = $character->execute_defence;
 	

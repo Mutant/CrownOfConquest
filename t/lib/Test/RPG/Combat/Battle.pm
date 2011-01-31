@@ -137,12 +137,11 @@ sub test_check_character_attack_with_ammo : Tests(2) {
     my $self = shift;
     
     # GIVEN
-    my $attacker = Test::MockObject->new();
-    $attacker->set_always('id',2);
+    my $attacker = Test::RPG::Builder::Character->build_character($self->{schema});
 
     my $ammo1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
-        char_id             => 2,
+        char_id             => $attacker->id,
         super_category_name => 'Ammo',
         category_name       => 'Ammo',
         variables => [
@@ -155,9 +154,9 @@ sub test_check_character_attack_with_ammo : Tests(2) {
     );
         
     my $character_weapons = {};        
-    $character_weapons->{2}{id} = 1;
-    $character_weapons->{2}{durability} = 1;
-    $character_weapons->{2}{ammunition} = [
+    $character_weapons->{$attacker->id}{id} = 1;
+    $character_weapons->{$attacker->id}{durability} = 1;
+    $character_weapons->{$attacker->id}{ammunition} = [
         {
             id => $ammo1->id,
             quantity => 5,
@@ -191,12 +190,11 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
     my $self = shift;
     
     # GIVEN
-    my $attacker = Test::MockObject->new();
-    $attacker->set_always('id',2);
+    my $attacker = Test::RPG::Builder::Character->build_character($self->{schema});
 
     my $ammo1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
-        char_id             => 2,
+        char_id             => $attacker->id,
         super_category_name => 'Ammo',
         category_name       => 'Ammo',
         variables => [
@@ -209,9 +207,9 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
     );
             
     my $character_weapons = {};              
-    $character_weapons->{2}{id} = 1;
-    $character_weapons->{2}{durability} = 1;
-    $character_weapons->{2}{ammunition} = [
+    $character_weapons->{$attacker->id}{id} = 1;
+    $character_weapons->{$attacker->id}{durability} = 1;
+    $character_weapons->{$attacker->id}{ammunition} = [
         {
             id => $ammo1->id,
             quantity => 0,
@@ -241,12 +239,11 @@ sub test_check_character_attack_with_ammo_last_shot : Tests(2) {
     my $self = shift;
     
     # GIVEN
-    my $attacker = Test::MockObject->new();
-    $attacker->set_always('id',2);
+    my $attacker = Test::RPG::Builder::Character->build_character($self->{schema});
 
     my $ammo1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
-        char_id             => 2,
+        char_id             => $attacker->id,
         super_category_name => 'Ammo',
         category_name       => 'Ammo',
         variables => [
@@ -259,9 +256,9 @@ sub test_check_character_attack_with_ammo_last_shot : Tests(2) {
     );
             
     my $character_weapons = {};              
-    $character_weapons->{2}{id} = 1;
-    $character_weapons->{2}{durability} = 1;
-    $character_weapons->{2}{ammunition} = [
+    $character_weapons->{$attacker->id}{id} = 1;
+    $character_weapons->{$attacker->id}{durability} = 1;
+    $character_weapons->{$attacker->id}{ammunition} = [
         {
             id => $ammo1->id,
             quantity => 1,

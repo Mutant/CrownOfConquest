@@ -218,7 +218,9 @@ sub new {
     my $self = $class->next::method($attr);
     
     $self->_encumbrace_trigger($self->_character_id) if $self->_character_id;
-
+    
+    $self->equip_place_id($self->_equip_place_id, {force_triggers => 1}) if $self->_equip_place_id;
+    
     return $self;	
 }
 
@@ -228,6 +230,7 @@ sub delete {
 	$self->_check_for_quest_item_removal();
 	
 	$self->_encumbrace_trigger(undef, $self->_character_id);
+	$self->equip_place_id(undef);
 	
     my $ret = $self->next::method(@args);
 
@@ -294,9 +297,11 @@ sub equip_place_id {
 
 	if (@_) {
 		my $new_equip_place_id = shift;
+		my $trigger_params = shift || {}; 
 		
 		no warnings 'uninitialized';
-		if ($new_equip_place_id != $self->_equip_place_id) {
+
+		if ($trigger_params->{force_triggers} || $new_equip_place_id != $self->_equip_place_id) {
 			if ($self->_character_id) {
 				my $character = $self->result_source->schema->resultset('Character')->find(
 					{
@@ -306,6 +311,8 @@ sub equip_place_id {
 				
 				$self->_stat_bonus_trigger($new_equip_place_id, $character);
 				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
+				$self->_factors_trigger($new_equip_place_id, $character)
+				    unless $trigger_params->{no_factors_trigger};
 				
 				$character->update;
 			}
@@ -364,6 +371,22 @@ sub _movement_factor_bonus_trigger {
 		$bonus = -$bonus unless defined $new_equip_place_id;
 		
 		$character->adjust_movement_factor_bonus($bonus);
+	}
+}
+
+sub _factors_trigger {
+	my $self = shift;
+	my $new_equip_place_id = shift;
+	my $character = shift;
+
+	my $key = defined $new_equip_place_id ? 'add' : 'remove';
+	
+	if (my $af_attr = $self->attribute('Attack Factor')) {
+	   $character->calculate_attack_factor({$key => [$self]});   
+	}
+	
+	if (my $df_attr = $self->attribute('Defence Factor')) {
+	   $character->calculate_defence_factor({$key => [$self]});   
 	}
 }
 
@@ -476,13 +499,15 @@ sub equip_item {
 
         # If this item and the item in opposite hand are both weapons, we have to unequip old weapon
         #  unless $replace_existing_equipment is false, in which case we return
-        # This is temporary while two weapons can't be equipped
+        # Note, we bypass the 'factors trigger' when unequipping these items. This is an optimisation,
+        #  since we don't want to trigger calculation of attack/defence factr until we equip the actual
+        #  item.
         if (   $item_in_opposite_hand
             && $item_in_opposite_hand->item_type->category->super_category->super_category_name eq 'Weapon'
             && $self->item_type->category->super_category->super_category_name eq 'Weapon' )
         {
             if ($replace_existing_equipment) {
-                $item_in_opposite_hand->equip_place_id(undef);
+                $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
                 $item_in_opposite_hand->update;
                 push @slots_changed, $other_hand->equip_place_name;
             }
@@ -499,7 +524,7 @@ sub equip_item {
 
                 if ( $item_in_opposite_hand && $item_in_opposite_hand->id != $self->id ) {
                     if ($replace_existing_equipment) {
-                        $item_in_opposite_hand->equip_place_id(undef);
+                        $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
                         $item_in_opposite_hand->update;
                         push @slots_changed, $other_hand->equip_place_name;
                     }

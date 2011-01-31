@@ -35,6 +35,23 @@ sub build_item {
 	}
 
     my $eq_place_id = $params{no_equip_place} ? undef : $schema->resultset('Equip_Places')->find(1)->id;
+    
+    foreach my $attribute ( @{ $params{attributes} } ) {
+        my $ian = $schema->resultset('Item_Attribute_Name')->find_or_create(
+            {
+                item_attribute_name => $attribute->{item_attribute_name},
+                item_category_id    => $item_cat->id,
+            }
+        );
+
+        $schema->resultset('Item_Attribute')->create(
+            {
+                item_attribute_name_id => $ian->id,
+                item_type_id           => $item_type_id,
+                item_attribute_value   => $attribute->{item_attribute_value},
+            }
+        );
+    }    
 
     my $item = $schema->resultset('Items')->create(
         {
@@ -65,24 +82,7 @@ sub build_item {
             }
         );
     }
-
-    foreach my $attribute ( @{ $params{attributes} } ) {
-        my $ian = $schema->resultset('Item_Attribute_Name')->find_or_create(
-            {
-                item_attribute_name => $attribute->{item_attribute_name},
-                item_category_id    => $item_cat->id,
-            }
-        );
-
-        $schema->resultset('Item_Attribute')->create(
-            {
-                item_attribute_name_id => $ian->id,
-                item_type_id           => $item_type_id,
-                item_attribute_value   => $attribute->{item_attribute_value},
-            }
-        );
-    }
-    
+   
     foreach my $enchantment ( @{ $params{enchantments} } ) {
     	my $enchantment_rec = $schema->resultset('Enchantments')->find(
     		{

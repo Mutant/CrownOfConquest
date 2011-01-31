@@ -24,7 +24,7 @@ __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
-        mayor_of status status_context encumbrance
+        mayor_of status status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
         movement_factor_bonus/
 );
@@ -43,6 +43,8 @@ __PACKAGE__->add_columns(
 	agility  => { accessor => '_agility'}, 
 	divinity  => { accessor => '_divinity'}, 
 	constitution => { accessor => '_constitution'}, 
+	attack_factor => { accessor => '_attack_factor'},
+	defence_factor => { accessor => '_defence_factor'},
 );
 
 __PACKAGE__->set_primary_key('character_id');
@@ -504,9 +506,34 @@ sub set_default_spells {
 }
 
 sub attack_factor {
+    my $self = shift;   
+    
+    my $attack_factor = $self->_attack_factor;
+    
+    # Apply effects
+    my $effect_df = 0;
+    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
+    $attack_factor += $effect_df;
+    
+    $attack_factor -= $self->back_rank_penalty if ! $self->in_front_rank;
+    
+    return $attack_factor;
+}
+
+sub calculate_attack_factor {
     my $self = shift;
+    my $extra = shift || {};
 
     my @items = $self->get_equipped_item('Weapon');
+
+    if ($extra->{add}) {
+        push @items, @{$extra->{add}};
+    }
+    if ($extra->{remove}) {
+        foreach my $remove (@{$extra->{remove}}) {
+            @items = grep { $_->id != $remove->id } @items;
+        }
+    }
 
     # Assume only one weapon equipped.
     # TODO needs to change to support multiple weapons
@@ -520,30 +547,47 @@ sub attack_factor {
     my $attack_factor = do {no strict 'refs'; $self->$af_attribute};
 
     if ($item) {
-
         # Add in item AF
         $attack_factor += $item->attribute('Attack Factor')->item_attribute_value || 0;
 
-        # Subtract back rank penalty if necessary
-        $attack_factor -= $item->attribute('Back Rank Penalty') && $item->attribute('Back Rank Penalty')->item_attribute_value || 0
-            unless $self->in_front_rank;
-
         # Add in upgrade bonus
         $attack_factor += $item->variable("Attack Factor Upgrade") || 0;
+        
+        # Record rank penalty
+        if ($item->attribute('Back Rank Penalty')) {
+            $self->back_rank_penalty($item->attribute('Back Rank Penalty')->item_attribute_value || 0);
+        }        
     }
 
-    # Apply effects
-    my $effect_df = 0;
-    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
-    $attack_factor += $effect_df;
+    $self->_attack_factor($attack_factor);
 
     return $attack_factor;
 }
 
 sub defence_factor {
     my $self = shift;
+    
+    # Apply effects
+    my $effect_df = 0;
+    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;    
+    
+    return $self->_defence_factor + $effect_df;
+}
+
+sub calculate_defence_factor {
+    my $self = shift;
+    my $extra = shift;
 
     my @items = $self->get_equipped_item('Armour');
+    
+    if ($extra->{add}) {
+        push @items, @{$extra->{add}};
+    }
+    if ($extra->{remove}) {
+        foreach my $remove (@{$extra->{remove}}) {
+            @items = grep { $_->id != $remove->id } @items;
+        }
+    }
     
     # Get rid of broken items (items without a durability (i.e. not defined) are ok)
     @items = grep { my $dur = $_->variable('Durability'); !defined $dur || $dur > 0 } @items;
@@ -551,11 +595,11 @@ sub defence_factor {
     my $armour_df = 0;
     map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ( $_->variable('Defence Factor Upgrade') || 0 ) } @items;
 
-    # Apply effects
-    my $effect_df = 0;
-    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
+    my $defence_factor = $self->agility + $armour_df;
 
-    return $self->agility + $armour_df + $effect_df;
+    $self->_defence_factor($defence_factor);
+    
+    return $defence_factor;
 }
 
 =head1 damage
@@ -792,7 +836,10 @@ sub execute_defence {
 
             my $new_durability = $self->_check_damage_to_item($durability_rec);
 
-            if ( $new_durability == 0 ) {
+            if ( $new_durability <= 0 ) {
+                # Recalculate defence factor
+                $self->calculate_defence_factor;
+                $self->update;
 
                 # Armour is now broken
                 $armour_now_broken = 1;

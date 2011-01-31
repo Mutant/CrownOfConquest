@@ -573,4 +573,204 @@ sub test_unequipping_item_updates_stat_bonus_multiple : Tests(2) {
     is($character->agility_bonus, 0, "Stat bonus 2 decreased correctly");			
 }
 
+sub test_equipping_item_updates_defence_factor : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Armour',
+        category_name       => 'Armour',
+        no_equip_place      => 1,
+        variables           => [
+            {
+                item_variable_name  => 'Defence Factor Upgrade',
+                item_variable_value => 3,
+            },
+        ],
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->defence_factor, 15, "Defence factor increased correctly");		
+}
+
+sub test_unequipping_item_updates_defence_factor : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Armour',
+        category_name       => 'Armour',
+        no_equip_place      => 1,
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+    $item1->equip_place_id(1);
+    $item1->update;    
+    
+    # WHEN
+    $character->discard_changes;
+    my $init_df = $character->defence_factor;
+
+    $item1->equip_place_id(undef);
+    $item1->update;
+
+    $character->discard_changes;
+    
+    # THEN
+    is($init_df, 12, "Correct initial defence factor");
+
+    is($character->defence_factor, 10, "Defence factor reduced correctly");		
+}
+
+
+sub test_unequipping_item_updates_defence_factor_existing_item : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Armour',
+        category_name       => 'Armour',
+        no_equip_place      => 1,
+        variables           => [
+            {
+                item_variable_name  => 'Defence Factor Upgrade',
+                item_variable_value => 3,
+            },
+        ],
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+    $item1->equip_place_id(1);
+    $item1->update;    
+    
+    
+    my $item2 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Armour',
+        category_name       => 'Head Gear',
+        no_equip_place      => 1,
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 5,
+            }
+        ],
+    );    
+    $item2->equip_place_id(2);
+    $item2->update;
+    
+    # WHEN
+    $character->discard_changes;
+    my $init_df = $character->defence_factor;
+
+    $item1->equip_place_id(undef);
+    $item1->update;
+
+    $character->discard_changes;
+    
+    # THEN
+    is($init_df, 20, "Correct initial defence factor");
+
+    is($character->defence_factor, 15, "Defence factor reduced correctly");		
+}
+
+sub test_equipping_item_updates_attack_factor : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10);
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Melee Weapon',
+        no_equip_place      => 1,
+        variables           => [
+            {
+                item_variable_name  => 'Attack Factor Upgrade',
+                item_variable_value => 3,
+            },
+        ],
+        attributes => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 2,
+            }
+        ],
+    );
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->attack_factor, 15, "Attack factor increased correctly");		
+}
+
+sub test_unequipping_item_updates_attack_factor : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $character->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Ranged Weapon',
+        no_equip_place      => 1,
+        attributes => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 3,
+            }
+        ],
+    );
+    $item1->equip_place_id(1);
+    $item1->update;    
+    
+    # WHEN
+    $character->discard_changes;
+    my $init_af = $character->attack_factor;
+
+    $item1->equip_place_id(undef);
+    $item1->update;
+
+    $character->discard_changes;
+    
+    # THEN
+    is($init_af, 13, "Correct initial attack factor");
+
+    is($character->attack_factor, 10, "Attack factor reduced correctly");		
+}
+
 1;

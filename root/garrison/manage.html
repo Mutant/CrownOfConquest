@@ -157,6 +157,11 @@ function changeName(arguments) {
     	href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
     </div>
+    
+    <div dojoType="dojox.layout.ContentPane" title="Buildings" 
+    	href="[% base %]garrison/buildings_tab?garrison_id=[% garrison.id %]"
+    	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
+    </div>
 </div>
 
 [% INCLUDE bottom.html %]

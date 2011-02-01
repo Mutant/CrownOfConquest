@@ -100,6 +100,13 @@ sub sector_menu : Private {
 		$can_build_garrison = $c->stash->{party_location}->garrison_allowed;
 	}
 
+	#  Determine if building can be built or is already built.
+	my $can_build_building = 0;
+	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
+		$can_build_building = $c->stash->{party_location}->building_allowed($c->stash->{party}->id);
+	}
+	my $has_building = $c->stash->{party_location}->has_building;
+
 	my @items = $c->stash->{party_location}->items;
 
 	$c->forward(
@@ -123,6 +130,8 @@ sub sector_menu : Private {
 					had_phantom_dungeon    => $c->stash->{had_phantom_dungeon},
 					garrison               => $garrison,
 					can_build_garrison     => $can_build_garrison,
+					can_build_building     => $can_build_building,
+					has_building           => $has_building,
 					items                  => \@items,
 				},
 				return_output => 1,

@@ -4,19 +4,32 @@
 	[% IF show_resources %]
 		[% FOREACH resource IN building_type.resources_needed %]
 			[% res_available = available_items.resources.${resource.res_name}; %]
+			[% title_span_style = "" %]
+			[% IF building_type.enough_turns == 0 %]
+				[% title_span_style = "color:red" %]
+			[% END %]
+			[%IF res_available < resource.amount %]
+				[% span_style = "color:red"
+				   res_word = "Needs" %]
+			[% ELSE %]
+				[% span_style = ""
+				   res_word = "Uses" %]
+			[% END %]
 			<div id="building_types" style="float:left; padding:10px;">
 				[% IF drawn_title == 0 %]
-					<div style="position:absolute; margin-top:-20px"><span>[% resources_title %]</span></div>
+					<div style="position:absolute; margin-top:-20px">
+						<span style="[% title_span_style %]">[% resources_title %] [% building_type.turns_needed%] turns to complete</span>
+					</div>
 					[% drawn_title = 1 %]
 				[% END %]
 				<div style="text-align: center; margin:10px;">
-					<span>Needs [% resource.amount %] [% resource.res_name %]</span>
+					<span style="[% span_style %]">[% res_word %] [% resource.amount %] [% resource.res_name %]</span>
 				</div>
 				<div style="text-align: center; margin:10px;">
 					<img height=40 width=40 src="[% c.config.static_path %]/images/items/[% resource.image %]">
 				</div>
 				<div style="text-align: center; margin:10px;">
-					<span>[% res_available %] [% resource.res_name %] available</span>
+					<span style="[% span_style %]">[% res_available %] [% resource.res_name %] available</span>
 				</div>
 			</div>
 		[% END %]

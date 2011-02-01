@@ -84,6 +84,8 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => '
 
 __PACKAGE__->might_have( 'garrison', 'RPG::Schema::Garrison', { 'foreign.land_id' => 'self.land_id' } );
 
+__PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+
 __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
@@ -317,6 +319,29 @@ sub garrison_allowed {
 	
 	# Ok, it's allowed
 	return 1;
+}
+
+# Returns true if a building could be built here.
+sub building_allowed {
+	my $self = shift;
+	my $party = shift;
+	
+	# Not allowed if adjacent to a town
+	return 0 if $self->get_adjacent_towns;
+
+	# Not allowed if another garrison is here that is not owned by us
+	return 0 if $self->garrison && $self->garrison->party_id != $party;
+
+	return 1;
+}
+
+# returns true if there is already a building here.
+sub has_building {
+	my $self = shift;
+	
+	return 1 if $self->building;
+
+	return 0;
 }
 
 1;

@@ -41,6 +41,15 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 	[% ELSIF garrison.party_id == party.id %]
 		| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
 	[% END %]
+	[% IF can_build_building %]
+		| <a href="[% base %]/building/create">Construct a Building</a>
+	[% END %]
+	[% IF has_building %]
+		[% IF garrison.party_id != party.id %]
+			| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Seize Building</a>
+		[% END %]
+		| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Raze Building</a>
+	[% END %]
 <br>
 
 [% IF creature_group %]

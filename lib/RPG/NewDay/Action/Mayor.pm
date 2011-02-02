@@ -28,7 +28,7 @@ sub run {
 
 	foreach my $town (@towns) {
 		$self->context->logger->debug("Processing mayor for town " . $town->id); 
-		
+
 		# Reset tax modified flag
 		$town->tax_modified_today(0);
 		$town->update;
@@ -100,6 +100,7 @@ sub run {
 		}
 
     	$self->generate_guards($town->castle);
+    	$town->discard_changes;
 		
 		$self->calculate_approval($town);
 
@@ -108,8 +109,8 @@ sub run {
     	if (! $revolt_started && $town->peasant_state) {
     		$self->process_revolt($town);
     	}
-    	
-    	$self->generate_advice($town);
+
+    	$self->generate_advice($town);    	
 	}
 	
 	# Clear all tax paid / raids today
@@ -476,8 +477,10 @@ sub generate_advice {
 	my $town = shift;
 		
 	my $advisor_fee = $town->advisor_fee;
+	$self->context->logger->debug("gold: " . $town->gold);
+
 	if ($town->gold < $advisor_fee) {
-		$advisor_fee = $town->gold;
+	    $advisor_fee = $town->gold;
 	}
 	
 	$town->decrease_gold($advisor_fee);
@@ -505,6 +508,9 @@ sub generate_advice {
 	for (shuffle @checks) {
 		# Do they need more guards?
 		when ('guards') {
+		    my $castle = $town->castle;
+		    next unless $castle;
+		    
 		 	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 				{
 					'dungeon_room.dungeon_id' => $town->castle->id,
@@ -552,8 +558,10 @@ sub generate_advice {
 					as => 'level_aggregate',	
 				}					
 			);
+			
+			my $level_aggr = $garrison_char_rec->get_column('level_aggregate') || 0;
 						
-			if ($town->expected_garrison_chars_level > $garrison_char_rec->get_column('level_aggregate')) {
+			if ($town->expected_garrison_chars_level > $level_aggr) {
 				$advice = "You could use some more protection. Adding more characters to the town's garrison will give you an edge";
 				last;	
 			}

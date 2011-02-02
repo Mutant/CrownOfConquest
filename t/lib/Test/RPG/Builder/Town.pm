@@ -21,6 +21,10 @@ sub build_town {
             gold => $params{gold} || 0,
             town_name => "Test Town",
             mayor_rating => $params{mayor_rating} || 0,
+            advisor_fee => $params{advisor_fee} || 0,
+            sales_tax => $params{sales_tax} || 0,
+            peasant_state => '',
+            peasant_tax => $params{peasant_tax} || 0,
         }   
     );
     

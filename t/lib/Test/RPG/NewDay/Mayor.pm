@@ -144,4 +144,28 @@ sub test_refresh_mayor : Tests(5) {
 	is($item->variable('Durability'), 100, "Weapon repaired");
 }
 
+sub test_generate_advice : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, advisor_fee => 50, gold => 20 );
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->generate_advice($town);
+	
+	# THEN
+	my $advice = $self->{schema}->resultset('Town_History')->find(
+	   {
+	       town_id => $town->id,
+	       type => 'advice',
+	   }
+	);
+	is(defined $advice, 1, "Advice generated");
+	
+	$town->discard_changes;
+	is($town->gold, 0, "Town gold reduced");
+}
+
 1;

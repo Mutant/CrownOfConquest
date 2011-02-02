@@ -24,21 +24,11 @@
 		[% END %]
 		
 		[% IF sector.stairs_up %]
-			[% background_image = "dungeonstairsup1.png" %]
+			[% background_image = "d" _ tileset _ "us.png" %]
 		[% ELSIF sector.stairs_down %]
-			[% background_image = "dungeonstairsdown1.png" %]
+			[% background_image = "d" _ tileset _ "ds.png" %]
 		[% ELSE %]
-			[% number = 1 %]
-			[% IF x % 4 == 0 && y % 3 == 0 %]
-				[% number = 2 %]
-			[% END %]
-			[% IF x % 6 == 0 && y % 5 == 0 %]
-				[% number = 3 %]
-			[% END %]
-			[% IF x % 8 == 0 && y % 6 == 0 %]
-				[% number = 3 %]
-			[% END %]
-			[% background_image = 'dungeonfloor' _ number _ '.png' %] 
+			[% background_image = 'd' _ tileset _ sector.tile _ '.png' %] 
 		[% END %]					
 	
 		<div style="
@@ -53,37 +43,45 @@
 			>
 									
 			[% IF ! viewable_sectors.$x.$y && current_location.id != sector.dungeon_grid_id %]
-				<span style="z-index: 60; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/dungeonshroud.png" border=0 width=[% size %] height=[% size %]></span>
+				<span style="z-index: 60; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]></span>
 			[% END %]
 									
 			[% IF sector.treasure_chest %]
 				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
 			[% ELSIF sector.teleporter && ! sector.teleporter.invisible %]
-				<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>				
+				<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>	
+			[% ELSE %]
+				[% IF sector.overlay == 'skeleton' %]
+					<img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
+				[% END %]
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: 3px; top: 2px"><img src="[% c.config.static_path %]/images/creatures/[% cgs.$x.$y.portrait %]" border=0 width=[% size / 1.2 %] height=[% size / 1.2 %]></div></span>
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/creatures/[% cgs.$x.$y.portrait %]" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
 					connectId="m_[% x _ y %]"								
 					label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
 				[% END %]
-			[% ELSIF parties.$x.$y %]
-				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/party.PNG" border=0  width=[% size %] height=[% size %]></span>
+			[% ELSIF parties.$x.$y.0 %]
+				[%# TODO: handle multiple parties in a sector %]
+			    [% other_party = parties.$x.$y.0 %]
+				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/portraits/characters/[% other_party.portrait %]small.png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
 					connectId="p_[% x _ y %]"
-					label="[% INCLUDE party/summary.html party=parties.$x.$y %]"></div>
+					label="[% INCLUDE party/summary.html party=other_party %]"></div>
 				[% END %]
 			[% ELSIF can_move_to_sector %]
-			    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto">.</span>
+			    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto">
+			    		<img src="[% c.config.static_path %]/images/dungeon/movedot.png" border=0  width=[% size %] height=[% size %]>
+			    </span>
 			[% END %]
 			
 			[% IF current_location.id == sector.dungeon_grid_id %]
-				<span style="z-index: 50; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/partyloc_t.PNG" border=0  width=[% size %] height=[% size %]></span>
+				<span style="z-index: 50; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/herecircle.png" border=0  width=[% size %] height=[% size %]></span>
 			[% END %]			
 			
 			</div>

@@ -16,7 +16,7 @@ use AI::Pathfinding::AStar::Rectangle;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Dungeon');
 
-__PACKAGE__->add_columns(qw/dungeon_id level land_id name type/);
+__PACKAGE__->add_columns(qw/dungeon_id level land_id name type tileset/);
 
 __PACKAGE__->set_primary_key('dungeon_id');
 
@@ -25,6 +25,11 @@ __PACKAGE__->has_many( 'rooms', 'RPG::Schema::Dungeon_Room', { 'foreign.dungeon_
 __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->might_have( 'town', 'RPG::Schema::Town', { 'foreign.land_id' => 'self.land_id' } );
+
+my @TILESETS = qw/rocky burrow/;
+sub tilesets {
+    return @TILESETS;
+}
 
 sub delete {
     my ( $self, @args ) = @_;

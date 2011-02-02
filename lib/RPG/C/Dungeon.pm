@@ -25,7 +25,8 @@ sub view : Local {
     	{ prefetch => {'dungeon_room' => 'dungeon'}, } 
 	);
 	
-	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
+	$c->stash->{dungeon} = $current_location->dungeon_room->dungeon;
+	$c->stash->{dungeon_type} = $c->stash->{dungeon}->type;
 
     $c->log->debug( "Current location: " . $current_location->x . ", " . $current_location->y );
 
@@ -103,7 +104,7 @@ sub build_viewable_sector_grids : Private {
         my $cg = $cg_rec->creature_group;
         
         if ($cg) {
-            my @creatures = sort { $a->id <=> $b->id } grep { $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
+            my @creatures = sort { $a->id <=> $b->id } grep { ! $_->is_dead && $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
             
             if (@creatures) {
                 $cg->{portrait} = $creatures[0]->type->image;
@@ -135,7 +136,13 @@ sub build_viewable_sector_grids : Private {
         },
     );
     foreach my $party_rec (@party_recs) {
-        $parties->[ $party_rec->x ][ $party_rec->y ] = $party_rec->parties;
+        my @parties = $party_rec->parties;
+        if ($parties[0]) {
+            my @characters = sort { $a->party_order <=> $b->party_order } grep { ! $_->is_dead } $parties[0]->members;
+            $parties[0]->{portrait} = $characters[0]->portrait;
+        }
+        
+        $parties->[ $party_rec->x ][ $party_rec->y ] = \@parties;
     }
  
     $c->stats->profile("Got Parties");	    
@@ -230,6 +237,7 @@ sub render_dungeon_grid : Private {
                     scroll_to => $scroll_to,
                     create_tooltips => 1,
                     dungeon_type => $c->stash->{dungeon_type},
+                    tileset => $c->stash->{dungeon}->tileset,
                 },
                 return_output => 1,
             }
@@ -249,7 +257,8 @@ sub move_to : Local {
     	{ prefetch => {'dungeon_room' => 'dungeon'} } 
 	);
 	
-	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
+	$c->stash->{dungeon} = $current_location->dungeon_room->dungeon;
+	$c->stash->{dungeon_type} = $c->stash->{dungeon}->type;
 
     my $sector = $c->model('DBIC::Dungeon_Grid')->find( { 'dungeon_grid_id' => $sector_id, }, { prefetch => 'dungeon_room', } );
 
@@ -411,7 +420,8 @@ sub build_updated_sectors_data : Private {
 		                	zoom_level => $c->session->{zoom_level} || 2,
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
 		                	positions => \@positions,      
-		                	dungeon_type => $c->stash->{dungeon_type},          	
+		                	dungeon_type => $c->stash->{dungeon_type},
+		                	tileset => $c->stash->{dungeon}->tileset,
 		                },
 		                return_output => 1,
 		            }
@@ -504,6 +514,8 @@ sub build_updated_sectors_data : Private {
 		                	positions => \@positions,
 		                	create_tooltips => 0,
 		                	dungeon_type => $c->stash->{dungeon_type},
+		                	tileset => $c->stash->{dungeon}->tileset,
+		                	
 		                },
 		                return_output => 1,
 		            }

@@ -58,3 +58,14 @@ INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, ra
 	VALUES ('Vampire', 19, 'Melee Weapon', 55, 55, 55, 0, (select creature_category_id from Creature_Category where name = 'Undead'));
 
 UPDATE `Creature_Type` set portrait = 'defaultportsmall.png' where portrait is null;
+
+CREATE TABLE `Creature_Spell` (
+  `creature_spell_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `spell_id` INTEGER  NOT NULL,
+  `creature_type_id` INTEGER  NOT NULL,
+  PRIMARY KEY (`creature_spell_id`),
+  INDEX `spell_idx`(`spell_id`),
+  INDEX `type_id`(`creature_type_id`)
+)
+ENGINE = InnoDB;
+

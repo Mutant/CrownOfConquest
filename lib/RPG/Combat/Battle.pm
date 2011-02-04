@@ -317,7 +317,12 @@ sub character_action {
 	my %opponents = map { $_->id => $_ } $opp_group->members;
 
 	# Check if spell casters should do an offline cast
-	$self->check_for_offline_cast($character);
+	my ($spell, $target) = $self->check_for_offline_cast($character);
+	if ($spell) {
+        $character->last_combat_action('Cast');
+		$character->last_combat_param1( $spell->id );
+		$character->last_combat_param2( $target->id );
+	}
 
 	if ( $character->last_combat_action eq 'Attack' ) {
 
@@ -450,43 +455,37 @@ sub apply_magical_damage {
 
 sub check_for_offline_cast {
 	my $self      = shift;
-	my $character = shift;
+	my $caster    = shift;
 	
-	return unless $character->is_spell_caster;
+	return unless $caster->is_spell_caster;
+	
+	if ( my $spell = $caster->check_for_offline_cast ) {
+        my $target;
 
-	my $opp_group = $self->opponents_of($character);
-	my %opponents = map { $_->id => $_ } $opp_group->members;
+		# Randomly select a target
+		given ( $spell->target ) {
+			when ('creature') {
+            	my $opp_group = $self->opponents_of($caster);
+            	my %opponents = map { $_->id => $_ } $opp_group->members;
 
-	if ( $character->is_npc || !$character->group->is_online) {
-		if ( my $spell = $character->check_for_offline_cast ) {
-
-			# Change character's actions to cast the spell
-			$character->last_combat_action('Cast');
-			$character->last_combat_param1( $spell->id );
-
-			# Randomly select a target
-			given ( $spell->target ) {
-				when ('creature') {
-					my $target;
-					for my $id ( shuffle keys %opponents ) {
-						unless ( $opponents{$id}->is_dead ) {
-							$target = $opponents{$id};
-							last;
-						}
+				for my $id ( shuffle keys %opponents ) {
+					unless ( $opponents{$id}->is_dead ) {
+						$target = $opponents{$id};
+						last;
 					}
-					$character->last_combat_param2( $target->id );
-				}
-				when ('character') {
-					my $target = ( shuffle grep { !$_->is_dead } $character->group->members )[0];
-					$character->last_combat_param2( $target->id );
-				}
-				default {
-
-					# Currently only combat spells with creature/character target are implemented
-					confess "Can't handle spell target: $_";
 				}
 			}
+			when ('character') {
+				$target = ( shuffle grep { !$_->is_dead } $caster->group->members )[0];
+			}
+			default {
+
+				# Currently only combat spells with creature/character target are implemented
+				confess "Can't handle spell target: $_";
+			}
 		}
+		
+		return ($spell, $target);
 	}
 }
 
@@ -494,6 +493,11 @@ sub creature_action {
 	my ( $self, $creature ) = @_;
 
 	my $party = $self->opponents_of($creature);
+	
+	my ($spell, $target) = $self->check_for_offline_cast($creature);
+	if ($spell) {
+	    return $spell->creature_cast($creature, $target);
+	}
 
 	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $party->members;
 	@characters = grep { !$_->is_dead } @characters;    # Get rid of corpses

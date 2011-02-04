@@ -6,6 +6,7 @@ with 'RPG::Schema::Role::Being';
 
 use Data::Dumper;
 use List::MoreUtils qw(true);
+use List::Util qw(shuffle);
 
 use base 'DBIx::Class';
 
@@ -219,6 +220,29 @@ sub resistences {
 		Ice => $type->ice,
 		Poison => $type->poison,
 	);
+}
+
+sub is_spell_caster {
+    my $self = shift;
+    
+    my $type = $self->type;
+    
+    # Assume only rare monsters cast
+    return unless $type->rare;
+    
+    return $type->search_related('spells')->count >= 1 ? 1 : 0;    
+}
+
+sub check_for_offline_cast {
+    my $self = shift;
+    
+    my $type = $self->type;
+    
+    return unless Games::Dice::Advanced->roll('1d100') <= 70;
+    
+    my $spell = (shuffle $type->spells)[0];
+    
+    return $spell->spell;
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

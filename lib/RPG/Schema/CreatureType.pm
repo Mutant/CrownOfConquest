@@ -16,4 +16,6 @@ __PACKAGE__->set_primary_key('creature_type_id');
 
 __PACKAGE__->belongs_to( 'category', 'RPG::Schema::Creature_Category', 'creature_category_id' );
 
+__PACKAGE__->has_many( 'spells', 'RPG::Schema::Creature_Spell', 'creature_type_id' );
+
 1;

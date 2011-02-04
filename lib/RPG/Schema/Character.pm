@@ -1091,6 +1091,8 @@ sub set_starting_equipment {
 sub check_for_offline_cast {
 	my $self = shift;
 	
+	return unless $self->is_npc || !$self->group->is_online;
+	
 	my $cast_roll = Games::Dice::Advanced->roll('1d100');
 	if ($cast_roll <= $self->offline_cast_chance) {
 		my %params;

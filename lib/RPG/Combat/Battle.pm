@@ -553,7 +553,7 @@ sub creature_action {
 	
 	if ($creature->type->special_damage) {
 		$self->apply_magical_damage(
-			$creature, $character, $action_result, $creature->type->special_damage, $creature->type->level
+			$creature, $character, $action_result, $creature->type->special_damage, int $creature->type->level / 3
 		);
 	}
 

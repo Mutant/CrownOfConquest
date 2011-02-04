@@ -15,9 +15,8 @@ my %RARE_MONSTERS = (
 
 sub generate {
     my $self = shift;
-    my $dungeon_room = shift;
     
-    my $level = $dungeon_room->dungeon->level;
+    my $level = $self->dungeon->level;
     
     my $type_to_use = (shuffle @{$RARE_MONSTERS{$level}})[0];
     
@@ -31,7 +30,7 @@ sub generate {
     
     confess "Rare type $type_to_use not in db" unless $creature_type;
     
-    my $sector = (shuffle $dungeon_room->sectors)[0];
+    my $sector = (shuffle $self->sectors)[0];
     
     my $cg = $schema->resultset('CreatureGroup')->create(
         {
@@ -55,9 +54,6 @@ sub generate {
     for my $count (1..8) {
         $cg->add_creature($guard_type, $count);   
     }
-    
-    $dungeon_room->special_room_id($self->id);
-    $dungeon_room->update;
 }
 
 1;

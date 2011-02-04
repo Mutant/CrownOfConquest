@@ -26,6 +26,70 @@ __PACKAGE__->has_many(
     { 'foreign.dungeon_room_id' => 'self.dungeon_room_id' }
 );
 
+__PACKAGE__->might_have(
+    'special_room',
+    'RPG::Schema::Dungeon_Special_Room',
+    'special_room_id',
+);
+
+sub insert {
+	my ( $self, @args ) = @_;
+	
+	$self->next::method(@args);
+	
+	$self->_apply_role;
+}
+
+sub inflate_result {
+    my $pkg = shift;
+
+    my $self = $pkg->next::method(@_);
+
+    $self->_apply_role;
+
+    return $self;
+}
+
+sub _apply_role {
+	my $self = shift;
+	my $special_room_type = shift;
+	
+	my $role = $self->get_role_name($special_room_type);
+	return unless $role;
+	
+	$self->ensure_class_loaded($role);	
+	$role->meta->apply($self);	
+}
+
+sub get_role_name {
+	my $self = shift;
+	
+	return unless $self->special_room_id;
+	
+	my $special_room = shift || $self->special_room;
+	
+	return unless $special_room;
+	
+	my $name = $special_room->room_type;
+	
+	# Camel case-ify the name
+	$name =~ s/(\b|_)(\w)/$1\u$2/g;	
+	
+	return 'RPG::Schema::Special_Rooms::' . $name;
+}
+
+# Turn a dungeon room into a special dungeon room
+sub make_special {
+    my $self = shift;
+    my $special_room_type = shift;
+    
+    $self->special_room_id($special_room_type->id);
+    $self->update;
+    
+    $self->_apply_role($special_room_type);
+    $self->generate;
+}
+
 sub connected_to_room {
     my $self = shift;
     my $room_id = shift;

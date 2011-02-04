@@ -29,7 +29,6 @@ has 'combatants_list' => (
 
 # We store whether the cg had rare monsters in it at the beginning of the combat
 #  This is because this could change (i.e. the rare monster is killed)
-
 before 'execute_round' => sub {
     my $self = shift;
 

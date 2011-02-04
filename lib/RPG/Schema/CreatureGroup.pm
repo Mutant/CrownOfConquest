@@ -167,6 +167,8 @@ sub add_creature {
 	my $type = shift;
 	my $count = shift // $self->number_alive+1;
 
+    confess "Type not supplied" unless $type;
+
 	my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
 	
 	my $melee_weapons = $self->melee_weapons;

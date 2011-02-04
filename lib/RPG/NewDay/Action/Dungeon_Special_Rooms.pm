@@ -142,9 +142,9 @@ sub generate_special_rooms {
           
     $c->logger->debug("Using room " . $room_to_use->id);
     
-    my $room_type = (shuffle @room_types)[0];
+    my $room_type = (shuffle @room_types)[0];    
     
-    $room_type->generate($room_to_use);   
+    $room_to_use->make_special($room_type);   
 }
 
 1;

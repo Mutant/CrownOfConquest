@@ -26,7 +26,7 @@ __PACKAGE__->has_many(
     { 'foreign.dungeon_room_id' => 'self.dungeon_room_id' }
 );
 
-__PACKAGE__->might_have(
+__PACKAGE__->belongs_to(
     'special_room',
     'RPG::Schema::Dungeon_Special_Room',
     'special_room_id',
@@ -65,7 +65,7 @@ sub get_role_name {
 	my $self = shift;
 	
 	return unless $self->special_room_id;
-	
+
 	my $special_room = shift || $self->special_room;
 	
 	return unless $special_room;

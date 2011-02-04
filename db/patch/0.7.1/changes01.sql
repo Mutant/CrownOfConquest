@@ -41,8 +41,8 @@ INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, ra
 	VALUES ('Orc Shaman', 6, 'Golden Staff', 25, 25, 25, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Goblin Chief', 8, 'Melee Weapon', 28, 28, 28, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
-INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
-	VALUES ('Bandit Leader', 14, 'Melee Weapon', 40, 40, 40, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
+INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, special_damage, creature_category_id)
+	VALUES ('Bandit Leader', 14, 'Melee Weapon', 40, 40, 40, 1, 'Poison', (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Warlock', 12, 'Staff of Oden', 40, 40, 40, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
@@ -51,8 +51,8 @@ INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, ra
 	VALUES ('Black Sorcerer', 15, 'Mace of Death', 50, 50, 50, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Lich', 22, 'Melee Weapon', 65, 65, 65, 1, (select creature_category_id from Creature_Category where name = 'Undead'));
-INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
-	VALUES ('Demon King', 24, 'Melee Weapon', 65, 65, 65, 1, (select creature_category_id from Creature_Category where name = 'Demon'));
+INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, special_damage, creature_category_id)
+	VALUES ('Demon King', 24, 'Melee Weapon', 65, 65, 80, 1, 'Fire', (select creature_category_id from Creature_Category where name = 'Demon'));
 
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Vampire', 19, 'Melee Weapon', 55, 55, 55, 0, (select creature_category_id from Creature_Category where name = 'Undead'));
@@ -71,3 +71,6 @@ CREATE TABLE `Creature_Spell` (
   INDEX `type_id`(`creature_type_id`)
 )
 ENGINE = InnoDB;
+
+ALTER TABLE `Creature_Type` ADD COLUMN `special_damage` VARCHAR(40)  AFTER `rare`;
+

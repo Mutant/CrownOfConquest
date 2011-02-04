@@ -544,12 +544,20 @@ sub creature_action {
 	$self->session->{attack_count}{ $character->id }++;
 
 	my $damage = $self->attack( $creature, $character );
-
-	return RPG::Combat::ActionResult->new(
+	
+	my $action_result = RPG::Combat::ActionResult->new(
 		attacker => $creature,
 		defender => $character,
 		damage   => $damage,
 	);
+	
+	if ($creature->type->special_damage) {
+		$self->apply_magical_damage(
+			$creature, $character, $action_result, $creature->type->special_damage, $creature->type->level
+		);
+	}
+
+	return $action_result;
 }
 
 sub attack {

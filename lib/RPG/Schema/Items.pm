@@ -307,14 +307,16 @@ sub equip_place_id {
 					{
 						character_id => $self->_character_id,
 					}
-				);	
+				);
 				
-				$self->_stat_bonus_trigger($new_equip_place_id, $character);
-				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
-				$self->_factors_trigger($new_equip_place_id, $character)
-				    unless $trigger_params->{no_factors_trigger};
-				
-				$character->update;
+				if ($character) {				
+    				$self->_stat_bonus_trigger($new_equip_place_id, $character);
+    				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
+    				$self->_factors_trigger($new_equip_place_id, $character)
+    				    unless $trigger_params->{no_factors_trigger};
+    				
+    				$character->update;
+				}
 			}
 		}
 		
@@ -378,6 +380,8 @@ sub _factors_trigger {
 	my $self = shift;
 	my $new_equip_place_id = shift;
 	my $character = shift;
+	
+	return unless $character;
 
 	my $key = defined $new_equip_place_id ? 'add' : 'remove';
 	

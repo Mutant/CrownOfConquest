@@ -478,6 +478,10 @@ sub check_for_offline_cast {
 			when ('character') {
 				$target = ( shuffle grep { !$_->is_dead } $caster->group->members )[0];
 			}
+			when ('party') {
+			    my $opp_num = $self->opponent_number_of_being($caster);
+                $target = ( $self->opponents )[$opp_num-1];			
+			}
 			default {
 
 				# Currently only combat spells with creature/character target are implemented

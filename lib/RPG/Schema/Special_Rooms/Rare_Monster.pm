@@ -43,10 +43,10 @@ sub generate {
     
     my @guard_types = $schema->resultset('CreatureType')->search(
         {
-            'level' => [
-                {'<', $creature_type->level},
-                {'>', $creature_type->level-5},
-            ],
+            'level' => {
+                '<', $creature_type->level,
+                '>', $creature_type->level-5,
+            },
             'creature_category_id' => $creature_type->creature_category_id,
         },
     );

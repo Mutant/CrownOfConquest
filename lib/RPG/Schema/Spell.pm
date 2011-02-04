@@ -99,7 +99,7 @@ sub _cast_impl {
         $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
         %$result_params,
     );
-
+    
     return $result;	
 }
 

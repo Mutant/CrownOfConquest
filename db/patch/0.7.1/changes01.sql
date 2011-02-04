@@ -68,4 +68,3 @@ CREATE TABLE `Creature_Spell` (
   INDEX `type_id`(`creature_type_id`)
 )
 ENGINE = InnoDB;
-

@@ -31,8 +31,11 @@ sub run {
     # Spawn dungeon monsters
     $self->spawn_dungeon_monsters();    
     
-    # Move dungeon moonsters
+    # Move dungeon monsters
     $self->move_dungeon_monsters();
+    
+    # Refresh rare monsters
+    $self->refresh_rare_monsters();
 }
 
 sub spawn_monsters {
@@ -343,6 +346,55 @@ sub move_dungeon_monsters {
     }
 
     $c->logger->info("Moved $moved groups in dungeons");
+}
+
+sub refresh_rare_monsters {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my @rare_creatures = $c->schema->resultset('Creature')->search(
+        {
+            'type.rare' => 1,
+            'hit_points_current' => {'>',0},
+        },
+        {
+            'join' => 'type',
+        },
+    );
+    
+    foreach my $rare_creature (@rare_creatures) {
+        my $cg = $rare_creature->creature_group;
+        
+        next if $cg->in_combat_with;
+                
+        $rare_creature->hit_points_current($rare_creature->hit_points_max);
+        $rare_creature->update;
+        
+        my $number_alive = $cg->number_alive - 1;
+        
+        if ($number_alive < 8) {
+            $c->logger->debug("Rare creature " . $rare_creature->id . " only has $number_alive guards, adding more..");
+            
+            # Add some more guards.
+            my $rare_ct = $rare_creature->type;
+            warn $rare_ct->id;
+            my @guard_types = $c->schema->resultset('CreatureType')->search(
+                {
+                    'level' => {
+                        '<', $rare_ct->level,
+                        '>', $rare_ct->level-5,
+                    },
+                    'creature_category_id' => $rare_ct->creature_category_id,
+                },
+            );
+    
+            my $guard_type = (shuffle @guard_types)[0];
+            for my $count (1..(8-$number_alive)) {
+                $cg->add_creature($guard_type, $count);   
+            }               
+        }   
+    }
 }
 
 sub _move_cg {

@@ -56,8 +56,11 @@ INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, ra
 
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Vampire', 19, 'Melee Weapon', 55, 55, 55, 0, (select creature_category_id from Creature_Category where name = 'Undead'));
+INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
+	VALUES ('Devil\'s Spawn', 20, 'Melee Weapon', 50, 50, 50, 0, (select creature_category_id from Creature_Category where name = 'Demon'));
 
-UPDATE `Creature_Type` set portrait = 'defaultportsmall.png' where portrait is null;
+
+UPDATE `Creature_Type` set image = 'defaultportsmall.png' where image is null;
 
 CREATE TABLE `Creature_Spell` (
   `creature_spell_id` INTEGER  NOT NULL AUTO_INCREMENT,

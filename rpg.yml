@@ -71,7 +71,7 @@ default_cron_string: 5 4 * * *
 creature_orb_cron_string: 35 */2 * * *
 
 # Spawning / moving of creatures
-creatures_cron_string: 50 * * * *
+creatures_cron_string: 20,50 * * * *
 
 # Re-closing of dungeon doors
 dungeon_doors_cron_string: "*/30 * * * *"

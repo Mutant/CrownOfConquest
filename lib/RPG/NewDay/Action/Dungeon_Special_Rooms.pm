@@ -26,6 +26,8 @@ sub run {
     );
     
     while (my $dungeon = $dungeons_rs->next) {
+        $self->delete_special_rooms($dungeon);
+        
         my $room_count = $dungeon->rooms->count;
             
         $c->logger->debug("Dungeon " . $dungeon->id . " has $room_count rooms");
@@ -82,6 +84,9 @@ sub generate_special_rooms {
             'join' => 'dungeon_room',
         }        
     );
+    
+    return unless $stairs_sector;
+    
     my $stairs_coord = {
         x => $stairs_sector->x,
         y => $stairs_sector->y,        
@@ -145,6 +150,25 @@ sub generate_special_rooms {
     my $room_type = (shuffle @room_types)[0];    
     
     $room_to_use->make_special($room_type);   
+}
+
+sub delete_special_rooms {
+    my $self = shift;
+    my $dungeon = shift;
+    
+    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+        my @special_rooms = $dungeon->search_related('rooms',
+            {
+                special_room_id => {'!=', undef},
+            },
+        );
+        
+        return unless @special_rooms;
+        
+        my $room_to_delete = (shuffle @special_rooms)[0];
+        
+        $room_to_delete->remove_special;               
+    } 
 }
 
 1;

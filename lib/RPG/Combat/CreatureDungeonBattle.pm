@@ -19,7 +19,7 @@ after 'execute_round' => sub {
     #  to be on the safe side.
     return unless $self->result->{losers};
     if ($self->result->{combat_complete} && $self->session->{rare_cg} && $self->result->{losers}->id == $self->creature_group->id) {
-        $self->location->dungeon_room->remove_special();
+        $self->location->dungeon_room->remove_special(rare_creature_killed => 1);
     }  
 };
 

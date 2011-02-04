@@ -11,7 +11,7 @@ Model::DBIC:
 TestModel::DBIC:
   schema_class: RPG::Schema
   connect_info: 
-    - dbi:mysql:game-test
+    - dbi:mysql:game_test
     - root
     - ''
     - { AutoCommit: 0 }
@@ -26,7 +26,7 @@ log_file_dir: /home/sam/RPG/log/
 
 data_file_path: /home/sam/RPG/script/data/
 
-online_threshold: 0
+online_threshold: 5
 
 no_email: 1
 

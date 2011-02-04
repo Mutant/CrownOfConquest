@@ -87,7 +87,7 @@ sub make_special {
     $self->update;
     
     $self->_apply_role($special_room_type);
-    $self->generate;
+    $self->generate_special;
 }
 
 sub connected_to_room {

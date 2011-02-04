@@ -4,13 +4,13 @@ package RPG::Schema::Special_Rooms::Interface;
 use Moose::Role;
 
 # Defined by the role
-requires qw/generate/;
+requires qw/generate_special remove_special/;
 
-sub remove_special {
+after 'remove_special' => sub {
     my $self = shift;
     
     $self->special_room_id(undef);
     $self->update;   
-}
+};
 
 1;

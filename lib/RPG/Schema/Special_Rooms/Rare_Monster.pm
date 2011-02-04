@@ -13,7 +13,7 @@ my %RARE_MONSTERS = (
     4 => ['Lich', 'Demon King'], 
 );
 
-sub generate {
+sub generate_special {
     my $self = shift;
     
     my $level = $self->dungeon->level;
@@ -51,9 +51,32 @@ sub generate {
     );
     
     my $guard_type = (shuffle @guard_types)[0];
+    confess "Couldn't find a suitable guard type" unless $guard_type;
     for my $count (1..8) {
         $cg->add_creature($guard_type, $count);   
     }
+}
+
+sub remove_special {
+    my $self = shift;
+    my %params = @_;
+    
+    return if $params{rare_creature_killed};
+    
+    # Find the cg with the rare monster 
+    my @sectors = $self->search_related('sectors',
+        {},
+        {
+            prefetch => 'creature_group',
+        }
+    );
+    
+    foreach my $sector (@sectors) {
+        if ($sector->creature_group && $sector->creature_group->has_rare_monster) {
+            $sector->creature_group->dungeon_grid_id(undef);
+            $sector->creature_group->update;   
+        }   
+    }               
 }
 
 1;

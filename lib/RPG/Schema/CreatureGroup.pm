@@ -196,10 +196,11 @@ sub has_rare_monster {
     
     return $self->search_related('creatures',
         {
-            'creature_type.rare' => 1,
+            'type.rare' => 1,
+            'hit_points_current' => {'>', 0},
         },
         {
-            'join' => 'creature_type',
+            'join' => 'type',
         }
     )->count >= 1 ? 1 : 0;   
 }

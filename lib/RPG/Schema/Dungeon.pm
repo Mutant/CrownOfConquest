@@ -568,4 +568,53 @@ sub get_non_diag_result {
 	}
 }
 
+sub floor_count {
+    my $self = shift;
+    
+    my $rs = $self->find_related('rooms',
+        {},
+        {
+            'select' => { max => 'floor' },
+            'as' => 'floor',   
+        },
+    );
+    
+    return $rs->get_column('floor');
+}
+
+# Find the coords of the top left and bottom right corner of the floor specified
+sub get_coord_range_of_floor {
+    my $self = shift;
+    my $floor = shift;
+    
+    my $rs = $self->find_related('rooms',
+        {
+            'floor' => $floor,
+        },
+        {
+            join => 'sectors',
+            'select' => [
+                { min => 'sectors.x' },
+                { min => 'sectors.y' },
+                { max => 'sectors.x' },
+                { max => 'sectors.y' },
+            ],
+            'as' => [
+                qw/min_x min_y max_x max_y/
+            ],
+        },
+    );
+    
+    return [
+        {
+            x => $rs->get_column('min_x'),
+            y => $rs->get_column('min_y'),
+        },
+        {
+            x => $rs->get_column('max_x'),
+            y => $rs->get_column('max_y'),
+        },
+    ];      
+}
+
 1;

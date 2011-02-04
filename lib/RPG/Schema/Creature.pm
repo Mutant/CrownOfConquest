@@ -148,8 +148,12 @@ sub _calculate_factor {
 
 sub name {
 	my $self = shift;
+	
+	my $type = $self->type;
+	
+	return $type->creature_type if $type->rare;
 
-	return $self->type->creature_type . ' #' . $self->group_order;
+	return $type->creature_type . ' #' . $self->group_order;
 }
 
 sub is_dead {

@@ -388,6 +388,9 @@ max_offline_combat_per_dungeon_level: 4
 # Offline combat chance in a dungeon
 dungeon_offline_combat_chance: 100
 
+# Percentage of dungeon rooms that are special
+dungeon_special_room_percentage: 2 
+
 # ----- Creature Params ----- #
 
 # Ratio of number of creature groups to parties

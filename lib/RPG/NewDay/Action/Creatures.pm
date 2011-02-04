@@ -324,6 +324,9 @@ sub move_dungeon_monsters {
             next unless $allowed_sectors->{$sector_id};
 
             my $sector = $c->schema->resultset('Dungeon_Grid')->find({ dungeon_grid_id => $sector_id });
+            
+            # CGs with rare monsters not allowed to move out of the room
+            next if $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
 
             if ( ! $sector->creature_group ) {
                 $cg->dungeon_grid_id( $sector_id );

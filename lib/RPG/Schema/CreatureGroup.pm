@@ -191,6 +191,19 @@ sub add_creature {
 	);
 }
 
+sub has_rare_monster {
+    my $self = shift;
+    
+    return $self->search_related('creatures',
+        {
+            'creature_type.rare' => 1,
+        },
+        {
+            'join' => 'creature_type',
+        }
+    )->count >= 1 ? 1 : 0;   
+}
+
 __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;

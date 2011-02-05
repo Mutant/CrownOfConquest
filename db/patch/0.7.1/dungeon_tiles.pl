@@ -16,6 +16,7 @@ my $schema = RPG::Schema->connect( @{$config->{'Model::DBIC'}{connect_info}} );
 my @dungeons = $schema->resultset('Dungeon')->search();
 foreach my $dungeon (@dungeons) {
     my $tileset = (shuffle qw/rocky burrow/)[0];
+    $tileset = 'rocky' if $dungeon->type eq 'castle';
     $dungeon->update({tileset => $tileset});
 }
 

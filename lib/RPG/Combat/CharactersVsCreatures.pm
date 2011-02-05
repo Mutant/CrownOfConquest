@@ -176,7 +176,7 @@ sub check_for_item_found {
 		my $item_type = shift @item_types;
 
 		unless ($item_type) {
-			$self->log->info("Couldn't find item to give to party under prevalence $min_prevalence");
+			$self->log->info("Couldn't find item to give to party over prevalence $min_prevalence");
 			return;
 		}
 
@@ -194,7 +194,14 @@ sub check_for_item_found {
 		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
 			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
+			
 			if ($self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
+			    # Make sure item type selected is capable of being enchanted. If not, choose another one
+			    while ($item_type->category->enchantments_allowed->count <= 0) {
+			        $item_type = shift @item_types;
+			        return unless $item_type;
+			    }			    
+			    
 				my $enchantment_count = RPG::Maths->weighted_random_number(1..3);
 				
 				my $max_value = $avg_creature_level * 150;

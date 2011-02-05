@@ -510,4 +510,4 @@ garrison_min_spacing: 1
 minimum_enchantment_creature_level: 6
 
 # Step in chance for creature levels for finding enchanted items
-enchantment_creature_level_step: 2
+enchantment_creature_level_step: 1.5

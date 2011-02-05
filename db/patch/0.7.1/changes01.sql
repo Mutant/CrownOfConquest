@@ -42,11 +42,11 @@ INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, ra
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Goblin Chief', 8, 'Melee Weapon', 28, 28, 28, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, special_damage, creature_category_id)
-	VALUES ('Bandit Leader', 14, 'Melee Weapon', 40, 40, 40, 1, 'Poison', (select creature_category_id from Creature_Category where name = 'Humanoid'));
+	VALUES ('Bandit Leader', 14, 'Melee Weapon', 40, 40, 40, 1, 'Ice', (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Warlock', 12, 'Staff of Oden', 40, 40, 40, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
-INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
-	VALUES ('Gelatinous Ooze', 16, 'Acidic Slime', 40, 40, 40, 1, (select creature_category_id from Creature_Category where name = 'Beast'));
+INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, special_damage, creature_category_id)
+	VALUES ('Gelatinous Ooze', 16, 'Acidic Slime', 40, 40, 40, 1, 'Poison', (select creature_category_id from Creature_Category where name = 'Beast'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)
 	VALUES ('Black Sorcerer', 15, 'Mace of Death', 50, 50, 50, 1, (select creature_category_id from Creature_Category where name = 'Humanoid'));
 INSERT into `Creature_Type` (creature_type, level, weapon, fire, ice, poison, rare, creature_category_id)

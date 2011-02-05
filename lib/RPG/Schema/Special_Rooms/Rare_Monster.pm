@@ -46,6 +46,7 @@ sub generate_special {
                 '<', $creature_type->level,
                 '>', $creature_type->level-5,
             },
+            rare => 0,
             'creature_category_id' => $creature_type->creature_category_id,
         },
     );
@@ -64,6 +65,7 @@ sub remove_special {
     return if $params{rare_creature_killed};
     
     # Find the cg with the rare monster 
+    # TODO: uses Dungeon_Room_Param to track cg / rare monster id?
     my @sectors = $self->search_related('sectors',
         {},
         {
@@ -77,6 +79,27 @@ sub remove_special {
             $sector->creature_group->update;   
         }   
     }               
+}
+
+sub rare_creature {
+    my $self = shift;
+    
+    my @sectors = $self->search_related('sectors',
+        {},
+        {
+            prefetch => 'creature_group',
+        }
+    );       
+    
+    my $rare_creature;
+    foreach my $sector (@sectors) {
+        if ($sector->creature_group && $sector->creature_group->has_rare_monster) { 
+            ($rare_creature) = grep { $_->type->rare } $sector->creature_group->creatures;
+        }
+    }
+    
+    return $rare_creature;
+     
 }
 
 1;

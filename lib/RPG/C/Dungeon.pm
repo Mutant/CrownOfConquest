@@ -306,6 +306,28 @@ sub move_to : Local {
 	            push @{ $c->stash->{refresh_panels} }, 'party';
 	        }
     	}
+    	
+    	if ($sector->dungeon_room->special_room_id && 
+    	   ! $c->session->{special_room_alerts}{$sector->dungeon_room_id} && $sector->dungeon_room_id != $current_location->dungeon_room_id) {
+            # They're moving into a special room for the first time in this session, so send an alert.            
+            my $message = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template => 'dungeon/special_room_alert.html',
+                        params   => {
+                            room => $sector->dungeon_room,
+                        },
+                        return_output => 1,
+    	            },
+    	        ]
+    	    );
+    	    
+    	    push @{$c->stash->{messages}}, $message;
+    	    
+    	    # Remember this, so we don't alert again in the session
+    	    $c->session->{special_room_alerts}{$sector->dungeon_room_id} = 1;
+    	}
 
         $c->stash->{party}->dungeon_grid_id($sector_id);
         $c->stash->{party}->turns( $c->stash->{party}->turns - $turn_cost );

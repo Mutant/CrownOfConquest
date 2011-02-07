@@ -8,6 +8,7 @@ use Data::Dumper;
 use List::Util qw(sum);
 use Math::Round qw(round);
 use DateTime;
+use Statistics::Basic qw(average);
 
 use RPG::Exception;
 
@@ -332,7 +333,12 @@ sub average_stat {
     my $self = shift;
     my $stat = shift;
 
-    return $self->result_source->schema->resultset('Party')->average_stat( $self->id, $stat );
+    my @stats;
+    foreach my $character ($self->characters_in_party) {
+        push @stats, $character->$stat;   
+    }
+    
+    return average @stats;
 }
 
 sub new_day {

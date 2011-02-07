@@ -27,25 +27,4 @@ sub get_by_player_id {
     );
 }
 
-sub average_stat {
-    my $self     = shift;
-    my $party_id = shift;
-    my $stat     = shift;
-
-    my ($rec) = $self->search(
-        { 
-        	'me.party_id' => $party_id,
-        	'garrison_id' => undef, 
-        	'characters.mayor_of' => undef,
-        },
-        {
-            join   => 'characters',
-            select => { avg => 'characters.' . $stat },
-            as     => 'avg',
-        }
-    );
-
-    return $rec->get_column('avg');
-}
-
 1;

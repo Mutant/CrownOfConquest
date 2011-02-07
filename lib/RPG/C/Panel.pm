@@ -162,23 +162,22 @@ sub messages : Private {
                     }
                 ]
             );
-        }  
-
-    }	
-    
-    my @garrison_counts = $c->model('DBIC::Combat_Log')->get_offline_garrison_log_count( $c->stash->{party} );
-    if (@garrison_counts) {
-        push @{ $c->stash->{messages} }, $c->forward(
-            'RPG::V::TT',
-            [
-                {
-                    template      => 'party/offline_garrison_combat_message.html',
-                    params        => { garrison_counts => \@garrison_counts },
-                    return_output => 1,
-                }
-            ]
-        );
-    }    
+        }
+        
+        my @garrison_counts = $c->model('DBIC::Combat_Log')->get_offline_garrison_log_count( $c->stash->{party} );
+        if (@garrison_counts) {
+            push @{ $c->stash->{messages} }, $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template      => 'party/offline_garrison_combat_message.html',
+                        params        => { garrison_counts => \@garrison_counts },
+                        return_output => 1,
+                    }
+                ]
+            );
+        }
+    }
 }
 
 # Create a dialog when the panels are reloaded. Submits form values to a given URL

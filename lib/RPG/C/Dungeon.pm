@@ -764,10 +764,13 @@ sub unblock_door : Local {
         );
 
         my $stats = $stats{ $c->req->param('action') };
-        my $stat_avg = average $character->get_column( $stats->[0] ), $character->get_column( $stats->[1] );
+        
+        my ($stat1, $stat2) = @$stats;
+        
+        my $stat_avg = average $character->$stat1, $character->$stat2;
 
         my $roll_base              = 15;
-        my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 5;
+        my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 4;
         my $roll                   = Games::Dice::Advanced->roll( '1d' . $roll_base + $dungeon_level_addition );
 
         if ( $roll < $stat_avg ) {

@@ -39,7 +39,7 @@ __PACKAGE__->numeric_columns(
 	},
 	sales_tax => {
 		min_value => 0, 
-		max_value => 100,
+		max_value => 20,
 	},
 	mayor_rating => {
 		min_value => -100,

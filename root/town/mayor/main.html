@@ -103,8 +103,8 @@ You can change tax settings once per day. [% IF town.tax_modified_today %]You've
 	<tr>
 		<td>Sales Tax:</td>
 		<td><input type="text" dojoType="dijit.form.NumberTextBox" name="sales_tax" id="sales-tax" style="width: 50px"
-				value="[% town.sales_tax %]" constraints="{min:0,max:100,places:0}" required="true"
-				invalidMessage="Sales Tax must be between 0 and 100%">%
+				value="[% town.sales_tax %]" constraints="{min:0,max:20,places:0}" required="true"
+				invalidMessage="Sales Tax must be between 0 and 20%">%
 				
 				<div dojoType="dijit.Tooltip"
 	           		connectId="sales-tax"

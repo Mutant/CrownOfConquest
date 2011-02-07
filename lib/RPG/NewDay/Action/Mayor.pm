@@ -50,9 +50,7 @@ sub run {
             );
 		}
 		
-		if ($mayor->is_dead && ! $town->pending_mayor) {
-			$self->refresh_mayor($mayor);
-		}
+		$self->refresh_mayor($mayor, $town);
 		
 		if ($town->pending_mayor) {
 			$self->check_for_pending_mayor_expiry($town);
@@ -401,9 +399,13 @@ sub check_for_pending_mayor_expiry {
 sub refresh_mayor {
 	my $self = shift;
 	my $mayor = shift;
+	my $town = shift;
 		
-	$mayor->hit_points($mayor->max_hit_points);
-	$mayor->update;
+
+	if ($mayor->is_dead && ! $town->pending_mayor) {
+    	$mayor->hit_points($mayor->max_hit_points);
+    	$mayor->update;		
+	}		
 	
 	# Mayor gets items auto-repaired, and ammo stocked up
 	my @items = $mayor->items;
@@ -418,7 +420,7 @@ sub refresh_mayor {
 		if ($item->item_type->category->item_category eq 'Ranged Weapon') {
 			my @ammo = $mayor->ammunition_for_item($item);
 			
-			my $total_ammo = (sum map { $_->quantity } @ammo) // 0;
+			my $total_ammo = (sum map { $_ && $_->quantity } @ammo) // 0;
 			
 			if ($total_ammo < 100) {
 				# Create some more ammo

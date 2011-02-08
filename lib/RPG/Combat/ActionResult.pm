@@ -15,7 +15,7 @@ has 'magical_damage'  => ( is => 'rw', isa => 'RPG::Combat::MagicalDamageResult'
 sub _build_defender_killed {
     my $self = shift;
 
-    return $self->defender->is_dead;
+    return $self->defender->can('is_dead') && $self->defender->is_dead;
 }
 
 __PACKAGE__->meta->make_immutable;

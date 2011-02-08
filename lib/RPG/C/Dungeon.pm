@@ -25,7 +25,8 @@ sub view : Local {
     	{ prefetch => {'dungeon_room' => 'dungeon'}, } 
 	);
 	
-	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
+	$c->stash->{dungeon} = $current_location->dungeon_room->dungeon;
+	$c->stash->{dungeon_type} = $c->stash->{dungeon}->type;
 
     $c->log->debug( "Current location: " . $current_location->x . ", " . $current_location->y );
 
@@ -103,7 +104,7 @@ sub build_viewable_sector_grids : Private {
         my $cg = $cg_rec->creature_group;
         
         if ($cg) {
-            my @creatures = sort { $a->id <=> $b->id } grep { $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
+            my @creatures = sort { $a->id <=> $b->id } grep { ! $_->is_dead && $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
             
             if (@creatures) {
                 $cg->{portrait} = $creatures[0]->type->image;
@@ -135,7 +136,13 @@ sub build_viewable_sector_grids : Private {
         },
     );
     foreach my $party_rec (@party_recs) {
-        $parties->[ $party_rec->x ][ $party_rec->y ] = $party_rec->parties;
+        my @parties = $party_rec->parties;
+        if ($parties[0]) {
+            my @characters = sort { $a->party_order <=> $b->party_order } grep { ! $_->is_dead } $parties[0]->members;
+            $parties[0]->{portrait} = $characters[0]->portrait;
+        }
+        
+        $parties->[ $party_rec->x ][ $party_rec->y ] = \@parties;
     }
  
     $c->stats->profile("Got Parties");	    
@@ -230,6 +237,7 @@ sub render_dungeon_grid : Private {
                     scroll_to => $scroll_to,
                     create_tooltips => 1,
                     dungeon_type => $c->stash->{dungeon_type},
+                    tileset => $c->stash->{dungeon}->tileset,
                 },
                 return_output => 1,
             }
@@ -249,7 +257,8 @@ sub move_to : Local {
     	{ prefetch => {'dungeon_room' => 'dungeon'} } 
 	);
 	
-	$c->stash->{dungeon_type} = $current_location->dungeon_room->dungeon->type;
+	$c->stash->{dungeon} = $current_location->dungeon_room->dungeon;
+	$c->stash->{dungeon_type} = $c->stash->{dungeon}->type;
 
     my $sector = $c->model('DBIC::Dungeon_Grid')->find( { 'dungeon_grid_id' => $sector_id, }, { prefetch => 'dungeon_room', } );
 
@@ -296,6 +305,28 @@ sub move_to : Local {
 	        if ($creature_group) {
 	            push @{ $c->stash->{refresh_panels} }, 'party';
 	        }
+    	}
+    	
+    	if ($sector->dungeon_room->special_room_id && 
+    	   ! $c->session->{special_room_alerts}{$sector->dungeon_room_id} && $sector->dungeon_room_id != $current_location->dungeon_room_id) {
+            # They're moving into a special room for the first time in this session, so send an alert.            
+            my $message = $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template => 'dungeon/special_room_alert.html',
+                        params   => {
+                            room => $sector->dungeon_room,
+                        },
+                        return_output => 1,
+    	            },
+    	        ]
+    	    );
+    	    
+    	    push @{$c->stash->{messages}}, $message;
+    	    
+    	    # Remember this, so we don't alert again in the session
+    	    $c->session->{special_room_alerts}{$sector->dungeon_room_id} = 1;
     	}
 
         $c->stash->{party}->dungeon_grid_id($sector_id);
@@ -411,7 +442,8 @@ sub build_updated_sectors_data : Private {
 		                	zoom_level => $c->session->{zoom_level} || 2,
 		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
 		                	positions => \@positions,      
-		                	dungeon_type => $c->stash->{dungeon_type},          	
+		                	dungeon_type => $c->stash->{dungeon_type},
+		                	tileset => $c->stash->{dungeon}->tileset,
 		                },
 		                return_output => 1,
 		            }
@@ -504,6 +536,8 @@ sub build_updated_sectors_data : Private {
 		                	positions => \@positions,
 		                	create_tooltips => 0,
 		                	dungeon_type => $c->stash->{dungeon_type},
+		                	tileset => $c->stash->{dungeon}->tileset,
+		                	
 		                },
 		                return_output => 1,
 		            }
@@ -730,10 +764,13 @@ sub unblock_door : Local {
         );
 
         my $stats = $stats{ $c->req->param('action') };
-        my $stat_avg = average $character->get_column( $stats->[0] ), $character->get_column( $stats->[1] );
+        
+        my ($stat1, $stat2) = @$stats;
+        
+        my $stat_avg = average $character->$stat1, $character->$stat2;
 
         my $roll_base              = 15;
-        my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 5;
+        my $dungeon_level_addition = $current_location->dungeon_room->dungeon->level * 4;
         my $roll                   = Games::Dice::Advanced->roll( '1d' . $roll_base + $dungeon_level_addition );
 
         if ( $roll < $stat_avg ) {

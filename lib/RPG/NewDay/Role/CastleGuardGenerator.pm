@@ -13,6 +13,8 @@ sub generate_guards {
 	my $self   = shift;
 	my $castle = shift;
 
+    return unless $castle;
+
 	my $c = $self->context;
 
 	my $town = $castle->town;

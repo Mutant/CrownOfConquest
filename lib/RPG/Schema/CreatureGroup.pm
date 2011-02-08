@@ -167,6 +167,8 @@ sub add_creature {
 	my $type = shift;
 	my $count = shift // $self->number_alive+1;
 
+    confess "Type not supplied" unless $type;
+
 	my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
 	
 	my $melee_weapons = $self->melee_weapons;
@@ -189,6 +191,20 @@ sub add_creature {
 			weapon             => $weapon,
 		}
 	);
+}
+
+sub has_rare_monster {
+    my $self = shift;
+    
+    return $self->search_related('creatures',
+        {
+            'type.rare' => 1,
+            'hit_points_current' => {'>', 0},
+        },
+        {
+            'join' => 'type',
+        }
+    )->count >= 1 ? 1 : 0;   
 }
 
 __PACKAGE__->meta->make_immutable( inline_constructor => 0 );

@@ -10,13 +10,14 @@ use Data::Dumper;
 
 use Clone qw(clone);
 use List::MoreUtils qw/any/;
+use Games::Dice::Advanced;
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Grid');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Dungeon_Grid');
 
-__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id stairs_up stairs_down/);
+__PACKAGE__->add_columns(qw/dungeon_grid_id x y dungeon_room_id stairs_up stairs_down tile overlay/);
 
 __PACKAGE__->set_primary_key('dungeon_grid_id');
 
@@ -37,6 +38,25 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.dungeon_grid_
 __PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->might_have( 'teleporter', 'RPG::Schema::Dungeon_Teleporter', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
+sub new {
+	my ( $class, $attr ) = @_;
+
+    my $self = $class->next::method($attr);
+    
+    $self->tile(1);
+    # See if we should use a 'rare' tile
+    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+        $self->tile(Games::Dice::Advanced->roll('1d3')+1);
+    }
+    
+    # See if there's an overlay
+    if (Games::Dice::Advanced->roll('1d100') <= 8) {
+        $self->overlay('skeleton');   
+    }
+    
+    return $self;
+}
 
 sub sides_with_walls {
     my $self = shift;

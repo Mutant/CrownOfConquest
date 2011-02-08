@@ -55,6 +55,7 @@ sub _create_group {
         my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
         	{
         		'category.name' => {'!=', 'Guards'},
+        		'rare' => 0,
         	},
         	{
         		join => 'category',

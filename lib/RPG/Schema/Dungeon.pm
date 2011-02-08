@@ -16,7 +16,7 @@ use AI::Pathfinding::AStar::Rectangle;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Dungeon');
 
-__PACKAGE__->add_columns(qw/dungeon_id level land_id name type/);
+__PACKAGE__->add_columns(qw/dungeon_id level land_id name type tileset/);
 
 __PACKAGE__->set_primary_key('dungeon_id');
 
@@ -25,6 +25,11 @@ __PACKAGE__->has_many( 'rooms', 'RPG::Schema::Dungeon_Room', { 'foreign.dungeon_
 __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->might_have( 'town', 'RPG::Schema::Town', { 'foreign.land_id' => 'self.land_id' } );
+
+my @TILESETS = qw/rocky burrow/;
+sub tilesets {
+    return @TILESETS;
+}
 
 sub delete {
     my ( $self, @args ) = @_;
@@ -561,6 +566,55 @@ sub get_non_diag_result {
 			doors_in_path => [ $sector->get_door_at($direction) // () ],
 		};
 	}
+}
+
+sub floor_count {
+    my $self = shift;
+    
+    my $rs = $self->find_related('rooms',
+        {},
+        {
+            'select' => { max => 'floor' },
+            'as' => 'floor',   
+        },
+    );
+    
+    return $rs->get_column('floor');
+}
+
+# Find the coords of the top left and bottom right corner of the floor specified
+sub get_coord_range_of_floor {
+    my $self = shift;
+    my $floor = shift;
+    
+    my $rs = $self->find_related('rooms',
+        {
+            'floor' => $floor,
+        },
+        {
+            join => 'sectors',
+            'select' => [
+                { min => 'sectors.x' },
+                { min => 'sectors.y' },
+                { max => 'sectors.x' },
+                { max => 'sectors.y' },
+            ],
+            'as' => [
+                qw/min_x min_y max_x max_y/
+            ],
+        },
+    );
+    
+    return [
+        {
+            x => $rs->get_column('min_x'),
+            y => $rs->get_column('min_y'),
+        },
+        {
+            x => $rs->get_column('max_x'),
+            y => $rs->get_column('max_y'),
+        },
+    ];      
 }
 
 1;

@@ -71,7 +71,7 @@ default_cron_string: 5 4 * * *
 creature_orb_cron_string: 35 */2 * * *
 
 # Spawning / moving of creatures
-creatures_cron_string: 50 * * * *
+creatures_cron_string: 20,50 * * * *
 
 # Re-closing of dungeon doors
 dungeon_doors_cron_string: "*/30 * * * *"
@@ -391,6 +391,9 @@ max_offline_combat_per_dungeon_level: 4
 # Offline combat chance in a dungeon
 dungeon_offline_combat_chance: 100
 
+# Percentage of dungeon rooms that are special
+dungeon_special_room_percentage: 2 
+
 # ----- Creature Params ----- #
 
 # Ratio of number of creature groups to parties
@@ -510,7 +513,7 @@ garrison_min_spacing: 1
 minimum_enchantment_creature_level: 6
 
 # Step in chance for creature levels for finding enchanted items
-enchantment_creature_level_step: 2
+enchantment_creature_level_step: 1.5
 
 # ----- Building Params ----- #
 
@@ -521,3 +524,4 @@ building_min_spacing: 1
 
 #   Buildings are free (no resources used)
 #dbg_free_buildings: 1
+

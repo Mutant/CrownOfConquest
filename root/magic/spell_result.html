@@ -6,4 +6,6 @@
 	[% INCLUDE magic/party_effect.html, message=message %]
 [% ELSIF message.type == 'portal' %]
 	[% INCLUDE magic/portal.html, message=message %]
+[% ELSIF message.type == 'summon' %]
+	[% INCLUDE magic/summon.html, message=message %]
 [% END %]

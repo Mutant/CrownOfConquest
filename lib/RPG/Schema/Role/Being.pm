@@ -6,7 +6,7 @@ use Lingua::EN::Gender qw();
 use List::Util qw(sum);
 use Math::Round qw(round);
 
-requires qw/group_id group effect_value resistences/;
+requires qw/group_id group effect_value resistences is_spell_caster check_for_offline_cast/;
 
 sub health {
 	my $self = shift;

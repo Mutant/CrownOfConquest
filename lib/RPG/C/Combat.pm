@@ -396,6 +396,7 @@ sub build_target_list : Private {
 	
 	my @target_data;
 	foreach my $target (@targets) {
+	    next if $target->is_dead;
 		next unless $spell->can_be_cast_on($target);
 		push @target_data, {
 			name => $target->name,

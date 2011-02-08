@@ -379,6 +379,8 @@ sub add_to_garrison : Local {
 	$character->creature_group_id($town->mayor->creature_group_id);
 	$character->update;
 	
+	$c->stash->{party}->adjust_order;
+	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
 }
 
@@ -407,6 +409,8 @@ sub remove_from_garrison : Local {
 	$character->status_context(undef);
 	$character->creature_group_id(undef);
 	$character->update;
+	
+	$c->stash->{party}->adjust_order;
 	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
 }

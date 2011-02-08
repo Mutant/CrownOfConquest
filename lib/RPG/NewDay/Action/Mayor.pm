@@ -28,7 +28,7 @@ sub run {
 
 	foreach my $town (@towns) {
 		$self->context->logger->debug("Processing mayor for town " . $town->id); 
-		
+
 		# Reset tax modified flag
 		$town->tax_modified_today(0);
 		$town->update;
@@ -50,9 +50,7 @@ sub run {
             );
 		}
 		
-		if ($mayor->is_dead && ! $town->pending_mayor) {
-			$self->refresh_mayor($mayor);
-		}
+		$self->refresh_mayor($mayor, $town);
 		
 		if ($town->pending_mayor) {
 			$self->check_for_pending_mayor_expiry($town);
@@ -100,6 +98,7 @@ sub run {
 		}
 
     	$self->generate_guards($town->castle);
+    	$town->discard_changes;
 		
 		$self->calculate_approval($town);
 
@@ -108,8 +107,8 @@ sub run {
     	if (! $revolt_started && $town->peasant_state) {
     		$self->process_revolt($town);
     	}
-    	
-    	$self->generate_advice($town);
+
+    	$self->generate_advice($town);    	
 	}
 	
 	# Clear all tax paid / raids today
@@ -400,9 +399,13 @@ sub check_for_pending_mayor_expiry {
 sub refresh_mayor {
 	my $self = shift;
 	my $mayor = shift;
+	my $town = shift;
 		
-	$mayor->hit_points($mayor->max_hit_points);
-	$mayor->update;
+
+	if ($mayor->is_dead && ! $town->pending_mayor) {
+    	$mayor->hit_points($mayor->max_hit_points);
+    	$mayor->update;		
+	}		
 	
 	# Mayor gets items auto-repaired, and ammo stocked up
 	my @items = $mayor->items;
@@ -417,7 +420,7 @@ sub refresh_mayor {
 		if ($item->item_type->category->item_category eq 'Ranged Weapon') {
 			my @ammo = $mayor->ammunition_for_item($item);
 			
-			my $total_ammo = (sum map { $_->quantity } @ammo) // 0;
+			my $total_ammo = (sum map { $_ && $_->quantity } @ammo) // 0;
 			
 			if ($total_ammo < 100) {
 				# Create some more ammo
@@ -476,8 +479,10 @@ sub generate_advice {
 	my $town = shift;
 		
 	my $advisor_fee = $town->advisor_fee;
+	$self->context->logger->debug("gold: " . $town->gold);
+
 	if ($town->gold < $advisor_fee) {
-		$advisor_fee = $town->gold;
+	    $advisor_fee = $town->gold;
 	}
 	
 	$town->decrease_gold($advisor_fee);
@@ -505,6 +510,9 @@ sub generate_advice {
 	for (shuffle @checks) {
 		# Do they need more guards?
 		when ('guards') {
+		    my $castle = $town->castle;
+		    next unless $castle;
+		    
 		 	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 				{
 					'dungeon_room.dungeon_id' => $town->castle->id,
@@ -552,8 +560,10 @@ sub generate_advice {
 					as => 'level_aggregate',	
 				}					
 			);
+			
+			my $level_aggr = $garrison_char_rec->get_column('level_aggregate') || 0;
 						
-			if ($town->expected_garrison_chars_level > $garrison_char_rec->get_column('level_aggregate')) {
+			if ($town->expected_garrison_chars_level > $level_aggr) {
 				$advice = "You could use some more protection. Adding more characters to the town's garrison will give you an edge";
 				last;	
 			}

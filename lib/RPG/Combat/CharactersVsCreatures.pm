@@ -27,6 +27,15 @@ has 'combatants_list' => (
     builder => '_build_combatants',
 );
 
+# We store whether the cg had rare monsters in it at the beginning of the combat
+#  This is because this could change (i.e. the rare monster is killed)
+before 'execute_round' => sub {
+    my $self = shift;
+
+    $self->session->{rare_cg} = $self->creature_group->has_rare_monster
+        unless defined $self->session->{rare_cg};
+};
+
 sub _build_combatants {
 	my $self = shift;
 
@@ -72,6 +81,10 @@ sub process_effects {
 # See if the creatures try to flee
 sub creature_flee {
 	my $self = shift;
+
+    # Rare cg's don't flee... this is to make sure party gets reward (i.e. item) if they kill the rare monster
+    #  Might make it too easy to farm items, but we'll see I guess...
+    return if $self->session->{rare_cg};
 
 	# See if the creatures want to flee... check this every 2 rounds
 	#  Only flee if cg level is lower than party
@@ -137,8 +150,17 @@ sub check_for_item_found {
 	my $self = shift;
 	my ( $characters, $avg_creature_level ) = @_;
 
-	# See if party find an item
-	if ( Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * ( $self->config->{chance_to_find_item} || 0 ) ) {
+	# See if party find an item	
+	my $find_item = 0;
+	if ($self->session->{rare_cg}) {
+	    # Always find an item on a rare cg
+	    $find_item = 1;
+	}
+	else {
+	    $find_item = Games::Dice::Advanced->roll('1d100') <= $avg_creature_level * ( $self->config->{chance_to_find_item} || 0 );
+	}
+
+	if ( $find_item ) {
 		my $min_prevalence = 100 - ( $avg_creature_level * $self->config->{prevalence_per_creature_level_to_find} );
 
 		# Get item_types within the prevalance roll
@@ -154,7 +176,7 @@ sub check_for_item_found {
 		my $item_type = shift @item_types;
 
 		unless ($item_type) {
-			$self->log->info("Couldn't find item to give to party under prevalence $min_prevalence");
+			$self->log->info("Couldn't find item to give to party over prevalence $min_prevalence");
 			return;
 		}
 
@@ -169,17 +191,34 @@ sub check_for_item_found {
 
 		# Create the item
 		my $item;
-		if ($avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
+		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
 			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
-			if ($enchantment_roll <= $enchantment_chance) {
+			
+			if ($self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
+			    # Make sure item type selected is capable of being enchanted. If not, choose another one
+			    while ($item_type->category->enchantments_allowed->count <= 0) {
+			        $item_type = shift @item_types;
+			        return unless $item_type;
+			    }			    
+			    
 				my $enchantment_count = RPG::Maths->weighted_random_number(1..3);
+				
+				my $max_value = $avg_creature_level * 150;
+				
+				if ($self->session->{rare_cg}) {
+				    my ($rare_creature) = grep { $_->type->rare == 1 } $self->creature_group->creatures;
+				    my $rare_level = $rare_creature->type->level;
+				    $max_value = $rare_level * 350;
+				    $enchantment_count = int $rare_level / 5;
+				    $enchantment_count = 4 if $enchantment_count > 4;
+				} 
 				
 				$item = $self->schema->resultset('Items')->create_enchanted(
 					{ item_type_id => $item_type->id, },
 					{ 
 						number_of_enchantments => $enchantment_count,
-						max_value => $avg_creature_level * 150, 
+						max_value => $max_value,
 					},
 				);
 			}

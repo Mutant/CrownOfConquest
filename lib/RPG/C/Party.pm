@@ -105,7 +105,7 @@ sub sector_menu : Private {
 	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
 		$can_build_building = $c->stash->{party_location}->building_allowed($c->stash->{party}->id);
 	}
-	my $has_building = $c->stash->{party_location}->has_building;
+	my $building = $c->stash->{party_location}->building;
 
 	my @items = $c->stash->{party_location}->items;
 
@@ -131,7 +131,7 @@ sub sector_menu : Private {
 					garrison               => $garrison,
 					can_build_garrison     => $can_build_garrison,
 					can_build_building     => $can_build_building,
-					has_building           => $has_building,
+					building               => $building,
 					items                  => \@items,
 				},
 				return_output => 1,

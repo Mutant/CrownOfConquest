@@ -607,6 +607,80 @@ sub disband {
 	);
 }
 
+#  Return an array of equipment in this party.  Optional item category name(s) can be passed.
+sub get_equipment {
+	my $self = shift;
+	my @categories = @_;
+	
+	my @search_criteria = ('belongs_to_character.party_id' => $self->id);
+	my $count = @categories;
+	if ($count) {
+		my @item_types;
+		foreach my $next_category (@categories) {
+			push(@item_types, ('item_category', $next_category));
+		}
+		if ($count > 1) {
+			push(@search_criteria, ('-or', \@item_types));
+		} else {
+			push(@search_criteria, @item_types);
+		}
+	}
+
+	my @party_equipment = $self->result_source->schema->resultset('Items')->search(
+        	@search_criteria,
+	        {
+	        	join => ['belongs_to_character', 'item_type'],
+	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+	            order_by => 'item_category',
+	        },
+	);
+	return @party_equipment;
+}
+
+#  This function consumes items that are possessed by the party.
+sub consume_items{
+	my $self = shift;
+	my @categories = split(',', shift);			# e.g. 'Resource' or 'Resource,Tool'
+
+	#  Remaining args consist of item type / count pairs.
+	my (@resources, %counts);
+	while (@_) {
+		my $next_item_type = shift;
+		push(@resources, $next_item_type);
+		$counts{$next_item_type} = shift;
+	}
+	
+	#Carp::carp("get_equipment resources:".Dumper(@resources));
+	#Carp::carp("counts:".Dumper(%counts));
+	
+	#  Get the party's equipment.
+	my @party_equipment = $self->get_equipment(@categories);
+
+	#  Go through the items, decreasing the needed counts.
+	my @items_to_delete;
+	foreach my $next_item (@party_equipment) {
+		if (defined $counts{$next_item->item_type->item_type} and $counts{$next_item->item_type->item_type} > 0) {
+			$counts{$next_item->item_type->item_type}--;
+			push(@items_to_delete, $next_item);
+		}
+	}
+	
+	#  If any of the counts are non-zero, we didn't have enough of the item.
+	#Carp::carp("final counts:".Dumper(%counts));
+	foreach my $next_key (keys %counts) {
+		if ($counts{$next_key} > 0) {
+			return 0;
+		}
+	}
+	
+	#  We had enough resources, so delete the items.
+	foreach my $next_item (@items_to_delete) {
+		Carp::carp("Would delete ".$next_item->item_type->item_type." with id:".$next_item->item_id);
+		$next_item->delete;	
+	}
+	return 1;
+}
+
 # Return a hash of characters with broken items
 sub broken_equipped_items_hash {
 	my $self = shift;

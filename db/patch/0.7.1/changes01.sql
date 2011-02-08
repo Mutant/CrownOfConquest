@@ -3,7 +3,7 @@ ALTER TABLE `Dungeon_Grid` ADD COLUMN `stairs_down` TINYINT(4)  NOT NULL DEFAULT
 
 ALTER TABLE `Memorised_Spells` ADD INDEX `char_id`(`character_id`);
 
-ALTER TABLE `Character` ADD COLUMN `attack_factor` INTEGER  NOT NULL DEFAULT 0 AFTER `has_usable_items`,
+ALTER TABLE `Character` ADD COLUMN `attack_factor` INTEGER  NOT NULL DEFAULT 0 AFTER `movement_factor_bonus`,
  ADD COLUMN `defence_factor` INTEGER  NOT NULL DEFAULT 0 AFTER `attack_factor`;
 
 ALTER TABLE `Character` ADD COLUMN `back_rank_penalty` INTEGER  NOT NULL AFTER `defence_factor`;
@@ -104,7 +104,7 @@ ALTER TABLE item_category AUTO_INCREMENT = 10;
 
 INSERT INTO item_category
  (item_category, hidden, auto_add_to_shop, findable)
- VALUES ('Resource', 0, 1, 1);
+ VALUES ('Resource', 0, 1, 0);
 
 INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Iron', 100, 100, 100, 'iron.png',
@@ -134,7 +134,7 @@ update item_type set image = concat(item_type_id, '-', image) where item_type = 
 
 INSERT INTO item_category
  (item_category, hidden, auto_add_to_shop, findable)
- VALUES ('Tool', 0, 1, 1);
+ VALUES ('Tool', 1, 1, 0);
 
 INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Mallet', 50, 100, 15, 'mallet.png',

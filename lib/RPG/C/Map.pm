@@ -160,7 +160,22 @@ sub generate_grid : Private {
     foreach my $road (@roads) {
         push @{$road_grid->[ $road->{location}->{x} ][ $road->{location}->{y} ]}, $road;
     }
+
+	#  Add any buildings
+    my @buildings = $c->model('DBIC::Building')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        $x_size,
+    );    
     
+    my $building_grid;
+    foreach my $building (@buildings) {
+    	#Carp::carp("Next building".Dumper($building));
+        push @{$building_grid->[ $building->{location}->{x} ][ $building->{location}->{y} ]}, $building;
+    }
+   
     $c->stats->profile("Queried db for roads");
 
     my @grid;
@@ -169,6 +184,7 @@ sub generate_grid : Private {
 
     foreach my $location (@$locations) {
         $location->{roads} = $road_grid->[ $location->{x} ][ $location->{y} ];
+        $location->{buildings} = $building_grid->[ $location->{x} ][ $location->{y} ];
         
         $grid[ $location->{x} ][ $location->{y} ] = $location;
 

@@ -8,6 +8,8 @@ extends 'DBIx::Class';
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Building');
+
 __PACKAGE__->add_columns(qw/building_id land_id building_type_id owner_id owner_type name clay_needed stone_needed wood_needed iron_needed labor_needed/);
 
 __PACKAGE__->numeric_columns(qw/clay_needed stone_needed wood_needed iron_needed labor_needed/);
@@ -17,7 +19,7 @@ __PACKAGE__->set_primary_key('building_id');
 __PACKAGE__->belongs_to( 'building_type', 'RPG::Schema::Building_Type', 'building_type_id', {cascade_delete => 0} );
 
 __PACKAGE__->belongs_to(
-    'land',
+    'location',
     'RPG::Schema::Land',
     { 'foreign.land_id' => 'self.land_id' },
     {cascade_delete => 0}

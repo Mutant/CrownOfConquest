@@ -43,18 +43,13 @@ sub get_building_info {
 		$c->stash->{resource_images}{$next_resource->item_type} = $next_resource->image;
 	}
 
-	#  Create the list of equipment (resources and tools) owned by the current party.
-	my @party_equipment = $c->model('DBIC::Items')->search(
-        	{ 
-	        	'belongs_to_character.party_id' => $c->stash->{party}->id
-	        },
-	        {
-	        	join => 'belongs_to_character',
-	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-	            order_by => 'item_category',
-	        },
-	);
-	
+	#  Get the list of equipment (resources and tools) owned by the current party.
+	my @party_equipment = $c->stash->{party}->get_equipment(qw(Tool Resource));
+	#Carp::carp("Both tools and resources:");
+	foreach my $next_item (@party_equipment) {
+		#Carp::carp("Next item:".$next_item->item_type_id);
+	}
+
 	foreach my $next_resource (@{$c->stash->{resource_and_tools}}) {
 		if ($next_resource->item_category_id == $c->stash->{resource_category}->item_category_id) {
 			$available_resources{$next_resource->item_type} = 0;
@@ -107,17 +102,12 @@ sub get_building_info {
 		$this_type{'enough_resources'} = 1;
 		foreach my $next_res (@resource_needs) {
 			if ($available_resources{$next_res->{res_name}} < $next_res->{amount}) {
-				$next_type->{'enough_resources'} = 0;
-				last;
+				$this_type{'enough_resources'} = 0;
 			}
 		}
 		$this_type{'resources_needed'} = \@resource_needs;
-		$c->stash->{building_info}{$next_type->building_type_id} = \%this_type;
-		#Carp::carp("Resource needs:".Dumper($c->stash->{building_info}{$next_type->building_type_id}));
-		#Carp::carp("Resource needs:".Dumper(%this_type));		
+		$c->stash->{building_info}{$next_type->building_type_id} = \%this_type;	
 	}
-
-
 }
 
 sub create : Local {
@@ -155,8 +145,7 @@ sub create : Local {
 		my $next_class = $next_type->{class};
 		
 		#  If the class of this building is not an existing building, and it's level is lower than others that we've
-		#   seen for this class, remember it.
-		
+		#   seen for this class, remember it.		
 		if (!exists($buildings_by_class{$next_class})) {
 			if (!exists($existing_classes_seen{$next_class}) || $existing_classes_seen{$next_class}->{level} > $next_type->{level}) {
 				$existing_classes_seen{$next_class} = $next_type;
@@ -175,6 +164,7 @@ sub create : Local {
 	
 	#  Construct the available buildings array from the lowest level building classes that haven't been built yet.
 	foreach my $next_class_key (keys %existing_classes_seen) {
+		#Carp::carp("Next building info:".Dumper($existing_classes_seen{$next_class_key}));
 		push(@available_buildings, $existing_classes_seen{$next_class_key});
 	}
 
@@ -195,6 +185,7 @@ sub create : Local {
     );			
 }
 
+#  getToolMultiplier - this function returns the multiplying effect on construction of a given tool.
 sub getToolMultiplier : Local {
 	my ($self, $c, $item) = @_;
 	return 1;
@@ -203,195 +194,145 @@ sub getToolMultiplier : Local {
 sub add : Local {
 	my ($self, $c) = @_;
 
+	#  Was a building type id supplied?
 	my $building_id = $c->req->param('building_id');
 	if (!defined $building_id) {
 		$c->stash->{error} = "You must select a building to create or upgrade";
 		$c->detach('create');
 	}
-	$self->get_building_info($c);
 
+	#  Check party level.
 	if ( $c->stash->{party}->level < $c->config->{minimum_building_level} ) {
 		$c->stash->{error} = "You can't create a building - your party level is too low";
 		$c->detach('create');
 	}
 
-	my $building = \$c->stash->{building_info}{$building_id};
-	#Carp::carp("Adding this building:".Dumper($building));
-	if ( $c->stash->{party}->turns < ${$building}->{turns_needed} ) {
-		$c->stash->{error} = "Your party needs at least " . ${$building}->{turns_needed} . " turns to create this building";
+	#  Get info on this building type.
+	$self->get_building_info($c);
+	my $building_type = \$c->stash->{building_info}{$building_id};
+	#Carp::carp("Adding this building:".Dumper($building_type));
+	
+	#  Make sure the party has enough turns to build.
+	if ( $c->stash->{party}->turns < ${$building_type}->{turns_needed} ) {
+		$c->stash->{error} = "Your party needs at least " . ${$building_type}->{turns_needed} . " turns to create this building";
 		$c->detach('create');		
 	}
-	
-#	croak "Illegal building creation - building not allowed here" unless $c->stash->{party_location}->building_allowed;
-#
-#	my $garrison = $c->model('DBIC::Garrison')->create(
-#		{
-#			land_id => $c->stash->{party_location}->land_id,
-#			party_id => $c->stash->{party}->id,
-#			creature_attack_mode => 'Attack Weaker Opponents',
-#			party_attack_mode => 'Defensive Only',
-#			name => $c->req->param('name') || undef,
-#		}
-#	);
-#	
-#	$c->model('DBIC::Character')->search(
-#		{
-#			character_id => \@char_ids_to_garrison,
-#			party_id => $c->stash->{party}->id,
-#		}
-#	)->update(
-#		{
-#			garrison_id => $garrison->id,
-#		}
-#	);
-#	
-#	$c->model('DBIC::Party_Messages')->create(
-#		{
-#			message => "We created a garrison at " . $garrison->land->x . ", " . $garrison->land->y,
-#			alert_party => 0,
-#			party_id => $c->stash->{party}->id,
-#			day_id => $c->stash->{today}->id,
-#		}
-#	);
-#	
-#	$c->stash->{party}->adjust_order;
-#	$c->stash->{party}->turns($c->stash->{party}->turns - $c->config->{garrison_creation_turn_cost});
-#	$c->stash->{party}->update;
-#	
-#	$c->forward('add_to_town_news', ['create']);
-#	
-#	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
-}
 
-sub update : Local {
-	my ($self, $c) = @_;
-	
-	croak "Can't find garrison" unless $c->stash->{garrison};
-	
-	croak "Must be in correct sector to update garrison" unless $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
-	
-	my @current_garrison_chars = $c->stash->{garrison}->characters;
-		
-	my %char_ids_to_garrison = map { $_ => 1 } $c->req->param('chars_in_garrison');
-	
-	croak "Must have at least one char in the garrison" unless %char_ids_to_garrison;
-	
-	my @chars_in_party = $c->stash->{party}->characters_in_party;
-	if (scalar keys(%char_ids_to_garrison) - scalar @current_garrison_chars == scalar @chars_in_party) {
-		croak "Must keep at least one character in the party";
-	}
-	
-	my %chars_by_id = map { $_->id => $_ } (@chars_in_party, @current_garrison_chars);
-	if ((grep { ! $chars_by_id{$_}->is_dead } keys %char_ids_to_garrison ) <= 0 ) {
-		$c->stash->{error} = "You must have at least one living character in the garrison";
-		$c->detach( 'manage' );
-	}
-	
-	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(keys %char_ids_to_garrison) };
-	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
-		$c->stash->{error} = "You must have at least one living character in your party";
-		$c->detach('manage');		
-	}	
+	#  Create the building.
+	my $building = $c->model('DBIC::Building')->create(
+		{
+			land_id => $c->stash->{party_location}->land_id,
+			building_type_id => $building_id,
+			owner_id => $c->stash->{party}->id,
+			owner_type => "party",
+			name => ${$building_type}->{name},
+			
+			#  For now, partial construction not allowed, so we use all the materials up front
+			'clay_needed' => 0,
+			'stone_needed' => 0,
+			'wood_needed' => 0,
+			'iron_needed' => 0,
+			'labor_needed' => 0,
+		}
+	);
 
-	if (scalar @chars_left_in_party > $c->config->{max_party_characters}) {
-		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " characters in your party";
-		$c->detach( 'manage' );
-		return;		
-	}
-	
-	my @chars_to_remove;
-	foreach my $current_char (@current_garrison_chars) {
-		if (! $char_ids_to_garrison{$current_char->id}) {
-			# Char removed
-			push @chars_to_remove, $current_char;
+	#  Make sure the party has the necessary resources.  If so, consume them.
+	#  Debug - if free buildings, don't deduct resources.
+	if (RPG->config->{dbg_free_buildings} != 1) {
+		my @resources_needed;
+		foreach my $next_res (@{${$building_type}->{resources_needed}}) {
+			push(@resources_needed, $next_res->{res_name});
+			push(@resources_needed, $next_res->{amount});
+		}
+		if (!($c->stash->{party}->consume_items('Resource', @resources_needed))) {
+			$c->stash->{error} = "Your party does not have the resources needed to create this building";
+			$c->detach('create');			
 		}
 	}
 	
-	foreach my $char (@current_garrison_chars) {
-		$char->garrison_id(undef);
-		$char->update;
-	}
-	
-	$c->model('DBIC::Character')->search(
+	$c->model('DBIC::Party_Messages')->create(
 		{
-			character_id => [keys %char_ids_to_garrison],
+			message => "We created a " . ${$building_type}->{name} . " at " . $c->stash->{party}->location->x . ", "
+			 . $c->stash->{party}->location->y,
+			alert_party => 0,
 			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->id,
 		}
-	)->update(
-		{
-			garrison_id => $c->stash->{garrison}->id,
-		}
-	);	
-	
-	$c->stash->{party}->adjust_order;
-	
-	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
-	
+	);
+
+	$c->stash->{party}->turns($c->stash->{party}->turns - ${$building_type}->{turns_needed});
+	$c->stash->{party}->update;
+
+#	$c->forward('add_to_town_news', ['create']);  TODO: is this needed?
+
+	$c->res->redirect( $c->config->{url_root});
 }
 
-sub remove : Local {
+sub seize : Local {
 	my ($self, $c) = @_;
 	
-	confess "Can't find garrison" unless $c->stash->{garrison};
+	#  Update the ownership of all buildings in this sector.
+	$c->model('DBIC::Building')->search(
+        	{ 'land_id' => $c->stash->{party_location}->id, },
+        	{ },
+	)->update
+	(
+			{ owner_id => $c->stash->{party}->id,
+			owner_type => "party", },
+	);
 	
-	my @garrison_characters = $c->stash->{garrison}->characters;
-	my @characters = $c->stash->{party}->characters_in_party;
-
-	if (scalar @garrison_characters + scalar @characters > $c->config->{max_party_characters}) {
-		$c->stash->{error} = "You can't remove this garrison - " .
-			"adding these characters would give you more than " . $c->config->{max_party_characters} . " characters in the party";
-		$c->detach( 'manage' );
-	}
-	else {	
-		foreach my $character (@garrison_characters) {
-			$character->garrison_id(undef);
-			$character->update;	
-		}
-		
-		$c->stash->{party}->adjust_order;
-
+	#   Grab the building list, report on each on seized.
+	my @existing_buildings = $c->model('DBIC::Building')->search(
+        	{ 'land_id' => $c->stash->{party_location}->id, },
+        	{ },
+	);
+	my $count = 0;
+	foreach my $next_building (@existing_buildings) {
 		$c->model('DBIC::Party_Messages')->create(
 			{
-				message => "We disbanded our garrison at " . $c->stash->{garrison}->land->x . ", " . $c->stash->{garrison}->land->y,
+				message => "We seized the " . $next_building->name . " at " .
+				 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y,
 				alert_party => 0,
 				party_id => $c->stash->{party}->id,
 				day_id => $c->stash->{today}->id,
 			}
-		);		
+		);
+		$count++;
 
-		# Move equipment and gold back to party
-		foreach my $item ($c->stash->{garrison}->items) {
-			my $character = (shuffle @characters)[0];
-			$item->add_to_characters_inventory($character);
-		}
-		
-		$c->forward('add_to_town_news', ['remove']);
-		
-		$c->stash->{party}->increase_gold($c->stash->{garrison}->gold);
-		$c->stash->{party}->update;
-
-		$c->stash->{garrison}->land_id(undef);
-		$c->stash->{garrison}->update;
-		
-		$c->stash->{panel_messages} = ['Garrison Removed'];
-		
-		$c->forward('/party/main');
+		# $c->forward('add_to_town_news', ['remove']);  TODO: Needed?
 	}
+	$c->stash->{panel_messages} = [$count . ' building' . ($count==1?'':'s') . ' seized'];
+		
+	$c->forward('/party/main');
 }
 
-sub update_garrison_name : Local {
+sub raze : Local {
 	my ($self, $c) = @_;
-	
-	$c->stash->{garrison}->name($c->req->param('name') || undef);
-	$c->stash->{garrison}->update;
-	
-	$c->res->body(
-		to_json(
-			{
-				new_name => $c->stash->{garrison}->display_name(1),
-			}
-		)
+
+	my @existing_buildings = $c->model('DBIC::Building')->search(
+        	{ 'land_id' => $c->stash->{party_location}->id, }, { },
 	);
+	
+	my $count = 0;
+	foreach my $next_building (@existing_buildings) {
+		$c->model('DBIC::Party_Messages')->create(
+			{
+				message => "We razed the " . $next_building->name . " at " .
+				 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y,
+				alert_party => 0,
+				party_id => $c->stash->{party}->id,
+				day_id => $c->stash->{today}->id,
+			}
+		);
+		
+		$next_building->delete;
+		$count++;
+
+		# $c->forward('add_to_town_news', ['remove']);  TODO: Needed?
+	}
+	$c->stash->{panel_messages} = [$count . ' building' . ($count==1?'':'s') . ' razed'];
+		
+	$c->forward('/party/main');
 }
 
 1;

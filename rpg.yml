@@ -511,3 +511,13 @@ minimum_enchantment_creature_level: 6
 
 # Step in chance for creature levels for finding enchanted items
 enchantment_creature_level_step: 2
+
+# ----- Building Params ----- #
+
+# Minimum distance between buildings- 1=one empty space min between
+building_min_spacing: 1
+
+# ----- Debug ----- #
+
+#   Buildings are free (no resources used)
+#dbg_free_buildings: 1

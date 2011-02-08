@@ -222,6 +222,27 @@ sub get_adjacent_garrisons {
     return @garrisons;
 }
 
+sub get_adjacent_buildings {
+    my $self = shift;
+    my $range = shift || RPG->config->{building_min_spacing};
+    my %criteria = ( 'building.building_id' => { '!=', undef }, );
+
+    my %attrs = ( 'prefetch' => 'building', );
+
+    my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => ($range * 2) + 1,
+        increment_search_by => 0,
+        criteria            => \%criteria,
+        attrs               => \%attrs,
+    );
+
+    my @buildings = map { $_->building } @land_rec;
+    return @buildings;
+}
+
 sub has_road_joining_to {
     my $self = shift;
     my $sector_to_check = shift || confess "sector_to_check not supplied";
@@ -329,8 +350,11 @@ sub building_allowed {
 	# Not allowed if adjacent to a town
 	return 0 if $self->get_adjacent_towns;
 
-	# Not allowed if another garrison is here that is not owned by us
-	return 0 if $self->garrison && $self->garrison->party_id != $party;
+	# Not allowed if too close to a building
+	return 0 if $self->get_adjacent_buildings();
+	
+	# Not allowed if another building is here that is not owned by us
+	return 0 if $self->building && $self->building->owner_id != $party;
 
 	return 1;
 }

@@ -43,7 +43,8 @@ sub auto : Private {
         }
         return 1;
     }
-        return 1 if $c->action =~ m/^admin/;
+        
+    return 1 if $c->action =~ m/^admin/;
     
     $c->forward('check_for_deleted_player');
 

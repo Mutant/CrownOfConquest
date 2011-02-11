@@ -162,96 +162,96 @@ INSERT INTO Building_Type
  ('Arsenal2', 3, 3, 8, 8, 8, 4, 20, 20, 8, 12, 40, 40, 'fortfin.png', 'fortinprog.png');
 
 
-DELETE FROM item_type WHERE item_category_id in
- (select item_category_id from Item_Category where item_category in ('Tool', 'Resource'));
-ALTER TABLE item_type AUTO_INCREMENT = 50;
+DELETE FROM Item_Type WHERE item_category_id in
+ (select item_category_id from Item_Category where Item_category in ('Tool', 'Resource'));
+ALTER TABLE Item_Type AUTO_INCREMENT = 50;
 
-DELETE FROM item_category where item_category in ('Resource', 'Tool');
-ALTER TABLE item_category AUTO_INCREMENT = 10;
+DELETE FROM Item_Category where Item_category in ('Resource', 'Tool');
+ALTER TABLE Item_Category AUTO_INCREMENT = 10;
 
-INSERT INTO item_category
- (item_category, hidden, auto_add_to_shop, findable)
+INSERT INTO Item_Category
+ (Item_category, hidden, auto_add_to_shop, findable)
  VALUES ('Resource', 0, 1, 0);
-DELETE FROM item_variable_name WHERE item_category_id in
- (select item_category_id from Item_Category where item_category = 'Resource');
-INSERT INTO item_variable_name (item_variable_name, create_on_insert, item_category_id)
+DELETE FROM Item_Variable_Name WHERE item_category_id in
+ (select item_category_id from Item_Category where Item_category = 'Resource');
+INSERT INTO Item_Variable_Name (item_variable_name, create_on_insert, item_category_id)
  VALUES ('Quantity', 1,
- (select item_category_id from Item_Category where item_category = 'Resource'));
+ (select item_category_id from Item_Category where Item_category = 'Resource'));
 
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Iron', 100, 100, 10, 'iron.png',
- (select item_category_id from Item_Category where item_category = 'Resource'));
+ (select item_category_id from Item_Category where Item_category = 'Resource'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Iron';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Iron';
 
-INSERT INTO item_variable_params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
- VALUES (0, 1, 50, (select item_type_id from item_type where item_type = 'Iron'),
- (select item_variable_name_id from item_variable_name where item_variable_name = 'Quantity' and
- item_category_id = (select item_category_id from Item_Category where item_category = 'Resource')));
+INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
+ VALUES (0, 1, 50, (select item_type_id from Item_Type where Item_Type = 'Iron'),
+ (select item_variable_name_id from Item_Variable_Name where item_variable_name = 'Quantity' and
+ item_category_id = (select item_category_id from Item_Category where Item_category = 'Resource')));
 
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Clay', 50, 100, 5, 'clay.png',
- (select item_category_id from Item_Category where item_category = 'Resource'));
+ (select item_category_id from Item_Category where Item_category = 'Resource'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Clay';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Clay';
 
-INSERT INTO item_variable_params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
- VALUES (0, 1, 50, (select item_type_id from item_type where item_type = 'Clay'),
- (select item_variable_name_id from item_variable_name where item_variable_name = 'Quantity' and
- item_category_id = (select item_category_id from Item_Category where item_category = 'Resource')));
+INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
+ VALUES (0, 1, 50, (select item_type_id from Item_Type where Item_Type = 'Clay'),
+ (select item_variable_name_id from Item_Variable_Name where item_variable_name = 'Quantity' and
+ item_category_id = (select item_category_id from Item_Category where Item_category = 'Resource')));
 
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Wood', 30, 100, 4, 'wood.png',
- (select item_category_id from Item_Category where item_category = 'Resource'));
+ (select item_category_id from Item_Category where Item_category = 'Resource'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Wood';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Wood';
 
-INSERT INTO item_variable_params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
- VALUES (0, 1, 50, (select item_type_id from item_type where item_type = 'Wood'),
- (select item_variable_name_id from item_variable_name where item_variable_name = 'Quantity' and
- item_category_id = (select item_category_id from Item_Category where item_category = 'Resource')));
+INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
+ VALUES (0, 1, 50, (select item_type_id from Item_Type where Item_Type = 'Wood'),
+ (select item_variable_name_id from Item_Variable_Name where item_variable_name = 'Quantity' and
+ item_category_id = (select item_category_id from Item_Category where Item_category = 'Resource')));
 
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Stone', 40, 100, 10, 'stone.png',
- (select item_category_id from Item_Category where item_category = 'Resource'));
+ (select item_category_id from Item_Category where Item_category = 'Resource'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Stone';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Stone';
 
-INSERT INTO item_variable_params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
- VALUES (0, 1, 50, (select item_type_id from item_type where item_type = 'Stone'),
- (select item_variable_name_id from item_variable_name where item_variable_name = 'Quantity' and
+INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item_variable_name_id)
+ VALUES (0, 1, 50, (select item_type_id from Item_Type where Item_Type = 'Stone'),
+ (select item_variable_name_id from Item_Variable_Name where item_variable_name = 'Quantity' and
  item_category_id = (select item_category_id from Item_Category where item_category = 'Resource')));
 
 
-INSERT INTO item_category
- (item_category, hidden, auto_add_to_shop, findable)
+INSERT INTO Item_Category
+ (Item_category, hidden, auto_add_to_shop, findable)
  VALUES ('Tool', 1, 1, 0);
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Mallet', 50, 100, 15, 'mallet.png',
- (select item_category_id from Item_Category where item_category = 'Tool'));
+ (select item_category_id from Item_Category where Item_category = 'Tool'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Mallet';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Mallet';
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Hammer', 70, 100, 10, 'hammer.png',
- (select item_category_id from Item_Category where item_category = 'Tool'));
+ (select item_category_id from Item_Category where Item_category = 'Tool'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Hammer';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Hammer';
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Pickaxe', 40, 100, 25, 'pickaxe.png',
- (select item_category_id from Item_Category where item_category = 'Tool'));
+ (select item_category_id from Item_Category where Item_category = 'Tool'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Pickaxe';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Pickaxe';
 
-INSERT INTO `Item_Type`(item_type, base_cost, prevalence, weight, image, item_category_id)
+INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
  VALUES ('Shovel', 30, 100, 20, 'shovel.png',
- (select item_category_id from Item_Category where item_category = 'Tool'));
+ (select item_category_id from Item_Category where Item_category = 'Tool'));
 
-update item_type set image = concat(item_type_id, '-', image) where item_type = 'Shovel';
+update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Shovel';
 

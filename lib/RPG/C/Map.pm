@@ -172,7 +172,6 @@ sub generate_grid : Private {
     
     my $building_grid;
     foreach my $building (@buildings) {
-    	#Carp::carp("Next building".Dumper($building));
         push @{$building_grid->[ $building->{location}->{x} ][ $building->{location}->{y} ]}, $building;
     }
    

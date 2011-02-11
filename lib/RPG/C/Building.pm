@@ -45,11 +45,6 @@ sub get_building_info {
 
 	#  Get the list of equipment (resources and tools) owned by the current party.
 	my @party_equipment = $c->stash->{party}->get_equipment(qw(Tool Resource));
-	#Carp::carp("Both tools and resources:");
-	foreach my $next_item (@party_equipment) {
-		#Carp::carp("Next item:".$next_item->item_type_id);
-	}
-
 	foreach my $next_resource (@{$c->stash->{resource_and_tools}}) {
 		if ($next_resource->item_category_id == $c->stash->{resource_category}->item_category_id) {
 			$available_resources{$next_resource->item_type} = 0;
@@ -62,7 +57,8 @@ sub get_building_info {
 	$available_resources{labor_available} = scalar @characters;
 	foreach my $next_item (@party_equipment) {
 		if ($next_item->item_type->item_category_id == $c->stash->{resource_category}->item_category_id) {
-			$available_resources{$next_item->item_type->item_type}++;
+			my $quantity = $next_item->variable('Quantity') // 1;
+			$available_resources{$next_item->item_type->item_type} += $quantity;
 		} elsif ($next_item->item_type->item_category_id == $c->stash->{tool_category}->item_category_id) {
 			$available_resources{labor_available} += getToolMultiplier($c, $next_item);
 		}
@@ -73,6 +69,7 @@ sub get_building_info {
 		my %this_type = ('name' => $next_type->name, 'image' => $next_type->image, 'defense' => $next_type->defense_factor+0,
 		  'attack' => $next_type->attack_factor+0,  'heal' => $next_type->heal_factor+0,  'commerce' => $next_type->commerce_factor+0,
 		  'labor_needed' => $next_type->labor_needed, 'turns_needed' => 0,
+		  'raze_labor_needed' => $next_type->labor_to_raze, 'raze_turns_needed' => 0,
 		  'building_type_id' => $next_type->building_type_id, 'class' => $next_type->class, 'level' => $next_type->level);
 		#Carp::carp("Next type:".Dumper(%this_type));
 		
@@ -96,8 +93,14 @@ sub get_building_info {
 
 		$this_type{'turns_needed'} = $available_resources{'labor_available'} != 0
 		 ? ceil($this_type{'labor_needed'} / $available_resources{'labor_available'}) : 1000000;
+		if ($this_type{'turns_needed'} <= 0) { $this_type{'turns_needed'} = 1; }
+		
 		$this_type{'enough_turns'} = ($c->stash->{party}->turns > $this_type{'turns_needed'}) ? 1 : 0;
 		
+		$this_type{'raze_turns_needed'} = $available_resources{'labor_available'} != 0
+		 ? ceil($this_type{'raze_labor_needed'} / $available_resources{'labor_available'}) : 1000000;
+		if ($this_type{'raze_turns_needed'} <= 0) { $this_type{'raze_turns_needed'} = 1; }
+				 		
 		#  See if the party has the resources to build/upgrade this type.
 		$this_type{'enough_resources'} = 1;
 		foreach my $next_res (@resource_needs) {
@@ -235,10 +238,26 @@ sub add : Local {
 			'labor_needed' => 0,
 		}
 	);
+	
+	#  If this is an upgrade, then find the previous building and delete it.
+	my @pre_upgrade = $c->model('DBIC::Building')->search(
+		{
+			'land_id' => $c->stash->{party_location}->id,
+			'building_type.class' => ${$building_type}->{class},
+			'building_type.level' => ${$building_type}->{level}-1,
+		},
+		{
+			'join' => 'building_type',
+		},
+	);
+
+	foreach my $pre_building (@pre_upgrade) {
+		$pre_building->delete;
+	}
 
 	#  Make sure the party has the necessary resources.  If so, consume them.
 	#  Debug - if free buildings, don't deduct resources.
-	if (RPG->config->{dbg_free_buildings} != 1) {
+	if (!defined RPG->config->{dbg_free_buildings} || RPG->config->{dbg_free_buildings} != 1) {
 		my @resources_needed;
 		foreach my $next_res (@{${$building_type}->{resources_needed}}) {
 			push(@resources_needed, $next_res->{res_name});
@@ -270,17 +289,7 @@ sub add : Local {
 
 sub seize : Local {
 	my ($self, $c) = @_;
-	
-	#  Update the ownership of all buildings in this sector.
-	$c->model('DBIC::Building')->search(
-        	{ 'land_id' => $c->stash->{party_location}->id, },
-        	{ },
-	)->update
-	(
-			{ owner_id => $c->stash->{party}->id,
-			owner_type => "party", },
-	);
-	
+
 	#   Grab the building list, report on each on seized.
 	my @existing_buildings = $c->model('DBIC::Building')->search(
         	{ 'land_id' => $c->stash->{party_location}->id, },
@@ -288,6 +297,27 @@ sub seize : Local {
 	);
 	my $count = 0;
 	foreach my $next_building (@existing_buildings) {
+
+		#  Make sure this building is indeed owned by another party.
+		if ($c->stash->{party}->id == $next_building->owner_id && $next_building->owner_type eq 'party') {
+			$c->stash->{error} = "You cannot seize your own " . $next_building->name . " at " .
+			 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y;
+			$c->detach('create');		# TODO this isn't right - what to do?			
+		}
+
+		#  Give the former owner the unfortunate news.
+		$c->model('DBIC::Party_Messages')->create(
+			{
+				message => "Our " . $next_building->name . " at " .
+				 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
+				 " was seized from us by " . $c->stash->{party}->name,
+				alert_party => 0,
+				party_id => $next_building->owner_id,
+				day_id => $c->stash->{today}->id,
+			}
+		);
+
+		#  But crow about it to ourselves.
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => "We seized the " . $next_building->name . " at " .
@@ -301,6 +331,17 @@ sub seize : Local {
 
 		# $c->forward('add_to_town_news', ['remove']);  TODO: Needed?
 	}
+
+	#  Update the ownership of all buildings in this sector.
+	$c->model('DBIC::Building')->search(
+        	{ 'land_id' => $c->stash->{party_location}->id, },
+        	{ },
+	)->update
+	(
+			{ owner_id => $c->stash->{party}->id,
+			owner_type => "party", },
+	);
+	
 	$c->stash->{panel_messages} = [$count . ' building' . ($count==1?'':'s') . ' seized'];
 		
 	$c->forward('/party/main');
@@ -309,12 +350,45 @@ sub seize : Local {
 sub raze : Local {
 	my ($self, $c) = @_;
 
+	$self->get_building_info($c);
 	my @existing_buildings = $c->model('DBIC::Building')->search(
         	{ 'land_id' => $c->stash->{party_location}->id, }, { },
 	);
-	
-	my $count = 0;
+
+	#  Figure how many turns are needed to raze the buildings here.
+	my $raze_turns_needed = 0;
 	foreach my $next_building (@existing_buildings) {
+		my $next_type = \%{$c->stash->{building_info}{$next_building->building_type_id}};
+		if ($next_type->{raze_turns_needed} > $raze_turns_needed) {
+			$raze_turns_needed = $next_type->{raze_turns_needed};
+		}
+	}
+	
+	#  Make sure the party has enough turns to raze.
+	my $count = @existing_buildings;
+	if ( $c->stash->{party}->turns < $raze_turns_needed) {
+		$c->stash->{error} = "Your party needs at least " . $raze_turns_needed . " turns to raze " .
+		 ($count > 1 ? "this building" : "these buildings");
+		$c->detach('create');		# TODO this isn't right - what to do?
+	}
+
+	#  Generate messages.
+	foreach my $next_building (@existing_buildings) {
+		
+		#  If we don't own this building, give the former owner the bad news.
+		if ($c->stash->{party}->id != $next_building->owner_id || $next_building->owner_type ne 'party') {
+			$c->model('DBIC::Party_Messages')->create(
+				{
+					message => "Our " . $next_building->name . " at " .
+					 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
+					 " was razed by " . $c->stash->{party}->name,
+					alert_party => 0,
+					party_id => $next_building->owner_id,
+					day_id => $c->stash->{today}->id,
+				}
+			);
+		}
+		
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => "We razed the " . $next_building->name . " at " .
@@ -326,13 +400,18 @@ sub raze : Local {
 		);
 		
 		$next_building->delete;
-		$count++;
 
 		# $c->forward('add_to_town_news', ['remove']);  TODO: Needed?
 	}
 	$c->stash->{panel_messages} = [$count . ' building' . ($count==1?'':'s') . ' razed'];
 		
+	$c->stash->{party}->turns($c->stash->{party}->turns - $raze_turns_needed);
+	$c->stash->{party}->update;
+
+#	$c->forward('add_to_town_news', ['create']);  TODO: is this needed?
+
 	$c->forward('/party/main');
+	#$c->res->redirect( $c->config->{url_root});
 }
 
 1;

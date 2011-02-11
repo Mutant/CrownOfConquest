@@ -126,7 +126,16 @@ __PACKAGE__->add_columns(
       'name' => 'labor_needed',
       'is_nullable' => 0,
       'size' => '11'
-    },    
+    },  
+    'labor_to_raze' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'labor_to_raze',
+      'is_nullable' => 0,
+      'size' => '11'
+    }, 
     'image' => {
       'data_type' => 'varchar',
       'is_auto_increment' => 0,

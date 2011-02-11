@@ -345,7 +345,27 @@ sub test_turns_cant_be_increased_above_maximum : Tests(1) {
     is($party->turns, 105, "Turns set to maximum");
 }
 
-sub test_disband : Tests(2) {
+sub test_turns_allowed_to_stay_above_maximum_when_increased : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema},);
+    my $day = Test::RPG::Builder::Day->build_day($self->{schema},);
+    
+    $self->{config}{maximum_turns} = 100;
+    $party->_turns(105);
+    $party->update;
+    
+    # WHEN
+    $party->increase_turns(110);
+    $party->update;
+    
+    # THEN
+    $party->discard_changes;
+    is($party->turns, 105, "Turns still above maximum");
+}
+
+sub test_disband : Tests(3) {
 	my $self = shift;
 	
 	# GIVEN	

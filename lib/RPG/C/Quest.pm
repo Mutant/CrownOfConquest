@@ -60,17 +60,6 @@ sub accept : Local {
     $quest->status('In Progress');
     $quest->update;
 
-    # If this town has no quests left, create a new quest of the same type
-    # TODO: does this work? Also, need to catch exceptions
-    if ( $c->model('DBIC::Quest')->count( { town_id => $town->id, party_id => undef, } ) == 0 ) {
-        $c->model('DBIC::Quest')->create(
-            {
-                town_id       => $town->id,
-                quest_type_id => $quest->quest_type_id,
-            }
-        );
-    }
-    
     my $message;
     my $accept_template = 'quest/accept_message/' . $quest->type->quest_type . '.html';
     if (-f $c->path_to('root') . '/' . $accept_template) {

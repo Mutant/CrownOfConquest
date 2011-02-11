@@ -323,8 +323,14 @@ sub increase_turns {
             type    => 'increase_turns_error',
         );
     }
+    
+    my $original_turns = $self->_turns;
+    
+    # If they've (somehow) gone above the max turns, they can keep those extra turns, but aren't allowed
+    #  any more (via this method)
+    my $max_turns = $original_turns > RPG::Schema->config->{maximum_turns} ? $original_turns : RPG::Schema->config->{maximum_turns}; 
 
-    $new_turns = RPG::Schema->config->{maximum_turns} if $new_turns > RPG::Schema->config->{maximum_turns};
+    $new_turns = $max_turns if $new_turns > $max_turns;
 
     $self->_turns($new_turns);
 }

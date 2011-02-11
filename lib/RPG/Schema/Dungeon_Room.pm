@@ -38,6 +38,8 @@ sub insert {
 	$self->next::method(@args);
 	
 	$self->_apply_role;
+	
+	return $self;
 }
 
 sub inflate_result {

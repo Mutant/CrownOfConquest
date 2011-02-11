@@ -1,0 +1,44 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+[% IF player_name %]
+<div dojoType="dijit.Dialog" id="confirm" style="display: none" title="Confirm" execute="confirm();">
+    <span id="confirmation-message">Are you sure you want to give [% amount %] [% type %] to [% player_name %]?</span>
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button> 
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm').hide()">Cancel</button>
+	</div>
+</div>
+<script>
+dojo.addOnLoad( init );
+
+function init() {
+	dijit.byId('confirm').show();
+}
+
+function confirm() {
+	document.location = '[% base %]/admin/reward?confirmed=1';
+}
+
+</script>
+[% END %]
+
+<form method="POST" action="[% base %]/admin/reward">
+<table class="main">
+<tr>
+	<td>Player to reward:</td>
+	<td><input type="text" name="player_name" size="50"></td>
+</tr>
+<tr>
+	<td>Amount to reward:</td>
+	<td><input type="text" name="amount" size="6" maxlength="4"></td>
+</tr>
+<tr>
+	<td>Type of reward:</td>
+	<td><select name="type"><option>Turns</option><option>Gold</option></select></td>
+</tr>
+</table>
+<input type="submit" value="Submit">
+</form>
+
+[% INCLUDE bottom.html %]

@@ -484,7 +484,11 @@ sub opponents {
 		$opponents = $opponent_party;
 	}
 	elsif ( $self->combat_type eq 'garrison' ) {
-		$opponents = $schema->resultset('Garrison')->get_by_id( $self->in_combat_with );
+		$opponents = $schema->resultset('Garrison')->find( 
+		  {
+		    garrison_id => $self->in_combat_with
+		  } 
+		);
 	}
 	
 	return $opponents;

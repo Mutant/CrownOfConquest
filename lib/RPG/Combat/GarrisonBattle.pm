@@ -83,7 +83,7 @@ around '_build_combat_factors' => sub {
     # TODO: need to check the garrison is the owner? Or are they always the owner if they're in the sector?
     
     if ($building) {
-        foreach my $character ($self->garrsion->characters) {
+        foreach my $character ($self->garrison->characters) {
             $combat_factors->{character}{ $character->id }{df} += $building->building_type->defense_factor;   
         }   
     }

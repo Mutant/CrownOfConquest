@@ -40,7 +40,7 @@ sub run {
             next unless $shop->status eq 'Open';
 
             # Calculate items in shop
-            my $ideal_items_value = $shop->shop_size * 200 + ( Games::Dice::Advanced->roll('2d40') - 20 );
+            my $ideal_items_value = $shop->shop_size * 250 + ( Games::Dice::Advanced->roll('2d40') - 20 );
             my $actual_items_value = 0;
             my @items_in_shop =
                 $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
@@ -61,12 +61,8 @@ sub run {
             foreach my $item_type (@items_made) {
                 # Skip item type if it's just been deleted
                 next if scalar (grep { $_->isa('RPG::Schema::Item_Type') && $_->id == $item_type->id } @removed) > 1;
-                
-                my $variable_param = $item_type->variable_param('Quantity');
-                
-                my $median_value = ( $variable_param->max_value - $variable_param->min_value ) / 2 + $variable_param->min_value;
-                
-                $actual_items_value += $item_type->modified_cost($shop) * $median_value;
+                                
+                $actual_items_value += $item_type->modified_cost($shop);
             }
 
             my $item_value_to_add = $ideal_items_value - $actual_items_value;
@@ -120,10 +116,7 @@ sub run {
                         $items_made->insert;
                     }
 
-                    # The value of this item is the median of the range of in the 'bundle' times the
-                    #  modified cost
-                    my $median_value = ( $variable_param->max_value - $variable_param->min_value ) / 2 + $variable_param->min_value;
-                    $item_value_to_add -= $item_type->modified_cost($shop) * $median_value;
+                    $item_value_to_add -= $item_type->modified_cost($shop);
                 }
                 else {
                 	my $number_of_enchantments = 0;

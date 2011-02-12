@@ -117,17 +117,17 @@ INSERT INTO Building_Type
  (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
   clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
   image, constr_image) VALUES
- ('Tower', 1, 1, 2, 2, 2, 1, 0, 10, 5, 3, 10, 10, 'fortfin.png', 'fortinprog.png');
+ ('Tower', 1, 1, 2, 0, 2, 1, 0, 20, 15, 6, 75, 30, 'fortfin.png', 'fortinprog.png');
 INSERT INTO Building_Type
  (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
   clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
   image, constr_image) VALUES
- ('Fort', 1, 2, 4, 4, 4, 2, 0, 20, 10, 5, 20, 20, 'fortfin.png', 'fortinprog.png');
+ ('Fort', 1, 2, 4, 0, 4, 2, 5, 25, 18, 12, 100, 40, 'fortfin.png', 'fortinprog.png');
 INSERT INTO Building_Type
  (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
   clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
   image, constr_image) VALUES
- ('Castle', 1, 3, 8, 8, 8, 4, 0, 40, 20, 10, 40, 40, 'fortfin.png', 'fortinprog.png');
+ ('Castle', 1, 3, 6, 0, 8, 4, 12, 40, 26, 20, 180, 60, 'fortfin.png', 'fortinprog.png');
 
 
 DELETE FROM Item_Type WHERE item_category_id in
@@ -148,7 +148,7 @@ INSERT INTO Item_Variable_Name (item_variable_name, create_on_insert, item_categ
 
 
 INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
- VALUES ('Iron', 100, 100, 10, 'iron.png',
+ VALUES ('Iron', 100, 50, 10, 'iron.png',
  (select item_category_id from Item_Category where Item_category = 'Resource'));
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Iron';
@@ -160,7 +160,7 @@ INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item
 
 
 INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
- VALUES ('Clay', 50, 100, 5, 'clay.png',
+ VALUES ('Clay', 50, 80, 5, 'clay.png',
  (select item_category_id from Item_Category where Item_category = 'Resource'));
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Clay';
@@ -172,7 +172,7 @@ INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item
 
 
 INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
- VALUES ('Wood', 30, 100, 4, 'wood.png',
+ VALUES ('Wood', 20, 70, 4, 'wood.png',
  (select item_category_id from Item_Category where Item_category = 'Resource'));
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Wood';
@@ -184,7 +184,7 @@ INSERT INTO Item_Variable_Params (keep_max,min_value,max_value,item_type_id,item
 
 
 INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_category_id)
- VALUES ('Stone', 40, 100, 10, 'stone.png',
+ VALUES ('Stone', 50, 55, 10, 'stone.png',
  (select item_category_id from Item_Category where Item_category = 'Resource'));
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Stone';

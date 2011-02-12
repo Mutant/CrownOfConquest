@@ -40,24 +40,40 @@ sub run {
             next unless $shop->status eq 'Open';
 
             # Calculate items in shop
-            my $ideal_items_value = $shop->shop_size * 200 + ( Games::Dice::Advanced->roll('1d40') - 20 );
+            my $ideal_items_value = $shop->shop_size * 200 + ( Games::Dice::Advanced->roll('2d40') - 20 );
             my $actual_items_value = 0;
             my @items_in_shop =
                 $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
+                
+            my @items_made = $shop->item_types_made;
 
             # Remove some random items. This lets new items, or changes in prevalence, etc. have a chance to take effect
-            @items_in_shop = _remove_random_items_from_shop(@items_in_shop);
+            my @removed = $self->_remove_random_items_from_shop($shop, @items_in_shop, @items_made);
 
+            # Calculate value of items
             foreach my $item (@items_in_shop) {
-                next unless defined $item;    # Might have removed some above
+                # Skip item if it's just been deleted
+                next if scalar (grep { $_->isa('RPG::Schema::Item') && $_->id == $item->id } @removed) > 1;
                 $actual_items_value += $item->item_type->modified_cost($shop);
             }
 
-            # TODO: add value of quantity items
-
-            $c->logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value" );
+            # Add value of quantity items
+            foreach my $item_type (@items_made) {
+                # Skip item type if it's just been deleted
+                next if scalar (grep { $_->isa('RPG::Schema::Item_Type') && $_->id == $item_type->id } @removed) > 1;
+                
+                my $variable_param = $item_type->variable_param('Quantity');
+                
+                my $median_value = ( $variable_param->max_value - $variable_param->min_value ) / 2 + $variable_param->min_value;
+                
+                $actual_items_value += $item_type->modified_cost($shop) * $median_value;
+            }
 
             my $item_value_to_add = $ideal_items_value - $actual_items_value;
+
+            $c->logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value, to add $item_value_to_add" );
+
+            my $added_count = 0;
 
             while ( $item_value_to_add > 0 ) {
                 my $min_prevalence = 100 - ( $town->prosperity + ( Games::Dice::Advanced->roll('1d40') - 20 ) );
@@ -82,6 +98,8 @@ sub run {
 
                 # We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
                 next unless $item_type;
+                
+                $added_count++;
 
                 # If the item_type has a 'quantity' variable param, add as an 'item made' rather than an
                 #  individual item
@@ -126,6 +144,9 @@ sub run {
                     $item_value_to_add -= $item->sell_price($shop, 0);
                 }
             }
+            
+            $c->logger->info("Added $added_count items (value left to add: $item_value_to_add)");
+            
         }
     }
 }
@@ -294,19 +315,46 @@ sub _adjust_number_of_shops {
 }
 
 sub _remove_random_items_from_shop {
+    my $self = shift;
+    my $shop = shift;
     my @items_in_shop = @_;
 
     @items_in_shop = shuffle @items_in_shop;
 
-    my $items_to_remove = Games::Dice::Advanced->roll('1d3');
+    my $items_to_remove = Games::Dice::Advanced->roll('1d4') - 1;
 
-    for my $item_index ( 0 .. $items_to_remove - 1 ) {
-        next unless defined $items_in_shop[$item_index];
-        $items_in_shop[$item_index]->delete;
-        undef $items_in_shop[$item_index];
+    my @removed;
+    
+    my $deleted_count = 0;
+    my $value = 0;
+
+    for my $item_index ( 1 .. $items_to_remove ) {
+        my $item = shift @items_in_shop;
+        next unless $item;
+        
+        if ($item->isa('RPG::Schema::Items')) {
+            $value += $item->item_type->modified_cost($shop);
+            $item->delete;
+        }
+        else {
+            $value += $item->modified_cost($shop);
+            $self->context->schema->resultset('Items_Made')->find(
+                {
+                    item_type_id => $item->id,
+                    shop_id => $shop->id,
+                }
+            );
+            
+        }
+        
+        $deleted_count++;
+        push @removed, $item;
+        
     }
 
-    return @items_in_shop;
+    $self->context->logger->info("Deleted $deleted_count items (value: $value)");
+
+    return @removed;
 
 }
 

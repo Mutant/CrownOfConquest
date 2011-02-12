@@ -1,5 +1,8 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
+[% FOREACH next_building IN buildings %]
+	<br><br>There is a [% next_building.name %] here that is controlled by [% IF next_building.owner_id == party.id %]you[%ELSE%][% next_building.owner_name %][% END %]
+[% END %]
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
 [% IF dungeon %]There is an entrance to a dungeon here. (Level [% dungeon.level %])<br><br>[% END %]
@@ -45,11 +48,13 @@ You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terra
 		[% IF can_build_building %]
 			| <a href="[% base %]/building/create">Construct/Upgrade a Building</a>
 		[% END %]
-		[% IF building %]
-			[% IF building.owner_id != party.id %]
+		[% FOREACH next_building IN buildings %]
+			[% IF can_seize_building && next_building.owner_id != party.id %]
 				| <a href="[% base %]/building/seize">Seize Building</a>
 			[% END %]
-			| <a href="[% base %]/building/raze">Raze Building</a>
+			[% IF can_raze_building %]
+				| <a href="[% base %]/building/raze">Raze Building</a>
+			[% END %]
 		[% END %]
 	[% END %]
 <br>

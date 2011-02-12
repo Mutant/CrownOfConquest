@@ -84,7 +84,7 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => '
 
 __PACKAGE__->might_have( 'garrison', 'RPG::Schema::Garrison', { 'foreign.land_id' => 'self.land_id' } );
 
-__PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+__PACKAGE__->has_many( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.land_id' => 'self.land_id' } );
 
@@ -354,7 +354,11 @@ sub building_allowed {
 	return 0 if $self->get_adjacent_buildings();
 	
 	# Not allowed if another building is here that is not owned by us
-	return 0 if $self->building && $self->building->owner_id != $party;
+	foreach my $next_building ($self->building) {
+		if ($next_building->owner_id != $party) {
+			return 0;
+		}
+	}
 
 	return 1;
 }

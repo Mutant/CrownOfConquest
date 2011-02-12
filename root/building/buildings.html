@@ -3,14 +3,11 @@
 function chooseBuilding(building_id) {
 	var form = document.getElementById("create");
     form.setAttribute("action", "[% base %]building/add?building_id=" + building_id);
-    //alert("Building id:"+building_id);
+    form.submit();
 }
 </script>
 
 <form method="POST" id="create" action="[% base %]/building/add"> 
-<div align="center">
-	<button onClick="">Update Orders</button>
-</div>
 
 [% available_seen = 0 %]
 [% FOREACH next_type IN available_buildings %]
@@ -29,18 +26,14 @@ function chooseBuilding(building_id) {
 			</div>
 			<div style="text-align: center; margin:10px;">
 				[% IF next_type.enough_turns == 0 %]
-				<select id="Action[% next_type.building_type_id %]" disabled="disabled">
-					<option value="NOT_ENOUGH_TURNS">Not enough turns left</option>
+				<input type="button" disabled="disabled" value="Not enough turns left"></input>
 				[% ELSIF next_type.enough_resources == 0 %]
-				<select id="Action[% next_type.building_type_id %]" disabled="disabled">
-					<option value="NOT_ENOUGH_RES">Not enough resources</option>
+				<input type="button" disabled="disabled" value="Not enough resources"></input>
 				[% ELSE %]
-				<select id="Action[% next_type.building_type_id %]" onchange="chooseBuilding([% next_type.building_type_id %]);">
-					<option value="NO_ACTION">Select Action</option>
-					<option value="START">Start Construction</option>
+				<input type="button" onclick="chooseBuilding([% next_type.building_type_id %]);" value="Start Construction"></input>
 				[% END %]
-				</select>
-			</div>		</div>
+			</div>
+		</div>
 	
 		[% INCLUDE building/building_details.html building_type=next_type show_resources=1
 			resources_title="Requires" %]
@@ -68,18 +61,13 @@ function chooseBuilding(building_id) {
 			<div style="text-align: center; margin:10px;">
 				[% IF next_type.upgrades_to %]
 					[% IF next_type.upgrades_to.enough_turns == 0 %]
-					<select id="Action[% next_type.upgrades_to.building_type_id %]" disabled="disabled">
-						<option value="NOT_ENOUGH_TURNS">Not enough turns left</option>
+					<input type="button" disabled="disabled" value="Not enough turns left"></input>
 					[% ELSIF next_type.upgrades_to.enough_resources == 0 %]
-					<select id="Action[% next_type.upgrades_to.building_type_id %]" disabled="disabled">
-						<option value="NOT_ENOUGH_RES">Not enough resources</option>
+					<input type="button" disabled="disabled" value="Not enough resources"></input>
 					[% ELSE %]
-					<select id="Action[% next_type.upgrades_to.building_type_id %]"
-					 onchange="chooseBuilding([% next_type.upgrades_to.building_type_id %]);">
-						<option value="NO_ACTION">Select Action</option>
-						<option value="UPGRADE">Upgrade to [% next_type.upgrades_to.upgrades_to.name %]</option>
+					<input type="button" onclick="chooseBuilding([% next_type.upgrades_to.building_type_id %]);"
+					 value="Upgrade to [% next_type.upgrades_to.upgrades_to.name %]"></input>
 					[% END %]
-					</select>
 				[% ELSE %]
 					<span>No more upgrades possible</span>
 				[% END %]

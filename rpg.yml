@@ -175,7 +175,7 @@ minimum_raid_level: 8
 minimum_garrison_level: 6
 
 # Minimum party level for creating a building
-minimum_building_level: 6
+minimum_building_level: 10
 
 # ----- Combat Params ----- #
 

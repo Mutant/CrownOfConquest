@@ -100,12 +100,17 @@ sub sector_menu : Private {
 		$can_build_garrison = $c->stash->{party_location}->garrison_allowed;
 	}
 
-	#  Determine if building can be built or is already built.
+	#  Determine if building can be built or is already built.  Also can seize or raze - for now, they all
+	#    check the same level.
 	my $can_build_building = 0;
+	my $can_seize_building = 0;
+	my $can_raze_building = 0;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
 		$can_build_building = $c->stash->{party_location}->building_allowed($c->stash->{party}->id);
+		$can_seize_building = 1;
+		$can_raze_building = 1;
 	}
-	my $building = $c->stash->{party_location}->building;
+	my @buildings = $c->stash->{party_location}->building;
 
 	my @items = $c->stash->{party_location}->items;
 
@@ -131,7 +136,9 @@ sub sector_menu : Private {
 					garrison               => $garrison,
 					can_build_garrison     => $can_build_garrison,
 					can_build_building     => $can_build_building,
-					building               => $building,
+					can_seize_building     => $can_seize_building,
+					can_raze_building      => $can_raze_building,
+					buildings              => \@buildings,
 					items                  => \@items,
 				},
 				return_output => 1,

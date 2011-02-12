@@ -129,38 +129,6 @@ INSERT INTO Building_Type
   image, constr_image) VALUES
  ('Castle', 1, 3, 8, 8, 8, 4, 0, 40, 20, 10, 40, 40, 'fortfin.png', 'fortinprog.png');
 
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Armory', 2, 1, 2, 2, 2, 1, 5, 5, 2, 3, 10, 10, 'fortfin.png', 'fortinprog.png');
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Magazine', 2, 2, 4, 4, 4, 2, 10, 10, 4, 6, 20, 20, 'fortfin.png', 'fortinprog.png');
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Arsenal', 2, 3, 8, 8, 8, 4, 20, 20, 8, 12, 40, 40, 'fortfin.png', 'fortinprog.png');
-
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Armory2', 3, 1, 2, 2, 2, 1, 5, 5, 2, 3, 10, 10000000, 'fortfin.png', 'fortinprog.png');
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Magazine2', 3, 2, 4, 4, 4, 2, 10, 10, 4, 6, 20, 20, 'fortfin.png', 'fortinprog.png');
-INSERT INTO Building_Type
- (name, class, level, defense_factor, attack_factor, heal_factor, commerce_factor,
-  clay_needed, stone_needed, wood_needed, iron_needed, labor_needed, labor_to_raze,
-  image, constr_image) VALUES
- ('Arsenal2', 3, 3, 8, 8, 8, 4, 20, 20, 8, 12, 40, 40, 'fortfin.png', 'fortinprog.png');
-
 
 DELETE FROM Item_Type WHERE item_category_id in
  (select item_category_id from Item_Category where Item_category in ('Tool', 'Resource'));

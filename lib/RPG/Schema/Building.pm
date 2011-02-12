@@ -71,5 +71,21 @@ sub set_image {
 	$self->{image} = shift;
 }
 
+#  Get owner_name.  TODO: this is inefficient, should be joined but owner_id / owner_type needs a special join.
+sub owner_name {
+	my $self = shift;
+	if (!defined $self->{owner_name}) {
+		my $party = $self->result_source->schema->resultset('Party')->find(
+	        	{ 'party_id' => $self->owner_id, }
+		);
+		if ($party) {
+			$self->{owner_name} = $party->name;
+		} else {
+			$self->{owner_name} = "No one";
+		}
+	}
+	return $self->{owner_name};
+}
+
 
 1;

@@ -84,6 +84,8 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => '
 
 __PACKAGE__->might_have( 'garrison', 'RPG::Schema::Garrison', { 'foreign.land_id' => 'self.land_id' } );
 
+__PACKAGE__->has_many( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+
 __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
@@ -220,6 +222,27 @@ sub get_adjacent_garrisons {
     return @garrisons;
 }
 
+sub get_adjacent_buildings {
+    my $self = shift;
+    my $range = shift || RPG->config->{building_min_spacing};
+    my %criteria = ( 'building.building_id' => { '!=', undef }, );
+
+    my %attrs = ( 'prefetch' => 'building', );
+
+    my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => ($range * 2) + 1,
+        increment_search_by => 0,
+        criteria            => \%criteria,
+        attrs               => \%attrs,
+    );
+
+    my @buildings = map { $_->building } @land_rec;
+    return @buildings;
+}
+
 sub has_road_joining_to {
     my $self = shift;
     my $sector_to_check = shift || confess "sector_to_check not supplied";
@@ -317,6 +340,36 @@ sub garrison_allowed {
 	
 	# Ok, it's allowed
 	return 1;
+}
+
+# Returns true if a building could be built here.
+sub building_allowed {
+	my $self = shift;
+	my $party = shift;
+	
+	# Not allowed if adjacent to a town
+	return 0 if $self->get_adjacent_towns;
+
+	# Not allowed if too close to a building
+	return 0 if $self->get_adjacent_buildings();
+	
+	# Not allowed if another building is here that is not owned by us
+	foreach my $next_building ($self->building) {
+		if ($next_building->owner_id != $party) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+# returns true if there is already a building here.
+sub has_building {
+	my $self = shift;
+	
+	return 1 if $self->building;
+
+	return 0;
 }
 
 1;

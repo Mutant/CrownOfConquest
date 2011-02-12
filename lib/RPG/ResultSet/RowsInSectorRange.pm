@@ -44,8 +44,14 @@ sub find_in_range {
     while ( !@rows_in_range ) {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $base_point->{x}, $base_point->{y}, $search_range, $search_range, );
 
-        # TOOD: should check this isn't already set
-        $attrs->{prefetch} = $relationship unless $relationship eq 'me';
+        #  If prefetch is set, add relationship if supplied.
+        if (defined $attrs->{prefetch}) {
+        	if ($relationship ne 'me') {
+        		push @{$attrs->{prefetch}}, $relationship;
+       		}
+        } else {
+        	$attrs->{prefetch} = $relationship unless $relationship eq 'me';
+    	}
 
         my %exclude_criteria;
         unless ($include_base_point) {

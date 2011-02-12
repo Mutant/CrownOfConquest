@@ -117,6 +117,24 @@ Prosperity: [% position.prosperity %]<br>
 							[% END %]
 						[% END %]
 
+						[% this_title = "" %]
+						[% FOREACH building IN position.buildings %]
+							<img src="[% c.config.static_path %][% image_path %]building/[% building.building_type.image%]"
+							 style="position: absolute; top:[% sector_height / 4 %]px; left: [% sector_width / 4 %]px;"
+							border = 0
+							width="[% sector_width / 2 %]"
+							height="[% sector_height / 2 %]"
+							[% IF this_title == "" %]
+								[% this_title = building.building_type.name %]
+							[% ELSE %]
+								[% this_title = "$this_title,$building.building_type.name" %]
+							[% END %]
+							[% IF loop.last %]
+							    title="[% this_title %]"
+							[% END %]
+							>
+						[% END %]
+
 					[% END %]
 					
 				

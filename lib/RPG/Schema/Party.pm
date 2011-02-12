@@ -623,6 +623,111 @@ sub disband {
 	);
 }
 
+#  Return an array of equipment in this party.  Optional item category name(s) can be passed.
+sub get_equipment {
+	my $self = shift;
+	my @categories = @_;
+	
+	my @search_criteria = ('belongs_to_character.party_id' => $self->id);
+	my $count = @categories;
+	if ($count) {
+		my @item_types;
+		foreach my $next_category (@categories) {
+			push(@item_types, ('item_category', $next_category));
+		}
+		if ($count > 1) {
+			push(@search_criteria, ('-or', \@item_types));
+		} else {
+			push(@search_criteria, @item_types);
+		}
+	}
+
+	my @party_equipment = $self->result_source->schema->resultset('Items')->search(
+        	@search_criteria,
+	        {
+	        	join => ['belongs_to_character', 'item_type'],
+	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+	            order_by => 'item_category',
+	        },
+	);
+	return @party_equipment;
+}
+
+#  This function consumes items that are possessed by the party.  Note that this sub will accept items that are
+#    both individual items and those with 'Quantity'.
+sub consume_items{
+	my $self = shift;
+	my @categories = split(',', shift);			# e.g. 'Resource' or 'Resource,Tool'
+
+	#  Remaining args consist of item type / count pairs.
+	my (@resources, %counts);
+	while (@_) {
+		my $next_item_type = shift;
+		push(@resources, $next_item_type);
+		$counts{$next_item_type} = shift;
+	}
+
+	#  Get the party's equipment.
+	my @party_equipment = $self->get_equipment(@categories);
+
+	#  Go through the items, decreasing the needed counts.
+	my @items_to_delete;
+	foreach my $next_item (@party_equipment) {
+		if (defined $counts{$next_item->item_type->item_type} and $counts{$next_item->item_type->item_type} > 0) {
+			my $quantity = $next_item->variable('Quantity') // 1;
+			if ($quantity <= $counts{$next_item->item_type->item_type}) {
+				$counts{$next_item->item_type->item_type} -= $quantity;
+				$quantity = -1;		# Flag that means we need to delete this item instead of simply decrementing its quantity.
+			} else {
+				$quantity -= $counts{$next_item->item_type->item_type};
+				$counts{$next_item->item_type->item_type} = 0;
+			}
+			push(@items_to_delete, $next_item, $quantity);
+		}
+	}
+	
+	#  If any of the counts are non-zero, we didn't have enough of the item.
+	foreach my $next_key (keys %counts) {
+		if ($counts{$next_key} > 0) {
+			return 0;
+		}
+	}
+	
+	#  We had enough resources, so decrement quantities and possibly delete the items.
+	for (my $i=0; $i<@items_to_delete; $i+=2) {
+		my $next_item = $items_to_delete[$i];
+		my $quantity = $items_to_delete[$i+1];
+
+		if ($quantity == -1) {
+			$next_item->delete;
+		} else {
+			my $var = $next_item->variable_row('Quantity');
+			$var->item_variable_value($quantity);
+			$var->update;
+		}
+	}
+	return 1;
+}
+
+#  Get an array of the buildings owned by this party.
+sub get_owned_buildings {
+	my $self = shift;
+
+	#  Get a list of the currently built buildings for this party.
+	my @existing_buildings = $self->result_source->schema->resultset('Building')->search(
+        	{
+	        	'owner_id' => $self->id,
+	        	'owner_type' => 'party'
+	        },
+	        {
+	            order_by => 'building_type.name',
+				join     => [ 'building_type' ],
+				prefetch => 'building_type',
+	        },
+	);
+	return @existing_buildings;
+}
+	
 # Return a hash of characters with broken items
 sub broken_equipped_items_hash {
 	my $self = shift;

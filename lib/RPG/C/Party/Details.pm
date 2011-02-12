@@ -241,4 +241,22 @@ sub mayors : Local {
     );	
 }
 
+sub buildings : Local {
+	my ($self, $c) = @_;
+
+	my @buildings = $c->stash->{party}->get_owned_buildings();
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/buildings.html',
+                params   => {
+                    buildings => \@buildings,
+                },
+            }
+        ]
+    );	
+}
+
 1;

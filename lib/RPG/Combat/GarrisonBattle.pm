@@ -64,4 +64,31 @@ sub wipe_out_garrison {
    	$garrison->update;
 }
 
+around '_build_combat_factors' => sub {
+    my $orig = shift;
+    my $self = shift;
+    
+    my $combat_factors = $self->$orig();
+    
+    # Check if the garrison is in the same sector as a building. If so, add something to all their defence factors
+    my $building = $self->schema->resultset('Building')->find(
+        {
+            land_id => $self->location->id,
+        },
+        {
+            prefetch => 'building_type',
+        },
+    );
+    
+    # TODO: need to check the garrison is the owner? Or are they always the owner if they're in the sector?
+    
+    if ($building) {
+        foreach my $character ($self->garrison->characters) {
+            $combat_factors->{character}{ $character->id }{df} += $building->building_type->defense_factor;   
+        }   
+    }
+    
+    return $combat_factors;
+};
+
 1;

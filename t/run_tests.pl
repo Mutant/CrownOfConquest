@@ -22,7 +22,7 @@ if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 		$dumpFile = '/tmp/db_dump';
 		$rmProg = 'rm';
 	}
-	system("mysqldump -u root -d game > $dumpFile");	
+	system("mysqldump -u root -d game > $dumpFile");
 	system("mysqldump -u root -t game Equip_Places Class Race Spell Quest_Type Quest_Param_Name Levels Dungeon_Position Enchantments Dungeon_Special_Room >> $dumpFile");
 	system("mysql -u root game_test < $dumpFile");
 	system("$rmProg $dumpFile");

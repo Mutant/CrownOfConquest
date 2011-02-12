@@ -27,7 +27,7 @@ __PACKAGE__->load_classes(qw/
     Treasure_Chest Survey_Response Announcement Announcement_Player Tip Dungeon_Sector_Path
     Dungeon_Sector_Path_Door Garrison Combat_Log_Messages Garrison_Messages Enchantments Item_Enchantments
     Enchantment_Item_Category Creature_Category Promo_Code Promo_Org Town_Guards Election Election_Candidate
-    Dungeon_Teleporter Dungeon_Special_Room Creature_Spell
+    Dungeon_Teleporter Dungeon_Special_Room Creature_Spell Building_Type Building
 /);
 
 my $config;

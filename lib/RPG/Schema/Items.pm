@@ -130,6 +130,7 @@ __PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' 
 
 with 'RPG::Schema::Item::Variables';
 
+
 sub variables {
 	my $self = shift;
 	

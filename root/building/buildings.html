@@ -1,0 +1,91 @@
+
+<script>
+function chooseBuilding(building_id) {
+	var form = document.getElementById("create");
+    form.setAttribute("action", "[% base %]building/add?building_id=" + building_id);
+    form.submit();
+}
+</script>
+
+<form method="POST" id="create" action="[% base %]/building/add"> 
+
+[% available_seen = 0 %]
+[% FOREACH next_type IN available_buildings %]
+	[% IF available_seen == 0 %]
+		<fieldset> <legend>Available buildings</legend>
+		[% available_seen = 1 %]
+	[% END %]
+
+	<div style=" padding:10px; height:125px;">
+		<div id="building_types" style="float:left;width:300px;">
+			<div class="enlargedTitle" style="text-align: center; margin:10px;">
+				<span>[% next_type.name %]</span>
+			</div>
+			<div style="text-align: center; margin:10px;">
+				<img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_type.image %]">
+			</div>
+			<div style="text-align: center; margin:10px;">
+				[% IF next_type.enough_turns == 0 %]
+				<input type="button" disabled="disabled" value="Not enough turns left"></input>
+				[% ELSIF next_type.enough_resources == 0 %]
+				<input type="button" disabled="disabled" value="Not enough resources"></input>
+				[% ELSE %]
+				<input type="button" onclick="chooseBuilding([% next_type.building_type_id %]);" value="Start Construction"></input>
+				[% END %]
+			</div>
+		</div>
+	
+		[% INCLUDE building/building_details.html building_type=next_type show_resources=1
+			resources_title="Requires" %]
+	</div>
+[% END %]
+[% IF available_seen > 0 %]
+	</fieldset>
+[% END %]
+
+
+[% existing_seen = 0 %]
+[% FOREACH next_type IN existing_buildings %]
+	[% IF existing_seen == 0 %]
+		<fieldset> <legend>Existing buildings</legend>
+		[% existing_seen = 1 %]
+	[% END %]
+	<div style=" padding:10px; height:125px;">
+		<div id="building_types" style="float:left; width:300px;">
+			<div class="enlargedTitle" style="text-align: center; margin:10px;">
+				<span>[% next_type.name %]</span>
+			</div>
+			<div style="text-align: center; margin:10px;">
+				<img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_type.image %]">
+			</div>
+			<div style="text-align: center; margin:10px;">
+				[% IF next_type.upgrades_to %]
+					[% IF next_type.upgrades_to.enough_turns == 0 %]
+					<input type="button" disabled="disabled" value="Not enough turns left"></input>
+					[% ELSIF next_type.upgrades_to.enough_resources == 0 %]
+					<input type="button" disabled="disabled" value="Not enough resources"></input>
+					[% ELSE %]
+					<input type="button" onclick="chooseBuilding([% next_type.upgrades_to.building_type_id %]);"
+					 value="Upgrade to [% next_type.upgrades_to.upgrades_to.name %]"></input>
+					[% END %]
+				[% ELSE %]
+					<span>No more upgrades possible</span>
+				[% END %]
+			</div>
+		</div>
+		
+		[% INCLUDE building/building_details.html building_type=next_type.type show_resources=0
+			effects_style="width:200px;" resources_title="" %]
+					
+		[% IF next_type.upgrades_to %]
+			[% INCLUDE building/building_details.html building_type=next_type.upgrades_to show_resources=1
+				resources_title="Upgrade requires" %]
+		[% END %]
+	</div>
+[% END %]
+[% IF existing_seen > 0 %]
+	</fieldset>
+[% END %]
+
+<br><br>
+

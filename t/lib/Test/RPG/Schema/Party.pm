@@ -389,4 +389,49 @@ sub test_disband : Tests(3) {
     is($garrison->land_id, undef, "Garrison removed from map");
 }
 
+sub test_number_alive : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN	
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2); 
+    my @characters = $party->characters;
+    
+    $characters[0]->hit_points(0);
+    $characters[0]->update; 
+    
+    # WHEN
+    my $number_alive = $party->number_alive;
+    
+    # THEN
+    is($number_alive, 1, "1 character is alive");
+}
+
+sub test_number_alive_only_includes_character_in_party : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN	
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 4); 
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id);  
+    my @characters = $party->characters;
+    
+    $characters[0]->hit_points(0);
+    $characters[0]->update; 
+
+    $characters[1]->garrison_id($garrison->id);
+    $characters[1]->update;
+
+    $characters[2]->mayor_of(1);
+    $characters[2]->update;
+
+    $characters[3]->status('inn');
+    $characters[3]->update;
+    
+    # WHEN
+    my $number_alive = $party->number_alive;
+    
+    # THEN
+    is($number_alive, 0, "No characters with party are alive");
+
+}
+
 1;

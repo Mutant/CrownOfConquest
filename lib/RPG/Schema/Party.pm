@@ -400,13 +400,14 @@ sub new_day {
 
 sub number_alive {
     my $self = shift;
+    
+    my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
 
     return $self->result_source->schema->resultset('Character')->count(
         {
             hit_points => { '>', 0 },
             party_id   => $self->id,
-            garrison_id => undef,
-            mayor_of => undef,
+            %null_fields,
         }
     );
 }

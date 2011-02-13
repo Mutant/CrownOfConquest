@@ -1,0 +1,35 @@
+[% INCLUDE top.html %]
+
+<h2>Rewards</h2>
+
+[% IF player_reward_links.0 %]
+
+<p>Click on the following links to receive rewards in the game. Please make sure you follow the instructions on the site to vote, filling out any CAPTCHAs, etc. 
+You won't receive the reward until your vote is registered properly! You can only vote on each site once per day.</p>
+
+<table class="main" cellspacing="6">
+	<tr>
+		<th>Site (click link to vote)</th>
+		<th>Reward</th>
+		<th>Last Voted</th>
+	</tr>
+	
+	[% FOREACH link IN player_reward_links %]
+	    [% link_info = link.link %]
+		<tr>
+			<td><a href="[% link.url %]" target="_new">[% link_info.label %]</a></td>
+			<td>[% link_info.turn_rewards %] turns</td>
+			<td>[% link.last_vote_date %]</td>
+		</tr>
+	[% END %]
+	
+</table>
+
+[% ELSE %]
+
+There are no reward links currently activated.
+
+[% END %]
+
+
+[% INCLUDE bottom.html %]

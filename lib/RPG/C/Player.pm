@@ -504,4 +504,43 @@ sub announcements : Local {
 	] );	
 }
 
+sub reward_callback : Local {
+    my ($self, $c) = @_;
+    
+    my $player_reward_link = $c->model('DBIC::Player_Reward_Links')->find(
+        {
+            player_id => $c->req->param('k'),
+            vote_key => $c->req->param('random'),            
+        },
+        {
+            prefetch => 'link',
+        },
+    );
+    
+    if ($player_reward_link) {
+        my $party = $c->model('DBIC::Party')->find(
+            {
+                player_id => $c->req->param('k'),
+                defunct => undef,
+            }
+        );
+        $party->_turns($party->_turns + $player_reward_link->link->turn_rewards);
+        $party->update;
+        
+        $player_reward_link->last_vote_date(DateTime->now());
+        $player_reward_link->update;
+        
+        my $today = $c->model('DBIC::Day')->find_today;
+        
+    	$c->model('DBIC::Party_Messages')->create(
+    		{
+    			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Kingdoms",
+    			alert_party => 1,
+    			party_id => $party->id,
+    			day_id => $today,
+    		}
+    	);          
+    }    
+}
+
 1;

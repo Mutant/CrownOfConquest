@@ -223,4 +223,24 @@ INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_ca
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Shovel';
 
+CREATE TABLE `Reward_Links` (
+  `link_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `url` VARCHAR(1000)  NOT NULL,
+  `label` VARCHAR(200)  NOT NULL,
+  `turn_rewards` INTEGER  NOT NULL,
+  `activated` TINYINT NOT NULL DEFAULT 1,
+  PRIMARY KEY (`link_id`)
+)
+ENGINE = InnoDB;
+
+CREATE TABLE `Player_Reward_Links` (
+  `player_id` INTEGER  NOT NULL,
+  `link_id` INTEGER  NOT NULL,
+  `last_vote_date` DATETIME ,
+  `vote_key` VARCHAR(255) ,
+  PRIMARY KEY (`player_id`, `link_id`)
+)
+ENGINE = InnoDB;
+
+INSERT INTO `Reward_Links` VALUES (1,'http://www.top-pbbg.com/in.php?u=Mutant&k=[% player_id %]&random=[% key %]','Vote for Kingdoms at Top PBBG',25,1);
 

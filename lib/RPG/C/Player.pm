@@ -537,7 +537,7 @@ sub reward_callback : Local {
     			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Kingdoms",
     			alert_party => 1,
     			party_id => $party->id,
-    			day_id => $today,
+    			day_id => $today->id,
     		}
     	);          
     }    

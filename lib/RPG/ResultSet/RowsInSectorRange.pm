@@ -27,7 +27,7 @@ sub find_in_range {
     my $package = shift;
 
     my %params = @_;
-    
+
     my $resultset    = $params{resultset}    || confess "Resultset not supplied";
     my $relationship = $params{relationship} || confess "Relationship not supplied";
     my $base_point   = $params{base_point}   || confess "Base point not supplied";
@@ -41,17 +41,18 @@ sub find_in_range {
 
     my @rows_in_range;
 
+    # If prefetch is set, add relationship if supplied.
+    if (%$attrs && defined $attrs->{prefetch}) {
+        if ($relationship ne 'me') {
+            push @{$attrs->{prefetch}}, $relationship;
+        }
+   }
+   else {
+    	$attrs->{prefetch} = $relationship unless $relationship eq 'me';
+   }
+
     while ( !@rows_in_range ) {
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $base_point->{x}, $base_point->{y}, $search_range, $search_range, );
-
-        #  If prefetch is set, add relationship if supplied.
-        if (defined $attrs->{prefetch}) {
-        	if ($relationship ne 'me') {
-        		push @{$attrs->{prefetch}}, $relationship;
-       		}
-        } else {
-        	$attrs->{prefetch} = $relationship unless $relationship eq 'me';
-    	}
 
         my %exclude_criteria;
         unless ($include_base_point) {

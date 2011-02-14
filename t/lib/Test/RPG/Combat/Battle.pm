@@ -487,7 +487,7 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
 	is(defined $party->defunct, 1, "Party now marked as defunct"); 
 }
 
-sub test_check_for_offline_cast_creature_target : Tests(3) {
+sub test_check_for_offline_cast_creature_target : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -513,16 +513,15 @@ sub test_check_for_offline_cast_creature_target : Tests(3) {
 	$battle->set_always('opponents_of', $cg);
 	
 	# WHEN
-	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_offline_cast($battle, $character);
 	
 	# THEN
-	is($character->last_combat_action, 'Cast', "Last combat action set correctly");
-	is($character->last_combat_param1, $spell->id, "Spell id set correctly");
-	is($character->last_combat_param2, $cret->id, "Spell target set correctly");	
+	is($spell_cast->id, $spell->id, "Spell id set correctly");
+	is($target->id, $cret->id, "Spell target set correctly");	
 
 }
 
-sub test_check_for_offline_cast_character_target : Tests(3) {
+sub test_check_for_offline_cast_character_target : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -548,12 +547,11 @@ sub test_check_for_offline_cast_character_target : Tests(3) {
 	$battle->set_always('opponents_of', $cg);
 	
 	# WHEN
-	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_offline_cast($battle, $character);
 	
 	# THEN
-	is($character->last_combat_action, 'Cast', "Last combat action set correctly");
-	is($character->last_combat_param1, $spell->id, "Spell id set correctly");
-	is($character->last_combat_param2, $character->id, "Spell target set correctly");	
+	is($spell_cast->id, $spell->id, "Spell id set correctly");
+	is($target->id, $character->id, "Spell target set correctly");	
 
 }
 

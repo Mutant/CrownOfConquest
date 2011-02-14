@@ -21,6 +21,12 @@ sub startup : Tests(startup => 1) {
 	$self->setup_context;	
 }
 
+sub teardown : Tests(teardown) {
+    my $self = shift;
+    
+    $self->unmock_dice;
+}
+
 sub test_generate_teleporter_basic : Tests(3) {
 	my $self = shift;
 	

@@ -12,6 +12,7 @@ use Test::MockObject;
 
 use Data::Dumper;
 
+use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
@@ -562,8 +563,9 @@ sub test_check_for_offline_cast : Tests(10) {
 	my $self = shift;
 	
 	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
-	$character->party_id(1);
+	$character->party_id($party->id);
 	$character->offline_cast_chance(50);
 	$character->update;
 	

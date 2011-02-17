@@ -242,5 +242,5 @@ CREATE TABLE `Player_Reward_Links` (
 )
 ENGINE = InnoDB;
 
-INSERT INTO `Reward_Links` VALUES (1,'http://www.top-pbbg.com/in.php?u=Mutant&k=[% player_id %]&random=[% key %]','Vote for Kingdoms at Top PBBG',25,1);
+INSERT INTO `Reward_Links` VALUES (1,'http://www.top-pbbg.com/in.php?u=Mutant&k=[% player_id %]&random=[% key %]','Vote for Kingdoms at Top PBBG',25,0);
 

@@ -9,9 +9,14 @@ use Digest::SHA1 qw(sha1_hex);
 sub default : Path {
     my ($self, $c) = @_;
     
+    my %params;
+    if (! $c->session->{player}->admin_user) {
+        $params{activated} = 1;   
+    }
+    
     my @reward_links = $c->model('DBIC::Reward_Links')->search(
         {
-            activated => 1,
+            %params,
         }
     );
    

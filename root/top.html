@@ -64,11 +64,10 @@ function show_message(message) {
 	<br>
 		
 	<div style="font-size: 10px">
+	    [% IF c.session.player %]<a href="[% base %]party/reward_links" class="nav" style="font-size: 8pt">Get More Turns (Free!)</a>[% END %]
 	    <a href="[% c.config.forum_url %]?topic=55.0">Help Wanted</a>
 		<a href="[% base %]/player/vote">Vote For Kingdoms!</a>
 		<br>IRC: #kingdoms on irc.afternet.org
-		<br><br>
-		<iframe src="http://www.facebook.com/plugins/like.php?href=http%3A%2F%2Fkingdoms-game.com%2F&amp;layout=button_count&amp;show_faces=true&amp;width=450&amp;action=like&amp;colorscheme=dark&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:21px;" allowTransparency="true"></iframe>
 	</div>
 	
 	<br>

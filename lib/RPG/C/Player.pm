@@ -504,27 +504,50 @@ sub announcements : Local {
 	] );	
 }
 
-sub reward_callback : Local {
-    my ($self, $c) = @_;
+sub reward_callback : Local : Args(1) {
+    my ($self, $c, $site_name) = @_;
+
+    my $link = $c->model('DBIC::Reward_Links')->find(
+        {
+            name => $site_name,
+        },
+    );
+    
+    $c->log->info("Got reward callback for site: $site_name");
+    
+    return unless $link;
+    
+    if ($link->result_field) {
+        my $result = $c->req->param($link->result_field);
+        
+        if (! $result) {
+            $c->log->info("Result is: $result, not giving a reward");
+            return;   
+        }       
+    }
+    
+    my %params;
+    $params{player_id} = $c->req->param($link->user_field);
+    $params{vote_key} = $c->req->param($link->key_field)
+        if defined $link->key_field;
     
     my $player_reward_link = $c->model('DBIC::Player_Reward_Links')->find(
         {
-            player_id => $c->req->param('k'),
-            vote_key => $c->req->param('random'),            
-        },
-        {
-            prefetch => 'link',
+            %params,
+            link_id => $link->id,           
         },
     );
     
     if ($player_reward_link) {
+        $c->log->info("Received message for successful action for player: " . $params{player_id});
+        
         my $party = $c->model('DBIC::Party')->find(
             {
-                player_id => $c->req->param('k'),
+                player_id => $params{player_id},
                 defunct => undef,
             }
         );
-        $party->_turns($party->_turns + $player_reward_link->link->turn_rewards);
+        $party->_turns($party->_turns + $link->turn_rewards);
         $party->update;
         
         $player_reward_link->last_vote_date(DateTime->now());
@@ -534,7 +557,7 @@ sub reward_callback : Local {
         
     	$c->model('DBIC::Party_Messages')->create(
     		{
-    			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Kingdoms",
+    			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Kingdoms at " . $link->label,
     			alert_party => 1,
     			party_id => $party->id,
     			day_id => $today->id,

@@ -223,16 +223,6 @@ INSERT INTO `Item_Type`(Item_Type, base_cost, prevalence, weight, image, item_ca
 
 update Item_Type set image = concat(item_type_id, '-', image) where Item_Type = 'Shovel';
 
-CREATE TABLE `Reward_Links` (
-  `link_id` INTEGER  NOT NULL AUTO_INCREMENT,
-  `url` VARCHAR(1000)  NOT NULL,
-  `label` VARCHAR(200)  NOT NULL,
-  `turn_rewards` INTEGER  NOT NULL,
-  `activated` TINYINT NOT NULL DEFAULT 1,
-  PRIMARY KEY (`link_id`)
-)
-ENGINE = InnoDB;
-
 CREATE TABLE `Player_Reward_Links` (
   `player_id` INTEGER  NOT NULL,
   `link_id` INTEGER  NOT NULL,
@@ -242,5 +232,21 @@ CREATE TABLE `Player_Reward_Links` (
 )
 ENGINE = InnoDB;
 
-INSERT INTO `Reward_Links` VALUES (1,'http://www.top-pbbg.com/in.php?u=Mutant&k=[% player_id %]&random=[% key %]','Vote for Kingdoms at Top PBBG',25,0);
+CREATE TABLE  `Reward_Links` (
+  `link_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `url` varchar(1000) NOT NULL,
+  `label` varchar(200) NOT NULL,
+  `turn_rewards` int(11) NOT NULL,
+  `activated` tinyint(4) NOT NULL DEFAULT '1',
+  `user_field` varchar(100) NOT NULL,
+  `key_field` varchar(100) DEFAULT NULL,
+  `extra_params` varchar(100) DEFAULT NULL,
+  `result_field` VARCHAR(100) DEFAULT NULL,
+  `template_url` TINYINT  NOT NULL,
+  PRIMARY KEY (`link_id`)
+) ENGINE=InnoDB;
+
+INSERT INTO `Reward_Links` VALUES (1,'top-pbbg','http://www.top-pbbg.com/in.php','Top PBBG',15,0,'k','random','u=Mutant',NULL,0),(2,'apex','http://apexwebgaming.com/','Apex Web Gaming',15,0,'u','k',NULL,NULL,0),(3,'top100mmorpg','http://www.top100mmorpgsites.com/in.php','Top 100 MMORPG Sites',15,0,'userid',NULL,'siteid=1000001378',NULL,0),(4,'mgpoll','http://mgpoll.com/vote/58/[% player_id %]','mgpoll',15,0,'id',NULL,NULL,'result',1),(5,'topgamessites','http://top-game-sites.com/index.php?a=in&u=Mutant&userback=[% player_id %]','Top Game Sites',15,0,'user',NULL,NULL,NULL,1);
+
 

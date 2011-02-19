@@ -5,6 +5,7 @@ use warnings;
 use base 'Catalyst::Controller';
 
 use Digest::SHA1 qw(sha1_hex);
+use List::Util qw(shuffle);
 
 sub default : Path {
     my ($self, $c) = @_;
@@ -14,10 +15,10 @@ sub default : Path {
         $params{activated} = 1;   
     }
     
-    my @reward_links = $c->model('DBIC::Reward_Links')->search(
+    my @reward_links = shuffle $c->model('DBIC::Reward_Links')->search(
         {
             %params,
-        }
+        },
     );
    
     # Create keys & links
@@ -34,18 +35,28 @@ sub default : Path {
         $link->vote_key(sha1_hex(rand));
         $link->update;
         
-        my $url_tmpl = $reward_link->url;
-        
-        $link->{url} = $c->forward( 'RPG::V::TT', [
-            {
-                template => \$url_tmpl,
-                params => {
-                    key => $link->vote_key,
-                    player_id => $c->session->{player}->id,
-                },
-                return_output => 1,
+        if (! $reward_link->template_url) {
+            my $url = $reward_link->url . '?' . $reward_link->extra_params . '&' . $reward_link->user_field . '=' . $c->session->{player}->id;
+            if ($reward_link->key_field) {
+                $url .= '&' . $reward_link->key_field . '=' . $link->vote_key;
             }
-        ]);
+            
+            $link->{url} = $url;
+        }
+        else {
+            my $url_tmpl = $reward_link->url;
+            
+            $link->{url} = $c->forward( 'RPG::V::TT', [
+                {
+                    template => \$url_tmpl,
+                    params => {
+                        key => $link->vote_key,
+                        player_id => $c->session->{player}->id,
+                    },
+                    return_output => 1,
+                }
+            ]);
+        }            
         
         push @player_reward_links, $link;
     }

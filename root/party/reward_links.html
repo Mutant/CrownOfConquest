@@ -17,7 +17,7 @@ You won't receive the reward until your vote is registered properly! You can onl
 	[% FOREACH link IN player_reward_links %]
 	    [% link_info = link.link %]
 		<tr>
-			<td><a href="[% link.url %]" target="_new">[% link_info.label %]</a></td>
+			<td><a href="[% link.url %]" target="_new">Vote for Kingdoms at [% link_info.label %]</a></td>
 			<td>[% link_info.turn_rewards %] turns</td>
 			<td>[% link.last_vote_date %]</td>
 		</tr>

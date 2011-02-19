@@ -103,7 +103,7 @@ sub save_party : Local {
 		$code->update;
 	}
 
-    $c->stash->{party}->increase_turns( $start_turns );
+    $c->stash->{party}->_turns( $start_turns );
     $c->stash->{party}->gold( $c->config->{start_gold} );
     $c->stash->{party}->created( DateTime->now() );
 

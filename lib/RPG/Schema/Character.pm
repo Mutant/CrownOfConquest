@@ -130,12 +130,30 @@ sub portrait {
 		. ($self->gender eq 'female' ? 'f' : '');
 }
 
+sub insert {
+    my ( $self, @args ) = @_;
+    
+    $self->next::method(@args);
+    
+    # Calculate df/af if they're 0 (they normally should be higher than that, so maybe there's no item equipped, 
+    #  and the trigger hasn't fired
+    $self->calculate_attack_factor if $self->attack_factor == 0;
+    $self->calculate_defence_factor if $self->defence_factor == 0;
+    
+    # Clear any cached equipped items. The above calls could have set this, and an item may be added later.
+    #  Possibly only an issue for tests?
+    undef $self->{equipped_item};
+    
+    return $self;
+    
+}
+
 sub _stat_accessor {
 	my $self = shift;
 	my $stat = shift;
 
 	my $accessor = '_' . $stat; 
-	my $value = $self->$accessor(@_);
+	my $value = $self->$accessor(@_) // 0;
 	
 	$accessor = $stat . '_bonus';
 	my $bonus = $self->$accessor || 0;
@@ -571,7 +589,7 @@ sub defence_factor {
     my $effect_df = 0;
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;    
     
-    return $self->_defence_factor + $effect_df;
+    return $self->_defence_factor || 0 + $effect_df;
 }
 
 sub calculate_defence_factor {
@@ -1090,10 +1108,11 @@ sub set_starting_equipment {
 # Returns the spell to cast if there is one, undef otherwise
 sub check_for_offline_cast {
 	my $self = shift;
-	
-	return unless $self->is_npc || !$self->group->is_online;
+		
+	return if $self->is_npc || !$self->group->is_online;
 	
 	my $cast_roll = Games::Dice::Advanced->roll('1d100');
+
 	if ($cast_roll <= $self->offline_cast_chance) {
 		my %params;
 		unless ($self->is_npc) {

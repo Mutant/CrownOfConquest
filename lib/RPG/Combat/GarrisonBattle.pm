@@ -66,10 +66,15 @@ sub wipe_out_garrison {
 
 around '_build_combat_factors' => sub {
     my $orig = shift;
-    my $self = shift;
+    my $self = shift;    
     
-    my $combat_factors = $self->$orig();
+    my $combat_factors = $self->$orig(@_);
+
+    my ( $refresh_type, $id ) = @_;
     
+    return $combat_factors if defined $refresh_type && $refresh_type ne 'character'; 
+   
+
     # Check if the garrison is in the same sector as a building. If so, add something to all their defence factors
     my $building = $self->schema->resultset('Building')->find(
         {
@@ -84,7 +89,11 @@ around '_build_combat_factors' => sub {
     
     if ($building) {
         foreach my $character ($self->garrison->characters) {
-            $combat_factors->{character}{ $character->id }{df} += $building->building_type->defense_factor;   
+            next if defined $id && $id != $character->id;
+            
+            $combat_factors->{character}{ $character->id }{af} += $building->building_type->attack_factor;
+            $combat_factors->{character}{ $character->id }{df} += $building->building_type->defense_factor;
+     
         }   
     }
     

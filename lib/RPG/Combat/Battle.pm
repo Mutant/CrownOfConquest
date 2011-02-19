@@ -414,9 +414,8 @@ sub character_action {
 			$result = $obj->use($target);
 		}
 
-		# Since effects could have changed an af or df, we delete any id's in the cache matching the second param
-		#  (the target's id) and then recompute.
-		$self->refresh_factor_cache( $character->last_combat_param2 );
+		# Since effects could have changed an af or df, we re-calculate the target's factors
+		$self->refresh_factor_cache( $target_type, $character->last_combat_param2 );
 		
 		# Make sure any healing/damage etc. is taken into account
 		$target->discard_changes;
@@ -586,7 +585,7 @@ sub attack {
 		if ( $defence_message->{armour_broken} ) {
 
 			# Armour has broken, clear out this character's factor cache
-			$self->refresh_factor_cache( $attacker->id );
+			$self->refresh_factor_cache( 'character', $attacker->id );
 		}
 	}
 
@@ -903,29 +902,18 @@ sub _build_combat_log {
 }
 
 # Refresh a combatant's details in the factor cache
-# Note, we're only passed in a combatant id, which could be a creature or character. It's possible that we could have
-#  a creature *and* a character with the same id. If that happens, we'll just end up refreshing both of them in the cache. Oh well.
-# We only have the id as this is all we have when casting a spell, and we don't know whether it's a creature or character
-# TODO: this could be fixed, as spell casting now have the actual target
 sub refresh_factor_cache {
-	my ( $self, $combatant_id_to_refresh ) = @_;
+	my ( $self, $combatant_type, $combatant_id_to_refresh ) = @_;
 
-	my @cached_combatant_ids = ( keys %{ $self->session->{combat_factors}{character} }, keys %{ $self->session->{combat_factors}{creature} }, );
+    delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
 
-	$self->log->debug("Deleting combat factor cache for target id $combatant_id_to_refresh");
-
-	foreach my $combatant_id (@cached_combatant_ids) {
-		delete $self->session->{combat_factors}{character}{$combatant_id}
-			if $combatant_id == $combatant_id_to_refresh;
-		delete $self->session->{combat_factors}{creature}{$combatant_id}
-			if $combatant_id == $combatant_id_to_refresh;
-	}
-
-	$self->combat_factors( $self->_build_combat_factors );
+	$self->combat_factors( $self->_build_combat_factors($combatant_type, $combatant_id_to_refresh) );
 }
 
 sub _build_combat_factors {
 	my $self = shift;
+	my $refresh_type = shift;
+	my $id = shift;
 
 	my %combat_factors;
 
@@ -933,8 +921,12 @@ sub _build_combat_factors {
 
 	foreach my $combatant ( $self->combatants ) {
 		next if $combatant->is_dead;
-
+		
 		my $type = $combatant->is_character ? 'character' : 'creature';
+
+		if (defined $id) {
+            next unless $id == $combatant->id && $type eq $refresh_type; 
+		}
 
 		next if defined $combat_factors{$type}{ $combatant->id };
 

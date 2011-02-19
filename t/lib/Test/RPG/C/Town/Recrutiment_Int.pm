@@ -23,7 +23,8 @@ use RPG::C::Town::Recruitment;
 sub test_sell_invalid_character : Tests(1) {
     my $self = shift;
 
-    my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => 5 );
+    my $other_party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $other_party->id );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
 
     $self->{params}{character_id} = $character->id;

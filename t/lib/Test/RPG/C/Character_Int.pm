@@ -20,7 +20,7 @@ use RPG::C::Character;
 sub test_update_spells : Tests(14) {
     my $self = shift;
 
-    my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => 1 );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
     $character->spell_points(10);
     $character->character_name('Foo');
     $character->update;

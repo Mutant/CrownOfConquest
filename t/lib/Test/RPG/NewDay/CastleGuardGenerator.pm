@@ -16,6 +16,7 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::CreatureType;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Party;
 
 sub setup : Test(setup => 2) {
     my $self = shift;
@@ -144,8 +145,9 @@ sub test_generate_guards_changes_as_per_requests : Tests(2) {
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 0);
-		
-	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => 1);
+
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
 	$character->mayor_of($town->id);
 	$character->update;
 	
@@ -196,7 +198,8 @@ sub test_generate_guards_changes_with_existing : Tests(3) {
 		creature_count => 20,
 	);
 		
-	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => 1);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
 	$character->mayor_of($town->id);
 	$character->update;
 	

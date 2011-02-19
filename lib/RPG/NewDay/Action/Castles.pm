@@ -45,7 +45,7 @@ sub run {
                 land_id => $town->land_id,
                 type => 'castle',
                 level => $level,
-                tileset => 'rocky',
+                tileset => 'castle',
             }
         );	
         

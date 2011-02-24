@@ -301,7 +301,9 @@ sub move_dungeon_monsters {
     my $c    = $self->context;    
 
     my $cg_rs = $c->schema->resultset('CreatureGroup')->search( 
-        {}, 
+        {
+            'dungeon_grid.dungeon_grid_id' => {'!=', undef },            
+        }, 
         { prefetch => [ { 'dungeon_grid' => 'dungeon_room' }, 'in_combat_with' ], }, 
     );
 
@@ -327,6 +329,7 @@ sub move_dungeon_monsters {
             next unless $allowed_sectors->{$sector_id};
 
             my $sector = $c->schema->resultset('Dungeon_Grid')->find({ dungeon_grid_id => $sector_id });
+            next unless $sector;
             
             # CGs with rare monsters not allowed to move out of the room
             next if $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;

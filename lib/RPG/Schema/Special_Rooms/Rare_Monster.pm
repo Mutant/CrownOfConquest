@@ -44,7 +44,7 @@ sub generate_special {
         {
             'level' => {
                 '<', $creature_type->level,
-                '>', $creature_type->level-5,
+                '>=', $creature_type->level-7,
             },
             rare => 0,
             'creature_category_id' => $creature_type->creature_category_id,
@@ -52,7 +52,7 @@ sub generate_special {
     );
     
     my $guard_type = (shuffle @guard_types)[0];
-    confess "Couldn't find a suitable guard type" unless $guard_type;
+    confess "Couldn't find a suitable guard type for creature type: " . $creature_type->id unless $guard_type;
     for my $count (1..8) {
         $cg->add_creature($guard_type, $count);   
     }

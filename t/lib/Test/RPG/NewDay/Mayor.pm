@@ -112,19 +112,23 @@ sub test_refresh_mayor : Tests(5) {
 	
 	# GIVEN
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, max_hit_point => 10 );
-	my $ammo = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
+	my $ammo_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
 		variables => [{name => 'Quantity', create_on_insert => 1}],
 	);
 	my $ranged = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
 		category_name => 'Ranged Weapon',
-		attributes => [{item_attribute_name => 'Ammunition', item_attribute_value => $ammo->id}]
+		attributes => [{item_attribute_name => 'Ammunition', item_attribute_value => $ammo_type->id}]
 	);
 	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, 
 		item_type_id => $ranged->id, 
 		char_id => $character->id,
-		variables => [{item_variable_name=>'Durability', item_variable_value => 10, max_value => 100}],
-		
+		variables => [{item_variable_name=>'Durability', item_variable_value => 10, max_value => 100}],		
 	);	
+	my $ammo = Test::RPG::Builder::Item->build_item($self->{schema}, 
+		item_type_id => $ammo_type->id, 
+		char_id => $character->id,
+	);		
+	$ammo->variable('Quantity', 10);
 	
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
 	
@@ -135,9 +139,9 @@ sub test_refresh_mayor : Tests(5) {
 	$character->discard_changes;
 	is($character->hit_points, 10, "Mayor healed to full hit points");
 	my @items = $character->items;
-	is(scalar @items, 2, "Mayor now has 2 items");
-	my ($new_ammo) = grep { $_->id != $item->id } @items;
-	is($new_ammo->item_type_id, $ammo->id, "Ammo created with correct item type");
+	is(scalar @items, 3, "Mayor now has 2 items");
+	my ($new_ammo) = grep { $_->id != $item->id && $_->id != $ammo->id } @items;
+	is($new_ammo->item_type_id, $ammo_type->id, "Ammo created with correct item type");
 	is($new_ammo->variable('Quantity'), 200, "Quantity of ammo set correctly");
 	
 	$item->discard_changes;

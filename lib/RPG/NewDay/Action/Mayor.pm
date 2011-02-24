@@ -419,9 +419,8 @@ sub refresh_mayor {
 				
 		if ($item->item_type->category->item_category eq 'Ranged Weapon') {
 			my @ammo = $mayor->ammunition_for_item($item);
-			
-			my $total_ammo = (sum map { $_ && $_->quantity } @ammo) // 0;
-			
+			my $total_ammo = (sum map { $_ && $_->{quantity} } @ammo) // 0;
+		
 			if ($total_ammo < 100) {
 				# Create some more ammo
 				my $ammunition_item_type_id = $item->item_type->attribute('Ammunition')->value;

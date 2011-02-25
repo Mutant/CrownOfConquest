@@ -98,7 +98,9 @@ sub email_unsubscribe : Local {
 	$c->forward( 'RPG::V::TT', [ 
 		{ 
 			template => 'player/email_unsubscribe.html',
-			params => {} 
+			params => {
+			    message => $c->flash->{message},
+			} 
 		} 
 	] );		
 }
@@ -106,13 +108,13 @@ sub email_unsubscribe : Local {
 sub disable_emails : Local {
 	my ( $self, $c ) = @_;
 	
-	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );;
+	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
 	$player->send_email(0);
 	$player->update;
 	
-	push @{$c->stash->{panel_messages}}, "Email messages disabled";
+	$c->flash->{message} = "Email messages disabled";
 	
-	$c->res->redirect( $c->config->{url_root} );
+	$c->res->redirect( $c->config->{url_root} . '/player/account/email_unsubscribe' );
 }
 
 1;

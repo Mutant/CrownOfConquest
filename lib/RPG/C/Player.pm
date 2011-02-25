@@ -35,6 +35,7 @@ sub login : Local {
 
             if ( $user->verified ) {
                 $c->session->{player} = $user;
+                $c->session->{partial_login} = 0;
                                 
                 # Various post login checks
                 $c->forward('post_login_checks');
@@ -76,6 +77,29 @@ sub login : Local {
             }
         ]
     );
+}
+
+# Allows login via a random hash send via email, so only one click is necessary to login
+#  This is only a 'partial' login though - only gives access to a couple of screens
+sub email_login : Local {
+    my ( $self, $c ) = @_;
+    
+    my $user = $c->model('DBIC::Player')->find( { 
+    	email => $c->req->param('email'), 
+    	email_hash => $c->req->param('h'), 
+    });
+    
+    return unless $user;
+    
+    $user->email_hash(undef);
+    $user->update;
+    
+    $c->session->{player} = $user;
+    $c->session->{partial_login} = 1;
+    
+    # For now, we hard-code in a redirect, but could be parameteised later
+    $c->res->redirect( '/player/account/email_unsubscribe' );    
+    
 }
 
 sub post_login_checks : Private {

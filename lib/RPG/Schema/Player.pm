@@ -151,6 +151,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 1,
         'size'              => '11'
     },
+    'email_hash' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => '',
+        'is_foreign_key'    => 0,
+        'name'              => 'email_hash',
+        'is_nullable'       => 0,
+        'size'              => '255'
+    },    
 );
 __PACKAGE__->set_primary_key('player_id');
 

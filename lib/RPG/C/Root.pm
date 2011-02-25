@@ -17,9 +17,10 @@ use DateTime::Format::HTTP;
 #
 __PACKAGE__->config->{namespace} = '';
 
-# List of paths which won't be prompted for reactivation if the player is inactive
+# List of paths where players can use a 'partial login', i.e. an email hash
+#  Also skips reactivation check
 # Mostly used so they can log in, change some settings, and log out, without having to worry about playing the game
-my @DONT_PROMPT_FOR_REACTIVATION = (
+my @PARTIAL_LOGIN_ALLOWED_PATHS = (
 	'player/account/email_unsubscribe',
 	'player/account/disable_emails',
 	'player/account/delete_account',
@@ -36,8 +37,15 @@ sub auto : Private {
     $c->model('DBIC')->schema->log( $c->log );
 
     $c->model('DBIC')->storage->txn_begin;
+    
+    # If they have a 'partial' login, check they're accessing one of the allowed paths
+    my $allowed_partial_login = 0;
+    warn $c->action;
+    if ($c->session->{partial_login} && grep { ref $_ eq 'Regexp' ? $c->action =~ m/$_/ : $c->action eq $_ } @PARTIAL_LOGIN_ALLOWED_PATHS) {
+        $allowed_partial_login = 1;   
+    }    
 
-    if ( !$c->session->{player} ) {
+    if ( !$c->session->{player} || ($c->session->{partial_login} && ! $allowed_partial_login) ) {
         if ( $c->action !~ m|^player(?!/account)| ) {
             $c->detach('/player/login');
         }
@@ -46,7 +54,7 @@ sub auto : Private {
         
     return 1 if $c->action =~ m/^admin/;
     
-    $c->forward('check_for_deleted_player');
+    $c->forward('check_for_deleted_player') unless $allowed_partial_login;
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
@@ -107,13 +115,6 @@ sub check_for_deleted_player : Private {
 	my ($self, $c) = @_;
 		
 	if ($c->session->{player}->deleted) {                        
-		# If they're just logging in to (eg) disable emails, don't make them reactivate.
-		my $dont_reactivate = grep { ref $_ eq 'Regexp' ? $c->action =~ m/$_/ : $c->action eq $_ } @DONT_PROMPT_FOR_REACTIVATION;
-
-		$c->log->debug("Not going to forward to reactivation screen, because action is: " . $c->action) if $dont_reactivate;
-		
-		return if $dont_reactivate;
-
 		# Check for a full game
 		my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );
 		if ( $players_in_game_rs->count > $c->config->{max_number_of_players} ) {

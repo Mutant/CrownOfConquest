@@ -546,10 +546,8 @@ sub update_spells : Local {
 		$c->stash->{error} = $character->character_name . " doesn't have enough spell points to memorise those spells";
 	}
 	else {
-		my $cast_chance = $c->req->param('offline_cast_chance');
-		$cast_chance = 0   if $cast_chance < 0;
-		$cast_chance = 100 if $cast_chance > 100;
-		$character->offline_cast_chance($cast_chance);
+		$character->online_cast_chance($c->req->param('online_cast_chance'));
+		$character->offline_cast_chance($c->req->param('offline_cast_chance'));
 		$character->update;
 
 		foreach my $spell_id ( keys %memorise_tomorrow ) {

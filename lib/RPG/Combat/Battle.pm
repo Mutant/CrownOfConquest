@@ -317,7 +317,7 @@ sub character_action {
 	my %opponents = map { $_->id => $_ } $opp_group->members;
 
 	# Check if spell casters should do an offline cast
-	my ($spell, $target) = $self->check_for_offline_cast($character);
+	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
         $character->last_combat_action('Cast');
 		$character->last_combat_param1( $spell->id );
@@ -452,13 +452,13 @@ sub apply_magical_damage {
 	$action_result->magical_damage($magical_damage_result);
 }
 
-sub check_for_offline_cast {
+sub check_for_auto_cast {
 	my $self      = shift;
 	my $caster    = shift;
 	
 	return unless $caster->is_spell_caster;
 	
-	if ( my $spell = $caster->check_for_offline_cast ) {
+	if ( my $spell = $caster->check_for_auto_cast ) {
         my $target;
 
 		# Randomly select a target
@@ -482,9 +482,8 @@ sub check_for_offline_cast {
                 $target = ( $self->opponents )[$opp_num-1];			
 			}
 			default {
-
 				# Currently only combat spells with creature/character target are implemented
-				confess "Can't handle spell target: $_";
+				confess "Auto-cast can't handle spell target: $_";
 			}
 		}
 		
@@ -497,7 +496,7 @@ sub creature_action {
 
 	my $party = $self->opponents_of($creature);
 	
-	my ($spell, $target) = $self->check_for_offline_cast($creature);
+	my ($spell, $target) = $self->check_for_auto_cast($creature);
 	if ($spell) {
 	    return $spell->creature_cast($creature, $target);
 	}

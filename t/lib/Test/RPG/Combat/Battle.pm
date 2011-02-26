@@ -487,7 +487,7 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
 	is(defined $party->defunct, 1, "Party now marked as defunct"); 
 }
 
-sub test_check_for_offline_cast_creature_target : Tests(2) {
+sub test_check_for_auto_cast_creature_target : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -507,13 +507,13 @@ sub test_check_for_offline_cast_creature_target : Tests(2) {
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
-	$character->set_always('check_for_offline_cast', $spell);
+	$character->set_always('check_for_auto_cast', $spell);
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
 	
 	# WHEN
-	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);
 	
 	# THEN
 	is($spell_cast->id, $spell->id, "Spell id set correctly");
@@ -521,7 +521,7 @@ sub test_check_for_offline_cast_creature_target : Tests(2) {
 
 }
 
-sub test_check_for_offline_cast_character_target : Tests(2) {
+sub test_check_for_auto_cast_character_target : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -541,13 +541,13 @@ sub test_check_for_offline_cast_character_target : Tests(2) {
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
-	$character->set_always('check_for_offline_cast', $spell);
+	$character->set_always('check_for_auto_cast', $spell);
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
 	
 	# WHEN
-	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);
 	
 	# THEN
 	is($spell_cast->id, $spell->id, "Spell id set correctly");
@@ -555,7 +555,7 @@ sub test_check_for_offline_cast_character_target : Tests(2) {
 
 }
 
-sub test_check_for_offline_cast_online_so_no_cast : Tests(3) {
+sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	my $self = shift;
 
 	# GIVEN
@@ -577,13 +577,13 @@ sub test_check_for_offline_cast_online_so_no_cast : Tests(3) {
 	$character->update;
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
-	$character->set_always('check_for_offline_cast', $spell);
+	$character->set_always('check_for_auto_cast', $spell);
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
 	
 	# WHEN
-	RPG::Combat::Battle::check_for_offline_cast($battle, $character);
+	RPG::Combat::Battle::check_for_auto_cast($battle, $character);
 	
 	# THEN
 	is($character->last_combat_action, 'Defend', "Last combat action set correctly");

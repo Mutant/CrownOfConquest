@@ -233,7 +233,7 @@ sub is_spell_caster {
     return $type->search_related('spells')->count >= 1 ? 1 : 0;    
 }
 
-sub check_for_offline_cast {
+sub check_for_auto_cast {
     my $self = shift;
     
     my $type = $self->type;

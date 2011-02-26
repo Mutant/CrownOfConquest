@@ -26,11 +26,11 @@
 		<td></td>
 		<td></td>
 		<th># to<br>Memorise</th>
-		<th>Cast<br>Offline <span id="cast_offline_help">(?)</span></th>
+		<th>Auto<br>Cast <span id="cast_offline_help">(?)</span></th>
 	</tr>
 <div dojoType="dijit.Tooltip"
 	connectId="cast_offline_help"
-    label="Check any combat spells that you would like this character to cast while in offline (or garrison) combat"></div>	
+    label="Check any combat spells that you would like this character to auto-cast based on the percentages below"></div>	
 	
 [% FOREACH spell IN available_spells %]	
 	[% spell_id = spell.id %]
@@ -67,13 +67,18 @@
 </table>
 <br>
 
-Offline Cast % Chance <span id="offline_cast_chance_help">(?)</span>: 
+Online Auto Cast % Chance <span id="online_cast_chance_help">(?)</span>: 
+<input type="text" dojoType="dijit.form.NumberTextBox" name="online_cast_chance" value="[% character.online_cast_chance %]" 
+	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
+<br>
+Offline Auto Cast % Chance <span id="offline_cast_chance_help">(?)</span>: 
 <input type="text" dojoType="dijit.form.NumberTextBox" name="offline_cast_chance" value="[% character.offline_cast_chance %]" 
-	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" size="4">
+	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
 
 <div dojoType="dijit.Tooltip"
-	connectId="offline_cast_chance_help"
-    label="The percentage chance each round this character will cast a spell in offline (or garrison) combat.<br>Set to 0 to disable offline casting."></div>	
+	connectId="online_cast_chance_help,offline_cast_chance_help"
+    label="The percentage chance each round this character will auto cast a spell in combat. Set to 0 to disable auto casting.<br>Online auto cast triggers when
+    the character is in your party and you're online. Offline cast triggers when your party is attacked offline, or the character is in a garrison."></div>	
 
 <br>
 

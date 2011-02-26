@@ -9,6 +9,7 @@ __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 use Test::MockObject;
+use DateTime;
 
 use Data::Dumper;
 
@@ -559,11 +560,11 @@ sub test_level_up : Tests(6) {
     is($history[0]->day_id, $today->id, "History event recorded on correct day");
 }
 
-sub test_check_for_offline_cast : Tests(10) {
+sub test_check_for_auto_cast : Tests(10) {
 	my $self = shift;
 	
 	# GIVEN
-	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, last_action => DateTime->now->subtract( hours => 1 ));
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
 	$character->party_id($party->id);
 	$character->offline_cast_chance(50);
@@ -679,7 +680,7 @@ sub test_check_for_offline_cast : Tests(10) {
 			$self->{schema}->resultset('Memorised_Spells')->create($mem_spell);
 		}
 		$self->{roll_result} = $test->{roll};
-		my $result = $character->check_for_offline_cast;
+		my $result = $character->check_for_auto_cast;
 		push @results, $result;
 	}
 	

@@ -23,8 +23,8 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance creature_group_id
-        mayor_of status status_context encumbrance back_rank_penalty
+        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance online_cast_chance
+        creature_group_id mayor_of status status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
         movement_factor_bonus/
 );
@@ -33,6 +33,14 @@ __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus a
 								movement_factor_bonus/,
 								hit_points => {
 							 		upper_bound_col => 'max_hit_points',
+							 	},
+							 	online_cast_chance => {
+							 	    min_value => 0, 
+                                    max_value => 100,
+							 	},
+							 	offline_cast_chance => {
+							 	    min_value => 0, 
+                                    max_value => 100,
 							 	},
 );
 
@@ -1106,19 +1114,23 @@ sub set_starting_equipment {
 }
 
 # Returns the spell to cast if there is one, undef otherwise
-sub check_for_offline_cast {
+sub check_for_auto_cast {
 	my $self = shift;
-		
-	return if $self->is_npc || !$self->group->is_online;
+	
+	my $online = 0;	
+	$online = 1 if ! $self->is_npc && $self->group->is_online;
+	
+	my $chance = $online ? $self->online_cast_chance : $self->offline_cast_chance;
+	$chance //= 0;
 	
 	my $cast_roll = Games::Dice::Advanced->roll('1d100');
 
-	if ($cast_roll <= $self->offline_cast_chance) {
+	if ($cast_roll <= $chance) {
 		my %params;
 		unless ($self->is_npc) {
 			# pc chars restricted to spells they've marked to cast offline
 			$params{cast_offline} = 1;
-		}			
+		}
 		
 		my @spells = $self->search_related(
 			'memorised_spells',

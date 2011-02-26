@@ -23,8 +23,12 @@ __PACKAGE__->config->{namespace} = '';
 my @PARTIAL_LOGIN_ALLOWED_PATHS = (
 	'player/account/email_unsubscribe',
 	'player/account/disable_emails',
-	'player/account/delete_account',
-	'player/account/delete_account_confirmed',
+);
+
+# These paths skip the check for an activated party (but still require a login)
+my @ACTIVATION_NOT_REQUIRED_PATHS = qw(
+	player/account/delete_account
+	player/account/delete_account_confirmed
 );
 
 sub auto : Private {
@@ -40,8 +44,7 @@ sub auto : Private {
     
     # If they have a 'partial' login, check they're accessing one of the allowed paths
     my $allowed_partial_login = 0;
-    warn $c->action;
-    if ($c->session->{partial_login} && grep { ref $_ eq 'Regexp' ? $c->action =~ m/$_/ : $c->action eq $_ } @PARTIAL_LOGIN_ALLOWED_PATHS) {
+    if ($c->session->{partial_login} && $c->action ~~ \@PARTIAL_LOGIN_ALLOWED_PATHS) {
         $allowed_partial_login = 1;   
     }    
 
@@ -114,7 +117,9 @@ sub auto : Private {
 sub check_for_deleted_player : Private {
 	my ($self, $c) = @_;
 		
-	if ($c->session->{player}->deleted) {                        
+	if ($c->session->{player}->deleted) {
+	    return if $c->action ~~ \@ACTIVATION_NOT_REQUIRED_PATHS;
+	    
 		# Check for a full game
 		my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );
 		if ( $players_in_game_rs->count > $c->config->{max_number_of_players} ) {

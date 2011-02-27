@@ -399,4 +399,33 @@ sub can_move_to_sector : Private {
 	return 1;
 }
 
+sub kingdom : Local {
+    my ($self, $c) = @_;
+    
+    my $land_rs = $c->model('DBIC::Land')->search(
+        {},
+        {
+            prefetch => 'kingdom',
+            order_by => ['y','x'],
+        }
+    );
+    
+    $Template::Directive::WHILE_MAX = 100000;
+    
+    $land_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template      => 'map/kingdom_map.html',
+                params        => {
+                    land_rs => $land_rs,
+                    colours => [RPG::Schema::Kingdom->colours],
+                },
+            }
+        ]
+    );    
+}
+
 1;

@@ -1,0 +1,26 @@
+
+<table border=0 cellspacing="0" cellpadding="1"><tr>
+[% last_y = 1 %]
+[% WHILE (sector = land_rs.next) ~%]
+	[% IF sector.y != last_y ~%]
+		</tr>
+		<tr>
+		[% last_y = sector.y %]
+	[% END ~%]
+	<td title="[% sector.kingdom.name %] ([% sector.x %], [% sector.y %])" style="width: 2px; height: 2px; background: [% sector.kingdom.colour %]"></td>
+[% END ~%]
+
+</tr></table>
+
+<br><br>
+
+<table>
+<tr>
+[% FOREACH colour IN colours %]
+<td title="colour" style="background: [% colour %]; font-size: 50px;">&nbsp;</td>
+[% END %]
+</tr></table>
+
+
+
+

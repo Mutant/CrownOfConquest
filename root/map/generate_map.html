@@ -20,8 +20,8 @@ Prosperity: [% position.prosperity %]<br>
 [% END %]
 
 [%
-	image_width = 80 / zoom_level
-	image_height = 80 / zoom_level
+	image_width = 80 div zoom_level
+	image_height = 80 div zoom_level
 	sector_width = image_width;
 	sector_height = image_height;
 	height = sector_height * grid_size + 2;
@@ -47,9 +47,7 @@ Prosperity: [% position.prosperity %]<br>
 			[% position = grid.$x.$y %]
 		[% END %] 
 
-		[% FILTER collapse %]
-        	[% border_colour = 'gray' %]
-	
+		[% FILTER collapse %]	
 		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
 				[% IF position.town_id %]
 					[% IF town_costs.${position.town_id}.gold && party.turns >= position.party_movement_factor %]
@@ -71,10 +69,7 @@ Prosperity: [% position.prosperity %]<br>
 					text-align: center;
 					display: inline;					
 					font-size: 1px;
-					position: relative;		
-					border: 0px;
-					margin: 0px;
-					padding: 0px;
+					position: relative;	
 					"
 					[% IF position.town_id %]id="town_[% position.town_id %]"[% END %]
 										
@@ -86,9 +81,6 @@ Prosperity: [% position.prosperity %]<br>
 							top: 0px;
 							left: 0px; 
 							position: absolute;
-							border: 0px;
-							margin: 0px;
-							padding: 0px;
 							">
 						<img 
 							src="[% c.config.static_path %][% image_path %][% position.image %]" 
@@ -158,7 +150,8 @@ Prosperity: [% position.prosperity %]<br>
 			[% IF position.town_id %]
 				<div dojoType="dijit.Tooltip"
                    connectId="town_[% position.town_id %]"
-                   label="[% town_tooltip(position) | collapse %]">
+                   label="[% town_tooltip(position) | collapse %]"
+                   style="display: none">
                    </div>
 			[% END %]					
 			[% IF ! click_to_move || position.next_to_centre %]

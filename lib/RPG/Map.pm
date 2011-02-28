@@ -6,6 +6,7 @@ use warnings;
 use Carp;
 
 use Math::Round qw(round);
+use Data::Dumper;
 
 sub surrounds {
 	my $self           = shift;
@@ -210,28 +211,51 @@ sub get_direction_to_point {
 	return "$y_dir $x_dir";
 }
 
+# The direction numbers are based on numeric keypad
+my %direction_adjustments = (
+	'1' => { y => 1,  x => -1 },
+	'2' => { y => 1 },
+	'3' => { y => 1,  x => 1 },
+	'4' => { x => -1 },
+	'6' => { x => 1 },
+	'7' => { y => -1, x => -1 },
+	'8' => { y => -1 },
+	'9' => { y => -1, x => 1 },
+);
+
 sub adjust_coord_by_direction {
 	my $package   = shift;
 	my $coord     = shift;
 	my $direction = shift;
+	
+	my %coord_copy = %$coord;
 
-	my %adjustments = (
-		'1' => { y => 1,  x => -1 },
-		'2' => { y => 1 },
-		'3' => { y => 1,  x => 1 },
-		'4' => { x => -1 },
-		'6' => { x => 1 },
-		'7' => { y => -1, x => -1 },
-		'8' => { y => -1 },
-		'9' => { y => -1, x => 1 },
-	);
-
-	while ( my ( $coord_dir, $adjustment ) = each %{ $adjustments{$direction} } ) {
-		$coord->{$coord_dir} += $adjustment;
+	while ( my ( $coord_dir, $adjustment ) = each %{ $direction_adjustments{$direction} } ) {
+		$coord_copy{$coord_dir} += $adjustment;
 	}
 
-	return $coord;
+	return \%coord_copy;
+}
 
+# Given two coords, find the (numeric) direction from the first to the second
+sub find_direction_to_adjacent_sector {
+    my $package   = shift;
+	my $start     = shift;
+	my $end       = shift;
+	
+	if ($package->get_distance_between_points($start, $end) > 1) {
+	    confess "Can't find direction for non-adjacent sector";
+	}
+	
+	foreach my $direction (keys %direction_adjustments) {
+	   my $adjusted_coord = $package->adjust_coord_by_direction($start, $direction);
+	   if ($adjusted_coord->{x} == $end->{x} && $adjusted_coord->{y} == $end->{y}) {
+	       return $direction;
+	   }
+	}
+	
+	confess "Couldn't find direction for sectors: " . Dumper [$start, $end];	
+    
 }
 
 1;

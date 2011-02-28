@@ -21,9 +21,9 @@ my @colours = (
     'Chocolate',
     'BurlyWood',
     'Crimson',
-    'DarkBlue',
     'Green',
     'Firebrick',
+    '#408080',
 );
 
 sub colours { @colours };

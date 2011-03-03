@@ -68,9 +68,30 @@ for (1..12) {
    
     my $failures = 0;
 
-    while ($size > 0 && $failures < 5000) { 
+    while ($size > 0 && $failures < 5000) {        
+        my $key;
+        if (! %joinable) {
+            # No sectors left to join, find another one at random
+            my $sector = $schema->resultset('Land')->find(
+                {
+                    kingdom_id => undef,
+                },
+                {
+                    order_by => \'rand()',
+                    rows => 1,
+                }                
+            );
+            
+            last unless $sector; 
+            
+            $key = $start_sector->x . ',' . $start_sector->y;
+            
+            push @{$joinable{$key}}, (1,2,3,4,6,7,8,9);
+        }
+        else {        
+            $key = (shuffle keys %joinable)[0];
+        }
         
-        my $key = (shuffle keys %joinable)[0];
         my ($x, $y) = split /,/, $key;
         my $coord = {x=>$x, y=>$y};
         

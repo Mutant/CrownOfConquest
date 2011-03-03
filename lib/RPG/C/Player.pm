@@ -424,6 +424,8 @@ sub verify : Local {
         if ($player) {
             if ( $player->verification_code eq $c->req->param('verification_code') ) {
                 $player->verified(1);
+                $player->last_login( DateTime->now() );
+                $player->warned_for_deletion(0);
                 $player->update;
                 $c->session->{player} = $player;
 

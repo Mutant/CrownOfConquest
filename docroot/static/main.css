@@ -277,7 +277,7 @@ html>body .nav a {width: auto}
 }
 
 .actionButton .dijitButtonText {
-    padding: 0;
+    padding: 0px;
 }
 
 .actionButton .dijitTooltipConnector {
@@ -294,7 +294,7 @@ html>body .nav a {width: auto}
 }
 
 .actionButton .dijitDropDownButton {
-    margin: 0;
+    margin: 0px;
 }
 
 .actionButton .dijitArrowButtonInner {

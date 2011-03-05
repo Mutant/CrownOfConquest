@@ -293,7 +293,7 @@ function calculateSpellPoints() {
 	* html #mainTabContainer {height: 700px; overflow: auto}
 </style>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
     	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    

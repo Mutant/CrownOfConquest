@@ -146,7 +146,7 @@ function sellCallback(responseObject, ioArgs, characterId) {
 
 <br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
 [% FOREACH char = characters %]
 	[% FILTER collapse %]
    		<div id="chartab_[% char.id %]" dojoType="dijit.layout.ContentPane" title="[% char.character_name %]" style="display: none;" 

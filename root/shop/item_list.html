@@ -1,9 +1,10 @@
 <div style="min-height: 700px; height: 700px;">
 [% last_category = '' %]
+
 [% FOREACH category IN items %]
 	[% IF last_category != category.key %]
 		[% IF last_category != '' %]</div>[% END %]
-		<div style="float: left; padding-right: 30px; padding-bottom: 10px"><h3 style="text-align: center">[% category.key %]</h3>
+		<div style="float: left; padding-right: 30px; padding-bottom: 10px;"><h3 style="text-align: center">[% category.key %]</h3>
 		[% last_category = category.key %]
 	[% END %]
 	
@@ -30,7 +31,7 @@
 				[% cost = item.sell_price(shop, 0) %]
 			[% END %]
 		
-			<div style="float: left; padding: 10px; height: 125px" id="item_outer_[% id %]">
+			<div style="float: left; padding: 10px; height: 125px;" id="item_outer_[% id %]">
 				
 					<div style="text-align: center">
 						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]

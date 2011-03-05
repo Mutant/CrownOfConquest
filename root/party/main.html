@@ -203,7 +203,7 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	
-	scrollTo = dojo.byId('scroll_to');
+	var scrollTo = dojo.byId('scroll_to');
 
 	if (scrollTo) {
 		console.log("Scrolling to " + scrollTo.innerHTML);

@@ -344,7 +344,8 @@ sub move_to : Local {
         }
         
         $c->stash->{mapped_sector} = $mapped_sector;
-        
+
+		my $already_messaged_garrison = -1;
         if (my $garrison = $new_land->garrison) {
         	# Garrison records a party sighting (unless it's the owner)
         	if ($garrison->party_id != $c->stash->{party}->id) {
@@ -353,6 +354,24 @@ sub move_to : Local {
         				garrison_id => $garrison->id,
         				day_id => $c->stash->{today}->id,
         				message => 'The party known as ' . $c->stash->{party}->name . ' passed through our sector',
+        			}
+        		);
+        		$already_messaged_garrison = $garrison->id;
+        	}
+        }
+        
+        my @nearby_garrisoned_blds = $self->find_nearby_garrisoned_buildings($c,
+         $c->stash->{party_location}->x, $c->stash->{party_location}->y);
+        foreach my $finfo (@nearby_garrisoned_blds) {
+        	if ($finfo->{garrison}->{garrison_id} != $already_messaged_garrison) {
+
+        		$c->model('DBIC::Garrison_Messages')->create(
+        			{
+        				garrison_id => $finfo->{garrison}->{garrison_id},
+        				day_id => $c->stash->{today}->id,
+        				message => 'From our ' . $finfo->{building}->{building_type}->{name} . ', we spotted the party known as ' .
+        				 $c->stash->{party}->name . ' in the distance at sector (' .
+        				 $c->stash->{party_location}->x . "," . $c->stash->{party_location}->y . ")",
         			}
         		);
         	}
@@ -371,6 +390,72 @@ sub move_to : Local {
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
 }
+
+#  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range
+#    of the given sector coordinate.  Returns an array of hashes, each which has a 'garrison' and 'building' entry that
+#    contains the resultsset info for that garrison/building.
+sub find_nearby_garrisoned_buildings {
+	my ( $self, $c, $x_centre, $y_centre ) = @_;
+
+	my $max_range = $c->config->{max_building_visibility};
+    my @garrisons = $c->model('DBIC::Garrison')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        $max_range,
+    );
+
+	#  If there are no garrisons in range, then there aren't any garrisoned buildings.
+	my @found;
+	if (@garrisons == 0) {
+		return @found;
+	}
+	
+    my @buildings = $c->model('DBIC::Building')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        $max_range,
+    ); 	
+
+	#  Build a hash of garrison/building keyed by location name (x.y)
+	my %locations;
+    foreach my $garrison (@garrisons) {
+    	my $locName = "" . $garrison->{land}->{x} . "." . $garrison->{land}->{y};
+    	$locations{$locName}{garrison} = $garrison;
+    }
+
+    foreach my $building (@buildings) {
+    	my $locName = "" . $building->{location}->{x} . "." . $building->{location}->{y};
+    	$locations{$locName}{building} = $building;
+    }
+
+	#  Traverse all the locations that had a garrison or a building.
+    foreach my $loc (keys %locations) {
+    	my $locInfo = $locations{$loc};
+
+    	#  If the location has both a garrison and building, check it.
+    	if (defined $locInfo->{garrison} && defined $locInfo->{building}) {
+
+    		#  Is the party not us, and does the garrison own the building (it should).
+  			if ($locInfo->{garrison}->{party_id} != $c->stash->{party}->id ) {
+		 	
+  			 	#  Finally, is our party in range (i.e. can the 'see' us?)
+  			 	my $dist = RPG::Map->get_distance_between_points(
+  			 		{x => $x_centre, y => $y_centre},
+  			 		{x => $locInfo->{building}->{location}->{x}, y => $locInfo->{building}->{location}->{y}}
+  			 	);
+  			 	if ($dist <= $locInfo->{building}->{building_type}->{visibility}) {
+  			 		push @found, {garrison => $locInfo->{garrison}, building => $locInfo->{building}};
+  			 	}
+  			}
+    	}
+    }
+    return @found;
+}
+
 
 # Check if a sector can be moved to
 sub can_move_to_sector : Private {

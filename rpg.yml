@@ -520,6 +520,9 @@ enchantment_creature_level_step: 1.5
 # Minimum distance between buildings- 1=one empty space min between
 building_min_spacing: 1
 
+# Maximum 'visibility' value for any building type
+max_building_visibility: 4
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

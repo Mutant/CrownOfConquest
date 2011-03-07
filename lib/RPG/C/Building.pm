@@ -14,6 +14,7 @@ use Set::Object qw(set);
 
 my %available_resources;
 my %available_tools;
+my $num_available_tools;
 
 sub auto : Private {
 	my ($self, $c) = @_;
@@ -21,6 +22,9 @@ sub auto : Private {
 	return 1;	
 }
 
+# get_building_info
+#   Constructs the available_resources / available_tools hashes for all defined buildings.  Reads the building definitions
+#    from the database, and the tool equipment from the currently cached party.
 sub get_building_info {
 	my ($self, $c) = @_;
 
@@ -63,7 +67,7 @@ sub get_building_info {
 		}
 	}
 
-	my $num_tools = 0;
+	$num_available_tools = 0;
 	foreach my $next_item (@party_equipment) {
 		if ($next_item->item_type->item_category_id == $c->stash->{resource_category}->item_category_id) {
 			my $quantity = $next_item->variable('Quantity') // 1;
@@ -71,7 +75,7 @@ sub get_building_info {
 		} elsif ($next_item->item_type->item_category_id == $c->stash->{tool_category}->item_category_id) {
 			$available_resources{labor_available} += getToolMultiplier($next_item);
 			$available_tools{$next_item->item_type->item_type}{count}++;
-			$num_tools++;
+			$num_available_tools++;
 		}
 	}
 	
@@ -81,102 +85,159 @@ sub get_building_info {
 		  'attack' => $next_type->attack_factor+0,  'heal' => $next_type->heal_factor+0,  'commerce' => $next_type->commerce_factor+0,
 		  'labor_needed' => $next_type->labor_needed, 'turns_needed' => 0,
 		  'raze_labor_needed' => $next_type->labor_to_raze, 'raze_turns_needed' => 0,
-		  'building_type_id' => $next_type->building_type_id, 'class' => $next_type->class, 'level' => $next_type->level);
+		  'building_type_id' => $next_type->building_type_id, 'class' => $next_type->class, 'level' => $next_type->level,
+		  'building_schema' => $next_type);
 		
-		#my $adj_labor = $self->optimize_tool_usage($next_type, $available_resources{laborers_available}, $num_tools);
-		
-		my @resource_needs;
-		if ($next_type->clay_needed > 0) {
-			push(@resource_needs, {'res_name', 'Clay', 'amount', $next_type->clay_needed+0, 'image',
-				$c->stash->{resource_images}{'Clay'}});
-		}
-		if ($next_type->iron_needed > 0) {
-			push(@resource_needs, {'res_name', 'Iron', 'amount', $next_type->iron_needed+0, 'image',
-				$c->stash->{resource_images}{'Iron'}});
-		}
-		if ($next_type->stone_needed > 0) {
-			push(@resource_needs, {'res_name', 'Stone', 'amount', $next_type->stone_needed+0, 'image',
-				$c->stash->{resource_images}{'Stone'}});
-		}
-		if ($next_type->wood_needed > 0) {
-			push(@resource_needs, {'res_name', 'Wood', 'amount', $next_type->wood_needed+0, 'image',
-				$c->stash->{resource_images}{'Wood'}});
-		}
-
-		$this_type{'turns_needed'} = $available_resources{'labor_available'} != 0
-		 ? ceil($this_type{'labor_needed'} / $available_resources{'labor_available'}) : 1000000;
-		if ($this_type{'turns_needed'} <= 0) { $this_type{'turns_needed'} = 1; }
-		
-		$this_type{'enough_turns'} = ($c->stash->{party}->turns > $this_type{'turns_needed'}) ? 1 : 0;
-		
-		$this_type{'raze_turns_needed'} = $available_resources{'labor_available'} != 0
-		 ? ceil($this_type{'raze_labor_needed'} / $available_resources{'labor_available'}) : 1000000;
-		if ($this_type{'raze_turns_needed'} <= 0) { $this_type{'raze_turns_needed'} = 1; }
-				 		
-		#  See if the party has the resources to build/upgrade this type.
-		$this_type{'enough_resources'} = 1;
-		foreach my $next_res (@resource_needs) {
-			if ($available_resources{$next_res->{res_name}} < $next_res->{amount}) {
-				$this_type{'enough_resources'} = 0;
-			}
-		}
-		$this_type{'resources_needed'} = \@resource_needs;
 		$c->stash->{building_info}{$next_type->building_type_id} = \%this_type;	
 	}
 }
 
+# calc_needs_by_party
+#   Calculates the building needs for the currently cached party.  Fills the necessary values in the given 'building_info'
+#    hash, which was created by 'get_building_info'.
+sub calc_needs_by_party {
+	my ($self, $c, $building_info) = @_;
+
+	my $building_schema = $building_info->{'building_schema'};
+	my ($adj_labor, $adj_res) = $self->optimize_tool_usage($building_schema, $available_resources{laborers_available},
+	 $num_available_tools);
+	#Carp::carp("Building ".$building_schema->name . " returned labor:".$adj_labor.", returned resources:\n".Dumper($adj_res));
+	
+	my @resource_needs;
+	if ($building_schema->clay_needed > 0) {
+		push(@resource_needs, {'res_name', 'Clay', 'amount', $adj_res->{'Clay'}, 'image',
+			$c->stash->{resource_images}{'Clay'}});
+	}
+	if ($building_schema->iron_needed > 0) {
+		push(@resource_needs, {'res_name', 'Iron', 'amount', $adj_res->{'Iron'}, 'image',
+			$c->stash->{resource_images}{'Iron'}});
+	}
+	if ($building_schema->stone_needed > 0) {
+		push(@resource_needs, {'res_name', 'Stone', 'amount', $adj_res->{'Stone'}, 'image',
+			$c->stash->{resource_images}{'Stone'}});
+	}
+	if ($building_schema->wood_needed > 0) {
+		push(@resource_needs, {'res_name', 'Wood', 'amount', $adj_res->{'Wood'}, 'image',
+			$c->stash->{resource_images}{'Wood'}});
+	}
+
+	$building_info->{'turns_needed'} = $available_resources{'labor_available'} != 0
+	 ? ceil($building_info->{'labor_needed'} / $available_resources{'labor_available'}) : 1000000;
+	if ($building_info->{'turns_needed'} <= 0) { $building_info->{'turns_needed'} = 1; }
+	
+	$building_info->{'enough_turns'} = ($c->stash->{party}->turns > $building_info->{'turns_needed'}) ? 1 : 0;
+	
+	$building_info->{'raze_turns_needed'} = $available_resources{'labor_available'} != 0
+	 ? ceil($building_info->{'raze_labor_needed'} / $available_resources{'labor_available'}) : 1000000;
+	if ($building_info->{'raze_turns_needed'} <= 0) { $building_info->{'raze_turns_needed'} = 1; }
+			 		
+	#  See if the party has the resources to build/upgrade this type.
+	$building_info->{'enough_resources'} = 1;
+	foreach my $next_res (@resource_needs) {
+		if ($available_resources{$next_res->{res_name}} < $next_res->{amount}) {
+			$building_info->{'enough_resources'} = 0;
+		}
+	}
+	$building_info->{'resources_needed'} = \@resource_needs;	
+}
+
+# optimize_tool_usage
+#   Given a party context (tools, num laborers), determines the best set of tools to use to construct/upgrade
+#    the given building.  Does the following:
+#      IF enough laborers for all given tools THEN
+#         calculates effects using all tools
+#      ELSE
+#         FOR all laborers
+#            score all tools (based on resource and labor savings)
+#            sort scored tools
+#            pick the best tool
+#         END FOR
+#      END IF
+#    This algorithm ensures that the best tools are used by rescoring each remaining tool, which takes into
+#     account any previous effects.  For example, if a previous tool ensures that most Iron is saved, then the
+#     next round of scoring sees that and may be a different tool as the next best based on the newly reduced requirements.
+#     A bit slower, but better results - however, should only be called on buildings where we really want this info.
 sub optimize_tool_usage {
-	my ($self, $building, $num_laborers, $num_tools) = @_;
+	my ($self, $building, $num_laborers, $num_tools, $res_needed) = @_;
 
 	#  If there are more laborers than tools, then we use all the tools, so calculate effects.
 	my $labor_avail = $num_laborers;
 	my %resources = ('Wood' => $building->wood_needed, 'Clay' => $building->clay_needed, 'Iron' => $building->iron_needed,
 		'Stone' => $building->stone_needed );
 	
-	Carp::carp("Optimize tool usage on ".$building->name.", orig labor available:".$labor_avail.", num laborers:".$num_laborers.", num tools:".$num_tools);
-	Carp::carp("Original resources needed:\n".Dumper(%resources));
+	#Carp::carp("Optimize tool usage on ".$building->name.", orig labor available:".$labor_avail.", num laborers:".$num_laborers.", num tools:".$num_tools);
+	#Carp::carp("Original resources needed:\n".Dumper(\%resources));
 	my $score;
 	if ($num_laborers >= $num_tools) {
+		#Carp::carp("Using all available tools");
 		foreach my $next_tool (keys %available_tools) {
-			Carp::carp("Next tool:".$next_tool.", avail count:".$available_tools{$next_tool}{count});
 			$score = $self->calc_tool_effects(\$labor_avail, \%resources, $available_tools{$next_tool}{tool},
 			 $available_tools{$next_tool}{count});
-			Carp::carp("Available labor:".$labor_avail.", score:".$score);
+			#Carp::carp("Next tool:".$next_tool.", avail count:".$available_tools{$next_tool}{count}.
+			# ", available labor:".$labor_avail.", score:".$score);
 		}
 	} else {
-		Carp::carp("SCORING METHOD");
-		for (my $i=0; $i<$num_tools; $i++){
-			my ($score, $avail_labor);
-			my %our_tools = %available_tools;
+		#Carp::carp("SCORING METHOD on num_tools:".$num_tools);
+		my %current_resources = %resources;			# Cumulative resource needs based on chosen tool bonuses.
+
+		# Make a copy of the available tools, it contains counts, will be decremented as tools are chosen.
+		my %our_tools;
+		foreach my $next_tool (keys %available_tools) {
+			$our_tools{$next_tool}{tool} = $available_tools{$next_tool}{tool};
+			$our_tools{$next_tool}{count} = $available_tools{$next_tool}{count};
+		}
+		
+		#  Here is the meat of the algorithm.  For each laborer, find the best available tool.  That is done by scoring
+		#   each remaining tool and picking the highest scored tool.  Thus, each pass takes into account the effects of
+		#   the previous choice - e.g. if a tool reduces a resource need, the next tool scoring will take that into account.
+		for (my $i=0; $i<$num_laborers; $i++){
 			my %scored_tools;
+			my $num_tools_considered = 0;
 			foreach my $next_tool (keys %our_tools) {
-				if ($our_tools{$next_tool}{count} <= 0) {
+				if ($our_tools{$next_tool}{count} <= 0) {		# Any more of this tool type left?
 					next;
 				}
-				Carp::carp("Next tool:".$next_tool.", avail count:".$our_tools{$next_tool}{count});
-				$score = $self->calc_tool_effects(\$labor_avail, \%resources, $our_tools{$next_tool}{tool}, 1);
-				Carp::carp("Available labor:".$labor_avail.", score:".$score);
-				$scored_tools{$next_tool} = $score;
+				my %resource_result = %current_resources;
+				my $this_avail_labor = $labor_avail;
+				my $score = $self->calc_tool_effects(\$this_avail_labor, \%resource_result, $our_tools{$next_tool}{tool}, 1);
+
+				$scored_tools{$next_tool}{score} = $score;
+				%{$scored_tools{$next_tool}{resource_result}} = %resource_result;
+				$scored_tools{$next_tool}{adjusted_labor} = $this_avail_labor;
+				$num_tools_considered++;
 			}
-			
-			my @sorted_tools = sort { $scored_tools{$b} <=> $scored_tools{$a} } keys %scored_tools;
-			
-			foreach my $tool_key (@sorted_tools) {
-				Carp::carp("Tool ".$tool_key." scores:".$scored_tools{$tool_key});
+			if ($num_tools_considered <= 0) {	# For safety, shouldn't happen.
+				last;
 			}
-			last;
+
+			#  Sort tools by score.			
+			my @sorted_tools = sort { $scored_tools{$b}{score} <=> $scored_tools{$a}{score} } keys %scored_tools;
+
+			#  Use the tool with the best score.
+			#Carp::carp("Best score on tool:".$sorted_tools[0].", score was:".$scored_tools{$sorted_tools[0]}{score});
+			%current_resources = %{$scored_tools{$sorted_tools[0]}{resource_result}};	# Remember the new resource needs.
+			$labor_avail = $scored_tools{$sorted_tools[0]}{adjusted_labor};				# Remember the adjusted labor.
+			$our_tools{$sorted_tools[0]}{count}--;										# Decrement the chosen tool.
 		}
+		%resources = %current_resources;
 	}
-	Carp::carp("Resulting labor available:".ceil($labor_avail).", adjusted resources needed:\n".Dumper(%resources));
-	return ceil($labor_avail);
+	
+	#  Round all fractional resource needs up (TODO: is there an idiom that's better than the foreach?)
+	foreach my $res_name (keys %resources) {
+		$resources{$res_name} = ceil($resources{$res_name});
+	}
+	return (ceil($labor_avail), \%resources);
 }
 
+# calc_tool_effects
+#  Calculates the effects of a given tool on a given set of labor and resource needs.  Returns a numeric score that takes
+#   into account the resources and labor saved if this tool were used.  The score is essentially a combined sum of the fractional
+#   resources and labor points saved by the given tool on the given labor and resource needs.
 sub calc_tool_effects {
 	my ($self, $labor_avail, $resources, $tool, $count) = @_;
 
 	#  Check for any effects on any of the resource types.
 	my $score = 0;
-	Carp::carp("calc resources:\n".Dumper($resources));
 	foreach ('Wood', 'Stone', 'Iron', 'Clay') {
 		my $next_attr = $tool->attribute($_ . ' Savings');
 		if (defined $next_attr) {
@@ -192,8 +253,8 @@ sub calc_tool_effects {
 			}
 			
 			#  Arbitrarily score this as the amount saved.  Favors higher savings of resources.
-			$score += ($resources->{$_} - $adjusted_value);
-			Carp::carp($_." scores: ".$score.", adj value:".$adjusted_value.", current res:".$resources->{$_}.", count:".$count.", attr value:".$next_attr->value);
+			$score += $adjusted_value;
+			#Carp::carp($_." scores: ".$score.", adj value:".$adjusted_value.", current res:".$resources->{$_}.", count:".$count.", attr value:".$next_attr->value);
 		}
 	}
 
@@ -253,6 +314,7 @@ sub create : Local {
 		} else {
 			my $existing_building = $buildings_by_class{$next_class};
 			if (${$existing_building}->level == $next_type->{level} - 1) {
+				$self->calc_needs_by_party($c, $next_type);
 				${$existing_building}->set_upgrades_to($next_type);
 			} elsif (${$existing_building}->level == $next_type->{level}) {
 				${$existing_building}->set_type($next_type);
@@ -262,6 +324,7 @@ sub create : Local {
 	
 	#  Construct the available buildings array from the lowest level building classes that haven't been built yet.
 	foreach my $next_class_key (keys %existing_classes_seen) {
+		$self->calc_needs_by_party($c, $existing_classes_seen{$next_class_key});
 		push(@available_buildings, $existing_classes_seen{$next_class_key});
 	}
 

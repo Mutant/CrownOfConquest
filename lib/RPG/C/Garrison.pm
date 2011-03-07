@@ -371,7 +371,6 @@ sub messages_tab : Local {
         {
             order_by => 'day.date_started desc',
             prefetch => 'day',
-            rows     => 7,                         # TODO: config me
         },
     );
 

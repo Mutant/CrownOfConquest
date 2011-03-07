@@ -521,7 +521,7 @@ enchantment_creature_level_step: 1.5
 building_min_spacing: 1
 
 # Maximum 'visibility' value for any building type
-max_building_visibility: 4
+max_building_visibility: 7
 
 # ----- Debug ----- #
 

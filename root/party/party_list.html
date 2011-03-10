@@ -4,8 +4,6 @@
 
 var loaded = {};
 
-
-
 function loadFightMenu(charId) {
 	if (! loaded.fightMenu) loaded.fightMenu = {};
 	
@@ -65,6 +63,14 @@ function loadTargetBasedMenu(charId, type) {
         
         load: function(responseObject, ioArgs){
         	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: none');
+        	
+        	if (responseObject.autocast) {
+        	 	menuItem = new dijit.MenuItem({
+			        label: "Auto Cast",
+			        onClick: function() { selectActionCombat('Cast', charId, 'autocast', null, '(Auto)') }
+			    });
+			    menu.addChild(menuItem);  
+        	}
 			
 			for (var i in responseObject.list) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;

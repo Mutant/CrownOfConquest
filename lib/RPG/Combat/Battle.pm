@@ -316,13 +316,22 @@ sub character_action {
 
 	my %opponents = map { $_->id => $_ } $opp_group->members;
 
-	# Check if spell casters should do an offline cast
+	# Check if spell casters should do an auto cast
+	my $autocast = $character->last_combat_param1 eq 'autocast' ? 1 : 0;
 	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
         $character->last_combat_action('Cast');
 		$character->last_combat_param1( $spell->id );
 		$character->last_combat_param2( $target->id );
 	}
+	elsif ($autocast) {
+	    # They have auto-cast set, but didn't cast a spell. Set them to attack instead
+	    $character->last_combat_action('Attack');
+	    $character->last_combat_param1(undef);
+	    $character->last_combat_param2(undef);
+	}
+	
+	my $result;	    
 
 	if ( $character->last_combat_action eq 'Attack' ) {
 
@@ -366,7 +375,7 @@ sub character_action {
 			$action_params{damage} = $damage;
 		}
 
-		my $action_result = RPG::Combat::ActionResult->new(
+		$result = RPG::Combat::ActionResult->new(
 			attacker => $character,
 			defender => $opponent,
 			%action_params,
@@ -374,12 +383,10 @@ sub character_action {
 
 		if ( my $type = $self->character_weapons->{ $character->id }{magical_damage_type} ) {
 			$self->apply_magical_damage(
-				$character, $opponent, $action_result, $type,
+				$character, $opponent, $result, $type,
 				$self->character_weapons->{ $character->id }{magical_damage_level}
 			);
 		}
-
-		return $action_result;
 	}
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
 		my $obj;
@@ -406,7 +413,6 @@ sub character_action {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
 
-		my $result;
 		if ( $character->last_combat_action eq 'Cast' ) {
 			$result = $obj->cast( $character, $target );
 		}
@@ -420,13 +426,21 @@ sub character_action {
 		# Make sure any healing/damage etc. is taken into account
 		$target->discard_changes;
 
-		$character->last_combat_action('Attack');
-		$character->update;
+        $character->last_combat_action('Attack');
 
 		$self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
-
-		return $result;
 	}
+	
+	# If they were auto-casting, set them back to auto-cast for next round
+	if ($autocast) {
+        $character->last_combat_action('Cast');   
+	    $character->last_combat_param1('autocast');
+	    $character->last_combat_param2(undef);	   
+	}
+    $character->update;
+    
+    return $result;
+	
 }
 
 sub apply_magical_damage {

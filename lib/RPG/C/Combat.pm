@@ -360,7 +360,8 @@ sub cast_list : Local {
 		};
 	}
 	
-	$c->res->body(to_json {list => \@spells_data});
+	my $autocast = $c->stash->{party}->in_combat && $character->online_cast_chance > 0 ? 1 : 0;
+	$c->res->body(to_json {list => \@spells_data, autocast => $autocast});
 }
 
 sub spell_target_list : Local {

@@ -249,7 +249,13 @@ sub list : Private {
 						if $opponents_by_id{$character->last_combat_param1};
 				}
 				when ('Cast') {
+				    if ($character->last_combat_param1 eq 'autocast') {
+				        $combat_params{$character->id} = ['(Auto)'];
+				        next;   
+				    }
+				    
 					my $spell = $c->model('DBIC::Spell')->find({spell_id => $character->last_combat_param1});
+										
 					my $target = $spell->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
 						$opponents_by_id{$character->last_combat_param2};

@@ -72,8 +72,8 @@ sub get_party_grid {
 
     my $sql = <<SQL;
 SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre, 
-	terrain.terrain_id, terrain.terrain_name, terrain.image, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
-	mapped_sector.party_id, mapped_sector.date_stored, town.town_id, town.town_name, town.prosperity
+	me.variation, terrain.terrain_id, terrain.terrain_name, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
+	mapped_sector.party_id, mapped_sector.date_stored, mapped_sector.known_dungeon, town.town_id, town.town_name, town.prosperity
 	
 	FROM Land me  
 	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id ) 

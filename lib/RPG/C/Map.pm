@@ -56,16 +56,17 @@ sub party : Local {
         $centre_y = $party_location->y + ( $c->req->param('y_offset') || 0 );
     }
 
-    my $grid_size = $zoom_level * 9 + 1;
-    $grid_size-- if $zoom_level % 2 == 1;    # Odd numbers cause us problems
+    my $x_size = $zoom_level * 12 + 1;
+    my $y_size = $zoom_level * 9 + 1;
+    $x_size-- if $zoom_level % 2 == 1;    # Odd numbers cause us problems
 
-    my $grid_params = $c->forward( 'generate_grid', [ $grid_size, $grid_size, $centre_x, $centre_y, ], );
+    my $grid_params = $c->forward( 'generate_grid', [ $x_size, $y_size, $centre_x, $centre_y, ], );
 
     $grid_params->{click_to_move} = 0;
-    $grid_params->{x_size}        = $grid_size;
-    $grid_params->{y_size}        = $grid_size;
+    $grid_params->{x_size}        = $x_size;
+    $grid_params->{y_size}        = $y_size;
     $grid_params->{zoom_level}    = $zoom_level;
-    $grid_params->{grid_size}     = $grid_size;
+    $grid_params->{grid_size}     = $x_size;
 
     my $map = $c->forward( 'render_grid', [ $grid_params, ] );
 

@@ -10,6 +10,7 @@
 </head>
 <body class="tundra" id="body">
 <script>
+
 	dojo.registerModulePath("rpg","[% c.config.static_path %]/dojo_cust/rpg");
 	dojo.require("dojo.parser");
 	dojo.require("dijit.form.Button");
@@ -77,7 +78,7 @@ function show_message(message) {
 	
 </div>
 
-<div id="content-outer" class="main" style="">
+<div id="content-outer" class="main" [% IF width %]style="width: [% width %]px"[% END %]>
 	
 <div id="border-top"><div id="border-left"><div id="border-bottom"><div id="border-right" style="position: relative;">
 	<div style="right:0px; top: 0px; position: absolute">

@@ -718,7 +718,7 @@ sub pickup_item : Local {
 
 	$item->add_to_characters_inventory($random_char);
 
-	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name;
+	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name(1);
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

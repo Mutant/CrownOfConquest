@@ -147,11 +147,18 @@ sub attribute {
 
 sub display_name {
     my $self = shift;
+    my $show_enchanted_star = shift // 0;
 
 	my $name = $self->item_type->item_type;
 
     if ( my $quantity = $self->variable('Quantity') ) {
         $name .= ' (x' . $quantity . ')';
+    }
+    
+    if ($show_enchanted_star) {
+        my $enchanted = $self->enchantments_count > 0 ? 1 : 0;
+    
+        $name .= $enchanted ? '(*)' : '';
     }
 
     return $name;

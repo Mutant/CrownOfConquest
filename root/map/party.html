@@ -1,12 +1,12 @@
-[% INCLUDE top.html %]
+[% INCLUDE top.html, width="1045" %]
 
 <script>
 	dojo.require("dijit.layout.TabContainer");	
 </script>
 
-<div style="background: black; position: relative; overflow: auto; min-height: 800px;">
+<div style="background: black; position: relative; overflow: auto;">
 	[% FILTER collapse %]
-	<div style="position: absolute; left: 25px; top: 45%; text-align: center; border: 3px inset black; z-index: 5">
+	<div style="position: absolute; left: 25px; top: 40%; text-align: center; border: 3px inset black; z-index: 5">
 		[% INCLUDE map/zoom.html max_zoom=7 %]
 
 

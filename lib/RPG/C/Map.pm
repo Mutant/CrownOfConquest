@@ -28,8 +28,8 @@ sub view : Private {
         $c->forward( 'generate_grid', [ $grid_size, $grid_size, $party_location->x, $party_location->y, 1, ], );
 
     $grid_params->{click_to_move} = 1;
-    $grid_params->{x_size}        = $c->config->{map_x_size};
-    $grid_params->{y_size}        = $c->config->{map_y_size};
+    $grid_params->{x_size}        = $grid_size;
+    $grid_params->{y_size}        = $grid_size;
     $grid_params->{grid_size}     = $grid_size;
     $grid_params->{zoom_level}    = $zoom_level;
 

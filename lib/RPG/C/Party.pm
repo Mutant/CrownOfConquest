@@ -249,7 +249,13 @@ sub list : Private {
 						if $opponents_by_id{$character->last_combat_param1};
 				}
 				when ('Cast') {
+				    if ($character->last_combat_param1 eq 'autocast') {
+				        $combat_params{$character->id} = ['(Auto)'];
+				        next;   
+				    }
+				    
 					my $spell = $c->model('DBIC::Spell')->find({spell_id => $character->last_combat_param1});
+										
 					my $target = $spell->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
 						$opponents_by_id{$character->last_combat_param2};
@@ -712,7 +718,7 @@ sub pickup_item : Local {
 
 	$item->add_to_characters_inventory($random_char);
 
-	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name;
+	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name(1);
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

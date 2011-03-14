@@ -16,8 +16,6 @@ function moveChar(char_id, sourceTableId, destTableId, funcName, linkLabel) {
 	
 	var tableRow = dojo.byId('char_row_' + char_id);
 
-	sourceTable.deleteRow(tableRow.rowIndex);
-
 	var destTable = dojo.byId(destTableId);
 	
 	var insertRowIndex = 0;
@@ -26,11 +24,19 @@ function moveChar(char_id, sourceTableId, destTableId, funcName, linkLabel) {
 	}
 	
 	newRow = destTable.insertRow(insertRowIndex);
-	newRow.innerHTML = tableRow.innerHTML;
+	
+	var cells = tableRow.cells;
+	
+	for (i=0; i<cells.length; i++) {
+		var cell = cells[i].cloneNode(true);
+		newRow.appendChild(cell);
+	}
+	
 	newRow.id = tableRow.id;
-		
-	lastCell = newRow.cells[newRow.cells.length-1];
-	lastCell.innerHTML = '<a href="javascript:' + funcName + '(\'' + char_id + '\')">' + linkLabel + '</a>';
+
+	sourceTable.deleteRow(tableRow.rowIndex);
+	
+	dojo.byId('char_link_' + char_id).innerHTML = '<a href="javascript:' + funcName + '(\'' + char_id + '\')">' + linkLabel + '</a>';	
 }
 
 function postGarrisonForm() {

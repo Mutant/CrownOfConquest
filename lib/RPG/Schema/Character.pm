@@ -1120,6 +1120,9 @@ sub check_for_auto_cast {
 	my $online = 0;	
 	$online = 1 if ! $self->is_npc && $self->group->is_online;
 	
+	# Only do auto cast if they're offline, or explictly set to autocast
+	return unless ! $online || ($self->last_combat_action eq 'Cast' && $self->last_combat_param1 eq 'autocast');     
+	
 	my $chance = $online ? $self->online_cast_chance : $self->offline_cast_chance;
 	$chance //= 0;
 	

@@ -629,7 +629,11 @@ sub get_equipment {
 	my $self = shift;
 	my @categories = @_;
 	
-	my @search_criteria = ('belongs_to_character.party_id' => $self->id);
+	my @search_criteria = (
+			'belongs_to_character.party_id' => $self->id, 
+			'belongs_to_character.garrison_id' => { '=' => undef},
+			'belongs_to_character.mayor_of' => { '=' => undef},
+	);
 	my $count = @categories;
 	if ($count) {
 		my @item_types;

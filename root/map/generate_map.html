@@ -3,6 +3,9 @@
 		[% position.terrain_name | ucfirst %]
 		[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
 		([% position.x %], [% position.y %])
+		[% IF position.known_dungeon %]
+			- Level [% position.known_dungeon %] Dungeon Entrance
+		[% END %]
 	[% END %]
 [% END %]
 
@@ -18,6 +21,19 @@ Prosperity: [% position.prosperity %]<br>
 	Tax: [% town_costs.${position.town_id}.gold %] gold / [% town_costs.${position.town_id}.turns %] turns
 [% END %] 
 [% END %]
+
+[% MACRO gen_image(position) BLOCK ~%]
+	[% IF position.buildings.0 ~%]
+		[%# Only handle 1 building per sector right now ~%]
+		[% building = position.buildings.0 ~%]
+		building/[% building.building_type.image %]
+	[% ELSIF position.known_dungeon ~%]
+		dungeonentrance.png
+	[% ELSE ~%]
+		[% image = position.terrain_name | replace(' ','_') ~%]
+		[% image %][% position.variation %].png
+	[% END ~%]
+[% END ~%]
 
 [%
 	image_width = 80 div zoom_level
@@ -84,7 +100,7 @@ Prosperity: [% position.prosperity %]<br>
 							position: absolute;
 							">
 						<img 
-							src="[% c.config.static_path %][% image_path %][% position.image %]" 
+							src="[% c.config.static_path %][% image_path %][% gen_image(position) %]" 
 							border=0 
 							[% title = sector_title(position) | trim | collapse %]
 							[% IF title %]title="[% title %]"[% END %]
@@ -94,14 +110,17 @@ Prosperity: [% position.prosperity %]<br>
 						</span>
 						
 			        	[% IF position.land_id == current_position.id %]
-							<img src="[% c.config.static_path %]images/dungeon/herecircle.png" style="
+							<img src="[% c.config.static_path %]/images/dungeon/herecircle.png" style="
 									position: absolute;
 									top: 0px;
 									left: 0px;												
 								" 
 								border = 0 
 								width="[% sector_width %]"
-								height="[% sector_height %]">
+								height="[% sector_height %]"
+								[% title = sector_title(position) %]
+								[%  IF title %]title="[% title %]"[% END %]
+								>
 			        	[% END %]						
 					
 						[% FOREACH road IN position.roads %]
@@ -123,29 +142,10 @@ Prosperity: [% position.prosperity %]<br>
 							[% END %]
 						[% END %]
 
-						[% this_title = "" %]
-						[% FOREACH building IN position.buildings %]
-							<img src="[% c.config.static_path %][% image_path %]building/[% building.building_type.image%]"
-							 style="position: absolute; top:[% sector_height / 4 %]px; left: [% sector_width / 4 %]px;"
-							border = 0
-							width="[% sector_width / 2 %]"
-							height="[% sector_height / 2 %]"
-							[% IF this_title == "" %]
-								[% this_title = building.building_type.name %]
-							[% ELSE %]
-								[% this_title = "$this_title,$building.building_type.name" %]
-							[% END %]
-							[% IF loop.last %]
-							    title="[% this_title %]"
-							[% END %]
-							>
-						[% END %]
-
 					[% END %]
 					
 				
-					</span>
-					
+					</span>					
 
 					
 			[% IF position.town_id %]
@@ -154,7 +154,7 @@ Prosperity: [% position.prosperity %]<br>
                    label="[% town_tooltip(position) | collapse %]"
                    style="display: none">
                    </div>
-			[% END %]					
+			[% END %]
 			[% IF ! click_to_move || position.next_to_centre %]
 				</a>
         	[% END %]

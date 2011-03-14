@@ -3,7 +3,7 @@
 <script>
 dojo.require("dojo.cookie");
 function displayIEDiag() {
-	if (dojo.isIE) {
+	if (dojo.isIE <= 7) {
 		var ieWarn = dojo.cookie('ieWarn');
 		console.log(ieWarn);
 
@@ -38,14 +38,12 @@ page has more info on the pre-beta.</p>
 <br style="clear:both">
 <hr size=1 width=70% align=center/>
 
-<div dojoType="dijit.Dialog" id="ie-diag" style="display: none" title="Internet Explorer Limitations">
-    It appears as if you're using a version of Internet Explorer.
+<div dojoType="dijit.Dialog" id="ie-diag" style="display: none" title="Internet Explorer 7 Limitations">
+    It seems like you're using Internet Explorer 7 or earlier.
     <br><br>
-    Note that this game does not work correctly in Internet Explorer. This is primarily because this browser is not standards compliant.
-    <br>
-    You can still log in, but important aspects of the game will not work.
+    Note that this game does not work correctly in Internet Explorer 7. You can still log in, but important aspects of the game will not work.
     <br><br>
-    Please try a standards compliant browser, such as <a href="http://www.google.com/chrome">Google Chrome</a> or 
+    Please upgrade to a newer version of IE, or use an alternative browser such as <a href="http://www.google.com/chrome">Google Chrome</a> or 
     <a href="http://www.firefox.com">Mozilla Firefox</a>.  
 	<br>
 	<div align="center">

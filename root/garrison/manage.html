@@ -94,7 +94,7 @@ function changeName(arguments) {
 </script>
 
 <style>
-	#mainTabContainer {height: 100%}
+	#mainTabContainer {height: 700px}
 	
 	* html #mainTabContainer {height: 700px; overflow: auto}
 </style>
@@ -155,11 +155,6 @@ function changeName(arguments) {
 
     <div dojoType="dojox.layout.ContentPane" title="Combat Log" 
     	href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
-    </div>
-    
-    <div dojoType="dojox.layout.ContentPane" title="Buildings" 
-    	href="[% base %]garrison/buildings_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
     </div>
 </div>

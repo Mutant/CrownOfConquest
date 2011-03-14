@@ -38,7 +38,7 @@
 		</td>
 		[% IF editable %]
 		<td>
-			<a href="javascript:removeFromGarrison('[% char.id %]')">Remove from Garrison</a>
+			<div id="char_link_[% char.id %]"><a href="javascript:removeFromGarrison('[% char.id %]')">Remove from Garrison</a></div>
 		</td>
 		[% END %]
 		</tr>
@@ -73,7 +73,7 @@
 		</td>
 		[% END %]
 		<td>
-			<a href="javascript:addToGarrison('[% char.id %]')">Add To Garrison</a>
+			<div id="char_link_[% char.id %]"><a href="javascript:addToGarrison('[% char.id %]')">Add To Garrison</a></div>
 		</td>
 		</tr>
 	[% END %]

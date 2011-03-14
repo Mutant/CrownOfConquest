@@ -61,6 +61,15 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => '11'
     },
+    'variation' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => '0',
+        'is_foreign_key'    => 0,
+        'name'              => 'variation',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    }, 
     'kingdom_id' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -69,7 +78,7 @@ __PACKAGE__->add_columns(
         'name'              => 'kingdom_id',
         'is_nullable'       => 1,
         'size'              => '11'
-    },    
+    },
 );
 __PACKAGE__->set_primary_key('land_id');
 

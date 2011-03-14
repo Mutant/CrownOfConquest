@@ -36,6 +36,7 @@ function loadFightMenu(charId) {
     });	
 }
 
+
 function ucFirst(string)
 {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -62,6 +63,14 @@ function loadTargetBasedMenu(charId, type) {
         
         load: function(responseObject, ioArgs){
         	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: none');
+        	
+        	if (responseObject.autocast) {
+        	 	menuItem = new dijit.MenuItem({
+			        label: "Auto Cast",
+			        onClick: function() { selectActionCombat('Cast', charId, 'autocast', null, '(Auto)') }
+			    });
+			    menu.addChild(menuItem);  
+        	}
 			
 			for (var i in responseObject.list) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
@@ -81,7 +90,7 @@ function loadTargetBasedMenu(charId, type) {
 					
 					var loadingItem = new dijit.MenuItem({
 				        label: "Loading...",
-				        id: type + "SubMenuLoading_" + charId + "_" + responseObject.list[i].id,
+				        id: type + "SubMenuLoading_" + charId + "_" + responseObject.list[i].id
 				    });
 				    listSubMenu.addChild(loadingItem); 								
 	
@@ -127,7 +136,7 @@ function loadCastSubMenu(subMenuId) {
         	
         	if (responseObject.spell_targets.length == 0) {
  				menuItem = new dijit.MenuItem({
-			        label: "<em>(No-one)</em>",
+			        label: "<em>(No-one)</em>"
 			    });
 			    menu.addChild(menuItem);       	
         	}
@@ -257,11 +266,11 @@ function highlightAction(char_id, action, target, name) {
 
 function createMenus() {
    [% FOREACH character IN characters %]    
-   
+
    [% IF character.is_dead %]
       [% NEXT %]
    [% END %]
-   
+
    [% IF in_combat %]
 	var params = {id:"fightMenu_[% character.id %]" };
 
@@ -269,74 +278,70 @@ function createMenus() {
 
 	var menuItem = new dijit.MenuItem({
         label: "Loading...",
-        id: "fightMenuLoading_[% character.id %]",
+        id: "fightMenuLoading_[% character.id %]"
     });
     menu.addChild(menuItem);
 
-    var button[% character.id %] = new dijit.form.DropDownButton({
-        label: '<img id="attackOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/attack.png">' +
-        	   '<img id="attackOn_[% character.id %]" style="display: none" src="[% c.config.static_path %]/images/actions/attack_glow.png">',
-        dropDown: menu,
-        class: "actionButton",
-        id: "fightButton_[% character.id %]"         
-	});        
+    var button[% character.id %] = createButton(menu, 'attack', '[% character.id %]');
 
     dojo.byId("fightSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
+
     [% END %]
     
     [% IF character.is_spell_caster && character.has_castable_spells(in_combat) %]
+
     	var params = {id:"castMenu_[% character.id %]" };
     	var menu = new dijit.Menu(params,document.createElement("div"));
     	
 		var menuItem = new dijit.MenuItem({
 	        label: "Loading...",
-	        id: "castMenuLoading_[% character.id %]",
+	        id: "castMenuLoading_[% character.id %]"
 	    });
 	    menu.addChild(menuItem);   
 	    
-	    var button[% character.id %] = new dijit.form.DropDownButton({
-	        label: '<img id="castOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/cast.png">' + 
-	               '<img id="castOn_[% character.id %]"  style="display: none" src="[% c.config.static_path %]/images/actions/cast_glow.png">',
-	        dropDown: menu,
-	        class: "actionButton",
-	        id: "castButton_[% character.id %]"         
-		});
-		
+	    var button[% character.id %] = createButton(menu, 'cast', '[% character.id %]');
+
 		dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
-		
+	
     [% END %]
     
     [% IF character.get_item_actions(in_combat) %]
+
     	params = {id:"useMenu_[% character.id %]" };
     	var menu = new dijit.Menu(params,document.createElement("div"));
     	
 		var menuItem = new dijit.MenuItem({
 	        label: "Loading...",
-	        id: "useMenuLoading_[% character.id %]",
+	        id: "useMenuLoading_[% character.id %]"
 	    });
 	    menu.addChild(menuItem);   
 	    
-	    var button[% character.id %] = new dijit.form.DropDownButton({
-	        label: '<img id="useOff_[% character.id %]" src="[% c.config.static_path %]/images/actions/use.png">' + 
-	               '<img id="useOn_[% character.id %]"  style="display: none" src="[% c.config.static_path %]/images/actions/use_glow.png">',
-	        dropDown: menu,
-	        class: "actionButton",
-	        id: "useButton_[% character.id %]"         
-		});
-		
+	    var button[% character.id %] = createButton(menu, 'use', '[% character.id %]');
+	    		
 		dojo.byId("useSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
     	dojo.connect(dijit.byId("useMenu_[% character.id %]"), 'onOpen', null, function() { loadUseMenu('[% character.id %]') });
+
     [% END %]
     
     highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 %]', '[% combat_params.${character.id}.1 %]');
     
-    [% END %]
-
+    [% END %]    
 }
 
-dojo.addOnLoad( createMenus );
+function createButton(menu, name, characterId) {
+    var params = {
+		label: '<img id="' + name + 'Off_' + characterId + '" src="[% c.config.static_path %]/images/actions/' + name + '.png">' +
+        	   '<img id="' + name + 'On_' + characterId + '" style="display: none" src="[% c.config.static_path %]/images/actions/' + name + '_glow.png">',
+        dropDown: menu,
+        id: name + "Button_" + characterId   
+    };
+   	params['class'] = "actionButton";
+
+    return new dijit.form.DropDownButton(params);
+}
+
 </script>
 
 <div style=""> 

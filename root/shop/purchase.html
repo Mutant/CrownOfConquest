@@ -1,11 +1,12 @@
 [% INCLUDE top.html %]
 
 <script type="text/javascript">
+
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.form.NumberSpinner");
 	dojo.require("dijit.layout.TabContainer");
 	dojo.require("rpg.dnd.Target");
-	
+
 function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 		var t = dojo.dnd.manager().target;
@@ -26,12 +27,12 @@ function init() {
 			dojo.byId('purchasing-char-id').value = char_id;
 			
 			if (tmp[0] == 'item') {
-			    dojo.byId('purchasing-item-id').value = null;
+			    dojo.byId('purchasing-item-id').value = '';
 				dojo.byId('purchasing-item-type-id').value = item_type_id;
 			}
 			else {
 				dojo.byId('purchasing-item-id').value = item_type_id;
-				dojo.byId('purchasing-item-type-id').value = null;
+				dojo.byId('purchasing-item-type-id').value = '';
 			}
 			
 			dijit.byId('confirmation').show();
@@ -115,7 +116,7 @@ function saveQuantityPurchase(dialogFields) {
 }
 
 dojo.addOnLoad( init );
-	
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
@@ -155,6 +156,7 @@ dojo.addOnLoad( init );
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
+
 [% INCLUDE shop/header.html shop_link='shop/purchase' %]
 
 <div align="center">
@@ -174,7 +176,8 @@ dojo.addOnLoad( init );
 <div align="center">Drag an item below onto a character's name to purchase it</div>
 <br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 100%">
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
 		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items" style="display: none;">
 
 [% INCLUDE shop/item_list.html items=items %]

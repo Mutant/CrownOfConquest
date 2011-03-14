@@ -61,8 +61,11 @@ function refreshPanels(panelData) {
 	}				
 				
     if (panelData.refresh_panels) {
-		for (var panel in panelData.refresh_panels) {
+		for (var panel in panelData.refresh_panels) {		
 			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
+			if (panel == 'party') {
+				createMenus();
+			}
 		}
 	}	
 }
@@ -200,7 +203,7 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	
-	scrollTo = dojo.byId('scroll_to');
+	var scrollTo = dojo.byId('scroll_to');
 
 	if (scrollTo) {
 		console.log("Scrolling to " + scrollTo.innerHTML);

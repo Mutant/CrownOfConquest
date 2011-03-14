@@ -16,10 +16,9 @@ sub attack : Local {
     croak "Opponent party not found" unless defined $party_attacked;
 
     if ($party_attacked->land_id != $c->stash->{party}->land_id) {
-		croak "Can't attack a party in a different sector";
+		c->stash->{error} = "Can't attack a party in a different sector";
     }
-
-    if ($party_attacked->dungeon_grid_id) {
+    elsif ($party_attacked->dungeon_grid_id) {
         $c->stash->{error} = "Can't attack a party in a dungeon";
     }
     elsif ( $party_attacked->in_combat ) {

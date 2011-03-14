@@ -135,6 +135,15 @@ __PACKAGE__->add_columns(
       'name' => 'labor_to_raze',
       'is_nullable' => 0,
       'size' => '11'
+    },
+    'visibility' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '1',
+      'is_foreign_key' => 0,
+      'name' => 'visibility',
+      'is_nullable' => 0,
+      'size' => '11'
     }, 
     'image' => {
       'data_type' => 'varchar',

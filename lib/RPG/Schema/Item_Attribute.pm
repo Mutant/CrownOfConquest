@@ -31,9 +31,12 @@ sub formatted_value {
 	my $self = shift;
 	
 	my $item_attribute_name = $self->item_attribute_name;
-	
+
 	if ($item_attribute_name->value_type eq 'boolean') {
 		return $self->value ? 'Yes' : 'No';
+	}
+	if ($item_attribute_name->value_type eq 'percent') {
+		return $self->value . "%";
 	}
 	elsif ($item_attribute_name->value_type eq 'item_type') {
 		# TODO: maybe pass in a list of item types?

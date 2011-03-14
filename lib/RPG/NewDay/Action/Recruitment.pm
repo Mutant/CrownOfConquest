@@ -48,7 +48,7 @@ sub randomly_delete_characters {
 	if (Games::Dice::Advanced->roll('1d100') <= 10) {
 		@characters = shuffle @characters;
 		my $unlucky = shift @characters;
-		$unlucky->delete;
+		$unlucky->delete if defined $unlucky;
 	}
 	
 	return @characters;

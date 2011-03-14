@@ -25,53 +25,6 @@ sub auto : Private {
 		}
 	);
 	
-	#  Get the resource and tool category id.  TODO: could these be cached elsewhere?	
-	$c->stash->{resource_category} = $c->model('DBIC::Item_Category')->find({'item_category' => 'Resource'});
-	$c->stash->{tool_category} = $c->model('DBIC::Item_Category')->find({'item_category' => 'Tool'});
-	
-	@{$c->stash->{building_types}} = $c->model('DBIC::Building_Type')->search({}, { order_by => ['class', 'level asc' ] } );
-
-	@{$c->stash->{resource_and_tools}} = $c->model('DBIC::Item_Type')->search(
-		{	-or => [
-				'item_category_id' => $c->stash->{resource_category}->item_category_id,
-				'item_category_id' => $c->stash->{tool_category}->item_category_id
-			] },
-		{ order_by => 'item_type' }
-	);
-	
-	# Create a hash of the items to image name.
-	foreach my $next_resource (@{$c->stash->{resource_and_tools}}) {
-		$c->stash->{resource_images}{$next_resource->item_type} = $next_resource->image;
-	}
-	
-	foreach my $next_type (@{$c->stash->{building_types}}) {
-		my %this_type = ('name' => $next_type->name, 'image' => $next_type->image, 'defense' => $next_type->defense_factor+0,
-		  'attack' => $next_type->attack_factor+0,  'heal' => $next_type->heal_factor+0,  'commerce' => $next_type->commerce_factor+0,
-		  'building_type_id' => $next_type->building_type_id, 'class' => $next_type->class, 'level' => $next_type->level);
-		#Carp::carp("Next type:".Dumper(%this_type));
-		
-		my @resource_needs;
-		if ($next_type->clay_needed > 0) {
-			push(@resource_needs, {'res_name', 'Clay', 'amount', $next_type->clay_needed+0, 'image',
-				$c->stash->{resource_images}{'Clay'}});
-		}
-		if ($next_type->iron_needed > 0) {
-			push(@resource_needs, {'res_name', 'Iron', 'amount', $next_type->iron_needed+0, 'image',
-				$c->stash->{resource_images}{'Iron'}});
-		}
-		if ($next_type->stone_needed > 0) {
-			push(@resource_needs, {'res_name', 'Stone', 'amount', $next_type->stone_needed+0, 'image',
-				$c->stash->{resource_images}{'Stone'}});
-		}
-		if ($next_type->wood_needed > 0) {
-			push(@resource_needs, {'res_name', 'Wood', 'amount', $next_type->wood_needed+0, 'image',
-				$c->stash->{resource_images}{'Wood'}});
-		}
-		$this_type{'resources_needed'} = \@resource_needs;
-		$c->stash->{building_info}{$next_type->building_type_id} = \%this_type;
-		#Carp::carp("Resource needs:".Dumper($c->stash->{building_info}{$next_type->building_type_id}));
-		#Carp::carp("Resource needs:".Dumper(%this_type));		
-	}
 	return 1;	
 }
 
@@ -418,7 +371,6 @@ sub messages_tab : Local {
         {
             order_by => 'day.date_started desc',
             prefetch => 'day',
-            rows     => 7,                         # TODO: config me
         },
     );
 
@@ -440,19 +392,6 @@ sub messages_tab : Local {
             }
         ]
     );	
-}
-
-sub get_garrison_buildings : Local {
-	my ($self, $c, $garrison_id) = @_;
-	return $c->model('DBIC::Building')->search(
-        	{ 
-	        	'owner_id' => $garrison_id,
-	        	'owner_type' => 'garrison'
-	        },
-	        {
-	            order_by => 'labor_needed'
-	        },
-	);
 }
 
 sub get_owned_equipment : Local {
@@ -521,89 +460,6 @@ sub equipment_tab : Local {
             }
         ]
     );		
-}
-
-sub buildings_tab : Local {
-	my ($self, $c) = @_;
-
-	# Create the available_resources/tools hashes for each type.
-	my (%available_resources, %available_tools);
-	foreach my $next_resource (@{$c->stash->{resource_and_tools}}) {
-		if ($next_resource->item_category_id == $c->stash->{resource_category}->item_category_id) {
-			$available_resources{$next_resource->item_type} = 0;
-		} else {
-			$available_tools{$next_resource->item_type} = 0;
-		}
-	}
-	
-	#  Get a list of the currently built (or under construction) buildings.
-	my @existing_buildings = $self->get_garrison_buildings($c, $c->stash->{garrison}->id);
-	my %buildings_by_class;
-	foreach my $next_item (@existing_buildings) {
-		my $this_type = $c->stash->{building_info}{$next_item->building_type_id};
-		$next_item->set_class($this_type->{class});
-		$next_item->set_level($this_type->{level});
-		$next_item->set_image($this_type->{image});
-		$buildings_by_class{$this_type->{class}} = \$next_item;
-	}
-	
-	#  Find which buildings have not been built, and get their lowest level for inclusion in the 'available buildings'.
-	my @available_buildings;
-	my %existing_classes_seen;
-	my %available_upgrades;
-	foreach my $next_key (keys %{$c->stash->{building_info}}) {
-		my $next_type = \%{$c->stash->{building_info}{$next_key}};
-		my $next_class = $next_type->{class};
-		
-		#  If the class of this building is not an existing building, and it's level is lower than others that we've
-		#   seen for this class, remember it.
-		
-		if (!exists($buildings_by_class{$next_class})) {
-			if (!exists($existing_classes_seen{$next_class}) || $existing_classes_seen{$next_class}->{level} > $next_type->{level}) {
-				$existing_classes_seen{$next_class} = $next_type;
-			}
-			
-		# Else the building exists - check to see if this is the next upgrade for that building (or the type itself)
-		} else {
-			my $existing_building = $buildings_by_class{$next_class};
-			if (${$existing_building}->level == $next_type->{level} - 1) {
-				${$existing_building}->set_upgrades_to($next_type);
-			} elsif (${$existing_building}->level == $next_type->{level}) {
-				${$existing_building}->set_type($next_type);
-			}
-		}
-	}
-	
-	#  Construct the available buildings array from the lowest level building classes that haven't been built yet.
-	foreach my $next_class_key (keys %existing_classes_seen) {
-		push(@available_buildings, $existing_classes_seen{$next_class_key});
-	}
-
-	#  Create the list of equipment (resources and tools) owned by the current party.
-	my @party_equipment = $self->get_owned_equipment($c, $c->stash->{party}->id, $c->stash->{garrison}->id);
-	foreach my $next_item (@party_equipment) {
-		if ($next_item->item_type->item_category_id == $c->stash->{resource_category}->item_category_id) {
-			$available_resources{$next_item->item_type->item_type}++;
-		}
-	}
-	my %available_items;
-	$available_items{'resources'} = \%available_resources;
-	$available_items{'tools'} = \%available_tools;
-		
-    $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'garrison/buildings.html',
-                params   => {
-                    #garrison => $c->stash->{garrison},
-                    available_buildings => \@available_buildings,
-                    available_items => \%available_items,
-                    existing_buildings => \@existing_buildings,
-                },
-            }
-        ]
-    );	
 }
 
 sub move_item : Local {

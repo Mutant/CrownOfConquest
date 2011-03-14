@@ -7,6 +7,8 @@ extends 'DBIx::Class';
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Garrison');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Garrison');
+
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name/);
 
 __PACKAGE__->numeric_columns(qw/gold/);

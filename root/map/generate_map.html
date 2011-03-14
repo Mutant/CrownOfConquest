@@ -76,7 +76,7 @@ Prosperity: [% position.prosperity %]<br>
 	       			<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')">
 				[% END %]
 	       	[% ELSIF ! click_to_move %]
-        		<a href="?center_x=[% x %]&center_y=[% y %]&zoom_level=[% zoom_level %]">
+        		<a href="javascript:refreshMap([% x %],[% y %],[% zoom_level %])">
 	       	[% END %]    
         	
 			<span style="			

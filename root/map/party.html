@@ -1,53 +1,103 @@
 [% INCLUDE top.html, width="1045" %]
 
 <script>
-	dojo.require("dijit.layout.TabContainer");	
+	dojo.require("dijit.layout.TabContainer");
+	
+	var mapBoxInit;
+	
+	function refreshMap(x,y,zoom_level) {
+	
+		var url = "[% base %]/map/party_inner?center_x=" + x + "&center_y=" + y + "&zoom_level=" + zoom_level;
+		
+		dojo.xhrGet( {
+        	url: url,
+        	handleAs: "json",
+        
+	        load: function(responseObject) {
+				dijit.byId("inner-map").setContent(responseObject.inner);		
+				var mapBox = dojo.byId('map-box');		
+				
+				if (mapBox) {
+					setMapBox(responseObject.map_box_coords);
+				}
+				else {
+					[%# Kingdom map not loaded yet. Store mapBox details for a callback ~%]
+					mapBoxInit = responseObject.map_box_coords;	
+				}
+			},
+			timeout: 15000	
+        });
+	}
+	
+	function setMapBox(mapBoxCoords) {
+		var mapBox = dojo.byId('map-box');
+		mapBox.style.left = ((mapBoxCoords.top_x - 1) * 2) + "px";
+		mapBox.style.top = ((mapBoxCoords.top_y - 1) * 2) + "px";
+		mapBox.style.width = (mapBoxCoords.x_size * 2) + "px";
+		mapBox.style.height = (mapBoxCoords.y_size * 2) + "px";
+		mapBox.style.display = "block";
+	}
+	
+	function init() {
+		refreshMap('','','');
+		
+		[%# We do this here so it starts *after* the inner map begins loadings ~%] 
+		dijit.byId("kingdom-map").href = "[% base %]/map/kingdom";
+		dijit.byId("kingdom-map").refresh();
+	}
+	
+	function initMapBox() {
+		setMapBox(mapBoxInit);
+	}
+	
+	dojo.addOnLoad( init );
 </script>
 
-<div style="background: black; position: relative; overflow: auto;">
-	[% FILTER collapse %]
-	<div style="position: absolute; left: 25px; top: 40%; text-align: center; border: 3px inset black; z-index: 5">
-		[% INCLUDE map/zoom.html max_zoom=7 %]
+<div style="position: relative; height: 100%">
 
+	<div style="position: relative">
 
-			
-		<br>
-		<span id="party_center"><a href="?zoom_level=[% zoom_level %]"><img src="[% c.config.static_path %]/images/center.gif" border=0></a></span>
-		<div 
-			dojoType="dijit.Tooltip" 
-			connectId="party_center"
-			label="Centre on Party"></div>
-	</div>
-	[% END %]
-	
-	[% map %]
+		<div style="background: black; position: relative; overflow: auto; min-height: 760px" 
+			dojoType="dijit.layout.ContentPane" id="inner-map">
+		</div>
 
-</div>
-
-<br><br>
-
-<center>Click on a square to centre the map there</center>
-
-<h2>Landmarks</h2>
-
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; min-height: 400px">
-    <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
-		<h3>Known Towns</h3>
+		<br><br>
 		
-		<table class="main" cellpadding="5" cellspacing="5">
-			<tr>
-		[% FOREACH town IN known_towns %]
-			<td>[% town.town_name %] ([% town.prosperity %]) ([% town.location.x %], [% town.location.y %])</td>
-			[% IF loop.count % 5 == 0 %]
-				</tr><tr>
-			[% END %]
-		[% END %]
-			</tr>
-		</table>
+		<center>Click on a square to centre the map there</center>
+		
+		<h2>Landmarks</h2>
+		
+		<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; min-height: 400px">
+		    <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
+				<h3>Known Towns</h3>
+				
+				<table class="main" cellpadding="5" cellspacing="5">
+					<tr>
+				[% FOREACH town IN known_towns %]
+					<td>[% town.town_name %] ([% town.prosperity %]) ([% town.location.x %], [% town.location.y %])</td>
+					[% IF loop.count % 5 == 0 %]
+						</tr><tr>
+					[% END %]
+				[% END %]
+					</tr>
+				</table>
+			</div>
+			
+			<div dojoType="dijit.layout.ContentPane" title="Dungeons" style="display: none" href="[% base %]/map/known_dungeons">
+					
+			</div>
+		
+		
+		</div>
 	</div>
 	
-	<div dojoType="dijit.layout.ContentPane" title="Dungeons" style="display: none" href="[% base %]/map/known_dungeons">
-			
-	</div>
+	<div style="position: absolute; top: 0px; left: 0px; z-index: 100; background: white; width: 200px; height: 200px; border: 2px solid black; overflow: hidden" 
+		dojoType="dijit.layout.ContentPane" id="kingdom-map" onDownloadEnd="initMapBox">
+	
+	</div>	
+</div>
+		
+
+
 
 [% INCLUDE bottom.html %]

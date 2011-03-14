@@ -39,6 +39,30 @@ sub view : Private {
 sub party : Local {
     my ( $self, $c ) = @_;
 
+    my @known_towns = $c->model('DBIC::Town')->search(
+        { 'mapped_sector.party_id' => $c->stash->{party}->id, },
+        {
+            prefetch => { 'location' => 'mapped_sector' },
+            order_by => 'town_name',
+        },
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'map/party.html',
+                params   => {
+                    known_towns => \@known_towns,
+                },
+            }
+        ]
+    );
+}
+
+sub party_inner : Local {
+    my ( $self, $c ) = @_;   
+    
     my $zoom_level = $c->req->param('zoom_level') || 2;
     if ( $zoom_level < 2 || $zoom_level > 7 ) {
         $zoom_level = 2;
@@ -59,6 +83,18 @@ sub party : Local {
     my $x_size = $zoom_level * 12 + 1;
     my $y_size = $zoom_level * 9 + 1;
     $x_size-- if $zoom_level % 2 == 1;    # Odd numbers cause us problems
+        
+    my @coords = RPG::Map->surrounds(
+        $centre_x,
+        $centre_y,
+        $x_size,
+        $y_size,
+        
+    );
+    
+    my ($top_x, $top_y) = ($coords[0]->{x}, $coords[0]->{y});
+    
+    $c->log->debug("x_center: $centre_x, y_center: $centre_y; x_top: $top_x; y_top: $top_y; x_size: $x_size; y_size: $y_size;");
 
     my $grid_params = $c->forward( 'generate_grid', [ $x_size, $y_size, $centre_x, $centre_y, ], );
 
@@ -68,30 +104,34 @@ sub party : Local {
     $grid_params->{zoom_level}    = $zoom_level;
     $grid_params->{grid_size}     = $x_size;
 
-    my $map = $c->forward( 'render_grid', [ $grid_params, ] );
-
-    my @known_towns = $c->model('DBIC::Town')->search(
-        { 'mapped_sector.party_id' => $c->stash->{party}->id, },
-        {
-            prefetch => { 'location' => 'mapped_sector' },
-            order_by => 'town_name',
-        },
-    );
-
-    $c->forward(
+    my $map = $c->forward( 'render_grid', [ $grid_params, ] );    
+    
+    my $inner = $c->forward(
         'RPG::V::TT',
         [
             {
-                template => 'map/party.html',
+                template => 'map/party_inner.html',
                 params   => {
                     map         => $map,
                     move_amount => 12,
-                    known_towns => \@known_towns,
                     zoom_level  => $zoom_level,
                 },
+                return_output => 1,
             }
         ]
     );
+    
+    $c->res->body( to_json(
+        {
+            inner => $inner,
+            map_box_coords => {
+                'x_size' => $x_size,
+                'y_size' => $y_size,
+                'top_x' => $top_x,
+                'top_y' => $top_y,
+            },
+        }
+    ));  
 }
 
 sub known_dungeons : Local {
@@ -498,6 +538,8 @@ sub kingdom : Local {
     
     $Template::Directive::WHILE_MAX = 100000;
     
+
+    
     $land_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
     
     return $c->forward(
@@ -506,8 +548,7 @@ sub kingdom : Local {
             {
                 template      => 'map/kingdom_map.html',
                 params        => {
-                    land_rs => $land_rs,
-                    colours => [RPG::Schema::Kingdom->colours],
+                    land_rs => $land_rs,               
                 },
             }
         ]

@@ -63,7 +63,8 @@ sub party : Local {
 sub party_inner : Local {
     my ( $self, $c ) = @_;   
     
-    my $zoom_level = $c->req->param('zoom_level') || 2;
+    my $zoom_level = $c->req->param('zoom_level') || $c->session->{zoom_level} || 2;
+    $c->session->{zoom_level} = $zoom_level;
     if ( $zoom_level < 2 || $zoom_level > 7 ) {
         $zoom_level = 2;
     }

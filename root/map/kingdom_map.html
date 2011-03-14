@@ -10,7 +10,7 @@
 		[% last_y = sector.y ~%]
 	[% END ~%]
 	<td title="[% sector.kingdom.name || "Neutral" %] ([% sector.x %], [% sector.y %])" style="width: 2px; height: 2px; background: [% sector.kingdom.colour %];" 
-		onClick="javascript:refreshMap('[% sector.x %]','[% sector.y %]')"></td>	
+		onClick="javascript:refreshMap('[% sector.x %]','[% sector.y %]','')"></td>	
 [% END ~%]
 
 </tr></table>

@@ -4,6 +4,7 @@
 	dojo.require("dijit.layout.TabContainer");
 	
 	var mapBoxInit;
+	var kingdomMapHidden = false;
 	
 	function refreshMap(x,y,zoom_level) {
 	
@@ -35,7 +36,10 @@
 		mapBox.style.top = ((mapBoxCoords.top_y - 1) * 2) + "px";
 		mapBox.style.width = (mapBoxCoords.x_size * 2) + "px";
 		mapBox.style.height = (mapBoxCoords.y_size * 2) + "px";
-		mapBox.style.display = "block";
+		
+		if (! kingdomMapHidden) {
+			mapBox.style.display = "block";
+		}
 	}
 	
 	function init() {
@@ -48,6 +52,24 @@
 	
 	function initMapBox() {
 		setMapBox(mapBoxInit);
+	}
+	
+	function hideKingdomMap() {
+		dojo.byId('map-box').style.display = 'none';
+		dojo.byId('kingdom-map-table').style.display = 'none';
+		dojo.byId('hide-kingdom-map-link').style.display = 'none';
+		dojo.byId('show-kingdom-map-link').style.display = 'inline';
+		dojo.byId('kingdom-map').style.height = '30px';
+		kingdomMapHidden = true;
+	}
+	
+	function showKingdomMap() {
+		dojo.byId('map-box').style.display = 'block';
+		dojo.byId('kingdom-map-table').style.display = 'block';
+		dojo.byId('hide-kingdom-map-link').style.display = 'inline';
+		dojo.byId('show-kingdom-map-link').style.display = 'none';
+		dojo.byId('kingdom-map').style.height = '230px';
+		kingdomMapHidden = false;
 	}
 	
 	dojo.addOnLoad( init );
@@ -91,7 +113,7 @@
 		</div>
 	</div>
 	
-	<div style="position: absolute; top: 0px; left: 0px; z-index: 100; background: white; width: 200px; height: 200px; border: 2px solid black; overflow: hidden" 
+	<div style="position: absolute; top: 0px; left: 0px; z-index: 100; background: white; width: 200px; height: 230px; border: 2px solid black; overflow: hidden" 
 		dojoType="dijit.layout.ContentPane" id="kingdom-map" onDownloadEnd="initMapBox">
 	
 	</div>	

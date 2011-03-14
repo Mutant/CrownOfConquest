@@ -1,6 +1,6 @@
 <div id="map-box" style="z-index: 1; position: absolute; border: 2px solid red; display: none"></div>
 
-<table border=0 cellspacing="0" cellpadding="0"><tr>
+<table border=0 cellspacing="0" cellpadding="0" id="kingdom-map-table"><tr>
 
 [% last_y = 1 %]
 [% WHILE (sector = land_rs.next) ~%]
@@ -14,4 +14,11 @@
 [% END ~%]
 
 </tr></table>
+
+<div align="center" class="main" style="background: black">
+	<em>Kingdom Map</em><br>
+	<span id="hide-kingdom-map-link"><a href="javascript:hideKingdomMap()">Hide</a></span>
+	<span id="show-kingdom-map-link" style="display: none"><a href="javascript:showKingdomMap()">Show</a></span>
+</div>
+	
 

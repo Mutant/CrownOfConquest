@@ -53,6 +53,7 @@ sub main : Local {
 					mayor             => $mayor,
 					party             => $c->stash->{party},
 					current_election  => $town->current_election,
+					kingdom           => $town->location->kingdom,
 				},
 				return_output => $return_output || 0,
 			}

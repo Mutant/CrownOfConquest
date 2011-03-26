@@ -460,4 +460,25 @@ sub update_advisor_fee : Local {
 		
 }
 
+sub kingdom : Local {
+    my ($self, $c) = @_;
+	
+	my $town = $c->stash->{town};
+	
+	my $kingdom = $town->location->kingdom;
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/kingdom_tab.html',
+				params => {
+					town => $town,
+					kingdom => $kingdom,
+				}
+			}
+		]
+	);	 
+}
+
 1;

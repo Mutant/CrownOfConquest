@@ -36,8 +36,10 @@ Your prestige here:
 	    The town will hold an election on day [% current_election.scheduled_day %] (<a href="[% base %]town/election">Details</a>)
 	    <br>
 	[% END %]
-	<br>
 [% END %]	  
+
+[% INCLUDE town/kingdom_status.html %]<br>
+<br>
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 <div style="float: left; width: 25%">

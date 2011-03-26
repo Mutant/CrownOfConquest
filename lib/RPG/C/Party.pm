@@ -113,6 +113,8 @@ sub sector_menu : Private {
 	my @buildings = $c->stash->{party_location}->building;
 
 	my @items = $c->stash->{party_location}->items;
+	
+	my $kingdom = $c->stash->{party_location}->kingdom;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -140,6 +142,7 @@ sub sector_menu : Private {
 					can_raze_building      => $can_raze_building,
 					buildings              => \@buildings,
 					items                  => \@items,
+					kingdom                => $kingdom || undef,
 				},
 				return_output => 1,
 			}

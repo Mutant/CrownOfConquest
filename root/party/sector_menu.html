@@ -1,5 +1,5 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
-You are in sector: [% location.x %], [% location.y %] ([% location.terrain.terrain_name %])
+You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terrain_name %][% IF kingdom %], Kingdom of [% kingdom.name %][% END %])
 [% FOREACH next_building IN buildings %]
 	<br><br>There is a [% next_building.building_type.name %] here that is controlled by [% IF next_building.owner_id == party.id %]you[%ELSE%][% next_building.owner_name %][% END %]
 [% END %]

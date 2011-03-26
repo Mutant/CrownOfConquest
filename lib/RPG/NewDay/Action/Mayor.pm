@@ -96,6 +96,8 @@ sub run {
 				}
 			); 
 		}
+		
+		$self->calculate_kingdom_tax($town);
 
     	$self->generate_guards($town->castle);
     	$town->discard_changes;
@@ -603,6 +605,46 @@ sub generate_advice {
 		}
 	);	
 	
+}
+
+sub calculate_kingdom_tax {
+    my $self = shift;
+    my $town = shift;
+    
+    my $c = $self->context;
+    
+    my $kingdom = $town->location->kingdom;
+    
+    return if ! $kingdom || $kingdom->mayor_tax == 0;
+    
+    my $income = $town->find_related(
+        'history',
+        {
+            day_id => $c->current_day->id,
+            type => 'income',
+        },
+        {
+            'select' => [{sum => 'value'}],
+            'as' => ['income'],
+        }
+    )->get_column('income');
+
+    my $kingdom_tax = round($income * $kingdom->mayor_tax / 100);
+    
+    $town->decrease_gold($kingdom_tax);
+    $town->update;
+    
+	$town->add_to_history(
+		{
+			type => 'expense',
+			value => $kingdom_tax,
+			message => 'Kingdom Tax',
+			day_id => $c->current_day->id,
+		}
+	);
+	
+	$kingdom->increase_gold($kingdom_tax);
+	$kingdom->update; 
 }
 
 1;

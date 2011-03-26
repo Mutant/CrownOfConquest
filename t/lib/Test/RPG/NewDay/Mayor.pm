@@ -17,6 +17,7 @@ use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Kingdom;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -170,6 +171,83 @@ sub test_generate_advice : Tests(2) {
 	
 	$town->discard_changes;
 	is($town->gold, 0, "Town gold reduced");
+}
+
+sub test_calculate_kingdom_tax : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema}, mayor_tax => 10, gold => 100 );
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1000, kingdom_id => $kingdom->id );
+    
+    my $day = $self->{mock_context}->current_day;
+    
+    $town->add_to_history(
+		{
+			type => 'income',
+			value => 100,
+			message => 'Income 1',
+			day_id => $day->id,
+		}        
+    );
+
+    $town->add_to_history(
+		{
+			type => 'income',
+			value => 150,
+			message => 'Income 2',
+			day_id => $day->id,
+		}        
+    );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_kingdom_tax($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 975, "Town gold decreased");
+    
+    $kingdom->discard_changes;
+    is($kingdom->gold, 125, "Kingdom gold increased");       
+}
+
+sub test_calculate_kingdom_tax_free_town : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN        
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1000 );
+    
+    my $day = $self->{mock_context}->current_day;
+    
+    $town->add_to_history(
+		{
+			type => 'income',
+			value => 100,
+			message => 'Income 1',
+			day_id => $day->id,
+		}        
+    );
+
+    $town->add_to_history(
+		{
+			type => 'income',
+			value => 150,
+			message => 'Income 2',
+			day_id => $day->id,
+		}        
+    );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_kingdom_tax($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 1000, "No tax paid, as this is a free town");    
+    
 }
 
 1;

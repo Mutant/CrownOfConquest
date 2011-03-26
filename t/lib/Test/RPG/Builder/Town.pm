@@ -9,7 +9,9 @@ sub build_town {
     my %params = @_;
     
     unless ($params{land_id}) {
-        my $location = $schema->resultset('Land')->create( {} );
+        my $location = $schema->resultset('Land')->create( {
+            kingdom_id => $params{kingdom_id},
+        } );
         $params{land_id} = $location->id;
     }
     

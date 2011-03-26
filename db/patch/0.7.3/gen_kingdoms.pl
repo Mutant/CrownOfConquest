@@ -194,38 +194,3 @@ for (1..12) {
         redo;          
     }
 }
-=comment        
-    my ($start_point, $end_point) = RPG::Map->surrounds_by_range( $start_sector->x, $start_sector->y, 5 );
-    foreach my $x ($start_point->{x} .. $end_point->{x}) {
-        foreach my $y ($start_point->{y} .. $end_point->{y}) {    
-            $schema->resultset('Land')->search(
-                {
-                    kingdom_id => undef,
-                    'x' => $x,
-                    'y' => $y,            
-                },
-            )->update(
-                {
-                    kingdom_id => $kingdom->id
-                }
-            );
-            
-            $in_kingdom->[$x][$y] = 1;
-            
-            if ($x == $start_point->{x}) {
-                push @{$joinable{"$x,$y"}}, 4;
-            }
-            if ($x == $end_point->{x}) {
-                push @{$joinable{"$x,$y"}}, 6;
-            }
-            if ($y == $start_point->{y}) {
-                push @{$joinable{"$x,$y"}}, 2;
-            }
-            if ($y == $end_point->{y}) {
-                push @{$joinable{"$x,$y"}}, 8;
-            }
-            
-            $size--;
-        }
-    }
-=cut  

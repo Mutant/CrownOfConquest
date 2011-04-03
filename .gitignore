@@ -2,3 +2,4 @@
 .includepath
 rpg_local.yml
 log/*
+patch/*

@@ -11,12 +11,14 @@ __PACKAGE__->table('Quest');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Quest');
 
-__PACKAGE__->add_columns(qw/quest_id party_id town_id quest_type_id complete gold_value xp_value min_level status days_to_complete/);
+__PACKAGE__->add_columns(qw/quest_id party_id town_id kingdom_id quest_type_id complete gold_value xp_value min_level status days_to_complete/);
 __PACKAGE__->set_primary_key('quest_id');
 
 __PACKAGE__->belongs_to( 'type', 'RPG::Schema::Quest_Type', { 'foreign.quest_type_id' => 'self.quest_type_id' } );
 
 __PACKAGE__->belongs_to( 'town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.town_id' } );
+
+__PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
 
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
 
@@ -29,6 +31,8 @@ my %QUEST_TYPE_TO_CLASS_MAP = (
     destroy_orb              => 'RPG::Schema::Quest::Destroy_Orb',
     raid_town                => 'RPG::Schema::Quest::Raid_Town',
     find_dungeon_item        => 'RPG::Schema::Quest::Find_Dungeon_Item',
+    construct_building       => 'RPG::Schema::Quest::Construct_Building',
+    claim_land               => 'RPG::Schema::Quest::Claim_Land',
 );
 
 # Inflate the result as a class based on quest type
@@ -66,6 +70,8 @@ sub delete {
 
 sub _bless_into_type_class {
     my $self = shift;
+    
+    confess "Quest has no type!" unless $self->type;
 
     my $class = $QUEST_TYPE_TO_CLASS_MAP{ $self->type->quest_type };
     
@@ -196,15 +202,17 @@ sub terminate {
 		);
 	}
 
-	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
-    	{
-			town_id  => $self->town_id,
-			party_id => $self->party_id,
-		},
-	);
-	
-	$party_town->decrease_prestige(3);
-	$party_town->update;	
+    if ($self->town_id) {
+    	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
+        	{
+    			town_id  => $self->town_id,
+    			party_id => $self->party_id,
+    		},
+    	);
+    	
+    	$party_town->decrease_prestige(3);
+    	$party_town->update;
+    }
 }
 
 

@@ -189,9 +189,18 @@ sub hit_points_max {
 sub name {
     my $self = shift;
     
-    my $town = $self->mayor_of ? $self->mayor_of_town : undef;
-
-    return $self->character_name . ($town ? ', Mayor of ' . $town->town_name : '');
+    my $name = $self->character_name;
+    
+    if ($self->mayor_of) {   
+        $name .= ', Mayor of ' . $self->mayor_of_town->town_name;    
+    }
+    elsif ($self->status eq 'king') {
+        my $kingdom = $self->king_of;
+        
+        $name .= ', ' . ($self->gender eq 'male' ? 'King' : 'Queen') . ' of ' . $kingdom->name;
+    }
+    
+    return $name;
 }
 
 sub group_id {
@@ -212,6 +221,20 @@ sub group {
 	else {
 		return $self->party;
 	}
+}
+
+sub king_of {
+    my $self = shift;
+    
+    return unless $self->status eq 'king';
+    
+    my $kingdom = $self->result_source->schema->resultset('Kingdom')->find(
+        {
+            kingdom_id => $self->status_context,
+        }
+    );
+    
+    return $kingdom;
 }
 
 sub is_spell_caster {

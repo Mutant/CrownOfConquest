@@ -20,6 +20,18 @@ __PACKAGE__->numeric_columns(
 	},
 );
 
+__PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'kingdom_id' );
+__PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'kingdom_id' ); 
+
+__PACKAGE__->belongs_to( 'king', 'RPG::Schema::Character', 
+    {
+        'foreign.status_context' => 'self.kingdom_id', 
+    },
+    {
+        'where' => { 'status' => 'king' },
+    }, 
+);
+
 my @colours = (
     'Silver',
     'Gray',

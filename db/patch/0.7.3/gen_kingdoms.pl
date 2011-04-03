@@ -14,7 +14,7 @@ use Data::Dumper;
 
 my $config = RPG::LoadConf->load();
 
-my $schema = RPG::Schema->connect( @{$config->{'Model::DBIC'}{connect_info}} );
+my $schema = RPG::Schema->connect( $config, @{$config->{'Model::DBIC'}{connect_info}} );
 
 my @kingdoms = shuffle read_file($config->{data_file_path} . '/kingdoms.txt');
 
@@ -24,7 +24,7 @@ my $redo_count = 0;
 
 for (1..12) {
     last if $redo_count == 10;
-    
+
     my $kingdom_name = shift @kingdoms;
     chomp $kingdom_name;
     
@@ -193,4 +193,14 @@ for (1..12) {
         warn "removing... (count: $redo_count)\n";
         redo;          
     }
+
+    # Generate king / queen
+    my $king = $schema->resultset('Character')->generate_character(
+        level => 18 + Games::Dice::Advanced->roll('1d6'),
+        allocate_equipment => 1,
+    );
+    
+    $king->status('king');
+    $king->status_context($kingdom->id);
+    $king->update;
 }

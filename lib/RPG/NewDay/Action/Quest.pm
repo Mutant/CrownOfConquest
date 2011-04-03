@@ -50,7 +50,10 @@ sub create_quests {
             my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
 
             my $quest_type = $c->schema->resultset('Quest_Type')->find(
-                { prevalence => { '>=', $prevalence_roll }, },
+                { 
+                    prevalence => { '>=', $prevalence_roll },
+                    owner_type => 'town', 
+                },
                 {
                     order_by => 'rand()',
                     rows     => 1,
@@ -106,7 +109,7 @@ sub randomly_delete_quests {
 
     my $c = $self->context;
 
-    my $quest_rs = $c->schema->resultset('Quest')->search( { party_id => undef, }, { order_by => 'rand()' }, );
+    my $quest_rs = $c->schema->resultset('Quest')->search( { party_id => undef, kingdom_id => undef }, { order_by => 'rand()' }, );
     
     my $number_of_quests = $quest_rs->count;
     

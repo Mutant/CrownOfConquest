@@ -29,7 +29,7 @@ sub find_quests_by_interested_action {
         {
             'prefetch' => [{'type' => 'quest_param_names'}, 'quest_params'],
         }
-    );       
+    );
 }
 
 1;

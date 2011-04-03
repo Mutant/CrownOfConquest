@@ -17,6 +17,8 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Town;
+use Test::RPG::Builder::Kingdom;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
@@ -732,6 +734,56 @@ sub test_cant_increase_hps_above_max : Tests(1) {
 	
 	# THEN
 	is($character->hit_points, 20, "Character's hps not increased above max");
+}
+
+sub test_name_of_mayor : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, name => 'Test1');
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $character->mayor_of($town->id);
+    $character->update;
+    
+    # WHEN
+    my $name = $character->name;
+    
+    # THEN
+    is($name, "Test1, Mayor of Test Town", "Character's display name includes mayoralty");
+}
+
+sub test_name_of_king : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, name => 'Test1', gender => 'male');
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    $character->status('king');
+    $character->status_context($kingdom->id);
+    $character->update;
+    
+    # WHEN
+    my $name = $character->name;
+    
+    # THEN
+    is($name, "Test1, King of Test Kingdom", "Character's display name includes king");
+}
+
+sub test_name_of_queen : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, name => 'Test1', gender => 'female');
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    $character->status('king');
+    $character->status_context($kingdom->id);
+    $character->update;
+    
+    # WHEN
+    my $name = $character->name;
+    
+    # THEN
+    is($name, "Test1, Queen of Test Kingdom", "Character's display name includes queen");
 }
 
 1;

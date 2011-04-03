@@ -38,19 +38,31 @@ sub offer : Local {
 sub accept : Local {
     my ( $self, $c ) = @_;
 
-	unless ($c->stash->{party}->allowed_more_quests) {
-		croak "Not allowed any more quests";	
-	}
-
-    my $town = $c->stash->{party_location}->town;
-
     my $quest = $c->model('DBIC::Quest')->find(
         {
             quest_id => $c->req->param('quest_id'),
-            town_id  => $town->id,
-            party_id => undef,
+            status => 'Not Started',
         },
     );
+    
+    croak "Quest not found" unless $quest;
+    
+    if ($quest->town_id) {
+        unless ($c->stash->{party}->allowed_more_quests) {
+    		croak "Not allowed any more quests";	
+    	}
+        
+        my $town = $c->stash->{party_location}->town;
+        
+        croak "Accepting a quest from another town" unless $town->id == $quest->town_id;
+        
+        croak "Accepting a quest for another party" unless ! defined $quest->party_id;
+    }
+    elsif ($quest->kingdom_id) {
+        croak "Accepting a quest for another kingdom" unless $quest->kingdom_id == $c->stash->{party}->kingdom_id;
+        
+        croak "Accepting a quest for another party" unless $quest->party_id == $c->stash->{party}->party_id;
+    }
     
     if ($c->stash->{party}->level < $quest->min_level) {
     	croak "Too low level to accept quest";	
@@ -76,6 +88,32 @@ sub accept : Local {
     };
     
     $c->res->body($message);
+    
+    if ($quest->kingdom_id) {
+        $c->res->redirect( $c->config->{url_root} . "/quest/list" );   
+    }
+}
+
+sub decline : Local {
+    my ( $self, $c ) = @_;
+    
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            status => 'Not Started',
+            kingdom_id => $c->stash->{party}->kingdom_id,
+            party_id => $c->stash->{party}->party_id,
+        },
+    );
+    
+    croak "Invalid quest" unless $quest;
+    
+    # TODO: message player kings
+    
+    $quest->delete;
+    
+    $c->res->redirect( $c->config->{url_root} . "/quest/list" ); 
+    
 }
 
 sub list : Local {
@@ -84,10 +122,16 @@ sub list : Local {
     my @quests = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            status   => 'In Progress',
+            status   => ['Not Started', 'In Progress'],
         },
-        { prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ], }
+        { 
+            prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ],
+            
+            # Order by kingdom id to sort them by town/kingdom quests
+            order_by => 'kingdom_id', 
+        }
     );
+     
 
     $c->forward(
         'RPG::V::TT',

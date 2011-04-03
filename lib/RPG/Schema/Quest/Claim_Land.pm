@@ -14,12 +14,13 @@ sub set_quest_params {
     my $amount_to_claim = Games::Dice::Advanced->roll('1d30') + 20;
     
     $self->define_quest_param( 'Amount To Claim', $amount_to_claim );
-    $self->define_quest_param( 'Amount Claimed', $amount_to_claim );
+    $self->define_quest_param( 'Amount Claimed', 0 );
     
     $self->min_level(3);
     $self->gold_value($amount_to_claim * 8);
     $self->xp_value($amount_to_claim * 3);
     $self->days_to_complete(round $amount_to_claim / 10 + 2);
+    $self->update;
 }
 
 sub interested_in_actions {
@@ -48,7 +49,7 @@ sub check_action {
 sub ready_to_complete {
     my $self = shift;
 
-    return $self->param_current_value('Amount To Claim') >= $self->param_current_value('Amount Claimed');
+    return $self->param_current_value('Amount To Claim') >= $self->param_current_value('Amount Claimed') ? 0 : 1;
 }
 
 1;

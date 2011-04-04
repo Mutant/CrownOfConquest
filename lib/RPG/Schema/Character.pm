@@ -194,7 +194,7 @@ sub name {
     if ($self->mayor_of) {   
         $name .= ', Mayor of ' . $self->mayor_of_town->town_name;    
     }
-    elsif ($self->status eq 'king') {
+    elsif ($self->status && $self->status eq 'king') {
         my $kingdom = $self->king_of;
         
         $name .= ', ' . ($self->gender eq 'male' ? 'King' : 'Queen') . ' of ' . $kingdom->name;

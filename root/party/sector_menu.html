@@ -57,6 +57,9 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 			[% END %]
 		[% END %]
 	[% END %]
+	[% IF can_claim_land %]
+		| <a href="javascript:getPanels('/party/claim_land')">Claim Land</a>
+	[% END %]
 <br>
 
 [% IF creature_group %]

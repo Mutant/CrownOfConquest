@@ -162,7 +162,16 @@ __PACKAGE__->add_columns(
       'name' => 'constr_image',
       'is_nullable' => 0,
       'size' => '11'
-    },    
+    },
+    'land_claim_range' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '1',
+      'is_foreign_key' => 0,
+      'name' => 'land_claim_range',
+      'is_nullable' => 0,
+      'size' => '11'
+    },         
 );
 __PACKAGE__->set_primary_key('building_type_id');
 

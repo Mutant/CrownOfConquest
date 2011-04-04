@@ -301,7 +301,7 @@ sub test_has_road_joining_to_only_one_joins : Tests(1) {
     
 }
 
-sub test_creature_threat_restrictions : Tests() {
+sub test_creature_threat_restrictions : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
@@ -315,6 +315,23 @@ sub test_creature_threat_restrictions : Tests() {
 	is($land[0]->creature_threat, '-100', "Creature threat restricted to no less than -100");
 	is($land[1]->creature_threat, '100', "Creature threat restricted to no more than 100");
 		
+}
+
+sub test_can_be_claimed_near_town : Tests(2) {
+    my $self = shift;
+    
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 10, 'y_size' => 10);
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+	
+	# WHEN
+	my $first_land = $land[4]->can_be_claimed(1);
+	my $second_land = $land[61]->can_be_claimed(1);
+	
+	# THEN
+	is($first_land, 0, "First land can't be claimed as it's too close to a town");
+	is($second_land, 1, "Second land can be claimed, as it's far enough away from town");
+       
 }
 
 1;

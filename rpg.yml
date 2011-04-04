@@ -177,6 +177,9 @@ minimum_garrison_level: 6
 # Minimum party level for creating a building
 minimum_building_level: 10
 
+# Minimum level for claiming land for a kingdom
+minimum_land_claim_level: 3
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack
@@ -357,6 +360,10 @@ decay_ctr_ratio: 30
 
 # Max number of characters that can be garrisoned in a town (by mayor)
 mayor_garrison_max_characters: 5
+
+# Amount of sectors automatically claimed by a town for its kingdom
+town_land_claim_range: 4
+
 
 # ----- Dungeon Params ----- #
 

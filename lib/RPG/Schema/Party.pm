@@ -195,6 +195,8 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
 __PACKAGE__->might_have( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
+
 __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 
 	{ 'foreign.party_id' => 'self.party_id' },
 	{ where => {'land_id' => {'!=', undef}} }, 
@@ -768,6 +770,17 @@ sub broken_equipped_items_hash {
 	}
 	
 	return %broken_items_by_char_id;
+}
+
+sub can_claim_land {
+    my $self = shift;
+    my $land = shift;
+    
+    return 0 unless $self->level >= RPG::Schema->config->{minimum_land_claim_level};
+    
+    return 0 unless $self->kingdom_id;
+    
+    return $land->can_be_claimed($self->kingdom_id);
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

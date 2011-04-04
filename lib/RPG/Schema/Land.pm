@@ -392,4 +392,61 @@ sub has_building {
 	return 0;
 }
 
+# Returns true if this sector can be claimed by the kingdom passed in 
+sub can_be_claimed {
+    my $self = shift;
+    my $kingdom_id = shift;
+    
+    return 0 if $self->kingdom_id && $kingdom_id == $self->kingdom_id;
+    
+    # Find maximum range a building can claim land from
+    my $max_building_range = $self->result_source->schema->resultset('Building_Type')->find(
+        {},
+        {
+            'select' => { max => 'land_claim_range' },
+            'as' => 'max_land_claim_range',
+        }
+    )->get_column('max_land_claim_range');            
+    
+    # Now find any buildings in range that have claimed this land
+    my @buildings = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->schema->resultset('Building'),
+        relationship        => 'location',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => ($max_building_range * 2) + 1,
+        increment_search_by => 0,
+    );
+    
+    foreach my $building (@buildings) {
+        my $dist = RPG::Map->get_distance_between_points(
+            {
+                x => $self->x,
+                y => $self->y,
+            },
+            {
+                x => $building->location->x,
+                y => $building->location->y,
+            }
+        );
+        
+        if ($dist <= $building->building_type->land_claim_range) {
+            # Land can't be claimed, as a building is within range
+            return 0;   
+        }
+    }
+    
+    # See if towns are within range
+    my @towns = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->schema->resultset('Town'),
+        relationship        => 'location',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => (RPG::Schema->config->{town_land_claim_range} * 2) + 1,
+        increment_search_by => 0,
+    );
+    
+    return 0 if @towns;
+    
+    return 1;
+}
+
 1;

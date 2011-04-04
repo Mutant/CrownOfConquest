@@ -37,3 +37,10 @@ ALTER TABLE `Party` ADD COLUMN `kingdom_id` INTEGER  DEFAULT NULL AFTER `combat_
  ADD INDEX `kingdom_id_idx`(`kingdom_id`),
  ADD INDEX `player_id_idx`(`player_id`);
 
+ALTER TABLE `Building_Type` ADD COLUMN `land_claim_range` INTEGER  NOT NULL DEFAULT 1 AFTER `constr_image`;
+
+update `Building_Type` set land_claim_range = level + 1;
+
+ALTER TABLE `Building` ADD INDEX `land_id_idx`(`land_id`),
+ ADD INDEX `building_type_idx`(`building_type_id`);
+

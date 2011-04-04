@@ -143,6 +143,7 @@ sub sector_menu : Private {
 					buildings              => \@buildings,
 					items                  => \@items,
 					kingdom                => $kingdom || undef,
+					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 				},
 				return_output => 1,
 			}
@@ -780,6 +781,28 @@ sub zoom_change : Local {
 	$c->session->{zoom_level} = $c->req->param('zoom_level');
 
 	$c->forward( '/panel/refresh', [ 'map', 'zoom', 'messages' ] );
+}
+
+sub claim_land : Local {
+	my ( $self, $c ) = @_;
+
+	die "Can't claim this land\n" unless $c->stash->{party}->can_claim_land($c->stash->{party_location});
+	
+	if ($c->stash->{party}->turns < 10) {
+        $c->stash->{error} = "You do not have enough turns left to claim more land";
+		$c->forward( '/panel/refresh', [ 'messages' ]);
+		return;
+	}
+	
+	$c->stash->{party}->turns($c->stash->{party}->turns - 10);
+	$c->stash->{party}->update;
+	
+	$c->stash->{party_location}->kingdom_id($c->stash->{party}->kingdom_id);
+	$c->stash->{party_location}->update;
+	
+	$c->stash->{messages} = "You claim this sector for the Kingdom of " . $c->stash->{party}->kingdom->name;
+	
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
 1;

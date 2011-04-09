@@ -45,7 +45,7 @@ Top Parties By:
 		<td align="right">[% party.get_column('character_count') %]</td>
 		<td align="right">[% party.turns_used %]</td>
 		<td>[% party.created.ymd %]</td>
-		<td>[% party.player.last_login.ymd %]</td>
+		<td>[% party.player.time_since_last_login %]</td>
 	</tr>
 [% END %]
 </table>

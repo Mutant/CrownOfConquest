@@ -5,7 +5,9 @@ use warnings;
 
 use Carp;
 
-__PACKAGE__->load_components(qw/ Core/);
+use RPG::DateTime;
+
+__PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Player_Reward_Links');
 
 __PACKAGE__->add_columns(qw/player_id link_id vote_key/);
@@ -17,5 +19,11 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key(qw/link_id player_id/);
 
 __PACKAGE__->belongs_to( 'link', 'RPG::Schema::Reward_Links', 'link_id' );
+
+sub time_since_last_vote {
+    my $self = shift;
+    
+    return RPG::DateTime->time_since_datetime($self->last_vote_date);
+}
 
 1;

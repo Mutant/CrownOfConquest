@@ -800,7 +800,10 @@ sub claim_land : Local {
 	$c->stash->{party_location}->kingdom_id($c->stash->{party}->kingdom_id);
 	$c->stash->{party_location}->update;
 	
-	$c->stash->{messages} = "You claim this sector for the Kingdom of " . $c->stash->{party}->kingdom->name;
+	$c->stash->{messages} = ["You claim this sector for the Kingdom of " . $c->stash->{party}->kingdom->name];
+	
+    my $quest_messages = $c->forward( '/quest/check_action', [ 'claimed_land', $c->stash->{party_location}->id ] );
+    push @{ $c->stash->{messages} }, @$quest_messages if $quest_messages;
 	
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }

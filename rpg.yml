@@ -362,7 +362,7 @@ decay_ctr_ratio: 30
 mayor_garrison_max_characters: 5
 
 # Amount of sectors automatically claimed by a town for its kingdom
-town_land_claim_range: 4
+town_land_claim_range: 3
 
 
 # ----- Dungeon Params ----- #

@@ -1,5 +1,5 @@
 [% IF quest.ready_to_complete %]
 	You've claimed the required land.
 [% ELSE %]
-	You've claimed [% quest.param_start_value("Amount Claimed") %] land so far.
+	You've claimed [% quest.param_current_value("Amount Claimed") %] land so far.
 [% END %]

@@ -184,63 +184,21 @@ sub check_action : Private {
 sub complete_quest : Private {
     my ( $self, $c, $party_quest ) = @_;
 
-	$party_quest->finish_quest;
+    my @details = $party_quest->set_complete();
 
-    $party_quest->status('Complete');
-    $party_quest->update;
-
-    $c->stash->{party}->gold( $c->stash->{party}->gold + $party_quest->gold_value );
-    $c->stash->{party}->update;
-
-    my $xp_gained = $party_quest->xp_value;
-
-    my @characters = grep { !$_->is_dead } $c->stash->{party}->characters_in_party;
-    my $xp_each = int $xp_gained / scalar @characters;
-
-    my $xp_messages = $c->forward( '/party/xp_gain', [$xp_each] );
+    my $xp_messages = $c->forward( '/party/xp_gain', [@details] );
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
-    
-    my $party_town = $c->model('Party_Town')->find_or_create(
-        {
-            party_id => $c->stash->{party}->id,
-            town_id  => $party_quest->town->id,
-        },
-    );
-    $party_town->prestige($party_town->prestige+3);
-    $party_town->update;
-    
-    $party_quest->town->increase_mayor_rating(3);
-    $party_quest->town->update;    
-    
-    my $news_message = $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template      => 'quest/completed_quest_news_message.html',
-                params        => { 
-                    party => $c->stash->{party},
-                    quest => $party_quest, 
-                },
-                return_output => 1,
-            }
-        ]
-    );
-    
-    $c->model('DBIC::Town_History')->create(
-        {
-            town_id => $party_quest->town_id,
-            day_id  => $c->stash->{today}->id,
-            message => $news_message,
-        }
-    );    
 
     my $panel = $c->forward(
         'RPG::V::TT',
         [
             {
                 template      => 'quest/completed_quest.html',
-                params        => { xp_messages => $xp_messages, },
+                params        => { 
+                    xp_messages => $xp_messages,
+                    quest => $party_quest,
+                },
                 return_output => 1,
             }
         ]

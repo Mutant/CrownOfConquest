@@ -216,8 +216,67 @@ sub terminate {
 }
 
 
-# Called when the quest is completed (i.e. town hall)
+# Called when the quest is completed (i.e. in complete() below) 
 sub finish_quest {}
+
+sub set_complete {
+    my $self = shift;
+
+    my $party = $self->party;
+    
+    $self->finish_quest;
+    
+    $self->status('Complete');
+    $self->update;
+    
+    $party->increase_gold($self->gold_value);
+    $party->update;
+    
+    my $awarded_xp = $self->xp_value / $party->number_alive;    
+    my @details = $party->xp_gain($awarded_xp);
+    
+    if ($self->town_id) {
+        my $party_town = $party->find_related(
+            'party_towns',
+            {
+                town_id  => $self->town_id,
+            },
+        );
+        
+        unless ($party_town) {
+            $party_town = $party->add_to_party_towns(
+                {
+                    town_id => $self->town_id,
+                }
+            );   
+        }
+        
+        $party_town->increase_prestige(3);
+        $party_town->update;        
+        
+        $self->town->increase_mayor_rating(3);
+        $self->town->update;
+        
+        my $news_message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/completed_quest_news_message.html',
+            { 
+                party => $party,
+                quest => $self, 
+            }
+        );
+        
+        $self->town->add_to_history(
+            {
+                day_id  => $self->result_source->schema->resultset('Day')->find_today->id,
+                message => $news_message,
+            }
+        );    
+        
+    }
+    
+    return @details;
+}
 
 # Called before deleting a quest
 sub cleanup {}

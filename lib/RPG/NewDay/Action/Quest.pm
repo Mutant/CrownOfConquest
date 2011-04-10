@@ -22,6 +22,8 @@ sub run {
     $self->randomly_delete_quests;
 
     $self->create_quests;
+    
+    $self->complete_quests;
 
     $self->update_days_left;
 }
@@ -71,6 +73,70 @@ sub create_quests {
                 }
             }
         }
+    }
+}
+
+# Complete quests that are automatically completed (i.e. not completed by going to the town hall)
+#  This is mostly kingdom quests
+sub complete_quests {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my @quests = $c->schema->resultset('Quest')->search(
+        {
+            party_id => { '!=', undef },
+            status   => 'Awaiting Reward',
+        },
+    );
+    
+    foreach my $quest (@quests) {
+        my @details = $quest->set_complete;
+        
+        my $party = $quest->party;
+        
+        my @messages;
+        foreach my $details (@details) {
+    		push @messages,
+            my $xp_info = RPG::Template->process(
+                $c->config,
+                'party/xp_gain.html',
+                {
+                    details => $details,
+                }
+            );
+        }
+        
+        my $template;
+        my %params;
+        
+        if ($quest->town_id) {
+            $template = 'quest/completed_quest.html';
+            %params = (
+                quest => $quest,
+            );
+        }
+        else {
+            $template = 'quest/kingdom/completed.html';
+            %params = (
+                quest => $quest,
+                kingdom => $quest->kingdom,
+            );
+        }   
+        
+        my $message = RPG::Template->process(
+            $c->config,
+            $template,
+            \%params,
+        );
+        
+        $party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                message => $message,
+                alert_party => 1,
+            }
+        );         
     }
 }
 

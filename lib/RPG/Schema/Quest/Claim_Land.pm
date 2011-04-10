@@ -36,20 +36,25 @@ sub check_action {
     my $land_id = shift;
 
     return 0 unless $action eq 'claimed_land';
+  
+    return 0 if $self->ready_to_complete;
     
     my $quest_param = $self->param_record('Amount Claimed');
     $quest_param->current_value($quest_param->current_value+1);
     $quest_param->update;
-
-    return 0 if $self->ready_to_complete;
-
+        
+    if ($self->ready_to_complete) {
+        $self->status('Awaiting Reward');
+        $self->update;   
+    }
+ 
     return 1;
 }
 
 sub ready_to_complete {
     my $self = shift;
-
-    return $self->param_current_value('Amount To Claim') >= $self->param_current_value('Amount Claimed') ? 0 : 1;
+    
+    return $self->param_current_value('Amount To Claim') > $self->param_current_value('Amount Claimed') ? 0 : 1;
 }
 
 sub land_left_to_claim {

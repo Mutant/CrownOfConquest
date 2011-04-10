@@ -625,12 +625,11 @@ sub disband : Local {
 #  character id to amount awarded
 # Returns an array with the display details of the changes
 sub xp_gain : Private {
-	my ( $self, $c, $awarded_xp ) = @_;
+	my ( $self, $c, $details ) = @_;
 
-	my @details = $c->stash->{party}->xp_gain($awarded_xp);
 	my @messages;
 
-	foreach my $details (@details) {
+	foreach my $details (@$details) {
 		push @messages,
 			$c->forward(
 			'RPG::V::TT',

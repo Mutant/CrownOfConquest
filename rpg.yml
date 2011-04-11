@@ -499,6 +499,12 @@ quest_type_vars:
     search_range: 35
     gold_per_distance: 85    
     xp_per_distance: 30
+    
+  ### Construct building
+  construct_building:
+    town_search_range: 9
+    building_search_range: 9
+    search_range: 9
 
 # ----- Garrison Params ----- #
 

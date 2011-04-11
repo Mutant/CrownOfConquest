@@ -126,7 +126,7 @@ sub sector_menu : Private {
 					creature_group_display => $creature_group_display,
 					creature_group         => $creature_group,
 					confirm_attack         => $confirm_attack || 0,
-					messages               => $c->stash->{messages},
+					messages               => $c->flash->{messages} || $c->stash->{messages},
 					day_logs               => $c->stash->{day_logs},
 					location               => $c->stash->{party_location},
 					orb                    => $c->stash->{party_location}->orb || undef,

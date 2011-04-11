@@ -3,6 +3,8 @@ use warnings;
 
 package Test::RPG::Builder::Building;
 
+use Test::RPG::Builder::Party;
+
 sub build_building {
 	my $package = shift;
 	my $schema  = shift;
@@ -20,7 +22,13 @@ sub build_building {
     unless ($params{land_id}) {
         my $location = $schema->resultset('Land')->create( {} );
         $params{land_id} = $location->id;
-    }    
+    }
+    
+    unless ($params{owner_id}) {
+        my $party = Test::RPG::Builder::Party->build_party($schema);
+        $params{owner_id} = $party->id;
+        $params{owner_type} = 'party';
+    }
 
     return $schema->resultset('Building')->create(
         {

@@ -325,7 +325,7 @@ sub test_can_be_claimed_near_town : Tests(2) {
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
 	
 	# WHEN
-	my $first_land = $land[4]->can_be_claimed(1);
+	my $first_land = $land[3]->can_be_claimed(1);
 	my $second_land = $land[61]->can_be_claimed(1);
 	
 	# THEN

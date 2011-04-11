@@ -441,6 +441,8 @@ sub add : Local {
 
 	$c->stash->{party}->turns($c->stash->{party}->turns - ${$building_type}->{turns_needed});
 	$c->stash->{party}->update;
+	
+	$c->flash->{messages} = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
 
 	$c->res->redirect( $c->config->{url_root});
 }

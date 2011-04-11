@@ -82,8 +82,12 @@ sub generate_kingdom_quests {
     }
     
     if ($counts{claim_land} < 3) {
-        $self->_create_quests_of_type( 'claim_land', 3 - $counts{claim_land}, 3, $kingdom, \@parties );
+        $self->_create_quests_of_type( 'claim_land', 3 - $counts{claim_land}, $c->config->{minimum_land_claim_level}, $kingdom, \@parties );
     }    
+    
+    if ($counts{construct_building} < 3) {
+        $self->_create_quests_of_type( 'construct_building', 3 - $counts{construct_building}, $c->config->{minimum_building_level}, $kingdom, \@parties );
+    }      
 }
 
 sub _create_quests_of_type {

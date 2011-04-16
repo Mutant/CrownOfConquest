@@ -53,7 +53,7 @@ Buildings give benefits to a garrison in the same sector.
 		[% existing_seen = 1 %]
 	[% END %]
 	<div style=" padding:10px; height:125px;">
-		<div id="building_types" style="float:left; width:300px;">
+		<div id="building_types" style="float:left; width:150px;">
 			<div class="enlargedTitle" style="text-align: center; margin:10px;">
 				<span>[% next_type.name %]</span>
 			</div>
@@ -83,6 +83,24 @@ Buildings give benefits to a garrison in the same sector.
 			[% INCLUDE building/building_details.html building_type=next_type.upgrades_to show_resources=1
 				resources_title="Upgrade requires" %]
 		[% END %]
+	</div>
+	<br>
+	<div align="center">
+	<button id="raze-building" onClick="document.location='[% base %]building/raze'; return false;">Raze Building</button>
+	[% IF party.kingdom_id %]
+		<button id="cede-building" onClick="document.location='[% base %]building/cede'; return false;">Cede Building</button>
+	[% END %]
+	<div dojoType="dijit.Tooltip"
+       		connectId="raze-building"
+			style="display: none">
+		Raze the building to the ground. Be sure you want to do this, as it will be lost forever!			 
+	</div>
+	<div dojoType="dijit.Tooltip"
+       		connectId="cede-building"
+			style="display: none">
+		Cede control of this building to your Kingdom.			 
+	</div>	
+	
 	</div>
 [% END %]
 [% IF existing_seen > 0 %]

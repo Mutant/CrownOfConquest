@@ -23,6 +23,8 @@
 				[% IF quest.status == 'Not Started' %]
 					Offered <a href="[% base %]quest/accept?quest_id=[% quest.id %]">Accept</a> 
 						<a href="[% base %]quest/decline?quest_id=[% quest.id %]">Decline</a>
+				[% ELSIF quest.status == 'Awaiting Reward' %]
+					Awaiting Reward
 				[% ELSE %]
 					Accepted
 				[% END %]	 

@@ -5,6 +5,8 @@ use Data::Dumper;
 
 extends 'DBIx::Class';
 
+use feature 'switch';
+
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
 
@@ -75,16 +77,35 @@ sub set_image {
 sub owner_name {
 	my $self = shift;
 	if (!defined $self->{owner_name}) {
-		my $party = $self->result_source->schema->resultset('Party')->find(
-	        	{ 'party_id' => $self->owner_id, }
-		);
-		if ($party) {
-			$self->{owner_name} = $party->name;
-		} else {
-			$self->{owner_name} = "No one";
+	    given ($self->owner_type) {
+	        when ('party') {
+                my $party = $self->result_source->schema->resultset('Party')->find(
+	        	  { 'party_id' => $self->owner_id, }
+		        );
+		        $self->{owner_name} = $party->name;
+	        }
+	        when ('kingdom') {
+	            my $kingdom = $self->result_source->schema->resultset('Kingdom')->find(
+	        	  { 'kingdom_id' => $self->owner_id, }
+		        );
+		        $self->{owner_name} = "The Kingdom of " . $kingdom->name;
+	        }
+	        default {
+                $self->{owner_name} = "No one";
+	        }
 		}
 	}
 	return $self->{owner_name};
+}
+
+# Returns true if the entity passed in owns the building
+sub owned_by {
+    my $self = shift;
+    my $entity = shift;
+    
+    my $type = $entity->group_type || 'kingdom';
+    
+    return 1 if $type eq $self->owner_type && $entity->id == $self->owner_id;
 }
 
 

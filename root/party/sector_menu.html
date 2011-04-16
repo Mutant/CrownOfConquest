@@ -1,7 +1,15 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terrain_name %][% IF kingdom %], Kingdom of [% kingdom.name %][% END %])
 [% FOREACH next_building IN buildings %]
-	<br><br>There is a [% next_building.building_type.name %] here that is controlled by [% IF next_building.owner_id == party.id %]you[%ELSE%][% next_building.owner_name %][% END %]
+	<br><br>There is a [% next_building.building_type.name %] here that is controlled by 
+	[% IF next_building.owner_id == party.id %]
+		you (<a href="[% base %]/building/create">Manage</a>)
+	[% ELSE %]
+		[% next_building.owner_name %] 
+		[% IF can_seize_building %]
+			(<a href="[% base %]/building/raze">Raze</a> / <a href="[% base %]/building/seize">Seize</a>)
+		[% END %]
+	[% END %]
 [% END %]
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
@@ -46,15 +54,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% END %]
 	[% IF !garrison || garrison.party_id == party.id %]
 		[% IF can_build_building %]
-			| <a href="[% base %]/building/create">Construct/Upgrade a Building</a>
-		[% END %]
-		[% FOREACH next_building IN buildings %]
-			[% IF can_seize_building && next_building.owner_id != party.id %]
-				| <a href="[% base %]/building/seize">Seize Building</a>
-			[% END %]
-			[% IF can_raze_building %]
-				| <a href="[% base %]/building/raze">Raze Building</a>
-			[% END %]
+			| <a href="[% base %]/building/create">Construct a Building</a>
 		[% END %]
 	[% END %]
 	[% IF can_claim_land %]

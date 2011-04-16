@@ -298,7 +298,6 @@ sub create : Local {
 	#  Find which buildings have not been built, and get their lowest level for inclusion in the 'available buildings'.
 	my @available_buildings;
 	my %existing_classes_seen;
-	my %available_upgrades;
 	foreach my $next_key (keys %{$c->stash->{building_info}}) {
 		my $next_type = \%{$c->stash->{building_info}{$next_key}};
 		my $next_class = $next_type->{class};
@@ -442,9 +441,10 @@ sub add : Local {
 	$c->stash->{party}->turns($c->stash->{party}->turns - ${$building_type}->{turns_needed});
 	$c->stash->{party}->update;
 	
-	$c->flash->{messages} = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
+	my $message = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
+	$c->flash->{messages} = $message if @$message;
 
-	$c->res->redirect( $c->config->{url_root});
+	$c->res->redirect( $c->config->{url_root} );
 }
 
 sub seize : Local {
@@ -472,20 +472,23 @@ sub seize : Local {
 		$count++;
 		$building_names .= $sep . $next_building->name;
 		$owner_id = $next_building->owner_id;			# Assume all have same owner.
+		$owner_type = $next_building->owner_type;
 	}
 
 	#  Give the former owner the unfortunate news.
-	$c->model('DBIC::Party_Messages')->create(
-		{
-			message => "Our " . $building_names . " at " .
-			 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
-			 " was seized from us by " . $c->stash->{party}->name,
-			alert_party => 1,
-			party_id => $owner_id,
-			day_id => $c->stash->{today}->id,
-		}
-		);
-
+	# TODO: give to kingdoms as well
+	if ($owner_type eq 'party') {
+    	$c->model('DBIC::Party_Messages')->create(
+    		{
+    			message => "Our " . $building_names . " at " .
+    			 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
+    			 " was seized from us by " . $c->stash->{party}->name,
+    			alert_party => 1,
+    			party_id => $owner_id,
+    			day_id => $c->stash->{today}->id,
+    		}
+        );
+	}
 
 	#  But crow about it to ourselves.
 	$c->model('DBIC::Party_Messages')->create(
@@ -554,7 +557,8 @@ sub raze : Local {
 	}
 
 	#  If we don't own this building, give the former owner the bad news.
-	if ($c->stash->{party}->id != $owner_id || $owner_type ne 'party') {
+	# TODO: only gives message to party, should also give it to kingdom
+	if ($c->stash->{party}->id != $owner_id && $owner_type eq 'party') {
 		$c->model('DBIC::Party_Messages')->create(
 			{
 				message => "Our " . $building_names . " at " .
@@ -577,12 +581,40 @@ sub raze : Local {
 		}
 	);
 
-	$c->stash->{panel_messages} = [$count . ' building' . ($count==1?'':'s') . ' razed!'];
+	$c->flash->{messages} = [$count . ' building' . ($count==1?'':'s') . ' razed!'];
 		
 	$c->stash->{party}->turns($c->stash->{party}->turns - $raze_turns_needed);
 	$c->stash->{party}->update;
 
-	$c->forward('/party/main');
+    $c->res->redirect( $c->config->{url_root} . '/party/main' );
+}
+
+sub cede : Local {
+    my ($self, $c) = @_;
+    
+    croak "You don't have a Kingdom" unless $c->stash->{party}->kingdom_id;
+    
+	my @existing_buildings = $c->model('DBIC::Building')->search(
+        { 'land_id' => $c->stash->{party_location}->id, },
+	);
+	
+	my @messages;
+	foreach my $building (@existing_buildings) {
+	   next unless $building->owner_type eq 'party' and $building->owner_id == $c->stash->{party}->id;
+	   $building->owner_type('kingdom');
+	   $building->owner_id($c->stash->{party}->kingdom_id);
+	   $building->update;
+	   
+	   	my $message = $c->forward( '/quest/check_action', [ 'ceded_building', $building ] );
+	   	push @messages, @$message if @$message;   
+	}
+	
+	my $count = scalar @existing_buildings;
+	push @messages, $count . ' building' . ($count==1?'':'s') . ' ceded to the Kingdom of ' . $c->stash->{party}->kingdom->name;
+	$c->flash->{messages} = \@messages;
+	
+	$c->res->redirect( $c->config->{url_root} . '/party/main' );
+       
 }
 
 1;

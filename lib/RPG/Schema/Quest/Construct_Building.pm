@@ -119,6 +119,9 @@ sub check_action {
         when ('constructed_building') {
             if ($land->id eq $self->param_current_value('Building Location')) {
                 my $quest_param = $self->param_record('Built');
+                
+                return 0 if $quest_param->current_value eq 1;
+                
                 $quest_param->current_value(1);
                 $quest_param->update;
 

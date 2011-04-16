@@ -536,6 +536,11 @@ building_min_spacing: 1
 # Maximum 'visibility' value for any building type
 max_building_visibility: 7
 
+# ----- Kingdom Params ----- #
+
+# Number of land required per kingdom quest
+land_per_kingdom_quests: 100
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

@@ -75,18 +75,39 @@ sub generate_kingdom_quests {
             'group_by' => 'quest_type_id',
         } 
     );
-    
+   
     my %counts;
     foreach my $count_rec (@quest_count) {
         $counts{$self->quest_type_map->{$count_rec->quest_type_id}} = $count_rec->get_column('count') // 0;   
     }
+
+    my $quests_allowed = $kingdom->quests_allowed;
+    my $total_current_quests = $kingdom->search_related(
+        'quests',
+        {
+            status => {'!=', 'Complete'},
+        }
+    )->count;
     
-    if ($counts{claim_land} < 3) {
-        $self->_create_quests_of_type( 'claim_land', 3 - $counts{claim_land}, $c->config->{minimum_land_claim_level}, $kingdom, \@parties );
-    }    
+    $c->logger->debug("Has $total_current_quests quests, allowed $quests_allowed");
     
-    if ($counts{construct_building} < 3) {
-        $self->_create_quests_of_type( 'construct_building', 3 - $counts{construct_building}, $c->config->{minimum_building_level}, $kingdom, \@parties );
+    my $quests_to_create = $quests_allowed - $total_current_quests;
+    
+    my %minimum_levels = (
+        claim_land => $c->config->{minimum_land_claim_level},
+        construct_building => $c->config->{minimum_building_level},
+    );
+    
+    for my $quest_type (qw/claim_land construct_building/) {
+        # TODO: currently create 3 of each quest type. Should change this
+        my $base_number = 3;
+        my $number_to_create = $base_number - ($counts{$quest_type} // 0);
+        
+        $number_to_create = $quests_to_create if $quests_to_create < $number_to_create;
+        
+        next if $number_to_create <= 0; 
+            
+        $self->_create_quests_of_type( $quest_type, $number_to_create, $minimum_levels{$quest_type}, $kingdom, \@parties );    
     }      
 }
 

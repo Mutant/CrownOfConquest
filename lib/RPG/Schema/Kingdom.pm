@@ -5,6 +5,8 @@ use warnings;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
+use Math::Round qw(round);
+
 __PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Kingdom');
 
@@ -52,6 +54,17 @@ my @colours = (
 );
 
 sub colours { @colours };
+
+sub quests_allowed {
+    my $self = shift;
+    
+    my $land_count = $self->sectors->count;
+    
+    my $quest_count = round $land_count / RPG::Schema->config->{land_per_kingdom_quests};
+    $quest_count = 2 if $quest_count < 2;
+    
+    return $quest_count;   
+}
 
 # Find the sectors that are part of a kingdom's border.
 #  Not terribly effcient, so probably should only be called offline

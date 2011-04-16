@@ -70,7 +70,8 @@ sub set_quest_params {
         }
     }
     
-    unless ($sector_to_use) {        
+    unless ($sector_to_use) {
+        $self->delete;
         die RPG::Exception->new(
             message => "Can't create quest - no suitable border sectors to create buildings",
             type    => 'quest_creation_error',

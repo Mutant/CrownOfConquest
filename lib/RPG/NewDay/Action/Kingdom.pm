@@ -6,6 +6,7 @@ extends 'RPG::NewDay::Base';
 
 use List::Util qw(shuffle);
 use RPG::Template;
+use Try::Tiny;
 
 sub run {
     my $self = shift;
@@ -142,14 +143,34 @@ sub _create_quests_of_type {
             
         my $party = (shuffle @eligble)[0];
             
-        my $quest = $c->schema->resultset('Quest')->create(
-            {
-                kingdom_id => $kingdom->id,
-                party_id => $party->id,
-                quest_type_id => $quest_type_rec->id,
-                day_offered => $c->current_day->day_number,
-            }
-        );
+        my $quest = try {
+            $c->schema->resultset('Quest')->create(
+                {
+                    kingdom_id => $kingdom->id,
+                    party_id => $party->id,
+                    quest_type_id => $quest_type_rec->id,
+                    day_offered => $c->current_day->day_number,
+                }
+            );
+        }
+        catch {
+            if (ref $_ && $_->isa('RPG::Exception')) {
+                if ($_->type eq 'quest_creation_error') {
+                    next;
+                }
+                die $_->message;
+            } 
+            
+            die $_;
+        };
+        
+        if ($quest->gold_value > $kingdom->gold) {
+            # Not enough gold to create this quest, skip it
+            $quest->delete;
+            next;
+        }
+        
+        $kingdom->decrease_gold($quest->gold_value);
         
         my $message = RPG::Template->process(
             $c->config,
@@ -215,8 +236,9 @@ sub cancel_quests_awaiting_acceptance {
             }
         );
         
-        $quest->terminate($message);
+        $quest->terminate($message);        
         $quest->update;
+        
     }
     
        

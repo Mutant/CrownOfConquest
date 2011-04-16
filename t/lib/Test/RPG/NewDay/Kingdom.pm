@@ -26,7 +26,7 @@ sub test_generate_kingdom_quests_basic : Tests(5) {
     my $self = shift;
     
     # GIVEN
-    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, gold => 100000);
     my $party1 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);
     my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);
     my $party3 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);
@@ -53,7 +53,7 @@ sub test_generate_kingdom_quests_prexisting : Tests(4) {
     my $self = shift;
     
     # GIVEN
-    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, gold => 100000);
     my $party1 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);
     my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);
     my $party3 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2, character_level => 3);

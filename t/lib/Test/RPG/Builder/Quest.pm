@@ -27,6 +27,7 @@ sub build_quest {
             quest_type_id => $quest_type->id,
             status        => $params{status} || 'Not Started',
             party_id      => $params{party_id},
+            day_offered   => $params{day_offered} || undef,
             %create_params,
         }
     );

@@ -541,6 +541,12 @@ max_building_visibility: 7
 # Number of land required per kingdom quest
 land_per_kingdom_quests: 100
 
+# Minimum number of quests per kingdom
+minimum_kingdom_quests: 2
+
+# Days to leave a quest offer opening before cancelling it
+kingdom_quest_offer_time_limit: 12
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

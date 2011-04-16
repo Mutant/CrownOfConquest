@@ -51,6 +51,8 @@ sub execute_npc_kingdom_actions {
     
     $self->context->logger->debug("Kingdom has " . scalar @parties . " parties");
     
+    $self->cancel_quests_awaiting_acceptance($kingdom);
+    
     $self->generate_kingdom_quests($kingdom, @parties);
 
 }
@@ -145,6 +147,7 @@ sub _create_quests_of_type {
                 kingdom_id => $kingdom->id,
                 party_id => $party->id,
                 quest_type_id => $quest_type_rec->id,
+                day_offered => $c->current_day->day_number,
             }
         );
         
@@ -187,6 +190,34 @@ sub _find_eligible_parties {
        )->count < 1 
    } @parties;   
    
-   return @eligible;
-   
+   return @eligible;   
+}
+
+# Cancel any quests that have been awaiting acceptance by the party for too long
+sub cancel_quests_awaiting_acceptance {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my @quests_to_cancel = $self->context->schema->resultset('Quest')->search(
+        {
+            kingdom_id => $kingdom->id,
+            status => 'Not Started',
+            day_offered => {'<=', $self->context->current_day->day_number - $self->context->config->{kingdom_quest_offer_time_limit}},
+        }
+    );
+    
+    foreach my $quest (@quests_to_cancel) {
+        my $message = RPG::Template->process(
+            $self->context->config,
+            'quest/kingdom/offer_expired.html',
+            {
+                quest => $quest,
+            }
+        );
+        
+        $quest->terminate($message);
+        $quest->update;
+    }
+    
+       
 }

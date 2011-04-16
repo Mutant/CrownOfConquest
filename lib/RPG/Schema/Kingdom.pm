@@ -61,7 +61,7 @@ sub quests_allowed {
     my $land_count = $self->sectors->count;
     
     my $quest_count = round $land_count / RPG::Schema->config->{land_per_kingdom_quests};
-    $quest_count = 2 if $quest_count < 2;
+    $quest_count = RPG::Schema->config->{minimum_kingdom_quests} if $quest_count < RPG::Schema->config->{minimum_kingdom_quests};
     
     return $quest_count;   
 }

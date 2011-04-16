@@ -44,3 +44,5 @@ update `Building_Type` set land_claim_range = level + 1;
 ALTER TABLE `Building` ADD INDEX `land_id_idx`(`land_id`),
  ADD INDEX `building_type_idx`(`building_type_id`);
 
+ALTER TABLE `Quest` ADD COLUMN `day_offered` INTEGER  DEFAULT NULL AFTER `days_to_complete`;
+

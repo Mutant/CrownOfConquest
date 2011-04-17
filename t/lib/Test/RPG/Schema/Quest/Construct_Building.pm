@@ -14,7 +14,7 @@ use Test::RPG::Builder::Town;
 
 use Test::More;
 
-sub test_set_quest_params : Tests() {
+sub test_set_quest_params : Tests(3) {
     my $self = shift;
  
     # GIVEN   

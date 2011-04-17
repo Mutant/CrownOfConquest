@@ -89,18 +89,28 @@ sub border_sectors {
     my @border_sectors;
     my %world_range;
     foreach my $sector (@sectors) {
-        if ($grid->{$sector->{x}-1}{$sector->{y}-1} and $grid->{$sector->{x}-1}{$sector->{y}+1}
-            and $grid->{$sector->{x}+1}{$sector->{y}-1} and $grid->{$sector->{x}+1}{$sector->{y}+1}) {
-            next;
-        }
-        
         unless ($edge_of_world_is_border) {
             %world_range = $self->result_source->schema->resultset('Land')->get_x_y_range()
                 unless %world_range;
             
-            # Ignore any sectors on edge of world
-            next if $sector->{x} == $world_range{min_x} || $sector->{x} == $world_range{max_x} ||
-                    $sector->{y} == $world_range{min_y} || $sector->{y} == $world_range{max_y};
+            # Ignore any sectors that are only missing neighbouring sectors on the edge of the world
+            if ($sector->{x} == $world_range{min_x}) {
+                $grid->{$sector->{x}-1}{$sector->{y}} = 1;
+            }
+            if ($sector->{x} == $world_range{max_x}) {
+                $grid->{$sector->{x}+1}{$sector->{y}} = 1;
+            }
+            if ($sector->{y} == $world_range{min_y}) {
+                $grid->{$sector->{x}}{$sector->{y}-1} = 1;
+            }
+            if ($sector->{y} == $world_range{max_y}) {
+                $grid->{$sector->{x}}{$sector->{y}+1} = 1;
+            }
+        }        
+        
+        if ($grid->{$sector->{x}-1}{$sector->{y}} and $grid->{$sector->{x}}{$sector->{y}+1}
+            and $grid->{$sector->{x}+1}{$sector->{y}} and $grid->{$sector->{x}}{$sector->{y}-1}) {
+            next;
         }
         
         push @border_sectors, $sector;

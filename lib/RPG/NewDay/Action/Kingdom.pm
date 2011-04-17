@@ -29,7 +29,11 @@ sub quest_type_map {
     my $self = shift;
     
     unless ($self->{quest_type_map}) {
-        my @quest_types = $self->context->schema->resultset('Quest_Type')->search();
+        my @quest_types = $self->context->schema->resultset('Quest_Type')->search(
+            {
+                owner_type => 'kingdom',
+            },
+        );
         $self->{quest_type_map} = { map { $_->id => $_->quest_type } @quest_types };
     }
         
@@ -96,12 +100,14 @@ sub generate_kingdom_quests {
     
     my $quests_to_create = $quests_allowed - $total_current_quests;
     
+    # TODO: configure elsewhere?
     my %minimum_levels = (
         claim_land => $c->config->{minimum_land_claim_level},
         construct_building => $c->config->{minimum_building_level},
+        take_over_town => $c->config->{minimum_raid_level},        
     );
     
-    for my $quest_type (qw/claim_land construct_building/) {
+    for my $quest_type (values %{ $self->quest_type_map }) {
         # TODO: currently create 3 of each quest type. Should change this
         my $base_number = 3;
         my $number_to_create = $base_number - ($counts{$quest_type} // 0);

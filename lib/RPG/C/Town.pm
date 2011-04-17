@@ -629,9 +629,12 @@ sub become_mayor : Local {
 			party_id => $c->stash->{party}->id,
 			day_id => $c->stash->{today}->id,
 		}
-	);	   	
+	);
 	
-	$c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
+    $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
+
+	my $messages = $c->forward( '/quest/check_action', [ 'taken_over_town', $town ] );
+	push @{ $c->stash->{panel_messages} }, $messages if $messages && @$messages;
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party', 'map' ] );
 }

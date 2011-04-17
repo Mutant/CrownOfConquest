@@ -46,3 +46,10 @@ ALTER TABLE `Building` ADD INDEX `land_id_idx`(`land_id`),
 
 ALTER TABLE `Quest` ADD COLUMN `day_offered` INTEGER  DEFAULT NULL AFTER `days_to_complete`;
 
+INSERT INTO `Quest_Type`(quest_type, owner_type) values ('take_over_town', 'kingdom');
+
+set @take_over_town_id = (select quest_type_id FROM `Quest_Type` where quest_type = 'take_over_town');
+INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@take_over_town_id , 'Town To Take Over');
+
+
+

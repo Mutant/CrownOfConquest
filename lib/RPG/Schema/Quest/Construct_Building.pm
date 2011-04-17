@@ -100,12 +100,6 @@ sub set_quest_params {
        
 }
 
-sub interested_in_actions {
-    my $self = shift;
-
-    return ('constructed_building', 'ceded_building');
-}
-
 sub check_action {
     my $self   = shift;
     my $party  = shift;

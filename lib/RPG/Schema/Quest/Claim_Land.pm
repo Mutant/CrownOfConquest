@@ -23,12 +23,6 @@ sub set_quest_params {
     $self->update;
 }
 
-sub interested_in_actions {
-    my $self = shift;
-
-    return 'claimed_land';
-}
-
 sub check_action {
     my $self   = shift;
     my $party  = shift;

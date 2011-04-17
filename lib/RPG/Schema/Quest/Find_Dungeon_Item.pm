@@ -119,12 +119,6 @@ sub set_quest_params {
 	$self->update;
 }
 
-sub interested_in_actions {
-    my $self = shift;
-    
-    return 'chest_opened';
-}
-
 sub check_action {
     my $self   = shift;
     my $party  = shift;

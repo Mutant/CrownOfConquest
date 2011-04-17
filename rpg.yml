@@ -505,6 +505,10 @@ quest_type_vars:
     town_search_range: 9
     building_search_range: 9
     search_range: 9
+    
+  ### Take over town
+  take_over_town:
+    town_search_range: 13
 
 # ----- Garrison Params ----- #
 

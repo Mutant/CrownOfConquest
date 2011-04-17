@@ -33,6 +33,7 @@ my %QUEST_TYPE_TO_CLASS_MAP = (
     find_dungeon_item        => 'RPG::Schema::Quest::Find_Dungeon_Item',
     construct_building       => 'RPG::Schema::Quest::Construct_Building',
     claim_land               => 'RPG::Schema::Quest::Claim_Land',
+    take_over_town           => 'RPG::Schema::Quest::Take_Over_Town',
 );
 
 # Inflate the result as a class based on quest type

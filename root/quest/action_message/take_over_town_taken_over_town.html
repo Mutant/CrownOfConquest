@@ -1,4 +1,4 @@
-[% IF quest.status eq 'Awaiting Reward' %]
+[% IF quest.status == 'Awaiting Reward' %]
 	You've completed the Kingdom Quest!
 [% ELSE %]
 	You've taken over the town of [% quest.town.town_name %]. You now need to set the town's allegiance to the Kingdom of [% quest.kingdom.name %] to complete the quest

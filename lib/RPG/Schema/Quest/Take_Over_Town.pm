@@ -84,9 +84,9 @@ sub check_action {
     my $action = shift;
     my $town = shift;
 
-    return 0 unless $town->id == $self->param_current_value('Town To Take Over');
-    
     return 0 unless $action eq 'taken_over_town' || $action eq 'changed_town_allegiance';
+
+    return 0 unless $town->id == $self->param_current_value('Town To Take Over');
 
     if ($town->location->kingdom_id == $self->kingdom_id) {
         # Town is loyal to kingdom, quest is complete

@@ -4,3 +4,14 @@
 
 <br>
 The town must pay [% kingdom.mayor_tax %]% of all daily income to the kingdom as tax.
+<br><br>
+<form method="POST" action="[% base %]town/mayor/change_allegiance">
+<input type="hidden" name="town_id" value="[% town.id %]">
+Change town's allegiance to: 
+	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false">
+		[% FOREACH kingdom IN kingdoms %]
+        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
+		[% END %]
+	</select>
+	<input type="submit" value="Change">
+</form>

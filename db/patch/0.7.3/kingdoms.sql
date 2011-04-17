@@ -51,5 +51,7 @@ INSERT INTO `Quest_Type`(quest_type, owner_type) values ('take_over_town', 'king
 set @take_over_town_id = (select quest_type_id FROM `Quest_Type` where quest_type = 'take_over_town');
 INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@take_over_town_id , 'Town To Take Over');
 
+ALTER TABLE `Kingdom` ADD COLUMN `active` TINYINT  NOT NULL DEFAULT 1 AFTER `gold`;
+
 
 

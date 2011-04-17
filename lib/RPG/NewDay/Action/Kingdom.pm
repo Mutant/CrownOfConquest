@@ -14,7 +14,11 @@ sub run {
     
     my $schema = $c->schema;
     
-    my @kingdoms = $schema->resultset('Kingdom')->search();
+    my @kingdoms = $schema->resultset('Kingdom')->search(
+        {
+            active => 1,
+        }
+    );
 
     foreach my $kingdom (@kingdoms) {
         my $king = $kingdom->king;
@@ -138,13 +142,11 @@ sub _create_quests_of_type {
     
     confess "No such quest type: $quest_type\n" unless $quest_type_rec;
     
-    $self->context->logger->debug("Attempting to create quest of type: " . $quest_type);    
+    $self->context->logger->debug("Attempting to create $number_to_create quests of type: " . $quest_type);    
     
     for (1..$number_to_create) {
         my @eligble = $self->_find_eligible_parties($minimum_level, $quest_type, @$parties);
         
-        $self->context->logger->debug("Eligible parties " . scalar @eligble);
-
         next unless @eligble;
             
         my $party = (shuffle @eligble)[0];
@@ -162,6 +164,7 @@ sub _create_quests_of_type {
         catch {
             if (ref $_ && $_->isa('RPG::Exception')) {
                 if ($_->type eq 'quest_creation_error') {
+                    $c->logger->debug("Couldn't create quest: " . $_->message);
                     next;
                 }
                 die $_->message;
@@ -172,6 +175,7 @@ sub _create_quests_of_type {
         
         if ($quest->gold_value > $kingdom->gold) {
             # Not enough gold to create this quest, skip it
+            $self->context->logger->debug("No enough gold to fund this quest, deleting (have: " . $kingdom->gold . ", need: " . $quest->gold_value . ')');
             $quest->delete;
             next;
         }

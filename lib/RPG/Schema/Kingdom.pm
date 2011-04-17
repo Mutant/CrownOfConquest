@@ -10,7 +10,7 @@ use Math::Round qw(round);
 __PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Kingdom');
 
-__PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold/);
+__PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 

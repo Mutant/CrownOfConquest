@@ -467,6 +467,15 @@ sub kingdom : Local {
 	
 	my $kingdom = $town->location->kingdom;
 	
+	my @kingdoms = $c->model('DBIC::Kingdom')->search(
+	   {
+	       active => 1,
+	   },
+	   {
+	       order_by => 'name',
+	   },	   
+	);
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -475,10 +484,33 @@ sub kingdom : Local {
 				params => {
 					town => $town,
 					kingdom => $kingdom,
+					kingdoms => \@kingdoms,					
 				}
 			}
 		]
 	);	 
+}
+
+sub change_allegiance : Local {
+    my ($self, $c) = @_;
+    
+    my $town = $c->stash->{town};
+    
+    my $kingdom = $c->model('DBIC::Kingdom')->find( $c->req->param('kingdom_id') );
+    croak "Kingdom not found\n" unless $kingdom;
+    
+    my $location = $town->location;
+    $location->kingdom_id( $kingdom->id );
+    $location->update;
+    
+    $town->decrease_mayor_rating(10);
+    $town->update;
+    
+	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
+	# TODO: messages go no where at the moment
+    
+    $c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=kingdom' );
+       
 }
 
 1;

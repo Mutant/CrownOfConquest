@@ -64,7 +64,7 @@ sub delete_account_confirmed : Local {
 	}
 	
 	$c->session->{party_level} = $c->stash->{party}->level;
-	$c->session->{turns_used} = $c->stash->{party}->turns;
+	$c->session->{turns_used} = $c->stash->{party}->turns_used;
 	
 	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
 	

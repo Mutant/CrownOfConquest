@@ -171,7 +171,16 @@ __PACKAGE__->add_columns(
         'name'              => 'kingdom_id',
         'is_nullable'       => 1,
         'size'              => 0,
-    },      
+    },   
+    'last_allegiance_change' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => '0',
+        'is_foreign_key'    => 0,
+        'name'              => 'last_allegiance_change',
+        'is_nullable'       => 1,
+        'size'              => 0,
+    },       
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -196,6 +205,8 @@ __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 __PACKAGE__->might_have( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
+
+__PACKAGE__->belongs_to( 'last_allegiance_change_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.last_allegiance_change' } );
 
 __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 
 	{ 'foreign.party_id' => 'self.party_id' },
@@ -781,6 +792,18 @@ sub can_claim_land {
     return 0 unless $self->kingdom_id;
     
     return $land->can_be_claimed($self->kingdom_id);
+}
+
+sub days_since_last_allegiance_change {
+    my $self = shift;
+    
+    my $change_day = $self->result_source->schema->resultset('Day')->find(
+        {
+            day_id => $self->last_allegiance_change,
+        }
+    );
+    
+    return $change_day->difference_to_today_str;   
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

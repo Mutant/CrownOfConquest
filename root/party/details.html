@@ -2,6 +2,7 @@
 
 <script>
 	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.form.FilteringSelect");
 	
 	function toggle_disabled_checkboxes() {
 		setting = dojo.byId('send_email').checked ? false : true;
@@ -58,6 +59,9 @@
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Combat Log" href="[% base %]/party/details/combat_log" [% IF tab == 'combat_log' %]selected=true[% END %]>
+</div>
+
+<div dojoType="dijit.layout.ContentPane" title="Kingdom" href="[% base %]/party/details/kingdom" [% IF tab == 'kingdom' %]selected=true[% END %]>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Garrisons" href="[% base %]/party/details/garrisons" [% IF tab == 'garrisons' %]selected=true[% END %]>

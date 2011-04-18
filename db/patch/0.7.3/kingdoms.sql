@@ -60,5 +60,6 @@ INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_
 INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Days To Hold');
 INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Created');
 
+ALTER TABLE `Party` ADD COLUMN `last_allegiance_change` INTEGER  DEFAULT NULL AFTER `kingdom_id`;
 
 

@@ -1,0 +1,29 @@
+<h4>Kingdom</h4>
+
+[% IF kingdom %]
+	We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
+	[% king = kingdom.king %]
+	Our monarch is: [% king.name %] ([% IF king.party_id %][% king.party.name %][% ELSE %]NPC[% END %])
+[% ELSE %]
+	We are Free Citizens, loyal to no one.
+[% END %]
+
+<br><br>
+We can change our allegiance once every [% allegiance_change_frequency %] days. 
+
+[% IF party.last_allegiance_change %]
+	We last changed it [% party.days_since_last_allegiance_change %].
+[% ELSE %]
+	So far, we have not changed our allegiance.
+[% END %]
+
+<form method="POST" action="[% base %]party/details/change_allegiance">
+Change our allegiance to: 
+	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false"
+		[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
+		[% FOREACH kingdom IN kingdoms %]
+        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
+		[% END %]
+	</select>
+	<input type="submit" value="Change">
+</form>

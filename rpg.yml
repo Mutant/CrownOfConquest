@@ -180,6 +180,9 @@ minimum_building_level: 10
 # Minimum level for claiming land for a kingdom
 minimum_land_claim_level: 3
 
+# Frequency in days party can change allegiance
+party_allegiance_change_frequency: 15
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack

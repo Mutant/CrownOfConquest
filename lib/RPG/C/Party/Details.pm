@@ -21,6 +21,7 @@ sub default : Path {
                     party   => $c->stash->{party},
                     tab     => $c->req->param('tab') || '',
                     message => $c->flash->{messages},
+                    error => $c->flash->{error},
                 },
             }
         ]
@@ -257,6 +258,64 @@ sub buildings : Local {
             }
         ]
     );	
+}
+
+sub kingdom : Local {
+	my ($self, $c) = @_;
+	
+	my $kingdom = $c->stash->{party}->kingdom;
+	my @kingdoms = $c->model('DBIC::Kingdom')->search(
+	   {
+	       active => 1,
+	       kingdom_id => {'!=', $c->stash->{party}->kingdom_id},
+	   },
+	   {
+	       order_by => 'name',
+	   }
+    );
+	
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/kingdom.html',
+                params   => {
+                    kingdom => $kingdom,
+                    kingdoms => \@kingdoms,
+                    allegiance_change_frequency => $c->config->{party_allegiance_change_frequency},
+                    party => $c->stash->{party},
+                },
+            }
+        ]
+    );		
+}
+
+sub change_allegiance : Local {
+	my ($self, $c) = @_;
+	
+	my $day = $c->stash->{party}->last_allegiance_change_day;
+	if ($day && abs $day->difference_to_today <= $c->config->{party_allegiance_change_frequency}) {
+	   $c->flash->{error} = "You changed your allegiance too recently";
+	   $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+	   return;
+	}
+	
+	if ($c->req->param('kingdom_id')) {
+	   my $kingdom = $c->model('DBIC::Kingdom')->find(
+	       {
+	           kingdom_id => $c->req->param('kingdom_id'),
+	       }  
+	   );
+	   croak "Kingdom doesn't exist\n" unless $kingdom;
+	}
+	
+	$c->stash->{party}->kingdom_id($c->req->param('kingdom_id'));
+	$c->stash->{party}->last_allegiance_change($c->stash->{today}->id);
+	$c->stash->{party}->update;
+	
+	$c->flash->{messages} = "Allegiance changed";
+	
+	$c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
 }
 
 1;

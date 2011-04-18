@@ -11,6 +11,7 @@ use Test::More;
 
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Character;
 
 sub test_border_sectors : Tests(5) {
     my $self = shift;
@@ -35,6 +36,23 @@ sub test_border_sectors : Tests(5) {
 
     is($border_sectors[1]->{x}, 2, "Correct x location of second border sector");
     is($border_sectors[1]->{y}, 1, "Correct y location of second border sector");
+}
+
+sub test_king : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->status('king');
+    $character->status_context($kingdom->id);
+    $character->update;
+    
+    # WHEN
+    my $king = $kingdom->king;
+    
+    # THEN
+    is($king->id, $character->id, "King returned");
 }
 
 1;

@@ -151,33 +151,11 @@ sub check_action : Private {
     my @messages;
 
     foreach my $quest ( $c->stash->{party}->quests_in_progress ) {
-        if ( $quest->check_action( $c->stash->{party}, $action, @params ) ) {
-
-            my $message = $c->forward(
-                'RPG::V::TT',
-                [
-                    {
-                        template => 'quest/action_message.html',
-                        params   => {
-                            quest  => $quest,
-                            action => $action,
-                        },
-                        return_output => 1,
-                    }
-                ]
-            );
+        if ( my $message = $quest->check_quest_action( $action, @params ) ) {
             push @messages, $message if $message;
-
         }
     }
-
-    # Check if this action affects any other quests    
-    my @quests = $c->model('DBIC::Quest')->find_quests_by_interested_action($action);
     
-    foreach my $quest (@quests) {
-        $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
-    }
-
     return \@messages;
 }
 

@@ -1,4 +1,3 @@
-[%# Include a file based on the quest type and action %]
-
-[% include = 'quest/action_message/' _ quest.type.quest_type _ '_' _ action _ '.html' %]
-[% INCLUDE $include %]
+[%# Include a file based on the quest type and action ~%]
+[% include = 'quest/action_message/' _ quest.type.quest_type _ '_' _ action _ '.html' ~%]
+[% INCLUDE $include ~%]

@@ -53,5 +53,12 @@ INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@take_ov
 
 ALTER TABLE `Kingdom` ADD COLUMN `active` TINYINT  NOT NULL DEFAULT 1 AFTER `gold`;
 
+INSERT INTO `Quest_Type`(quest_type, owner_type) values ('create_garrison', 'kingdom');
+
+set @create_garrison_id = (select quest_type_id FROM `Quest_Type` where quest_type = 'create_garrison');
+INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Location To Create');
+INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Days To Hold');
+INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Created');
+
 
 

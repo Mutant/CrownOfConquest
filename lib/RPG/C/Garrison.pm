@@ -116,6 +116,9 @@ sub add : Local {
 	
 	$c->forward('add_to_town_news', ['create']);
 	
+	my $messages = $c->forward( '/quest/check_action', [ 'garrison_created', $garrison ] );
+	$c->flash->{message} = $messages->[0] if $messages && @$messages;
+	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
 }
 
@@ -226,6 +229,9 @@ sub remove : Local {
 		$c->stash->{party}->increase_gold($c->stash->{garrison}->gold);
 		$c->stash->{party}->update;
 
+		my $messages = $c->forward( '/quest/check_action', [ 'garrison_removed', $c->stash->{garrison} ] );
+	    $c->stash->{messages} = $messages if $messages && @$messages;
+
 		$c->stash->{garrison}->land_id(undef);
 		$c->stash->{garrison}->update;
 		
@@ -290,6 +296,7 @@ sub manage : Local {
                     garrison => $c->stash->{garrison},
                     party_garrisons => \@party_garrisons,
                     selected => $c->req->param('selected') || '',
+                    message => $c->flash->{message} || undef,
                 },
             }
         ]

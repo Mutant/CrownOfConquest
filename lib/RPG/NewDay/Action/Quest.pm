@@ -18,7 +18,9 @@ sub run {
     my $self = shift;
 
     my $c = $self->context;
-
+    
+    $self->run_new_day_action;
+    
     $self->randomly_delete_quests;
 
     $self->create_quests;
@@ -101,9 +103,7 @@ sub complete_quests {
             my $xp_info = RPG::Template->process(
                 $c->config,
                 'party/xp_gain.html',
-                {
-                    details => $details,
-                }
+                $details,
             );
         }
         
@@ -121,6 +121,7 @@ sub complete_quests {
             %params = (
                 quest => $quest,
                 kingdom => $quest->kingdom,
+                xp_messages => \@messages,
             );
         }   
         
@@ -150,7 +151,7 @@ sub update_days_left {
             party_id => { '!=', undef },
             status   => 'In Progress',
         },
-        { prefetch => [ 'type', 'town' ] },
+        { prefetch => [ 'type' ] },
     );
 
     foreach my $quest (@quests) {
@@ -186,6 +187,23 @@ sub randomly_delete_quests {
     for (1 .. $quests_to_delete) {
         my $quest= $quest_rs->next;
         $quest->delete;   
+    }
+}
+
+# Run the 'new_day' action on quests
+sub run_new_day_action {
+    my $self = shift;
+    
+     my $c = $self->context;
+    
+    my @quests = $c->schema->resultset('Quest')->search(
+        {
+            status => 'In Progress',
+        }
+    );
+    
+    foreach my $quest (@quests) {
+        $quest->check_quest_action( 'new_day' );   
     }
 }
 

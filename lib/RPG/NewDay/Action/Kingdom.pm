@@ -108,7 +108,8 @@ sub generate_kingdom_quests {
     my %minimum_levels = (
         claim_land => $c->config->{minimum_land_claim_level},
         construct_building => $c->config->{minimum_building_level},
-        take_over_town => $c->config->{minimum_raid_level},        
+        take_over_town => $c->config->{minimum_raid_level},
+        create_garrison => $c->config->{minimum_garrison_level},
     );
     
     for my $quest_type (values %{ $self->quest_type_map }) {
@@ -214,6 +215,7 @@ sub _find_eligible_parties {
             'quests', 
             { 
                 'type.quest_type' => $quest_type,
+                'status' => ['In Progress','Not Started'],
             },
             {
                 join => 'type',

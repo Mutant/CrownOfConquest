@@ -34,6 +34,7 @@ my %QUEST_TYPE_TO_CLASS_MAP = (
     construct_building       => 'RPG::Schema::Quest::Construct_Building',
     claim_land               => 'RPG::Schema::Quest::Claim_Land',
     take_over_town           => 'RPG::Schema::Quest::Take_Over_Town',
+    create_garrison          => 'RPG::Schema::Quest::Create_Garrison',
 );
 
 # Inflate the result as a class based on quest type
@@ -220,6 +221,15 @@ sub terminate {
 # Called when the quest is completed (i.e. in complete() below) 
 sub finish_quest {}
 
+# Returns the character group xp should be award to.
+#  By default, it's the party, but a quest type can override thar
+sub xp_awarded_to {
+    my $self = shift;
+    
+    return $self->party;
+    
+}
+
 sub set_complete {
     my $self = shift;
 
@@ -233,8 +243,10 @@ sub set_complete {
     $party->increase_gold($self->gold_value);
     $party->update;
     
-    my $awarded_xp = $self->xp_value / $party->number_alive;    
-    my @details = $party->xp_gain($awarded_xp);
+    my $group = $self->xp_awarded_to;
+    
+    my $awarded_xp = $self->xp_value / $group->number_alive;    
+    my @details = $group->xp_gain($awarded_xp);
     
     if ($self->town_id) {
         my $party_town = $party->find_related(
@@ -281,5 +293,34 @@ sub set_complete {
 
 # Called before deleting a quest
 sub cleanup {}
+
+# Entry point for calling quest actions
+#  (Call rather than calling check_action on subclass)
+sub check_quest_action {
+    my $self = shift;
+    my $action = shift;
+    my @params = @_; 
+    
+    return unless $self->check_action( $self->party, $action, @params );
+    
+    my $message = RPG::Template->process(
+        RPG::Schema->config,
+        'quest/action_message.html',
+        {
+            quest  => $self,
+            action => $action,
+        },
+    );   
+    
+    # Check if this action affects any other quests    
+    my @quests = $self->result_source->schema->resultset('Quest')->find_quests_by_interested_action($action);
+    
+    foreach my $quest (@quests) {
+        $quest->check_action_from_another_party( $self->party, $action, @params );
+    }
+    
+    return $message;
+}
+
 
 1;

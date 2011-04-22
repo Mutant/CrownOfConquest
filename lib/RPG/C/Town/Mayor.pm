@@ -496,11 +496,15 @@ sub change_allegiance : Local {
     
     my $town = $c->stash->{town};
     
-    my $kingdom = $c->model('DBIC::Kingdom')->find( $c->req->param('kingdom_id') );
-    croak "Kingdom not found\n" unless $kingdom;
+    my $kingdom;
+    
+    if ($c->req->param('kingdom_id')) {
+        $kingdom = $c->model('DBIC::Kingdom')->find( $c->req->param('kingdom_id') );
+        croak "Kingdom not found\n" unless $kingdom;
+    }
     
     my $location = $town->location;
-    $location->kingdom_id( $kingdom->id );
+    $location->kingdom_id( $c->req->param('kingdom_id') ? $kingdom->id : undef );
     $location->update;
     
     $town->decrease_mayor_rating(10);

@@ -398,6 +398,8 @@ sub add : Local {
 		}
 	);
 	
+	
+	
 	#  If this is an upgrade, then find the previous building and delete it.
 	my @pre_upgrade = $c->model('DBIC::Building')->search(
 		{
@@ -411,8 +413,11 @@ sub add : Local {
 	);
 
 	foreach my $pre_building (@pre_upgrade) {
+	    $pre_building->unclaim_land;
 		$pre_building->delete;
 	}
+	
+	$c->forward('change_building_ownership', [$building]);
 
 	#  Make sure the party has the necessary resources.  If so, consume them.
 	#  Debug - if free buildings, don't deduct resources.
@@ -473,10 +478,12 @@ sub seize : Local {
 		$building_names .= $sep . $next_building->name;
 		$owner_id = $next_building->owner_id;			# Assume all have same owner.
 		$owner_type = $next_building->owner_type;
+		
+		$c->forward('change_building_ownership', [$next_building]);
 	}
 
 	#  Give the former owner the unfortunate news.
-	# TODO: give to kingdoms as well
+	# TODO: give message to kingdoms as well
 	if ($owner_type eq 'party') {
     	$c->model('DBIC::Party_Messages')->create(
     		{
@@ -553,6 +560,7 @@ sub raze : Local {
 		$owner_type = $next_building->owner_type;
 		$building_names .= $sep . $next_building->name;
 		$sep = ", ";
+		$next_building->unclaim_land;
 		$next_building->delete;
 	}
 
@@ -605,6 +613,8 @@ sub cede : Local {
 	   $building->owner_id($c->stash->{party}->kingdom_id);
 	   $building->update;
 	   
+	   $c->forward('change_building_ownership', [$building]);
+	   
 	   	my $message = $c->forward( '/quest/check_action', [ 'ceded_building', $building ] );
 	   	push @messages, @$message if @$message;   
 	}
@@ -615,6 +625,13 @@ sub cede : Local {
 	
 	$c->res->redirect( $c->config->{url_root} . '/party/main' );
        
+}
+
+sub change_building_ownership : Private {
+    my ($self, $c, $building) = @_;
+    
+    $building->unclaim_land;
+    $building->claim_land;  
 }
 
 1;

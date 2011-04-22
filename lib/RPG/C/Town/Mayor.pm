@@ -504,7 +504,9 @@ sub change_allegiance : Local {
     $location->update;
     
     $town->decrease_mayor_rating(10);
-    $town->update;
+    $town->unclaim_land;
+    $town->claim_land;
+    $town->update;    
     
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
 	# TODO: messages go no where at the moment

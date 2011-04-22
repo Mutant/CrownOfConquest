@@ -39,7 +39,7 @@ ALTER TABLE `Party` ADD COLUMN `kingdom_id` INTEGER  DEFAULT NULL AFTER `combat_
 
 ALTER TABLE `Building_Type` ADD COLUMN `land_claim_range` INTEGER  NOT NULL DEFAULT 1 AFTER `constr_image`;
 
-update `Building_Type` set land_claim_range = level + 1;
+update `Building_Type` set land_claim_range = level;
 
 ALTER TABLE `Building` ADD INDEX `land_id_idx`(`land_id`),
  ADD INDEX `building_type_idx`(`building_type_id`);
@@ -61,5 +61,8 @@ INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_
 INSERT INTO `Quest_Param_Name`(quest_type_id, quest_param_name) values (@create_garrison_id, 'Created');
 
 ALTER TABLE `Party` ADD COLUMN `last_allegiance_change` INTEGER  DEFAULT NULL AFTER `kingdom_id`;
+
+ALTER TABLE `Land` ADD COLUMN `claimed_by_id` INTEGER  DEFAULT NULL,
+ ADD COLUMN `claimed_by_type` VARCHAR(50)  DEFAULT NULL;
 
 

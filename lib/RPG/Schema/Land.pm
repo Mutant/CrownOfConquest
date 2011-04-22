@@ -15,71 +15,8 @@ __PACKAGE__->table('Land');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Land');
 
-__PACKAGE__->add_columns(
-    'land_id' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 1,
-        'default_value'     => undef,
-        'is_foreign_key'    => 0,
-        'name'              => 'land_id',
-        'is_nullable'       => 0,
-        'size'              => '11'
-    },
-    'x' => {
-        'data_type'         => 'bigint',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'x',
-        'is_nullable'       => 0,
-        'size'              => '20'
-    },
-    'y' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'y',
-        'is_nullable'       => 0,
-        'size'              => '11'
-    },
-    'terrain_id' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'terrain_id',
-        'is_nullable'       => 0,
-        'size'              => '11'
-    },
-    'creature_threat' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'creature_threat',
-        'is_nullable'       => 0,
-        'size'              => '11'
-    },
-    'variation' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'variation',
-        'is_nullable'       => 0,
-        'size'              => '11'
-    }, 
-    'kingdom_id' => {
-        'data_type'         => 'int',
-        'is_auto_increment' => 0,
-        'default_value'     => '0',
-        'is_foreign_key'    => 0,
-        'name'              => 'kingdom_id',
-        'is_nullable'       => 1,
-        'size'              => '11'
-    },
-);
+__PACKAGE__->add_columns(qw/land_id x y terrain_id creature_threat variation kingdom_id claimed_by_id claimed_by_type/);
+    
 __PACKAGE__->set_primary_key('land_id');
 
 __PACKAGE__->numeric_columns(
@@ -399,54 +336,10 @@ sub can_be_claimed {
     
     return 0 if $self->kingdom_id && $kingdom_id == $self->kingdom_id;
     
-    # Find maximum range a building can claim land from
-    my $max_building_range = $self->result_source->schema->resultset('Building_Type')->find(
-        {},
-        {
-            'select' => { max => 'land_claim_range' },
-            'as' => 'max_land_claim_range',
-        }
-    )->get_column('max_land_claim_range');            
-    
-    # Now find any buildings in range that have claimed this land
-    my @buildings = RPG::ResultSet::RowsInSectorRange->find_in_range(
-        resultset           => $self->result_source->schema->resultset('Building'),
-        relationship        => 'location',
-        base_point          => { x => $self->x, y => $self->y },
-        search_range        => ($max_building_range * 2) + 1,
-        increment_search_by => 0,
-    );
-    
-    foreach my $building (@buildings) {
-        my $dist = RPG::Map->get_distance_between_points(
-            {
-                x => $self->x,
-                y => $self->y,
-            },
-            {
-                x => $building->location->x,
-                y => $building->location->y,
-            }
-        );
-        
-        if ($dist <= $building->building_type->land_claim_range) {
-            # Land can't be claimed, as a building is within range
-            return 0;   
-        }
-    }
-    
-    # See if towns are within range
-    my @towns = RPG::ResultSet::RowsInSectorRange->find_in_range(
-        resultset           => $self->result_source->schema->resultset('Town'),
-        relationship        => 'location',
-        base_point          => { x => $self->x, y => $self->y },
-        search_range        => (RPG::Schema->config->{town_land_claim_range} * 2) + 1,
-        increment_search_by => 0,
-    );
-    
-    return 0 if @towns;
+    return 0 if $self->claimed_by_id;
     
     return 1;
+    
 }
 
 1;

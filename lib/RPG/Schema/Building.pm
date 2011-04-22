@@ -7,6 +7,8 @@ extends 'DBIx::Class';
 
 use feature 'switch';
 
+use RPG::ResultSet::RowsInSectorRange;
+
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
 
@@ -108,5 +110,50 @@ sub owned_by {
     return 1 if $type eq $self->owner_type && $entity->id == $self->owner_id;
 }
 
+sub claim_land {
+    my $self = shift;
+    
+    return unless $self->owner_type eq 'kingdom';
+    
+    my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset    => $self->result_source->schema->resultset('Land'),
+        relationship => 'me',
+        base_point   => {
+            x => $self->location->x,
+            y => $self->location->y,
+        },
+        search_range        => $self->building_type->land_claim_range * 2 + 1,
+        increment_search_by => 0,
+    );
+    
+    foreach my $sector (@sectors) {
+        # Skip sectors already claimed
+        if (defined $sector->claimed_by_type && ($sector->claimed_by_type ne 'building' || $sector->claimed_by_id != $self->id)) {
+            next;   
+        } 
+        
+        $sector->kingdom_id($self->owner_id);
+        $sector->claimed_by_id($self->id);
+        $sector->claimed_by_type('building');
+        $sector->update;
+    } 
+}
+
+sub unclaim_land {
+    my $self = shift;   
+    
+    my @sectors = $self->result_source->schema->resultset('Land')->search(
+        {
+            'claimed_by_id' => $self->id,
+            'claimed_by_type' => 'building',   
+        },
+    );
+    
+    foreach my $sector (@sectors) {
+        $sector->claimed_by_id(undef);
+        $sector->claimed_by_type(undef);
+        $sector->update;
+    }     
+}
 
 1;

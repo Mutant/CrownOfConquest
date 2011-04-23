@@ -180,23 +180,7 @@ sub _create_quests_of_type {
         }
         
         $kingdom->decrease_gold($quest->gold_value);
-        
-        my $message = RPG::Template->process(
-            $c->config,
-            'quest/kingdom/offered.html',
-            {
-                king => $kingdom->king,
-                quest => $quest,
-            }                
-        );
-        
-        $party->add_to_messages(
-            {
-                day_id => $c->current_day->id,
-                message => $message,
-                alert_party => 1,
-            }
-        );      
+   
     } 
 }
 

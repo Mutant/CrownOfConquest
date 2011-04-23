@@ -5,6 +5,7 @@ use warnings;
 
 use Data::Dumper;
 use Carp;
+use RPG::Template;
 
 __PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Quest');
@@ -81,6 +82,25 @@ sub insert {
     }
     else {
         $self->insert_params($self->{_params});
+    }
+    
+    if ($self->kingdom_id) {    
+        my $message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/kingdom/offered.html',
+            {
+                king => $self->kingdom->king,
+                quest => $self,
+            }                
+        );
+        
+        $self->party->add_to_messages(
+            {
+                day_id => $self->day_offered,
+                message => $message,
+                alert_party => 1,
+            }
+        );      
     }
 
     return $ret;

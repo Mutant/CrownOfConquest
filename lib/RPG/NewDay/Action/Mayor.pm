@@ -644,7 +644,14 @@ sub calculate_kingdom_tax {
 	);
 	
 	$kingdom->increase_gold($kingdom_tax);
-	$kingdom->update; 
+	$kingdom->update;
+	
+	$kingdom->add_to_messages(
+	   {
+	       message => "The mayor of " . $town->town_name . " paid us $kingdom_tax gold in tax",
+	       day_id => $c->current_day->id,
+	   }	       
+	); 
 }
 
 1;

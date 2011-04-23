@@ -39,6 +39,7 @@ sub main : Local {
 				template => 'kingdom/main.html',
 				params => {
 					kingdom => $c->stash->{kingdom},
+					party => $c->stash->{party},
 				},
 			}
 		]
@@ -374,5 +375,37 @@ sub towns : Local {
 	);	
 	
 }    
+
+sub change_gold : Local {
+	my ($self, $c) = @_;
+		
+	my $party = $c->stash->{party};
+	my $kingdom = $c->stash->{kingdom};
+		
+	my $kingdom_gold = $c->req->param('kingdom_gold');
+	my $total_gold = $kingdom->gold + $party->gold;
+	if ($kingdom_gold > $total_gold) {
+		$kingdom_gold = $total_gold
+	}
+	
+	$kingdom_gold = 0 if $kingdom_gold < 0;
+	
+	my $party_gold = $total_gold - $kingdom_gold;
+	
+	$party->gold($party_gold);
+	$party->update;
+	
+	$kingdom->gold($kingdom_gold);
+	$kingdom->update;
+	
+	$c->res->body(
+		to_json(
+			{
+				party_gold => $party_gold,
+				kingdom_gold => $kingdom_gold,
+			}
+		),
+	);
+}
 
 1;

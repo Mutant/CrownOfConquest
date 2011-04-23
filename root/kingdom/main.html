@@ -7,9 +7,36 @@
 	dojo.require("dijit.layout.TabContainer");
 	dojo.require("dijit.layout.ContentPane");
 	dojo.require("dijit.form.FilteringSelect");
+	
+function changeGold(kingdomGoldInput) {
+	dojo.xhrGet( {
+        url: "[% base %]/kingdom/change_gold?kingdom_gold=" + kingdomGoldInput.value, 
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs) { 
+        	dojo.byId('party_gold').innerHTML = responseObject.party_gold;
+        	if (kingdomGoldInput.value != responseObject.kingdom_gold) {
+        		kingdomGoldInput.value = responseObject.kingdom_gold;
+        	}
+        },
+		timeout: 5000
+    }); 
+}		
 </script>
 
 <h2>Manage the Kingdom of [% kingdom.name %]</h2>
+
+<table class="main">
+	<tr>
+		<td>Kingdom Treasury:</td>
+		<td><input type="text" name="kingdom_gold" value="[% kingdom.gold %]" size="5" onchange="changeGold(this)"></td>
+	</tr>
+	<tr>
+		<td>Party Gold:</td>
+		<td id="party_gold">[% party.gold %]</td>
+	</tr>
+</table>
+<br><br>
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
 

@@ -203,6 +203,7 @@ sub create_quest : Private {
             days_to_complete => $c->req->param('days_to_complete'),
             params => \%params,
             day_offered => $c->stash->{today}->id,
+            xp_value => 1000,
         }
     );   
     

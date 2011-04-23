@@ -312,8 +312,37 @@ sub parties_to_offer : Local {
 				items => \@data,
 			}
 		),
-	);    
-	          
+	);        
+}
+
+sub parties : Local {
+	my ( $self, $c ) = @_;
+	
+	my @parties = $c->stash->{kingdom}->search_related(
+	   'parties',
+	   {},
+	   {
+	       order_by => 'name',
+	       join      => 'characters',
+	       '+select' => [
+	           {count => 'characters.character_id'},
+	       ],
+	       '+as' => ['character_count'],
+	       group_by  => 'me.party_id',
+	   }
+    );	       
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/parties.html',
+				params => {
+				    parties => \@parties,
+				},
+			}
+		]
+	);	 	
 }
 
 1;

@@ -408,4 +408,31 @@ sub change_gold : Local {
 	);
 }
 
+sub messages : Local {
+	my ($self, $c) = @_;
+	
+	my @messages = $c->stash->{kingdom}->search_related(
+	   'messages',
+	   {
+	       'day.day_number' => {'>=', $c->stash->{today}->day_number - 14},
+	   },
+	   {
+	       prefetch => 'day',
+	       order_by => ['day.day_id desc', 'message_id desc'],
+	   }
+	);
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/messages.html',
+				params => {
+				    messages => \@messages,
+				},
+			}
+		]
+	);		  
+}
+
 1;

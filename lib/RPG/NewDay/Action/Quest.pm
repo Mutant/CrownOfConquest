@@ -164,7 +164,21 @@ sub update_days_left {
             # Time's up!
             my $message = RPG::Template->process( $c->config, 'newday/quest/time_run_out.html', { quest => $quest, }, );
             
-			$quest->terminate($message)
+            my $kingdom_message;
+            if ($quest->kingdom_id) {
+                $kingdom_message = RPG::Template->process( $c->config,
+                    'quest/kingdom/terminated.html',
+                    {
+                        quest => $quest,
+                        reason => 'the party ran out of time to complete it',
+                    }
+                );
+            }
+            
+			$quest->terminate(
+                party_message => $message,
+                kingdom_message => $kingdom_message,
+            );
         }
 
         $quest->update;

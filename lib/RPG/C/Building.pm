@@ -483,18 +483,27 @@ sub seize : Local {
 	}
 
 	#  Give the former owner the unfortunate news.
-	# TODO: give message to kingdoms as well
+	my $message = "Our building at " .
+    			 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
+    			 " was seized from us by " . $c->stash->{party}->name;
 	if ($owner_type eq 'party') {
     	$c->model('DBIC::Party_Messages')->create(
     		{
-    			message => "Our " . $building_names . " at " .
-    			 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
-    			 " was seized from us by " . $c->stash->{party}->name,
+    			message => $message,
     			alert_party => 1,
     			party_id => $owner_id,
     			day_id => $c->stash->{today}->id,
     		}
         );
+	}
+	elsif ($owner_type eq 'kingdom') {
+	   $c->model('DBIC::Kingdom_Messages')->create(
+	       {
+	           kingdom_id => $owner_id,
+	           day_id => $c->stash->{today}->id,
+	           message => $message,
+	       }
+	   );   
 	}
 
 	#  But crow about it to ourselves.
@@ -565,18 +574,27 @@ sub raze : Local {
 	}
 
 	#  If we don't own this building, give the former owner the bad news.
-	# TODO: only gives message to party, should also give it to kingdom
+	my $message = "Our building at " .
+				 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
+				 " was razed by " . $c->stash->{party}->name;
 	if ($c->stash->{party}->id != $owner_id && $owner_type eq 'party') {
 		$c->model('DBIC::Party_Messages')->create(
 			{
-				message => "Our " . $building_names . " at " .
-				 $c->stash->{party}->location->x . ", " . $c->stash->{party}->location->y .
-				 " was razed by " . $c->stash->{party}->name,
+				message => $message,
 				alert_party => 1,
 				party_id => $owner_id,
 				day_id => $c->stash->{today}->id,
 			}
 		);
+	}
+	elsif ($owner_type eq 'kingdom') {
+		$c->model('DBIC::Kingdom_Messages')->create(
+			{
+				message => $message,
+				kingdom_id => $owner_id,
+				day_id => $c->stash->{today}->id,
+			}
+		);	      
 	}
 	
 	$c->model('DBIC::Party_Messages')->create(
@@ -616,7 +634,15 @@ sub cede : Local {
 	   $c->forward('change_building_ownership', [$building]);
 	   
 	   	my $message = $c->forward( '/quest/check_action', [ 'ceded_building', $building ] );
-	   	push @messages, @$message if @$message;   
+	   	push @messages, @$message if @$message;
+	   	
+	   	$c->stash->{party}->kingdom->add_to_messages(
+	   	   {
+	   	       day_id => $c->stash->{today}->id,
+	   	       message => "The party " . $c->stash->{party}->name . " ceded a building to the kingdom at " 
+	   	           . $c->stash->{party_location}->x . ', ' . $c->stash->{party_location}->y,
+	   	   }
+	   	); 
 	}
 	
 	my $count = scalar @existing_buildings;

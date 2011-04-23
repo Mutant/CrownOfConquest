@@ -93,4 +93,15 @@ UPDATE `Quest_Type` set long_desc = 'Order a party to create a garrison in the s
 UPDATE `Quest_Type` set long_desc = 'Request that a party claims a certain number of land for the Kingdom' where quest_type = 'claim_land';
 UPDATE `Quest_Type` set long_desc = 'Request that a party takes over a town, installs a mayor, and changes the town\s allegiance to that of the Kingdom' where quest_type = 'take_over_town';
 
+CREATE TABLE `Kingdom_Messages` (
+  `message_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `kingdom_id` INTEGER  NOT NULL,
+  `day_id` INTEGER  NOT NULL,
+  `message` VARCHAR(1000)  NOT NULL,
+  PRIMARY KEY (`message_id`),
+  INDEX `kingdom_id_idx`(`kingdom_id`),
+  INDEX `day_id_idx`(`day_id`)
+)
+ENGINE = InnoDB;
+
 

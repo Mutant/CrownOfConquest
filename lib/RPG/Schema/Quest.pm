@@ -291,13 +291,16 @@ sub interested_actions_by_quest_type {
 # Called when a quest is terminated (non-amicably)
 sub terminate {
 	my $self = shift;
-	my $message = shift;
+	my %params = @_;
+	
+	my $message = $params{party_message};
 	
     $self->status('Terminated');
 	$self->cleanup;
 
+	my $day = $self->result_source->schema->resultset('Day')->find_today;
+
 	if ($message) {
-		my $day = $self->result_source->schema->resultset('Day')->find_today;
 	    $self->result_source->schema->resultset('Party_Messages')->create(
 			{
 				party_id    => $self->party_id,
@@ -326,12 +329,19 @@ sub terminate {
         $kingdom->increase_gold($self->gold_value);
         $kingdom->update;
         
-        # TODO: message player kings
+        my $kingdom_message = $params{kingdom_message};
+        
+        if ($kingdom_message && ! $kingdom->king->is_npc) {        
+            $kingdom->add_to_messages(
+                day_id => $day->id,
+                message => $kingdom_message,
+            );
+        }
     }
 }
 
 
-# Called when the quest is completed (i.e. in complete() below) 
+# Called when the quest is completed (i.e. in set_complete() below) 
 sub finish_quest {}
 
 # Returns the character group xp should be award to.
@@ -399,6 +409,23 @@ sub set_complete {
             }
         );    
         
+    }
+    elsif ($self->kingdom_id) {
+        my $message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/kingdom/kingdom_complete.html',
+            { 
+                party => $party,
+                quest => $self, 
+            }
+        );   
+        
+        $self->kingdom->add_to_messages(
+            {
+                day_id  => $self->result_source->schema->resultset('Day')->find_today->id,
+                message => $message,
+            }
+        );        
     }
     
     return @details;

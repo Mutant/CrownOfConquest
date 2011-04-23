@@ -1,0 +1,12 @@
+<h4>Kingdom Messages</h4>
+
+[% last_day %]
+[% FOREACH message IN messages %]
+	[% IF last_day != message.day.day_number %]
+		[% last_day = message.day.day_number %]
+		<br><b>Day [% last_day %] ([% message.day.difference_to_today_str %])</b><br>
+	[% END %]
+	[% message.message %]<br>
+[% END %]	
+	
+		

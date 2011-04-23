@@ -265,7 +265,7 @@ sub kingdom : Local {
 	
 	my $kingdom = $c->stash->{party}->kingdom;
 	
-	if ($kingdom->king->party_id == $c->stash->{party}->id) {
+	if ($kingdom && $kingdom->king->party_id == $c->stash->{party}->id) {
         $c->forward(
             'RPG::V::TT',
             [
@@ -324,15 +324,57 @@ sub change_allegiance : Local {
 	       }  
 	   );
 	   croak "Kingdom doesn't exist\n" unless $kingdom;
+
+    	if ($kingdom->king->party_id == $c->stash->{party}->id) {
+    	   croak "Can't change your allegiance when you have the king!\n";	       
+    	}
 	}
-	
-	if ($kingdom->king->party_id == $c->stash->{party}->id) {
-	   croak "Can't change your allegieance when you have the king!\n";	       
-	}
+
+	my $old_kingdom = $c->stash->{party}->kingdom;
 	
 	$c->stash->{party}->kingdom_id($c->req->param('kingdom_id'));
 	$c->stash->{party}->last_allegiance_change($c->stash->{today}->id);
 	$c->stash->{party}->update;
+	
+	my $message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/allegiance_change.html',
+                params   => {
+                    old_kingdom => $old_kingdom,
+                    new_kingdom => $kingdom,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+	
+	$c->stash->{party}->add_to_messages(
+	   {
+	       day_id => $c->stash->{today}->id,
+	       alert_party => 0,
+	       message => $message,
+	   }
+	);
+	
+	if ($old_kingdom) {
+	   $old_kingdom->add_to_messages(
+	       {
+	           day_id => $c->stash->{today}->id,
+	           message => "The party known as " . $c->stash->{party}->name . " renounced their loyalty to the kingdom",
+	       }
+	   );
+	}
+	
+	if ($kingdom) {
+	   $kingdom->add_to_messages(
+	       {
+	           day_id => $c->stash->{today}->id,
+	           message => "The party known as " . $c->stash->{party}->name . " swore allegiance, and are now loyal to the kingdom",
+	       }
+	   ); 
+	}
 	
 	$c->flash->{messages} = "Allegiance changed";
 	

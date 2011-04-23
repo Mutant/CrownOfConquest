@@ -237,7 +237,19 @@ sub cancel_quests_awaiting_acceptance {
             }
         );
         
-        $quest->terminate($message);        
+        my $kingdom_message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/kingdom/terminated.html',
+            {
+                quest => $quest,
+                reason => 'the party took too long to accept it',
+            },
+        );        
+        
+        $quest->terminate(
+            party_message => $message,
+            kingdom_message => $kingdom_message,
+        );        
         $quest->update;
         
     }

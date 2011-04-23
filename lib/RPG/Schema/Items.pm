@@ -738,7 +738,9 @@ sub _check_for_quest_item_removal {
 			}
 		);		
 		
-		$quest->terminate($message);
+		$quest->terminate(
+            party_message => $message
+		);
 		$quest->update;
 	}
 

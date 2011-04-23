@@ -108,7 +108,23 @@ sub decline : Local {
     
     croak "Invalid quest" unless $quest;
     
-    $quest->terminate;
+    my $kingdom_message = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'quest/kingdom/terminated.html',
+                params   => { 
+                       quest => $quest,
+                       reason => 'the party declined it',  
+                },
+                return_output => 1,
+            }
+        ]
+    );
+    
+    $quest->terminate(
+        kingdom_message => $kingdom_message,
+    );
     
     $c->res->redirect( $c->config->{url_root} . "/quest/list" ); 
     

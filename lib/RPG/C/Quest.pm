@@ -108,9 +108,7 @@ sub decline : Local {
     
     croak "Invalid quest" unless $quest;
     
-    # TODO: message player kings
-    
-    $quest->delete;
+    $quest->terminate;
     
     $c->res->redirect( $c->config->{url_root} . "/quest/list" ); 
     

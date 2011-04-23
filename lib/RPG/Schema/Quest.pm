@@ -319,6 +319,15 @@ sub terminate {
     	$party_town->decrease_prestige(3);
     	$party_town->update;
     }
+    
+    if ($self->kingdom_id) {
+        # Kingdom gets gold back
+        my $kingdom = $self->kingdom;
+        $kingdom->increase_gold($self->gold_value);
+        $kingdom->update;
+        
+        # TODO: message player kings
+    }
 }
 
 

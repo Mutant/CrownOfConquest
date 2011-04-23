@@ -78,7 +78,7 @@ sub quests : Local {
 sub new_quest : Local {
 	my ( $self, $c ) = @_;
 	
-	if ($c->req->param('quest_party_id')) {
+	if ($c->req->param('quest_party_id') && ! $c->stash->{error}) {
 	   $c->forward('create_quest');
 	   return;   
 	}	
@@ -111,9 +111,10 @@ sub new_quest : Local {
 				params => {
 				    quest_types => \@types,
 				    params => \@params,
-				    quest_type_id => $c->req->param('quest_type_id'),
 				    current_type => $current_type || undef,
+				    error => $c->stash->{error} || undef,
 				},
+				fill_in_form => 1,
 			}
 		]
 	);	   
@@ -134,9 +135,12 @@ sub create_quest : Private {
 	}	
 	
 	if ($c->stash->{kingdom}->gold < $c->req->param('gold_value')) {
-	   # TODO: error for gold
-	   return;   
+	   $c->stash->{error} = "The Kingdom does not have enough gold to pay for this quest";
+	   $c->detach('new_quest');
 	}
+	
+	$c->stash->{kingdom}->decrease_gold($c->req->param('gold_value'));
+	$c->stash->{kingdom}->update;
 	
 	my $quest_type = $c->model('DBIC::Quest_Type')->find(
 	   {
@@ -197,7 +201,7 @@ sub create_quest : Private {
         }
     );   
     
-    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );	         
+    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );
 	
 }
 

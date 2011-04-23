@@ -17,7 +17,7 @@ Type Of Quest:
 <select dojoType="dijit.form.FilteringSelect" name="quest_type_id" autocomplete="false" onChange="dojo.byId('quest-form').submit()">
 	<option></option>
 	[% FOREACH type IN quest_types %]
-		<option value="[% type.id %]" [% IF quest_type_id == type.id %]selected[% END %]>[% type.description %]</option>
+		<option value="[% type.id %]">[% type.description %]</option>
 	[% END %]
 </select>
 

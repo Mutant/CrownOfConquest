@@ -12,17 +12,18 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 [% IF quests.size > 0 %]
 <h5>Current Quests</h5>
 
-<table class="main" cellpadding="5">
+<table class="main" cellpadding="10" cellspacing="0">
 	<tr>
 		<th>Quest Type</th>
 		<th>Status</th>
 		<th>Party</th>
 		<th>Days Left</th>
 		<th>Gold Reward</th>
+		<th>Parameters</th>
 	</tr>
 
 [% FOREACH quest IN quests %]
-	<tr>
+	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
 		<td>[% quest.type.description %]</td>
 		<td>
 			[% IF quest.status == 'Not Started' %]
@@ -34,6 +35,14 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 		<td>[% quest.party.name %]</td>
 		<td>[% quest.days_to_complete %]</td>
 		<td>[% quest.gold_value %]</td>
+		<td>
+			[% FOREACH param IN quest.quest_params %]
+				[% IF param.quest_param_name.user_settable %]
+					[% param_name = param.quest_param_name.quest_param_name %]
+					[% param_name %]: [% quest.param_display_value(param_name) %]<br>
+				[% END %]
+			[% END %]
+		</td> 
 	</tr>
 [% END %]
 

@@ -77,6 +77,12 @@ __PACKAGE__->has_many( 'elections', 'RPG::Schema::Election', 'town_id', );
 
 __PACKAGE__->might_have( 'current_election', 'RPG::Schema::Election', 'town_id', { where => {'status' => 'Open'}} );
 
+sub label {
+    my $self = shift;
+    
+    return $self->town_name;   
+}
+
 sub tax_cost {
     my $self  = shift;
     my $party = shift;

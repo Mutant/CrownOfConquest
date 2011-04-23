@@ -52,6 +52,9 @@ sub quests : Local {
 	   {
 	       kingdom_id => $c->stash->{kingdom}->id,
 	       status => ['Not Started', 'In Progress', 'Awaiting Reward'],
+	   },
+	   {
+	       prefetch => ['type', 'quest_params'],
 	   }
 	);
 	

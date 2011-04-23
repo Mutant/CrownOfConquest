@@ -190,6 +190,24 @@ sub param_current_value {
     return +( $self->param($param_name) )[1];
 }
 
+sub param_display_value {
+    my $self = shift;
+    my $param_name = shift || croak "Param name not supplied";
+    
+    my $rec = $self->param_record($param_name);
+    
+    my $value = $rec->current_value;
+    
+    my $param_name_rec = $rec->quest_param_name;
+    
+    if ($param_name_rec->variable_type && $param_name_rec->variable_type ne 'int') {
+        my $obj = $self->result_source->schema->resultset($param_name_rec->variable_type)->find($rec->current_value);
+        $value = $obj->label;
+    }
+    
+    return $value;
+}
+
 sub param_record {
     my $self = shift;
 

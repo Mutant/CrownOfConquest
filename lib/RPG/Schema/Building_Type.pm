@@ -196,4 +196,10 @@ sub variable_param {
 	return $param;
 }
 
+sub label {
+    my $self = shift;
+    
+    return $self->name;   
+}
+
 1;

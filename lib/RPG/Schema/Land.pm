@@ -47,6 +47,12 @@ __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'sel
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join_type => 'LEFT' } );
 
+sub label {
+    my $self = shift;
+    
+    return $self->x . ', ' . $self->y;   
+}
+
 sub next_to {
     my $self = shift;
     my $compare_to = shift || croak 'sector to compare to not supplied';

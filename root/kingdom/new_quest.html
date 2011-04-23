@@ -14,7 +14,8 @@
 <div dojoType="dijit.form.Form" action="[% base %]kingdom/new_quest" method="POST" id="quest-form">
 
 Type Of Quest:
-<select dojoType="dijit.form.FilteringSelect" name="quest_type_id" autocomplete="false" onChange="dojo.byId('quest-form').submit()">
+<select dojoType="dijit.form.FilteringSelect" name="quest_type_id" autocomplete="false" 
+	onChange="document.location='[% base %]kingdom/new_quest?quest_type_id=' + this.value">
 	<option></option>
 	[% FOREACH type IN quest_types %]
 		<option value="[% type.id %]">[% type.description %]</option>

@@ -6,7 +6,7 @@ use warnings;
 use Data::Dumper;
 use Carp;
 
-__PACKAGE__->load_components(qw/ Core/);
+__PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Quest');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Quest');
@@ -23,6 +23,12 @@ __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
 
 __PACKAGE__->has_many( 'quest_params', 'RPG::Schema::Quest_Param', { 'foreign.quest_id' => 'self.quest_id' } );
+
+__PACKAGE__->numeric_columns(
+	gold_value => {
+		min_value => 0,
+	},
+);
 
 my %QUEST_TYPE_TO_CLASS_MAP = (
     kill_creatures_near_town => 'RPG::Schema::Quest::Kill_Creatures_Near_Town',

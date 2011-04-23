@@ -150,6 +150,10 @@ sub create_quest : Private {
 	
 	croak "Invalid quest type\n" unless $quest_type;
 	
+	if ($c->req->param('days_to_complete') < 5 || $c->req->param('days_to_complete') > 30) {
+        croak "Invalid days to complete value\n";
+	}
+		
 	my $quest_party = $c->model('DBIC::Party')->find(
 	   {
 	       party_id => $c->req->param('quest_party_id'),

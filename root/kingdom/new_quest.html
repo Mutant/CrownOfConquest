@@ -21,7 +21,7 @@ Type Of Quest:
 	[% END %]
 </select>
 
-<br>
+<br><br>
 [% current_type.long_desc %]
 <br><br>
 	
@@ -43,7 +43,11 @@ Type Of Quest:
 		
 		[% FOREACH param IN params %]
 			<tr>
-				<td>[% param.quest_param_name %]:</td> 
+				<td>[% param.quest_param_name %]:
+				[% IF param.min_val %]
+					<br>(Min: [% param.min_val %], Max: [% param.max_val %])
+				[% END %] 
+				</td> 
 				<td>
 			[% IF param.variable_type == 'int' %]
 				<input type="text" dojoType="dijit.form.NumberTextBox" name="param_[% param.id %]" style="width: 50px"
@@ -66,15 +70,14 @@ Type Of Quest:
 		<tr>
 			<td>Gold Reward:</td>
 			<td><input type="text" dojoType="dijit.form.NumberTextBox" name="gold_value" style="width: 50px"
-					constraints="{min:0,places:0}" required="true"
-					invalidMessage="Please enter a valid value for gold">
+					constraints="{min:0,places:0}" required="true" invalidMessage="Please enter a valid value for gold">
 			</td>
 		</tr>
 		<tr>
-			<td>Days To Complete:</td>
+			<td>Days To Complete:<br>(Min: 5, Max: 30)</td>
 			<td><input type="text" dojoType="dijit.form.NumberTextBox" name="days_to_complete" style="width: 50px"
-					constraints="{min:0,places:0}" required="true"
-					invalidMessage="Please enter a valid value for gold">
+					constraints="{min:5,max:30,places:0}" required="true"
+					invalidMessage="Please enter a valid value for days to complete">
 			</td>
 		</tr>		
 		

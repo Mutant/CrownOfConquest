@@ -48,14 +48,32 @@ sub inflate_result {
     return $ret;
 }
 
+sub new {
+    my ( $pkg, @args ) = @_;
+    
+    my $params = delete $args[0]->{params};
+
+    my $self = $pkg->next::method(@args);
+    
+    $self->{_params} = $params;
+
+    return $self;
+
+}
+
 sub insert {
     my ( $self, @args ) = @_;
-	
+    
     my $ret = $self->next::method(@args);
 
     $ret->_bless_into_type_class;
 
-    $ret->set_quest_params;
+    if (! $self->{_params}) {
+        $self->set_quest_params;
+    }
+    else {
+        $self->insert_params($self->{_params});
+    }
 
     return $ret;
 }
@@ -85,6 +103,46 @@ sub _bless_into_type_class {
     $self->{_config} = RPG::Schema->config->{quest_type_vars}{ $self->type->quest_type };
 
     return $self;
+}
+
+sub insert_params {
+    my $self = shift;
+    my $params = shift;
+    
+    my @quest_params = $self->result_source->schema->resultset('Quest_Param_Name')->search(
+        {
+            quest_type_id => $self->quest_type_id,
+        }
+    );       
+    
+    foreach my $param (@quest_params) {
+        my $value = $params->{$param->quest_param_name};
+        
+        unless (defined $value) {
+            if (defined $param->default_val) {
+                $value = $param->default_val;   
+            }
+            else {
+                croak "No value for " . $param->quest_param_name . " when creating quest\n";
+            }
+        } 
+        
+        # Bit of validation
+        if ($param->variable_type) {
+            if ($param->variable_type ne 'int') {
+                my $obj = $self->result_source->schema->resultset($param->variable_type)->find($value);
+                croak "Invalid id for entity type " . $param->variable_type . " for quest param " . $param->quest_param_name . "\n"
+                    unless $obj;
+            }
+            else {
+                if ($param->min_val && $value < $param->min_val || $param->max_val && $value > $param->max_val) {
+                    croak "Value " . $param->quest_param_name . " out of range of min/max\n";   
+                }  
+            }
+        }
+        
+        $self->define_quest_param($param->quest_param_name, $value); 
+    }
 }
 
 # Set a quest param for a new quest

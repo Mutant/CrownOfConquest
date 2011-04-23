@@ -264,6 +264,22 @@ sub kingdom : Local {
 	my ($self, $c) = @_;
 	
 	my $kingdom = $c->stash->{party}->kingdom;
+	
+	if ($kingdom->king->party_id == $c->stash->{party}->id) {
+        $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template => 'kingdom/summary.html',
+                    params => {
+                        kingdom => $kingdom,  
+                    },
+                }
+            ]
+        );
+        return;
+	}
+	
 	my @kingdoms = $c->model('DBIC::Kingdom')->search(
 	   {
 	       active => 1,
@@ -300,13 +316,18 @@ sub change_allegiance : Local {
 	   return;
 	}
 	
+	my $kingdom;
 	if ($c->req->param('kingdom_id')) {
-	   my $kingdom = $c->model('DBIC::Kingdom')->find(
+	   $kingdom = $c->model('DBIC::Kingdom')->find(
 	       {
 	           kingdom_id => $c->req->param('kingdom_id'),
 	       }  
 	   );
 	   croak "Kingdom doesn't exist\n" unless $kingdom;
+	}
+	
+	if ($kingdom->king->party_id == $c->stash->{party}->id) {
+	   croak "Can't change your allegieance when you have the king!\n";	       
 	}
 	
 	$c->stash->{party}->kingdom_id($c->req->param('kingdom_id'));

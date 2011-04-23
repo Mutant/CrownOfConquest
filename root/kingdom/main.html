@@ -1,0 +1,25 @@
+[% INCLUDE top.html %]
+
+<script>
+    dojo.require("dijit.form.Form");
+    dojo.require("dijit.form.Button");
+	dojo.require("dijit.form.NumberTextBox");
+	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.layout.ContentPane");
+	dojo.require("dijit.form.FilteringSelect");
+</script>
+
+<h2>Manage the Kingdom of [% kingdom.name %]</h2>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
+
+[%# 'Tax', 'Parties', 'Towns', 'Messages' %]
+
+[% FOREACH tab IN [ 'Quests' ] %]
+	[% lower_tab = tab | lower %]
+	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
+[% END %]
+	
+</div>
+
+[% INCLUDE bottom.html %]

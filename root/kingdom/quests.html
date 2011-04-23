@@ -1,0 +1,41 @@
+<h4>Quests</h4>
+
+We've offered [% quests.size %] of [% quests_allowed %] quests.
+
+[% IF quests.size < quests_allowed %]
+<br><br>
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="document.location='[% base %]kingdom/new_quest'">
+	New Quest
+</button>	
+[% END %]
+
+[% IF quests.size > 0 %]
+<h5>Current Quests</h5>
+
+<table class="main" cellpadding="5">
+	<tr>
+		<th>Quest Type</th>
+		<th>Status</th>
+		<th>Party</th>
+		<th>Days Left</th>
+		<th>Gold Reward</th>
+	</tr>
+
+[% FOREACH quest IN quests %]
+	<tr>
+		<td>[% quest.type.description %]</td>
+		<td>
+			[% IF quest.status == 'Not Started' %]
+				Awaiting Party Acceptance
+			[% ELSE %]
+				[% quest.status %]
+			[% END %]
+		</td>
+		<td>[% quest.party.name %]</td>
+		<td>[% quest.days_to_complete %]</td>
+		<td>[% quest.gold_value %]</td>
+	</tr>
+[% END %]
+
+</table>
+[% END %]

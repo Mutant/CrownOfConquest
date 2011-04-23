@@ -1,8 +1,8 @@
 <h4>Kingdom</h4>
 
 [% IF kingdom %]
-	We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
 	[% king = kingdom.king %]
+	We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
 	Our monarch is: [% king.name %] ([% IF king.party_id %][% king.party.name %][% ELSE %]NPC[% END %])
 [% ELSE %]
 	We are Free Citizens, loyal to no one.

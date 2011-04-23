@@ -8,6 +8,8 @@ use List::Util qw(shuffle);
 use RPG::Template;
 use Try::Tiny;
 
+use RPG::Schema::Quest_Type;
+
 sub run {
     my $self = shift;
     my $c = $self->context;
@@ -104,13 +106,6 @@ sub generate_kingdom_quests {
     
     my $quests_to_create = $quests_allowed - $total_current_quests;
     
-    # TODO: configure elsewhere?
-    my %minimum_levels = (
-        claim_land => $c->config->{minimum_land_claim_level},
-        construct_building => $c->config->{minimum_building_level},
-        take_over_town => $c->config->{minimum_raid_level},
-        create_garrison => $c->config->{minimum_garrison_level},
-    );
     
     for my $quest_type (values %{ $self->quest_type_map }) {
         # TODO: currently create 3 of each quest type. Should change this
@@ -120,8 +115,10 @@ sub generate_kingdom_quests {
         $number_to_create = $quests_to_create if $quests_to_create < $number_to_create;
         
         next if $number_to_create <= 0; 
+        
+        my $min_level = RPG::Schema::Quest_Type->min_level( $quest_type );
             
-        $self->_create_quests_of_type( $quest_type, $number_to_create, $minimum_levels{$quest_type}, $kingdom, \@parties );    
+        $self->_create_quests_of_type( $quest_type, $number_to_create, $min_level, $kingdom, \@parties );    
     }      
 }
 

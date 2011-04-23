@@ -122,6 +122,17 @@ sub new_quest : Local {
 sub create_quest : Private {
 	my ( $self, $c ) = @_;
 	
+	my $current_quests = $c->model('DBIC::Quest')->search(
+	   {
+	       kingdom_id => $c->stash->{kingdom}->id,
+	       status => ['Not Started', 'In Progress', 'Awaiting Reward'],
+	   },
+	)->count;
+	
+	if ($current_quests >= $c->stash->{kingdom}->quests_allowed) {
+	   croak "Already have maximum number of quests";   
+	}	
+	
 	if ($c->stash->{kingdom}->gold < $c->req->param('gold_value')) {
 	   # TODO: error for gold
 	   return;   

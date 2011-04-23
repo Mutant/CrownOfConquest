@@ -435,4 +435,29 @@ sub messages : Local {
 	);		  
 }
 
+sub tax : Local {
+    my ($self, $c) = @_;
+    
+    if ($c->req->param('mayor_tax')) {
+        $c->stash->{kingdom}->mayor_tax($c->req->param('mayor_tax'));
+        $c->stash->{kingdom}->update;
+        
+        $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=tax' );
+        
+        return;
+    }
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/tax.html',
+				params => {
+				    kingdom => $c->stash->{kingdom},
+				},
+			}
+		]
+	);	     
+}
+
 1;

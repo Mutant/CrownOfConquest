@@ -40,9 +40,7 @@ function changeGold(kingdomGoldInput) {
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
 
-[%# 'Tax' %]
-
-[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Messages' ] %]
+[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Tax', 'Messages' ] %]
 	[% lower_tab = tab | lower %]
 	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]

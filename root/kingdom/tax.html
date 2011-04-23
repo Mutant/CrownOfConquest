@@ -1,0 +1,13 @@
+<h4>Tax</h4>
+
+<div dojoType="dijit.form.Form" action="[% base %]/kingdom/tax" method="POST">
+
+Tax rate on towns within the Kingdom: 
+<input type="text" dojoType="dijit.form.NumberTextBox" name="mayor_tax"  style="width: 50px"
+				value="[% kingdom.mayor_tax %]" constraints="{min:0,max:100,places:0}" required="true"
+				invalidMessage="Town Tax must be between 0 and 100%">%
+				
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+	Submit
+</button>				
+</div>

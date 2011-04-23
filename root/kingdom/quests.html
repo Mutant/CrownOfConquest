@@ -10,13 +10,17 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 [% END %]
 
 [% IF quests.size > 0 %]
-<h5>Current Quests</h5>
+<br><br>
+<b>Current Quests</b>
+
+<p>(Note, quests offered by not accepted are removed after [% c.config.kingdom_quest_offer_time_limit %] days)</p>
 
 <table class="main" cellpadding="10" cellspacing="0">
 	<tr>
 		<th>Quest Type</th>
 		<th>Status</th>
 		<th>Party</th>
+		<th>Day Offered</th>
 		<th>Days Left</th>
 		<th>Gold Reward</th>
 		<th>Parameters</th>
@@ -33,6 +37,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 			[% END %]
 		</td>
 		<td>[% quest.party.name %]</td>
+		<td>[% quest.day_offered_rec.day_number %] ([% quest.day_offered_rec.difference_to_today_str %])</td>
 		<td>[% quest.days_to_complete %]</td>
 		<td>[% quest.gold_value %]</td>
 		<td>

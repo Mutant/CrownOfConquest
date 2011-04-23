@@ -202,6 +202,7 @@ sub create_quest : Private {
             gold_value => $c->req->param('gold_value'),
             days_to_complete => $c->req->param('days_to_complete'),
             params => \%params,
+            day_offered => $c->stash->{today}->id,
         }
     );   
     

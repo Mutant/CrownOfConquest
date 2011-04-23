@@ -22,6 +22,8 @@ __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
 
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' } );
 
+__PACKAGE__->belongs_to( 'day_offered_rec', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.day_offered' } );
+
 __PACKAGE__->has_many( 'quest_params', 'RPG::Schema::Quest_Param', { 'foreign.quest_id' => 'self.quest_id' } );
 
 __PACKAGE__->numeric_columns(

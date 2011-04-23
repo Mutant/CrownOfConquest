@@ -10,6 +10,8 @@ use Try::Tiny;
 
 use RPG::Schema::Quest_Type;
 
+sub depends { qw/RPG::NewDay::Action::Mayor/ }
+
 sub run {
     my $self = shift;
     my $c = $self->context;
@@ -24,6 +26,8 @@ sub run {
 
     foreach my $kingdom (@kingdoms) {
         my $king = $kingdom->king;
+        
+        $self->cancel_quests_awaiting_acceptance($kingdom);
 
         if ($king->is_npc) {
             $self->execute_npc_kingdom_actions($kingdom, $king);
@@ -62,8 +66,6 @@ sub execute_npc_kingdom_actions {
     
     $self->context->logger->debug("Kingdom has " . scalar @parties . " parties");
     
-    $self->cancel_quests_awaiting_acceptance($kingdom);
-    
     $self->generate_kingdom_quests($kingdom, @parties);
 
 }
@@ -98,14 +100,13 @@ sub generate_kingdom_quests {
     my $total_current_quests = $kingdom->search_related(
         'quests',
         {
-            status => {'!=', 'Complete'},
+            status => {'!=', ['Complete', 'Terminated']},
         }
     )->count;
     
     $c->logger->debug("Has $total_current_quests quests, allowed $quests_allowed");
     
-    my $quests_to_create = $quests_allowed - $total_current_quests;
-    
+    my $quests_to_create = $quests_allowed - $total_current_quests;    
     
     for my $quest_type (values %{ $self->quest_type_map }) {
         # TODO: currently create 3 of each quest type. Should change this
@@ -155,7 +156,7 @@ sub _create_quests_of_type {
                     kingdom_id => $kingdom->id,
                     party_id => $party->id,
                     quest_type_id => $quest_type_rec->id,
-                    day_offered => $c->current_day->day_number,
+                    day_offered => $c->current_day->id,
                 }
             );
         }
@@ -228,11 +229,18 @@ sub cancel_quests_awaiting_acceptance {
     my $self = shift;
     my $kingdom = shift;
     
+    my $expired_day_number = $self->context->current_day->day_number - $self->context->config->{kingdom_quest_offer_time_limit};
+    my $day_rec = $self->context->schema->resultset('Day')->find(
+        {
+            day_number => $expired_day_number,
+        }
+    );
+    
     my @quests_to_cancel = $self->context->schema->resultset('Quest')->search(
         {
             kingdom_id => $kingdom->id,
             status => 'Not Started',
-            day_offered => {'<=', $self->context->current_day->day_number - $self->context->config->{kingdom_quest_offer_time_limit}},
+            day_offered => {'<=', $day_rec},
         }
     );
     

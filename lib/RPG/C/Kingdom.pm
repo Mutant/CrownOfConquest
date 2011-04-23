@@ -242,7 +242,7 @@ sub quest_param_list : Local {
            foreach my $town (@towns) {
                push @data, {
                    id => $town->id,
-                   name => $town->town_name,
+                   name => $town->label,
                }
             }
 	    }
@@ -344,5 +344,35 @@ sub parties : Local {
 		]
 	);	 	
 }
+
+sub towns : Local {
+	my ( $self, $c ) = @_;
+	
+	my @towns = $c->model('DBIC::Town')->search(
+	   {
+	       'location.kingdom_id' => $c->stash->{kingdom}->id,
+	   },
+	   {
+	      order_by => 'town_name',
+	      prefetch => [
+            {'mayor' => 'party'},
+            'location',
+          ],	       
+	   }
+    );
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/towns.html',
+				params => {
+				    towns => \@towns,
+				},
+			}
+		]
+	);	
+	
+}    
 
 1;

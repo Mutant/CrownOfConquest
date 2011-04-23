@@ -80,7 +80,7 @@ __PACKAGE__->might_have( 'current_election', 'RPG::Schema::Election', 'town_id',
 sub label {
     my $self = shift;
     
-    return $self->town_name;   
+    return $self->town_name . ' (' . $self->location->x . ', ' . $self->location->y . ')';
 }
 
 sub tax_cost {

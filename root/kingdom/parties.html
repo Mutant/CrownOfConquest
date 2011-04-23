@@ -12,7 +12,7 @@ The following parties have sworn allegiance to our Kingdom.
 
 [% FOREACH party IN parties %]
 	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
-		<td><a href="[% party.name %]</td>
+		<td>[% party.name %]</td>
 		<td>[% party.level %]</td>
 		<td>[% party.get_column('character_count') %]</td>
 	</tr>

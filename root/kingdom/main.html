@@ -13,9 +13,9 @@
 
 <div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
 
-[%# 'Tax', 'Parties', 'Towns', 'Messages' %]
+[%# 'Tax', 'Messages' %]
 
-[% FOREACH tab IN [ 'Parties', 'Quests' ] %]
+[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests' ] %]
 	[% lower_tab = tab | lower %]
 	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]

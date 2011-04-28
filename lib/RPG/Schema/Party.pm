@@ -10,6 +10,7 @@ use Math::Round qw(round);
 use DateTime;
 use Statistics::Basic qw(average);
 
+use RPG::Template;
 use RPG::Exception;
 
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
@@ -804,6 +805,57 @@ sub days_since_last_allegiance_change {
     );
     
     return $change_day->difference_to_today_str;   
+}
+
+sub change_allegiance {
+    my $self = shift;   
+    my $new_kingdom = shift;
+    
+    my $old_kingdom = $self->kingdom;
+    	
+    my $today = $self->result_source->schema->resultset('Day')->find_today;	
+    
+	$self->kingdom_id($new_kingdom ? $new_kingdom->id : undef);
+	$self->last_allegiance_change($today->id);
+	
+	my $own_kingdom = $new_kingdom && $new_kingdom->king->party_id == $self->id ? 1 : 0;
+	
+	if (! $own_kingdom) {
+    	my $message = RPG::Template->process(
+    	   RPG::Schema->config,
+            'party/allegiance_change.html',
+            {
+                old_kingdom => $old_kingdom,
+                new_kingdom => $new_kingdom,
+            },
+        );
+    	
+    	$self->add_to_messages(
+    	   {
+    	       day_id => $today->id,
+    	       alert_party => 0,
+    	       message => $message,
+    	   }
+    	);
+	}
+	
+	if ($old_kingdom) {
+	   $old_kingdom->add_to_messages(
+	       {
+	           day_id => $today->id,
+	           message => "The party known as " . $self->name . " renounced their loyalty to the kingdom",
+	       }
+	   );
+	}
+	
+	if ($new_kingdom && ! $own_kingdom) {
+	   $new_kingdom->add_to_messages(
+	       {
+	           day_id => $today->id,
+	           message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
+	       }
+	   ); 
+	}       
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

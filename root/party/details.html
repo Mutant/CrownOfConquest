@@ -3,12 +3,14 @@
 <script>
 	dojo.require("dijit.layout.TabContainer");
 	dojo.require("dijit.form.FilteringSelect");
+	dojo.require("dijit.Dialog");
 	
 	function toggle_disabled_checkboxes() {
 		setting = dojo.byId('send_email').checked ? false : true;
 		dojo.byId('send_daily_report').disabled = setting;
 		dojo.byId('send_email_announcements').disabled = setting;
 	}
+	
 </script>
 
 <h2>[% party.name %]</h2>

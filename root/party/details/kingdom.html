@@ -1,3 +1,30 @@
+<div dojoType="dijit.Dialog" id="declare-kingdom-diag" style="display: none" title="Declare Kingdom" execute="return true;">
+	<form dojotType="dijit.form.Form" method="post" action="[% base %]kingdom/create">
+	<table class="main">
+		<tr>
+			<td>Kingdom Name:</td>
+			<td><input name="kingdom_name" dojoType=dijit.form.TextBox type="text" value="" style="width: 250px"></td>
+		</tr>
+		<tr>
+			<td>King / Queen:</td>
+			<td><select name="king" dojoType="dijit.form.FilteringSelect">
+				[% FOREACH character IN party.characters_in_party %]
+					[% UNLESS character.is_dead %]
+						<option value="[% character.id %]">[% character.name %]</option>
+					[% END %]
+				[% END %]
+				</select>
+			</tr>
+		</tr>
+	</table>    
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('declare-kingdom-diag').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
 <h4>Kingdom</h4>
 
 [% IF kingdom %]
@@ -19,7 +46,7 @@ We can change our allegiance once every [% allegiance_change_frequency %] days.
 
 <form method="POST" action="[% base %]party/details/change_allegiance">
 Change our allegiance to: 
-	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false"
+	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
 		[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
 		[% FOREACH kingdom IN kingdoms %]
         	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
@@ -27,3 +54,15 @@ Change our allegiance to:
 	</select>
 	<input type="submit" value="Change">
 </form>
+
+[% IF mayor_count > 0 %]
+	<br>
+	We currently have [% mayor_count %] mayors. [% town_count_for_kingdom_declaration %] mayors (and a party level of [% minimum_kingdom_level %])
+	are required in order to declare a Kingdom.
+	
+	[% IF can_declare_kingdom %]
+		<br><br>
+		<button dojoType="dijit.form.Button" onClick="dijit.byId('declare-kingdom-diag').show()">Declare Kingdom</button>
+	[% END %]
+
+[% END %] 

@@ -8,9 +8,15 @@ use feature 'switch';
 
 use Carp;
 use JSON;
+use HTML::Strip;
+use List::Util qw(shuffle);
+
+use RPG::Schema::Kingdom;
 
 sub auto : Private {
 	my ( $self, $c ) = @_;
+	
+	return 1 if $c->action eq 'kingdom/create';
 	
 	my $kingdom = $c->stash->{party}->kingdom;
 	my $king = $kingdom->king;
@@ -458,6 +464,93 @@ sub tax : Local {
 			}
 		]
 	);	     
+}
+
+sub create : Local {
+    my ($self, $c) = @_;
+    
+    my $mayor_count = $c->stash->{party}->search_related(
+		'characters',
+		{
+			mayor_of => {'!=', undef},
+		},
+	)->count;
+    
+    my $can_declare_kingdom = $c->stash->{party}->level >= $c->config->{minimum_kingdom_level} 
+	   && $mayor_count >= $c->config->{town_count_for_kingdom_declaration};
+	   
+    croak "Not allowed to declare a kingdom\n" unless $can_declare_kingdom;
+    
+    my $hs = HTML::Strip->new();
+    
+    my $kingdom_name = $hs->parse( $c->req->param('kingdom_name') );    
+    
+    unless ($kingdom_name) {
+        $c->flash->{error} = 'Please enter a valid Kingdom name';
+        $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+        return;   
+    }
+    
+    my ($king) = grep { $_->id == $c->req->param('king') } $c->stash->{party}->characters_in_party;
+    croak "Invalid king" unless $king && ! $king->is_dead;
+    
+    my $colour;
+    foreach my $test_colour (shuffle RPG::Schema::Kingdom::colours()) {
+        my $existing = $c->model('DBIC::Kingdom')->find(
+            {
+                colour => $test_colour,
+            }
+        );
+        if (! $existing) {
+            $colour = $test_colour;
+            last;
+        }
+    }
+    
+    my $kingdom = $c->model('DBIC::Kingdom')->create(
+        {
+            name => $kingdom_name,
+            colour => $colour,
+        },
+    );
+    
+    $king->status('king');
+    $king->status_context($kingdom->id);
+    $king->update;
+    
+    # Set all towns to new kingdom
+    my @towns = $c->model('DBIC::Town')->search(
+        {
+            'mayor.party_id' => $c->stash->{party}->id,
+        },
+        {
+            join => 'mayor',
+            prefetch => 'location',
+        }
+    );
+    
+    foreach my $town (@towns) {
+        my $location = $town->location;
+        $location->kingdom_id($kingdom->id);
+        $location->update;
+        
+        $town->unclaim_land;
+        $town->claim_land;
+    }
+    
+    $c->stash->{party}->change_allegiance($kingdom);
+    $c->stash->{party}->update;
+    
+    $c->stash->{party}->add_to_messages(
+        {
+	       day_id => $c->stash->{today}->id,
+	       alert_party => 0,
+	       message => "We declared the Kingdom of $kingdom_name, and appoint " . $king->character_name . " as the " . 
+	           ($king->gender eq 'male' ? 'King' : 'Queen') . ". What an historic day!",
+        }
+    );
+    
+    $c->res->redirect( $c->config->{url_root} . 'kingdom' );
 }
 
 1;

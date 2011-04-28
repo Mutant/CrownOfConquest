@@ -13,6 +13,8 @@ use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Quest;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 sub setup : Test(setup => 1) {
     my $self = shift;
@@ -113,6 +115,68 @@ sub test_cancel_quests_awaiting_acceptance : Tests(2) {
     
     my @messages = $party->messages;
     is(scalar @messages, 1, "Message added to party");     
+}
+
+sub test_check_for_inactive_still_active : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, 'x_size' => 5, 'y_size' => 5);
+    foreach my $land (@land) {        
+        $land->kingdom_id($kingdom->id);
+        $land->update;   
+    }
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    my $result = $action->check_for_inactive($kingdom);
+    
+    # THEN
+    is($result, 0, "Kingdom not inactive");
+    
+    $kingdom->discard_changes;
+    is($kingdom->active, 1, "Kingdom still active");
+    
+}
+
+sub test_check_for_inactive_marked_inactive : Tests(12) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, 'x_size' => 3, 'y_size' => 3);
+    foreach my $land (@land) {        
+        $land->kingdom_id($kingdom->id);
+        $land->update;   
+    }
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
+    my ($character) = $party->characters;
+    $character->status('king');
+    $character->status_context($kingdom->id);
+    $character->update;
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    my $result = $action->check_for_inactive($kingdom);
+    
+    # THEN
+    is($result, 1, "Kingdom is now inactive");
+    
+    $kingdom->discard_changes;
+    is($kingdom->active, 0, "Kingdom marked inactive");
+    
+    foreach my $land (@land) {
+        $land->discard_changes;
+        is($land->kingdom_id, undef, "Sector " . $land->x . ", " . $land->y . " made neutral");    
+    }
+    
+    $character->discard_changes;
+    is($character->status, undef, "Character is not longer king");
+    
 }
 
 1;

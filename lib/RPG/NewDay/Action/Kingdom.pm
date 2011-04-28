@@ -17,7 +17,7 @@ sub run {
     my $c = $self->context;
     
     my $schema = $c->schema;
-    
+        
     my @kingdoms = $schema->resultset('Kingdom')->search(
         {
             active => 1,
@@ -25,6 +25,8 @@ sub run {
     );
 
     foreach my $kingdom (@kingdoms) {
+        return if $self->check_for_inactive($kingdom);
+        
         my $king = $kingdom->king;
         
         $self->cancel_quests_awaiting_acceptance($kingdom);
@@ -252,7 +254,48 @@ sub cancel_quests_awaiting_acceptance {
         );        
         $quest->update;
         
-    }
+    }       
+}
+
+# Mark any kingdoms with 0 towns as inactive.
+#  All land becomes neutral, King removed, and party become free citizens
+sub check_for_inactive {
+    my $self = shift;
+    my $kingdom = shift;
     
-       
+    my $c = $self->context;
+    
+    my $town_count = $c->schema->resultset('Town')->search(
+        {
+            'location.kingdom_id' => $kingdom->id
+        },
+        {
+            'join' => 'location',
+        }
+    )->count;
+    
+    return 0 if $town_count > 0;
+    
+    $kingdom->active(0);
+    $kingdom->update;
+    
+    $kingdom->search_related('sectors')->update( { kingdom_id => undef } );
+    
+    my $king = $kingdom->king;
+    $king->status(undef);
+    $king->status_context(undef);
+    $king->update;
+    
+    if (! $king->is_npc) {
+        my $party = $king->party;
+        $party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                alert_party => 1,
+                message => "Our mighty Kingdom of " . $kingdom->name . " has fallen, as we no longer own any towns. A sad day indeed.",
+            },
+        );
+    } 
+    
+    return 1;
 }

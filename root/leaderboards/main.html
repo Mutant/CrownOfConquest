@@ -21,7 +21,7 @@ Top Parties By:
 	[% END %]
 [% END %]
 
-<table class="main" cellspacing=6>
+<table class="main" cellpadding=3 cellspacing=0>
 	<tr>
 		<th>Rank</th>
 		<th>Party</th>
@@ -35,7 +35,7 @@ Top Parties By:
 		<th>Last Login</th>
 	</tr>
 [% FOREACH party IN parties %]
-	<tr>
+	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
 		<td>[% loop.count %]</td>		
 		<td>[% party.name %]</td>		
 		<td>[% party.player.player_name %]</td>

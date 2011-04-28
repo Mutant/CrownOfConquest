@@ -336,6 +336,10 @@ sub status_description {
 		
 		return "Garrisoned in the town of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
 	}
+	elsif ($self->status eq 'king') {
+	   my $kingdom = $self->party->kingdom;
+	   return ($self->gender eq 'male' ? 'King' : 'Queen') . " of " . $kingdom->name;   
+	}
 	else {
 		return "Unknown";	
 	}		

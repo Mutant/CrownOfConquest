@@ -499,6 +499,7 @@ sub create : Local {
         my $existing = $c->model('DBIC::Kingdom')->find(
             {
                 colour => $test_colour,
+                active => 1,
             }
         );
         if (! $existing) {

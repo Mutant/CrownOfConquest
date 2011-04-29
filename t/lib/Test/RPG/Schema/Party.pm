@@ -14,6 +14,8 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Garrison;
+use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Quest;
 
 use Data::Dumper;
 use DateTime;
@@ -431,7 +433,43 @@ sub test_number_alive_only_includes_character_in_party : Tests(1) {
     
     # THEN
     is($number_alive, 0, "No characters with party are alive");
+}
 
+sub test_change_allegiance : Tests() {
+	my $self = shift;
+	
+	# GIVEN
+	my $old_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});	
+    my $new_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $old_kingdom->id);
+    my $quest1 = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        quest_type => 'claim_land', kingdom_id => $old_kingdom->id, party_id => $party->id, status => 'In Progress'
+    );
+
+    my $quest2 = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        quest_type => 'claim_land', kingdom_id => $old_kingdom->id, party_id => $party->id, status => 'Complete'
+    );
+    
+    # WHEN
+    $party->change_allegiance($new_kingdom);
+    $party->update;
+    
+    # THEN
+    is($party->kingdom_id, $new_kingdom->id, "Kingdom id of party updated");
+    
+    is(scalar $old_kingdom->messages, 1, "Old kingdom gets a message");
+    is(scalar $new_kingdom->messages, 1, "New kingdom gets a message");
+    
+    my @quests = $party->search_related('quests',
+        {
+            kingdom_id => $old_kingdom->id,
+        }
+    );
+    is(scalar @quests, 2, "party has 2 kingdom quests");
+    is($quests[0]->status, 'Terminated', "first quest was terminated");
+    is($quests[1]->status, 'Complete', "second quest is still complete");
+        
 }
 
 1;
+

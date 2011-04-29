@@ -839,13 +839,39 @@ sub change_allegiance {
     	);
 	}
 	
-	if ($old_kingdom) {
-	   $old_kingdom->add_to_messages(
-	       {
-	           day_id => $today->id,
-	           message => "The party known as " . $self->name . " renounced their loyalty to the kingdom",
-	       }
-	   );
+    if ($old_kingdom) {
+        $old_kingdom->add_to_messages(
+            {
+                day_id => $today->id,
+                message => "The party known as " . $self->name . " renounced their loyalty to the kingdom",
+            }
+        );
+        
+        # Cancel any kingdom quests
+        my @kingdom_quests = $self->search_related(
+            'quests',
+            {
+                kingdom_id => $old_kingdom->id,
+                status => ['Not Started', 'In Progress'],
+            }
+        );
+        
+        foreach my $quest (@kingdom_quests) {
+            my $kingdom_message = RPG::Template->process(
+                RPG::Schema->config,
+                'quest/kingdom/terminated.html',
+                 { 
+                    quest => $quest,
+                    reason => 'the party changed their alliegance to another kingdom',
+                 }
+            );
+            
+            $quest->terminate(
+                kingdom_message => $kingdom_message,
+            );
+            
+            $quest->update;
+        }
 	}
 	
 	if ($new_kingdom && ! $own_kingdom) {
@@ -855,7 +881,8 @@ sub change_allegiance {
 	           message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
 	       }
 	   ); 
-	}       
+	}
+	
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

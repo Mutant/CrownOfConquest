@@ -3,12 +3,14 @@ use warnings;
 
 package Test::RPG::Builder::Kingdom;
 
+use Test::RPG::Builder::Character;
+
 sub build_kingdom {
     my $package = shift;
     my $schema = shift;
     my %params = @_;
     
-    my $town = $schema->resultset('Kingdom')->create(
+    my $kingdom = $schema->resultset('Kingdom')->create(
         {
             name => 'Test Kingdom',
             mayor_tax => $params{mayor_tax} || 10,
@@ -16,7 +18,12 @@ sub build_kingdom {
         }   
     );
     
-    return $town;
+    my $character = Test::RPG::Builder::Character->build_character($schema);
+    $character->status('king');
+    $character->status_context($kingdom->id);
+    $character->update;
+    
+    return $kingdom;
 }
 
 1;

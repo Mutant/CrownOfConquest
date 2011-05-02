@@ -43,16 +43,12 @@ sub test_king : Tests(1) {
     
     # GIVEN
     my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
-    $character->status('king');
-    $character->status_context($kingdom->id);
-    $character->update;
     
     # WHEN
     my $king = $kingdom->king;
     
     # THEN
-    is($king->id, $character->id, "King returned");
+    isa_ok($king, 'RPG::Schema::Character', "King returned");
 }
 
 1;

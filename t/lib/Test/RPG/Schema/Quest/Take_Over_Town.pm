@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Schema::Quest::Town_Over_Town;
+package Test::RPG::Schema::Quest::Take_Over_Town;
 
 use base qw(Test::RPG::DB);
 

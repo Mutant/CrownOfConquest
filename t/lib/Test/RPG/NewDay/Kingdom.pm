@@ -101,11 +101,13 @@ sub test_cancel_quests_awaiting_acceptance : Tests(2) {
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
     my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
         kingdom_id => $kingdom->id, quest_type => 'claim_land', day_offered => $self->{mock_context}->current_day->day_number - 10, party_id => $party->id);
-        
+
+    my $old_day = Test::RPG::Builder::Day->build_day($self->{schema}, day_number => $self->{mock_context}->current_day->day_number - 10 );
+   
     $self->{config}{kingdom_quest_offer_time_limit} = 10;
     
     my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
-    
+  
     # WHEN
     $action->cancel_quests_awaiting_acceptance($kingdom);
         
@@ -114,7 +116,7 @@ sub test_cancel_quests_awaiting_acceptance : Tests(2) {
     is($quest->status, 'Terminated', 'Quest marked as terminated');
     
     my @messages = $party->messages;
-    is(scalar @messages, 1, "Message added to party");     
+    is(scalar @messages, 2, "2 Messages added to party");     
 }
 
 sub test_check_for_inactive_still_active : Tests(2) {
@@ -153,10 +155,7 @@ sub test_check_for_inactive_marked_inactive : Tests(12) {
         $land->update;   
     }
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
-    my ($character) = $party->characters;
-    $character->status('king');
-    $character->status_context($kingdom->id);
-    $character->update;
+    my $character = $kingdom->king;
     
     my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
     

@@ -323,6 +323,8 @@ sub test_can_be_claimed_near_town : Tests(2) {
 	# GIVEN
 	my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 10, 'y_size' => 10);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
+	$land[3]->claimed_by_id(1);
+	$land[3]->update;
 	
 	# WHEN
 	my $first_land = $land[3]->can_be_claimed(1);

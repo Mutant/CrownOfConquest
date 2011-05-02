@@ -226,10 +226,10 @@ sub cancel_quests_awaiting_acceptance {
         {
             kingdom_id => $kingdom->id,
             status => 'Not Started',
-            day_offered => {'<=', $day_rec},
+            day_offered => {'<=', $day_rec->day_number},
         }
     );
-    
+
     foreach my $quest (@quests_to_cancel) {
         my $message = RPG::Template->process(
             $self->context->config,

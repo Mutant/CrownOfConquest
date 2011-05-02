@@ -22,9 +22,11 @@ sub test_check_action_not_complete : Tests(2) {
     my $party = Test::RPG::Builder::Party->build_party($self->{schema});
     my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
     
-    $quest->define_quest_param( 'Amount To Claim', 10 );
-    $quest->define_quest_param( 'Amount Claimed', 0 );
-    $quest->update;    
+    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
+    $quest->param_record( 'Amount To Claim' )->update;
+    
+    $quest->param_record( 'Amount Claimed' )->current_value( 0 );
+    $quest->param_record( 'Amount Claimed' )->update;    
     
     # WHEN
     my $result = $quest->check_action($party, 'claimed_land');
@@ -44,9 +46,11 @@ sub test_check_action_completed : Tests(3) {
     my $party = Test::RPG::Builder::Party->build_party($self->{schema});
     my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
     
-    $quest->define_quest_param( 'Amount To Claim', 10 );
-    $quest->define_quest_param( 'Amount Claimed', 9 );
-    $quest->update;    
+    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
+    $quest->param_record( 'Amount To Claim' )->update;
+    
+    $quest->param_record( 'Amount Claimed' )->current_value( 9);
+    $quest->param_record( 'Amount Claimed' )->update;    
     
     # WHEN
     my $result = $quest->check_action($party, 'claimed_land');
@@ -67,9 +71,11 @@ sub test_check_action_already_completed : Tests(2) {
     my $party = Test::RPG::Builder::Party->build_party($self->{schema});
     my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
     
-    $quest->define_quest_param( 'Amount To Claim', 10 );
-    $quest->define_quest_param( 'Amount Claimed', 10 );
-    $quest->update;    
+    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
+    $quest->param_record( 'Amount To Claim' )->update;
+    
+    $quest->param_record( 'Amount Claimed' )->current_value( 10 );
+    $quest->param_record( 'Amount Claimed' )->update;
     
     # WHEN
     my $result = $quest->check_action($party, 'claimed_land');

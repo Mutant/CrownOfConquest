@@ -84,7 +84,7 @@ sub insert {
         $self->insert_params($self->{_params});
     }
     
-    if ($self->kingdom_id) {    
+    if ($self->kingdom_id && $self->party_id) {    
         my $message = RPG::Template->process(
             RPG::Schema->config,
             'quest/kingdom/offered.html',
@@ -413,7 +413,7 @@ sub set_complete {
     elsif ($self->kingdom_id) {
         my $message = RPG::Template->process(
             RPG::Schema->config,
-            'quest/kingdom/kingdom_complete.html',
+            'quest/kingdom/kingdom_completed.html',
             { 
                 party => $party,
                 quest => $self, 

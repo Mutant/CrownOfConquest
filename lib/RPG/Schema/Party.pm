@@ -9,6 +9,7 @@ use List::Util qw(sum);
 use Math::Round qw(round);
 use DateTime;
 use Statistics::Basic qw(average);
+use Carp;
 
 use RPG::Template;
 use RPG::Exception;
@@ -812,6 +813,10 @@ sub change_allegiance {
     my $new_kingdom = shift;
     
     my $old_kingdom = $self->kingdom;
+    
+    if ($old_kingdom && $old_kingdom->king->party_id == $self->id) {
+        croak "Cannot change allegiance if you already have your own kingdom\n";   
+    }
     	
     my $today = $self->result_source->schema->resultset('Day')->find_today;	
     

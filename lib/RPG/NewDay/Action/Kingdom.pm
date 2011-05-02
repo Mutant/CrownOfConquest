@@ -279,6 +279,7 @@ sub check_for_inactive {
     return 0 if $town_count > 0;
     
     $kingdom->active(0);
+    $kingdom->fall_day_id($c->current_day->day_id);
     $kingdom->update;
     
     $kingdom->search_related('sectors')->update( { kingdom_id => undef } );

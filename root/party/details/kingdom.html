@@ -27,10 +27,13 @@
 
 <h4>Kingdom</h4>
 
+[% PROCESS kingdom/loyalty_rating.html %]
+
 [% IF kingdom %]
 	[% king = kingdom.king %]
 	We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
-	Our monarch is: [% king.name %] ([% IF king.party_id %][% king.party.name %][% ELSE %]NPC[% END %])
+	Our monarch is: [% king.name %] ([% IF king.party_id %][% king.party.name %][% ELSE %]NPC[% END %])<br>
+	Our loyalty rating: [% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]
 [% ELSE %]
 	We are Free Citizens, loyal to no one.
 [% END %]

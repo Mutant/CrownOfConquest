@@ -907,8 +907,34 @@ sub change_allegiance {
             $new_kingdom->highest_party_count_day_id($today->id);
             $new_kingdom->update;
         } 
-	}
-	
+	}	
+}
+
+sub loyalty_for_kingdom {
+    my $self = shift;
+    my $kingdom_id = shift;
+    
+    return $self->{_loyalty}{$kingdom_id} if defined $self->{_loyalty}{$kingdom_id};
+    
+    my $party_kingdom = $self->find_related(
+        'party_kingdoms',
+        {
+            kingdom_id => $kingdom_id,
+        }
+    );
+    
+    unless ($party_kingdom) {
+        $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->create(
+            {
+                party_id => $self->id,
+                kingdom_id => $kingdom_id,
+            }
+        );   
+    }
+    
+    $self->{_loyalty}{$kingdom_id} = $party_kingdom->loyalty;
+    
+    return $self->{_loyalty}{$kingdom_id} // 0;   
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

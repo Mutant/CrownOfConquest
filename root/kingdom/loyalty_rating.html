@@ -1,0 +1,30 @@
+[% MACRO display_loyalty_rating(rating, for_king) BLOCK %]
+	[% IF for_king %]
+		[% pronoun = 'They' %]
+	[% ELSE %]
+		[% pronoun = 'You' %]
+	[% END %]
+	[% IF rating < -80 %]		
+		[% pronoun %] are lucky not to have been banished
+	[% ELSIF rating < -60 %]
+		Abysmal
+	[% ELSIF rating < -40 %]
+		Terrible
+	[% ELSIF rating < -20 %]
+		Very Poor
+	[% ELSIF rating < -10 %]
+		Poor
+	[% ELSIF rating < 10 %]
+		Neutral
+	[% ELSIF rating < 20 %]
+		Good
+	[% ELSIF rating < 40 %]
+		Very Good
+	[% ELSIF rating < 60 %]
+		Excellent
+	[% ELSIF rating < 80 %]
+		Astounding
+	[% ELSE %]
+		[% pronoun %] are among the Kingdom's most trusted subjects
+	[% END %]		
+[% END %]

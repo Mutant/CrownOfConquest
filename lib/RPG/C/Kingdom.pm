@@ -346,6 +346,7 @@ sub parties : Local {
 				template => 'kingdom/parties.html',
 				params => {
 				    parties => \@parties,
+				    kingdom => $c->stash->{kingdom},
 				},
 			}
 		]

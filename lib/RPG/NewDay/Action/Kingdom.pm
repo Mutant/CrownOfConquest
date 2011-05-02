@@ -151,8 +151,10 @@ sub _create_quests_of_type {
         my @eligble = $self->_find_eligible_parties($minimum_level, $quest_type, @$parties);
         
         next unless @eligble;
+        
+        @eligble = sort { $b->loyalty_for_kingdom($kingdom->id) <=> $a->loyalty_for_kingdom($kingdom->id) } shuffle @eligble;
             
-        my $party = (shuffle @eligble)[0];
+        my $party = shift @eligble;
             
         my $quest = try {
             $c->schema->resultset('Quest')->create(

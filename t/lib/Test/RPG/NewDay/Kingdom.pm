@@ -174,8 +174,46 @@ sub test_check_for_inactive_marked_inactive : Tests(12) {
     }
     
     $character->discard_changes;
-    is($character->status, undef, "Character is not longer king");
+    is($character->status, undef, "Character is not longer king");    
+}
+
+sub test_adjust_party_loyalty : Tests(1) {
+    my $self = shift;
     
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 3);
+    my @characters = $party->characters;
+    
+    my @towns;
+    for (0..2) {
+        push @towns, Test::RPG::Builder::Town->build_town($self->{schema});
+        $characters[$_]->mayor_of($towns[$_]->id);
+        $characters[$_]->update;   
+    }
+    
+    my $loc = $towns[0]->location;
+    $loc->kingdom_id($kingdom->id);
+    $loc->update;
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->adjust_party_loyalty($kingdom);
+    
+    # THEN
+    my $party_kingdom = $self->{schema}->resultset('Party_Kingdom')->find(
+        {
+            party_id => $party->id,
+            kingdom_id => $kingdom->id,
+        }
+    );
+    is($party_kingdom->loyalty, -1, "Loyalty reduced due to disloyal towns");
+    
+    
+    
+    
+       
 }
 
 1;

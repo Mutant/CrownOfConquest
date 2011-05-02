@@ -204,6 +204,8 @@ __PACKAGE__->has_many( 'party_effects', 'RPG::Schema::Party_Effect', 'party_id',
 
 __PACKAGE__->has_many( 'party_towns', 'RPG::Schema::Party_Town', 'party_id', );
 
+__PACKAGE__->has_many( 'party_kingdoms', 'RPG::Schema::Party_Kingdom', 'party_id', );
+
 __PACKAGE__->might_have( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
@@ -879,13 +881,26 @@ sub change_allegiance {
         }
 	}
 	
-	if ($new_kingdom && ! $own_kingdom) {
-	   $new_kingdom->add_to_messages(
+	if ($new_kingdom) {
+	    # Reset loyalty
+	    my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
 	       {
-	           day_id => $today->id,
-	           message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
+	           party_id => $self->id,
+	           kingdom_id => $new_kingdom->id,
 	       }
-	   ); 
+	    );
+	    
+	    $party_kingdom->loyalty(0);
+	    $party_kingdom->update;
+	    
+        if (! $own_kingdom) {	   
+            $new_kingdom->add_to_messages(
+                {
+                    day_id => $today->id,
+                    message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
+                }
+            );
+        } 
 	}
 	
 }

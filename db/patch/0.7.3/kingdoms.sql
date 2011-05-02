@@ -104,4 +104,12 @@ CREATE TABLE `Kingdom_Messages` (
 )
 ENGINE = InnoDB;
 
+CREATE TABLE `Party_Kingdom` (
+  `party_id` INTEGER  NOT NULL,
+  `kingdom_id` INTEGER  NOT NULL,
+  `loyalty` INTEGER  NOT NULL DEFAULT 0,
+  PRIMARY KEY (`party_id`, `kingdom_id`)
+)
+ENGINE = InnoDB;
+
 

@@ -561,6 +561,11 @@ sub reward_callback : Local : Args(1) {
     if ($player_reward_link) {
         $c->log->info("Received message for successful action for player: " . $params{player_id});
         
+        if ($player_reward_link->last_vote_date && DateTime->compare($player_reward_link->last_vote_date, DateTime->now()->subtract( hours => 24 )) == 1) {
+            $c->log->info("Voted for this site in last 24 hours, ignoring");
+            return; 
+        }
+        
         my $party = $c->model('DBIC::Party')->find(
             {
                 player_id => $params{player_id},

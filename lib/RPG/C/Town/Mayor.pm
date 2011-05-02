@@ -510,7 +510,26 @@ sub change_allegiance : Local {
     $town->decrease_mayor_rating(10);
     $town->unclaim_land;
     $town->claim_land;
-    $town->update;    
+    $town->update;
+    
+    # Adjust parties loyalty if they have a kingdom
+    if (my $partys_kingdom = $c->stash->{party}->kingdom) {
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $partys_kingdom->id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );
+        
+        if ($partys_kingdom->id == $c->req->param('kingdom_id')) {
+            $party_kingdom->increase_loyalty(10);
+        }
+        else {
+            $party_kingdom->decrease_loyalty(10);
+        }
+        
+        $party_kingdom->update;
+    }
     
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
 	# TODO: messages go no where at the moment

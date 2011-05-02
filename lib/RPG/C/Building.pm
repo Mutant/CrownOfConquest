@@ -503,7 +503,22 @@ sub seize : Local {
 	           day_id => $c->stash->{today}->id,
 	           message => $message,
 	       }
-	   );   
+	   );
+	   
+	   
+        # If they party seized a building belonging to their kingdom, reduce loyalty
+        if ($owner_id == $c->stash->{party}->kingdom_id) {	   
+            my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+                {
+                    kingdom_id => $c->stash->{party}->kingdom_id,
+                    party_id => $c->stash->{party}->id,
+                }           
+            );
+            
+            $party_kingdom->decrease_loyalty(7);
+            $party_kingdom->update;
+        }	   
+	   
 	}
 
 	#  But crow about it to ourselves.
@@ -594,7 +609,21 @@ sub raze : Local {
 				kingdom_id => $owner_id,
 				day_id => $c->stash->{today}->id,
 			}
-		);	      
+		);	    
+		
+        # If the party razed a building belonging to their kingdom, reduce loyalty
+        if ($owner_id == $c->stash->{party}->kingdom_id) {	   
+            my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+                {
+                    kingdom_id => $c->stash->{party}->kingdom_id,
+                    party_id => $c->stash->{party}->id,
+                }           
+            );
+            
+            $party_kingdom->decrease_loyalty(10);
+            $party_kingdom->update;
+        }	 		
+		  
 	}
 	
 	$c->model('DBIC::Party_Messages')->create(
@@ -643,6 +672,17 @@ sub cede : Local {
 	   	           . $c->stash->{party_location}->x . ', ' . $c->stash->{party_location}->y,
 	   	   }
 	   	); 
+	   
+	    # Increase loyalty
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $c->stash->{party}->kingdom_id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );
+        
+        $party_kingdom->increase_loyalty(7);
+        $party_kingdom->update;
 	}
 	
 	my $count = scalar @existing_buildings;
@@ -657,7 +697,7 @@ sub change_building_ownership : Private {
     my ($self, $c, $building) = @_;
     
     $building->unclaim_land;
-    $building->claim_land;  
+    $building->claim_land;
 }
 
 1;

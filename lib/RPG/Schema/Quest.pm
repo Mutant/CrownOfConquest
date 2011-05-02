@@ -337,6 +337,17 @@ sub terminate {
                 message => $kingdom_message,
             );
         }
+
+        my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
+            {
+                kingdom_id  => $self->kingdom_id,
+                party_id => $self->party_id,
+            },
+        );
+        
+        $party_kingdom->decrease_loyalty(1);
+        $party_kingdom->update;          
+        
     }
 }
 
@@ -425,7 +436,17 @@ sub set_complete {
                 day_id  => $self->result_source->schema->resultset('Day')->find_today->id,
                 message => $message,
             }
-        );        
+        );
+        
+        my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
+            {
+                kingdom_id  => $self->kingdom_id,
+                party_id => $party->id,
+            },
+        );
+        
+        $party_kingdom->increase_loyalty(5);
+        $party_kingdom->update;       
     }
     
     return @details;

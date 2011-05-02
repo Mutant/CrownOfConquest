@@ -30,6 +30,8 @@ sub run {
         my $king = $kingdom->king;
         
         $self->cancel_quests_awaiting_acceptance($kingdom);
+        
+        $self->adjust_party_loyalty($kingdom);
 
         if ($king->is_npc) {
             $self->execute_npc_kingdom_actions($kingdom, $king);
@@ -299,3 +301,46 @@ sub check_for_inactive {
     
     return 1;
 }
+
+# Adjust loyalty of parties
+sub adjust_party_loyalty {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my $c = $self->context;
+    
+    my @parties = $kingdom->parties;
+    foreach my $party (@parties) {
+        # Adjust loyalty based on number of towns owned by party that are loyal to kingdom
+        my $loyal_town_count = $c->schema->resultset('Town')->search(
+            {
+                'mayor.party_id' => $party->id,
+                'location.kingdom_id' => $kingdom->id,
+            },
+            {
+                join => ['mayor', 'location'],
+            }
+        )->count;
+        
+        my $disloyal_town_count = $c->schema->resultset('Town')->search(
+            {
+                'mayor.party_id' => $party->id,
+                'location.kingdom_id' => [{'!=', $kingdom->id}, undef],
+            },
+            {
+                join => ['mayor', 'location'],
+            }
+        )->count;
+        
+        my $party_kingdom = $c->schema->resultset('Party_Kingdom')->find_or_create(
+            {
+                'party_id' => $party->id,
+                'kingdom_id' => $kingdom->id,
+            }
+        );
+        $party_kingdom->adjust_loyalty($loyal_town_count - $disloyal_town_count);
+        $party_kingdom->update;
+    }
+}
+
+1;

@@ -65,7 +65,7 @@ sub execute_npc_kingdom_actions {
         'parties',
         {
             defunct => undef,
-        },  
+        },
     );
     
     $self->context->logger->debug("Kingdom has " . scalar @parties . " parties");

@@ -900,6 +900,12 @@ sub change_allegiance {
                     message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
                 }
             );
+        }
+        
+        if ($new_kingdom->highest_party_count < $new_kingdom->parties->count) {
+            $new_kingdom->highest_party_count($new_kingdom->parties->count);
+            $new_kingdom->highest_party_count_day_id($today->id);
+            $new_kingdom->update;
         } 
 	}
 	

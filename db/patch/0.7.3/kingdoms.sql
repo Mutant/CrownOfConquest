@@ -112,4 +112,14 @@ CREATE TABLE `Party_Kingdom` (
 )
 ENGINE = InnoDB;
 
+ALTER TABLE `Kingdom` ADD COLUMN `inception_day_id` INTEGER  NOT NULL,
+ ADD COLUMN `fall_day_id` INTEGER  AFTER `inception_day_id`,
+ ADD COLUMN `highest_land_count` INTEGER  NOT NULL DEFAULT 0 AFTER `fall_day_id`,
+ ADD COLUMN `highest_land_count_day_id` INTEGER  NOT NULL AFTER `highest_land_count`,
+ ADD COLUMN `highest_town_count` INTEGER  NOT NULL DEFAULT 0 AFTER `highest_land_count_day_id`,
+ ADD COLUMN `highest_town_count_day_id` INTEGER  NOT NULL AFTER `highest_town_count`,
+ ADD COLUMN `highest_party_count` INTEGER  NOT NULL DEFAULT 0 AFTER `highest_town_count_day_id`,
+ ADD COLUMN `highest_party_count_day_id` INTEGER  NOT NULL AFTER `highest_party_count`;
+
+
 

@@ -16,7 +16,7 @@ __PACKAGE__->table('Land');
 __PACKAGE__->resultset_class('RPG::ResultSet::Land');
 
 __PACKAGE__->add_columns(qw/land_id x y terrain_id creature_threat variation kingdom_id claimed_by_id claimed_by_type/);
-    
+
 __PACKAGE__->set_primary_key('land_id');
 
 __PACKAGE__->numeric_columns(

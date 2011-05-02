@@ -10,7 +10,9 @@ use Math::Round qw(round);
 __PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Kingdom');
 
-__PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active/);
+__PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active inception_day_id fall_day_id
+                            highest_land_count highest_land_count_day_id highest_town_count highest_town_count_day_id
+                            highest_party_count highest_party_count_day_id/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 
@@ -22,6 +24,7 @@ __PACKAGE__->numeric_columns(
 	gold => {
 		min_value => 0,
 	},
+	qw/highest_land_count highest_town_count highest_party_count/,
 );
 
 __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'kingdom_id', { where => { defunct => undef } } );

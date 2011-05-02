@@ -800,6 +800,14 @@ sub claim_land : Local {
 	$c->stash->{party_location}->kingdom_id($c->stash->{party}->kingdom_id);
 	$c->stash->{party_location}->update;
 	
+	my $kingdom = $c->stash->{party}->kingdom;
+	my $land_count = $kingdom->sectors->count;
+	if ($kingdom->highest_land_count < $land_count) {
+	   $kingdom->highest_land_count($land_count);
+	   $kingdom->highest_land_count_day_id($c->stash->{today}->id);
+	   $kingdom->update;
+	}
+	
 	$c->stash->{messages} = ["You claim this sector for the Kingdom of " . $c->stash->{party}->kingdom->name];
 	
     my $quest_messages = $c->forward( '/quest/check_action', [ 'claimed_land', $c->stash->{party_location}->id ] );

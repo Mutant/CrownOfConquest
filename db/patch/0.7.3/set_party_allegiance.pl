@@ -18,6 +18,8 @@ my @parties = $schema->resultset('Party')->search(
     }
 );
 
+my $today = $schema->resultset('Day')->find_today;
+
 foreach my $party (@parties) {
     if ($party->location and my $kingdom_id = $party->location->kingdom_id) {
         $party->kingdom_id($kingdom_id);
@@ -28,4 +30,9 @@ foreach my $party (@parties) {
     }
     
     $party->update;
+    
+    my $new_kingdom = $party->kingdom;
+    $new_kingdom->increment_highest_party_count;
+    $new_kingdom->highest_party_count_day_id($today->id);
+    $new_kingdom->update;
 }

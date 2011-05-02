@@ -22,6 +22,8 @@ my @colours = shuffle (RPG::Schema::Kingdom->colours);
 
 my $redo_count = 0;
 
+my $today = $schema->resultset('Day')->find_today;
+
 for (1..12) {
     last if $redo_count == 10;
 
@@ -34,6 +36,7 @@ for (1..12) {
         {
             name => $kingdom_name,
             colour => $colour,
+            inception_date => $today->id,
         }
     );
     
@@ -193,6 +196,12 @@ for (1..12) {
         warn "removing... (count: $redo_count)\n";
         redo;          
     }
+    
+    $kingdom->highest_town_count($town_count);
+    $kingdom->highest_town_count_day_id($today->id);
+    $kingdom->highest_land_count($kingdom_size);
+    $kingdom->highest_land_count_day_id($today->id);
+    $kingdom->update;
 
     # Generate king / queen
     my $king = $schema->resultset('Character')->generate_character(

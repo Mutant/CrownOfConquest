@@ -531,6 +531,13 @@ sub change_allegiance : Local {
         $party_kingdom->update;
     }
     
+    # check if this is the most towns the kingdom has had
+    if ($kingdom && $kingdom->highest_town_count < $kingdom->towns->count) {
+        $kingdom->highest_town_count($kingdom->towns->count);
+        $kingdom->highest_town_count_day_id($c->stash->{today}->id);
+        $kingdom->update;
+    }
+    
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
 	# TODO: messages go no where at the moment
     

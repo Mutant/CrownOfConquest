@@ -58,6 +58,16 @@ Change our allegiance to:
 	<input type="submit" value="Change">
 </form>
 
+[% IF banned.size > 0 %]
+<br>
+We have been banished from the following kingdoms:
+<ul>
+[% FOREACH banished IN banned %]
+<li>Kingdom of [% banished.kingdom.name %] ([% banished.banished_for %] more days)</li>
+[% END %]
+</ul>
+[% END %]
+
 [% IF mayor_count > 0 %]
 	<br>
 	We currently have [% mayor_count %] mayors. [% town_count_for_kingdom_declaration %] mayors (and a party level of [% minimum_kingdom_level %])

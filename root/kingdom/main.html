@@ -21,7 +21,14 @@ function changeGold(kingdomGoldInput) {
         },
 		timeout: 5000
     }); 
-}		
+}
+
+function showBanishPartyDiag(partyId, partyName) {
+	dojo.byId('banished-party-id').value = partyId;
+	dojo.byId('banished-party-name').innerHTML= partyName;
+	dijit.byId('banish-party-diag').show();
+}
+
 </script>
 
 <h2>Manage the Kingdom of [% kingdom.name %]</h2>

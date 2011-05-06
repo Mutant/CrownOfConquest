@@ -819,6 +819,17 @@ sub change_allegiance {
     if ($old_kingdom && $old_kingdom->king->party_id == $self->id) {
         croak "Cannot change allegiance if you already have your own kingdom\n";   
     }
+    
+    my $party_kingdom = $new_kingdom->search_related(
+        'party_kingdoms',
+        {
+            party_id => $self->id,
+        }        
+    );
+    
+    if ($party_kingdom && $party_kingdom->banished_for > 0) {
+        croak "Can't change allegiance to a kingdom you are banned from\n";            
+    }
     	
     my $today = $self->result_source->schema->resultset('Day')->find_today;	
     
@@ -855,30 +866,7 @@ sub change_allegiance {
         );
         
         # Cancel any kingdom quests
-        my @kingdom_quests = $self->search_related(
-            'quests',
-            {
-                kingdom_id => $old_kingdom->id,
-                status => ['Not Started', 'In Progress'],
-            }
-        );
-        
-        foreach my $quest (@kingdom_quests) {
-            my $kingdom_message = RPG::Template->process(
-                RPG::Schema->config,
-                'quest/kingdom/terminated.html',
-                 { 
-                    quest => $quest,
-                    reason => 'the party changed their alliegance to another kingdom',
-                 }
-            );
-            
-            $quest->terminate(
-                kingdom_message => $kingdom_message,
-            );
-            
-            $quest->update;
-        }
+        $self->cancel_kingdom_quests($old_kingdom);
 	}
 	
 	if ($new_kingdom) {
@@ -910,6 +898,36 @@ sub change_allegiance {
 	}	
 }
 
+sub cancel_kingdom_quests {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my @kingdom_quests = $self->search_related(
+        'quests',
+        {
+            kingdom_id => $kingdom->id,
+            status => ['Not Started', 'In Progress'],
+        }
+    );
+    
+    foreach my $quest (@kingdom_quests) {
+        my $kingdom_message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/kingdom/terminated.html',
+             { 
+                quest => $quest,
+                reason => 'the party is no longer loyal to our kingdom',
+             }
+        );
+        
+        $quest->terminate(
+            kingdom_message => $kingdom_message,
+        );
+        
+        $quest->update;
+    }       
+}
+
 sub loyalty_for_kingdom {
     my $self = shift;
     my $kingdom_id = shift;
@@ -935,6 +953,36 @@ sub loyalty_for_kingdom {
     $self->{_loyalty}{$kingdom_id} = $party_kingdom->loyalty;
     
     return $self->{_loyalty}{$kingdom_id} // 0;   
+}
+
+sub banish_from_kingdom {
+    my $self = shift;
+    my $kingdom = shift;
+    my $duration = shift;
+    
+    $self->kingdom_id(undef);
+    $self->update;
+
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
+    
+    my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
+        {
+            party_id => $self->id,
+            kingdom_id => $kingdom->id,
+        }
+    );
+    $party_kingdom->banished_for($duration);
+    $party_kingdom->update;
+    
+    $self->cancel_kingdom_quests($kingdom);
+   
+    $self->add_to_messages(
+        {
+	       day_id => $today->id,
+	       alert_party => 1,
+	       message => "We were banished from the Kingdom of " . $kingdom->name . " for $duration days!",
+        }
+    );           
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

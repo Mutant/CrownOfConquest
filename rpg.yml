@@ -560,6 +560,10 @@ town_count_for_kingdom_declaration: 8
 # Minimum level for declaring a kingdom
 minimum_kingdom_level: 16
 
+# Min/max days a party can be banished by the king
+min_banish_days: 5
+max_banish_days: 30
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

@@ -121,5 +121,5 @@ ALTER TABLE `Kingdom` ADD COLUMN `inception_day_id` INTEGER  NOT NULL,
  ADD COLUMN `highest_party_count` INTEGER  NOT NULL DEFAULT 0 AFTER `highest_town_count_day_id`,
  ADD COLUMN `highest_party_count_day_id` INTEGER  NOT NULL AFTER `highest_party_count`;
 
-
+ALTER TABLE `Party_Kingdom` ADD COLUMN `banished_for` INTEGER;
 

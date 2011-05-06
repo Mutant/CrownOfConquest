@@ -17,6 +17,8 @@ sub run {
     my $c = $self->context;
     
     my $schema = $c->schema;
+    
+    $self->decrement_banished_parties;
         
     my @kingdoms = $schema->resultset('Kingdom')->search(
         {
@@ -343,6 +345,23 @@ sub adjust_party_loyalty {
         );
         $party_kingdom->adjust_loyalty($loyal_town_count - $disloyal_town_count);
         $party_kingdom->update;
+    }
+}
+
+sub decrement_banished_parties {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my @party_kingdom = $c->schema->resultset('Party_Kingdom')->search(
+        {
+            banished_for => {'>=', 0},
+        }
+    );
+    
+    foreach my $party_kingdom (@party_kingdom) {
+        $party_kingdom->decrement_banished_for;
+        $party_kingdom->update;   
     }
 }
 

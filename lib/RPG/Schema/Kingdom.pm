@@ -31,6 +31,7 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'kingdom_id', { where =>
 __PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'kingdom_id' );
 __PACKAGE__->has_many( 'sectors', 'RPG::Schema::Land', 'kingdom_id' );
 __PACKAGE__->has_many( 'messages', 'RPG::Schema::Kingdom_Messages', 'kingdom_id' );
+__PACKAGE__->has_many( 'party_kingdoms', 'RPG::Schema::Party_Kingdom', 'kingdom_id', { join_type => 'LEFT OUTER' } );
 
 __PACKAGE__->belongs_to( 'king', 'RPG::Schema::Character', 
     {

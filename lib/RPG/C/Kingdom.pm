@@ -46,6 +46,7 @@ sub main : Local {
 				params => {
 					kingdom => $c->stash->{kingdom},
 					party => $c->stash->{party},
+					message => $c->flash->{messages} || undef,
 				},
 			}
 		]
@@ -337,7 +338,9 @@ sub parties : Local {
 	       '+as' => ['character_count'],
 	       group_by  => 'me.party_id',
 	   }
-    );	       
+    );
+    
+    @parties = sort { $b->level <=> $a->level } @parties;
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -347,6 +350,8 @@ sub parties : Local {
 				params => {
 				    parties => \@parties,
 				    kingdom => $c->stash->{kingdom},
+				    banish_min => $c->config->{min_banish_days},
+				    banish_max => $c->config->{max_banish_days},
 				},
 			}
 		]
@@ -553,6 +558,37 @@ sub create : Local {
     );
     
     $c->res->redirect( $c->config->{url_root} . 'kingdom' );
+}
+
+sub banish_party : Local {
+    my ($self, $c) = @_;
+    
+    my $duration = $c->req->param('duration');
+    if ($duration < $c->config->{min_banish_days} || $duration > $c->config->{max_banish_days}) {
+        $c->flash->{messages} = "A party can only be banished for between " . $c->config->{min_banish_days} .
+            ' and ' . $c->config->{max_banish_days} . ' days';
+        
+        $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );       
+        
+        return; 
+    }
+    
+    my $banish_party = $c->model('DBIC::Party')->find(
+        {
+            party_id => $c->req->param('banished_party_id'),
+        }
+    );
+    
+    croak "Invalid party\n" if ! $banish_party || $banish_party->id == $c->stash->{party}->id;
+    
+    my $kingdom = $c->stash->{kingdom};
+    
+    $banish_party->banish_from_kingdom($kingdom, $duration);
+    
+    $c->flash->{messages} = "Party banished";
+    
+    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );
+            
 }
 
 1;

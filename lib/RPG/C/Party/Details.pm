@@ -283,11 +283,24 @@ sub kingdom : Local {
 	my @kingdoms = $c->model('DBIC::Kingdom')->search(
 	   {
 	       active => 1,
-	       kingdom_id => {'!=', $c->stash->{party}->kingdom_id},
+	       'me.kingdom_id' => {'!=', $c->stash->{party}->kingdom_id},
+	       'party_kingdoms.banished_for' => [0,undef],
+	       'party_kingdoms.party_id' => [$c->stash->{party}->id, undef],
 	   },
 	   {
+	       join => 'party_kingdoms',
 	       order_by => 'name',
 	   }
+    );
+    
+    my @banned = $c->model('DBIC::Party_Kingdom')->search(
+        {
+            party_id => $c->stash->{party}->id,
+            banished_for => {'>=', 0},
+        },
+        {
+            prefetch => 'kingdom',
+        }
     );
     
 	my $mayor_count = $c->stash->{party}->search_related(
@@ -314,6 +327,7 @@ sub kingdom : Local {
                     town_count_for_kingdom_declaration => $c->config->{town_count_for_kingdom_declaration},
                     minimum_kingdom_level => $c->config->{minimum_kingdom_level},
                     can_declare_kingdom => $can_declare_kingdom,
+                    banned => \@banned,
                 },
             }
         ]

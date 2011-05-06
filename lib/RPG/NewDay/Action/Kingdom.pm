@@ -72,6 +72,11 @@ sub execute_npc_kingdom_actions {
     
     $self->context->logger->debug("Kingdom has " . scalar @parties . " parties");
     
+    $self->banish_parties($kingdom, @parties);
+    
+    # Some parties might have been banned, so remove them
+    @parties = grep { $_->kingdom_id == $kingdom->id } @parties; 
+    
     $self->generate_kingdom_quests($kingdom, @parties);
 
 }
@@ -345,6 +350,27 @@ sub adjust_party_loyalty {
         );
         $party_kingdom->adjust_loyalty($loyal_town_count - $disloyal_town_count);
         $party_kingdom->update;
+    }
+}
+
+sub banish_parties {
+    my $self = shift;
+    my $kingdom = shift;
+    my @parties = @_;
+    
+    # Only banish parties if there are enough
+    return unless $kingdom->parties->count >= $self->context->config->{npc_kingdom_min_parties};
+    
+    # Find parties with low loyalty ratings
+    my @disloyal_parties = grep { $_->loyalty_for_kingdom($kingdom->id) <= -60 } @parties;
+    return unless @disloyal_parties;
+    
+    my $chance_to_ban = Games::Dice::Advanced->roll('1d100');
+
+    if ($chance_to_ban <= 35) {
+        my $party_to_ban = (shuffle @disloyal_parties)[0];
+        my $duration_to_ban = (shuffle qw(10 15 20 25 30))[0];
+        $party_to_ban->banish_from_kingdom($kingdom, $duration_to_ban);
     }
 }
 

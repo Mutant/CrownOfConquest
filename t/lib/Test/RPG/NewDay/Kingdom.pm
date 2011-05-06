@@ -208,11 +208,57 @@ sub test_adjust_party_loyalty : Tests(1) {
             kingdom_id => $kingdom->id,
         }
     );
-    is($party_kingdom->loyalty, -1, "Loyalty reduced due to disloyal towns");
+    is($party_kingdom->loyalty, -1, "Loyalty reduced due to disloyal towns");       
+}
+
+sub test_banish_parties : Tests(3) {
+    my $self = shift;
     
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
     
+    $self->mock_dice;
+    $self->{roll_result} = 20;
     
+    $party1->add_to_party_kingdoms(
+        {
+            kingdom_id => $kingdom->id,
+            loyalty => 0,
+        }
+    );    
+
+    $party2->add_to_party_kingdoms(
+        {
+            kingdom_id => $kingdom->id,
+            loyalty => -70,
+        }
+    );
     
+    $self->{config}{npc_kingdom_min_parties} = 2;
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->banish_parties($kingdom, $party1, $party2);
+    
+    # THEN
+    $party1->discard_changes;
+    is($party1->kingdom_id, $kingdom->id, "First party still in the kingdom");
+    
+    $party2->discard_changes;
+    is($party2->kingdom_id, undef, "Second party was banished");
+    
+    my $party_kingdom = $party2->find_related(
+        'party_kingdoms',
+        {
+            kingdom_id => $kingdom->id,
+        }
+    );
+    cmp_ok($party_kingdom->banished_for, '>=', '10', "Banished for set"); 
+    
+    $self->unmock_dice;
        
 }
 

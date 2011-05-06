@@ -820,7 +820,7 @@ sub change_allegiance {
         croak "Cannot change allegiance if you already have your own kingdom\n";   
     }
     
-    my $party_kingdom = $new_kingdom->search_related(
+    my $party_kingdom = $new_kingdom->find_related(
         'party_kingdoms',
         {
             party_id => $self->id,

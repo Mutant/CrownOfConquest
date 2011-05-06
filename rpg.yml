@@ -564,6 +564,9 @@ minimum_kingdom_level: 16
 min_banish_days: 5
 max_banish_days: 30
 
+# Minimum number of parties in an NPC kingdom before they will start banishing disloyal parties
+npc_kingdom_min_parties: 10
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

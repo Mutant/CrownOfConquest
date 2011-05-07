@@ -18,8 +18,15 @@ sub character_list : Private {
 
 	my $current_day = $c->stash->{today}->day_number;
 	
-	my @graffiti = my @logs = $c->model('DBIC::Town_History')->recent_history(
-	   $c->stash->{party_location}->town->id, 'graffiti', $current_day, 21
+	my @graffiti = my @logs = $c->model('DBIC::Town_History')->search(
+	   {
+	       town_id => $c->stash->{party_location}->town->id, 
+	       type => 'graffiti'
+	   },
+	   {
+	       order_by => 'day_id desc',
+	       rows => 10,
+	   }
 	);
 	
 	$c->stash->{template_params}{graffiti} = \@graffiti;     

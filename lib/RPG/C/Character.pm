@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use JSON;
+use HTML::Strip;
 
 use Carp;
 
@@ -651,6 +652,8 @@ sub change_name : Local {
 
 sub bury : Local {
 	my ( $self, $c ) = @_;
+	
+	my $hs = HTML::Strip->new();
 
 	$c->forward('check_action_allowed');
 
@@ -661,7 +664,7 @@ sub bury : Local {
 			character_name => $character->character_name,
 			land_id        => $c->stash->{party_location}->id,
 			day_created    => $c->stash->{today}->day_number,
-			epitaph        => $c->req->param('epitaph'),
+			epitaph        => $hs->parse($c->req->param('epitaph')),
 		}
 	);
 

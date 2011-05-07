@@ -10,6 +10,7 @@ use Data::Dumper;
 use JSON;
 use List::Util qw(shuffle);
 use Set::Object qw(set);
+use HTML::Strip;
 
 sub auto : Private {
 	my ($self, $c) = @_;
@@ -80,13 +81,16 @@ sub add : Local {
 		$c->detach('create');		
 	}
 	
+	my $hs = HTML::Strip->new();
+	my $name = $hs->parse($c->req->param('name'));
+	
 	my $garrison = $c->model('DBIC::Garrison')->create(
 		{
 			land_id => $c->stash->{party_location}->land_id,
 			party_id => $c->stash->{party}->id,
 			creature_attack_mode => 'Attack Weaker Opponents',
 			party_attack_mode => 'Defensive Only',
-			name => $c->req->param('name') || undef,
+			name => $name || undef,
 		}
 	);
 	

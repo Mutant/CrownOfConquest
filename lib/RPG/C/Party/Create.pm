@@ -8,6 +8,7 @@ use JSON;
 use DateTime;
 use List::Util qw(shuffle);
 use Carp;
+use HTML::Strip;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
@@ -54,13 +55,17 @@ sub create : Local {
 sub save_party : Local {
     my ( $self, $c ) = @_;
     
+    my $hs = HTML::Strip->new();
+    
     if ( $c->req->param('add_character') ) {
         $c->stash->{party}->update;
         $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
         return;
     }    
+    
+    my $name = $hs->parse($c->req->param('name'));
 
-    unless ( $c->req->param('name') ) {
+    unless ( $name ) {
         $c->stash->{error} = "You must enter a party name!";
         $c->detach('create');
     }
@@ -68,7 +73,7 @@ sub save_party : Local {
     # Check there's not already a party with this name
     my $dupe_party = $c->model('DBIC::Party')->find(
         {
-            name    => $c->req->param('name'),
+            name    => $name,
             defunct => undef,
         },
     );
@@ -78,7 +83,7 @@ sub save_party : Local {
         $c->detach('create');
     }
 
-    $c->stash->{party}->name( $c->req->param('name') );
+    $c->stash->{party}->name( $name );
 
     if ( $c->stash->{party}->characters->count < $c->config->{new_party_characters} ) {
 		$c->stash->{error} = "You still have more character's to create!";
@@ -232,7 +237,11 @@ sub new_character_form : Private {
 sub create_character : Local {
     my ( $self, $c ) = @_;
 
-    unless ( $c->req->param('name') && $c->req->param('race') && $c->req->param('class') ) {
+    my $hs = HTML::Strip->new();
+    
+    my $name = $hs->parse($c->req->param('name'));
+
+    unless ( $name && $c->req->param('race') && $c->req->param('class') ) {
         $c->stash->{error} = 'Please choose a name, race and class';
         $c->detach('new_character');
     }
@@ -269,8 +278,10 @@ sub create_character : Local {
 
     my $class = $c->model('DBIC::Class')->find( { class_name => $c->req->param('class') } );
 
+
+
     my %char_params = (
-        character_name => $c->req->param('name'),
+        character_name => $name,
         class_id       => $class->id,
         race_id        => $c->req->param('race'),
         strength       => $race->base_str + int $c->req->param('mod_str') || 0,

@@ -14,6 +14,8 @@ use Test::More;
 
 use RPG::Ticker::LandGrid;
 
+use Test::RPG::Builder::CreatureType;
+
 sub setup_creature_data : Test(startup=>1) {
     my $self = shift;
 
@@ -292,9 +294,10 @@ sub test_move_cg_ctr_blocks_some_squares : Tests(2) {
     $self->{roll_result} = -1;    
 
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[4]->id, }, );
+    my $creature_type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5);
     my $creature = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg->id,
         }
     );
@@ -324,9 +327,10 @@ sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
     $self->{roll_result} = 1;
     
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[4]->id, }, );
+    my $creature_type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 8);
     my $creature = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_3}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg->id,
         }
     );
@@ -346,15 +350,17 @@ sub test_move_cg_ctr_blocks_all_squares : Tests(2) {
 sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
     my $self = shift;
 
+    # GIVEN
     $self->mock_dice();
     $self->{roll_result} = -1; 
 
     my @land = $self->_create_land( 5, 5 );
 
     my $cg = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[12]->id, }, );
+    my $creature_type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5);
     my $creature = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg->id,
         }
     );
@@ -365,8 +371,10 @@ sub test_move_cg_ctr_blocks_all_adjacent_squares_but_hop_allowed : Tests(2) {
 
     $self->{land_grid} = RPG::Ticker::LandGrid->new( schema => $self->{schema} );
 
+    # WHEN
     my $moved = $self->{creature_action}->_move_cg( 2, $cg );
 
+    # THEN
     is( defined $moved, 1, "Creature group was moved" );
 
     $cg->discard_changes;
@@ -385,15 +393,16 @@ sub test_move_multiple_cgs_second_one_blocked : Tests(4) {
 
     my $cg1 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[3]->id, }, );
     my $cg2 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[4]->id, }, );
+    my $creature_type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5);
     my $creature1 = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg1->id,
         }
     );
     my $creature2 = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg2->id,
         }
     );
@@ -453,15 +462,16 @@ sub test_move_monsters : Tests(4) {
 
     my $cg1 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[0]->id, }, );
     my $cg2 = $self->{schema}->resultset('CreatureGroup')->create( { land_id => $land[5]->id, }, );
+    my $creature_type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5);
     my $creature1 = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg1->id,
         }
     );
     my $creature2 = $self->{schema}->resultset('Creature')->create(
         {
-            creature_type_id  => $self->{creature_type_2}->id,
+            creature_type_id  => $creature_type->id,
             creature_group_id => $cg2->id,
         }
     );

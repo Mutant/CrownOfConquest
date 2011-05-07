@@ -34,9 +34,11 @@ __PACKAGE__->numeric_columns(
 	},
 	party_tax_level_step => {
 		min_value => 0,
+		max_value => 100,
 	},		
 	base_party_tax => {
 		min_value => 0,
+		max_value => 100,
 	},
 	sales_tax => {
 		min_value => 0, 

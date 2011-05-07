@@ -587,8 +587,23 @@ sub banish_party : Local {
     
     $c->flash->{messages} = "Party banished";
     
-    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );
-            
+    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );            
+}
+
+sub records : Local {
+    my ($self, $c) = @_;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/records.html',
+				params => {
+				    kingdom => $c->stash->{kingdom},
+				},
+			}
+		]
+	);       
 }
 
 1;

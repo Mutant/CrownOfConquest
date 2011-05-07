@@ -187,6 +187,15 @@ sub generate_guards {
 		$mayor->update;
 	}
 	
+	# Somehow, mayors groups don't have sectors. Possibly an old bug, but we'll give them a sector if they
+	#  don't have one.
+	if (! $mayors_group->dungeon_grid_id) {
+	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
+        my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
+        $mayors_group->creature_group_id($random_sector->id);
+        $mayors_group->update; 
+	}
+	
 	# Add any garrisoned chars into the group
 	my @garrison_chars = $c->schema->resultset('Character')->search(
 		{

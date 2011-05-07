@@ -342,14 +342,11 @@ sub move_to : Local {
         croak 'Invalid town entrance';
     }
     elsif ($c->stash->{entered_town} || $c->forward('can_move_to_sector', [$new_land])) {   	
-        #$c->log->debug("Before p move_to: " . $c->stash->{party}->land_id);
-        
         $c->stash->{party}->move_to($new_land);
 
         $c->stash->{party}->update;
 
         # Fetch from the DB, since it may have changed recently
-        #$c->log->debug("After p move_to: " . $c->stash->{party}->land_id);
         $c->stash->{party_location} = $c->model('DBIC::Land')->find( { land_id => $c->stash->{party}->land_id, } );
 
         $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
@@ -511,17 +508,20 @@ sub can_move_to_sector : Private {
         return 0;
     }
     
-    # Check that the party has enough movement points
-    elsif ( $c->stash->{party}->turns < $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location) ) {
+    # Check that the party has enough movement points    
+    my $movement_cost = $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location);
+    if ( $c->stash->{party}->turns < $movement_cost ) {
         $c->stash->{error} = 'You do not have enough turns to move there';
         return 0;
     }
   
     # Can't move if a character is overencumbered
-    elsif ( $c->stash->{party}->has_overencumbered_character ) {
+    if ( $c->stash->{party}->has_overencumbered_character ) {
     	$c->stash->{error} = "One or more characters is carrying two much equipment. Your party cannot move";
     	return 0; 
-	}	
+	}
+	
+	$c->stash->{movement_cost} = $movement_cost;	
 	
 	return 1;
 }
@@ -538,9 +538,7 @@ sub kingdom : Local {
     );
     
     $Template::Directive::WHILE_MAX = 100000;
-    
-
-    
+        
     $land_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
     
     return $c->forward(

@@ -145,6 +145,7 @@ sub sector_menu : Private {
 					items                  => \@items,
 					kingdom                => $kingdom || undef,
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
+					movement_cost          => $c->stash->{movement_cost} // 0,
 				},
 				return_output => 1,
 			}

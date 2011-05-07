@@ -1,5 +1,8 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terrain_name %][% IF kingdom %], Kingdom of [% kingdom.name %][% END %])
+[% IF movement_cost %]
+<br>You used <b>[% movement_cost %]</b> turns moving here.
+[% END %]
 [% FOREACH next_building IN buildings %]
 	<br><br>There is a [% next_building.building_type.name %] here that is controlled by 
 	[% IF next_building.owner_id == party.id %]

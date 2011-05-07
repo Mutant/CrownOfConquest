@@ -14,6 +14,7 @@ use List::Util qw(shuffle);
 use Digest::SHA1 qw(sha1_hex);
 use MIME::Lite;
 use Data::Dumper;
+use HTML::Strip;
 
 sub login : Local {
     my ( $self, $c ) = @_;
@@ -149,9 +150,12 @@ sub register : Local {
     my $message;
 
     if ( $c->req->param('submit') ) {
+        my $hs = HTML::Strip->new();
+        my $name = $hs->parse($c->req->param('player_name'));
+        
         $message = eval {
             unless ( $c->req->param('email')
-                && $c->req->param('player_name')
+                && $name
                 && $c->req->param('password1')
                 && $c->req->param('password1') eq $c->req->param('password2')
                 && $c->validate_captcha( $c->req->param('captcha') ) )
@@ -216,7 +220,7 @@ sub register : Local {
             
             my $player = $c->model('DBIC::Player')->create(
                 {
-                    player_name       => $c->req->param('player_name'),
+                    player_name       => $name,
                     email             => $c->req->param('email'),
                     password          => sha1_hex($c->req->param('password1')),
                     verification_code => $verification_code,

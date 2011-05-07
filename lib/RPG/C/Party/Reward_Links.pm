@@ -15,10 +15,13 @@ sub default : Path {
         $params{activated} = 1;   
     }
     
-    my @reward_links = shuffle $c->model('DBIC::Reward_Links')->search(
+    my @reward_links = $c->model('DBIC::Reward_Links')->search(
         {
             %params,
         },
+        {
+            order_by => ['turn_rewards desc', 'rand()'],
+        }
     );
    
     # Create keys & links

@@ -59,12 +59,12 @@ sub kingdoms : Local {
         },
         {
             join => [
-                'parties',
                 {'sectors' => 'town'},
+                'parties',
             ],
             '+select' => [
-                { count => 'sectors.land_id', -as => 'total_land' },
-                { count => 'town.town_id', -as => 'town_count' },
+                { count => 'distinct sectors.land_id', -as => 'total_land' },
+                { count => 'distinct town.town_id', -as => 'town_count' },
                 { count => 'distinct parties.party_id', -as => 'party_count' },
             ],
             '+as' => [

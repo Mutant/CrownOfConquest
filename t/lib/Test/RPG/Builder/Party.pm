@@ -35,7 +35,7 @@ sub build_party {
         	party_id				=> $params{party_id},
             land_id                 => $params{land_id},
             player_id               => $params{player_id},
-            rank_separator_position => 2,
+            rank_separator_position => $params{rank_separator_position} // 2,
             turns                   => 100,
             gold                    => $params{gold} // 100,
             defunct                 => $params{defunct} || undef,

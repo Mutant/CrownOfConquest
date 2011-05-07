@@ -1090,7 +1090,7 @@ sub in_front_rank {
     # If character isn't in a party, say they're in the front rank
     return 1 unless $self->party_id;
 
-    return $self->party->rank_separator_position > $self->party_order;
+    return $self->party->rank_separator_position >= $self->party_order ? 1 : 0;
 }
 
 # Return the number of attacks allowed by this character

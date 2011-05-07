@@ -786,4 +786,32 @@ sub test_name_of_queen : Tests(1) {
     is($name, "Test1, Queen of Test Kingdom", "Character's display name includes queen");
 }
 
+sub test_in_front_rank : Tests(4) {
+    my $self = shift;  
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 4, rank_separator_position => 2);
+    $party->adjust_order;
+    
+    my @chars = $party->search_related(
+        'characters',
+        {},
+        {
+            order_by => 'party_order',
+        }
+    );
+
+    my %expected = (
+        $chars[0]->id => 1,
+        $chars[1]->id => 1,
+        $chars[2]->id => 0,
+        $chars[3]->id => 0,
+    );
+    
+    # WHEN / THEN
+    foreach my $char (@chars) {
+        is($char->in_front_rank, $expected{$char->id}, "Character in correct rank");
+    }
+}
+
 1;

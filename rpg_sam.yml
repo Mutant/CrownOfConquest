@@ -31,3 +31,7 @@ online_threshold: 5
 no_email: 1
 
 email_log_file: /home/sam/RPG/log/email_log.html
+
+dbg_free_buildings: 1
+
+town_count_for_kingdom_declaration: 3

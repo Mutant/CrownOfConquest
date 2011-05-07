@@ -593,6 +593,8 @@ sub add_stat_point : Local {
 	if ( my $stat = $character->get_column( $c->req->param('stat') ) ) {
 		$character->set_column( $c->req->param('stat'), $stat + 1 );
 		$character->stat_points( $character->stat_points - 1 );
+		$character->calculate_attack_factor;
+		$character->calculate_defence_factor;
 		$character->update;
 	}
 

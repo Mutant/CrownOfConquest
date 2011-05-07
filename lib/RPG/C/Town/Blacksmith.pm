@@ -209,6 +209,11 @@ sub upgrade : Local {
 			$durability_decrease = 0;
 		}
 	}
+	
+	my $character = $item->belongs_to_character;
+    $character->calculate_attack_factor;
+    $character->calculate_defence_factor;
+    $character->update;
 
 	# TODO: bit of a hack getting the name of the upgraded attribute with a regex...
 	my ($upgraded_attribute) = ( $variable->item_variable_name =~ /(.+) Upgrade$/ );

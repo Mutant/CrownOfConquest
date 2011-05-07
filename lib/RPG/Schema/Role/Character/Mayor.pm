@@ -47,6 +47,7 @@ sub lose_mayoralty {
 			$char->status('inn');
 			$char->status_context($town->id);			
 		}
+		$char->creature_group_id(undef);
 		$char->update;
 	}
 	

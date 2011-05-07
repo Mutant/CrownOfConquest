@@ -421,7 +421,7 @@ sub _move_cg {
         # Can't move to a town or sector that already has a creature group
         if ( !$sector->{town} && !$sector->{creature_group}) {
         	
-        	my $ctr_roll = ($cg->level * 20) - Games::Dice::Advanced->roll('1d20') - 100;
+        	my $ctr_roll = ($cg->level * 20) - Games::Dice::Advanced->roll('1d20') - 140;
         	$ctr_roll = 90 if $ctr_roll > 90;
         	if ($sector->{ctr} < $ctr_roll) {
 				$cant_move_reason{ctr}++;

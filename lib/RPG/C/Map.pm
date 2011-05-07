@@ -126,10 +126,10 @@ sub party_inner : Local {
         {
             inner => $inner,
             map_box_coords => {
-                'x_size' => $x_size,
-                'y_size' => $y_size,
-                'top_x' => $top_x,
-                'top_y' => $top_y,
+                'x_size' => int $x_size,
+                'y_size' => int $y_size,
+                'top_x' => int $top_x,
+                'top_y' => int $top_y,
             },
         }
     ));  

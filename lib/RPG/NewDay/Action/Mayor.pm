@@ -35,6 +35,13 @@ sub run {
 		
 		my $mayor = $town->mayor;
 		
+		if ($mayor->is_dead) {
+            # Hmm, the mayor is dead. This should really happen.
+            #  To be defensive, we'll just remove them
+            $mayor->lose_mayoralty;
+            undef $mayor; # Force new mayor to be generated
+		}
+		
 		unless ( $mayor ) {
 			$mayor = $self->create_mayor($town);
 			$town->mayor_rating(0);

@@ -784,10 +784,7 @@ sub hit {
                    	message => $town_history_msg,
            		}
            	);
-           	
-           	$town->mayor_rating(0);
-        	$town->peasant_state(undef);
-        	$town->last_election(undef);
+
    			$town->pending_mayor($killing_party->id);
    			$town->pending_mayor_date(DateTime->now());        	
         	$town->update;

@@ -504,6 +504,8 @@ sub change_allegiance : Local {
     }
     
     my $location = $town->location;
+    my $old_kingdom = $location->kingdom;
+    
     $location->kingdom_id( $c->req->param('kingdom_id') ? $kingdom->id : undef );
     $location->update;
     
@@ -536,6 +538,24 @@ sub change_allegiance : Local {
         $kingdom->highest_town_count($kingdom->towns->count);
         $kingdom->highest_town_count_day_id($c->stash->{today}->id);
         $kingdom->update;
+    }
+    
+    # Leave messages for old/new kings
+    if ($kingdom) {
+        $kingdom->add_to_messages(
+            {
+                message => "The town of " . $town->town_name . " is now loyal to our kingdom",
+                day_id => $c->stash->{today}->id,
+            }
+        );
+    }
+    if ($old_kingdom) {
+        $old_kingdom->add_to_messages(
+            {
+                message => "The town of " . $town->town_name . " is no longer loyal to our kingdom",
+                day_id => $c->stash->{today}->id,
+            }
+        );        
     }
     
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );

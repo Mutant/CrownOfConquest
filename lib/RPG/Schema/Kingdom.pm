@@ -71,6 +71,19 @@ sub quests_allowed {
     return $quest_count;   
 }
 
+sub towns {
+    my $self = shift;
+    
+    return $self->result_source->schema->resultset('Town')->search(
+        {
+            'location.kingdom_id' => $self->id,
+        },
+        {
+            join => 'location',
+        }   
+    );   
+}
+
 # Find the sectors that are part of a kingdom's border.
 #  Not terribly effcient, so probably should only be called offline
 # Note, only sectors with no sector to the top, bottom, left or right are considered on the border.

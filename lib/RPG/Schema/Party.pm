@@ -219,7 +219,13 @@ __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison',
 
 __PACKAGE__->has_many( 'messages', 'RPG::Schema::Party_Messages', 'party_id', );
 
-__PACKAGE__->numeric_columns(qw/gold/); # Can't use this for turns..
+# Can't use this for turns..
+__PACKAGE__->numeric_columns(qw/gold/,
+    rank_separator_position => {
+        min_value => 1,
+        max_value => 8,   
+    }
+); 
 
 with qw/
 	RPG::Schema::Role::BeingGroup

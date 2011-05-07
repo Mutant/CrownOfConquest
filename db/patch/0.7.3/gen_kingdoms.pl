@@ -36,7 +36,7 @@ for (1..12) {
         {
             name => $kingdom_name,
             colour => $colour,
-            inception_date => $today->id,
+            inception_day_id => $today->id,
         }
     );
     

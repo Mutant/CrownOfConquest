@@ -192,7 +192,7 @@ sub generate_guards {
 	if (! $mayors_group->dungeon_grid_id) {
 	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
         my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
-        $mayors_group->creature_group_id($random_sector->id);
+        $mayors_group->dungeon_grid_id($random_sector->id);
         $mayors_group->update; 
 	}
 	

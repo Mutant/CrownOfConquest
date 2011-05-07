@@ -155,13 +155,16 @@ sub _create_quests_of_type {
     $self->context->logger->debug("Attempting to create $number_to_create quests of type: " . $quest_type);    
     
     for (1..$number_to_create) {
-        my @eligble = $self->_find_eligible_parties($minimum_level, $quest_type, @$parties);
+        my @eligible = $self->_find_eligible_parties($minimum_level, $quest_type, @$parties);
         
-        next unless @eligble;
+        next unless @eligible;
         
-        @eligble = sort { $b->loyalty_for_kingdom($kingdom->id) <=> $a->loyalty_for_kingdom($kingdom->id) } shuffle @eligble;
+        # Sort eligible parties by loyalty. Note, we divide loyalty scores by 10, and remove decimals to break
+        #  up the parties a bit. Otherwise someone on a slightly higher loyalty is instantly going to get 1 of
+        #  every quest type
+        @eligible = sort { int ($b->loyalty_for_kingdom($kingdom->id) / 10) <=> int ($a->loyalty_for_kingdom($kingdom->id) / 10) } shuffle @eligible;
             
-        my $party = shift @eligble;
+        my $party = shift @eligible;
             
         my $quest = try {
             $c->schema->resultset('Quest')->create(

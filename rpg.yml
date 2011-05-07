@@ -293,9 +293,9 @@ ressurection_percent_xp_to_lose: 5
 news_day_range: 4
 
 # Cost of sage
-sage_direction_cost: 100
-sage_distance_cost: 200
-sage_location_cost: 800
+sage_direction_cost: 75
+sage_distance_cost: 100
+sage_location_cost: 600
 sage_item_find_cost: 100
 sage_find_dungeon_cost_per_level: 300
 

@@ -185,7 +185,7 @@ sub test_calculate_heal_cost_discount_available : Tests(1) {
        
 }
 
-sub test_become_mayor : Tests(6) {
+sub test_become_mayor : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
@@ -193,9 +193,7 @@ sub test_become_mayor : Tests(6) {
 	$town->mayor_rating(10);
 	$town->peasant_state('revolt');
 	$town->update;
-	
-	my $election = Test::RPG::Builder::Election->build_election($self->{schema}, town_id => $town->id, candidate_count => 2);
-	
+		
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
 	my @characters = $party->characters;
 	my $character = $characters[0];
@@ -207,11 +205,7 @@ sub test_become_mayor : Tests(6) {
 			prestige => -10,
 		},
 	);	
-	
-	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
-	$mayor->mayor_of($town->id);
-	$mayor->update;
-	
+
 	$self->{params}{character_id} = $character->id;
 	$self->{params}{town_id} = $town->id;
 	
@@ -227,18 +221,9 @@ sub test_become_mayor : Tests(6) {
 	$character->discard_changes;
 	is($character->mayor_of, $town->id, "Character now mayor of town");
 	
-	$mayor->discard_changes;
-	is($mayor->mayor_of, undef, "Old mayor updated correctly");
-	
-	$town->discard_changes;
-	is($town->mayor_rating, 0, "Approval rating reset");
-	is($town->peasant_state, undef, "Peasant state reset");
 	
 	$party_town->discard_changes;
-	is($party_town->prestige, 0, "Prestige reset");
-	
-	$election->discard_changes;
-	is($election->status, 'Cancelled', "Election cancelled");
+	is($party_town->prestige, 0, "Prestige reset");	
 	
 }
 

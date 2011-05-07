@@ -554,28 +554,6 @@ sub become_mayor : Local {
 
 	croak "Character not in party" unless $character;
 
-	# Remove existing mayor
-	my $mayor = $c->model('DBIC::Character')->find(
-		{
-			mayor_of => $town->id,
-		}
-	);
-	$mayor->lose_mayoralty;
-
-	# Leave a message for the mayor's party
-	if ($mayor->party_id) {
-		$c->model('DBIC::Party_Messages')->create(
-			{
-				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
-				. $town->town_name . ". " . ucfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
-				. $mayor->pronoun('posessive') . " may be resurrected there.",
-				alert_party => 1,
-				party_id => $mayor->party_id,
-				day_id => $c->stash->{today}->id,
-			}
-		);		
-	}
-
 	$character->mayor_of( $town->id );	
 	$character->update;
 
@@ -592,36 +570,19 @@ sub become_mayor : Local {
 		$party_town->prestige(0);
 		$party_town->update;	
 	}
-		
-	my $town_history_msg = "Mayor " . $mayor->character_name . " was disgraced in combat by " . $c->stash->{party}->name . ". The party appoints " .
-		$character->character_name . " the new mayor.";
-           		
-    if ($town->peasant_state eq 'revolt') {
-    	$town_history_msg .= " The peasants have given up their revolt now that there's a new mayor."; 
-    }
-    
-    # Cancel election, if there's one in progress
-    my $election = $town->current_election;
-    if ($election) {
-    	$election->status("Cancelled");
-    	$election->update;
-    	$town_history_msg .= " The upcoming election is cancelled.";
-    }
-           		
-	$town->add_to_history(
-   		{
-			day_id  => $c->stash->{today}->id,
-           	message => $town_history_msg,
-   		}
-   	);
-   	
-   	$town->mayor_rating(0);
-	$town->peasant_state(undef);
+
 	$town->pending_mayor(undef);
 	$town->pending_mayor_date(undef);
-	$town->last_election(undef);
-	$town->update;		
-   	
+	$town->update;
+	
+	$town->add_to_history(
+   		{
+			day_id  => $c->stash->{today}->id,,
+           	message => "The towns people allow the triumphant party " . $c->stash->{party}->name . " to appoint a new mayor. They select "
+           	    . $character->character_name . " for the job",
+   		}
+   	);	
+	  	
 	$c->model('DBIC::Party_Messages')->create(
 		{
 			message => "We deposed the mayor of " . $town->town_name . " and appointed " . $character->character_name . " to take over the mayoral duties there",

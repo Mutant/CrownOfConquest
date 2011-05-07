@@ -231,7 +231,7 @@ sub end_raid : Private {
 		$c->log->debug( $stats->{$enemy_num}{deaths} . " guards killed in battle, reducing prosperity" );
 	}
 
-	if ( $c->session->{spotted} || @battles ) {
+	if ( ! $mayor_killed && ($c->session->{spotted} || @battles) ) {
 		my $news = $c->forward(
 			'RPG::V::TT',
 			[

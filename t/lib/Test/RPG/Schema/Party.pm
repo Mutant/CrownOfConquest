@@ -16,6 +16,8 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Quest;
+use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Item;
 
 use Data::Dumper;
 use DateTime;
@@ -467,8 +469,67 @@ sub test_change_allegiance : Tests() {
     );
     is(scalar @quests, 2, "party has 2 kingdom quests");
     is($quests[0]->status, 'Terminated', "first quest was terminated");
-    is($quests[1]->status, 'Complete', "second quest is still complete");
+    is($quests[1]->status, 'Complete', "second quest is still complete");        
+}
+
+sub test_consume_items : Tests() {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    my @characters = $party->characters;
+    
+    my $item_type1 = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, category_name => 'Resource', item_type => 'Type1',
+
+    );
+    
+    my $item1 = Test::RPG::Builder::Item->build_item($self->{schema},  
+        character_id => $characters[0]->id, item_type_id => $item_type1->id,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 100,
+            }
+        ]        
+    );
+    
+    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},  
+        character_id => $characters[0]->id, item_type_id => $item_type1->id,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 100,
+            }
+        ]
+    );
         
+    my $item3 = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Resource',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 200,
+            }
+        ], character_id => $characters[1]->id, item_type_name => 'Type2');
+    
+    # WHEN
+    $party->consume_items(
+        'Resource',
+        (
+            'Type1' => 150,
+            'Type2' => 150,
+        )
+    );
+    
+    # THEN
+    $item1->discard_changes;
+    is($item1->variable('Quantity'), undef, "Item1 used up");
+
+    $item2->discard_changes;
+    is($item2->variable('Quantity'), 50, "Item2 used up");
+
+    $item3->discard_changes;
+    is($item3->variable('Quantity'), 50, "Item3 used up");
+       
 }
 
 1;

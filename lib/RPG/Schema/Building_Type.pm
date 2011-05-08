@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Math::Round qw(round);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Building_Type');
@@ -199,7 +200,14 @@ sub variable_param {
 sub label {
     my $self = shift;
     
-    return $self->name;   
+    return $self->name;
+}
+
+sub turns_needed {
+    my $self = shift;
+    my $party = shift;
+    
+    return round $self->labor_needed / $party->characters_in_party->count;   
 }
 
 1;

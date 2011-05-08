@@ -12,7 +12,6 @@ use POSIX;
 use List::Util qw(shuffle);
 use Set::Object qw(set);
 
-my %available_resources;
 my %available_tools;
 my $num_available_tools;
 
@@ -27,6 +26,8 @@ sub auto : Private {
 #    from the database, and the tool equipment from the currently cached party.
 sub get_building_info {
 	my ($self, $c) = @_;
+	
+	my %available_resources;
 
 	#  Get the resource and tool category id.
 	$c->stash->{resource_category} = $c->model('DBIC::Item_Category')->find({'item_category' => 'Resource'});
@@ -90,6 +91,8 @@ sub get_building_info {
 		
 		$c->stash->{building_info}{$next_type->building_type_id} = \%this_type;	
 	}
+	
+	$c->stash->{avialable_resources} = \%available_resources;
 }
 
 # calc_needs_by_party
@@ -99,6 +102,8 @@ sub calc_needs_by_party {
 	my ($self, $c, $building_info) = @_;
 
 	my $building_schema = $building_info->{'building_schema'};
+	
+	my %available_resources = %{ $c->stash->{avialable_resources} };
 	my ($adj_labor, $adj_res) = $self->optimize_tool_usage($building_schema, $available_resources{laborers_available},
 	 $num_available_tools);
 	#Carp::carp("Building ".$building_schema->name . " returned labor:".$adj_labor.", returned resources:\n".Dumper($adj_res));
@@ -328,6 +333,7 @@ sub create : Local {
 	}
 
 	my %available_items;
+	my %available_resources = %{ $c->stash->{avialable_resources} };
 	$available_items{'resources'} = \%available_resources;
 	$available_items{'tools'} = \%available_tools;
 		
@@ -371,14 +377,33 @@ sub add : Local {
 	}
 
 	#  Get info on this building type.
-	$self->get_building_info($c);
-	my $building_type = \$c->stash->{building_info}{$building_id};
+	my $building_type = $c->model('DBIC::Building_Type')->find(
+	   {
+	       building_type_id => $building_id,
+	   }
+    );
 	
 	#  Make sure the party has enough turns to build.
-	if ( $c->stash->{party}->turns < ${$building_type}->{turns_needed} ) {
-		$c->stash->{error} = "Your party needs at least " . ${$building_type}->{turns_needed} . " turns to create this building";
+	my $turns_needed = $building_type->turns_needed($c->stash->{party});
+	if ( $c->stash->{party}->turns < $turns_needed) {
+		$c->stash->{error} = "Your party needs at least " . $turns_needed . " turns to create this building";
 		$c->detach('create');		
 	}
+	
+	#  Make sure the party has the necessary resources.  If so, consume them.
+	#  Debug - if free buildings, don't deduct resources.
+	if (!defined RPG->config->{dbg_free_buildings} || RPG->config->{dbg_free_buildings} != 1) {
+		my %resources_needed = (
+	       'Clay'  => $building_type->clay_needed,
+	       'Iron'  => $building_type->iron_needed,
+	       'Wood'  => $building_type->wood_needed,
+	       'Stone' => $building_type->stone_needed,
+		);
+		if (!($c->stash->{party}->consume_items('Resource', %resources_needed))) {
+			$c->stash->{error} = "Your party does not have the resources needed to create this building";
+			$c->detach('create');			
+		}
+	}	
 
 	#  Create the building.
 	my $building = $c->model('DBIC::Building')->create(
@@ -387,7 +412,7 @@ sub add : Local {
 			building_type_id => $building_id,
 			owner_id => $c->stash->{party}->id,
 			owner_type => "party",
-			name => ${$building_type}->{name},
+			name => $building_type->name,
 			
 			#  For now, partial construction not allowed, so we use all the materials up front
 			'clay_needed' => 0,
@@ -398,14 +423,12 @@ sub add : Local {
 		}
 	);
 	
-	
-	
 	#  If this is an upgrade, then find the previous building and delete it.
 	my @pre_upgrade = $c->model('DBIC::Building')->search(
 		{
 			'land_id' => $c->stash->{party_location}->id,
-			'building_type.class' => ${$building_type}->{class},
-			'building_type.level' => ${$building_type}->{level}-1,
+			'building_type.class' => $building_type->class,
+			'building_type.level' => $building_type->level-1,
 		},
 		{
 			'join' => 'building_type',
@@ -419,23 +442,9 @@ sub add : Local {
 	
 	$c->forward('change_building_ownership', [$building]);
 
-	#  Make sure the party has the necessary resources.  If so, consume them.
-	#  Debug - if free buildings, don't deduct resources.
-	if (!defined RPG->config->{dbg_free_buildings} || RPG->config->{dbg_free_buildings} != 1) {
-		my @resources_needed;
-		foreach my $next_res (@{${$building_type}->{resources_needed}}) {
-			push(@resources_needed, $next_res->{res_name});
-			push(@resources_needed, $next_res->{amount});
-		}
-		if (!($c->stash->{party}->consume_items('Resource', @resources_needed))) {
-			$c->stash->{error} = "Your party does not have the resources needed to create this building";
-			$c->detach('create');			
-		}
-	}
-	
 	$c->model('DBIC::Party_Messages')->create(
 		{
-			message => "We created a " . ${$building_type}->{name} . " at " . $c->stash->{party}->location->x . ", "
+			message => "We created a " . $building_type->name . " at " . $c->stash->{party}->location->x . ", "
 			 . $c->stash->{party}->location->y,
 			alert_party => 0,
 			party_id => $c->stash->{party}->id,
@@ -443,7 +452,7 @@ sub add : Local {
 		}
 	);
 
-	$c->stash->{party}->turns($c->stash->{party}->turns - ${$building_type}->{turns_needed});
+	$c->stash->{party}->turns($c->stash->{party}->turns - $turns_needed);
 	$c->stash->{party}->update;
 	
 	my $message = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );

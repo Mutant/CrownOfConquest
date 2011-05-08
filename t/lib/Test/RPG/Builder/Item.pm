@@ -24,7 +24,7 @@ sub build_item {
 	unless ($item_type_id) {
 	    my $item_type = $schema->resultset('Item_Type')->find_or_create(
 	        {
-	            item_type        => 'Test1',
+	            item_type        => $params{item_type_name} || 'Test1',
 	            item_category_id => $item_cat->id,
 	            base_cost => $params{base_cost} // 1,
 	            weight => $params{weight} // 100,
@@ -56,7 +56,7 @@ sub build_item {
     my $item = $schema->resultset('Items')->create(
         {
             item_type_id   => $item_type_id,
-            character_id   => $params{char_id} || undef,
+            character_id   => $params{char_id} || $params{character_id} || undef,
             treasure_chest_id => $params{treasure_chest_id} || undef,
             equip_place_id => $eq_place_id,
             name => $params{name} || '',

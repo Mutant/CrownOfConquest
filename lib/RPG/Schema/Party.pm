@@ -661,26 +661,27 @@ sub get_equipment {
 	my $self = shift;
 	my @categories = @_;
 	
-	my @search_criteria = (
+	my %search_criteria = (
 			'belongs_to_character.party_id' => $self->id, 
-			'belongs_to_character.garrison_id' => { '=' => undef},
-			'belongs_to_character.mayor_of' => { '=' => undef},
+			'belongs_to_character.garrison_id' => { '=', undef},
+			'belongs_to_character.mayor_of' => { '=', undef},
+			'belongs_to_character.status' => { '=', undef},
 	);
 	my $count = @categories;
 	if ($count) {
-		my @item_types;
+		my %item_types;
 		foreach my $next_category (@categories) {
-			push(@item_types, ('item_category', $next_category));
+			push @{$item_types{item_category}}, $next_category;
 		}
 		if ($count > 1) {
-			push(@search_criteria, ('-or', \@item_types));
+			$search_criteria{'-or'} = \%item_types;
 		} else {
-			push(@search_criteria, @item_types);
+			%search_criteria = (%search_criteria, %item_types);
 		}
 	}
 
 	my @party_equipment = $self->result_source->schema->resultset('Items')->search(
-        	@search_criteria,
+        	\%search_criteria,
 	        {
 	        	join => ['belongs_to_character', 'item_type'],
 	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
@@ -694,52 +695,47 @@ sub get_equipment {
 #    both individual items and those with 'Quantity'.
 sub consume_items{
 	my $self = shift;
-	my @categories = split(',', shift);			# e.g. 'Resource' or 'Resource,Tool'
-
-	#  Remaining args consist of item type / count pairs.
-	my (@resources, %counts);
-	while (@_) {
-		my $next_item_type = shift;
-		push(@resources, $next_item_type);
-		$counts{$next_item_type} = shift;
-	}
-
+	my $categories = shift;
+	$categories = [$categories] unless ref $categories;
+    my %items_to_consume = @_;
+warn Dumper \%items_to_consume;
 	#  Get the party's equipment.
-	my @party_equipment = $self->get_equipment(@categories);
+	my @party_equipment = $self->get_equipment(@$categories);
 
 	#  Go through the items, decreasing the needed counts.
-	my @items_to_delete;
-	foreach my $next_item (@party_equipment) {
-		if (defined $counts{$next_item->item_type->item_type} and $counts{$next_item->item_type->item_type} > 0) {
-			my $quantity = $next_item->variable('Quantity') // 1;
-			if ($quantity <= $counts{$next_item->item_type->item_type}) {
-				$counts{$next_item->item_type->item_type} -= $quantity;
-				$quantity = -1;		# Flag that means we need to delete this item instead of simply decrementing its quantity.
+	my @items_to_consume;
+	foreach my $item (@party_equipment) {
+		if (defined $items_to_consume{$item->item_type->item_type} and $items_to_consume{$item->item_type->item_type} > 0) {
+			my $quantity = $item->variable('Quantity') // 1;
+
+			if ($quantity <= $items_to_consume{$item->item_type->item_type}) {
+				$items_to_consume{$item->item_type->item_type} -= $quantity;
+				$quantity = 0;
 			} else {
-				$quantity -= $counts{$next_item->item_type->item_type};
-				$counts{$next_item->item_type->item_type} = 0;
+				$quantity -= $items_to_consume{$item->item_type->item_type};
+				$items_to_consume{$item->item_type->item_type} = 0;
 			}
-			push(@items_to_delete, $next_item, $quantity);
+			push @items_to_consume, {
+			    item => $item, 
+			    quantity => $quantity
+			};
 		}
 	}
 	
 	#  If any of the counts are non-zero, we didn't have enough of the item.
-	foreach my $next_key (keys %counts) {
-		if ($counts{$next_key} > 0) {
+	foreach my $next_key (keys %items_to_consume) {
+		if ($items_to_consume{$next_key} > 0) {
 			return 0;
 		}
 	}
 	
 	#  We had enough resources, so decrement quantities and possibly delete the items.
-	for (my $i=0; $i<@items_to_delete; $i+=2) {
-		my $next_item = $items_to_delete[$i];
-		my $quantity = $items_to_delete[$i+1];
-
-		if ($quantity == -1) {
-			$next_item->delete;
+	foreach my $to_consume (@items_to_consume) {
+		if ($to_consume->{quantity} == 0) {
+			$to_consume->{item}->delete;
 		} else {
-			my $var = $next_item->variable_row('Quantity');
-			$var->item_variable_value($quantity);
+			my $var = $to_consume->{item}->variable_row('Quantity');
+			$var->item_variable_value($to_consume->{quantity});
 			$var->update;
 		}
 	}

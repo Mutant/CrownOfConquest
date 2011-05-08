@@ -38,6 +38,7 @@ sub run {
 		if ($mayor->is_dead) {
             # Hmm, the mayor is dead. This should really happen.
             #  To be defensive, we'll just remove them
+            $self->context->logger->debug("Mayor found dead - forcing generation of new one");
             $mayor->lose_mayoralty;
             undef $mayor; # Force new mayor to be generated
 		}
@@ -64,6 +65,7 @@ sub run {
 		}
 	
 		if ($mayor->is_npc) {
+		    $self->context->logger->debug("Mayor is NPC");
 			# Set default tax rates
 			if ($town->peasant_tax < 8 || $town->peasant_tax > 15) {
 				$town->peasant_tax(Games::Dice::Advanced->roll('1d8') + 7);

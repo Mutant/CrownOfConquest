@@ -57,14 +57,13 @@ sub generate_guards {
 			town_id => $town->id,
 		},
 	);
-	
 	$self->context->logger->debug("Hiring guards: " . Dumper \%guards_to_hire);
 			
 	my %creature_types_by_id = map { $_->id => $_ } @creature_types;
 
 	# Pay for guards
 	my $total_cost = 0;
-	foreach my $type_id (keys %guards_to_hire) {
+	foreach my $type_id (sort keys %guards_to_hire) {
 		next if $guards_to_hire{$type_id} <= 0;
 		
 		my $cost = $guards_to_hire{$type_id} * $creature_types_by_id{$type_id}->hire_cost;
@@ -86,6 +85,8 @@ sub generate_guards {
 		$town->update;
 	}
 	
+	$self->context->logger->debug("Total cost of guards: " . $total_cost);
+	
 	$town->add_to_history(
 		{
 			type => 'expense',
@@ -100,6 +101,8 @@ sub generate_guards {
 		$guards_to_hire{$creature->creature_type_id}--;	
 	}
 	
+	$self->context->logger->debug("Changes required: " . Dumper \%guards_to_hire);
+	
 	my $highest_level_type = $creature_types[$#creature_types];
 	
 	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
@@ -107,7 +110,7 @@ sub generate_guards {
 	# Ressurect any guards that were killed
 	map { $_->hit_points_current($_->hit_points_max); $_->update } @creatures;
 	
-	foreach my $type_id (keys %guards_to_hire) {
+	foreach my $type_id (sort keys %guards_to_hire) {
 		my $last_cg;
 		my $type = $creature_types_by_id{$type_id};
 		
@@ -123,7 +126,7 @@ sub generate_guards {
 					dungeon_grid_id   => $random_sector->id,
 				}
 			);
-			
+
 			$last_cg->add_creature( $type );
 			
 			$guards_to_hire{$type_id}--;
@@ -138,7 +141,7 @@ sub generate_guards {
 			my $to_delete = shift @creatures_of_type;
 						
 			my $cg = $to_delete->creature_group;
-			
+
 			$to_delete->delete;
 			
 			if ($cg->number_alive == 0) {

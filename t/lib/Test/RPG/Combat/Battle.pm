@@ -284,7 +284,7 @@ sub test_check_character_attack_with_ammo_last_shot : Tests(2) {
         
 }
 
-sub test_distribute_xp : Tests(12) {
+sub test_distribute_xp : Tests(15) {
 	my $self = shift;
 	
 	my @tests = (
@@ -383,6 +383,26 @@ sub test_distribute_xp : Tests(12) {
 			},
 			description => 'Two chars, take 50% each, odd number of xp',
 		},		
+		{
+			xp => 96,
+			characters => {
+				'1' => {
+					damage_done => 0,
+					attack_count => 0,
+					spell_cast => 0,
+				},
+				'2' => {
+					damage_done => 0,
+					attack_count => 0,
+					spells_cast => 1,
+				},
+			},
+			result => {
+				1 => 38,
+				2 => 58,	
+			},
+			description => 'Two chars, one gets extra for casting spells',
+		},		
 		
 	);
 	
@@ -390,15 +410,18 @@ sub test_distribute_xp : Tests(12) {
 		my @char_ids;
 		my %damage;
 		my %attacks;
+		my %spells_cast;
 
 		foreach my $char_id (keys %{$test->{characters}}) {
 			push @char_ids, $char_id;
 			$damage{$char_id}  = $test->{characters}{$char_id}{damage_done};
 			$attacks{$char_id} = $test->{characters}{$char_id}{attack_count};
+			$spells_cast{$char_id} = $test->{characters}{$char_id}{spells_cast} // 0;
 		}
 		
 		# Setup session		
-		my $session = {damage_done => \%damage, attack_count => \%attacks};
+		my $session = {damage_done => \%damage, attack_count => \%attacks, spells_cast => \%spells_cast};
+
 		my $battle = Test::MockObject->new();
 		$battle->set_always('session', $session);
 		

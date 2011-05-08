@@ -428,6 +428,7 @@ sub character_action {
 
         $character->last_combat_action('Attack');
 
+        $self->session->{spells_cast}{$character->id}++;
 		$self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
 	}
 	
@@ -827,28 +828,43 @@ sub distribute_xp {
 
 	my %awarded_xp;
 	$xp //= 0;    # Everyone gets 10% to start with
-	my $min_xp = int $xp * 0.10;
+	my $min_xp = int $xp * 0.1;
 	@awarded_xp{@$char_ids} = ($min_xp) x scalar @$char_ids;
 	$xp -= $min_xp * scalar @$char_ids;
 
-	# Work out total damage, and total attacks made
-	my ( $total_damage, $total_attacks ) = ( 0, 0 );
+	# Work out total damage, total attacks made and total spells cast
+	my ( $total_damage, $total_attacks, $total_spells_cast ) = ( 0, 0, 0 );
 	map { $total_damage  += $_ } values %{ $self->session->{damage_done} };
 	map { $total_attacks += $_ } values %{ $self->session->{attack_count} };
+	map { $total_spells_cast += $_ } values %{ $self->session->{spells_cast} };
 
-	# Assign each character XP points, up to a max of 30% of the pool
-	# (note, they can actually get up to 35%, but we've already given them 5% above)
-	# Damage done vs attacks recieved is weighted at 60/40
 	my $total_awarded = 0;
+	
+	# Weighting depend on whether any spells were cast
+	my ($damage_weight, $attack_weight, $spell_weight);
+	if ($total_spells_cast <= 0) {
+	   $damage_weight = 0.6;
+	   $attack_weight = 0.4;
+	   $spell_weight = 0;   
+	}
+	else {
+	   $damage_weight = 0.5;
+	   $attack_weight = 0.25;
+	   $spell_weight = 0.25;
+	}
+
+	# Assign each character XP points, up to a max of 35% of the pool
 	foreach my $char_id (@$char_ids) {
-		my ( $damage_percent, $attacked_percent ) = ( 0, 0 );
+		my ( $damage_percent, $attacked_percent, $spells_percent ) = ( 0, 0, 0 );
 
-		$damage_percent = ( ( $self->session->{damage_done}{$char_id} || 0 ) / $total_damage ) * 0.6
+		$damage_percent = ( ( $self->session->{damage_done}{$char_id} || 0 ) / $total_damage ) * $damage_weight
 			if $total_damage > 0;
-		$attacked_percent = ( ( $self->session->{attack_count}{$char_id} || 0 ) / $total_attacks ) * 0.4
+		$attacked_percent = ( ( $self->session->{attack_count}{$char_id} || 0 ) / $total_attacks ) * $attack_weight
 			if $total_attacks > 0;
+		$spells_percent = ( ( $self->session->{spells_cast}{$char_id} || 0 ) / $total_spells_cast ) * $spell_weight
+			if $total_spells_cast > 0;
 
-		my $total_percent = $damage_percent + $attacked_percent;
+		my $total_percent = $damage_percent + $attacked_percent + $spells_percent;
 		$total_percent = 0.35 if $total_percent > 0.35;
 
 		my $xp_awarded = round $xp * $total_percent;

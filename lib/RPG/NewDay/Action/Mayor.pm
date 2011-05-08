@@ -169,7 +169,7 @@ sub calculate_approval {
 	my $guards_killed_adjustment = - $guards_killed;
 		
 	my $party_tax_adjustment = int $tax_collected / 100;
-	my $peasant_tax_adjustment = - $town->peasant_tax / 2;
+	my $peasant_tax_adjustment = - $town->peasant_tax / 2 - 1;
 	
  	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 		{

@@ -324,7 +324,6 @@ sub move_dungeon_monsters {
 
         # Find sector to move to (if we can)
         my $allowed_sectors = $cg->dungeon_grid->sectors_allowed_to_move_to( 3, 0 );
-
         foreach my $sector_id (shuffle keys %$allowed_sectors) {
             next unless $allowed_sectors->{$sector_id};
 
@@ -332,7 +331,7 @@ sub move_dungeon_monsters {
             next unless $sector;
             
             # CGs with rare monsters not allowed to move out of the room
-            next if $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
+            next if $cg->has_rare_monster && $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
 
             if ( ! $sector->creature_group ) {
                 $cg->dungeon_grid_id( $sector_id );

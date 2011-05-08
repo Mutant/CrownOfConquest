@@ -15,6 +15,9 @@ use Test::More;
 use RPG::Ticker::LandGrid;
 
 use Test::RPG::Builder::CreatureType;
+use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::CreatureGroup;
 
 sub setup_creature_data : Test(startup=>1) {
     my $self = shift;
@@ -525,6 +528,58 @@ sub _create_land {
     }
 
     return @land;
+}
+
+sub test_move_dungeon_monsters : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 1,
+            y => 1,
+        },
+        bottom_right => {
+            x => 1,
+            y => 1,
+        },
+        create_walls => 1,
+        sector_doors => {
+            '1,1' => 'bottom',
+        },
+    );
+    my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 1,
+            y => 2,
+        },
+        bottom_right => {
+            x => 1,
+            y => 2,
+        },
+        create_walls => 1,
+        sector_doors => {
+            '1,2' => 'top',
+        },        
+    );
+    $dungeon->populate_sector_paths;
+    
+    my ($sector1) = $room1->sectors;
+    my ($sector2) = $room2->sectors;
+    
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector1->id);
+    
+    $self->{config}{creature_move_chance} = 100;
+    
+    # WHEN
+    $self->{creature_action}->move_dungeon_monsters();
+    
+    # THEN
+    $cg->discard_changes;
+    is($cg->dungeon_grid_id, $sector2->id, "CG moved");
 }
 
 1;

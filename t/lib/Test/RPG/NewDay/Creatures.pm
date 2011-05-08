@@ -582,4 +582,53 @@ sub test_move_dungeon_monsters : Tests(1) {
     is($cg->dungeon_grid_id, $sector2->id, "CG moved");
 }
 
+sub test_spawn_in_dungeon : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $creature_type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 1);
+    my $creature_type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 2);
+    my $creature_type3 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 3);
+    my $creature_type4 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 4);
+    my $creature_type5 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5);
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 1,
+            y => 1,
+        },
+        bottom_right => {
+            x => 3,
+            y => 3,
+        },
+        create_walls => 1,
+    );   
+    my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 4,
+            y => 1,
+        },
+        bottom_right => {
+            x => 6,
+            y => 3,
+        },
+        create_walls => 1,
+    );
+    
+    $self->{config}{dungeon_sectors_per_creature} = 5;
+    
+    # WHEN
+    $self->{creature_action}->_spawn_in_dungeon($self->{context}, $dungeon);
+    
+    # THEN
+    my $cg_count = $self->{schema}->resultset('CreatureGroup')->search( 
+        { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, 
+        { join => { 'dungeon_grid' => 'dungeon_room' }, } 
+    )->count;
+    is($cg_count, 3, "3 CGs generated");    
+       
+}
+
 1;

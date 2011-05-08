@@ -169,6 +169,8 @@ sub _spawn_in_dungeon {
     # Spawn random groups
     my $spawned = {};
 
+    my $redo_count = 0;
+
     for my $group_number ( 1 .. $number_of_groups_to_spawn ) {
         my $level_range_start = $dungeon->level * 5 - 7;
         $level_range_start = 1 if $level_range_start < 1;
@@ -176,19 +178,28 @@ sub _spawn_in_dungeon {
 
         my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->dungeon_id );
 
+        my $cg;
 		try {
-           	$c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
+           	$cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
 		}
 		catch {
 			if (ref $_ && $_->isa('RPG::Exception')) {
 				if ($_->type eq 'creature_type_error') {
 					# Couldn't find a creature type.. just skip this group
-					next;	
+					next;
 				}
 			}
 				
 			die $_;	
 		};
+		
+		unless ($cg) {
+            # CG wasn't created for some reasons, try again   
+            $redo_count++;
+            if ($redo_count <= 50) {
+                redo;
+            }
+		}
 
         if ( $group_number % 50 == 0 ) {
             $c->logger->info("Spawned $group_number groups...");

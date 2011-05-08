@@ -38,7 +38,7 @@ sub is_over_flee_threshold {
     	$total_hp   += $character->max_hit_points;
     }
 
-    my $percentage = ( $current_hp / $total_hp ) * 100;
+    my $percentage = $total_hp != 0 ? ( $current_hp / $total_hp ) * 100 : 0;
 
     return $percentage < $self->flee_threshold ? 1 : 0;
 }

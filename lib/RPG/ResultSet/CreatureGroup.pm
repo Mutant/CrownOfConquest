@@ -7,6 +7,8 @@ use base 'DBIx::Class::ResultSet';
 
 use RPG::Maths;
 use RPG::Exception;
+use RPG::ResultSet::RowsInSectorRange;
+
 use List::Util qw(shuffle);
 use Math::Round qw(round);
 
@@ -124,6 +126,26 @@ sub create_in_dungeon {
     $cg->update;
 
     return $cg;
+}
+
+sub search_in_dungeon_range {
+    my $self = shift;
+    my %params = @_;
+    
+    return RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset => $self,
+        relationship => 'dungeon_grid',
+        base_point => $params{base_point},
+        search_range => $params{search_range},
+        include_base_point => 1,
+        increment_search_by => 0,
+        criteria => {
+            'in_combat_with.party_id' => undef,
+        },
+        attrs => {
+             join => 'in_combat_with',  
+        }
+    );   
 }
 
 1;

@@ -36,7 +36,6 @@ sub complete_battles {
             'in_combat_with.party_id' => { '!=', undef },
             'in_combat_with.combat_type' => 'creature_group',
             'in_combat_with.defunct'  => undef,
-            'me.land_id' => { '!=', undef },
         },
         { prefetch => [ { 'creatures' => 'type' }, 'in_combat_with' ], },
     );
@@ -44,7 +43,12 @@ sub complete_battles {
 
     foreach my $cg (@cgs) {
         unless ( $cg->in_combat_with->is_online ) {
-            $self->execute_offline_battle( $cg->in_combat_with, $cg );
+            if ($cg->land_id) {
+                $self->execute_offline_battle( $cg->in_combat_with, $cg );
+            }
+            else {
+                $self->execute_offline_dungeon_battle( $cg->in_combat_with, $cg );
+            }
         }
     }
 }
@@ -146,48 +150,73 @@ sub initiate_battles {
     }
     
     # Now combat in dungeons
-    $cg_rs = $c->schema->resultset('CreatureGroup')->search(
-        { 
-            'parties.party_id' => { '!=', undef },
-            'parties.defunct' => undef, 
-        },
-        {
-            prefetch => [ { 'creatures' => 'type' }, { 'dungeon_grid' => 'parties' }, ],
-        },
-    );
-    
-    $c->logger->info("CGs in same dungeon sector as party: " . $cg_rs->count);
-    
-    CG: while (my $cg = $cg_rs->next) {
-        my @parties = $cg->dungeon_grid->parties;
-
-        foreach my $party (shuffle @parties) {
-            warn $party->is_online;
-            warn $party->in_combat;
-        	next if $party->is_online || $party->in_combat;
-        	
-            my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, undef, 'dungeon' );
-            
-            warn $offline_combat_count;
-            
-            my $dungeon = $party->location->dungeon;
-            
-            next if $offline_combat_count >= $c->config->{max_offline_combat_per_dungeon_level} * $dungeon->level;
-
-            if (Games::Dice::Advanced->roll('1d100') <= $c->config->{dungeon_offline_combat_chance}) {
-            	$party->initiate_combat($cg);
-                $self->execute_offline_dungeon_battle( $party, $cg, 1 );
-                $dungeon_combat_count++;
-                
-                next CG;
-            }
-        }
-    }    
+    $dungeon_combat_count = $self->initiate_dungeon_battles;
     
     $c->logger->info($combat_count . " wilderness battles executed");
     $c->logger->info($dungeon_combat_count . " dungeon battles executed");
     $c->logger->info($garrison_cg_combat_count . " garrison cg battles executed");
     $c->logger->info($garrison_party_combat_count . " garrison party battles executed");
+}
+
+sub initiate_dungeon_battles {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my $dungeon_combat_count;
+    
+    my @parties = $c->schema->resultset('Party')->search_by_last_action(
+        {
+            online => 0,
+            'me.dungeon_grid_id' => {'!=',undef},
+            defunct => undef,
+        },
+        {
+            prefetch => 'dungeon_grid',
+        },
+    );
+    
+    foreach my $party (shuffle @parties) {
+        next if $party->is_online || $party->in_combat;
+        
+        my $offline_combat_count = $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, undef, 'dungeon' );
+
+        my $sector = $party->dungeon_grid;
+        
+        my $dungeon = $sector->dungeon_room->dungeon;
+        
+        next if $offline_combat_count >= $c->config->{max_offline_combat_per_dungeon_level} * $dungeon->level;
+        
+        my $cg = $sector->available_creature_group;
+
+        # No CG in the sector with the party. See if there are any nearby cgs
+        if (! $cg) {        
+            my @cgs = $c->schema->resultset('CreatureGroup')->search_in_dungeon_range(
+                base_point => {
+                    x => $sector->x,
+                    y => $sector->y,  
+                },
+                search_range => 5 * 2 - 1,
+            );
+           
+            $cg = (shuffle @cgs)[0];
+            
+            if ($cg) {
+                $cg->dungeon_grid_id($sector->id);
+                $cg->update;   
+            }
+        }
+        
+        next unless $cg;
+        
+        if (Games::Dice::Advanced->roll('1d100') <= $c->config->{dungeon_offline_combat_chance}) {
+        	$party->initiate_combat($cg);
+            $self->execute_offline_dungeon_battle( $party, $cg, 1 );
+            $dungeon_combat_count++;
+        }                
+    }
+
+    return $dungeon_combat_count;
 }
 
 sub execute_offline_battle {

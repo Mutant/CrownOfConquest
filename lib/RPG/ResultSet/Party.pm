@@ -5,6 +5,8 @@ package RPG::ResultSet::Party;
 
 use base 'DBIx::Class::ResultSet';
 
+use DateTime;
+
 sub get_by_player_id {
     my $self      = shift;
     my $player_id = shift;
@@ -25,6 +27,22 @@ sub get_by_player_id {
             order_by => 'party_order',
         },
     );
+}
+
+sub search_by_last_action {
+    my $self = shift;
+    my $params = shift;
+    my $attrs = shift;
+        
+    my $comparison = delete $params->{online} ? '>=' : '<';
+        
+    return $self->search(
+        {
+            last_action => {$comparison,  DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} )},
+            %$params,
+        },
+        $attrs,
+    );   
 }
 
 1;

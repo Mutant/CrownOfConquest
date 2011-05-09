@@ -604,9 +604,8 @@ sub new_party_message : Local {
 sub disband : Local {
 	my ( $self, $c ) = @_;
 
-	# If this is a confirmation (and the referer details check out, disband the party. Otherwise check for confirmation
-	my $url_root = $c->config->{url_root};
-	if ( $c->req->param('confirmed') && $c->req->referer =~ /^$url_root/ && $c->req->referer =~ m|party/disband| ) {
+	# If this is a confirmation disband the party. Otherwise check for confirmation
+	if ( $c->req->param('confirmed') ) {
 		$c->stash->{party}->disband;
 		$c->res->redirect( $c->config->{url_root} );
 		return;

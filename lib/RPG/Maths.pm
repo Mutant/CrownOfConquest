@@ -20,12 +20,17 @@ sub weighted_random_number {
 	my ($cumulative_chance, %chances) = _calculate_weights(@numbers);
 	    
     my $roll = Games::Dice::Advanced->roll("1d" . $cumulative_chance);
-            
+    my $res;            
     foreach my $chance_to_check (sort {$a <=> $b} keys %chances) {    
         if ($roll <= $chance_to_check) {
-            return $chances{$chance_to_check};
+            $res = $chances{$chance_to_check};
+            last;
         }
     }
+    
+    confess "Got no res (roll: $roll)" . Dumper \%chances unless defined $res;
+    
+    return $res;
 }
 
 sub _calculate_weights {
@@ -50,7 +55,7 @@ sub _calculate_weights {
         $chances{$cumulative_chance} = $number;
     }
     
-    return (round($cumulative_chance), %chances);
+    return (int($cumulative_chance), %chances);
 }
 
 # Random number between a max and min

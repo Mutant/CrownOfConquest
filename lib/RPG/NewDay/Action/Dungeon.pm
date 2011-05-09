@@ -336,7 +336,6 @@ sub fill_empty_chests {
 	my $self = shift;
 	
 	my @chests = $self->context->schema->resultset('Treasure_Chest')->all;
-	warn 'fill chance: ' . $self->context->config->{empty_chest_fill_chance};
 	foreach my $chest (@chests) {	    
 		if ($chest->is_empty) {
 			if (Games::Dice::Advanced->roll('1d100') <= $self->context->config->{empty_chest_fill_chance}) {

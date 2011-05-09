@@ -243,7 +243,6 @@ sub end : Private {
             [
                 {
                     template => 'error.html',
-                    params   => { error_msgs => $c->error, },
                 }
             ]
         );

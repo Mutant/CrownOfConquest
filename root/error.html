@@ -1,16 +1,10 @@
-[% INCLUDE layout/guest_top.html %]
+[% INCLUDE top.html %]
 
 
-<div class="outer">
-<div class="content" style="color: black">
+<h3>Humble Apologies</h3>
 
-It seems an error has occured. The error message was:
-<br><br>
-[% db_err %]<br>
-[% FOREACH error_msg IN error_msgs %]
-[% error_msg %]<br>
-[% END %]
+It seems an error has occurred. The error details have been logged.
 <br>
 Please try what you were doing again. If the problem persists, please file a bug report. Thanks.
-</div>
-</div>
+
+[% INCLUDE bottom.html %]

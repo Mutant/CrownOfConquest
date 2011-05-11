@@ -215,6 +215,8 @@ sub create_quest : Private {
         }
     );   
     
+    $quest->create_party_offer_message;
+    
     $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );
 	
 }

@@ -94,7 +94,10 @@ sub set_quest_params {
     
     $self->days_to_complete(10);
     $self->min_level(RPG::Schema->config->{minimum_building_level});
-    $self->gold_value(10000);
+    
+    my $value = (Games::Dice::Advanced->roll('1d100') * 25) + 1000;
+    
+    $self->gold_value($value);
     $self->xp_value(1000);
     $self->update;
        

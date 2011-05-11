@@ -195,6 +195,8 @@ sub _create_quests_of_type {
             next;
         }
         
+        $quest->create_party_offer_message;
+        
         $kingdom->decrease_gold($quest->gold_value);
    
     } 

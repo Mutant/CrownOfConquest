@@ -54,7 +54,9 @@ sub set_quest_params {
     
     $self->days_to_complete(6 + $days_to_hold);
     $self->min_level(RPG::Schema->config->{minimum_garrison_level});
-    $self->gold_value(5000);
+    
+    my $value = (Games::Dice::Advanced->roll('1d100') * 10) + 500;
+    $self->gold_value($value);
     $self->xp_value(750);
     $self->update;    
     

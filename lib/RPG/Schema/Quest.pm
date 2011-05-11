@@ -83,6 +83,11 @@ sub insert {
     else {
         $self->insert_params($self->{_params});
     }
+    return $ret;
+}
+
+sub create_party_offer_message {
+    my $self = shift;
     
     if ($self->kingdom_id && $self->party_id) {    
         my $message = RPG::Template->process(
@@ -101,9 +106,7 @@ sub insert {
                 alert_party => 1,
             }
         );      
-    }
-
-    return $ret;
+    }    
 }
 
 sub delete {

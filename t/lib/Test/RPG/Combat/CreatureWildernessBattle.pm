@@ -624,7 +624,7 @@ sub test_check_for_flee_successful_flee : Tests(9) {
 	$cg->discard_changes;
 	is( $cg->land_id, 1, "Fled to correct land" );
 
-	my ( $name, $args ) = $combat_log->next_call(3);
+	my ( $name, $args ) = $combat_log->next_call(2);
 	is( $name, "xp_awarded", "xp awarded in combat log set" );
 	ok( $args->[1] > 0, "some xp awarded" ) || diag( "xp: " . $args->[1] );
 

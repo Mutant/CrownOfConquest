@@ -180,6 +180,7 @@ sub _spawn_in_dungeon {
 
         my $cg;
 		try {
+		    return if $sector_to_spawn->teleporter;
            	$cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
 		}
 		catch {
@@ -340,6 +341,9 @@ sub move_dungeon_monsters {
 
             my $sector = $c->schema->resultset('Dungeon_Grid')->find({ dungeon_grid_id => $sector_id });
             next unless $sector;
+            
+            # Don't move onto teleporters
+            next if $sector->teleporter;
             
             # CGs with rare monsters not allowed to move out of the room
             next if $cg->has_rare_monster && $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;

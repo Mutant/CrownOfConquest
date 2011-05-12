@@ -740,52 +740,12 @@ sub hit {
     if ($self->is_dead && $attacker) {
     	if (my $town = $self->mayor_of_town) {
     		# A mayor has died... 
-    		$self->lose_mayoralty;
     		
     		# The party that killed them is marked as 'pending mayor' of the town
     		# .. Attacker might be a party or a character  		
     		my $killing_party = $attacker->isa('RPG::Schema::Party') ? $attacker : $attacker->party; 	
 
-        	my $today = $self->result_source->schema->resultset('Day')->find_today;
-    		
-        	# Leave a message for the mayor's party
-        	if ($self->party_id) {
-        	    my $party = $self->party;
-        		$party->add_to_messages(
-        			{
-        				message => $self->character_name . " was killed by the party " . $killing_party->name . " and is no longer mayor of " 
-        				. $town->town_name . ". " . ucfirst $self->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
-        				. $self->pronoun('posessive') . " may be resurrected there.",
-        				alert_party => 1,
-        				party_id => $self->party_id,
-        				day_id => $today->id,
-        			}
-        		);		
-        	}
-        	
-        	my $town_history_msg = "Mayor " . $self->character_name . " was disgraced in combat by " . $killing_party->name . ". " . 
-        	   ucfirst $self->pronoun('subjective') . " has been thrown out of office in disgrace.";
-                   		
-            if ($town->peasant_state eq 'revolt') {
-            	$town_history_msg .= " The peasants have given up their revolt now that there's a new mayor."; 
-            }
-            
-            # Cancel election, if there's one in progress
-            my $election = $town->current_election;
-            if ($election) {
-            	$election->status("Cancelled");
-            	$election->update;
-            	$town_history_msg .= " The upcoming election is cancelled.";
-            }
-                   		
-        	$town->add_to_history(
-           		{
-        			day_id  => $today->id,
-                   	message => $town_history_msg,
-           		}
-           	);
-
-   			$town->pending_mayor($killing_party->id);
+  			$town->pending_mayor($killing_party->id);
    			$town->pending_mayor_date(DateTime->now());        	
         	$town->update;
     	}	

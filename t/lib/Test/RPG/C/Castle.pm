@@ -15,6 +15,7 @@ use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Character;
 
 use RPG::C::Castle;
 
@@ -110,4 +111,32 @@ sub test_check_for_creature_move_party_not_spotted_as_out_of_range : Tests(1) {
 	
 	# THEN
 	is($self->{session}{spotted}{$cg->id}, undef, "Party not spotted");
+}
+
+sub test_end_raid : Tests() {
+	my $self = shift;
+	
+	# GIVEN
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
+	
+	$mayor->mayor_of($town->id);
+	$mayor->update;
+	
+	$town->pending_mayor($party->id);
+	$town->update;
+	
+	$self->{stash}{party} = $party;	
+	
+	# WHEN
+	RPG::C::Castle->end_raid($self->{c}, $castle);
+	
+	# THEN
+	$mayor->discard_changes;
+	is($mayor->mayor_of, undef, "Mayor is no longer mayor");
+	
+	
+	   
 }

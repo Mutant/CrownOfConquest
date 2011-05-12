@@ -178,7 +178,7 @@ sub complete_quest : Private {
 
     my @details = $party_quest->set_complete();
 
-    my $xp_messages = $c->forward( '/party/xp_gain', [@details] );
+    my $xp_messages = $c->forward( '/party/xp_gain', [\@details] );
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
 

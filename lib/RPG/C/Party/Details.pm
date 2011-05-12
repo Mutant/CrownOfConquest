@@ -284,14 +284,20 @@ sub kingdom : Local {
 	   {
 	       active => 1,
 	       'me.kingdom_id' => {'!=', $c->stash->{party}->kingdom_id},
-	       'party_kingdoms.banished_for' => [0,undef],
-	       'party_kingdoms.party_id' => [$c->stash->{party}->id, undef],
 	   },
 	   {
-	       join => 'party_kingdoms',
 	       order_by => 'name',
 	   }
     );
+    
+    @kingdoms = grep { 
+        my $party_kingdom = $_->find_related('party_kingdoms',
+            {
+                'party_id' => $c->stash->{party}->id,
+            }
+        );
+        $party_kingdom && $party_kingdom->banished_for > 0 ? 0 : 1;
+    } @kingdoms;
     
     my @banned = $c->model('DBIC::Party_Kingdom')->search(
         {

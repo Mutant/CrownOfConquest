@@ -822,15 +822,17 @@ sub change_allegiance {
         croak "Cannot change allegiance if you already have your own kingdom\n";   
     }
     
-    my $party_kingdom = $new_kingdom->find_related(
-        'party_kingdoms',
-        {
-            party_id => $self->id,
-        }        
-    );
-    
-    if ($party_kingdom && $party_kingdom->banished_for > 0) {
-        croak "Can't change allegiance to a kingdom you are banned from\n";            
+    if ($new_kingdom) {
+        my $party_kingdom = $new_kingdom->find_related(
+            'party_kingdoms',
+            {
+                party_id => $self->id,
+            }        
+        );
+        
+        if ($party_kingdom && $party_kingdom->banished_for > 0) {
+            croak "Can't change allegiance to a kingdom you are banned from\n";            
+        }
     }
     	
     my $today = $self->result_source->schema->resultset('Day')->find_today;	

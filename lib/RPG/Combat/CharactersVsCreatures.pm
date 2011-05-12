@@ -88,7 +88,7 @@ sub creature_flee {
 
 	# See if the creatures want to flee... check this every 2 rounds
 	#  Only flee if cg level is lower than party
-	if ( $self->combat_log->rounds % 2 == 0 ) {
+	if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 2 == 0 ) {
 		if ( $self->creature_group->level < $self->character_group->level ) {
 		    my $level_diff = $self->character_group->level - $self->creature_group->level;		    
 		    

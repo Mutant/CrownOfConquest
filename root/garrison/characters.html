@@ -13,7 +13,7 @@
 	</div>
 </div>
 
-<h1><span id="name-header">[% garrison.display_name(1) %]</span> <a href="javascript:dijit.byId('change-name-diag').show()" class="main">Change</a></h1>
+<h1><span id="name-header">[% garrison.display_name(1) %]</span> <a href="#" onClick="javascript:dijit.byId('change-name-diag').show()" class="main">Change</a></h1>
 [% END %]
 
 <div [% UNLESS garrison.characters %]style="display: none"[% END %] id="garrison-list-outer">

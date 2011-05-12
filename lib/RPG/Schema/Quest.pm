@@ -336,8 +336,10 @@ sub terminate {
         
         if ($kingdom_message && ! $kingdom->king->is_npc) {        
             $kingdom->add_to_messages(
-                day_id => $day->id,
-                message => $kingdom_message,
+                {
+                    day_id => $day->id,
+                    message => $kingdom_message,
+                }
             );
         }
 

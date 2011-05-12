@@ -125,6 +125,7 @@ sub decline : Local {
     $quest->terminate(
         kingdom_message => $kingdom_message,
     );
+    $quest->update;
     
     $c->res->redirect( $c->config->{url_root} . "/quest/list" ); 
     

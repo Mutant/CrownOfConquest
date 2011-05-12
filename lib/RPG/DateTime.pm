@@ -12,8 +12,8 @@ sub time_since_datetime {
     
     return 'Never' unless $date_time;
     
-    my $now = DateTime->now;      
-    my $dur = $now->subtract_datetime($date_time);
+    my $now = DateTime->now;
+    my $dur = $date_time->subtract_datetime($now);
     
     my $str = "About ";
     if ($dur->years) {
@@ -22,6 +22,9 @@ sub time_since_datetime {
     elsif ($dur->months) {
         $str .= $dur->months . PL_N(" month", $dur->months);   
     }
+    elsif ($dur->weeks) {
+        $str .= $dur->weeks . PL_N(" week", $dur->weeks);   
+    }    
     elsif ($dur->days) {
         $str .= $dur->days . PL_N(" day", $dur->days);   
     }

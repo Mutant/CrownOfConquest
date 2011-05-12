@@ -35,7 +35,7 @@ sub run {
 		
 		my $mayor = $town->mayor;
 		
-		if ($mayor->is_dead) {
+		if ($mayor && $mayor->is_dead) {
             # Hmm, the mayor is dead. This should really happen.
             #  To be defensive, we'll just remove them
             $self->context->logger->debug("Mayor found dead - forcing generation of new one");

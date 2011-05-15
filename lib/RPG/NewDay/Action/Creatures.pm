@@ -383,7 +383,7 @@ sub refresh_rare_monsters {
     foreach my $rare_creature (@rare_creatures) {
         my $cg = $rare_creature->creature_group;
         
-        next if $cg->in_combat_with;
+        next if $cg && $cg->in_combat_with;
                 
         $rare_creature->hit_points_current($rare_creature->hit_points_max);
         $rare_creature->update;
@@ -395,7 +395,6 @@ sub refresh_rare_monsters {
             
             # Add some more guards.
             my $rare_ct = $rare_creature->type;
-            warn $rare_ct->id;
             my @guard_types = $c->schema->resultset('CreatureType')->search(
                 {
                     'level' => {

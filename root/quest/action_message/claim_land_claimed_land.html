@@ -1,4 +1,4 @@
-[% UNLESS quest.land_left_to_claim > 0 ~%]
+[% IF quest.land_left_to_claim > 0 ~%]
 	You've now claimed [% quest.param_current_value('Amount Claimed') %] sectors for your Kingdom Quest. ([% quest.land_left_to_claim %] more to claim)
 [% ELSE ~%]
 	You've now completed your Kingdom Quest!

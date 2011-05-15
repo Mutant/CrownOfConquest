@@ -32,7 +32,7 @@ sub get_sector_to_flee_to {
         last if $range > 3;
     }    
 
-    confess "Couldn't find land to flee to" unless $flee_sector;
+    confess "Couldn't find land to flee to: (fleeing group: " . ref($fleeing_group) . ", id: " . $fleeing_group->id . ")"  unless $flee_sector;
 
     $self->log->debug( "Fleeing to " . $flee_sector->x . ", " . $flee_sector->y );
 

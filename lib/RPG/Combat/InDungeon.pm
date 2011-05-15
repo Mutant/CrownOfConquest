@@ -17,7 +17,7 @@ sub get_sector_to_flee_to {
     my $flee_sector;
     
     my $range = 1;
-    OUTER: while (my $allowed_sectors = $sector->sectors_allowed_to_move_to( $range, $fleeing_group->group_type eq 'party' ? 1 : 0 ) ) {
+    OUTER: while (my $allowed_sectors = $sector->sectors_allowed_to_move_to( $range, 0 ) ) {
         foreach my $sector_id (shuffle keys %$allowed_sectors) {
             next unless $allowed_sectors->{$sector_id};
             

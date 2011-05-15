@@ -622,31 +622,6 @@ sub disband : Local {
 	);
 }
 
-# Award XP to all characters. Takes the amount of xp to award if it's the same for everyone, or a hash of
-#  character id to amount awarded
-# Returns an array with the display details of the changes
-sub xp_gain : Private {
-	my ( $self, $c, $details ) = @_;
-
-	my @messages;
-
-	foreach my $details (@$details) {
-		push @messages,
-			$c->forward(
-			'RPG::V::TT',
-			[
-				{
-					template      => 'party/xp_gain.html',
-					params        => $details,
-					return_output => 1,
-				}
-			]
-			);
-	}
-
-	return \@messages;
-}
-
 sub destroy_orb : Local {
 	my ( $self, $c ) = @_;
 

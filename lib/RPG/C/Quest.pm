@@ -179,7 +179,21 @@ sub complete_quest : Private {
 
     my @details = $party_quest->set_complete();
 
-    my $xp_messages = $c->forward( '/party/xp_gain', [\@details] );
+	my @messages;
+
+	foreach my $details (@details) {
+		push @messages,
+			$c->forward(
+    			'RPG::V::TT',
+    			[
+    				{
+    					template      => 'party/xp_gain.html',
+    					params        => $details,
+    					return_output => 1,
+    				}
+    			]
+            );
+	}
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
 
@@ -189,7 +203,7 @@ sub complete_quest : Private {
             {
                 template      => 'quest/completed_quest.html',
                 params        => { 
-                    xp_messages => $xp_messages,
+                    xp_messages => \@messages,
                     quest => $party_quest,
                 },
                 return_output => 1,

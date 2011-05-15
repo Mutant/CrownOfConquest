@@ -384,7 +384,7 @@ sub set_complete {
     
     my $group = $self->xp_awarded_to;
     
-    my $awarded_xp = $self->xp_value / $group->number_alive;    
+    my $awarded_xp = int $self->xp_value / $group->number_alive;    
     my @details = $group->xp_gain($awarded_xp);
     
     if ($self->town_id) {

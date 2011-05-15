@@ -192,24 +192,23 @@ sub end_raid : Private {
 	
 	# Check to see if party is now pending mayor of the town. i.e. the mayor was killed
 	my $mayor_killed = 0;
-	if ($town->pending_mayor == $c->stash->{party}->id) {
+	if ($town->pending_mayor == $c->stash->{party}->id and my $mayor = $town->mayor) {
 		$mayor_killed = 1;
 		
-		my $mayor = $town->mayor;
         $mayor->lose_mayoralty;
         
     	my $today = $c->stash->{today};
 		
     	# Leave a message for the mayor's party
     	if ($mayor->party_id) {
-    	    my $party = $self->party;
+    	    my $party = $mayor->party;
     		$party->add_to_messages(
     			{
     				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
     				. $town->town_name . ". " . ucfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
     				. $mayor->pronoun('posessive') . " may be resurrected there.",
     				alert_party => 1,
-    				party_id => $self->party_id,
+    				party_id => $mayor->party_id,
     				day_id => $today->id,
     			}
     		);		

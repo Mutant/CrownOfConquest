@@ -141,9 +141,13 @@ sub search_in_dungeon_range {
         increment_search_by => 0,
         criteria => {
             'in_combat_with.party_id' => undef,
+            'dungeon_room.dungeon_id' => $params{dungeon_id},
         },
         attrs => {
-             join => 'in_combat_with',  
+             join => [
+                'in_combat_with',
+                { 'dungeon_grid' => 'dungeon_room' }
+             ],  
         }
     );   
 }

@@ -197,6 +197,7 @@ sub initiate_dungeon_battles {
                     y => $sector->y,  
                 },
                 search_range => 5 * 2 - 1,
+                dungeon_id => $dungeon->id,
             );
            
             $cg = (shuffle @cgs)[0];

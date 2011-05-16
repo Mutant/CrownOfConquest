@@ -71,7 +71,7 @@ Type Of Quest:
 		<tr>
 			<td>Gold Reward:</td>
 			<td><input type="text" dojoType="dijit.form.NumberTextBox" name="gold_value" style="width: 50px"
-					constraints="{min:0,places:0}" required="true" invalidMessage="Please enter a valid value for gold">
+					constraints="{min:0,max:[% c.config.max_kingdom_quest_reward %],places:0}" required="true" invalidMessage="Please enter a valid value for gold">
 			</td>
 		</tr>
 		<tr>

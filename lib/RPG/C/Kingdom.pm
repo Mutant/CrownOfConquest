@@ -171,6 +171,10 @@ sub create_quest : Private {
 	croak "Invalid quest party\n" unless $quest_party->kingdom_id == $c->stash->{kingdom}->id &&
 	   $quest_party->level >= $quest_type->min_level;
 	   
+	   
+	if ($c->req->param('gold_value') > $c->config->{max_kingdom_quest_reward}) {
+	   croak "Exceeded maximum gold value\n";   
+	}
 	
     my @param_names = $c->model('DBIC::Quest_Param_Name')->search(
         {
@@ -520,6 +524,7 @@ sub create : Local {
         {
             name => $kingdom_name,
             colour => $colour,
+            inception_day_id => $c->stash->{today}->id,
         },
     );
     

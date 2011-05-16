@@ -567,6 +567,9 @@ max_banish_days: 30
 # Minimum number of parties in an NPC kingdom before they will start banishing disloyal parties
 npc_kingdom_min_parties: 10
 
+# Maximum amount of gold that can be given as a Kingdom quest reward
+max_kingdom_quest_reward: 25000
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

@@ -46,12 +46,12 @@ sub new {
     
     $self->tile(1);
     # See if we should use a 'rare' tile
-    if (Games::Dice::Advanced->roll('1d100') || 100 <= 15) {
+    if ((Games::Dice::Advanced->roll('1d100') || 100) <= 15) {
         $self->tile(Games::Dice::Advanced->roll('1d3')+1);
     }
     
     # See if there's an overlay
-    if (Games::Dice::Advanced->roll('1d100') || 100 <= 8) {
+    if ((Games::Dice::Advanced->roll('1d100') || 100) <= 8) {
         $self->overlay('skeleton');   
     }
     

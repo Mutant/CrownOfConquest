@@ -106,7 +106,7 @@ sub test_complete_quests : Tests(4) {
     
     $quest2->discard_changes;
     is($quest2->status, 'Complete', "Quest 2 has status set correctly");
-    is(scalar $party2->messages, 2, "Message added to party 2");
+    is(scalar $party2->messages, 1, "Message added to party 2");
 }
 
 1;

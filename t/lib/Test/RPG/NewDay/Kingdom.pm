@@ -116,7 +116,7 @@ sub test_cancel_quests_awaiting_acceptance : Tests(2) {
     is($quest->status, 'Terminated', 'Quest marked as terminated');
     
     my @messages = $party->messages;
-    is(scalar @messages, 2, "2 Messages added to party");     
+    is(scalar @messages, 1, "1 Message added to party");     
 }
 
 sub test_check_for_inactive_still_active : Tests(2) {

@@ -148,19 +148,30 @@ sub check_for_dungeon_deletion {
     my @dungeons = $c->schema->resultset('Dungeon')->search( { type => 'dungeon' }, { prefetch => 'location', }, );
 
     foreach my $dungeon (@dungeons) {
-        if ( Games::Dice::Advanced->roll('1d200') <= 1 ) {
+        if ( Games::Dice::Advanced->roll('1d100') <= 1 ) {
 
-            # Make sure no parties are in the dungeon
-            my $party_rs =
-                $c->schema->resultset('Party')
-                ->search( { 'dungeon.dungeon_id' => $dungeon->id, }, { join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' } }, }, );
-
-            if ( $party_rs->count > 0 ) {
-                $c->logger->info(
-                    'Not deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y . " as it has 1 or more parties inside" );
-                next;
+            # Any parties in the dungeon get busted back to the surface
+            my @parties = $c->schema->resultset('Party')->search( 
+                { 
+                    'dungeon.dungeon_id' => $dungeon->id, 
+                }, 
+                { 
+                    join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' } }, 
+                }, 
+            );
+            
+            foreach my $party (@parties) {
+                $party->dungeon_grid_id(undef);
+                $party->update;
+                $party->add_to_messages(
+                    {
+                        day_id => $c->current_day->id,
+                        alert_party => 1,
+                        message => "There's a puff of smoke, and we suddenly realise we're no longer in the dungeon, but back on the surface!",
+                    }
+                );   
             }
-
+            
             $c->logger->info( 'Deleting dungeon at: ' . $dungeon->location->x . ", " . $dungeon->location->y );
 
             # Delete the dungeon

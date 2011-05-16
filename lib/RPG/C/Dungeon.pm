@@ -257,6 +257,12 @@ sub move_to : Local {
     	{ prefetch => {'dungeon_room' => 'dungeon'} } 
 	);
 	
+	if (! $current_location) {
+        # No longer in the dungeon?
+        $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+        return;
+	}
+	
 	$c->stash->{dungeon} = $current_location->dungeon_room->dungeon;
 	$c->stash->{dungeon_type} = $c->stash->{dungeon}->type;
 

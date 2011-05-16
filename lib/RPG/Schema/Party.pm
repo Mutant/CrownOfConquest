@@ -818,7 +818,7 @@ sub change_allegiance {
     
     my $old_kingdom = $self->kingdom;
     
-    if ($old_kingdom && $old_kingdom->king->party_id == $self->id) {
+    if ($old_kingdom && defined $old_kingdom->king->party_id && $old_kingdom->king->party_id == $self->id) {
         croak "Cannot change allegiance if you already have your own kingdom\n";   
     }
     

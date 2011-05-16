@@ -291,7 +291,7 @@ sub check_for_inactive {
     )->count;
     
     return 0 if $town_count > 0;
-    
+  
     $kingdom->active(0);
     $kingdom->fall_day_id($c->current_day->day_id);
     $kingdom->update;
@@ -299,6 +299,23 @@ sub check_for_inactive {
     $kingdom->search_related('sectors')->update( { kingdom_id => undef } );
     
     my $king = $kingdom->king;
+
+    foreach my $party ($kingdom->parties) {
+        $party->change_allegiance(undef);
+        
+        if ($king->is_npc || $party->id != $king->party_id) {
+            $party->add_to_messages(
+                {
+                    day_id => $c->current_day->id,
+                    alert_party => 1,
+                    message => "The Kingdom of " . $kingdom->name . " has fallen. We are now free citizens",
+                }
+            );
+        }
+        
+        $party->update;
+    }
+
     $king->status(undef);
     $king->status_context(undef);
     $king->update;
@@ -312,8 +329,8 @@ sub check_for_inactive {
                 message => "Our mighty Kingdom of " . $kingdom->name . " has fallen, as we no longer own any towns. A sad day indeed.",
             },
         );
-    } 
-    
+    }
+   
     return 1;
 }
 

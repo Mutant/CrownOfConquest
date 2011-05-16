@@ -144,7 +144,7 @@ sub test_check_for_inactive_still_active : Tests(2) {
     
 }
 
-sub test_check_for_inactive_marked_inactive : Tests(12) {
+sub test_check_for_inactive_marked_inactive : Tests(13) {
     my $self = shift;
     
     # GIVEN
@@ -152,10 +152,12 @@ sub test_check_for_inactive_marked_inactive : Tests(12) {
     my @land = Test::RPG::Builder::Land->build_land($self->{schema}, 'x_size' => 3, 'y_size' => 3);
     foreach my $land (@land) {        
         $land->kingdom_id($kingdom->id);
-        $land->update;   
+        $land->update;
     }
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
     my $character = $kingdom->king;
+    
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
     
     my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
     
@@ -174,7 +176,10 @@ sub test_check_for_inactive_marked_inactive : Tests(12) {
     }
     
     $character->discard_changes;
-    is($character->status, undef, "Character is not longer king");    
+    is($character->status, undef, "Character is no longer king"); 
+    
+    $party2->discard_changes;
+    is($party2->kingdom_id, undef, "Party 2 no longer loyal to kingdom");
 }
 
 sub test_adjust_party_loyalty : Tests(1) {

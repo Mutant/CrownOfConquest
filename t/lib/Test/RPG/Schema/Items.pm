@@ -410,11 +410,14 @@ sub test_updating_via_method_item_updates_encumbrance : Tests(2) {
     is($character->encumbrance, 0, "Item's weight removed to character's encumbrance");
 }
 
-sub test_equipping_item_updates_stat_bonus : Tests(1) {
+sub test_equipping_item_updates_stat_bonus_including_af : Tests(2) {
 	my $self = shift;
 	
 	# GIVEN
-    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10);
+    $character->calculate_attack_factor;
+    $character->update;
+    
     my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
     $item->variable('Stat Bonus', 'strength');
     $item->variable('Bonus', 2);
@@ -426,7 +429,31 @@ sub test_equipping_item_updates_stat_bonus : Tests(1) {
     
     # THEN
     $character->discard_changes;
-    is($character->strength_bonus, 2, "Stat bonus increased correctly");		
+    is($character->strength_bonus, 2, "Stat bonus increased correctly");
+    is($character->attack_factor, 12, "Attack factor correctly updated");
+}
+
+sub test_equipping_item_updates_stat_bonus_including_df : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
+    $character->calculate_attack_factor;
+    $character->update;
+    
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'agility');
+    $item->variable('Bonus', 2);
+    $item->update;
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->agility_bonus, 2, "Stat bonus increased correctly");
+    is($character->defence_factor, 12, "Defence factor correctly updated");
 }
 
 sub test_unequipping_item_updates_stat_bonus : Tests(1) {
@@ -771,6 +798,50 @@ sub test_unequipping_item_updates_attack_factor : Tests(2) {
     is($init_af, 13, "Correct initial attack factor");
 
     is($character->attack_factor, 10, "Attack factor reduced correctly");		
+}
+
+sub test_equipping_item_updates_movement_factor_bonus : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 12);
+    $character->calculate_attack_factor;
+    $character->update;
+    
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['movement_bonus'], no_equip_place => 1);
+    $item->variable('Movement Bonus', '2');
+    $item->update;
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->movement_factor_bonus, 2, "Movement factor bonus increased correctly");
+    is($character->natural_movement_factor, 5, "Movement factor correct");
+}
+
+sub test_equipping_item_updates_with_con_bonus_updates_movement_factor : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 12);
+    $character->calculate_attack_factor;
+    $character->update;
+    
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    $item->variable('Stat Bonus', 'constitution');
+    $item->variable('Bonus', 4);
+    $item->update;
+    
+    # WHEN
+    $item->equip_place_id(1);
+    $item->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->natural_movement_factor, 4, "Movement factor correct");
 }
 
 1;

@@ -318,9 +318,9 @@ sub equip_place_id {
 				);
 				
 				if ($character) {				
-    				$self->_stat_bonus_trigger($new_equip_place_id, $character);
+    				my @stats_with_bonuses = $self->_stat_bonus_trigger($new_equip_place_id, $character);
     				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
-    				$self->_factors_trigger($new_equip_place_id, $character)
+    				$self->_factors_trigger($new_equip_place_id, $character, @stats_with_bonuses)
     				    unless $trigger_params->{no_factors_trigger};
     				
     				$character->update;
@@ -349,8 +349,11 @@ sub _stat_bonus_trigger {
 		}
 	);
 		
+	my @stats_with_bonuses;
+		
 	foreach my $stat_bonus (@stat_bonuses) {
 		my $stat  = $stat_bonus->variable('Stat Bonus');
+		push @stats_with_bonuses, $stat;
 		my $bonus = $stat_bonus->variable('Bonus');
 
 		my $method = "adjust_" . $stat . "_bonus";
@@ -358,7 +361,9 @@ sub _stat_bonus_trigger {
 		$bonus = -$bonus unless defined $new_equip_place_id; 
 		
 		$character->$method($bonus);		
-	}	
+	}
+	
+	return @stats_with_bonuses;
 }
 
 sub _movement_factor_bonus_trigger {
@@ -388,17 +393,29 @@ sub _factors_trigger {
 	my $self = shift;
 	my $new_equip_place_id = shift;
 	my $character = shift;
+	my @stats_with_bonuses = @_;
 	
 	return unless $character;
 
 	my $key = defined $new_equip_place_id ? 'add' : 'remove';
-	
+
 	if (my $af_attr = $self->attribute('Attack Factor')) {
-	   $character->calculate_attack_factor({$key => [$self]});   
+	   $character->calculate_attack_factor({$key => [$self]}); 
+	   return;  
+	}
+	# If we're not equipping something with AF, but the item changes str or agl, 
+	#  we need to calculate attack factor
+	elsif (grep { $_ ~~ [qw/strength agility/] } @stats_with_bonuses) {
+	   $character->calculate_attack_factor;
 	}
 	
 	if (my $df_attr = $self->attribute('Defence Factor')) {
-	   $character->calculate_defence_factor({$key => [$self]});   
+	   $character->calculate_defence_factor({$key => [$self]});
+	   return;   
+	}	
+	# Ditto DF
+	elsif (grep { $_ eq 'agility' } @stats_with_bonuses) {	
+	   $character->calculate_defence_factor;
 	}
 }
 

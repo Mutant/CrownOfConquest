@@ -54,6 +54,7 @@ sub lose_mayoralty {
    	$town->mayor_rating(0);
    	$town->peasant_state(undef);
    	$town->last_election(undef);
+   	$town->tax_modified_today(0);
    	$town->update;    	    	    		
 		
 }

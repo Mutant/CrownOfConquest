@@ -207,6 +207,12 @@ sub has_rare_monster {
     )->count >= 1 ? 1 : 0;   
 }
 
+sub in_combat {
+    my $self = shift;
+    
+    return $self->in_combat_with ? 1 : 0;
+}
+
 __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;

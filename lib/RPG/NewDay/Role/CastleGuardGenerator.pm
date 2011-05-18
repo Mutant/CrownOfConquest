@@ -212,6 +212,8 @@ sub generate_mayors_group {
 	) if $mayor->creature_group_id;
 	
 	unless ($mayors_group) {
+	    $self->context->logger->debug("Mayor doesn't have a group - generating a new one");
+	    
 		my @groups = $c->schema->resultset('CreatureGroup')->search(
 			{
 				'dungeon_room.dungeon_id' => $castle->id,
@@ -225,23 +227,29 @@ sub generate_mayors_group {
 			$mayors_group = (shuffle @groups)[0];			
 		}
 		else {
-			my $sector;
-			my $sector_rs = $castle->find_sectors_not_near_stairs(1);
-			
-			while ($sector = $sector_rs->next) {
-                next if $sector->creature_group;
-			}
-			
-			$mayors_group = $c->schema->resultset('CreatureGroup')->create(
+            $mayors_group = $c->schema->resultset('CreatureGroup')->create(
 				{
 					creature_group_id => undef,
-					dungeon_grid_id   => $sector->id,
 				}
 			);
-		}		
+		}
 
 		$mayor->creature_group_id($mayors_group->id);
 		$mayor->update;
+		
+        # Move the group into a sector away from the stairs
+        unless ($mayors_group->in_combat) {
+    		my $sector;
+    		my $sector_rs = $castle->find_sectors_not_near_stairs(1);
+    		
+    		while ($sector = $sector_rs->next) {
+                next if $sector->creature_group;
+                last;
+    		}
+    		
+    		$mayors_group->dungeon_grid_id($sector->id);
+    		$mayors_group->update;
+        }
 	}
 	
 	# Somehow, some mayor groups don't have sectors. Possibly an old bug, but we'll give them a sector if they

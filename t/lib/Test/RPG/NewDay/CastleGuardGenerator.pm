@@ -40,6 +40,9 @@ sub test_generate_guards_basic : Tests(3) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
 	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
@@ -74,6 +77,9 @@ sub test_generate_guards_high_prosperity : Tests(4) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 50);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;		
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
 	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
@@ -109,6 +115,9 @@ sub test_generate_guards_pays_for_guards_correct : Tests(3) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;	
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
 	
@@ -143,6 +152,9 @@ sub test_generate_guards_changes_as_per_requests : Tests(2) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;		
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 0);
 
@@ -186,6 +198,9 @@ sub test_generate_guards_changes_with_existing : Tests(3) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;		
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
 	
@@ -240,6 +255,9 @@ sub test_generate_guards_mayors_group : Tests(4) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 100, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;
 		
 	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
 	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
@@ -281,6 +299,9 @@ sub test_generate_guards_multiple_guard_types : Tests(3) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 520, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;		
 		
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
@@ -346,6 +367,9 @@ sub test_generate_guards_multiple_guard_types_firings_needed : Tests(3) {
 	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>5,y=>5}, dungeon_id => $castle->id);
 	my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>6,y=>6}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, gold => 520, prosperity => 10);
+	my $sector = ($room->sectors)[0];
+	$sector->stairs_up(1);
+	$sector->update;		
 		
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);

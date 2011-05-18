@@ -15,7 +15,8 @@ sub setup_context {
     my $day = Test::RPG::Builder::Day->build_day( $self->{schema} );
     
     $self->{mock_logger} = Test::MockObject->new();
-    $self->{mock_logger}->set_true('info'); 
+    $self->{mock_logger}->set_true('info');
+    $self->{mock_logger}->set_true('debug');  
 
     my $mock_context = Test::MockObject->new();
     $mock_context->set_always( 'schema',    $self->{schema} );

@@ -152,65 +152,7 @@ sub generate_guards {
 		} 
 	}
 	
-	# See if the mayor has a group (if there is one)
-	return unless $mayor;
-	
-	my $mayors_group;
-	$mayors_group = $c->schema->resultset('CreatureGroup')->find(
-		{
-			'creature_group_id' => $mayor->creature_group_id,
-		},
-	) if $mayor->creature_group_id;
-	
-	unless ($mayors_group) {
-		my @groups = $c->schema->resultset('CreatureGroup')->search(
-			{
-				'dungeon_room.dungeon_id' => $castle->id,
-			},
-			{
-				join => {'dungeon_grid' => 'dungeon_room'},
-			}
-		);
-		
-		if (@groups) {
-			$mayors_group = (shuffle @groups)[0];			
-		}
-		else {
-			my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
-			
-			$mayors_group = $c->schema->resultset('CreatureGroup')->create(
-				{
-					creature_group_id => undef,
-					dungeon_grid_id   => $random_sector->id,
-				}
-			);
-		}		
-
-		$mayor->creature_group_id($mayors_group->id);
-		$mayor->update;
-	}
-	
-	# Somehow, mayors groups don't have sectors. Possibly an old bug, but we'll give them a sector if they
-	#  don't have one.
-	if (! $mayors_group->dungeon_grid_id) {
-	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
-        my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
-        $mayors_group->dungeon_grid_id($random_sector->id);
-        $mayors_group->update; 
-	}
-	
-	# Add any garrisoned chars into the group
-	my @garrison_chars = $c->schema->resultset('Character')->search(
-		{
-			status => 'mayor_garrison',
-			status_context => $town->id,
-		}
-	);
-	
-	foreach my $character (@garrison_chars) {
-		$character->creature_group_id($mayors_group->id);
-		$character->update;
-	}	
+	$self->generate_mayors_group($castle, $town, $mayor);
 }
 
 sub calculate_guards_to_hire {
@@ -250,4 +192,79 @@ sub calculate_guards_to_hire {
 		$guards_to_hire->update;
 	}
 }
+
+sub generate_mayors_group {
+    my $self = shift;
+    my $castle = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    my $c = $self->context;
+	
+	# See if the mayor has a group (if there is one)
+	return unless $mayor;
+	
+	my $mayors_group;
+	$mayors_group = $c->schema->resultset('CreatureGroup')->find(
+		{
+			'creature_group_id' => $mayor->creature_group_id,
+		},
+	) if $mayor->creature_group_id;
+	
+	unless ($mayors_group) {
+		my @groups = $c->schema->resultset('CreatureGroup')->search(
+			{
+				'dungeon_room.dungeon_id' => $castle->id,
+			},
+			{
+				join => {'dungeon_grid' => 'dungeon_room'},
+			}
+		);
+		
+		if (@groups) {
+			$mayors_group = (shuffle @groups)[0];			
+		}
+		else {
+			my $sector;
+			my $sector_rs = $castle->find_sectors_not_near_stairs(1);
+			
+			while ($sector = $sector_rs->next) {
+                next if $sector->creature_group;
+			}
+			
+			$mayors_group = $c->schema->resultset('CreatureGroup')->create(
+				{
+					creature_group_id => undef,
+					dungeon_grid_id   => $sector->id,
+				}
+			);
+		}		
+
+		$mayor->creature_group_id($mayors_group->id);
+		$mayor->update;
+	}
+	
+	# Somehow, some mayor groups don't have sectors. Possibly an old bug, but we'll give them a sector if they
+	#  don't have one.
+	if (! $mayors_group->dungeon_grid_id) {
+	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
+        my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
+        $mayors_group->dungeon_grid_id($random_sector->id);
+        $mayors_group->update; 
+	}
+	
+	# Add any garrisoned chars into the group
+	my @garrison_chars = $c->schema->resultset('Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $town->id,
+		}
+	);
+	
+	foreach my $character (@garrison_chars) {
+		$character->creature_group_id($mayors_group->id);
+		$character->update;
+	}	    
+}
+
 1;

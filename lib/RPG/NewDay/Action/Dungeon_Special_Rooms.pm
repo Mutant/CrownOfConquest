@@ -72,68 +72,12 @@ sub generate_special_rooms {
     
         $c->logger->debug("Using floor $floor_to_use to generate special room");
        
-        # Find stairs up sector
-        my $stairs_sector = $c->schema->resultset('Dungeon_Grid')->find(
-            {
-                'dungeon_room.dungeon_id' => $dungeon->id,
-                'dungeon_room.floor' => $floor_to_use,
-                'stairs_up' => 1,
-                
-            },
-            {
-                'join' => 'dungeon_room',
-            }        
-        );
-        
-        return unless $stairs_sector;
-        
-        my $stairs_coord = {
-            x => $stairs_sector->x,
-            y => $stairs_sector->y,        
-        };
-        
-        # Find floor dimensions
-        my $floor_dimensions = $dungeon->get_coord_range_of_floor($floor_to_use);
-        
-        # Get minimum range from stairs
-        my $dist_from_top_left = RPG::Map->get_distance_between_points(
-            $floor_dimensions->[0],
-            $stairs_coord,
-        );
-        
-        my $dist_from_bottom_right = RPG::Map->get_distance_between_points(
-            $floor_dimensions->[1],
-            $stairs_coord,
-        );
-        
-        my $min_dist_from_stairs_allowed = ($dist_from_top_left > $dist_from_bottom_right ? $dist_from_top_left : $dist_from_bottom_right) - 5;
-        $min_dist_from_stairs_allowed = 5 if $min_dist_from_stairs_allowed < 5;
-    
-        # Query all sectors in the floor
-        my $sectors_in_floor_rs = $c->schema->resultset('Dungeon_Grid')->search(
-            {
-                'dungeon_room.dungeon_id' => $dungeon->id,
-                'dungeon_room.floor' => $floor_to_use,
-            },
-            {
-                'join' => 'dungeon_room',
-                'order_by' => \'rand()',
-            }
-        );
+        # Find sectors far enough away from stairs
+        my $sectors_in_floor_rs = $dungeon->find_sectors_not_near_stairs($floor_to_use);
         
         my $room_to_use;
         # Find a room with a sector min distance from stairs, without a special room, and at least 4 sectors in size
         while (my $sector = $sectors_in_floor_rs->next) {
-            my $dist = RPG::Map->get_distance_between_points(
-                {
-                    x => $sector->x,
-                    y => $sector->y,
-                },
-                $stairs_coord,
-            );
-            
-            next unless $dist >= $min_dist_from_stairs_allowed;
-            
             my $room = $sector->dungeon_room;
             
             next if $room->special_room_id;

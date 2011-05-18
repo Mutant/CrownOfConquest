@@ -195,4 +195,39 @@ sub test_delete_inprogress_quest : Tests(2) {
 	is(defined $message, 1, "message added for party"); 
 }
 
+sub test_find_sectors_not_near_stairs : Tests(41) {
+    my $self = shift;
+    
+    # GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 10, y => 10},		
+	);
+	my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 1},
+		bottom_right => {x => 15, y => 10},		
+	);
+	
+	foreach my $sector ($dungeon_room1->sectors) {
+	   if ($sector->x == 6 and $sector->y == 5) {
+	       $sector->stairs_up(1);
+	       $sector->update;   
+	   }   
+	}
+	
+	# WHEN
+	my $sector_rs = $dungeon->find_sectors_not_near_stairs(1);
+	
+	# THEN
+	is($sector_rs->count, 40, "Correct number of sectors returned");
+	foreach my $sector ($sector_rs->all) {
+	   cmp_ok($sector->x, '>=', 12, "Sector " . $sector->x . ", " . $sector->y . " in correct range");
+	}
+}
+
 1;

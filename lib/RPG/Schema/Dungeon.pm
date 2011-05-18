@@ -617,4 +617,81 @@ sub get_coord_range_of_floor {
     ];      
 }
 
+# Calculate a value that is a good distance from the stairs of a given floor, 
+#  based on the size of the floor
+sub find_min_distance_to_stairs {
+    my $self = shift;
+    my $floor = shift;
+    my $stairs_sector = shift;
+        
+    return unless $stairs_sector;
+        
+    my $stairs_coord = {
+        x => $stairs_sector->x,
+        y => $stairs_sector->y,        
+    };
+    
+    # Find floor dimensions
+    my $floor_dimensions = $self->get_coord_range_of_floor($floor);
+    
+    # Get minimum range from stairs
+    my $dist_from_top_left = RPG::Map->get_distance_between_points(
+        $floor_dimensions->[0],
+        $stairs_coord,
+    );
+    
+    my $dist_from_bottom_right = RPG::Map->get_distance_between_points(
+        $floor_dimensions->[1],
+        $stairs_coord,
+    );
+    
+    my $min_dist_from_stairs_allowed = ($dist_from_top_left > $dist_from_bottom_right ? $dist_from_top_left : $dist_from_bottom_right) - 5;
+    $min_dist_from_stairs_allowed = 5 if $min_dist_from_stairs_allowed < 5;
+    
+    return $min_dist_from_stairs_allowed;
+}
+
+# Return a (randomised) result set of sectors that aren't near the stairs on the specified floor
+sub find_sectors_not_near_stairs {
+    my $self = shift;
+    my $floor = shift;
+  
+    my $stairs_sector = $self->result_source->schema->resultset('Dungeon_Grid')->find(
+        {
+            'dungeon_room.dungeon_id' => $self->id,
+            'dungeon_room.floor' => $floor,
+            'stairs_up' => 1,
+            
+        },
+        {
+            'join' => 'dungeon_room',
+        }        
+    );    
+
+    my $min_dist_from_stairs = $self->find_min_distance_to_stairs($floor, $stairs_sector);
+    
+    return $self->result_source->schema->resultset('Dungeon_Grid')->search(
+        {
+            -and => [
+                'dungeon_room.dungeon_id' => $self->id,
+                'dungeon_room.floor' => $floor,                
+                [
+                    'x' => [
+                        {'<', $stairs_sector->x - $min_dist_from_stairs},
+                        {'>', $stairs_sector->x + $min_dist_from_stairs},
+                    ],
+                    'y' => [
+                        {'<', $stairs_sector->y - $min_dist_from_stairs},
+                        {'>', $stairs_sector->y + $min_dist_from_stairs},
+                    ],                    
+                ],
+            ],
+        },
+        {
+            'join' => 'dungeon_room',
+            'order_by' => \'rand()',
+        }
+    );    
+}
+
 1;

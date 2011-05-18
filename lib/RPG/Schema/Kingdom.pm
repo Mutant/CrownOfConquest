@@ -18,8 +18,8 @@ __PACKAGE__->set_primary_key('kingdom_id');
 
 __PACKAGE__->numeric_columns(
 	mayor_tax => {
-		min_value => 0, 
-		max_value => 100,
+		min_value => 1, 
+		max_value => 25,
 	},
 	gold => {
 		min_value => 0,

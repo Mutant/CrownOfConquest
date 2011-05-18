@@ -32,7 +32,13 @@ sub run {
 		$level = 1 if $level < 1;
 
 		if (my $castle = $town->castle) {
-			$self->fill_chests($castle);
+		    my @chests;
+            if (Games::Dice::Advanced->roll('1d100') < $c->config->{castle_treasury_movement_chance}) {
+                $self->context->logger->debug("Regenerating castle's treasury");
+                @chests = $self->generate_chests($castle);
+            }
+		    
+			$self->fill_chests($castle, @chests);
 			$castle->level($level);
 			$castle->update;
 			next;
@@ -63,21 +69,24 @@ sub generate_chests {
 	my $self = shift;
 	my $dungeon = shift;
 	
+	# Delete any existing chests
+	$self->context->schema->resultset('Treasure_Chest')->search(
+	   {
+	       'dungeon_room.dungeon_id' => $dungeon->id,
+	   },
+	   {
+	       join => {'dungeon_grid' => 'dungeon_room'},
+	   }
+	)->delete;
+	
+	# Find the room to use
+	my $sector_rs = $dungeon->find_sectors_not_near_stairs(1);
+	
 	my $room;
-	foreach my $room_to_check (shuffle $dungeon->rooms) {
-		$room = $room_to_check;
-		
-		# Don't use room with the stairs
-		my $sector = $room_to_check->search_related('sectors',
-			{
-				'stairs_up' => 1,
-			}
-		);
-		next if $sector;
-		
-		if ($room_to_check->sectors->count > 10) {
-			last;	
-		}
+	while (my $sector = $sector_rs->next) {
+	   if ($sector->dungeon_room->sectors->count > 6) {
+            $room = $sector->dungeon_room;
+	   }   
 	}
 	
 	my @sectors = $room->sectors;

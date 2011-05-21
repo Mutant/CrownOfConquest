@@ -76,7 +76,7 @@ sub new_day {
 		            log    => $char->name . " was healed " . $actual . " hit points by " . $char->pronoun('posessive-subjective') 
 		            			. ' ' . $item->display_name,
 		        }
-	    	);
+	    	) if $char->party_id;
 		}
 		
 	}

@@ -109,8 +109,11 @@ sub sector_menu : Private {
 	my $can_raze_building = 0;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
 		$can_build_building = ! @buildings && $c->stash->{party_location}->building_allowed($c->stash->{party}->id) ? 1 : 0;
-		$can_seize_building = 1;
-		$can_raze_building = 1;
+		
+		if (! $garrison) {
+		    $can_seize_building = 1;
+		    $can_raze_building = 1;
+		}
 	}
 
 	my @items = $c->stash->{party_location}->items;

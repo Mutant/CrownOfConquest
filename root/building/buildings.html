@@ -85,8 +85,11 @@ Buildings give benefits to a garrison in the same sector.
 		[% END %]
 	</div>
 	<br>
+	
 	<div align="center">
-	<button id="raze-building" onClick="document.location='[% base %]building/raze'; return false;">Raze Building</button>
+	[% IF ! garrison_in_sector %]
+		<button id="raze-building" onClick="document.location='[% base %]building/raze'; return false;">Raze Building</button>
+	[% END %]
 	[% IF party.kingdom_id %]
 		<button id="cede-building" onClick="document.location='[% base %]building/cede'; return false;">Cede Building</button>
 	[% END %]

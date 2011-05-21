@@ -345,6 +345,7 @@ sub create : Local {
 				available_buildings => \@available_buildings,
 				available_items => \%available_items,
 				existing_buildings => \@existing_buildings,
+				garrison_in_sector => $c->stash->{party_location}->garrison ? 1 : 0, 
             },
         }]
     );			
@@ -468,6 +469,10 @@ sub seize : Local {
 	if ( $c->stash->{party}->level < $c->config->{minimum_building_level} ) {
 		croak "You can't seize building - your party level is too low";
 	}
+	
+	if ( $c->stash->{party_location}->garrison ) {
+	   croak "Can't seize a building with a garrison";   
+	}	
 
 	#   Grab the building list, report on each on seized.
 	my @existing_buildings = $c->model('DBIC::Building')->search(
@@ -583,6 +588,10 @@ sub raze : Local {
 	if ( $c->stash->{party}->turns < $raze_turns_needed) {
 		croak "Your party needs at least " . $raze_turns_needed . " turns to raze " .
 		 ($count > 1 ? "this building" : "these buildings");
+	}
+	
+	if ( $c->stash->{party_location}->garrison ) {
+	   croak "Can't raze a building with a garrison";   
 	}
 
 	#  Delete the buildings.  Assume all are owned by the same player (could be us).

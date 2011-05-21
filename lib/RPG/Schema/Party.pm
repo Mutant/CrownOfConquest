@@ -698,7 +698,7 @@ sub consume_items{
 	my $categories = shift;
 	$categories = [$categories] unless ref $categories;
     my %items_to_consume = @_;
-warn Dumper \%items_to_consume;
+
 	#  Get the party's equipment.
 	my @party_equipment = $self->get_equipment(@$categories);
 

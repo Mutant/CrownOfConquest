@@ -49,6 +49,12 @@ sub party_attacks : Local {
 
 sub execute_attack : Private {
 	my ( $self, $c, $creature_group ) = @_;
+	
+	if ($c->stash->{party}->turns <= 0) {
+		$c->stash->{error} = "You do not have enough turns to attack the creatures";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;   
+	}
 
 	if ($creature_group) {
 		$c->stash->{creature_group} = $creature_group;
@@ -58,7 +64,7 @@ sub execute_attack : Private {
 		$c->forward( '/panel/refresh', [ 'messages', 'party' ] );
 	}
 	else {
-		$c->stash->{messages} = "The creatures have moved, or have been attacked by someone else.";
+		$c->stash->{error} = "The creatures have moved, or have been attacked by someone else.";
 		$c->forward( '/panel/refresh', ['messages'] );
 	}
 

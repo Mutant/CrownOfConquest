@@ -944,6 +944,12 @@ sub open_chest : Local {
 
     croak "No chest here" unless $current_location->treasure_chest;
     
+	if ($c->stash->{party}->turns <= 0) {
+		$c->stash->{error} = "You do not have enough turns to open the chest";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;   
+	}    
+    
     if ($current_location->treasure_chest->trap) {
     	$c->detach('handle_chest_trap', [$current_location]);
     }

@@ -5,7 +5,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% END %]
 [% FOREACH next_building IN buildings %]
 	<br><br>There is a [% next_building.building_type.name %] here that is controlled by 
-	[% IF next_building.owner_id == party.id %]
+	[% IF next_building.owner_id == party.id && next_building.owner_type == 'party' %]
 		you (<a href="[% base %]/building/create">Manage</a>)
 	[% ELSE %]
 		[% next_building.owner_name %] 

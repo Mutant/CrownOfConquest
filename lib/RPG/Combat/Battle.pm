@@ -320,6 +320,7 @@ sub character_action {
 	my $autocast = $character->last_combat_param1 eq 'autocast' ? 1 : 0;
 	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
+	    $self->log->debug($character->name . " is autocasting " . $spell->spell_name . " on " . $target->name);
         $character->last_combat_action('Cast');
 		$character->last_combat_param1( $spell->id );
 		$character->last_combat_param2( $target->id );
@@ -407,7 +408,8 @@ sub character_action {
 
 		my $target;
 		if ( $target_type eq 'character' ) {
-			$target = $self->combatants_by_id->{'character'}{ $character->last_combat_param2 };
+			$target = $self->combatants_by_id->{'character'}{ $character->last_combat_param2 } ||
+                $self->combatants_by_id->{'creature'}{ $character->last_combat_param2 };
 		}
 		else {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );

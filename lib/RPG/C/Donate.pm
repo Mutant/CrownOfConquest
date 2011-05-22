@@ -19,7 +19,7 @@ sub default : Path {
     );
 }
 
-sub thankyou : Path {
+sub thankyou : Local {
     my ($self, $c) = @_;
     
     $c->forward('RPG::V::TT',

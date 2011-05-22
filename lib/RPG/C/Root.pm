@@ -49,7 +49,7 @@ sub auto : Private {
     }    
 
     if ( !$c->session->{player} || ($c->session->{partial_login} && ! $allowed_partial_login) ) {
-        if ( $c->action !~ m|^player(?!/account)| ) {
+        if ( $c->action !~ m|^player(?!/account)| && $c->action !~ m|^donate| ) {
             $c->detach('/player/login');
         }
         return 1;

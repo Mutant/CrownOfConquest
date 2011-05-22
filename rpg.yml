@@ -365,7 +365,7 @@ min_days_for_election_candidacy: 2
 decay_ctr_ratio: 30
 
 # Max number of characters that can be garrisoned in a town (by mayor)
-mayor_garrison_max_characters: 5
+mayor_garrison_max_characters: 8
 
 # Amount of sectors automatically claimed by a town for its kingdom
 town_land_claim_range: 3

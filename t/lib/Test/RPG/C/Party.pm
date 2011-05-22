@@ -33,7 +33,7 @@ sub test_swap_chars : Tests(65) {
 	}	
 	
 	my $party = Test::MockObject->new();
-	$party->mock('characters', sub { @characters });
+	$party->mock('characters_in_party', sub { @characters });
 	$party->mock('rank_separator_position',  sub { $_[0]->{rank_sep_set_to} = $_[1] if $_[1]; $_[0]->{rank_sep} } );	
 	$party->set_always('update');
 	

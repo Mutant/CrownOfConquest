@@ -216,6 +216,7 @@ sub res_from_morgue : Local {
 			$character->status(undef);
 			$character->status_context(undef);
 			$character->update;	
+			$c->stash->{party}->adjust_order;
 		}		
 	}
 	

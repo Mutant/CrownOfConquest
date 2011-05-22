@@ -76,6 +76,9 @@ creatures_cron_string: 20,50 * * * *
 # Re-closing of dungeon doors
 dungeon_doors_cron_string: "*/30 * * * *"
 
+# Generation of mayor's group
+mayors_group_cron_string: "15 */6 * * *"
+
 # ----- Character / Party Generation Params ----- #
 
 # Pool of points to add to stats for new character

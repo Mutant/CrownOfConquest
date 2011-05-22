@@ -202,7 +202,7 @@ sub generate_mayors_group {
     my $c = $self->context;
 	
 	# See if the mayor has a group (if there is one)
-	return unless $mayor;
+	return unless $mayor && $castle && $town;
 	
 	my $mayors_group;
 	$mayors_group = $c->schema->resultset('CreatureGroup')->find(

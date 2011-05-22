@@ -522,15 +522,23 @@ sub raid : Local {
 
 	confess "Castle not found for town " . $town->id unless $start_sector;
 
-	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
-	$c->stash->{party}->update;
-
 	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
 		{
 			town_id  => $town->id,
 			party_id => $c->stash->{party}->id,
 		}
 	);
+	
+	if ($party_town->raids_today > $c->config->{max_raids_per_day}) {
+	   $c->stash->{error} = "You've raided this town too many times today";
+	   $c->forward( '/panel/refresh', [ 'messages' ]);
+	   return;
+	}
+
+	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
+	$c->stash->{party}->update;
+
+
 	$party_town->last_raid_start( DateTime->now() );
 	$party_town->last_raid_end(undef);
 	$party_town->increment_raids_today;

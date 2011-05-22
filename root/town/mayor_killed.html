@@ -13,6 +13,6 @@ Choose a character to become mayor of [% town.town_name %]:<br><br>
 <input name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="[% town.id %]">
 
 <div align="center">
-	<button dojoType=dijit.form.Button type="submit" onClick="return dijit.byId('dialog').isValid();">Become Mayor</button>
-	<button dojoType=dijit.form.Button onClick="dijit.byId('dialog').hide()">No thanks</button>
+	<button dojoType=dijit.form.Button type="submit" name="accept" onClick="this.value = 1; return dijit.byId('dialog').isValid();">Become Mayor</button>
+	<button dojoType=dijit.form.Button type="submit" name="decline" onClick="this.value = 1; return dijit.byId('dialog').isValid();">No thanks</button>
 </div>

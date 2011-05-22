@@ -214,11 +214,11 @@ sub end_raid : Private {
     		);		
     	}
     	
-    	my $town_history_msg = "Mayor " . $mayor->character_name . " was disgraced in combat by " . $c->stash->{party}->name . ". " . 
+    	my $town_history_msg = "Mayor " . $mayor->character_name . " was dishonoured in combat by " . $c->stash->{party}->name . ". " . 
     	   ucfirst $mayor->pronoun('subjective') . " has been thrown out of office in disgrace.";
                		
         if ($town->peasant_state eq 'revolt') {
-        	$town_history_msg .= " The peasants have given up their revolt now that there's a new mayor."; 
+        	$town_history_msg .= " The peasants give up their revolt."; 
         }
         
         # Cancel election, if there's one in progress
@@ -235,30 +235,7 @@ sub end_raid : Private {
                	message => $town_history_msg,
        		}
        	);        
-		
-		my $message = $c->forward(
-			'RPG::V::TT',
-			[
-				{
-					template => 'town/mayor_killed.html',
-					params   => {
-						town => $town,
-						party => $c->stash->{party},
-					},
-					return_output => 1,
-				}
-			]
-		);
-		
-		$c->forward('/panel/create_submit_dialog', 
-			[
-				{
-					content => $message,
-					submit_url => 'town/become_mayor',
-					dialog_title => 'Become Mayor?',
-				}
-			],
-		);
+
 	}
 
 	my $killed_count;

@@ -550,6 +550,13 @@ sub become_mayor : Local {
 	);
 
 	croak "Not pending mayor of that town" unless $town;
+	
+	if ($c->req->param('decline')) {
+	   $town->pending_mayor(undef);
+	   $town->update;
+	   $c->forward( '/panel/refresh', [ 'messages' ] );
+	   return;   
+	}
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters_in_party;
 

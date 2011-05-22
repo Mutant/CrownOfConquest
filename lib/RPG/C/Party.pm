@@ -22,7 +22,7 @@ sub main : Local {
 	my ( $self, $c ) = @_;
 
 	my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom' ] );
-
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -79,6 +79,8 @@ sub sector_menu : Private {
 	my $parties_in_sector = $c->forward( 'parties_in_sector', [ $c->stash->{party_location}->id ] );
 
 	$c->forward('/party/party_messages_check');
+	
+	$c->forward('/party/pending_mayor_check');
 
 	my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
 
@@ -154,6 +156,42 @@ sub sector_menu : Private {
 			}
 		]
 	);
+}
+
+sub pending_mayor_check : Private {
+	my ( $self, $c ) = @_;
+	
+	my $town = $c->model('DBIC::Town')->find(
+	   {
+	       pending_mayor => $c->stash->{party}->id,
+	   }
+    );
+    
+    return unless $town;
+    
+	my $message = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor_killed.html',
+				params   => {
+					town => $town,
+					party => $c->stash->{party},
+				},
+				return_output => 1,
+			}
+		]
+	);
+	
+	$c->forward('/panel/create_submit_dialog', 
+		[
+			{
+				content => $message,
+				submit_url => 'town/become_mayor',
+				dialog_title => 'Become Mayor?',
+			}
+		],
+	);   
 }
 
 sub parties_in_sector : Private {
@@ -363,7 +401,7 @@ sub swap_chars : Local {
 
 	return if $c->req->param('target') == $c->req->param('moved');
 
-	my %characters = map { $_->id => $_ } $c->stash->{party}->characters;
+	my %characters = map { $_->id => $_ } $c->stash->{party}->characters_in_party;
 
 	# Moved char moves to the position of the target char
 	my $moved_char_destination = $characters{ $c->req->param('target') }->party_order;

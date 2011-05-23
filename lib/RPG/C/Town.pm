@@ -536,6 +536,12 @@ sub become_mayor : Local {
 
 	croak "Not pending mayor of that town" unless $town;
 	
+	if (my $old_mayor = $town->mayor) {
+	   # Hmm, they've submitted the "become mayor" dialog, but there's still a mayor.
+	   #  This shouldn't happen. We'll clean up anyway (could have been some sort of transient error when ending the raid)
+	   $old_mayor->was_killed($c->stash->{party});
+	}
+	
 	if ($c->req->param('decline')) {
 	   $town->pending_mayor(undef);
 	   $town->update;

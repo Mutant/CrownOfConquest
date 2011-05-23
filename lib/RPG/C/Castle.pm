@@ -195,47 +195,7 @@ sub end_raid : Private {
 	if ($town->pending_mayor == $c->stash->{party}->id and my $mayor = $town->mayor) {
 		$mayor_killed = 1;
 		
-        $mayor->lose_mayoralty;
-        
-    	my $today = $c->stash->{today};
-		
-    	# Leave a message for the mayor's party
-    	if ($mayor->party_id) {
-    	    my $party = $mayor->party;
-    		$party->add_to_messages(
-    			{
-    				message => $mayor->character_name . " was killed by the party " . $c->stash->{party}->name . " and is no longer mayor of " 
-    				. $town->town_name . ". " . ucfirst $mayor->pronoun('posessive-subjective') . " body has been interred in the town cemetery, and "
-    				. $mayor->pronoun('posessive') . " may be resurrected there.",
-    				alert_party => 1,
-    				party_id => $mayor->party_id,
-    				day_id => $today->id,
-    			}
-    		);		
-    	}
-    	
-    	my $town_history_msg = "Mayor " . $mayor->character_name . " was dishonoured in combat by " . $c->stash->{party}->name . ". " . 
-    	   ucfirst $mayor->pronoun('subjective') . " has been thrown out of office in disgrace.";
-               		
-        if ($town->peasant_state eq 'revolt') {
-        	$town_history_msg .= " The peasants give up their revolt."; 
-        }
-        
-        # Cancel election, if there's one in progress
-        my $election = $town->current_election;
-        if ($election) {
-        	$election->status("Cancelled");
-        	$election->update;
-        	$town_history_msg .= " The upcoming election is cancelled.";
-        }
-               		
-    	$town->add_to_history(
-       		{
-    			day_id  => $today->id,
-               	message => $town_history_msg,
-       		}
-       	);        
-
+        $mayor->was_killed($c->stash->{party});
 	}
 
 	my $killed_count;

@@ -113,7 +113,7 @@ sub test_check_for_creature_move_party_not_spotted_as_out_of_range : Tests(1) {
 	is($self->{session}{spotted}{$cg->id}, undef, "Party not spotted");
 }
 
-sub test_end_raid : Tests() {
+sub test_end_raid : Tests(1) {
 	my $self = shift;
 	
 	# GIVEN

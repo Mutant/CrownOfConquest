@@ -191,7 +191,6 @@ sub test_become_mayor : Tests(2) {
 	# GIVEN
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema});
 	$town->mayor_rating(10);
-	$town->peasant_state('revolt');
 	$town->update;
 		
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3 );
@@ -219,8 +218,7 @@ sub test_become_mayor : Tests(2) {
 	
 	# THEN
 	$character->discard_changes;
-	is($character->mayor_of, $town->id, "Character now mayor of town");
-	
+	is($character->mayor_of, $town->id, "Character now mayor of town");	
 	
 	$party_town->discard_changes;
 	is($party_town->prestige, 0, "Prestige reset");	

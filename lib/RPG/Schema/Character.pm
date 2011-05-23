@@ -12,6 +12,7 @@ use List::Util qw(shuffle);
 use Math::Round qw(round);
 use Sub::Name;
 use DateTime;
+use Lingua::EN::Inflect qw ( A );
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
@@ -730,6 +731,7 @@ sub hit {
     my $self   = shift;
     my $damage = shift;
     my $attacker = shift;
+    my $effect_type = shift;
 
     my $new_hp_total = $self->hit_points - $damage;
     $new_hp_total = 0 if $new_hp_total < 0;
@@ -737,8 +739,34 @@ sub hit {
     $self->hit_points($new_hp_total);
     $self->update;
     
-    if ($self->is_dead && $attacker) {
-    	if (my $town = $self->mayor_of_town) {
+    if ($self->is_dead) {
+        my $message = $self->character_name . " was slain ";        
+        
+        # Slightly messy, as $attacker may be a party instead of a specific character. This is because
+        #  a hit may come from an effect (e.g. poison), which isn't directly related to a character. If that's
+        #  the case, it should ideally pass the optional $effect_type param
+		my $attacker_type;
+		if ($effect_type) {
+		    $message .= "by $effect_type";
+		}
+		elsif ($attacker->is_character) {
+		    $message .= "by " . A( $attacker->class->class_name );
+		}
+		elsif ($attacker->isa('RPG::Schema::Creature')) { 
+		    $message .= "by " . A( $attacker->type->creature_type );
+		}
+		else {
+            $message .= "during combat";
+		}
+
+		$self->add_to_history(
+			{
+				day_id       => $self->result_source->schema->resultset('Day')->find_today->id,
+				event        => $message,
+			},
+		);
+        
+    	if ($attacker and $self->mayor_of and my $town = $self->mayor_of_town) {
     		# A mayor has died... 
     		
     		# The party that killed them is marked as 'pending mayor' of the town

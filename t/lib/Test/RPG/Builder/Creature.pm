@@ -9,7 +9,7 @@ sub build_creature {
     my %params  = @_;
     
     unless ($params{type_id}) {
-        my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
+        my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1, creature_type => 'Test Type' } );
         $params{type_id} = $type->id;        
     }
 

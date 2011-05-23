@@ -19,6 +19,7 @@ use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Creature;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
@@ -813,5 +814,112 @@ sub test_in_front_rank : Tests(4) {
         is($char->in_front_rank, $expected{$char->id}, "Character in correct rank");
     }
 }
+
+sub test_hit_basic : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 10, max_hit_points => 10);
+    
+    # WHEN
+    $character->hit(7);
+    
+    # THEN
+    is($character->hit_points, 3, "Character took damage");    
+}
+
+sub test_hit_character_killed_by_creature : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 10, max_hit_points => 10);  
+    my $creature = Test::RPG::Builder::Creature->build_creature($self->{schema});
+    
+    # WHEN
+    $character->hit(11, $creature);
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage"); 
+    my @history = $character->history;
+    is(scalar @history, 1, "1 item added to history");
+    is($history[0]->event, "test was slain by a Test Type");
+}
+
+sub test_hit_character_killed_by_character : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);  
+    my $killer = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    # WHEN
+    $character->hit(7, $killer);
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage"); 
+    my @history = $character->history;
+    is(scalar @history, 1, "1 item added to history");
+    is($history[0]->event, "test was slain by a test_class");
+}
+
+sub test_hit_character_killed_by_effect : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);  
+    
+    # WHEN
+    $character->hit(8, undef, 'poison');
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage"); 
+    my @history = $character->history;
+    is(scalar @history, 1, "1 item added to history");
+    is($history[0]->event, "test was slain by poison");
+}
+
+sub test_hit_killed_mayor : Tests(2) {
+    my $self = shift;    
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $character->mayor_of($town->id);
+    $character->update;      
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});    
+    my $killer = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+    
+    # WHEN
+    $character->hit(9, $killer);
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage");
+    
+    $town->discard_changes;
+    is($town->pending_mayor, $party->id, "Party set to pending mayor");
+}
+
+sub test_hit_killed_mayor_by_effect : Tests(2) {
+    my $self = shift;    
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $character->mayor_of($town->id);
+    $character->update;      
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    
+    # WHEN
+    $character->hit(9, $party, 'poison');
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage");
+    
+    $town->discard_changes;
+    is($town->pending_mayor, $party->id, "Party set to pending mayor");
+}
+
 
 1;

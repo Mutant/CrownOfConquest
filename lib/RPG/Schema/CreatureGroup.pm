@@ -260,6 +260,8 @@ sub auto_heal {
     my $cost_per_hp = $town->heal_cost_per_hp;
 
     foreach my $character (@characters) {
+        next if $character->is_dead;
+        
         my $to_heal = $character->max_hit_points - $character->hit_points;
         
         my $cost = $to_heal * $cost_per_hp;

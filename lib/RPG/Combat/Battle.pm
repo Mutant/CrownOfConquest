@@ -216,7 +216,7 @@ sub _process_effects {
 		if ( !$being->is_dead && $effect->effect->modified_stat eq 'poison' ) {
 			my $damage = Games::Dice::Advanced->roll( '1d' . $effect->effect->modifier );
 			
-			$being->hit($damage, $self->opponents_of($being));
+			$being->hit($damage, $self->opponents_of($being), 'poison');
 
 			my $result = RPG::Combat::EffectResult->new(
 				defender => $being,
@@ -640,22 +640,6 @@ sub attack {
 		$defender->hit($damage, $attacker);
 
 		$self->session->{stalemate_check} += $damage;
-
-		if ( $defender->is_dead ) {
-
-			# TODO: move to schema class?
-			if ( $defender->is_character ) {
-				my $attacker_type = $attacker->is_character ? $attacker->class->class_name : $attacker->type->creature_type;
-
-				$self->schema->resultset('Character_History')->create(
-					{
-						character_id => $defender->id,
-						day_id       => $self->schema->resultset('Day')->find_today->id,
-						event        => $defender->character_name . " was slain by a " . $attacker_type,
-					},
-				);
-			}
-		}
 
 		$self->log->debug("Damage: $damage");
 	}

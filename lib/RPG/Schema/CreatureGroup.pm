@@ -207,6 +207,84 @@ sub has_rare_monster {
     )->count >= 1 ? 1 : 0;   
 }
 
+sub has_mayor {
+    my $self = shift;
+    
+    return $self->search_related('characters',
+        {
+            'mayor_of' => {'!=', undef},
+        },
+    )->count >= 1 ? 1 : 0;          
+}
+
+# Auto heal the group if they have a mayor, and have some budget to heal
+#  (called at the end of combat)
+sub auto_heal {
+    my $self = shift;
+
+    my $mayor = $self->find_related('characters',
+        {
+            'mayor_of' => {'!=', undef},
+        },
+    );
+    
+    return if ! $mayor || $mayor->is_dead;
+
+    my $town = $mayor->mayor_of_town;
+    
+    return unless $town->character_heal_budget > 0;
+    
+    my $schema = $self->result_source->schema;
+    
+    my $day = $schema->resultset('Day')->find_today;
+    
+    my $hist_rec = $schema->resultset('Town_History')->find_or_create(
+        {
+            town_id => $town->id,
+            day_id => $day->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+        }
+    );
+    
+    my $spent = $hist_rec->value // 0;
+
+    return if $spent >= $town->character_heal_budget;
+    
+    my $budget_left = $town->character_heal_budget - $spent;
+    $budget_left = $town->gold if $budget_left > $town->gold;
+    
+    # Heal the mayor first 
+    my @characters = ($mayor, grep { $_->id != $mayor->id } $self->characters);
+        
+    my $cost_per_hp = $town->heal_cost_per_hp;
+
+    foreach my $character (@characters) {
+        my $to_heal = $character->max_hit_points - $character->hit_points;
+        
+        my $cost = $to_heal * $cost_per_hp;
+        
+        if ($cost > $budget_left) {
+            $to_heal = int $budget_left / $cost_per_hp;
+            $cost = $to_heal * $cost_per_hp;
+        }
+        
+        $character->increase_hit_points($to_heal);
+        $character->update;
+        
+        $budget_left-=$cost;
+        $spent+=$cost;
+        
+        $town->decrease_gold($cost);       
+    }
+    
+    $town->update;
+    $hist_rec->value($spent);
+    $hist_rec->update;
+    
+}
+
+
 sub in_combat {
     my $self = shift;
     

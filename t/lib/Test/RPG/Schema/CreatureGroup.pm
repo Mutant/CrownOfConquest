@@ -3,12 +3,15 @@ package Test::RPG::Schema::CreatureGroup;
 use strict;
 use warnings;
 
-use base qw(Test::RPG);
+use base qw(Test::RPG::DB);
 
 __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 use Test::MockObject;
+
+use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Town;
 
 
 sub startup : Test(startup => 1) {
@@ -150,4 +153,233 @@ sub test_party_within_level_range : Tests(5) {
     }
 }
 
+sub test_auto_heal_basic : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    $town->character_heal_budget(1000);
+    $town->update;
+    
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+    
+    my $char1 = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 5);
+    my $char2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create(
+        {}
+    );
+    
+    for my $char ($mayor, $char1, $char2) {
+        $char->creature_group_id($cg->id);
+        $char->update;   
+    }        
+    
+    # WHEN
+    $cg->auto_heal;
+    
+    # THEN   
+    $char1->discard_changes;
+    is($char1->hit_points, 10, "Character was healed");
+    
+    $town->discard_changes;
+    is($town->gold, 980, "Town's gold decreased");
+    
+    my $hist_rec = $self->{schema}->resultset('Town_History')->find(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+        }
+    );
+    is($hist_rec->value, 20, "Cost of healing recorded");
+}
+
+sub test_auto_heal_not_enough_in_budget : Tests(4) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    $town->character_heal_budget(32);
+    $town->update;
+    
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+    
+    my $char1 = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    my $char2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create(
+        {}
+    );
+    
+    for my $char ($mayor, $char1, $char2) {
+        $char->creature_group_id($cg->id);
+        $char->update;   
+    }    
+    
+    # WHEN
+    $cg->auto_heal;
+    
+    # THEN
+    $mayor->discard_changes;
+    is($mayor->hit_points, 10, "Mayor was healed");
+    
+    $char1->discard_changes;
+    is($char1->hit_points, 8, "Character was partially healed");
+    
+    $town->discard_changes;
+    is($town->gold, 968, "Town's gold decreased");
+    
+    my $hist_rec = $self->{schema}->resultset('Town_History')->find(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+        }
+    );
+    is($hist_rec->value, 32, "Cost of healing recorded");    
+    
+}
+
+sub test_auto_heal_not_enough_gold_in_coffers : Tests(4) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 32);
+    $town->character_heal_budget(100);
+    $town->update;
+    
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+    
+    my $char1 = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    my $char2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create(
+        {}
+    );
+    
+    for my $char ($mayor, $char1, $char2) {
+        $char->creature_group_id($cg->id);
+        $char->update;   
+    }    
+    
+    # WHEN
+    $cg->auto_heal;
+    
+    # THEN
+    $mayor->discard_changes;
+    is($mayor->hit_points, 10, "Mayor was healed");
+    
+    $char1->discard_changes;
+    is($char1->hit_points, 8, "Character was partially healed");
+    
+    $town->discard_changes;
+    is($town->gold, 0, "Town's gold decreased");
+    
+    my $hist_rec = $self->{schema}->resultset('Town_History')->find(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+        }
+    );
+    is($hist_rec->value, 32, "Cost of healing recorded");
+}
+
+sub test_auto_heal_some_budget_already_used : Tests(4) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    $town->character_heal_budget(50);
+    $town->update;
+    
+    $self->{schema}->resultset('Town_History')->create(
+        {
+            town_id => $town->id,
+            day_id => $self->{stash}{today}->day_id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+            value => 18,
+        }
+    );    
+    
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+    
+    my $char1 = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    my $char2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create(
+        {}
+    );
+    
+    for my $char ($mayor, $char1, $char2) {
+        $char->creature_group_id($cg->id);
+        $char->update;   
+    }    
+    
+    # WHEN
+    $cg->auto_heal;
+    
+    # THEN
+    $mayor->discard_changes;
+    is($mayor->hit_points, 10, "Mayor was healed");
+    
+    $char1->discard_changes;
+    is($char1->hit_points, 8, "Character was partially healed");
+    
+    $town->discard_changes;
+    is($town->gold, 968, "Town's gold decreased");
+    
+    my $hist_rec = $self->{schema}->resultset('Town_History')->find(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+        }
+    );
+    is($hist_rec->value, 50, "Cost of healing recorded");       
+}
+
+sub test_auto_heal_no_healing_if_no_mayor : Tests(2) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    $town->character_heal_budget(50);
+    $town->update;
+    
+    my $char1 = Test::RPG::Builder::Character->build_character($self->{schema}, max_hit_points => 10, hit_points => 5);
+    my $char2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $cg = $self->{schema}->resultset('CreatureGroup')->create(
+        {}
+    );
+    
+    for my $char ($char1, $char2) {
+        $char->creature_group_id($cg->id);
+        $char->update;   
+    }    
+    
+    # WHEN
+    $cg->auto_heal;
+    
+    # THEN    
+    $char1->discard_changes;
+    is($char1->hit_points, 5, "Character was not healed");
+    
+    $town->discard_changes;
+    is($town->gold, 1000, "Town's gold the same");    
+    
+}
+
 1;
+

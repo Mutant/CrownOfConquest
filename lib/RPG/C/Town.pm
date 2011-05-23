@@ -275,7 +275,7 @@ sub res_impl : Private {
 sub calculate_heal_cost : Private {
 	my ( $self, $c, $town ) = @_;
 
-	my $per_hp_heal_cost = round( $c->config->{min_healer_cost} + ( 100 - $town->prosperity ) / 100 * $c->config->{max_healer_cost} );
+	my $per_hp_heal_cost = $town->heal_cost_per_hp;
 
 	my $cost_to_heal = 0;
 

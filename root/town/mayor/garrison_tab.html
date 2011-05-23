@@ -13,6 +13,22 @@ Any characters garrisoned in the town will fight alongside the mayor. You can ga
 
 <br><br>
 
+<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/set_character_heal_budget" method="POST">
+<input type="hidden" name="town_id" value="[% town.id %]">
+You can set a budget to have characters (including the mayor) automatically healed. This will be taken out of the town coffers, up to the maximum you specify
+below. Each night, any dead characters (<i>not</i> including the mayor) will also be resurrected. 
+
+<br><br>
+
+Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="character_heal_budget" 
+				value="[% town.character_heal_budget %]" constraints="{min:0,places:0}" required="true">
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+	Update
+</button>				
+</div>
+
+<br><br>
+
 [% IF garrison_chars.0 %]
 	Garrisoned characters:
 	

@@ -565,4 +565,13 @@ sub change_allegiance : Local {
        
 }
 
+sub set_character_heal_budget : Local {
+    my ($self, $c) = @_;   
+    
+	$c->stash->{town}->character_heal_budget($c->req->param('character_heal_budget'));
+	$c->stash->{town}->update;
+	
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );    
+}
+
 1;

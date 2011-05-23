@@ -972,6 +972,43 @@ sub resurrect_cost {
     return $self->level * RPG::Schema->config->{resurrection_cost};
 }
 
+sub resurrect {
+    my $self = shift;
+    my $town = shift;
+    
+    my $party = $self->party;
+    
+    if ($party) {    
+        $party->decrease_gold( $self->resurrect_cost );
+        $party->update;
+    }
+
+	$self->hit_points( round $self->max_hit_points * 0.1 );
+	$self->hit_points(1) if $self->hit_points < 1;
+	my $xp_to_lose = int( $self->xp * RPG::Schema->config->{ressurection_percent_xp_to_lose} / 100 );
+	$self->xp( $self->xp - $xp_to_lose );
+	$self->update;
+
+	my $message =
+		  $self->character_name
+		. " was ressurected by the healer in the town of "
+		. $town->town_name
+		. " and has risen from the dead. "
+		. ucfirst $self->pronoun('subjective')
+		. " lost $xp_to_lose xp.";
+		
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
+
+	$self->add_to_history(
+		{
+			day_id       => $today->id,
+			event        => $message,
+		},
+	);
+	
+	return $message;
+}
+
 # Number of prayer or magic points used for spells memorised tomorrow
 #  Takes optional parameter of a spell to *exclude* from this count
 sub spell_points_used {

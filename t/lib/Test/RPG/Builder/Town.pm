@@ -27,6 +27,7 @@ sub build_town {
             sales_tax => $params{sales_tax} || 0,
             peasant_state => '',
             peasant_tax => $params{peasant_tax} || 0,
+            character_heal_budget => $params{character_heal_budget} || 0,
         }   
     );
     

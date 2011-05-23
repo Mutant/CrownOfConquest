@@ -236,30 +236,7 @@ sub res_impl : Private {
 			$c->stash->{error} = "You don't have enough gold to resurrect " . $char_to_res->character_name;
 		}
 		else {
-			$c->stash->{party}->gold( $c->stash->{party}->gold - $char_to_res->resurrect_cost );
-			$c->stash->{party}->update;
-
-			$char_to_res->hit_points( round $char_to_res->max_hit_points * 0.1 );
-			$char_to_res->hit_points(1) if $char_to_res->hit_points < 1;
-			my $xp_to_lose = int( $char_to_res->xp * $c->config->{ressurection_percent_xp_to_lose} / 100 );
-			$char_to_res->xp( $char_to_res->xp - $xp_to_lose );
-			$char_to_res->update;
-
-			my $message =
-				  $char_to_res->character_name
-				. " was ressurected by the healer in the town of "
-				. $town->town_name
-				. " and has risen from the dead. "
-				. $char_to_res->pronoun('subjective')
-				. " lost $xp_to_lose xp.";
-
-			$c->model('DBIC::Character_History')->create(
-				{
-					character_id => $char_to_res->id,
-					day_id       => $c->stash->{today}->id,
-					event        => $message,
-				},
-			);
+            my $message = $char_to_res->resurrect($town);
 
 			$c->stash->{messages} = $message;
 			

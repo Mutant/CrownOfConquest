@@ -446,7 +446,46 @@ sub refresh_mayor {
 				$new_ammo->variable( 'Quantity', 200 );
 			}
 		}
-	}	
+	}
+	
+	# Res dead garrison characters
+	my @dead_garrison_chars = $self->context->schema->resultset('Character')->search(
+	   {
+	       status => 'mayor_garrison',
+	       status_context => $town->id,
+	       hit_points => {'<=', 0},
+	   }   
+	);
+	
+	if (@dead_garrison_chars) {
+        my $hist_rec = $self->context->schema->resultset('Town_History')->find_or_create(
+            {
+                town_id => $town->id,
+                day_id => $self->context->current_day->id,
+                type => 'expense',
+                message => 'Town Garrison Healing',
+            }
+        );
+        
+        my $to_spend = $town->character_heal_budget - ($hist_rec->value // 0);
+        $to_spend = $town->gold if $to_spend > $town->gold;
+        
+        my $spent = 0;
+    	
+    	foreach my $char (@dead_garrison_chars) {
+            my $cost = $char->resurrect_cost;
+            if ($cost <= $to_spend) {
+                $char->resurrect($town);
+                $to_spend-=$cost;
+                $spent+=$cost;
+                $town->decrease_gold($cost);   
+            }
+    	}
+    	
+    	$town->update;
+    	$hist_rec->increase_value($spent);
+    	$hist_rec->update;
+	}
 }
 
 sub check_for_npc_election {

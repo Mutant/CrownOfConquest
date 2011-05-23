@@ -113,6 +113,7 @@ sub test_refresh_mayor : Tests(5) {
 	
 	# GIVEN
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, max_hit_point => 10 );
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
 	my $ammo_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
 		variables => [{name => 'Quantity', create_on_insert => 1}],
 	);
@@ -134,7 +135,7 @@ sub test_refresh_mayor : Tests(5) {
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
 	
 	# WHEN
-	$action->refresh_mayor($character);
+	$action->refresh_mayor($character, $town);
 	
 	# THEN
 	$character->discard_changes;
@@ -147,6 +148,111 @@ sub test_refresh_mayor : Tests(5) {
 	
 	$item->discard_changes;
 	is($item->variable('Durability'), 100, "Weapon repaired");
+}
+
+sub test_refresh_mayor_dead_garrison_characters : Test(4) {
+	my $self = shift;
+	
+	# GIVEN
+	my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema} );
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 300, character_heal_budget => 310 );
+	my $char1 = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 0, max_hit_points => 10, level => 1 );
+	my $char2 = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 0, max_hit_points => 10, level => 2 );
+	
+	for my $char ($char1, $char2) {
+    	$char->status('mayor_garrison');
+    	$char->status_context($town->id);
+    	$char->update;
+	}
+	
+    my $hist_rec = $self->{schema}->resultset('Town_History')->create(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+            value => 10,
+            day_id => $self->{mock_context}->current_day->id,
+        }
+    );	
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->refresh_mayor($mayor, $town);	
+	
+	# THEN  
+	$char1->discard_changes;
+	is($char1->hit_points, 1, "Character 1 ressurected");
+
+	$char2->discard_changes;
+	is($char2->hit_points, 1, "Character 2 ressurected");
+	
+	$town->discard_changes;
+	is($town->gold, 0, "Town used up gold");
+	
+    $hist_rec->discard_changes;
+    is($hist_rec->value, 310, "Cost of healing recorded");	
+   
+}
+
+sub test_refresh_mayor_dead_garrison_characters_not_enough_budget : Test(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema} );
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 100, character_heal_budget => 100 );
+	my $char = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 0, max_hit_points => 10, level => 1 );
+	$char->status('mayor_garrison');
+	$char->status_context($town->id);
+	$char->update;
+	
+    my $hist_rec = $self->{schema}->resultset('Town_History')->create(
+        {
+            town_id => $town->id,
+            type => 'expense',
+            message => 'Town Garrison Healing',
+            value => 10,
+            day_id => $self->{mock_context}->current_day->id,
+        }
+    );	
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->refresh_mayor($mayor, $town);	
+	
+	# THEN  
+	$char->discard_changes;
+	is($char->hit_points, 0, "Character not resurrected");
+	
+	$town->discard_changes;
+	is($town->gold, 100, "Town still has gold");
+   
+}
+
+sub test_refresh_mayor_dead_garrison_characters_not_enough_gold : Test(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema} );
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 90, character_heal_budget => 100 );
+	my $char = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 0, max_hit_points => 10, level => 1 );
+	$char->status('mayor_garrison');
+	$char->status_context($town->id);
+	$char->update;
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->refresh_mayor($mayor, $town);	
+	
+	# THEN  
+	$char->discard_changes;
+	is($char->hit_points, 0, "Character not resurrected");
+	
+	$town->discard_changes;
+	is($town->gold, 90, "Town still has gold");
+   
 }
 
 sub test_generate_advice : Tests(2) {

@@ -150,6 +150,7 @@ sub successful_flee : Private {
 		
 		# Lose pending mayor
 		$town->pending_mayor(undef) if $town->pending_mayor == $c->stash->{party}->id;
+		$town->update;
 
 		$c->forward( 'end_raid', [$castle] );
 

@@ -166,7 +166,7 @@ sub check_action : Private {
     my @messages;
 
     foreach my $quest ( $c->stash->{party}->quests_in_progress ) {
-        if ( my $message = $quest->check_quest_action( $action, @params ) ) {
+        if ( my $message = $quest->check_quest_action( $action, $c->stash->{party}, @params ) ) {
             push @messages, $message if $message;
         }
     }

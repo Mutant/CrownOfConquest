@@ -465,24 +465,26 @@ sub cleanup {}
 sub check_quest_action {
     my $self = shift;
     my $action = shift;
+    my $actioning_party = shift;
     my @params = @_; 
     
-    return unless $self->check_action( $self->party, $action, @params );
-    
-    my $message = RPG::Template->process(
-        RPG::Schema->config,
-        'quest/action_message.html',
-        {
-            quest  => $self,
-            action => $action,
-        },
-    );   
+    my $message;
+    if ($self->party_id && $actioning_party->id == $self->party_id && $self->check_action( $actioning_party, $action, @params )) {    
+        $message = RPG::Template->process(
+            RPG::Schema->config,
+            'quest/action_message.html',
+            {
+                quest  => $self,
+                action => $action,
+            },
+        );   
+    }
     
     # Check if this action affects any other quests    
     my @quests = $self->result_source->schema->resultset('Quest')->find_quests_by_interested_action($action);
     
     foreach my $quest (@quests) {
-        $quest->check_action_from_another_party( $self->party, $action, @params );
+        $quest->check_action_from_another_party( $actioning_party, $action, @params );
     }
     
     return $message;

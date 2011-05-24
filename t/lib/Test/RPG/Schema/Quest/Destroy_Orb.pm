@@ -11,10 +11,12 @@ use Test::More;
 use Test::MockObject;
 
 use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Quest::Destroy_Orb;
 
 use Scalar::Util 'blessed';
 
-sub setup_orb_quest : Tests(setup) {
+sub setup_orb_quest : Tests(setup => 1) {
     my $self = shift;
 
     $self->{dice} = $self->mock_dice;
@@ -22,24 +24,54 @@ sub setup_orb_quest : Tests(setup) {
     use_ok 'RPG::Schema::Quest::Destroy_Orb';    
 }
 
-sub test_check_action_from_another_party_deletes_not_started_quest : Tests(2) {
+sub test_check_action_from_another_party_deletes_not_started_quest : Tests(1) {
     my $self = shift;
 
-    my $quest = Test::MockObject->new();
-    $quest->set_always( 'param_start_value', 1 );
-    $quest->set_always( 'party',             $quest );
-    $quest->set_always( 'id',                1 );
-    $quest->set_always( 'status',            'Not Started' );
-    $quest->set_true('delete');
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $quest = Test::RPG::Builder::Quest::Destroy_Orb->build_quest($self->{schema});
+    my $orb = $quest->orb_to_destroy;
 
-    my $mock_trigger_party = Test::MockObject->new();
-    $mock_trigger_party->set_always( 'id', 2 );
+    # WHEN
+    $quest->check_quest_action( 'orb_destroyed', $party, $orb->id );
 
-    my $quest_affected = RPG::Schema::Quest::Destroy_Orb::check_action_from_another_party( $quest, $mock_trigger_party, 'orb_destroyed', 1 );
+    # THEN
+    $quest->discard_changes;
+    is($quest->in_storage, 0, "Quest deleted");
 
-    is( $quest_affected, 1, "Quest was affected" );
-    $quest->called_ok( 'delete', "Quest was deleted" );
+}
 
+sub test_check_action_from_another_party_deletes_in_progress_quest : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $quest = Test::RPG::Builder::Quest::Destroy_Orb->build_quest($self->{schema}, party_id => $party1->id, status => 'In Progress');
+    my $orb = $quest->orb_to_destroy;
+
+    # WHEN
+    $quest->check_quest_action( 'orb_destroyed', $party2, $orb->id );
+
+    # THEN
+    $quest->discard_changes;
+    is($quest->in_storage, 1, "Quest not deleted");
+    is($quest->status, 'Terminated', "Quest terminated");    
+}
+
+sub test_action_completes_quest : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $quest = Test::RPG::Builder::Quest::Destroy_Orb->build_quest($self->{schema}, party_id => $party->id, status => 'In Progress');
+    my $orb = $quest->orb_to_destroy;
+
+    # WHEN
+    $quest->check_quest_action( 'orb_destroyed', $party, $orb->id );
+
+    # THEN
+    is($quest->ready_to_complete, 1, "Quest is now ready to complete");   
 }
 
 sub test_set_quest_params : Tests(7) {

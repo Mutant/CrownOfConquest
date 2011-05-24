@@ -53,7 +53,15 @@ function refreshTaxPreview() {
 
 <h2>[% town.town_name %] Mayor's Office</h2>
 
-<a href="[% base %]">Back To Town</a><br><br>
+[% IF party_in_town %]
+	<a href="[% base %]">Back To Town</a><br><br>
+[% ELSIF mayors.size > 1 %]
+	[% FOREACH mayor IN mayors %]
+		<a href="[% base %]town/mayor?town_id=[% mayor.mayor_of %]">[% mayor.name %]</a>
+		[% IF ! loop.last %] |[% END %]
+	[% END %]
+	<br><br>
+[% END %]
 
 [% IF party_in_town %]
 	<table class="main">
@@ -167,6 +175,8 @@ You can change tax settings once per day. [% IF town.tax_modified_today %]You've
 <div dojoType="dijit.layout.ContentPane" title="Advisor" href="[% base %]/town/mayor/advisor?town_id=[% town.id %]" [% IF tab == 'advisor' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Kingdom" href="[% base %]/town/mayor/kingdom?town_id=[% town.id %]" [% IF tab == 'kingdom' %]selected=true[% END %]></div>
+
+<div dojoType="dijit.layout.ContentPane" title="Combat Log" href="[% base %]/town/mayor/combat_log?town_id=[% town.id %]" [% IF tab == 'combat_log' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="News" href="[% base %]/town/mayor/news?town_id=[% town.id %]" [% IF tab == 'news' %]selected=true[% END %]></div>
 

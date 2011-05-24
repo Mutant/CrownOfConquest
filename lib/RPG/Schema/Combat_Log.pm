@@ -203,7 +203,18 @@ sub location {
         
         return unless $dungeon;
         
-        return "a level " . $dungeon->level . " dungeon at " . $dungeon->location->x . ", " . $dungeon->location->y;
+        if ($dungeon->type eq 'castle') {
+            my $town = $self->result_source->schema->resultset('Town')->find(
+                {
+                    land_id => $dungeon->land_id,
+                }
+            );
+            
+            return "the castle of in the town of " . $town->town_name;
+        }
+        else {        
+            return "a level " . $dungeon->level . " dungeon at " . $dungeon->location->x . ", " . $dungeon->location->y;
+        }
     }   
 }
 

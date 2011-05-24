@@ -118,6 +118,25 @@ sub get_recent_logs_for_party {
     );
 }
 
+sub get_recent_logs_for_creature_group {
+    my $self  = shift;
+    my $cg = shift;
+    my $logs_count = shift;
+    
+    return if $logs_count <= 0;
+    
+    return $self->search(
+        {
+            $self->_group_type_critiera($cg)
+        },
+        {
+            prefetch => 'day',
+            order_by => 'encounter_ended desc',
+            rows => $logs_count,
+        }
+    );
+}
+
 sub get_party_logs_since_date {
     my $self  = shift;
     my $party = shift;

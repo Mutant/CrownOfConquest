@@ -255,11 +255,13 @@ sub record_messages {
 	my %display_messages;
 
 	foreach my $opp_number ( 1 .. 2 ) {
-		next if $opponents[ $opp_number - 1 ]->group_type eq 'creature_group';
+	    my $group = $opponents[ $opp_number - 1 ];
+	    
+		next if $group->group_type eq 'creature_group' && ! $group->has_mayor;
 
 		my @messages = RPG::Combat::MessageDisplayer->display(
 			config   => $self->config,
-			group    => $opponents[ $opp_number - 1 ],
+			group    => $group,
 			opponent => $opponents[ $opp_number == 1 ? 1 : 0 ],
 			result   => $self->result
 		);

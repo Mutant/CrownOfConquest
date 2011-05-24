@@ -34,6 +34,22 @@ sub default : Path {
 
 sub main : Local {
 	my ( $self, $c ) = @_;
+	
+	my $in_town = $c->stash->{town}->land_id == $c->stash->{party_location}->id ? 1 : 0;
+	
+	my @mayors;
+	
+	if (! $in_town) {
+	    @mayors = $c->stash->{party}->search_related(
+    		'characters',
+    		{
+    			mayor_of => {'!=', undef},
+    		},
+    		{
+    			prefetch => 'mayor_of_town',
+    		}
+	   );
+	}	
 
 	$c->forward(
 		'RPG::V::TT',
@@ -42,8 +58,9 @@ sub main : Local {
 				template => 'town/mayor/main.html',
 				params => {
 					town => $c->stash->{town},
-					party_in_town => $c->stash->{town}->land_id == $c->stash->{party_location}->id ? 1 : 0,
+					party_in_town => $in_town,
 					party => $c->stash->{party},
+					mayors => \@mayors,
 				},
 			}
 		]
@@ -572,6 +589,35 @@ sub set_character_heal_budget : Local {
 	$c->stash->{town}->update;
 	
 	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );    
+}
+
+sub combat_log : Local {
+    my ($self, $c) = @_;
+    
+    my $cg = $c->model('DBIC::CreatureGroup')->find(
+        {
+            creature_group_id => $c->stash->{town}->mayor->creature_group_id,
+        }
+    );
+    
+    my @logs;
+    
+    if ($cg) {    
+        @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_creature_group($cg, 20);        
+    }
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'town/mayor/combat_log.html',
+                params   => {
+                    logs  => \@logs,
+                    cg    => $cg,
+                },
+            }
+        ]
+    );       
 }
 
 1;

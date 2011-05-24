@@ -32,7 +32,20 @@ sub display {
 
     if ( $result->{combat_complete} ) {
     	# TODO: wotamess
-		if ( $result->{creatures_fled} ) {	
+    	#  The problem is, we're essentially using the code below to decide on aspects of the result of the combat
+    	#  (including on whether to reward xp if one side fled). The way the result is handled when fleeing occurs
+    	#  probably needs to be changed. If it simply indicated which side fled, then the other side could get awarded
+    	#  xp, and appropriate messages generated. This could also occur in Battle.pm instead of here. The current
+    	#  version also doesn't account for the fact that a creature group can gain xp (i.e. mayors). This is why we
+    	#  don't give creature groups a decent message for end of combat.
+    	
+    	if ( $group->group_type eq 'creature_group' ) {
+    	   push @messages, "The battle is over";
+    	   return @messages;
+    	}
+		
+		# These many if statements handle the message + xp gain for garrisons/parties who won
+		if ( $result->{creatures_fled} ) {
 	        push @messages, "The creatures have fled!\n";
 	
 			my @xp_messages = $self->_xp_gain($config, $group, $result->{awarded_xp} );

@@ -359,6 +359,13 @@ sub process_revolt {
 				}
 			);
     	}
+    	
+    	$mayor->add_to_history(
+    	   {
+    	       day_id  => $c->current_day->id,
+    	       event => $mayor->character_name . " was killed in a rebellion by the peasants of " . $town->town_name,
+    	   } 
+    	);
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);

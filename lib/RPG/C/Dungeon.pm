@@ -1137,7 +1137,7 @@ sub trigger_trap : Private {
 		
 		when ("Detonate") {
 			$trap_variable = Games::Dice::Advanced->roll('2d4') * $dungeon->level;
-			$target->hit($trap_variable);
+			$target->hit($trap_variable, undef, 'an explosion');
 		}				
 	}
 	

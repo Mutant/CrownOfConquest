@@ -42,7 +42,7 @@
 
 [% IF character.is_in_party %]
 <script>
-var itemMenuData = [[% FOREACH item IN items %]{id: "item-menu-[% item.id %]", equipped: "[% item.slot_equipped_in %]"}[% UNLESS loop.last %],[% END %][% END %]];
+var itemMenuData = [[% FOREACH item IN items %]{id: "item-menu-[% item.id %]", equipped: "[% item.slot_equipped_in %]", quantity: "[% item.variable('Quantity') %]"}[% UNLESS loop.last %],[% END %][% END %]];
 
 </script>
 [% END %]

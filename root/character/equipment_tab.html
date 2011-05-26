@@ -32,12 +32,12 @@
 	var currentItemId;
 	function saveCurrentItemId(id) {
 		currentItemId = id;
-		console.log(currentItemId);
 	}
 	
 function createMenus() {
 	createInventoryMenu(); 
 	createEquippedMenu();
+	createQuantityMenu();
 }
 	
 function createInventoryMenu() { 
@@ -46,7 +46,7 @@ function createInventoryMenu() {
 	}
 	
 	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (! item.equipped)
+		if (! item.equipped && ! item.quantity)
 		  return true;
 	}), function(item) { return item.id } ); 
 
@@ -78,6 +78,32 @@ function createInventoryMenu() {
 	
 	addCommonMenuItems(menu);	
 } 	
+
+function createQuantityMenu() {
+	if (dijit.byId('item_quantity_menu') != undefined) {
+		dijit.byId('item_quantity_menu').destroyRecursive();			
+	}
+	
+	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
+		if (item.quantity)
+		  return true;
+	}), function(item) { return item.id } ); 
+	
+	var params = {id:"item_quantity_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+	
+	params = {
+		label: "Split",
+		onClick: function() {
+			split_item(currentItemId);
+		}
+	};
+	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(splitItem);
+	
+	addCommonMenuItems(menu);		
+}
 
 function createEquippedMenu() {
 	if (dijit.byId('item_equipped_menu') != undefined) {

@@ -107,7 +107,22 @@
 				clearEquipSlot(responseObject.clear_equip_place);
 	        }
 	    });	       
-	}		
+	}
+	
+	function split_item(item_id) {
+		dojo.byId('split-item-id').value = item_id;
+		dijit.byId('split-diag').show();
+	}
+	
+	function split_item_submit(arguments) {
+		dojo.xhrGet( {
+	        url: "[% base %]/character/split_item?item_id=" +  arguments.item_id + "&new_quantity=" + arguments.new_quantity,
+	        handleAs: "text",	
+	        load: function(responseObject, ioArgs) {
+	        	reloadInventory();
+	        }
+	    });	 	
+	}
 	
 	
 	dojo.addOnLoad( init );	
@@ -238,6 +253,16 @@ function calculateSpellPoints() {
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="split-diag" style="display: none" title="Split Item" execute="split_item_submit(arguments[0]);">
+    Amount to split out: <input type="text" dojoType=dijit.form.TextBox name="new_quantity">
+    <input id="split-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('split-diag').hide()">Cancel</button>
 	</div>
 </div>
 

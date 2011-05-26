@@ -52,7 +52,7 @@ sub variable_row {
     my $new_val       = shift;
 
 	my @vars = $self->variables;
-	
+
 	# Note, due to some edge cases (mostly used in tests), it's possible variables could be accessed before they've actually
 	#  been inserted into the db. (i.e. when insert trigger is called). The result gets cached below, meaning we never re-read
 	#  them.. so if there are no vars, we just return immediately.

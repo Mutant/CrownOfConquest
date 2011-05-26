@@ -233,6 +233,34 @@ sub item_details : Local {
 
 }
 
+sub split_item : Local {
+   	my ( $self, $c ) = @_;
+   	
+	my $item = $c->model('DBIC::Items')->find(
+		{
+			'item_id' => $c->req->param('item_id'),
+			'belongs_to_character.party_id' => $c->stash->{party}->id,
+		},
+		{
+			join => [
+                'belongs_to_character',                
+            ]
+		}
+	);
+	
+	return if ! $item->variable('Quantity') || $item->variable('Quantity') <= $c->req->param('new_quantity');
+	
+	my $new_item = $c->model('DBIC::Items')->create(
+	   {
+	       item_type_id => $item->item_type_id,
+	       character_id => $item->character_id,
+	   }
+	);
+	
+	$new_item->variable_row('Quantity', $c->req->param('new_quantity'));
+	$item->variable_row('Quantity', $item->variable('Quantity') - $c->req->param('new_quantity'));
+}
+
 sub item_list : Local {
 	my ( $self, $c ) = @_;
 

@@ -399,7 +399,7 @@ max_y_dungeon_room_size: 6
 dungeon_move_maximum: 3
 
 # Ratios of sectors per creature
-dungeon_sectors_per_creature: 5
+dungeon_sectors_per_creature: 12
 
 # Number of party levels required to enter a dungeon per level (with level 1 dungeons = 0, level 2 = step * 1, level 3 = step * 2, etc) 
 dungeon_entrance_level_step: 5

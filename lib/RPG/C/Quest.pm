@@ -56,7 +56,7 @@ sub accept : Local {
         
         croak "Accepting a quest from another town" unless $town->id == $quest->town_id;
         
-        croak "Accepting a quest for another party" unless ! defined $quest->party_id;
+        croak "Accepting a quest for another party" if defined $quest->party_id;
     }
     elsif ($quest->kingdom_id) {
         croak "Accepting a quest for another kingdom" unless $quest->kingdom_id == $c->stash->{party}->kingdom_id;

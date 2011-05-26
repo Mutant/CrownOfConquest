@@ -242,8 +242,11 @@ sub cancel_quests_awaiting_acceptance {
         {
             kingdom_id => $kingdom->id,
             status => 'Not Started',
-            day_offered => {'<=', $day_rec->day_number},
-        }
+            'day_offered_rec.day_number' => {'<=', $day_rec->day_number},
+        },
+        {
+            join => 'day_offered_rec',
+        },
     );
 
     foreach my $quest (@quests_to_cancel) {

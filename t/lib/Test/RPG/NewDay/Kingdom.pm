@@ -99,10 +99,11 @@ sub test_cancel_quests_awaiting_acceptance : Tests(2) {
     # GIVEN
     my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
-    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
-        kingdom_id => $kingdom->id, quest_type => 'claim_land', day_offered => $self->{mock_context}->current_day->day_number - 10, party_id => $party->id);
 
     my $old_day = Test::RPG::Builder::Day->build_day($self->{schema}, day_number => $self->{mock_context}->current_day->day_number - 10 );
+
+    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        kingdom_id => $kingdom->id, quest_type => 'claim_land', day_offered => $old_day->id, party_id => $party->id);
    
     $self->{config}{kingdom_quest_offer_time_limit} = 10;
     

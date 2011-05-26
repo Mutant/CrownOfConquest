@@ -19,6 +19,8 @@ __PACKAGE__->belongs_to( 'super_category', 'RPG::Schema::Super_Category', { 'for
 
 __PACKAGE__->has_many( 'enchantments_allowed', 'RPG::Schema::Enchantment_Item_Category', { 'foreign.item_category_id' => 'self.item_category_id' } );
 
+__PACKAGE__->has_many( 'equip_place_categories', 'RPG::Schema::Equip_Place_Category', 'item_category_id' );
+
 # Get a list of variable names in a property_category
 my %variables_in_property_category;
 

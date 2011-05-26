@@ -2,6 +2,18 @@
 
 [% INCLUDE stats/subnav.html %]
 
+[% MACRO page_links BLOCK %]
+	[% page = 1 %]
+	[% WHILE page <= page_count %]
+		[% IF current_page == page %]
+			[% page %]
+		[% ELSE %]
+			<a href="?page=[% page %]&sort=[% current_sort %]">[% page %]</a>
+		[% END %]
+		[% page = page + 1 %]
+	[% END %]
+[% END %]
+
 <h2>Top Parties</h2>
 
 Top Parties By:
@@ -17,9 +29,13 @@ Top Parties By:
 	[% IF current_sort == sort_param.param %]
 		<span id="current-selection">[% sort_param.label %]</span>
 	[% ELSE %]
-		<a href="[% base %]/leaderboards?sort=[% sort_param.param %]">[% sort_param.label %]</a>
+		<a href="[% base %]/leaderboards?page=[% current_page %]&sort=[% sort_param.param %]">[% sort_param.label %]</a>
 	[% END %]
 [% END %]
+
+<br><br>
+<div align="center">[% page_links() %]</div>
+<br>
 
 <table class="main" cellpadding=3 cellspacing=0>
 	<tr>
@@ -36,7 +52,7 @@ Top Parties By:
 	</tr>
 [% FOREACH party IN parties %]
 	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
-		<td>[% loop.count %]</td>		
+		<td>[% loop.count + offset %]</td>		
 		<td>[% party.name %]</td>		
 		<td>[% party.player.player_name %]</td>
 		<td align="right">[% party.get_column('xp_per_turn') %]</td>

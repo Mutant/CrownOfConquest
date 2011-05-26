@@ -129,6 +129,9 @@ starting_turns: 400
 # Number of days to give the watcher effect for new parties
 new_party_watcher_days: 20
 
+# Size of page on party leaderboard
+leaderboard_page_size: 25
+
 # ----- Player Params ----- #
 
 # Number of days of inactivity before sending a warning to a player

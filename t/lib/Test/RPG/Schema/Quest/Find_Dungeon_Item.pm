@@ -229,4 +229,34 @@ sub test_check_quest_not_ready_to_complete_when_item_is_on_character_outside_of_
 	is($result, 0, "Quest is not ready to complete");
 }
 
+sub test_check_quest_not_ready_to_complete_when_item_is_on_character_in_the_inn : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1);
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$quest->party_id($party->id);
+	$quest->status('In Progress');
+	$quest->update;
+	
+    my $quest_param = $quest->param_record('Item Found');
+    $quest_param->current_value(1);
+    $quest_param->update;	
+		
+	$character->status('inn');
+	$character->status_context(1);
+	$character->update;
+	
+	my $item = $quest->item;
+	$item->character_id($character->id);
+	$item->update;
+	
+	# WHEN
+	my $result = $quest->ready_to_complete;
+	
+	# THEN
+	is($result, 0, "Quest is not ready to complete");
+}
+
 1;

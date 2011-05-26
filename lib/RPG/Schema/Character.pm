@@ -273,7 +273,7 @@ sub is_in_party {
 	
 	return 0 unless $self->party_id;
 	
-	return 1 if ! $self->garrison_id && ! $self->mayor_of;
+	return 1 if ! $self->garrison_id && ! $self->mayor_of && ! $self->status;
 
 	if ($self->garrison_id) {	
 		# They're in a garrison.. if the party is currently in the garrison's sector, consider the char to be in the party

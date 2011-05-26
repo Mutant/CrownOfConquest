@@ -844,4 +844,83 @@ sub test_equipping_item_updates_with_con_bonus_updates_movement_factor : Tests(1
     is($character->natural_movement_factor, 4, "Movement factor correct");
 }
 
+sub test_add_to_characters_inventory_stacking : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 5,
+            }
+        ],
+        character_id => $character->id,
+    );
+    
+    my $item2 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 5,
+            }
+        ],
+    );
+    
+    $item2->item_type_id($item1->item_type_id);
+    $item2->update;
+    
+    # WHEN
+    $item2->add_to_characters_inventory($character);
+    
+    # THEN
+    is($item1->variable('Quantity'), 10, "Item quantities added together");
+    
+    $item2->discard_changes;
+    is($item2->character_id, undef, "Second item not added to inventory");
+       
+}
+
+sub test_add_to_characters_inventory_not_stacked : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 5,
+            }
+        ],
+        character_id => $character->id,
+    );
+    
+    my $item2 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 5,
+            }
+        ],
+    );
+    
+    # WHEN
+    $item2->add_to_characters_inventory($character);
+    
+    # THEN
+    is($item1->variable('Quantity'), 5, "Item quantities not added together");
+    
+    $item2->discard_changes;
+    is($item2->character_id, $character->id, "Second item added to inventory");
+       
+}
+
 1;

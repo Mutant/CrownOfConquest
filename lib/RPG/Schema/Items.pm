@@ -592,6 +592,26 @@ sub add_to_characters_inventory {
     $self->treasure_chest_id(undef);
     $self->garrison_id(undef);
 	$self->land_id(undef);
+        
+    if ($self->variable('Quantity')) {
+        # Stack quantity items
+        my $item = $character->search_related(
+            'items',
+            {
+                'me.item_type_id' => $self->item_type_id,
+            }
+        )->first;
+        
+        if ($item) {
+            # They have an existing item, so stack it
+            $item->variable_row('Quantity', $item->variable('Quantity') + $self->variable('Quantity'));
+            
+            # Don't delete this item, just don't add it to inventory
+            $self->character_id(undef);
+            $self->update;
+            return;             
+        }   
+    }
 
     my $category = $self->item_type->category;
 

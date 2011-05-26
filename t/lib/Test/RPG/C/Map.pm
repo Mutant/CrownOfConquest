@@ -20,6 +20,7 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Road;
+use Test::RPG::Builder::Garrison;
 
 sub startup : Tests(startup) {
 	my $self = shift;
@@ -374,7 +375,39 @@ sub test_generated_grid_has_correct_movement_costs : Tests(2) {
 	my $grid = $result->{grid};
 	is($grid->[1][1]->{party_movement_factor}, 2, "Sector 1,1 movement factor correct");
 	is($grid->[1][2]->{party_movement_factor}, 4, "Sector 1,2 movement factor correct");
+}
 
+sub test_move_to_garrison_attacks : Tests(3) {
+	my $self = shift;
+
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		land_id         => $land[1]->id
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, land_id => $land[0]->id, character_count => 2);
+
+	$self->{params}{land_id} = $land[0]->id;
+
+	$self->{stash}{party}          = $party;
+	$self->{stash}{party_location} = $party->location;
+
+	$self->{mock_forward}{'/combat/check_for_attack'} = sub { };
+	$self->{mock_forward}{'/panel/refresh'}           = sub { };
+
+	# WHEN
+	RPG::C::Map->move_to( $self->{c} );
+
+	# THEN
+	$party->discard_changes;
+	is( $party->turns,   98,           "Turns reduced" );
+	is( $party->land_id, $land[0]->id, "Moved to correct sector" );
+    is( $party->in_combat_with, $garrison->id, "Now in combat with garrison");
+    
 }
 
 1;

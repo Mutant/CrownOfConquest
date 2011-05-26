@@ -49,29 +49,4 @@ sub execute_garrison_battle {
 	}
 }
 
-sub check_for_garrison_fight {
-	my $self        = shift;
-	my $cg          = shift;
-	my $garrison    = shift;
-	my $attack_mode = shift;
-
-	return 0 if $attack_mode eq 'Defensive Only';
-
-	my $factor = $cg->compare_to_party($garrison);
-
-	given ($attack_mode) {
-		when ( 'Attack Weaker Opponents' && $factor > 20 ) {
-			return 1;
-		}
-		when ( 'Attack Similar Opponents' && $factor > 5 ) {
-			return 1;
-		}
-		when ( 'Attack Stronger Opponents' && $factor > -15 ) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 1;

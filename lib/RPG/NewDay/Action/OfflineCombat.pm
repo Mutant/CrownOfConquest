@@ -142,7 +142,7 @@ sub initiate_battles {
     
     	next if $c->schema->resultset('Combat_Log')->get_offline_log_count( $party, undef, 1 ) > $c->config->{max_party_offline_attacks};
     	
-    	if ($self->check_for_garrison_fight($party, $garrison, $garrison->party_attack_mode)) {
+    	if ($garrison->check_for_fight($party)) {
     		$party->initiate_combat($garrison);
         	$self->execute_garrison_battle( $garrison, $party );
             $garrison_party_combat_count++;    		    		
@@ -150,7 +150,7 @@ sub initiate_battles {
     }
     
     # Now combat in dungeons
-    $dungeon_combat_count = $self->initiate_dungeon_battles;
+    $dungeon_combat_count = $self->initiate_dungeon_battles // 0;
     
     $c->logger->info($combat_count . " wilderness battles executed");
     $c->logger->info($dungeon_combat_count . " dungeon battles executed");

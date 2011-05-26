@@ -183,22 +183,20 @@ sub test_initiate_battles_garrison_vs_party : Tests(5) {
     my @land = Test::RPG::Builder::Land->build_land($self->{schema});
     my $land = $land[0];
     my $party1 = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land->id);
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land->id, character_count => 2);
     my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $land->id, 
-    	last_action => DateTime->now()->subtract( minutes => 20 ));
+    	last_action => DateTime->now()->subtract( minutes => 20 ), character_count => 2);
     
     my $offline_combat_action = RPG::NewDay::Action::OfflineCombat->new( context => $self->{mock_context} );
     
     $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
     $offline_combat_action->set_true('execute_garrison_battle');
-    $offline_combat_action->set_true('check_for_garrison_fight');
-    
-    
+        
     # WHEN
     $offline_combat_action->initiate_battles();
     
     # THEN
-    my ($method, $args) = $offline_combat_action->next_call(2);
+    my ($method, $args) = $offline_combat_action->next_call(1);
     
     is($method, 'execute_garrison_battle', "Garrison battle executed");
     isa_ok($args->[1], 'RPG::Schema::Garrison', "Garrison passed to offline battle");
@@ -221,7 +219,9 @@ sub test_initiate_battles_garrison_vs_own_party : Tests(1) {
     
     $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
     $offline_combat_action->set_true('execute_garrison_battle');
-    $offline_combat_action->set_true('check_for_garrison_fight');    
+    
+    $garrison = Test::MockObject::Extends->new($garrison);    
+    $garrison->set_true('check_for_fight');    
     
     # WHEN
     $offline_combat_action->initiate_battles();

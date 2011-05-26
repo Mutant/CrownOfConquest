@@ -21,7 +21,7 @@ sub build_garrison {
         {
             land_id => $params{land_id},
             party_id => $params{party_id},
-			
+            party_attack_mode => $params{party_attack_mode} || 'Attack Stronger Opponents',   
         }
     );
     

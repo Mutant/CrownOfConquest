@@ -43,6 +43,7 @@ sub main : Private {
 				params   => {
 					opposing_garrison => $c->stash->{party_location}->garrison,
 					combat_messages   => $c->stash->{combat_messages},
+					garrison_initiated  => $c->stash->{garrison_initiated} ? 1 : 0,
 				},
 				return_output => 1,
 			},
@@ -63,7 +64,7 @@ sub fight : Local {
 		schema                  => $c->model('DBIC')->schema,
 		config                  => $c->config,
 		log                     => $c->log,
-		initiated_by_opp_number => $c->stash->{party_initiated},
+		initiated_by_opp_number => $c->stash->{party_initiated} ? 1 : 2,
 	);
 
 	my $result = $battle->execute_round;

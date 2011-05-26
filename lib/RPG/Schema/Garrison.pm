@@ -2,6 +2,8 @@ package RPG::Schema::Garrison;
 
 use Moose;
 
+use feature 'switch';
+
 extends 'DBIx::Class';
 
 __PACKAGE__->load_components(qw/Core Numeric/);
@@ -134,6 +136,33 @@ sub display_name {
 	else {
 		return "A garrison $party_name";
 	}
+}
+
+sub check_for_fight {
+	my $self        = shift;
+	my $opponent    = shift;
+	
+	my $attack_mode = $opponent->group_type eq 'creature_group' ? $self->creature_attack_mode : $self->party_attack_mode;
+	
+	return 0 if $attack_mode eq 'Defensive Only';
+
+	return 0 if $opponent->group_type eq 'party' && $opponent->party_id == $self->party_id;
+
+	my $factor = $opponent->compare_to_party($self);
+
+	given ($attack_mode) {
+		when ( 'Attack Weaker Opponents' ) {		     
+			return 1 if $factor > 20;
+		}
+		when ( 'Attack Similar Opponents' ) {
+			return 1 if $factor > 5;
+		}
+		when ( 'Attack Stronger Opponents' ) {
+			return 1 if $factor > -20;
+		}
+	}
+
+	return 0;
 }
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

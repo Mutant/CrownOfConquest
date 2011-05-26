@@ -397,6 +397,12 @@ sub move_to : Local {
         		);
         		$already_messaged_garrison = $garrison->id;
         	}
+        	
+        	if ($garrison->check_for_fight($c->stash->{party})) {
+        	    $c->stash->{party}->initiate_combat($garrison);
+                push @{ $c->stash->{refresh_panels} }, 'party';
+                $c->stash->{garrison_initiated} = 1;
+        	}         	
         }
         
         my @nearby_garrisoned_blds = $self->find_nearby_garrisoned_buildings($c,

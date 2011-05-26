@@ -8,6 +8,10 @@
 	[% END %]	
 [% END %]
 
+[% IF garrison_initiated %]
+	You have been attacked by a garrison.<br><br>
+[% END %]
+
 [% UNLESS combat_complete || party_dead %]
 [% prefix = '' %]
 [% IF in_dungeon %]

@@ -14,6 +14,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Creature_Orb;
 use Test::RPG::Builder::Town;
+use Test::RPG::Builder::CreatureGroup;
 
 sub test_find_fleeable_sectors_all_sectors_clear : Tests(9) {
 	my $self = shift;
@@ -58,6 +59,110 @@ sub test_find_fleeable_sectors_some_sectors_occupied : Tests(6) {
 		my $in_land_array = grep { $_->id == $land[$idx]->id } @fleeable_sectors;
 		is(	$in_land_array, 1, "Correct sector returned");
 	}
+}
+
+sub test_check_for_fight_vs_party_even : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 3);
+	
+	# WHEN / THEN
+	$garrison->party_attack_mode('Attack Weaker Opponents');
+	is($garrison->check_for_fight($party), 0, "Doesn't attack when set to attack weaker");
+
+	$garrison->party_attack_mode('Attack Similar Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack similar");
+	
+	$garrison->party_attack_mode('Attack Stronger Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack stronger");  
+}
+
+sub test_check_for_fight_vs_party_weaker : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 6);
+	
+	# WHEN / THEN
+	$garrison->party_attack_mode('Attack Weaker Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack weaker");
+
+	$garrison->party_attack_mode('Attack Similar Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack similar");
+	
+	$garrison->party_attack_mode('Attack Stronger Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack stronger");       
+}
+
+sub test_check_for_fight_vs_party_stronger : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 5,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 2);
+	
+	# WHEN / THEN
+	$garrison->party_attack_mode('Attack Weaker Opponents');
+	is($garrison->check_for_fight($party), 0, "Doesn't attack when set to attack weaker");
+
+	$garrison->party_attack_mode('Attack Similar Opponents');
+	is($garrison->check_for_fight($party), 0, "Doesn't attack when set to attack similar");
+	
+	$garrison->party_attack_mode('Attack Stronger Opponents');
+	is($garrison->check_for_fight($party), 1, "Attacks when set to attack stronger");       
+}
+
+sub test_check_for_fight_vs_own_party : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+	);
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, character_count => 2);
+	$garrison->party_attack_mode('Attack Stronger Opponents');
+	
+	# WHEN / THEN
+	is($garrison->check_for_fight($party), 0, "Doesn't attack own party");       
+}
+
+sub test_check_for_fight_vs_cg : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg(
+		$self->{schema},
+		character_count => 1,
+		creature_level => 1,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 6);
+	
+	# WHEN / THEN
+	$garrison->creature_attack_mode('Attack Weaker Opponents');
+	is($garrison->check_for_fight($cg), 0, "Doesn't attack when set to attack weaker");
+
+	$garrison->creature_attack_mode('Attack Similar Opponents');
+	is($garrison->check_for_fight($cg), 1, "Attacks when set to attack similar");
+	
+	$garrison->creature_attack_mode('Attack Stronger Opponents');
+	is($garrison->check_for_fight($cg), 1, "Attacks when set to attack stronger");       
 }
 
 1;

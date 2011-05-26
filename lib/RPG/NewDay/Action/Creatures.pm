@@ -485,7 +485,7 @@ sub _check_for_fight {
 	my $cg = shift;
 	my $garrison = shift;
 		
-	if ($self->check_for_garrison_fight($cg, $garrison, $garrison->creature_attack_mode)) {
+	if ($garrison->check_for_fight($cg)) {
 		$self->execute_garrison_battle($garrison, $cg, 0);
 	}
 }

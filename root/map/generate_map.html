@@ -11,6 +11,7 @@
 
 [% MACRO town_tooltip(position) BLOCK %]
 <b>[% position.town_name %]</b> ([% position.x %], [% position.y %])<br>
+[% IF position.kingdom_name %]Kingdom of [% position.kingdom_name %][% ELSE %]Free City[% END %]<br>
 Prosperity: [% position.prosperity %]<br>
 [% IF click_to_move %]Movement Cost: [% position.party_movement_factor %]<br>[% END %]
 [% IF town_costs.${position.town_id}.paid %]

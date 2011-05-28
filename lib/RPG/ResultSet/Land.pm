@@ -73,12 +73,13 @@ sub get_party_grid {
     my $sql = <<SQL;
 SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre, 
 	me.variation, terrain.terrain_id, terrain.terrain_name, terrain.modifier, mapped_sector.mapped_sector_id, mapped_sector.storage_type, 
-	mapped_sector.party_id, mapped_sector.date_stored, mapped_sector.known_dungeon, town.town_id, town.town_name, town.prosperity
+	mapped_sector.party_id, mapped_sector.date_stored, mapped_sector.known_dungeon, town.town_id, town.town_name, town.prosperity, kingdom.name as kingdom_name
 	
 	FROM Land me  
 	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id ) 
 	LEFT JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? ) 
 	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
+	LEFT JOIN Kingdom kingdom ON ( me.kingdom_id = kingdom.kingdom_id )
 	WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )
 SQL
 

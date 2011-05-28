@@ -208,7 +208,7 @@ __PACKAGE__->has_many( 'party_kingdoms', 'RPG::Schema::Party_Kingdom', 'party_id
 
 __PACKAGE__->might_have( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
-__PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );
+__PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join_type => 'LEFT OUTER' } );
 
 __PACKAGE__->belongs_to( 'last_allegiance_change_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.last_allegiance_change' } );
 

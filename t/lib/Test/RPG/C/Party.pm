@@ -7,6 +7,8 @@ use base qw(Test::RPG::DB);
 
 __PACKAGE__->runtests unless caller();
 
+use DateTime;
+
 use Test::MockObject;
 use Test::More;
 
@@ -14,6 +16,8 @@ use RPG::C::Party;
 
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Kingdom;
 
 use Data::Dumper;
 
@@ -283,6 +287,35 @@ sub test_select_action : Tests(7) {
     is($template_args->[0][0]{params}{message}, "mock_cast_result", "Cast result passed to template");
     
     is($self->{stash}{messages}, 'spell message', "Messages set correctly");
+}
+
+sub test_parties_in_sector_land : Tests() {
+    my $self = shift;
+    
+    # GIVEN
+    my ($land) = Test::RPG::Builder::Land->build_land($self->{schema});
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, land_id => $land->id);
+    
+    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, land_id => $land->id);
+    
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, land_id => $land->id, kingdom_id => $kingdom->id);
+    my $party3 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, land_id => $land->id, defunct => DateTime->now());
+    
+    $self->{stash}{party_location} = $land;
+    $self->{stash}{party} = $party; 
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_; };    
+    
+    # WHEN
+    RPG::C::Party->parties_in_sector($self->{c}, $land->id);
+    
+    # THEN
+    my $parties = $template_args->[0][0]{params}{parties};
+    is(scalar @$parties, 2, "Two parties in sector");
+       
 }
 
 1;

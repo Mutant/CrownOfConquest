@@ -210,7 +210,11 @@ sub parties_in_sector : Private {
 		$query_params{dungeon_grid_id} = $dungeon_grid_id;
 	}
 
-	my @parties = $c->model('DBIC::Party')->search( \%query_params, {}, );
+	my @parties = $c->model('DBIC::Party')->search( \%query_params, 
+	   {
+	       prefetch => 'kingdom',
+	   }, 
+	);
 
 	return unless @parties;
 

@@ -575,7 +575,7 @@ sub attack_factor {
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
     $attack_factor += $effect_df;
     
-    $attack_factor -= $self->back_rank_penalty if ! $self->in_front_rank;
+    $attack_factor -= ($self->back_rank_penalty // 0) if ! $self->in_front_rank;
     
     return $attack_factor;
 }

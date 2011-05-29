@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::C::Town::Recruitment_Int;
+package Test::RPG::C::Town::Recruitment;
 
 use base qw(Test::RPG::DB);
 
@@ -33,7 +33,7 @@ sub test_sell_invalid_character : Tests(1) {
     throws_ok( sub { RPG::C::Town::Recruitment->sell( $self->{c} ); }, qr/Invalid character id:/, "Can't sell a character from another party" );
 }
 
-sub test_sell : Tests(5) {
+sub test_sell : Tests(6) {
     my $self = shift;
 
     my $party     = Test::RPG::Builder::Party->build_party( $self->{schema} );
@@ -53,12 +53,14 @@ sub test_sell : Tests(5) {
     $self->{stash}{party_location} = $town->location;
     $self->{stash}{today}          = $day;
     $self->{config}{url_root}      = '';
+    $self->{config}{character_sell_deletion_chance} = 0;
 
     RPG::C::Town::Recruitment->sell( $self->{c} );
 
     $character_to_sell->discard_changes;
     is( $character_to_sell->party_id,    undef,     "Character no longer in a party" );
-    is( $character_to_sell->town_id,     $town->id, "Character now belongs to town he was sold in" );
+    is( $character_to_sell->status,      'recruitment_hold', "Character now in the recruitment hold" );
+    is( $character_to_sell->status_context, $town->id, "Character now in the recruitment hold" );
     is( $character_to_sell->party_order, undef,     "Character's party order cleared" );
     
     my @updated_characters = $party->characters;

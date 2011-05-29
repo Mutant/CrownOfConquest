@@ -404,6 +404,12 @@ sub is_overencumbered {
 	return 1 if $self->encumbrance > $self->encumbrance_allowance;	
 }
 
+sub encumbrance_left {
+    my $self = shift;
+    
+    return $self->encumbrance_allowance - $self->encumbrance;
+}
+
 sub roll_all {
     my $self = shift;
 

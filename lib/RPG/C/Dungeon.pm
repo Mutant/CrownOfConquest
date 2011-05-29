@@ -956,8 +956,6 @@ sub open_chest : Local {
 
 	my $chest = $current_location->treasure_chest;
 	my @items = $chest->items;
-
-	my @characters = $c->stash->{party}->characters;
 	
 	my @items_found;
 	
@@ -968,13 +966,7 @@ sub open_chest : Local {
 			next;			
 		}
 		
-        my $finder;
-        foreach my $character ( shuffle @characters ) {
-            unless ( $character->is_dead ) {
-                $finder = $character;
-                last;
-            }
-        }		
+        my $finder = $c->stash->{party}->get_least_encumbered_character;        		
         
         $item->add_to_characters_inventory($finder);
         

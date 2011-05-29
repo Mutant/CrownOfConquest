@@ -5,7 +5,7 @@ use Moose;
 extends 'DBIx::Class';
 
 use Data::Dumper;
-use List::Util qw(sum);
+use List::Util qw(sum shuffle);
 use Math::Round qw(round);
 use DateTime;
 use Statistics::Basic qw(average);
@@ -987,6 +987,16 @@ sub banish_from_kingdom {
 	       message => "We were banished from the Kingdom of " . $kingdom->name . " for $duration days!",
         }
     );           
+}
+
+sub get_least_encumbered_character {
+    my $self = shift;
+    
+    my @characters = shuffle grep { ! $_->is_dead } $self->characters_in_party;
+    
+    @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
+    
+    return $characters[0];
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

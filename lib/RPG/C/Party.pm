@@ -735,7 +735,7 @@ sub pickup_item : Local {
 		return;
 	}
 
-	my $random_char = ( shuffle grep { $_->is_alive } $party->characters )[0];
+	my $random_char = $party->get_least_encumbered_character;
 
 	$party->turns( $party->turns - 1 );
 	$party->update;

@@ -532,5 +532,29 @@ sub test_consume_items : Tests() {
        
 }
 
+sub test_get_least_encumbered_character : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
+    my @characters = $party->characters;
+    
+    $characters[0]->encumbrance(50);
+    $characters[0]->update;
+
+    $characters[1]->encumbrance(30);
+    $characters[1]->update;
+    
+    $characters[2]->encumbrance(20);
+    $characters[2]->hit_points(0);
+    $characters[2]->update;    
+    
+    # WHEN
+    my $character = $party->get_least_encumbered_character;
+    
+    # THEN
+    is($character->id, $characters[1]->id, "Correct character returned");   
+}
+
 1;
 

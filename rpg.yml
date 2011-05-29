@@ -264,7 +264,7 @@ offline_combat_chance: 35
 max_offline_combat_count: 5
 
 # Number of rounds per turn cost
-combat_rounds_per_turn: 3
+combat_rounds_per_turn: 2
 
 # Max number of times a party can be attacked by another party when offline
 max_party_offline_attacks: 3
@@ -415,6 +415,9 @@ dungeon_offline_combat_chance: 100
 
 # Percentage of dungeon rooms that are special
 dungeon_special_room_percentage: 2 
+
+# Movement cost
+cost_of_moving_through_dungeons: 2
 
 # ----- Creature Params ----- #
 

@@ -250,7 +250,7 @@ sub move_to : Local {
 
     $sector_id ||= $c->req->param('sector_id');
     
-    $turn_cost //= 1;
+    $turn_cost //= $c->config->{cost_of_moving_through_dungeons};
 
     my $current_location = $c->model('DBIC::Dungeon_Grid')->find( 
     	{ dungeon_grid_id => $c->stash->{party}->dungeon_grid_id, }, 

@@ -12,7 +12,7 @@ use DateTime;
 sub move_to : Local {
 	my ( $self, $c ) = @_;
 
-	my $turn_cost = $c->session->{castle_move_type} eq 'stealth' ? 4 : 1;
+	my $turn_cost = $c->session->{castle_move_type} eq 'stealth' ? 4 : $c->config->{cost_of_moving_through_dungeons};
 
 	$c->forward( '/dungeon/move_to', [ undef, $turn_cost ] );
 }

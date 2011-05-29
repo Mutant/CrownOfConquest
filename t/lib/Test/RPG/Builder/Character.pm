@@ -32,6 +32,8 @@ sub build_character {
 			stat_points    => 0,
 			garrison_id    => $params{garrison_id},
 			encumbrance    => 0,
+			status         => $params{status} || undef,
+			status_context => $params{status_context} || undef,
 		}
 	);
 

@@ -24,7 +24,7 @@ sub auto : Private {
 	if ( $c->stash->{character}->party_id && $c->stash->{character}->party_id != $c->stash->{party}->id ) {
 		croak "Not allowed to view this character\n";
 	}
-	elsif ( $c->stash->{character}->town_id && $c->stash->{character}->town_id != $c->stash->{party_location}->town->id ) {
+	if ( ! $c->stash->{character}->party_id && $c->stash->{character}->town_id != $c->stash->{party_location}->town->id ) {
 		croak "Not allowed to view this character\n";
 	}
 

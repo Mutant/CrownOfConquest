@@ -100,25 +100,31 @@ sub sell : Local {
     $c->stash->{party}->gold( $c->stash->{party}->gold + $character->sell_value );
     $c->stash->{party}->update;
 
-    $character->party_id(undef);
-    $character->town_id( $c->stash->{party_location}->town->id );
-    $character->party_order(undef);
-    $character->update;
+    if (Games::Dice::Advanced->roll('1d100') <= $c->config->{character_sell_deletion_chance}) {
+        $character->delete;   
+    }
+    else {
+        $character->party_id(undef);
+        $character->party_order(undef);
+        $character->status('recruitment_hold');
+        $character->status_context($c->stash->{party_location}->town->id);
+        $character->update;
+
+        $c->model('DBIC::Character_History')->create(
+            {
+                character_id => $character->id,
+                day_id       => $c->stash->{today}->id,
+                event        => $character->character_name
+                    . " was sold by "
+                    . $c->stash->{party}->name
+                    . " to the Recruitment markets of "
+                    . $c->stash->{party_location}->town->town_name,
+            },
+        );
+    }
     
     # Rejig party order
     $c->stash->{party}->adjust_order;
-
-    $c->model('DBIC::Character_History')->create(
-        {
-            character_id => $character->id,
-            day_id       => $c->stash->{today}->id,
-            event        => $character->character_name
-                . " was sold by "
-                . $c->stash->{party}->name
-                . " to the Recruitment markets of "
-                . $c->stash->{party_location}->town->town_name,
-        },
-    );
 
     $c->res->redirect( $c->config->{url_root} . '/town/recruitment' );
 }

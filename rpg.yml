@@ -379,6 +379,9 @@ town_land_claim_range: 3
 # Chance the treasury will be moved in the castle (daily)
 castle_treasury_movement_chance: 5
 
+# Chance a character will get deleted when sold
+character_sell_deletion_chance: 15
+
 
 # ----- Dungeon Params ----- #
 

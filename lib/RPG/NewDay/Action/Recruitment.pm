@@ -60,13 +60,30 @@ sub generate_character {
 
     my $c = $self->context;
 
-    my $character = $c->schema->resultset('Character')->generate_character(
-    	allocate_equipment => 1,
-    	level => Games::Dice::Advanced->roll('1d20'),
+    my $character;
+    
+    # See if there are any characters in the recruitment hold first
+    my @characters = $c->schema->resultset('Character')->search(
+        {
+            status => 'recruitment_hold',
+            status_context => {'!=', $town->id},
+        }
     );
     
-    $character->set_default_spells;
-    
+    if (@characters) {
+        $character = (shuffle @characters)[0];
+    }
+    else {
+        $character = $c->schema->resultset('Character')->generate_character(
+        	allocate_equipment => 1,
+        	level => RPG::Maths->weighted_random_number(1..20),
+        );
+        
+        $character->set_default_spells;
+    }
+
+    $character->status(undef);
+    $character->status_context(undef);    
     $character->town_id($town->id);
     $character->update;
     

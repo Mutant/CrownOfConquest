@@ -542,6 +542,9 @@ garrison_creation_turn_cost: 15
 # Minimum distance between garrisons - 1=one empty space min between
 garrison_min_spacing: 1
 
+# Minimum level a party must be before a garrison will attack
+min_party_level_for_garrison_attack: 6
+
 # ----- Enchantment Params ----- #
 
 # Minimum creature level that has enchanted items

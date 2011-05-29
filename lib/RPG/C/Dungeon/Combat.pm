@@ -16,6 +16,15 @@ sub check_for_attack : Local {
 
     # See if party is in same location as a creature
     my $creature_group = $current_location->available_creature_group;
+    
+    # If there's no cg in sector, see if there's one within range.
+    if (! $creature_group) {
+        $creature_group = $c->model('DBIC::CreatureGroup')->find_in_dungeon_range_for_combat(
+            search_range => 4 * 2 - 1,
+            sector => $current_location,
+        );
+        warn "cg in range found" if $creature_group;
+    }    
 
     # If there are creatures here, check to see if we go straight into combat
     if ( $creature_group && $creature_group->number_alive > 0 ) {
@@ -23,7 +32,11 @@ sub check_for_attack : Local {
         
         my $type = $current_location->dungeon_room->dungeon->type;
 
-        if ( $type eq 'castle' || $creature_group->initiate_combat( $c->stash->{party} ) ) {
+        if ( $type eq 'castle' || $creature_group->initiate_combat( $c->stash->{party}, 1 ) ) {
+            # Might have moved from another sector
+            $creature_group->dungeon_grid_id($current_location->id);
+            $creature_group->update;
+            
         	$c->stash->{party}->initiate_combat($creature_group);
             $c->stash->{creatures_initiated} = 1;
             

@@ -148,7 +148,7 @@ sub check_for_fight {
 
 	if ($opponent->group_type eq 'party') {
 	    # Don't attack low-level parties
-	    return 0 if $opponent->level <= 5;
+	    return 0 if $opponent->level < RPG::Schema->config->{min_party_level_for_garrison_attack};
 	    
 	    # Don't attack own party
 	    return 0 if $opponent->party_id == $self->party_id;

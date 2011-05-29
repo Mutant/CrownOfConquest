@@ -152,4 +152,24 @@ sub search_in_dungeon_range {
     );   
 }
 
+# Find a CG in range of a sector, and move them into that sector (ready for combat)
+sub find_in_dungeon_range_for_combat {
+    my $self = shift;
+    my %params = @_;
+    
+    $params{dungeon_id} //= $params{sector}->dungeon_room->dungeon_id;
+    $params{base_point} //= {
+        x => $params{sector}->x,
+        y => $params{sector}->y,  
+    };
+    
+    my @cgs = $self->search_in_dungeon_range(
+        %params,
+    );
+   
+    my $cg = (shuffle @cgs)[0];
+  
+    return $cg;
+}
+
 1;

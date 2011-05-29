@@ -416,14 +416,14 @@ sub character_action {
 		else {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
-
+		
 		if ( $character->last_combat_action eq 'Cast' ) {
 			$result = $obj->cast( $character, $target );
 		}
 		else {
 			$result = $obj->use($target);
 		}
-
+		
 		# Since effects could have changed an af or df, we re-calculate the target's factors
 		$self->refresh_factor_cache( $target_type, $character->last_combat_param2 );
 		

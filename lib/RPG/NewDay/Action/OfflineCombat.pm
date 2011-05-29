@@ -191,21 +191,15 @@ sub initiate_dungeon_battles {
 
         # No CG in the sector with the party. See if there are any nearby cgs
         if (! $cg) {        
-            my @cgs = $c->schema->resultset('CreatureGroup')->search_in_dungeon_range(
-                base_point => {
-                    x => $sector->x,
-                    y => $sector->y,  
-                },
+            $cg = $c->schema->resultset('CreatureGroup')->find_in_dungeon_range_for_combat(
                 search_range => 5 * 2 - 1,
-                dungeon_id => $dungeon->id,
+                sector => $sector,
             );
-           
-            $cg = (shuffle @cgs)[0];
             
             if ($cg) {
                 $cg->dungeon_grid_id($sector->id);
                 $cg->update;   
-            }
+            }            
         }
         
         next unless $cg;

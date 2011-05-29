@@ -8,6 +8,9 @@ use base qw(Test::RPG::DB);
 __PACKAGE__->runtests() unless caller();
 
 use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::CreatureGroup;
 
 use Test::More;
 use Test::MockObject;
@@ -149,6 +152,38 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
     $land[0]->discard_changes;
     is($land[0]->creature_threat, 12, "Creature threat increased");
 
+}
+
+sub test_find_in_dungeon_range_for_combat : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 1,
+            y => 1,
+        },
+        bottom_right => {
+            x => 5,
+            y => 5,
+        },
+        create_walls => 1,
+    );
+    my ($dungeon_sector) = $room1->sectors;
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $dungeon_sector->id);    
+    
+    my ($find_from_sector) = grep { $_->x == 3 && $_->y == 3 } $room1->sectors; 
+    
+    # WHEN
+    my $found_cg = $self->{schema}->resultset('CreatureGroup')->find_in_dungeon_range_for_combat(
+        sector => $find_from_sector,
+        search_range => 5,
+    );
+    
+    # THEN
+    is($found_cg->id, $cg->id, "Found correct cg");
 }
 
 1;

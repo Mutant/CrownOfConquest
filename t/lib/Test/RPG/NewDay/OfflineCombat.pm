@@ -191,6 +191,8 @@ sub test_initiate_battles_garrison_vs_party : Tests(5) {
     
     $offline_combat_action = Test::MockObject::Extends->new($offline_combat_action);
     $offline_combat_action->set_true('execute_garrison_battle');
+    
+    $self->{config}{min_party_level_for_garrison_attack} = 1;
         
     # WHEN
     $offline_combat_action->initiate_battles();

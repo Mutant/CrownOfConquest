@@ -391,6 +391,8 @@ sub test_move_to_garrison_attacks : Tests(3) {
 	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema});	
 	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, land_id => $land[0]->id, character_count => 2);
 
+    $self->{config}{min_party_level_for_garrison_attack} = 1;
+
 	$self->{params}{land_id} = $land[0]->id;
 
 	$self->{stash}{party}          = $party;

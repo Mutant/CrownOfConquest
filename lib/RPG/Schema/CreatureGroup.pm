@@ -65,6 +65,7 @@ sub is_online {
 sub initiate_combat {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
+	my $no_high_level_check = shift // 0;
 
 	if ( $self->land_id && $self->location->orb && $self->location->orb->can_destroy( $party->level ) ) {
 
@@ -72,7 +73,7 @@ sub initiate_combat {
 		return 1;
 	}
 
-	return 0 unless $self->party_within_level_range($party);
+	return 0 unless $self->party_within_level_range($party, $no_high_level_check);
 
 	my $chance = RPG::Schema->config->{creature_attack_chance};
 
@@ -84,6 +85,7 @@ sub initiate_combat {
 sub party_within_level_range {
 	my $self = shift;
 	my $party = shift || croak "Party not supplied";
+	my $no_high_level_check = shift // 0;
 
 	if ( $self->level >= $party->level ) {
 		my $factor_comparison = $self->compare_to_party($party);
@@ -95,7 +97,7 @@ sub party_within_level_range {
 	}
 
 	# Won't attack party if they're too high a level
-	if ( $self->level < $party->level ) {
+	if ( ! $no_high_level_check && $self->level < $party->level ) {
 		return 0
 			if $party->level - $self->level > RPG::Schema->config->{cg_attack_max_level_below_party};
 	}

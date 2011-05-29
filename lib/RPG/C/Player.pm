@@ -143,7 +143,7 @@ sub register : Local {
     my ( $self, $c ) = @_;
 
     if ( $c->model('DBIC::Player')->count( { deleted => 0 } ) >= $c->config->{max_number_of_players} ) {
-        $c->forward( 'RPG::V::TT', [ { template => 'player/full.html', } ] );
+        $c->forward( 'RPG::V::TT', [ { template => 'player/full.html' } ] );
         return;
     }
 
@@ -226,6 +226,7 @@ sub register : Local {
                     verification_code => $verification_code,
                     last_login        => DateTime->now(),
                     $code ? (promo_code_id => $code->code_id) : (),
+                    send_email        => $c->req->param('allow_emails') ? 1 : 0,
                 }
             );
  
@@ -239,6 +240,8 @@ sub register : Local {
 
         return unless $message;
     }
+    
+    $c->req->param('allow_emails', 0) if $c->req->param('submit') && ! $c->req->param('allow_emails');
 
     $c->forward(
         'RPG::V::TT',

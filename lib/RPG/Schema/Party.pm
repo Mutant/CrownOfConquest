@@ -989,16 +989,6 @@ sub banish_from_kingdom {
     );           
 }
 
-sub get_least_encumbered_character {
-    my $self = shift;
-    
-    my @characters = shuffle grep { ! $_->is_dead } $self->characters_in_party;
-    
-    @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
-    
-    return $characters[0];
-}
-
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

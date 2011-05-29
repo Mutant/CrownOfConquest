@@ -6,7 +6,7 @@ use Carp;
 
 requires qw/members flee_threshold in_combat is_online end_combat display_name/;
 
-use List::Util qw(sum);
+use List::Util qw(sum shuffle);
 use POSIX;
 use Carp;
 
@@ -72,6 +72,17 @@ sub xp_gain {
     }
 
     return @details;
+}
+
+
+sub get_least_encumbered_character {
+    my $self = shift;
+    
+    my @characters = shuffle grep { ! $_->is_dead } $self->members;
+    
+    @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
+    
+    return $characters[0];
 }
 
 1;

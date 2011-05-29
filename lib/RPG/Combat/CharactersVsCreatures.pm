@@ -185,14 +185,8 @@ sub check_for_item_found {
 			return;
 		}
 
-		# Choose a random character to find it
-		my $finder;
-		foreach my $character ( shuffle @$characters ) {
-			unless ( $character->is_dead ) {
-				$finder = $character;
-				last;
-			}
-		}
+		# Choose a character to find it
+		my $finder = $self->character_group->get_least_encumbered_character;
 
 		# Create the item
 		my $item;

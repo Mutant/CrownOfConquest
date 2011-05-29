@@ -10,10 +10,10 @@ use Data::Dumper;
 
 sub surrounds {
 	my $self           = shift;
-	my $x_base         = shift || confess 'x base not supplied';
-	my $y_base         = shift || confess 'y base not supplied';
-	my $x_size         = shift || confess 'x size not supplied';
-	my $y_size         = shift || confess 'y size not supplied';
+	my $x_base         = shift // confess 'x base not supplied';
+	my $y_base         = shift // confess 'y base not supplied';
+	my $x_size         = shift // confess 'x size not supplied';
+	my $y_size         = shift // confess 'y size not supplied';
 	my $allow_negative = shift || 0;
 
 	# XXX: x_size and y_size must both be odd numbers;
@@ -50,8 +50,8 @@ sub surrounds_by_range {
 }
 
 sub _coord_diff {
-	my $coord = shift || confess 'coord value not supplied';
-	my $size  = shift || confess 'size not supplied';
+	my $coord = shift // confess 'coord value not supplied';
+	my $size  = shift // confess 'size not supplied';
 	my $direction      = shift;    # 0 = down, 1 = up;
 	my $allow_negative = shift;
 

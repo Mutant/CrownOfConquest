@@ -13,8 +13,9 @@ sub build_kingdom {
     my $kingdom = $schema->resultset('Kingdom')->create(
         {
             name => 'Test Kingdom',
-            mayor_tax => $params{mayor_tax} || 10,
-            gold => $params{gold} || 100,
+            mayor_tax => $params{mayor_tax} // 10,
+            gold => $params{gold} // 100,
+            active => $params{active} // 1,
         }   
     );
     

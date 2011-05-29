@@ -520,16 +520,7 @@ sub change_allegiance : Local {
         croak "Kingdom not found\n" unless $kingdom;
     }
     
-    my $location = $town->location;
-    my $old_kingdom = $location->kingdom;
-    
-    $location->kingdom_id( $c->req->param('kingdom_id') ? $kingdom->id : undef );
-    $location->update;
-    
-    $town->decrease_mayor_rating(10);
-    $town->unclaim_land;
-    $town->claim_land;
-    $town->update;
+    $town->change_allegiance($kingdom);
     
     # Adjust parties loyalty if they have a kingdom
     if (my $partys_kingdom = $c->stash->{party}->kingdom) {
@@ -548,32 +539,7 @@ sub change_allegiance : Local {
         }
         
         $party_kingdom->update;
-    }
-    
-    # check if this is the most towns the kingdom has had
-    if ($kingdom && $kingdom->highest_town_count < $kingdom->towns->count) {
-        $kingdom->highest_town_count($kingdom->towns->count);
-        $kingdom->highest_town_count_day_id($c->stash->{today}->id);
-        $kingdom->update;
-    }
-    
-    # Leave messages for old/new kings
-    if ($kingdom) {
-        $kingdom->add_to_messages(
-            {
-                message => "The town of " . $town->town_name . " is now loyal to our kingdom",
-                day_id => $c->stash->{today}->id,
-            }
-        );
-    }
-    if ($old_kingdom) {
-        $old_kingdom->add_to_messages(
-            {
-                message => "The town of " . $town->town_name . " is no longer loyal to our kingdom",
-                day_id => $c->stash->{today}->id,
-            }
-        );        
-    }
+    }    
     
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
 	# TODO: messages go no where at the moment

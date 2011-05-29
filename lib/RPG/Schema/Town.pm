@@ -274,4 +274,49 @@ sub heal_cost_per_hp {
     return round( RPG::Schema->config->{min_healer_cost} + ( 100 - $self->prosperity ) / 100 * RPG::Schema->config->{max_healer_cost} );   
 }
 
+sub change_allegiance {
+    my $self = shift;
+    my $new_kingdom = shift;
+    
+    my $location = $self->location;
+    my $old_kingdom = $location->kingdom;
+        
+    return if $new_kingdom->id == $old_kingdom->id;
+    
+    $location->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
+    $location->update;
+    
+    $self->decrease_mayor_rating(10);
+    $self->unclaim_land;
+    $self->claim_land;
+    $self->update;
+
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
+
+    # check if this is the most towns the kingdom has had
+    if ($new_kingdom && $new_kingdom->highest_town_count < $new_kingdom->towns->count) {
+        $new_kingdom->highest_town_count($new_kingdom->towns->count);
+        $new_kingdom->highest_town_count_day_id($today->id);
+        $new_kingdom->update;
+    }
+  
+    # Leave messages for old/new kings
+    if ($new_kingdom) {
+        $new_kingdom->add_to_messages(
+            {
+                message => "The town of " . $self->town_name . " is now loyal to our kingdom",
+                day_id => $today->id,
+            }
+        );
+    }
+    if ($old_kingdom) {
+        $old_kingdom->add_to_messages(
+            {
+                message => "The town of " . $self->town_name . " is no longer loyal to our kingdom",
+                day_id => $today->id,
+            }
+        );        
+    }       
+}
+
 1;

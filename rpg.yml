@@ -382,6 +382,8 @@ castle_treasury_movement_chance: 5
 # Chance a character will get deleted when sold
 character_sell_deletion_chance: 15
 
+# Chance npc mayor will change kingdom allegiance over night
+npc_mayor_kingdom_change_chance: 5 
 
 # ----- Dungeon Params ----- #
 

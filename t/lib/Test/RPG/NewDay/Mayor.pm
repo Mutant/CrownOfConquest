@@ -356,4 +356,26 @@ sub test_calculate_kingdom_tax_free_town : Tests(1) {
     
 }
 
+sub test_check_for_allegiance_change : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN        
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom3 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, active => 0);
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, kingdom_id => $kingdom1->id );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    $self->{config}{npc_mayor_kingdom_change_chance} = 100;
+    
+    # WHEN
+    $action->check_for_allegiance_change($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->location->kingdom_id, $kingdom2->id, "Allegiance of town changed");
+           
+}
+
 1;

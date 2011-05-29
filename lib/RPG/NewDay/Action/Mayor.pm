@@ -57,6 +57,8 @@ sub run {
 			$town->update;
 			
 			$self->check_for_npc_election($town);
+			
+			$self->check_for_allegiance_change($town);
 		}
 
 		my $revolt_started = $self->check_for_revolt($town);
@@ -665,6 +667,27 @@ sub calculate_kingdom_tax {
 	       day_id => $c->current_day->id,
 	   }	       
 	); 
+}
+
+sub check_for_allegiance_change {
+    my $self = shift;
+    my $town = shift;
+    
+    my $c = $self->context;
+    
+    return unless Games::Dice::Advanced->roll('1d100') <= $c->config->{npc_mayor_kingdom_change_chance};
+    
+    # Change allegiance, decide on kingdom
+    my @kingdoms = $c->schema->resultset('Kingdom')->search(
+        {
+            active => 1,
+            kingdom_id => {'!=', $town->location->kingdom_id},
+        }
+    );
+        
+    my $new_kingdom = (shuffle @kingdoms)[0];
+    
+    $town->change_allegiance($new_kingdom);
 }
 
 1;

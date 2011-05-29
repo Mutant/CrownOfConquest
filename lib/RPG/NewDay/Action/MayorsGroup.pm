@@ -26,6 +26,7 @@ sub run {
 	);
 	
 	foreach my $town (@towns) {
+	    $self->check_for_mayor_replacement($town, $town->mayor);
 	    $self->generate_mayors_group($town->castle, $town, $town->mayor);
 	}
       

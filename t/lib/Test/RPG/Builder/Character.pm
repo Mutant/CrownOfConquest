@@ -10,7 +10,7 @@ sub build_character {
 
 	my $race = $schema->resultset('Race')->create( { 'race_name' => 'test_race' } );
 
-	my $class = $schema->resultset('Class')->create( { 'class_name' => 'test_class' } );
+	my $class = $schema->resultset('Class')->create( { 'class_name' => $params{class} || 'test_class' } );
 
 	my $character = $schema->resultset('Character')->create(
 		{

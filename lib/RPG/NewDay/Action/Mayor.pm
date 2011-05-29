@@ -35,28 +35,7 @@ sub run {
 		
 		my $mayor = $town->mayor;
 		
-		if ($mayor && $mayor->is_dead) {
-            # Hmm, the mayor is dead. This should really happen.
-            #  To be defensive, we'll just remove them
-            $self->context->logger->debug("Mayor found dead - forcing generation of new one");
-            $mayor->lose_mayoralty;
-            undef $mayor; # Force new mayor to be generated
-		}
-		
-		unless ( $mayor ) {
-			$mayor = $self->create_mayor($town);
-			$town->mayor_rating(0);
-			$town->peasant_state(undef);
-			$town->update;
-			
-			$c->schema->resultset('Town_History')->create(
-                {
-                    town_id => $town->id,
-                    day_id  => $c->current_day->id,
-                    message => $town->town_name . " doesn't have a mayor! " . $mayor->character_name . " is appointed by the King",
-                }
-            );
-		}
+		$self->check_for_mayor_replacement($town, $mayor);
 		
 		$self->refresh_mayor($mayor, $town);
 		
@@ -124,27 +103,6 @@ sub run {
 	
 	# Clear all tax paid / raids today
     $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0, guards_killed => 0 } );	
-}
-
-sub create_mayor {
-	my $self = shift;
-	my $town = shift;
-	
-	my $c = $self->context;
-	
-	my $mayor_level = int $town->prosperity / 4;
-	$mayor_level = 8  if $mayor_level < 8;
-	$mayor_level = 20 if $mayor_level > 20;
-
-	my $character = $c->schema->resultset('Character')->generate_character(
-		allocate_equipment => 1,
-		level              => $mayor_level,
-	);
-
-	$character->mayor_of( $town->id );
-	$character->update;
-	
-	return $character;
 }
 
 sub calculate_approval {

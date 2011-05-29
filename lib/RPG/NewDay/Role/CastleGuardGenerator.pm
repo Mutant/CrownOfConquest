@@ -204,6 +204,8 @@ sub generate_mayors_group {
 	# See if the mayor has a group (if there is one)
 	return unless $mayor && $castle && $town;
 	
+	return if $mayor->is_dead;
+	
 	my $mayors_group;
 	$mayors_group = $c->schema->resultset('CreatureGroup')->find(
 		{
@@ -273,6 +275,58 @@ sub generate_mayors_group {
 		$character->creature_group_id($mayors_group->id);
 		$character->update;
 	}	    
+}
+
+sub check_for_mayor_replacement {
+    my $self = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    my $c = $self->context;
+    
+	if ($mayor && $mayor->is_dead) {
+        # Hmm, the mayor is dead. This can happen if the mayor is killed, but a party flees,
+        #  or they party doesn't take over the mayoralty.
+        $self->context->logger->debug("Mayor found dead - forcing generation of new one");
+        $mayor->lose_mayoralty;
+        undef $mayor; # Force new mayor to be generated
+	}
+	
+	unless ( $mayor ) {
+		$mayor = $self->create_mayor($town);
+		$town->mayor_rating(0);
+		$town->peasant_state(undef);
+		$town->update;
+		
+		$c->schema->resultset('Town_History')->create(
+            {
+                town_id => $town->id,
+                day_id  => $c->current_day->id,
+                message => $town->town_name . " doesn't have a mayor! " . $mayor->character_name . " is appointed by the King",
+            }
+        );
+	}    
+}
+
+sub create_mayor {
+	my $self = shift;
+	my $town = shift;
+	
+	my $c = $self->context;
+	
+	my $mayor_level = int $town->prosperity / 4;
+	$mayor_level = 8  if $mayor_level < 8;
+	$mayor_level = 20 if $mayor_level > 20;
+
+	my $character = $c->schema->resultset('Character')->generate_character(
+		allocate_equipment => 1,
+		level              => $mayor_level,
+	);
+
+	$character->mayor_of( $town->id );
+	$character->update;
+	
+	return $character;
 }
 
 1;

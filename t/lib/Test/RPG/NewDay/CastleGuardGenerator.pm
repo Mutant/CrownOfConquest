@@ -427,4 +427,28 @@ sub test_generate_guards_multiple_guard_types_firings_needed : Tests(3) {
     is($hist_rec->value, 510, "Correct expense record written");
 }
 
+sub test_check_for_mayor_replacement_dead_mayor : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 0, class => 'Warrior');
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+        
+    my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->check_for_mayor_replacement($town, $town->mayor);
+    
+    # THEN
+    $mayor->discard_changes;
+    is($mayor->mayor_of, undef, "Mayor is no longer mayor");
+    
+    my $new_mayor = $town->mayor;
+    isa_ok($new_mayor, 'RPG::Schema::Character', "New mayor appointed");
+    
+       
+}
+
 1;

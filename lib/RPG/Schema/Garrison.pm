@@ -146,7 +146,13 @@ sub check_for_fight {
 	
 	return 0 if $attack_mode eq 'Defensive Only';
 
-	return 0 if $opponent->group_type eq 'party' && $opponent->party_id == $self->party_id;
+	if ($opponent->group_type eq 'party') {
+	    # Don't attack low-level parties
+	    return 0 if $opponent->level <= 5;
+	    
+	    # Don't attack own party
+	    return 0 if $opponent->party_id == $self->party_id;
+	}
 
 	my $factor = $opponent->compare_to_party($self);
 

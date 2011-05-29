@@ -15,6 +15,7 @@ use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Creature_Orb;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Kingdom;
 
 sub test_find_fleeable_sectors_all_sectors_clear : Tests(9) {
 	my $self = shift;
@@ -169,6 +170,26 @@ sub test_check_for_fight_vs_cg : Tests(3) {
 	
 	$garrison->creature_attack_mode('Attack Stronger Opponents');
 	is($garrison->check_for_fight($cg), 1, "Attacks when set to attack stronger");       
+}
+
+sub test_check_for_fight_vs_party_from_own_kingdom : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		kingdom_id => $kingdom->id,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 2);
+	
+	# WHEN / THEN
+	is($garrison->check_for_fight($party), 0, "Doesn't attack party from own kingdom, by default");
+	
+	$garrison->attack_parties_from_kingdom(1);
+	is($garrison->check_for_fight($party), 1, "Attacks party from own kingdom, when requested to");       
 }
 
 1;

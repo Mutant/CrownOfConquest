@@ -369,6 +369,7 @@ sub update_orders : Local {
 	$c->stash->{garrison}->creature_attack_mode($c->req->param('creature_attack_mode'));
 	$c->stash->{garrison}->party_attack_mode($c->req->param('party_attack_mode'));
 	$c->stash->{garrison}->flee_threshold($c->req->param('flee_threshold'));
+	$c->stash->{garrison}->attack_parties_from_kingdom($c->req->param('attack_parties_from_kingdom') ? 1 : 0);
 	$c->stash->{garrison}->update;
 	
 	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders' );

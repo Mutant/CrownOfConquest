@@ -6,12 +6,13 @@ use feature 'switch';
 
 extends 'DBIx::Class';
 
-__PACKAGE__->load_components(qw/Core Numeric/);
+__PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Garrison');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Garrison');
 
-__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name/);
+__PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name
+                            attack_parties_from_kingdom/);
 
 __PACKAGE__->numeric_columns(qw/gold/);
 
@@ -152,6 +153,12 @@ sub check_for_fight {
 	    
 	    # Don't attack own party
 	    return 0 if $opponent->party_id == $self->party_id;
+	    
+	    # Don't attack parties from own kingdom, unless instructed to do so
+	    my $party = $self->party;
+	    if ($party->kingdom_id && ! $self->attack_parties_from_kingdom && $party->kingdom_id == $opponent->kingdom_id) {
+	       return 0;   
+	    }
 	}
 
 	my $factor = $opponent->compare_to_party($self);

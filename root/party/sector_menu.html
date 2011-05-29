@@ -22,7 +22,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% IF garrison.party_id == party.id %]
 		You have a garrison here.
 	[% ELSE %]
-		There is a garrison here owned by the party "[% garrison.party.name %]". [ <a href="javascript:getPanels('/garrison/combat/attack')">Attack</a> ]
+		There is a garrison here owned by the party "[% garrison.party.name %]" ([% INCLUDE party/kingdom.html party=garrison.party ~%]). [ <a href="javascript:getPanels('/garrison/combat/attack')">Attack</a> ]
 	[% END %]
 	<br><br>
 [% END %]

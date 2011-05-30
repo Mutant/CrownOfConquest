@@ -12,3 +12,24 @@ You do not have any garrisons
 	<br><br> 
 	[% END %]
 [% END %]
+
+[% IF old_garrisons.size > 0 %]
+<h4>Old Garrisions</h4>
+
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Battles</th>
+		<th>Combat Logs</th>
+	</tr>
+
+	[% FOREACH garrison IN old_garrisons %]
+	<tr>
+		<td>[% garrison.display_name(1) %]</td>
+		<td>[% garrison.recent_battles_count || 0 %]</td> 
+		<td><a href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]">View</a></td>
+	</tr>
+	[% END %]
+</table>
+
+[% END %]

@@ -1,8 +1,20 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
+[% IF old_party %]
+	[% INCLUDE top.html %]
+[% END %]
+
 [%# TODO: refactor so it's not so tied to 'party' %]
 
-<h4>Recent Battles</h4>
+[% IF old_party %]
+	[% IF party.group_type == 'party' %]
+		<h4>Battles for disbanded party: [% party.name %]</h4>
+	[% ELSIF party.group_type == 'garrison' %]
+		<h4>Battles for disbanded garrison: [% garrison.display_name(1) %]</h4>
+	[% END %]
+[% ELSE %]
+	<h4>Recent Battles</h4>
+[% END %]
 
 [% UNLESS show_location.defined %]
 	[% show_location = 1 %]
@@ -73,3 +85,7 @@
 	</tr>
 [% END %]
 </table>
+
+[% IF old_party %]
+	[% INCLUDE bottom.html %]
+[% END %]

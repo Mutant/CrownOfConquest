@@ -185,7 +185,7 @@ sub test_calculate_heal_cost_discount_available : Tests(1) {
        
 }
 
-sub test_become_mayor : Tests(2) {
+sub test_become_mayor : Tests(5) {
 	my $self = shift;
 	
 	# GIVEN
@@ -222,6 +222,17 @@ sub test_become_mayor : Tests(2) {
 	
 	$party_town->discard_changes;
 	is($party_town->prestige, 0, "Prestige reset");	
+	
+	my $history_rec = $self->{schema}->resultset('Party_Mayor_History')->find(
+        {
+            party_id => $party->id,
+            town_id => $town->id,
+            lost_mayoralty_day => undef,
+        }
+    );
+    is($history_rec->got_mayoralty_day, $self->{stash}{today}->id, "Got mayoralty day recorded");
+    is($history_rec->character_id, $character->id, "Character id recorded in history");
+    is($history_rec->mayor_name, $character->character_name, "Mayor name recorded in history");
 	
 }
 

@@ -20,7 +20,7 @@ __PACKAGE__->load_classes(qw/
     Dungeon_Sector_Path_Door Garrison Combat_Log_Messages Garrison_Messages Enchantments Item_Enchantments
     Enchantment_Item_Category Creature_Category Promo_Code Promo_Org Town_Guards Election Election_Candidate
     Dungeon_Teleporter Dungeon_Special_Room Creature_Spell Building_Type Building Reward_Links Player_Reward_Links
-    Kingdom Kingdom_Messages Party_Kingdom
+    Kingdom Kingdom_Messages Party_Kingdom Party_Mayor_History
 /);
 
 my $config;

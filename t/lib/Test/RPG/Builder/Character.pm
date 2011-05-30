@@ -34,6 +34,7 @@ sub build_character {
 			encumbrance    => 0,
 			status         => $params{status} || undef,
 			status_context => $params{status_context} || undef,
+			mayor_of       => $params{mayor_of} || undef,
 		}
 	);
 

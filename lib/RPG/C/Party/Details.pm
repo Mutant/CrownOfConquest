@@ -11,6 +11,16 @@ use feature "switch";
 
 sub default : Path {
     my ( $self, $c ) = @_;
+    
+    my @old_parties = $c->model('DBIC::Party')->search(
+        {
+            player_id => $c->session->{player}->id,
+            defunct => {'!=', undef},
+        },
+        {
+            order_by => 'created',
+        }
+    );
 
     $c->forward(
         'RPG::V::TT',
@@ -22,6 +32,7 @@ sub default : Path {
                     tab     => $c->req->param('tab') || '',
                     message => $c->flash->{messages},
                     error => $c->flash->{error},
+                    old_parties => \@old_parties,
                 },
             }
         ]
@@ -81,8 +92,22 @@ sub history : Local {
 
 sub combat_log : Local {
     my ( $self, $c ) = @_;
+    
+    my $party;
+    
+    if ($c->req->param('party_id')) {
+        $party = $c->model('DBIC::Party')->find(
+            {
+                party_id => $c->req->param('party_id'),
+            }
+        );        
+        croak "Can't access party from another player" unless $party->player_id == $c->session->{player}->id;
+    }
+    else {
+        $party = $c->stash->{party};
+    }
 
-    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_party( $c->stash->{party}, 20 );
+    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_party( $party, 20 );
 
     $c->forward(
         'RPG::V::TT',
@@ -91,7 +116,8 @@ sub combat_log : Local {
                 template => 'party/details/combat_log.html',
                 params   => {
                     logs  => \@logs,
-                    party => $c->stash->{party},
+                    party => $party,
+                    old_party => $party->id != $c->stash->{party}->id ? 1 : 0,
                 },
             }
         ]
@@ -110,7 +136,16 @@ sub combat_messages : Local {
     
     given ($type) {
     	when ('party') {
-    		croak "Invalid combat log" unless $id == $c->stash->{party}->id;	
+    	    if ($id != $c->stash->{party}->id) {
+                my $old_party = $c->model('DBIC::Party')->find(
+                    {
+                        party_id => $id,
+                        player_id => $c->session->{player}->id,
+                    }
+                );
+                
+                croak "Invalid combat log" unless $old_party;
+    	    } 	
     	}
     	when ('garrison') {
     		my $garrison = $c->model('DBIC::Garrison')->find(
@@ -203,6 +238,13 @@ sub garrisons : Local {
 	
 	my @garrisons = $c->stash->{party}->garrisons;
 	
+	my @old_garrisons = $c->model('DBIC::Garrison')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       land_id => undef,
+	   }
+    );
+	
     $c->forward(
         'RPG::V::TT',
         [
@@ -210,6 +252,7 @@ sub garrisons : Local {
                 template => 'party/details/garrisons.html',
                 params   => {
                     garrisons => \@garrisons,
+                    old_garrisons => \@old_garrisons,
                 },
             }
         ]
@@ -229,6 +272,14 @@ sub mayors : Local {
 		}
 	);	
 	
+	my @old_mayors = $c->model('DBIC::Party_Mayor_History')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       lost_mayoralty_day => {'!=', undef},
+	   }
+    );
+	   
+	
     $c->forward(
         'RPG::V::TT',
         [
@@ -236,10 +287,48 @@ sub mayors : Local {
                 template => 'party/details/mayors.html',
                 params   => {
                     mayors => \@mayors,
+                    old_mayors => \@old_mayors,
                 },
             }
         ]
     );	
+}
+
+sub old_mayor_combat_log : Local {
+    my ($self, $c) = @_;
+    
+    my $history = $c->model('DBIC::Party_Mayor_History')->find(
+        {
+            creature_group_id => $c->req->param('creature_group_id'),
+            party_id => $c->stash->{party}->id,
+        }
+    );
+    
+    croak "History not found" unless $history;
+    
+    my $cg = $c->model('DBIC::CreatureGroup')->find(
+        {
+            creature_group_id => $c->req->param('creature_group_id'),
+        }
+    );
+    
+    croak "CG not found" unless $cg;
+    
+    my @logs = $c->model('DBIC::Combat_Log')->get_recent_logs_for_creature_group($cg, 20);
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/combat_log.html',
+                params   => {
+                    logs  => \@logs,
+                    party => $cg,
+                    old_party => 1,
+                },
+            }
+        ]
+    );
 }
 
 sub buildings : Local {

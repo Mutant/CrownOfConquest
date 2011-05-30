@@ -591,6 +591,16 @@ sub become_mayor : Local {
 		}
 	);
 	
+	$c->model('DBIC::Party_Mayor_History')->create(
+	   {
+	       mayor_name => $character->character_name,
+	       character_id => $character->id,
+	       town_id => $town->id,
+	       got_mayoralty_day => $c->stash->{today}->id,
+	       party_id => $c->stash->{party}->id,
+	   }
+	);
+	
     $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
 
 	my $messages = $c->forward( '/quest/check_action', [ 'taken_over_town', $town ] );

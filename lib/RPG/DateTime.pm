@@ -14,7 +14,7 @@ sub time_since_datetime {
     
     my $now = DateTime->now;
     my $dur = $date_time->subtract_datetime($now);
-    
+
     my $str = "About ";
     if ($dur->years) {
         $str .= $dur->years . PL_N(" year", $dur->years);   

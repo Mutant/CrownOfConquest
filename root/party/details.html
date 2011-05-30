@@ -33,7 +33,7 @@
 		</tr>
 		<tr>
 			<td>Party Created:</td>
-			<td>[% party.created.ymd %] [% party.created.hms %]</td>
+			<td>[% party.created.ymd %] [% party.created.hms %] ([% party.time_since_created %])</td>
 		</tr>
 		<tr>
 			<td>Party Level:</td>
@@ -56,6 +56,30 @@
 			<td>[% party.turns_used %]</td>
 		</tr>
 	</table>
+	
+	<br>
+	
+	[% IF old_parties.size > 0 %]
+	<h3>Previous Parties</h3>
+	
+	<table cellpadding=6 cellspacing=0>
+		<tr>
+			<th>Party Name</th>
+			<th>Created</th>
+			<th>Disbanded</th>
+			<th>Combat Logs</th>
+		</tr>
+		
+		[% FOREACH old_party IN old_parties %]
+			<tr>
+				<td>[% old_party.name %]</td>
+				<td>[% old_party.time_since_created %]</td>
+				<td>[% old_party.time_since_defunct %]</td>
+				<td><a href="[% base %]party/details/combat_log?party_id=[% old_party.party_id %]">View</a></td>
+			</tr>
+		[% END %]
+	</table>
+	[% END %]
 </div>
 <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/party/details/history" [% IF tab == 'history' %]selected=true[% END %]>
 </div>

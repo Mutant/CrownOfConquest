@@ -55,8 +55,24 @@ sub lose_mayoralty {
    	$town->peasant_state(undef);
    	$town->last_election(undef);
    	$town->tax_modified_today(0);
-   	$town->update;   	    	    		
-		
+   	$town->update;
+   	
+   	if (! $self->is_npc) { 	    
+    	my $history_rec = $self->result_source->schema->resultset('Party_Mayor_History')->find(
+            {
+                party_id => $self->party_id,
+                town_id => $town->id,
+                lost_mayoralty_day => undef,
+            }
+        );
+        
+        if ($history_rec) {
+            my $today = $self->result_source->schema->resultset('Day')->find_today;
+                    
+            $history_rec->lost_mayoralty_day($today->id);
+            $history_rec->update;
+        }
+   	}	
 }
 
 # Called when the mayor was defeated in battle, and they should be removed from office

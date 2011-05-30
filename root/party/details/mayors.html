@@ -14,3 +14,29 @@ None of your characters are mayors of a town
 	<br><br>
 	[% END %]
 [% END %]
+
+[% IF old_mayors.size > 0 %]
+<h4>Previous Mayors</h4>
+
+<table>
+	<tr>
+		<th>Mayor</th>
+		<th>Town</th>
+		<th>Became Mayor</th>
+		<th>Lost Mayoralty</th>
+		<th>Combat Logs</th>
+	</tr>
+	
+	[% FOREACH mayor_history IN old_mayors %]
+		<tr>
+			<td>[% mayor_history.mayor_name %]</td>
+			<td>[% mayor_history.town.town_name %]</td>
+			<td>Day [% mayor_history.got_mayoralty_day %] ([% mayor_history.got_mayoralty_day_rec.difference_to_today_str %])</td>
+			<td>Day [% mayor_history.lost_mayoralty_day %] ([% mayor_history.lost_mayoralty_day_rec.difference_to_today_str %])</td>
+			<td><a href="[% base %]party/details/old_mayor_combat_log?creature_group_id=[% mayor_history.creature_group_id %]">View</a></td>
+		</tr>
+	[% END %]
+</table>
+
+[% END %]
+		

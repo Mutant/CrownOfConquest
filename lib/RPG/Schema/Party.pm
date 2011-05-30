@@ -13,6 +13,7 @@ use Carp;
 
 use RPG::Template;
 use RPG::Exception;
+use RPG::DateTime;
 
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
 __PACKAGE__->table('Party');
@@ -246,6 +247,18 @@ sub display_name {
 	my $self = shift;
 	
 	return $self->name;	
+}
+
+sub time_since_created {
+    my $self = shift;
+    
+    return RPG::DateTime->time_since_datetime($self->created)
+}
+
+sub time_since_defunct {
+    my $self = shift;
+    
+    return RPG::DateTime->time_since_datetime($self->defunct)
 }
 
 sub movement_factor {

@@ -19,13 +19,12 @@ sub auto : Private {
 		{
 			garrison_id => $c->req->param('garrison_id'),
 			party_id => $c->stash->{party}->id,
-			land_id => {'!=', undef},
 		},
 		{
 			prefetch => ['characters', 'land'],
 		}
 	);
-	
+		
 	return 1;	
 }
 
@@ -340,6 +339,7 @@ sub combat_log_tab : Local {
                 params   => {
                     logs  => \@logs,
                     garrison => $c->stash->{garrison},
+                    old_party => $c->stash->{garrison}->land_id ? 0 : 1,
                 },
             }
         ]

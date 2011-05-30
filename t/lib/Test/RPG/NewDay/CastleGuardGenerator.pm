@@ -447,8 +447,46 @@ sub test_check_for_mayor_replacement_dead_mayor : Tests(2) {
     
     my $new_mayor = $town->mayor;
     isa_ok($new_mayor, 'RPG::Schema::Character', "New mayor appointed");
+}
+
+sub test_generate_mayors_group : Tests() {
+    my $self = shift; 
     
-       
+    # GIVEN
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, top_left => {x=>1,y=>1}, bottom_right=>{x=>10,y=>10}, dungeon_id => $castle->id);
+	my ($stairs_sector) = $room->sectors;
+    $stairs_sector->update({stairs_up => 1 }); 
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, mayor_of => $town->id, party_id => $party->id,);
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, status => 'mayor_garrison', status_context => $town->id, party_id => $party->id,);
+    
+    my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
+    
+	my $history_rec = $self->{schema}->resultset('Party_Mayor_History')->create(
+        {
+            party_id => $mayor->party_id,
+            town_id => $town->id,
+            lost_mayoralty_day => undef,
+        }
+    );    
+    
+    # WHEN
+    $action->generate_mayors_group($castle, $town, $mayor);
+    
+    # THEN
+    my $cg = $mayor->creature_group;
+    is(defined $cg, 1, "CG generated for mayor");
+    
+    my ($sector) = grep { $_->id == $cg->dungeon_grid_id } $room->sectors; 
+    is(defined $sector, 1, "CG added to sector in the castle");
+    
+    $char->discard_changes;
+    is($char->creature_group_id, $cg->id, "Garrison char added to cg");
+    
+	$history_rec->discard_changes;
+    is($history_rec->creature_group_id, $cg->id, "CG id recorded in history record");
 }
 
 1;

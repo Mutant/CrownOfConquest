@@ -28,7 +28,7 @@ __PACKAGE__->belongs_to(
     'land',
     'RPG::Schema::Land',
     { 'foreign.land_id' => 'self.land_id' },
-    {cascade_delete => 0}
+    {cascade_delete => 0, join_type => 'LEFT OUTER'}
 );
 
 with qw/

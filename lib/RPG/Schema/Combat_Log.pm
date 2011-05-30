@@ -210,7 +210,7 @@ sub location {
                 }
             );
             
-            return "the castle of in the town of " . $town->town_name;
+            return "the castle in the town of " . $town->town_name;
         }
         else {        
             return "a level " . $dungeon->level . " dungeon at " . $dungeon->location->x . ", " . $dungeon->location->y;

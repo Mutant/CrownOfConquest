@@ -238,6 +238,23 @@ sub generate_mayors_group {
 
 		$mayor->creature_group_id($mayors_group->id);
 		$mayor->update;
+				
+		if (! $mayor->is_npc) {
+		    # Record creature group of mayor
+    		my $history_rec = $c->schema->resultset('Party_Mayor_History')->find(
+                {
+                    party_id => $mayor->party_id,
+                    town_id => $town->id,
+                    lost_mayoralty_day => undef,
+                }
+            );
+            
+            if ($history_rec) {
+                $history_rec->creature_group_id($mayors_group->id);
+                $history_rec->update;
+            }
+		}
+    		      
 		
         # Move the group into a sector away from the stairs
         unless ($mayors_group->in_combat) {

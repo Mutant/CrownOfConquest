@@ -109,6 +109,8 @@ sub check_action {
     my $action = shift;
     my $building = shift;
     
+    return unless $action ~~ [qw(constructed_building ceded_building)];
+    
     my $land = $building->location;
     
     return 0 unless $building->building_type_id == $self->param_current_value('Building Type');

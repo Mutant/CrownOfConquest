@@ -316,21 +316,14 @@ sub list : Private {
 					$combat_params{$character->id} = [$target->name, $spell->spell_name];
 				}
 				when ('Use') {
-					my $action = $c->model('DBIC::Item_Enchantment')->find(
-						{ 
-							item_enchantment_id => $character->last_combat_param1,			
-						},
-						{
-							prefetch => 'item',
-						},						
-					);	
-					my $spell = $action->spell;
-					my $target = $spell->target eq 'character' ? 
+					my $action = $character->get_item_action( $character->last_combat_param1 );
+					my $target = $action->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
 						$opponents_by_id{$character->last_combat_param2};
 						
 					next unless $target;
 						
+					my $spell = $action->spell;
 					my $spell_name = $spell->spell_name . ' [' . $action->item->display_name . ']';
 												
 					$combat_params{$character->id} = [$target->name, $spell_name];					
@@ -532,13 +525,10 @@ sub select_action : Local {
 
 		when ('Use') {
 			my ( $action_id, $target_id ) = $c->req->param('action_param');
-			my $action = $c->model('DBIC::Item_Enchantment')->find($action_id);
-			
-			confess "Attempt to use item that belongs to another character" 
-				unless $action->item->character_id == $character->id;
+			my $action = $character->get_item_action($action_id);
 		
-			my $spell = $action->spell;
-			if ( $spell->target eq 'character' ) {
+			my $target_type = $action->target;
+			if ( $target_type eq 'character' ) {
 				$target = $c->model('DBIC::Character')->find(
 					{
 						character_id => $target_id,
@@ -546,7 +536,7 @@ sub select_action : Local {
 					}
 				);
 			}
-			else {
+			elsif ( $target_type eq 'party') {
 				$target = $c->stash->{party};
 			}
 			

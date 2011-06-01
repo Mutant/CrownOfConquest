@@ -76,7 +76,7 @@ function loadTargetBasedMenu(charId, type) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
 				menuItem = dijit.byId(listId);
 
-				if (responseObject.list[i].target == 'party') {		
+				if (responseObject.list[i].target == 'party' || responseObject.list[i].target == 'self') {		
 					menuItem = new dijit.MenuItem({
 				        label: responseObject.list[i].label,
 				        onClick: function() { selectAction(this, ucFirst(type)) },

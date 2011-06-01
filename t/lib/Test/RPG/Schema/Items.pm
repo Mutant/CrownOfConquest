@@ -280,6 +280,55 @@ sub test_usable_actions_with_no_usable_enchantments : Tests(1) {
 	is(scalar @actions, 0, "Item has no usable actions");			
 }
 
+sub test_usable_actions_with_usable_item_no_character : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+	
+	# WHEN
+	my @actions = $item->usable_actions;
+	
+	# THEN
+	is(scalar @actions, 0, "Item not usable as doesn't belong to a character");			
+}
+
+sub test_usable_actions_with_usable_item : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 9, max_hit_points => 10);
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+        character_id => $character->id,
+    );
+	
+	# WHEN
+	my @actions = $item->usable_actions;
+	
+	# THEN
+	is(scalar @actions, 1, "Item is usable");
+	is($actions[0]->id, $item->id, "Correct item returned");
+}
+
 sub test_sell_price : Tests(2) {
 	my $self = shift;
 	
@@ -921,6 +970,40 @@ sub test_add_to_characters_inventory_not_stacked : Tests(2) {
     $item2->discard_changes;
     is($item2->character_id, $character->id, "Second item added to inventory");
        
+}
+
+sub test_role_applied_if_exists : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, item_type => 'Potion of Healing' );
+    
+    # WHEN
+    my $item = $self->{schema}->resultset('Items')->create(
+        {
+            item_type_id => $item_type->id,
+        }
+    );
+    
+    # THEN
+    is($item->can('use') ? 1 : 0, 1, "Role applied to new item");
+}
+
+sub test_created_if_no_role : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, );
+    
+    # WHEN
+    my $item = $self->{schema}->resultset('Items')->create(
+        {
+            item_type_id => $item_type->id,
+        }
+    );
+    
+    # THEN
+    is($item->can('use') ? 1 : 0, 0, "No role applied");
 }
 
 1;

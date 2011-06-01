@@ -18,6 +18,7 @@ use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Item;
 
 use Data::Dumper;
 
@@ -202,12 +203,8 @@ sub test_sector_menu_confirm_attack_set : Tests(3) {
     $self->{mock_forward}->{'/party/party_messages_check'} = sub {};
     $self->{mock_forward}->{'/combat/display_cg'} = sub {};
     
-    my $mock_location = Test::MockObject->new();
-    $mock_location->set_always('orb');
-    $mock_location->set_always('id');
-    
-    $self->{c}->stash->{party_location} = $mock_location;    
-    
+    $self->{mock_forward}->{'/party/pending_mayor_check'} = sub {};
+  
     # WHEN
     my %results;
     foreach my $test (@tests) {
@@ -229,6 +226,7 @@ sub test_sector_menu_confirm_attack_set : Tests(3) {
         );
         
         $self->{c}->stash->{party} = $party;
+        $self->{c}->stash->{party_location} = $party->location; 
         
         RPG::C::Party->sector_menu($self->{c});
         
@@ -289,7 +287,7 @@ sub test_select_action : Tests(7) {
     is($self->{stash}{messages}, 'spell message', "Messages set correctly");
 }
 
-sub test_parties_in_sector_land : Tests() {
+sub test_parties_in_sector_land : Tests(1) {
     my $self = shift;
     
     # GIVEN
@@ -308,6 +306,7 @@ sub test_parties_in_sector_land : Tests() {
     
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_; };    
+    $self->{mock_forward}->{'/party/pending_mayor_check'} = sub {};
     
     # WHEN
     RPG::C::Party->parties_in_sector($self->{c}, $land->id);
@@ -316,6 +315,48 @@ sub test_parties_in_sector_land : Tests() {
     my $parties = $template_args->[0][0]{params}{parties};
     is(scalar @$parties, 2, "Two parties in sector");
        
+}
+
+sub test_select_action_drink_potion : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    $self->mock_dice;
+    $self->{roll_result} = 1;
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id, hit_points => 9, max_hit_points => 10);
+    
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+        character_id => $character->id,
+    );
+    
+    $self->{stash}{party} = $party;
+    $self->{params}{character_id} = $character->id;
+    $self->{params}{action_param} = $item1->id;
+    $self->{params}{action} = 'Use';
+    
+    $self->{mock_forward}->{'/panel/refresh'} = sub {}; 
+    
+    # WHEN
+    RPG::C::Party->select_action($self->{c});
+    
+    # THEN
+    $character->discard_changes;
+    is($character->hit_points, 10, "Character healed");
+    
+    $item1->discard_changes;
+    is($item1->in_storage, 0, "Potion removed");
+    
+    $self->unmock_dice;
 }
 
 1;

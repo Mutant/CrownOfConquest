@@ -9,6 +9,7 @@ use Carp;
 use Data::Dumper;
 use Math::Round qw(round);
 use Games::Dice::Advanced;
+use Try::Tiny;
 
 use RPG::Template;
 
@@ -217,6 +218,18 @@ sub insert {
         );
     }
     
+    $self->_apply_role;
+    
+    return $self;
+}
+
+sub inflate_result {
+    my $pkg = shift;
+
+    my $self = $pkg->next::method(@_);
+
+    $self->_apply_role;
+
     return $self;
 }
 
@@ -705,12 +718,11 @@ sub repair_cost {
 #  (e.g. the item is equipped if the action requires that)
 sub usable_actions {
 	my $self = shift;
-	my $combat = shift;
+	my $combat = shift // 0;
 	
 	return @{$self->{_actions}{$combat}} if $self->{_actions}{$combat}; 
 	
 	my @enchantments = $self->item_enchantments;
-	return unless @enchantments;
 	
 	my @actions;
 	foreach my $enchantment (@enchantments) {
@@ -721,6 +733,10 @@ sub usable_actions {
 		else {
 			push @actions, $enchantment;
 		}
+	}
+		
+	if ($self->item_type->usable && $self->is_usable) {
+        push @actions, $self;   
 	}
 	
 	$self->{_actions}{$combat} = \@actions;
@@ -785,6 +801,38 @@ sub _check_for_quest_item_removal {
 	}
 
 }
+
+sub _apply_role {
+	my $self = shift;
+	
+	my $role = $self->get_role_name;
+
+	return unless $role;
+	
+	my $failed = try {
+	   $self->ensure_class_loaded($role);
+	}
+	catch {
+	    return 1 if /Can't locate/;
+	    
+	    die $_;
+	};
+	
+	return if $failed;
+		
+	$role->meta->apply($self);	
+}
+
+sub get_role_name {
+	my $self = shift;
+	
+	my $name = $self->item_type->item_type;
+	
+	$name =~ s/ /_/g;
+	
+	return 'RPG::Schema::Role::Item_Type::' . $name;
+}
+
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 

@@ -9,6 +9,7 @@ __PACKAGE__->runtests() unless caller();
 
 use Test::More;
 use Test::MockObject;
+use Test::Exception;
 use DateTime;
 
 use Data::Dumper;
@@ -921,5 +922,101 @@ sub test_hit_killed_mayor_by_effect : Tests(2) {
     is($town->pending_mayor, $party->id, "Party set to pending mayor");
 }
 
+sub test_get_item_action_usable_item : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+        character_id => $character->id,
+    );
+    
+    # WHEN
+    my $action = $character->get_item_action($item->id);
+    
+    # THEN
+    is($action->id, $item->id, "Item returned");        
+}
+
+sub test_get_item_action_enchantment : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id );
+	my ($enchantment) = $item->item_enchantments;
+	$enchantment->variable('Spell', 'Heal');
+	$enchantment->variable_max('Casts Per Day', 2);
+	$enchantment->variable('Spell Level', 3);	
+    
+    # WHEN
+    my $action = $character->get_item_action($enchantment->id);
+    
+    # THEN
+    is($action->id, $enchantment->id, "Enchantment returned");        
+}
+
+sub test_get_item_action_invaid : Tests(1) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    # WHEN
+    dies_ok( sub { $character->get_item_action(99) }, "Action doesn't exist");
+        
+}
+
+sub test_get_item_actions : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 9, max_hit_points => 10);
+    
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+        character_id => $character->id,
+    );    
+    
+	my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id );
+	my ($enchantment) = $item2->item_enchantments;
+	$enchantment->variable('Spell', 'Heal');
+	$enchantment->variable_max('Casts Per Day', 2);
+	$enchantment->variable('Spell Level', 3);    
+	
+	my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'] );
+	
+	my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['daily_heal'], character_id => $character->id );
+	
+	# WHEN
+	my @actions = $character->get_item_actions(1);
+	
+	# THEN
+	is(scalar @actions, 2, "2 actions found");
+	
+	my $action1 = $actions[0]->isa('RPG::Schema::Items') ? $actions[0] : $actions[1];
+	
+	is($action1->id, $item1->id, "Usable item returned");
+	is($actions[1]->id, $enchantment->id, "Enchantment returned");
+    
+}
 
 1;

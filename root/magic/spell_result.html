@@ -8,4 +8,6 @@
 	[% INCLUDE magic/portal.html, message=message %]
 [% ELSIF message.type == 'summon' %]
 	[% INCLUDE magic/summon.html, message=message %]
+[% ELSIF message.type == 'potion' %]
+	[% INCLUDE magic/potion.html, message=message %]	
 [% END %]

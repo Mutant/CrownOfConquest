@@ -1253,23 +1253,55 @@ sub check_for_auto_cast {
 # Get item actions (i.e. all items that can be used)
 sub get_item_actions {
 	my $self = shift;
-	my $combat = shift;
+	my $combat = shift // 0;
 	
 	my @items = $self->search_related('items',
 		{
-			'item_enchantments.enchantment_id' => {'!=', undef},
+			-nest => [
+                {'item_enchantments.enchantment_id' => {'!=', undef}},
+                {'item_type.usable' => 1},
+            ],
 		},
 		{
-			prefetch => {'item_enchantments' => 'enchantment'},
+			prefetch => [
+                {'item_enchantments' => 'enchantment'},
+                'item_type',
+            ],
 		}			
 	);
-		
+
 	my @actions;
 	foreach my $item (@items) {
 		push @actions, $item->usable_actions($combat);		
 	}
 	
-	return @actions;	
+	return @actions;
+}
+
+# Get an item action by the id. The id could either be an item_enchantment or an item
+# TODO: Id clashes are possible... which is really a bug
+sub get_item_action {
+    my $self = shift;
+    my $action_id = shift;
+    
+    my $action = $self->find_related(
+        'items',
+        {
+            'item_id' => $action_id,
+        },
+    );
+    
+    if (! $action || ! $action->can('use')) {
+        # Try an item enchantment
+        my $schema = $self->result_source->schema;
+        $action = $schema->resultset('Item_Enchantments')->find($action_id);
+        
+        confess "Usable action belongs to another character" if $action && $action->item->character_id != $self->id;   
+    }
+    
+    confess "No usable action found" unless $action;
+    
+    return $action; 
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

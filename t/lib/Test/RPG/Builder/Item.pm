@@ -28,6 +28,7 @@ sub build_item {
 	            item_category_id => $item_cat->id,
 	            base_cost => $params{base_cost} // 1,
 	            weight => $params{weight} // 100,
+	            usable => $params{usable} // 0,
 	        }
 	    );
 	    

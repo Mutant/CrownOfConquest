@@ -400,12 +400,9 @@ sub character_action {
 			$target_type = $obj->target;
 		}
 		else {
-			$obj = $self->schema->resultset('Item_Enchantments')->find( $character->last_combat_param1 );
+			$obj = $character->get_item_action( $character->last_combat_param1 );
 
-			confess "Attempt to use item that belongs to another character"
-				unless $obj->item->character_id == $character->id;
-
-			$target_type = $obj->spell->target;
+			$target_type = $obj->target;
 		}
 
 		my $target;
@@ -428,7 +425,7 @@ sub character_action {
 		$self->refresh_factor_cache( $target_type, $character->last_combat_param2 );
 		
 		# Make sure any healing/damage etc. is taken into account
-		$target->discard_changes;
+		$target->discard_changes if $target;
 
         $character->last_combat_action('Attack');
 

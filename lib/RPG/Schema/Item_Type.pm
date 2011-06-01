@@ -72,6 +72,15 @@ __PACKAGE__->add_columns(
       'name' => 'image',
       'is_nullable' => 0,
       'size' => '11'
+    },
+    'usable' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '0',
+      'is_foreign_key' => 0,
+      'name' => 'usable',
+      'is_nullable' => 0,
+      'size' => '11'
     },    
 );
 __PACKAGE__->set_primary_key('item_type_id');

@@ -66,7 +66,7 @@ sub test_init : Tests(3) {
 	is($enchantment->variable('Spell Level') >= 1 && $enchantment->variable('Casts Per Day') <= 20, 1, 'Spell level set correctly');	
 }
 
-sub test_tooltoip : Tests(1) {
+sub test_tooltip : Tests(1) {
 	my $self = shift;
 	
 	# GIVEN

@@ -5,6 +5,8 @@ use warnings;
 
 use Moose::Role;
 
+with 'RPG::Schema::Role::Item_Type::Potion';
+
 use Games::Dice::Advanced;
 use RPG::Combat::SpellActionResult;
 
@@ -21,16 +23,7 @@ sub use {
     
     $character->change_hit_points($heal);
     $character->update;
-    
-    my $quantity = $self->variable('Quantity');
-    $quantity--;
-    if ($quantity == 0) {
-        $self->delete;   
-    }
-    else {
-        $self->variable_row('Quantity', $quantity);
-    }
-    
+
     return RPG::Combat::SpellActionResult->new(
         {
             type => 'potion',
@@ -47,10 +40,6 @@ sub label {
     my $self = shift;
     
     return "Drink Potion of Healing (" . $self->variable('Quantity') . ')';   
-}
-
-sub target {
-    return 'self';
 }
 
 sub is_usable {

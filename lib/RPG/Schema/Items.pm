@@ -735,7 +735,7 @@ sub usable_actions {
 		}
 	}
 		
-	if ($self->item_type->usable && $self->is_usable) {
+	if ($self->item_type->usable && $self->is_usable($combat)) {
         push @actions, $self;   
 	}
 	

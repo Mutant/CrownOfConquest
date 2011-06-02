@@ -194,6 +194,14 @@ sub check_for_item_found {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
 			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
 			
+			my $avg_divinity = $self->character_group->average_stat('divinity');
+			if($avg_divinity >= $self->config->{min_avg_divinity_for_enchantment_chance_increase}) {
+                my $bonus = int ($avg_divinity - $self->config->{min_avg_divinity_for_enchantment_chance_increase})
+                    / $self->config->{divinity_points_per_enchantment_chance_increase};
+                    
+                $enchantment_chance+=$bonus;
+			}
+			
 			if ($self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
 			    # Make sure item type selected is capable of being enchanted. If not, choose another one
 			    while ($item_type->category->enchantments_allowed->count <= 0) {

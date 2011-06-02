@@ -269,6 +269,12 @@ combat_rounds_per_turn: 2
 # Max number of times a party can be attacked by another party when offline
 max_party_offline_attacks: 3
 
+# Min avg divinity for enchantment chance increase
+min_avg_divinity_for_enchantment_chance_increase: 12
+
+# Divinity points per 1% increase in enchantment chance
+divinity_points_per_enchantment_chance_increase: 3
+
 # ----- Shop Params ----- #
 
 # Usual prosperity per shop in a particular town

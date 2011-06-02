@@ -380,18 +380,6 @@ sub increase_turns {
     $self->_turns($new_turns);
 }
 
-sub average_stat {
-    my $self = shift;
-    my $stat = shift;
-
-    my @stats;
-    foreach my $character ($self->characters_in_party) {
-        push @stats, $character->$stat;   
-    }
-    
-    return average @stats;
-}
-
 sub new_day {
     my $self    = shift;
     my $new_day = shift;

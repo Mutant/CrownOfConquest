@@ -9,6 +9,7 @@ requires qw/members flee_threshold in_combat is_online end_combat display_name/;
 use List::Util qw(sum shuffle);
 use POSIX;
 use Carp;
+use Statistics::Basic qw(average);
 
 sub level {
     my $self = shift;
@@ -83,6 +84,19 @@ sub get_least_encumbered_character {
     @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
     
     return $characters[0];
+}
+
+sub average_stat {
+    my $self = shift;
+    my $stat = shift;
+
+    my @stats;
+    foreach my $character ($self->members) {
+        next if $character->is_dead;
+        push @stats, $character->$stat;   
+    }
+    
+    return average @stats;
 }
 
 1;

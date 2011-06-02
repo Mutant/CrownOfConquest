@@ -319,4 +319,17 @@ sub change_allegiance {
     }       
 }
 
+sub decline_mayoralty {
+    my $self = shift;
+    
+    $self->pending_mayor(undef);
+	$self->add_to_history(
+		{
+			type => 'news',
+			message => 'There is currently no mayor. The town is under marshal law.',
+			day_id => $self->result_source->schema->resultset('Day')->find_today->id,
+		}
+	); 
+}
+
 1;

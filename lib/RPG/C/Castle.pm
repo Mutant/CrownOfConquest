@@ -134,8 +134,7 @@ sub successful_flee : Private {
 		my $turns_dice = round $castle->town->prosperity / 4;
 		$turns_dice ||= 1;
 		my $turns_lost = 20 + Games::Dice::Advanced->roll( '1d' . $turns_dice );
-		push @{ $c->stash->{panel_messages} }, "While fleeing, you are captured and thrown into the town's jail for $turns_lost turns!";
-
+		my $message = "While fleeing, you are captured and thrown into the town's jail for $turns_lost turns!";
 		my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
 			{
 				town_id  => $castle->town->id,
@@ -149,8 +148,13 @@ sub successful_flee : Private {
 		my $town = $castle->town;
 		
 		# Lose pending mayor
-		$town->pending_mayor(undef) if $town->pending_mayor == $c->stash->{party}->id;
+		if ($town->pending_mayor == $c->stash->{party}->id) {
+            $town->decline_mayoralty;
+            $message .= " You lose your chance to claim the mayoralty after defeating the mayor. The town is now under marshal law";
+		}
 		$town->update;
+		
+		push @{ $c->stash->{panel_messages} }, $message;
 
 		$c->forward( 'end_raid', [$castle] );
 

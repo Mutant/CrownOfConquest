@@ -543,7 +543,7 @@ sub become_mayor : Local {
 	}
 	
 	if ($c->req->param('decline')) {
-	   $town->pending_mayor(undef);
+	   $town->decline_mayoralty();
 	   $town->update;
 	   $c->forward( '/panel/refresh', [ 'messages' ] );
 	   return;   

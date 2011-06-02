@@ -135,8 +135,48 @@ sub test_end_raid : Tests(1) {
 	
 	# THEN
 	$mayor->discard_changes;
-	is($mayor->mayor_of, undef, "Mayor is no longer mayor");
+	is($mayor->mayor_of, undef, "Mayor is no longer mayor");	   
+}
+
+sub test_successful_flee : Tests(4) {
+    my $self = shift;
 	
+	# GIVEN
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
 	
-	   
+	$mayor->mayor_of($town->id);
+	$mayor->update;
+	
+	$town->pending_mayor($party->id);
+	$town->update;
+	
+	$self->{config}{castle_capture_chance} = 100;
+	
+	$self->{stash}{party} = $party;
+	
+	$self->{mock_forward}{'/dungeon/exit'} = sub {};
+	$self->{mock_forward}{'end_raid'} = sub {};
+	
+	# WHEN
+	RPG::C::Castle->successful_flee($self->{c}, $castle);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->pending_mayor, undef, "Party no longer pending mayor");
+	is($town->history->count, 1, "Message added to town history");
+	
+	$mayor->discard_changes;
+	is($mayor->mayor_of, $town->id, "Mayor is still mayor");
+	
+	my $party_town = $self->{schema}->resultset('Party_Town')->find(
+		{
+			town_id  => $castle->town->id,
+			party_id => $party->id,
+		}
+	);
+	is($party_town->prestige, -10, "Prestige reduced");
+	
 }

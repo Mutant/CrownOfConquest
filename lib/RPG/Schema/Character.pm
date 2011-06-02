@@ -244,6 +244,12 @@ sub is_spell_caster {
 	return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
 }
 
+sub has_unallocated_spell_points {
+    my $self = shift;
+    
+    return $self->spell_points > $self->spell_points_used ? 1 : 0;   
+}
+
 sub has_castable_spells {
 	my $self = shift;
 	my $in_combat = shift;

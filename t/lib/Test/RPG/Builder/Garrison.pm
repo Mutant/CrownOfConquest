@@ -3,6 +3,7 @@ use warnings;
 
 package Test::RPG::Builder::Garrison;
 
+use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Character;
 
 use DateTime;
@@ -15,7 +16,12 @@ sub build_garrison {
     unless ($params{land_id}) {
         my $location = $schema->resultset('Land')->create( {x=>1, y=>1} );
         $params{land_id} = $location->id;
-    }    
+    }
+    
+    unless ($params{party_id}) {
+        my $party = Test::RPG::Builder::Party->build_party($schema); 
+        $params{party_id} = $party->id;  
+    }
 
     my $garrison = $schema->resultset('Garrison')->create(
         {

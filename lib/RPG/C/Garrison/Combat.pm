@@ -17,10 +17,13 @@ sub attack : Local {
 
 	croak "Can't attack your own garrison" if $garrison->party_id == $c->stash->{party}->id;
 
+    my @buildings = $c->stash->{party_location}->building;
+    my $building_in_sector = @buildings ? 1 : 0;
+
 	if ( $garrison->in_combat ) {
 		$c->stash->{error} = "The garrison is already in combat";
 	}
-	elsif ( $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
+	elsif ( ! $building_in_sector && $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
 		$c->stash->{error} = "The garrison is too weak to attack";
 	}
 	else {

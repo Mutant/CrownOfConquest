@@ -109,18 +109,16 @@ sub check_action {
     my $action = shift;
     my $building = shift;
     
-    return unless $action ~~ [qw(constructed_building ceded_building)];
+    return 0 unless $action ~~ [qw(constructed_building ceded_building)];
     
     my $land = $building->location;
-    
-    return 0 unless $building->building_type_id == $self->param_current_value('Building Type');
 
     given ($action) {
         when ('constructed_building') {
             if ($land->id eq $self->param_current_value('Building Location')) {
                 my $quest_param = $self->param_record('Built');
                 
-                return 0 if $quest_param->current_value eq 1;
+                return 0 if $quest_param->current_value == 1;
                 
                 $quest_param->current_value(1);
                 $quest_param->update;
@@ -129,7 +127,7 @@ sub check_action {
             }
         }
         when ('ceded_building') {
-            if ($land->id eq $self->param_current_value('Building Location') && $building->owner_id == $party->kingdom_id && $building->owner_type eq 'kingdom') {
+            if ($land->id == $self->param_current_value('Building Location') && $building->owner_id == $party->kingdom_id && $building->owner_type eq 'kingdom') {
            
                 $self->status('Awaiting Reward');
                 $self->update; 

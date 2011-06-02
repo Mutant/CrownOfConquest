@@ -29,6 +29,7 @@ sub build_quest {
             party_id      => $params{party_id},
             day_offered   => $params{day_offered} || undef,
             %create_params,
+            params        => $params{params},
         }
     );
     

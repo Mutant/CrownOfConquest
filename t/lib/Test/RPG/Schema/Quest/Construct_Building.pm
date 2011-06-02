@@ -11,6 +11,7 @@ use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Building;
 use Test::RPG::Builder::Town;
+use Test::RPG::Builder::Quest;
 
 use Test::More;
 
@@ -92,6 +93,121 @@ sub test_set_quest_params : Tests(3) {
     my $sector = $quest->sector_to_build_in;
     is($sector->x, 10, "Correct x location for build location");
     is($sector->y, 6, "Correct y location for build location");    
+}
+
+sub test_check_action_constructed_building : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, land_id => $party->location->land_id);   
+        
+    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        quest_type => 'construct_building', 
+        kingdom_id => $kingdom->id, 
+        party_id => $party->id,
+        params => {
+            'Building Type' => $building->building_type_id,
+            'Building Location' => $party->location->land_id,
+        },
+    );
+        
+    # WHEN
+    my $res = $quest->check_action($party, 'constructed_building', $building);
+    
+    # THEN
+    is($res, 1, "Action was successful");
+    
+    is($quest->param('Built'), 1, "Quest param updated");
+ 
+}
+
+sub test_check_action_ceded_building : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
+    
+    my $building_type = $self->{schema}->resultset('Building_Type')->find(
+        {
+            name => 'Tower',
+        }
+    );    
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        land_id => $party->location->land_id,
+        building_type_id => $building_type->id,
+        owner_type => 'kingdom',
+        owner_id => $kingdom->id,
+    );   
+        
+    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        quest_type => 'construct_building', 
+        kingdom_id => $kingdom->id, 
+        party_id => $party->id,
+        params => {
+            'Building Type' => $building->building_type_id,
+            'Building Location' => $party->location->land_id,
+        },
+    );
+        
+    # WHEN
+    my $res = $quest->check_action($party, 'ceded_building', $building);
+    
+    # THEN
+    is($res, 1, "Action was successful");
+    
+    $quest->discard_changes;
+    is($quest->status, 'Awaiting Reward', "Quest's status updated");
+ 
+}
+
+sub test_check_action_ceded_building_castle : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id);
+    
+    my $building_type = $self->{schema}->resultset('Building_Type')->find(
+        {
+            name => 'Castle',
+        }
+    );    
+    
+    my $tower_building_type = $self->{schema}->resultset('Building_Type')->find(
+        {
+            name => 'Tower',
+        }
+    );        
+    
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        land_id => $party->location->land_id,
+        building_type_id => $building_type->id,
+        owner_type => 'kingdom',
+        owner_id => $kingdom->id,
+    );   
+        
+    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, 
+        quest_type => 'construct_building', 
+        kingdom_id => $kingdom->id, 
+        party_id => $party->id,
+        params => {
+            'Building Type' => $tower_building_type->id,
+            'Building Location' => $party->location->land_id,
+        },
+    );
+        
+    # WHEN
+    my $res = $quest->check_action($party, 'ceded_building', $building);
+    
+    # THEN
+    is($res, 1, "Action was successful");
+    
+    $quest->discard_changes;
+    is($quest->status, 'Awaiting Reward', "Quest's status updated");
+ 
 }
 
 1;

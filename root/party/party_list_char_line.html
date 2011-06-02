@@ -15,7 +15,7 @@
 				[% label = 'These equipped items need to be repaired: ' %]
 				[% FOREACH item IN broken_items.${char.id} %]
 					[% label = label _ item.display_name %]
-					[% UNLESS loop.last %][% label = ',' %][% END %]
+					[% UNLESS loop.last %][% label = label _ ',' %][% END %]
 				[% END %]
 			[% END %]
 			[% IF char_out_of_ammo %]

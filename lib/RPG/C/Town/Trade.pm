@@ -149,7 +149,17 @@ sub create : Local {
         croak "Attempt to sell an item not in party";   
     }
     
-    # TODO: check sell price is reasonable?
+    # Check sell price is reasonable
+    my $base_price = $item->sell_price;
+    my $sell_price = $c->req->param('price');
+    
+    my $percent_diff = abs RPG::Maths->precentage_difference($base_price, $sell_price);
+    
+    if ($sell_price <= 0 || $percent_diff >= $c->config->{trade_max_percentage_difference_in_base_price}) {
+        $c->flash->{error} = "Your sell price is too high or too low!";  
+        $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+        return;
+    }
     
     $item->character_id(undef);
     $item->equip_place_id(undef);
@@ -162,7 +172,7 @@ sub create : Local {
             town_id => $c->stash->{party_location}->town->id,
             amount => $c->req->param('price'),
             status => 'Offered',
-            item_base_value => $item->sell_price,
+            item_base_value => $sell_price,
             item_type => $item->display_name,            
         }
     );

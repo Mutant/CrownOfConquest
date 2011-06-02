@@ -385,6 +385,9 @@ character_sell_deletion_chance: 15
 # Chance npc mayor will change kingdom allegiance over night
 npc_mayor_kingdom_change_chance: 5 
 
+# Max % difference to base price allowed when trading items
+trade_max_percentage_difference_in_base_price: 100
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

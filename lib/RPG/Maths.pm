@@ -72,4 +72,12 @@ sub roll_in_range {
 	
 }
 
+sub precentage_difference {
+    my $package = shift;
+    my $first_number = shift;
+    my $second_number = shift;
+    
+    return ($first_number-$second_number)/(($first_number+$second_number)/2)*100;   
+}
+
 1;

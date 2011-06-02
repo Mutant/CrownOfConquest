@@ -1,10 +1,11 @@
 [% IF trades.size > 0 %]
 	Items You Are Currently Offering In [% town.town_name %]:<br>
 	
-	<table class="main">
+	<table class="main" cellspacing="5">
 		<tr>
 			<th>Item</th>
 			<th>Asking Price</th>
+			<th>Offered To</th>
 			<th>Purchased?</th>
 			<th></th>
 		</tr>
@@ -29,6 +30,13 @@
 				</div>
 			</td>
 			<td>[% trade.amount %] gold</td>
+			<td>
+				[% IF trade.offered_to %]
+					[% trade.party_offered_to.name %]
+				[% ELSE %]
+					Anyone
+				[% END %]
+			</td>
 			<td>[% trade.status == 'Offered' ? 'No' : 'Yes' %]</td>
 			<td>
 				[% IF trade.status == 'Offered' %]

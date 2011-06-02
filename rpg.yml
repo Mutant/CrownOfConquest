@@ -386,7 +386,7 @@ character_sell_deletion_chance: 15
 npc_mayor_kingdom_change_chance: 5 
 
 # Max % difference to base price allowed when trading items
-trade_max_percentage_difference_in_base_price: 100
+trade_max_percentage_difference_in_base_price: 175
 
 # ----- Dungeon Params ----- #
 

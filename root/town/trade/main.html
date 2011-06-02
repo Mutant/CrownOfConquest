@@ -50,18 +50,30 @@ function purchaseConfirmation(tradeId, item, amount) {
 <div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
 	<form method="POST" action="[% base %]town/trade/create">
 	<input id="trade-item-id" name="trade_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    How much do you want to offer this item for?
-    
-	<input type="text"
-        dojoType="dijit.form.NumberTextBox"
-        name="price"
-        value="1"
-        constraints="{min:1,places:0}"
-        promptMessage= "Enter a value for the item"
-        required= "true"
-        invalidMessage= "Invalid quantity."
-		style="width: 100px"
-        />
+	<table class="main">
+		<tr>
+			<td>How much do you want to offer this item for?</td>
+			<td>    
+				<input type="text"
+			        dojoType="dijit.form.NumberTextBox"
+			        name="price"
+			        value="1"
+			        constraints="{min:1,places:0}"
+			        promptMessage= "Enter a value for the item"
+			        required= "true"
+			        invalidMessage= "Invalid quantity."
+					style="width: 100px"
+			        />
+			</td>
+		</tr>
+		<tr>
+			<td>
+		    Do you want to offer this trade only to a particular party?<br>
+		    (Leave blank to offer to all parties)
+		    </td>
+		    <td><input name="offer_to" dojoType=dijit.form.TextBox type="text" style="width: 250px"></td>
+		</tr>
+	</table>
         
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>

@@ -42,6 +42,7 @@ sub buy : Local {
             status => 'Offered',
             town_id => $c->stash->{party_location}->town->id,
             party_id => {'!=', $c->stash->{party}->id},
+            offered_to => [undef, $c->stash->{party}->id],
         }
     );    
     
@@ -53,6 +54,7 @@ sub buy : Local {
 				params   => {
 				    trades => \@trades,
 				    town => $c->stash->{party_location}->town, 
+				    party => $c->stash->{party},
 				},
 			}
 		]
@@ -161,6 +163,31 @@ sub create : Local {
         return;
     }
     
+    my $offer_to;
+    if ($c->req->param('offer_to')) {
+        my $offer_party = $c->model('DBIC::Party')->find(
+            {
+                name => $c->req->param('offer_to'),
+                defunct => undef,
+            }
+        );
+        
+        if (! $offer_party) {
+            $c->flash->{error} = "The party " . $c->req->param('offer_to') . " does not exist";
+            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            return;              
+        }
+        
+        if ($offer_party->id == $c->stash->{party}->id) {
+            $c->flash->{error} = "You can't offer to your own party!";
+            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            return;            
+        }
+        
+        $offer_to = $offer_party->id;
+        
+    }
+    
     $item->character_id(undef);
     $item->equip_place_id(undef);
     $item->update;
@@ -173,7 +200,8 @@ sub create : Local {
             amount => $c->req->param('price'),
             status => 'Offered',
             item_base_value => $sell_price,
-            item_type => $item->display_name,            
+            item_type => $item->display_name,
+            offered_to => $offer_to,        
         }
     );
     
@@ -212,6 +240,10 @@ sub purchase : Local {
     
     if (! $trade || $trade->status ne 'Offered' || $trade->town_id != $c->stash->{party_location}->town->id || $trade->party_id == $c->stash->{party}->id) {
         croak "Invalid trade";   
+    }
+    
+    if ($trade->offered_to && $trade->offered_to != $c->stash->{party}->id) {
+        croak "Item not offered to this party";
     }
     
     if ($trade->amount > $c->stash->{party}->gold) {        

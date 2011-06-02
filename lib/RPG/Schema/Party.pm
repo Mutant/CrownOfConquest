@@ -1002,6 +1002,23 @@ sub banish_from_kingdom {
     );           
 }
 
+# Return a resultset of active quests of a given type
+sub active_quests_of_type {
+    my $self = shift;
+    my $quest_type_name = shift;
+    
+    return $self->search_related(
+        'quests', 
+        { 
+            'type.quest_type' => $quest_type_name,
+            'status' => ['In Progress','Not Started'],
+        },
+        {
+            join => 'type',
+        }
+   );
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

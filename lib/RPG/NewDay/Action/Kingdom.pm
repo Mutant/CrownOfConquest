@@ -211,16 +211,7 @@ sub _find_eligible_parties {
     
     my @eligible = grep { 
         $_->level >= $min_level && 
-        $_->search_related(
-            'quests', 
-            { 
-                'type.quest_type' => $quest_type,
-                'status' => ['In Progress','Not Started'],
-            },
-            {
-                join => 'type',
-            }
-       )->count < 1 
+        $_->active_quests_of_type($quest_type)->count < 1 
    } @parties;   
    
    return @eligible;   

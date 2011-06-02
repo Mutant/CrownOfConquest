@@ -108,8 +108,7 @@ sub new_quest : Local {
                 user_settable => 1,
             }
         );   
-    }
-    
+    }    
     
 	$c->forward(
 		'RPG::V::TT',
@@ -168,8 +167,9 @@ sub create_quest : Private {
 	   }
 	);
 	
-	croak "Invalid quest party\n" unless $quest_party->kingdom_id == $c->stash->{kingdom}->id &&
-	   $quest_party->level >= $quest_type->min_level;
+	croak "Invalid quest party\n" unless $quest_party->kingdom_id == $c->stash->{kingdom}->id
+	   && $quest_party->level >= $quest_type->min_level 
+	   && $quest_party->active_quests_of_type($quest_type->quest_type)->count <= 0;
 	   
 	   
 	if ($c->req->param('gold_value') > $c->config->{max_kingdom_quest_reward}) {
@@ -308,7 +308,10 @@ sub parties_to_offer : Local {
 	   },
 	);
 	
-	@parties = grep { $_->level >= $quest_type->min_level } @parties;
+	@parties = grep { 
+        $_->level >= $quest_type->min_level &&
+        $_->active_quests_of_type($quest_type->quest_type)->count < 1  
+	} @parties;
 	
     my @data;
     foreach my $party (@parties) {

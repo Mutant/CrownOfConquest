@@ -43,3 +43,10 @@ INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id
 
 INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Intelligence', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Intelligence'), @ivn);
+
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Diffusion', @magical_cat_id, 750, 8, 5, 1, 'messypotion.png');
+INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Diffusion'), @ivn);
+
+ALTER TABLE `Party` ADD INDEX `in_combat_with_idx`(`in_combat_with`);
+
+

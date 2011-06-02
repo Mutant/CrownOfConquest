@@ -1,1 +1,5 @@
-<span class="combat-party-attacker">[% message.attacker.name %]</span> drank a Potion of [% message.spell_name %] and gained [% message.damage %] [% message.effect %].
+<span class="combat-party-attacker">[% message.attacker.name %]</span> drank a Potion of [% message.spell_name %] and 
+[% IF message.damage %]
+	gained [% message.damage %] 
+[% END %]
+[% message.effect %].

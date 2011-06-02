@@ -17,6 +17,8 @@ sub check_for_attack : Local {
     # See if party is in same location as a creature
     my $creature_group = $current_location->available_creature_group;
     
+    $c->log->debug("Checking for attack in dungeon");
+    
     # If there's no cg in sector, see if there's one within range.
     if (! $creature_group) {
         $creature_group = $c->model('DBIC::CreatureGroup')->find_in_dungeon_range_for_combat(

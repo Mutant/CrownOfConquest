@@ -12,7 +12,7 @@ sub build_effect {
         {
             effect_name => $params{effect_name} || 'foo',
             time_left   => 1,
-            modifier    => 1,
+            modifier    => $params{modifier} // 1,
             combat      => 1,
             modified_stat => $params{modified_stat} || 'stat',
         }

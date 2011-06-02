@@ -89,6 +89,8 @@ sub generate_chests {
 	   }   
 	}
 	
+	return unless $room;
+	
 	my @sectors = $room->sectors;
 	my $chest_count = 2 + Games::Dice::Advanced->roll('1d3');
 	$chest_count = scalar @sectors if $chest_count > scalar @sectors;

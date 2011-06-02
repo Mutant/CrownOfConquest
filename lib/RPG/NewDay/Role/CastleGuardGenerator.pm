@@ -266,13 +266,14 @@ sub generate_mayors_group {
                 last;
     		}
     		
-    		$mayors_group->dungeon_grid_id($sector->id);
-    		$mayors_group->update;
+    		if ($sector) {
+                $mayors_group->dungeon_grid_id($sector->id);
+                $mayors_group->update;
+    		}
         }
 	}
 	
-	# Somehow, some mayor groups don't have sectors. Possibly an old bug, but we'll give them a sector if they
-	#  don't have one.
+	# Ensure mayor's group has a sector. Could be that finding a sector not near stairs didn't give them one
 	if (! $mayors_group->dungeon_grid_id) {
 	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
         my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );

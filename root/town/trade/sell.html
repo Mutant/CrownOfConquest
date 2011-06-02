@@ -1,0 +1,50 @@
+[% IF trades.size > 0 %]
+	Items You Are Currently Offering In [% town.town_name %]:<br>
+	
+	<table class="main">
+		<tr>
+			<th>Item</th>
+			<th>Asking Price</th>
+			<th>Purchased?</th>
+			<th></th>
+		</tr>
+				
+	[% FOREACH trade IN trades %]
+		[% item = trade.item %]
+		<tr>
+			<td>
+				<span id="item-tooltip-[% item.id %]">
+					[% IF item.item_type.image %]
+						<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+					[% ELSE %]
+					[% item.display_name %]
+					[% END %]
+				</span>
+				
+				<div dojoType="dijit.Tooltip"
+					connectId="item-tooltip-[% item.id %]"
+					id="item-dijit-[% item.id %]"
+					style="display: none">
+						[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
+				</div>
+			</td>
+			<td>[% trade.amount %] gold</td>
+			<td>[% trade.status == 'Offered' ? 'No' : 'Yes' %]</td>
+			<td>
+				[% IF trade.status == 'Offered' %]
+					<a href="[% base %]town/trade/cancel?trade_id=[% trade.id %]">Cancel Trade</a>
+				[% ELSE %]
+					<a href="[% base %]town/trade/collect?trade_id=[% trade.id %]">Collect Gold</a>
+				[% END %]
+			</tr>
+		</tr>
+	[% END %]
+	</table>
+	<br><br>
+[% END %]
+
+Add an item for sale:
+
+<br><br>
+
+<div dojoType="dijit.layout.ContentPane" href="[% base %]town/trade/equipment" id="equipment-pane"></div>

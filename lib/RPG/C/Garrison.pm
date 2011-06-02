@@ -433,6 +433,8 @@ sub equipment_tab : Local {
 		@party_equipment = $c->model('DBIC::Items')->search(
         	{ 
 	        	'belongs_to_character.garrison_id' => undef,
+	        	'belongs_to_character.mayor_of' => undef,
+	        	'belongs_to_character.status' => undef,
 	        	'belongs_to_character.party_id' => $c->stash->{party}->id, 
 	        },
 	        {

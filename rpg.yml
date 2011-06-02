@@ -29,7 +29,7 @@ forum_url: http://forum.kingdoms-game.com/index.php
 
 static_path: http://kingdoms-game.com/static
 
-dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.6.0
+dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.5.0
 dojo_path: /dojo/dojo.xd.js
 
 home: /home/sam/RPG/

@@ -1,0 +1,111 @@
+[% INCLUDE top.html %]
+
+<script type="text/javascript">
+	dojo.require("dijit.form.FilteringSelect");
+	dojo.require("dijit.form.NumberTextBox");
+	dojo.require("dijit.form.Button");
+	dojo.require("dijit.layout.TabContainer");
+	dojo.require("dijit.layout.ContentPane");
+	
+function tradeConfirmation(itemSpan) {
+	item_id = (itemSpan.id.split('-'))[2];
+
+	dojo.byId('trade-item-id').value = item_id;
+	
+	[%# Get around dojo bug (fixed in 1.7?) %]
+	try {
+		dijit.byId('confirm-trade').show();
+	}
+	catch(err) {}
+}	
+
+function filterItems() {
+	var url = '[% base %]town/trade/equipment?';
+	
+	if (dijit.byId('character_filter').get('value')) {
+		url += 'character_filter=' + dijit.byId('character_filter').get('value') + '&';
+	}
+
+	if (dijit.byId('category_filter').get('value')) {
+		url += 'category_filter=' + dijit.byId('category_filter').get('value') + '&';
+	}
+	
+     dojo.xhrGet({
+         url: url,
+         load: function(data,ioa){
+              dijit.byId('equipment-pane').set('content', data);
+         } 
+     });
+}
+
+function purchaseConfirmation(tradeId, item, amount) {
+	dojo.byId('trade-id').value = tradeId;
+	dojo.byId('trade-item').innerHTML = item;
+	dojo.byId('trade-amount').innerHTML = amount;
+	
+	dijit.byId('confirm-purchase').show();
+}
+</script>
+
+<div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
+	<form method="POST" action="[% base %]town/trade/create">
+	<input id="trade-item-id" name="trade_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    How much do you want to offer this item for?
+    
+	<input type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name="price"
+        value="1"
+        constraints="{min:1,places:0}"
+        promptMessage= "Enter a value for the item"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+		style="width: 100px"
+        />
+        
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-trade').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="confirm-purchase" style="display: none" title="Confirm Purchase">
+	<form method="POST" action="[% base %]town/trade/purchase">
+	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
+        
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-purchase').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
+<h2>Trade Hall Of [% town.town_name %]</h2>
+
+<br>
+
+<a href="[% base %]">Back To Town</a>
+
+<br><br>
+
+Party Gold: [% party.gold %]
+
+<br><br>
+Here, you can buy and sell items from other parties. The buyer comes to the trade hall to buy the item, and the seller will have to
+come back later to pick up the gold.
+	
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; min-height: 700px">
+	<div dojoType="dijit.layout.ContentPane" title="Buy" style="height: 700px; min-height: 150px" 
+		href="[% base %]town/trade/buy"
+		[% IF selected == 'buy' %]selected=true[% END %]>
+	</div>
+
+	<div dojoType="dijit.layout.ContentPane" id="sell_tab" title="Sell" style="height: 700px; min-height: 150px" 
+		href="[% base %]town/trade/sell"
+		[% IF selected == 'sell' %]selected=true[% END %]>
+	</div>
+</div>
+
+[% INCLUDE bottom.html %]

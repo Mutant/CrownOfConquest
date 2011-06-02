@@ -162,6 +162,8 @@ sub create : Local {
             town_id => $c->stash->{party_location}->town->id,
             amount => $c->req->param('price'),
             status => 'Offered',
+            item_base_value => $item->sell_price,
+            item_type => $item->display_name,            
         }
     );
     
@@ -215,6 +217,7 @@ sub purchase : Local {
         $item->add_to_characters_inventory($character);    
         
         $trade->status('Accepted');
+        $trade->purchased_by($c->stash->{party}->id);
         $trade->update;
         
         $trade->party->add_to_messages(

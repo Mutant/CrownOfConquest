@@ -52,7 +52,7 @@ INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id
 
 ALTER TABLE `Party` ADD INDEX `in_combat_with_idx`(`in_combat_with`);
 
-CREATE TABLE `game`.`Trade` (
+CREATE TABLE `Trade` (
   `trade_id` INTEGER  NOT NULL AUTO_INCREMENT,
   `town_id` INTEGER  NOT NULL,
   `party_id` INTEGER  NOT NULL,
@@ -67,6 +67,12 @@ CREATE TABLE `game`.`Trade` (
   INDEX `offered_to`(`offered_to`)
 )
 ENGINE = InnoDB;
+
+ALTER TABLE `Trade` ADD COLUMN `item_base_value` INTEGER  NOT NULL AFTER `amount`,
+ ADD COLUMN `item_type` VARCHAR(100)  NOT NULL AFTER `item_base_value`,
+ ADD COLUMN `purchased_by` INTEGER AFTER `item_type`;
+
+
 
 
 

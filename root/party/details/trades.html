@@ -1,0 +1,46 @@
+[% IF trades.size <= 0 %]
+	You do not currently have any trades offered.
+[% ELSE %]
+	<h3>Current Trades</h3>
+
+	<table class="main" cellspacing="5">
+		<tr>
+			<th>Item</th>
+			<th>Town</th>
+			<th>Asking Price</th>
+			<th>Offered To</th>
+			<th>Purchased?</th>
+		</tr>
+				
+	[% FOREACH trade IN trades %]
+		[% item = trade.item %]
+		<tr>
+			<td>
+				<span id="item-tooltip-[% item.id %]">
+					[% IF item.item_type.image %]
+						<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+					[% ELSE %]
+					[% item.display_name %]
+					[% END %]
+				</span>
+				
+				<div dojoType="dijit.Tooltip"
+					connectId="item-tooltip-[% item.id %]"
+					id="item-dijit-[% item.id %]"
+					style="display: none">
+						[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
+				</div>
+			</td>
+			<td>[% trade.town.town_name %]</td>
+			<td>[% trade.amount %] gold</td>
+			<td>
+				[% IF trade.offered_to %]
+					[% trade.party_offered_to.name %]
+				[% ELSE %]
+					Anyone
+				[% END %]
+			</td>
+			<td>[% trade.status == 'Offered' ? 'No' : 'Yes' %]</td>
+		</tr>
+	[% END %]
+[% END %]

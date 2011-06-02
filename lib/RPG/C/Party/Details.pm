@@ -461,4 +461,27 @@ sub change_allegiance : Local {
 	$c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
 }
 
+sub trades : Local {
+    my ($self, $c) = @_;
+    
+    my @trades = $c->model('DBIC::Trade')->search(
+        {
+            status => ['Offered', 'Accepted'],
+            party_id => $c->stash->{party}->id,
+        }
+    );  
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/trades.html',
+                params   => {
+                    trades => \@trades,    
+                }    
+            }
+        ],
+    );
+}
+
 1;

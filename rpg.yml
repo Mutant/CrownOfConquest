@@ -513,9 +513,9 @@ quest_type_vars:
     initial_search_range: 11
     max_search_range: 30
     
-    gold_per_distance: 65
+    gold_per_distance: 115
     
-    xp_per_distance: 35    
+    xp_per_distance: 65    
 
   ### Find dungeon item
   find_dungeon_item:

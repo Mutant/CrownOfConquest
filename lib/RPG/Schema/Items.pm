@@ -833,6 +833,18 @@ sub get_role_name {
 	return 'RPG::Schema::Role::Item_Type::' . $name;
 }
 
+sub repair {
+    my $self = shift;
+    
+	my $variable_rec = $self->variable_row('Durability');
+	$variable_rec->item_variable_value( $variable_rec->max_value );
+	$variable_rec->update;
+	
+	my $character = $self->belongs_to_character;
+    $character->calculate_attack_factor;
+    $character->calculate_defence_factor;
+    $character->update;		       
+}
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 

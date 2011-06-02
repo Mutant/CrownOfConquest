@@ -262,9 +262,7 @@ sub repair : Local {
 	$c->stash->{party}->gold( $c->stash->{party}->gold - $item->repair_cost($town) );
 	$c->stash->{party}->update;
 
-	my $variable_rec = $item->variable_row('Durability');
-	$variable_rec->item_variable_value( $variable_rec->max_value );
-	$variable_rec->update;
+    $item->repair;
 
 	$c->flash->{message} = "Repair complete";
 	$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
@@ -289,9 +287,7 @@ sub full_repair : Local {
 
 			$party->gold( $party->gold - $item->repair_cost($town) );
 
-			my $variable_rec = $item->variable_row('Durability');
-			$variable_rec->item_variable_value( $variable_rec->max_value );
-			$variable_rec->update;
+			$item->repair;		
 		}
 		else {
 			last;

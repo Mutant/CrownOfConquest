@@ -370,6 +370,13 @@ sub test_attack_factor_melee_weapon_from_back_rank : Tests(1) {
                 item_attribute_name  => 'Back Rank Penalty',
                 item_attribute_value => 2,
             }
+        ],        
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value => 0,
+                max_value => 10,
+            }
         ],
     );
 
@@ -379,6 +386,45 @@ sub test_attack_factor_melee_weapon_from_back_rank : Tests(1) {
 
     # THEN
     is( $af, 6, "Attack factor set correctly" );
+
+}
+
+sub test_attack_factor_broken_weapon : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $char = $self->{schema}->resultset('Character')->create( { strength => 5, } );
+
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Weapon',
+        category_name       => 'Melee Weapon',
+        attributes          => [
+            {
+                item_attribute_name  => 'Attack Factor',
+                item_attribute_value => 3,
+            },
+            {
+                item_attribute_name  => 'Back Rank Penalty',
+                item_attribute_value => 2,
+            }
+        ],
+        variables => [
+            {
+                item_variable_name => 'Durability',
+                item_variable_value => 0,
+                max_value => 10,
+            }
+        ],
+    );
+
+    # WHEN
+    $char->discard_changes;
+    my $af = $char->attack_factor;
+
+    # THEN
+    is( $af, 8, "Attack factor includes broken weapon" );
 
 }
 

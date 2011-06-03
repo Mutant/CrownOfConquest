@@ -107,6 +107,7 @@ sub execute_round {
 	my @combat_messages;
 
 	foreach my $combatant (@combatants) {
+	    $combatant->discard_changes;
 		next if $combatant->is_dead;
 
 		my $action_result;
@@ -394,15 +395,20 @@ sub character_action {
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
 		my $obj;
 		my $target_type;
+		my $action;
 		if ( $character->last_combat_action eq 'Cast' ) {
 			$obj = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
 
 			$target_type = $obj->target;
+			
+			$action = 'casts ' . $obj->spell_name;
 		}
 		else {
 			$obj = $character->get_item_action( $character->last_combat_param1 );
 
-			$target_type = $obj->target;
+			$target_type = $obj->target;	
+			
+			$action = 'uses item';		
 		}
 
 		my $target;
@@ -414,23 +420,32 @@ sub character_action {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
 		
-		if ( $character->last_combat_action eq 'Cast' ) {
-			$result = $obj->cast( $character, $target );
+		if (! $target->is_dead) {
+    		if ( $character->last_combat_action eq 'Cast' ) {
+    			$result = $obj->cast( $character, $target );
+    		}
+    		else {
+    			$result = $obj->use($target);
+    		}
+    		
+    		$self->log->debug($character->name . ' ' . $action . ' on ' . $target->name . ' (damage: ' . $result->damage .')');
+    		
+    		# Since effects could have changed an af or df, we re-calculate the target's factors
+    		$self->refresh_factor_cache( $target_type, $character->last_combat_param2 );
+    		
+    		# Make sure any healing/damage etc. is taken into account
+    		$target->discard_changes if $target;
+    		
+    		$self->session->{spells_cast}{$character->id}++;
+            $self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
 		}
 		else {
-			$result = $obj->use($target);
-		}
-		
-		# Since effects could have changed an af or df, we re-calculate the target's factors
-		$self->refresh_factor_cache( $target_type, $character->last_combat_param2 );
-		
-		# Make sure any healing/damage etc. is taken into account
-		$target->discard_changes if $target;
+		     $self->log->debug($character->name . " skips '$action' as target is dead");
+		}		  
 
         $character->last_combat_action('Attack');
 
-        $self->session->{spells_cast}{$character->id}++;
-		$self->combat_log->spells_cast( $self->combat_log->spells_cast + 1 );
+
 	}
 	
 	# If they were auto-casting, set them back to auto-cast for next round
@@ -585,7 +600,7 @@ sub attack {
 	if ( $attacker_type eq 'character' ) {
 		my $attack_error = $self->check_character_attack($attacker);
 
-		$self->log->debug( "Got attack error: " . Dumper $attack_error);
+		$self->log->debug( "Got attack error: " . Dumper $attack_error) if $attack_error;
 		return $attack_error if $attack_error;
 	}
 
@@ -635,12 +650,14 @@ sub attack {
 		my $dam_max = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{dam};
 		$damage = Games::Dice::Advanced->roll( '1d' . $dam_max )
 			unless $dam_max <= 0;
+			
+	   $self->log->debug("Defender current hps: " . $defender->hit_points_current);
 
 		$defender->hit($damage, $attacker);
 
 		$self->session->{stalemate_check} += $damage;
 
-		$self->log->debug("Damage: $damage");
+		$self->log->debug("Attack hits. Damage: $damage");
 	}
 
 	return $damage;

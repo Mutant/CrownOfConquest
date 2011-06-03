@@ -90,10 +90,12 @@ sub aa_setup_context : Test(setup) {
 	$self->{mock_response}->set_true('redirect');
 	$self->{c}->set_always('res',$self->{mock_response});
 	
+	my $logger = sub { warn $_[1] . "\n" if $ENV{RPG_TEST_LOG} };
+	
 	$self->{mock_logger} = Test::MockObject->new();
-	$self->{mock_logger}->set_true('debug');
-	$self->{mock_logger}->set_true('info');
-	$self->{mock_logger}->mock('warning', sub { warn $_[1] });
+	$self->{mock_logger}->mock('debug', $logger);
+	$self->{mock_logger}->mock('info', $logger);
+	$self->{mock_logger}->mock('warning', $logger);
 	$self->{mock_logger}->set_isa('Log::Dispatch');
 	$self->{c}->set_always('log',$self->{mock_logger});
 	

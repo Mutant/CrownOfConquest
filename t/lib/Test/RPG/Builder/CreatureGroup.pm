@@ -18,7 +18,7 @@ sub build_cg {
     my $cg = $schema->resultset('CreatureGroup')->create( {%cg_params} );
     
     unless ($params{type_id}) {
-    	my $type = $schema->resultset('CreatureType')->create( { level => $params{creature_level} || 1 } );
+    	my $type = $schema->resultset('CreatureType')->create( { creature_type => 'test_cret', level => $params{creature_level} || 1 } );
     	
     	$params{type_id} = $type->id;
     }

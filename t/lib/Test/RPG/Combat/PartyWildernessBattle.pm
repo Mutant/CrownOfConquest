@@ -326,7 +326,7 @@ sub test_end_of_combat_cleanup_creates_news : Tests(1) {
         log           => $self->{mock_logger},
         battle_record => $battle_record,
         config        => $self->{config},
-    );    
+    );   
 
     # WHEN
     $battle->end_of_combat_cleanup();
@@ -334,8 +334,130 @@ sub test_end_of_combat_cleanup_creates_news : Tests(1) {
     # THEN
     my @history = $town->history;
     is(scalar @history, 1, "History created in town");
-	
-	
 }
 
+sub test_characters_killed_by_spell_during_round_are_skipped : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, character_level => 5 );
+	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	
+	my ($character1) = $party1->characters;
+	$character1->hit_points(1);
+	$character1->update;
+	
+	my ($character2) = $party2->characters;
+	
+	my $spell = $self->{schema}->resultset('Spell')->find(
+	   {
+	       spell_name => 'Flame',
+	   }
+    );
+    
+    $self->{schema}->resultset('Memorised_Spells')->create(
+	   {
+	       spell_id => $spell->id,
+	       character_id => $character2->id,
+	       memorised_today => 1,
+	       memorise_count => 2,
+	   }
+    );    
+	
+	$character2->last_combat_action('Cast');
+	$character2->last_combat_param1($spell->id);
+	$character2->last_combat_param2($character1->id);
+	$character2->update;
+
+    my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
+        $self->{schema},
+        party_1 => $party1,
+        party_2 => $party2,
+    );
+
+    my $battle = RPG::Combat::PartyWildernessBattle->new(
+        schema        => $self->{schema},
+        party_1       => $party1,
+        party_2       => $party2,
+        log           => $self->{mock_logger},
+        battle_record => $battle_record,
+        config        => $self->{config},
+    );   
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'get_combatant_list', sub { ($character2, $character1) });
+	$battle->set_false('check_for_end_of_combat');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+}
+
+
+sub test_cant_cast_spell_on_dead_character : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, character_level => 5 );
+	
+	my ($character1) = $party1->characters;
+	$character1->character_name('loser');
+	$character1->hit_points(1);
+	$character1->update;
+	
+	my @party2_chars = $party2->characters;
+	
+	my $spell = $self->{schema}->resultset('Spell')->find(
+	   {
+	       spell_name => 'Flame',
+	   }
+    );
+    
+    foreach my $char (@party2_chars) {
+        $self->{schema}->resultset('Memorised_Spells')->create(
+    	   {
+    	       spell_id => $spell->id,
+    	       character_id => $char->id,
+    	       memorised_today => 1,
+    	       memorise_count => 2,
+    	   }
+        );    
+    	
+    	$char->last_combat_action('Cast');
+    	$char->last_combat_param1($spell->id);
+    	$char->last_combat_param2($character1->id);
+    	$char->update;
+    }
+
+    my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
+        $self->{schema},
+        party_1 => $party1,
+        party_2 => $party2,
+    );
+
+    my $battle = RPG::Combat::PartyWildernessBattle->new(
+        schema        => $self->{schema},
+        party_1       => $party1,
+        party_2       => $party2,
+        log           => $self->{mock_logger},
+        battle_record => $battle_record,
+        config        => $self->{config},
+    );   
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'get_combatant_list', sub { (@party2_chars, $character1) });
+	$battle->set_false('check_for_end_of_combat');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+}
 1;
+

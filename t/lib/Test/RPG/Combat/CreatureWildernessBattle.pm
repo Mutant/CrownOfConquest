@@ -946,6 +946,39 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	like( $combat_log_message->message, qr/You fled the battle!/, "Flee message set" );
 }
 
+sub test_characters_killed_during_round_are_skipped : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_level => 20 );
+	
+	my ($creature) = $cg->creatures;
+	my ($character) = $party->characters;
+	$character->hit_points(1);
+	$character->update;
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'get_combatant_list', sub { ($creature, $character) });
+	$battle->set_false('check_for_end_of_combat');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+}
+
+
 sub test_finish_creatures_lost : Tests(6) {
 	my $self = shift;
 

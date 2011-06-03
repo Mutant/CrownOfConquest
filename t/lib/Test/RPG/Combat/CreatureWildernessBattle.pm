@@ -978,7 +978,6 @@ sub test_characters_killed_during_round_are_skipped : Tests(1) {
 	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
 }
 
-
 sub test_finish_creatures_lost : Tests(6) {
 	my $self = shift;
 

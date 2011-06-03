@@ -292,11 +292,14 @@ sub get_combatant_list {
 		my @attack_history;
 
 		my $type = $combatant->is_character ? 'character' : 'creature';
-
-		@attack_history = @{ $self->session->{attack_history}{$type}{ $combatant->id } }
-			if $self->session->{attack_history}{$type}{ $combatant->id };
-
-		my $number_of_attacks = $combatant->number_of_attacks(@attack_history);
+		
+		my $number_of_attacks = 1;
+    	@attack_history = @{ $self->session->{attack_history}{$type}{ $combatant->id } }
+    			if $self->session->{attack_history}{$type}{ $combatant->id };		
+		
+		if ($type ne 'character' || $combatant->last_combat_action ne 'Cast') {   
+    		$number_of_attacks = $combatant->number_of_attacks(@attack_history);
+		}
 
 		push @attack_history, $number_of_attacks;
 

@@ -43,10 +43,10 @@ sub test_get_combatant_list_attack_history_updated : Tests(2) {
     my $self = shift;
     
     # GIVEN
-    my $character = Test::MockObject->new();
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});  
+    $character = Test::MockObject::Extends->new($character);
     $character->set_always('number_of_attacks', 2);
-    $character->set_true('is_character');
-    $character->set_always('id', 1);
+    $character->set_always('last_combat_action', 'Attack');
     
     my $creature = Test::MockObject->new();
     $creature->set_always('number_of_attacks', 1);
@@ -61,7 +61,7 @@ sub test_get_combatant_list_attack_history_updated : Tests(2) {
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character, $creature);
     
     # THEN
-    is($session->{attack_history}{character}{1}[0], 2, "Session updated for character");
+    is($session->{attack_history}{character}{$character->id}[0], 2, "Session updated for character");
     is($session->{attack_history}{creature}{1}[0], 1, "Session updated for creature");
 }
 
@@ -69,13 +69,15 @@ sub test_get_combatant_list_with_history : Tests(5) {
     my $self = shift;
     
     # GIVEN
-    my $character = Test::MockObject->new();
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});  
+    $character->last_combat_action('Attack');
+    $character->update;
+    
+    $character = Test::MockObject::Extends->new($character);
     $character->set_always('number_of_attacks', 2);
-    $character->set_true('is_character');
-    $character->set_always('id', 1);
         
     my $battle = Test::MockObject->new();
-    my $session = {attack_history => {'character' => { '1' => [2,2] }}};
+    my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
    
     # WHEN
@@ -84,11 +86,36 @@ sub test_get_combatant_list_with_history : Tests(5) {
     # THEN
     is(scalar @sorted_combatants, 2, "Character added twice");
 
-    my ($name, $args) = $character->next_call(4);
+    my ($name, $args) = $character->next_call();
     is($name, 'number_of_attacks', "Number of attacks called");
     is($args->[1], 2, "First attack history passed");
     is($args->[2], 2, "Second attack history passed");
-    is($session->{attack_history}{character}{1}[2], 2, "Session updated for character");
+    is($session->{attack_history}{character}{$character->id}[2], 2, "Session updated for character");
+}
+
+
+sub test_get_combatant_list_spell_casters_always_have_only_one_attack : Tests() {
+	my $self = shift;
+	
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    $character->last_combat_action('Cast');
+    $character->update;
+    
+    $character = Test::MockObject::Extends->new($character);
+    $character->set_always('number_of_attacks', 2);
+    
+        
+    my $battle = Test::MockObject->new();
+    my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
+    $battle->mock('session', sub { return $session });
+    
+    # WHEN
+    my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
+    
+    # THEN
+    is(scalar @sorted_combatants, 1, "Character only has 1 attack as they're casting");
 }
 
 sub test_check_character_attack : Tests(3) {
@@ -613,5 +640,4 @@ sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	is($character->last_combat_param1, undef, "No spell id");
 	is($character->last_combat_param2, undef, "No spell target");
 }
-
 1;

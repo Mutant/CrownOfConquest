@@ -18,6 +18,7 @@ use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Dungeon;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -375,6 +376,54 @@ sub test_check_for_allegiance_change : Tests(1) {
     # THEN
     $town->discard_changes;
     is($town->location->kingdom_id, $kingdom2->id, "Allegiance of town changed");
+           
+}
+
+sub test_caclulate_approval_basic : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_approval($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->mayor_rating, -4, "Mayor rating reduced");
+           
+}
+
+sub test_caclulate_approval_mayoralty_changed : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    
+    my $pmh = $self->{schema}->resultset('Party_Mayor_History')->create(
+        {
+            town_id => $town->id,
+            got_mayoralty_day => $self->{mock_context}->yesterday->id,
+            mayor_name => 'Mayor',
+            character_id => $mayor->id,
+            party_id => 1,
+        }
+    );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_approval($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->mayor_rating, 0, "Mayor rating unchanged");
            
 }
 

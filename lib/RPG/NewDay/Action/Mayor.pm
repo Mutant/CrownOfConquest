@@ -115,13 +115,31 @@ sub calculate_approval {
 	
 	return unless $mayor;
 	
+	# Don't adjust approval if the mayoralty changed hands yesterday
+	#  We do this by checking if there's a Party_Mayor_History record that
+	#  starts or ends today. We don't care so much about NPCs
+	my $changes = $self->context->schema->resultset('Party_Mayor_History')->search(
+	   {
+	       town_id => $town->id,
+	       -nest => [
+               {got_mayoralty_day => $self->context->yesterday->id},
+               {lost_mayoralty_day => $self->context->yesterday->id},
+           ]
+	   }
+    )->count;
+    
+    if ($changes >= 1) {
+        $self->context->logger->debug("Mayoralty changed hands $changes times today, not calculating approval");
+        return;   
+    }
+	
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
             select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }, {sum => 'guards_killed'} ],
             as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
         }
-    );   
+    );
 
     my $raids_today = $party_town_rec->get_column('raids_today') // 0;
     my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;

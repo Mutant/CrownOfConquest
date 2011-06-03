@@ -113,22 +113,33 @@ sub generate_guards {
 	# Ressurect any guards that were killed
 	map { $_->hit_points_current($_->hit_points_max); $_->update } @creatures;
 	
+	my $retries = 0;
 	foreach my $type_id (sort keys %guards_to_hire) {
 		my $last_cg;
 		my $type = $creature_types_by_id{$type_id};
 		
 		# Add any guards that need to be added
 		while ($guards_to_hire{$type_id} > 0) {
-			my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id, 1 );
+		    if ($retries >= 20) {
+                $c->logger->error("Couldn't find a random sector to generate guards in! Giving up");
+                last;
+		    }
+		    
+		    if (! $last_cg) {
+                my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id, 1 );
 			
-			last unless $random_sector;
+    			if (! $random_sector) {
+                    $retries++;
+                    next;
+    			}
 		
-			$last_cg ||= $c->schema->resultset('CreatureGroup')->create(
-				{
-					creature_group_id => undef,
-					dungeon_grid_id   => $random_sector->id,
-				}
-			);
+    			$last_cg = $c->schema->resultset('CreatureGroup')->create(
+    				{
+    					creature_group_id => undef,
+    					dungeon_grid_id   => $random_sector->id,
+    				}
+    			);
+		    }
 
 			$last_cg->add_creature( $type );
 			

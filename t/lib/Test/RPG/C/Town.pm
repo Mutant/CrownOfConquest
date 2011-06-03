@@ -15,6 +15,8 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Election;
+use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::Dungeon_Room;
 
 use Test::More;
 use Test::Exception;
@@ -43,6 +45,7 @@ sub test_enter : Tests(4) {
     };
 
     $self->{mock_forward}{'/map/move_to'} = sub { };
+    $self->{mock_forward}{'/map/can_move_to_sector'} = sub {};
 
     # WHEN
     RPG::C::Town->enter( $self->{c} );
@@ -83,6 +86,7 @@ sub test_enter_previously_entered : Tests(4) {
     };
 
     $self->{mock_forward}{'/map/move_to'} = sub { };
+    $self->{mock_forward}{'/map/can_move_to_sector'} = sub {};
     
     my $party_town = $self->{schema}->resultset('Party_Town')->create(
         {
@@ -128,6 +132,174 @@ sub test_raid_party_not_next_to_town : Tests(1) {
     # WHEN / THEN    
     throws_ok(sub { RPG::C::Town->raid( $self->{c} ); }, qr/Not next to that town/, "Dies if raid attempted from town that's not adjacent");   
        
+}
+
+sub test_raid_party_ip_address_common_with_mayor : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    
+    $party1->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 3 ),
+        }
+    );
+
+    $party2->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 9 ),
+        }
+    );
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $party1->land_id );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    $party1->land_id($land[0]->id);
+    $party1->update;
+    $town->land_id($land[1]->id);
+    $town->update;    
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        top_left => {x=>1,y=>1}, 
+        bottom_right=>{x=>5,y=>5}, 
+        dungeon_id => $castle->id,
+        make_stairs => 1,
+    );
+
+    my ($mayor) = $party2->characters;
+    $mayor->update( { mayor_of => $town->id } );
+    
+    $self->{config}{minimum_raid_level} = 1;
+    
+    $self->{stash}{party} = $party1;
+    $self->{stash}{party_location} = $party1->location;
+    $self->{params}{town_id} = $town->id;
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub {};
+    
+    # WHEN
+    RPG::C::Town->raid( $self->{c} );
+    
+    # THEN
+    is($self->{stash}->{error}, "Can't raid this town, as you have IP addresses in common with the mayor's party", "Correct error");
+}
+
+sub test_raid_party_ip_address_common_with_previous_mayor : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    
+    $party1->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 3 ),
+        }
+    );
+
+    $party2->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 9 ),
+        }
+    );
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $party1->land_id );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    $party1->land_id($land[0]->id);
+    $party1->update;
+    $town->land_id($land[1]->id);
+    $town->update;    
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        top_left => {x=>1,y=>1}, 
+        bottom_right=>{x=>5,y=>5}, 
+        dungeon_id => $castle->id,
+        make_stairs => 1,
+    );
+    
+    my $old_day = $self->{schema}->resultset('Day')->create(
+        {
+            day_number => $self->{stash}{today}->day_number -2,
+        }
+    );
+    
+    my $pmh = $self->{schema}->resultset('Party_Mayor_History')->create(
+        {
+            party_id => $party2->id,
+            town_id => $town->id,
+            got_mayoralty_day => $old_day->id,
+            lost_mayoralty_day => $old_day->id,
+            character_id => 1,
+            mayor_name => 'Mayor',
+        }
+    );
+    
+    $self->{config}{minimum_raid_level} = 1;
+    
+    $self->{stash}{party} = $party1;
+    $self->{stash}{party_location} = $party1->location;
+    $self->{params}{town_id} = $town->id;
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub {};
+    
+    # WHEN
+    RPG::C::Town->raid( $self->{c} );
+    
+    # THEN
+    is($self->{stash}->{error}, "Can't raid this town, as you have IP addresses in common with a recent mayor's party", "Correct error");
+}
+
+sub test_raid_successful : Tests(3) {
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $party1->land_id );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    $party1->land_id($land[0]->id);
+    $party1->update;
+    $town->land_id($land[1]->id);
+    $town->update;    
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        top_left => {x=>1,y=>1}, 
+        bottom_right=>{x=>5,y=>5}, 
+        dungeon_id => $castle->id,
+        make_stairs => 1,
+    );
+
+    my ($mayor) = $party2->characters;
+    $mayor->update( { mayor_of => $town->id } );
+    
+    $self->{config}{minimum_raid_level} = 1;
+    
+    $self->{stash}{party} = $party1;
+    $self->{stash}{party_location} = $party1->location;
+    $self->{params}{town_id} = $town->id;
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub {};
+    
+    # WHEN
+    RPG::C::Town->raid( $self->{c} );
+    
+    # THEN
+    $party1->discard_changes;
+    is(defined $party1->dungeon_grid_id, 1, "Party put into castle");
+    
+	my $party_town = $self->{schema}->resultset('Party_Town')->find(
+		{
+			town_id  => $town->id,
+			party_id => $party1->id,
+		}
+	);
+	is($party_town->raids_today, 1, "Raid count increased");
+	isa_ok($party_town->last_raid_start, 'DateTime', "last raid start"); 
+    
 }
 
 sub test_calculate_heal_cost_simple : Tests(1) {
@@ -212,6 +384,7 @@ sub test_become_mayor : Tests(5) {
 	$self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});
 	
 	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	$self->{mock_forward}{'/quest/check_action'} = sub {};
 	
 	# WHEN
 	RPG::C::Town->become_mayor($self->{c});	

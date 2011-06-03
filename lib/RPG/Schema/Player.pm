@@ -167,10 +167,37 @@ __PACKAGE__->set_primary_key('player_id');
 
 __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'player_id', { cascade_delete => 0 } );
 
+__PACKAGE__->has_many( 'logins', 'RPG::Schema::Player_Login', 'player_id', );
+
 sub time_since_last_login {
     my $self = shift;
     
     return RPG::DateTime->time_since_datetime($self->last_login);   
 }
+
+sub has_ips_in_common_with {
+    my $self = shift;
+    my $other_player = shift;
+    
+    my @logins = $self->search_related(
+        'logins',
+        {
+            login_date => {'>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} )},
+        }
+    );
+    
+    my @ips = map { $_->ip } @logins;
+    
+    my $common_logins = $other_player->search_related(
+        'logins',
+        {
+            ip => \@ips,
+            login_date => {'>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} )},
+        }
+    )->count;
+    
+    return $common_logins >= 1 ? 1 : 0;       
+}
+
 
 1;

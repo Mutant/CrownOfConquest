@@ -143,6 +143,9 @@ inactivity_deletion_days: 28
 # Number of days after last attempting to login to remind player if they haven't verified
 verification_reminder_days: 7
 
+# Number of days we check back for co-op IP address
+ip_coop_window: 90
+
 # ----- Party Params ----- #
 
 # Size of map to display

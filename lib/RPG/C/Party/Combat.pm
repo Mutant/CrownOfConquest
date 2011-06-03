@@ -30,6 +30,9 @@ sub attack : Local {
     elsif ( $c->model('DBIC::Combat_Log')->get_offline_log_count( $party_attacked, undef, 1 ) > $c->config->{max_party_offline_attacks} ) {
     	$c->stash->{error} = 'This party has been attacked too many times recently';
     }
+    elsif ( $c->stash->{party}->is_suspected_of_coop_with($party_attacked) ) {
+        $c->stash->{error} = 'Cannot attack this party as it has IP addresses in common with your account'; 
+    }
     else {
 
         my $battle = $c->model('DBIC::Party_Battle')->create( {} );

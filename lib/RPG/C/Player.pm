@@ -37,6 +37,14 @@ sub login : Local {
             if ( $user->verified ) {
                 $c->session->{player} = $user;
                 $c->session->{partial_login} = 0;
+                
+                $c->model('DBIC::Player_Login')->create(
+                    {
+                        ip => $c->req->address,
+                        login_date => DateTime->now(),
+                        player_id => $user->id,
+                    }
+                );
                                 
                 # Various post login checks
                 $c->forward('post_login_checks');

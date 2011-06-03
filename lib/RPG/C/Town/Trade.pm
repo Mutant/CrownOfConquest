@@ -184,6 +184,12 @@ sub create : Local {
             return;            
         }
         
+        if ($c->stash->{party}->is_suspected_of_coop_with($offer_party)) {
+            $c->flash->{error} = "You can't trade with this party, as you have IP addresses in common";
+            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            return;
+        }
+        
         $offer_to = $offer_party->id;
         
     }
@@ -246,8 +252,13 @@ sub purchase : Local {
         croak "Item not offered to this party";
     }
     
+    my $selling_party = $trade->party;
+    
     if ($trade->amount > $c->stash->{party}->gold) {        
         $c->flash->{error} = "You don't have enough gold to buy that item";
+    }
+    elsif ($c->stash->{party}->is_suspected_of_coop_with($selling_party)) {
+        $c->flash->{error} = "You can't trade with this party, as you have IP addresses in common";
     }
     else {
         $c->stash->{party}->decrease_gold($trade->amount);
@@ -262,7 +273,7 @@ sub purchase : Local {
         $trade->purchased_by($c->stash->{party}->id);
         $trade->update;
         
-        $trade->party->add_to_messages(
+        $selling_party->add_to_messages(
             {
                 day_id => $c->stash->{today}->id,
                 alert_party => 1,

@@ -262,7 +262,7 @@ sub calculate_heal_cost : Private {
 		$cost_to_heal += $per_hp_heal_cost * ( $character->max_hit_points - $character->hit_points );
 	}
 
-	if ( $town->discount_type eq 'healer' && $c->stash->{party}->prestige_for_town($town) >= $town->discount_threshold ) {
+	if ( $town->discount_type && $town->discount_type eq 'healer' && $c->stash->{party}->prestige_for_town($town) >= $town->discount_threshold ) {
 		$cost_to_heal = round( $cost_to_heal * ( 100 - $town->discount_value ) / 100 );
 	}
 
@@ -426,7 +426,7 @@ sub enter : Local {
 	my $mayor = $town->mayor;
 	if (! $mayor || $mayor->party_id != $c->stash->{party}->id) {
 		my $prestige_threshold = -90 + round( $town->prosperity / 25 );
-		if ( $party_town->prestige <= $prestige_threshold ) {
+		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
 			$c->stash->{panel_messages} =
 				[ "You've been refused entry to " . $town->town_name . ". You'll need to wait until your prestige improves before coming back" ];
 			$c->detach( '/panel/refresh', ['messages'] );
@@ -464,7 +464,7 @@ sub enter : Local {
 		$town->increase_gold($cost->{gold});
 		$town->update;
 
-		$party_town->prestige( $party_town->prestige + 1 );
+		$party_town->increment_prestige;
 		$party_town->update;
 	}
 
@@ -506,15 +506,46 @@ sub raid : Local {
 		}
 	);
 	
-	if ($party_town->raids_today > $c->config->{max_raids_per_day}) {
+	if (($party_town->raids_today // 0) > $c->config->{max_raids_per_day}) {
 	   $c->stash->{error} = "You've raided this town too many times today";
 	   $c->forward( '/panel/refresh', [ 'messages' ]);
 	   return;
-	}
+	}	
+	
+	my $mayor = $town->mayor;
+    # If the mayor is owned by a party, see if this party is doing coop with them
+    if ( $mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with( $mayor->party ) ) {
+	    $c->stash->{error} = "Can't raid this town, as you have IP addresses in common with the mayor's party";
+	    $c->forward( '/panel/refresh', [ 'messages' ]);
+        return;
+    }
+	
+    # If the mayor is an NPC or doesn't exist, check each party who's had a mayor here in the last few days
+    #  They may have just reliquinshed the mayoralty, and left it for their co-op party to come
+    #  claim it
+    if (! $mayor || $mayor->is_npc) {
+        my @mayor_history = $c->model('DBIC::Party_Mayor_History')->search(
+           {
+               town_id => $town->id,
+               party_id => {'!=', $c->stash->{party}->id},
+               'lost_mayoralty_day_rec.day_number' => {'>=', $c->stash->{today}->day_number - 3},
+           },
+           {
+               join => 'lost_mayoralty_day_rec',
+           }
+        );
+        
+        foreach my $history (@mayor_history) {
+            if ($c->stash->{party}->is_suspected_of_coop_with( $history->party ) ) {
+        	    $c->stash->{error} = "Can't raid this town, as you have IP addresses in common with a recent mayor's party";
+        	    $c->forward( '/panel/refresh', [ 'messages' ]);
+                return;
+            }
+        }       
+    }	
 
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
-
 
 	$party_town->last_raid_start( DateTime->now() );
 	$party_town->last_raid_end(undef);

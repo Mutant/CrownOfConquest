@@ -1007,6 +1007,13 @@ sub active_quests_of_type {
    );
 }
 
+sub is_suspected_of_coop_with {
+    my $self = shift;
+    my $party = shift;
+    
+    return $self->player->has_ips_in_common_with($party->player) ? 1 : 0;  
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

@@ -12,7 +12,7 @@ sub build_player {
 	
     my $player = $schema->resultset('Player')->create( 
         { 
-            player_name => 'name', 
+            player_name => $params{name} || 'name', 
             email => 'foo@bar.com', 
             password => sha1_hex('pass'), 
             verified => 1,

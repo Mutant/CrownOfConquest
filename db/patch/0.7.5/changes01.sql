@@ -74,7 +74,15 @@ ALTER TABLE `Trade` ADD COLUMN `item_base_value` INTEGER  NOT NULL AFTER `amount
 
 ALTER TABLE `Town_Guards` ADD COLUMN `amount_yesterday` INTEGER;
 
-
+CREATE TABLE `Player_Login` (
+  `login_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `player_id` INTEGER  NOT NULL,
+  `ip` VARCHAR(255)  NOT NULL,
+  `login_date` DATETIME  NOT NULL,
+  PRIMARY KEY (`login_id`),
+  INDEX `player_id`(`player_id`)
+)
+ENGINE = InnoDB;
 
 
 

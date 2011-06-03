@@ -100,8 +100,45 @@ sub test_attack_error_when_old_offline_combats : Tests(1) {
     RPG::C::Party::Combat->attack($self->{c});
     
     # THEN
-    is($self->{stash}{error}, undef, "No error message");
+    is($self->{stash}{error}, undef, "No error message");    
+}
+
+sub test_attack_when_parties_are_multi : Tests(1) {
+    my $self = shift;	
+	
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $party1->land_id );
+    
+    $party1->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 3 ),
+        }
+    );
+
+
+    $party2->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 9 ),
+        }
+    );    
+    
+    $self->{config}{ip_coop_window} = 10;
+    
+    $self->{stash}{party} = $party1;
+    $self->{params}{party_id} = $party2->id;
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub {};
+    
+    # WHEN
+    RPG::C::Party::Combat->attack($self->{c});
+    
+    # THEN
+    is($self->{stash}{error}, 'Cannot attack this party as it has IP addresses in common with your account', "Correct error message");
     
 }
+
 
 1;

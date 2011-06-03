@@ -15,6 +15,7 @@ sub build_dungeon_grid {
             x => $params{x} || 1,
             y => $params{y} || 1,
             dungeon_room_id => $params{dungeon_room_id} || 1,
+            stairs_up => $params{stairs_up} || 0,
         }
     );
 

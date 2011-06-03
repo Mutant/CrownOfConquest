@@ -68,9 +68,9 @@ sub aa_setup_context : Test(setup) {
 	$req->mock('params', sub {$self->{params}});
 	$req->set_always('uri', $req);
 	$req->set_always('path', $self->{request_path});
+	$req->set_always('address', '127.0.0.1');
 	$self->{c}->set_always('req',$req);		
 	
-	$self->{c}->set_always('req', $req);
 
 	$self->{stash} ||= {};
 	$self->{c}->mock( 'stash', sub { $self->{stash} } );

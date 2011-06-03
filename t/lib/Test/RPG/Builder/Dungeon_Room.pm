@@ -31,6 +31,8 @@ sub build_dungeon_room {
     	special_room_id => $special_room_id,
     });
     
+    my $stairs_made = 0;
+    
     # Size parameters can be specified to create some dungeon sectors
     if ($params{top_left} && $params{bottom_right}) {
         for my $x ($params{top_left}{x} .. $params{bottom_right}{x}) {
@@ -74,6 +76,11 @@ sub build_dungeon_room {
             	}
             	
             	$grid_params{doors} = \@doors;
+            	
+            	if (! $stairs_made && $params{make_stairs}) {
+            	   $grid_params{stairs_up} = 1;
+            	   $stairs_made = 1;            	   
+            	}
             	
                 Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($schema, %grid_params);
             }

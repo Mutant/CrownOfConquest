@@ -11,9 +11,10 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 <table class="main" cellpadding="2">
 	<tr>
 		<th>Guard Type</th>
-		<th>Number Currently<br>Hired</th>
-		<th>Amount To Hire</th>
-		<th>Cost Per Day</th>
+		<th>Number Currently<br>Alive</th>
+		<th>Amount Previously<br>Requested</th>
+		<th>Amount To Hire<br>Tomorrow</th>
+		<th valign="bottom">Cost Per Day</th>
 	</tr>
 	
 [% total_cost = 0 %]
@@ -21,6 +22,7 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 	<tr>
 		<td>[% guard_type.creature_type %] ([% guard_type.hire_cost %] gold each)</td>
 		<td align="center">[% guard_type.count || 0 %]</td>
+		<td align="center">[% guard_type.hired_previously || 0 %]</td>
 		<td align="center">
 		    <input type="text" dojoType="dijit.form.NumberTextBox" name="type_[% guard_type.creature_type_id %]" style="width: 50px"
 				value="[% guard_type.to_hire %]" constraints="{min:0,places:0}" required="true"
@@ -34,11 +36,12 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 	</tr>
 [% END %]
 
-	<tr><td colspan="4"><hr size="1" width="100%"></td></tr>
+	<tr><td colspan="5"><hr size="1" width="100%"></td></tr>
 	<tr>
 		<td>
 			<b>Total:</b>
 		</td>
+		<td></td>
 		<td></td>
 		<td></td>
 		<td align="right">[% total_cost %] gold</td>

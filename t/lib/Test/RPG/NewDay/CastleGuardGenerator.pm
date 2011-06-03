@@ -144,7 +144,7 @@ sub test_generate_guards_pays_for_guards_correct : Tests(3) {
 	is($town->gold, 0, "Spent all gold");
 }
 
-sub test_generate_guards_changes_as_per_requests : Tests(2) {
+sub test_generate_guards_changes_as_per_requests : Tests(3) {
 	my $self = shift;
 	
 	# GIVEN
@@ -188,6 +188,9 @@ sub test_generate_guards_changes_as_per_requests : Tests(2) {
 	}
 	
 	is($count, 10, "Only 10 guards created");	
+	
+	$hire->discard_changes;
+	is($hire->amount_yesterday, 10, "Amount hired yesterday recorded");
 }
 
 sub test_generate_guards_changes_with_existing : Tests(3) {

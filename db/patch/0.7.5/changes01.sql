@@ -72,6 +72,8 @@ ALTER TABLE `Trade` ADD COLUMN `item_base_value` INTEGER  NOT NULL AFTER `amount
  ADD COLUMN `item_type` VARCHAR(100)  NOT NULL AFTER `item_base_value`,
  ADD COLUMN `purchased_by` INTEGER AFTER `item_type`;
 
+ALTER TABLE `Town_Guards` ADD COLUMN `amount_yesterday` INTEGER;
+
 
 
 

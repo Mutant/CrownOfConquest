@@ -126,6 +126,7 @@ sub guards : Local {
 		}		
 		
 		$guard_types{$guard_type->id}->{to_hire} = $hired->amount;
+		$guard_types{$guard_type->id}->{hired_previously} = $hired->amount_yesterday;
 	}
 	
 	$c->forward(

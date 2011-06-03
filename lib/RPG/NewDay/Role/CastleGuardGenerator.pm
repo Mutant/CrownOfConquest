@@ -94,7 +94,10 @@ sub generate_guards {
 			message => 'Guard Wages',
 			day_id => $c->current_day->id,
 		}
-	);  	
+	);
+	
+	# Record number of guards hired
+	$self->record_guards_hired($town, %guards_to_hire);
 
 	# Factor in any guards that already exist
 	foreach my $creature (@creatures) {
@@ -153,6 +156,25 @@ sub generate_guards {
 	}
 	
 	$self->generate_mayors_group($castle, $town, $mayor);
+}
+
+sub record_guards_hired {
+    my $self = shift;
+    my $town = shift;
+    my %hires = @_;
+    
+    foreach my $type_id (keys %hires) {
+		my $guards_to_hire = $self->context->schema->resultset('Town_Guards')->find_or_create(
+			{
+				town_id => $town->id,
+				creature_type_id => $type_id,
+			}
+		);
+		
+		$guards_to_hire->amount_yesterday($hires{$type_id});
+		$guards_to_hire->update;
+    }
+   
 }
 
 sub calculate_guards_to_hire {

@@ -278,6 +278,15 @@ min_avg_divinity_for_enchantment_chance_increase: 12
 # Divinity points per 1% increase in enchantment chance
 divinity_points_per_enchantment_chance_increase: 3
 
+# Chance of critical hit per creature level (fractions rounded down)
+creature_critical_hit_chance_per_level: 0.5
+
+# Divinity points per chance of critical hit
+character_divinity_points_per_chance_of_critical_hit: 8
+
+# Character level per bonus point to critical hit chance
+character_level_per_bonus_point_to_critical_hit: 6  
+
 # ----- Shop Params ----- #
 
 # Usual prosperity per shop in a particular town

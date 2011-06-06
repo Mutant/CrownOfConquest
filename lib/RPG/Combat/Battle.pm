@@ -342,7 +342,7 @@ sub character_action {
 
 	if ( $character->last_combat_action eq 'Attack' ) {
 
-		my ( $opponent, $damage );
+		my ( $opponent, $damage, $crit );
 
 		# If they've selected a target, or have one saved from last round make sure it's still alive
 		my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
@@ -371,7 +371,7 @@ sub character_action {
 		#  (Unless they die, or they target someone else)
 		$self->session->{previous_opponents}{$character->id} = $opponent->id;
 
-		$damage = $self->attack( $character, $opponent );
+		($damage, $crit) = $self->attack( $character, $opponent );
 
 		# Store damage done for XP purposes
 		my %action_params;
@@ -385,6 +385,7 @@ sub character_action {
 		$result = RPG::Combat::ActionResult->new(
 			attacker => $character,
 			defender => $opponent,
+			critical_hit => $crit,
 			%action_params,
 		);
 
@@ -575,12 +576,13 @@ sub creature_action {
 	# Count number of times attacked for XP purposes
 	$self->session->{attack_count}{ $character->id }++;
 
-	my $damage = $self->attack( $creature, $character );
+	my ($damage, $crit) = $self->attack( $creature, $character );
 	
 	my $action_result = RPG::Combat::ActionResult->new(
 		attacker => $creature,
 		defender => $character,
 		damage   => $damage,
+		critical_hit => $crit,
 	);
 	
 	if ($creature->type->special_damage) {
@@ -621,40 +623,59 @@ sub attack {
 			$self->refresh_factor_cache( 'character', $attacker->id );
 		}
 	}
+	
+	my $hit = 0;
+	my $crit = 0;
+	
+	# Check for critical hit
+	my $chance = $attacker->critical_hit_chance;
+	my $roll = Games::Dice::Advanced->roll('1d100');
 
-	my $a_roll = Games::Dice::Advanced->roll( '1d' . $self->config->{attack_dice_roll} );
-	my $d_roll = Games::Dice::Advanced->roll( '1d' . $self->config->{defence_dice_roll} );
-
-	my $defence_bonus = $defending ? $self->config->{defend_bonus} : 0;
-
-	my $af = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{af};
-
-	if ( $attacker->is_character && !$defender->is_character ) {
-		if ( my $bonuses = $self->character_weapons->{ $attacker->id }{creature_bonus} ) {
-			$af += $bonuses->{ $defender->type->category->id } || 0;
-		}
+    $self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );	
+	$self->log->debug("Checking for critical hit: chance: $chance, roll: $roll");
+	
+	if ($roll <= $chance) {
+	    $self->log->debug("Critical hit!");
+	    $hit = 1;
+	    $crit = 1;
 	}
-
-	my $df = $self->combat_factors->{ $defender->is_character ? 'character' : 'creature' }{ $defender->id }{df};
-
-	my $aq = $af - $a_roll;
-	my $dq = $df + $defence_bonus - $d_roll;
-
-	$self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );
-
-	$self->log->debug("Attack:  Factor: $af Roll: $a_roll  Quotient: $aq");
-	$self->log->debug("Defence: Factor: $df Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
+	else {
+    	my $a_roll = Games::Dice::Advanced->roll( '1d' . $self->config->{attack_dice_roll} );
+    	my $d_roll = Games::Dice::Advanced->roll( '1d' . $self->config->{defence_dice_roll} );
+    
+    	my $defence_bonus = $defending ? $self->config->{defend_bonus} : 0;
+    
+    	my $af = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{af};
+    
+    	if ( $attacker->is_character && !$defender->is_character ) {
+    		if ( my $bonuses = $self->character_weapons->{ $attacker->id }{creature_bonus} ) {
+    			$af += $bonuses->{ $defender->type->category->id } || 0;
+    		}
+    	}
+    
+    	my $df = $self->combat_factors->{ $defender->is_character ? 'character' : 'creature' }{ $defender->id }{df};
+    
+    	my $aq = $af - $a_roll;
+    	my $dq = $df + $defence_bonus - $d_roll;
+  
+    	$self->log->debug("Attack:  Factor: $af Roll: $a_roll  Quotient: $aq");
+    	$self->log->debug("Defence: Factor: $df Roll: $d_roll  Quotient: $dq Bonus: $defence_bonus ");
+    	
+    	if ($aq > $dq) {
+    	   $hit = 1;
+    	}
+	}
 
 	my $damage = 0;
 
-	if ( $aq > $dq ) {
+	if ( $hit ) {
 
 		# Attack hits
 		my $dam_max = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{dam};
 		$damage = Games::Dice::Advanced->roll( '1d' . $dam_max )
 			unless $dam_max <= 0;
 			
-	   $self->log->debug("Defender current hps: " . $defender->hit_points_current);
+        $self->log->debug("Defender current hps: " . $defender->hit_points_current);
 
 		$defender->hit($damage, $attacker);
 
@@ -663,7 +684,7 @@ sub attack {
 		$self->log->debug("Attack hits. Damage: $damage");
 	}
 
-	return $damage;
+	return ($damage, $crit);
 }
 
 # TODO: could be moved into Schema class (and have equivilent for any being, like execute_defence)

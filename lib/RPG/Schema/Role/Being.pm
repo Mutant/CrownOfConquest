@@ -6,7 +6,7 @@ use Lingua::EN::Gender qw();
 use List::Util qw(sum);
 use Math::Round qw(round);
 
-requires qw/group_id group effect_value resistences is_spell_caster check_for_auto_cast/;
+requires qw/group_id group effect_value resistences is_spell_caster check_for_auto_cast critical_hit_chance/;
 
 sub health {
 	my $self = shift;

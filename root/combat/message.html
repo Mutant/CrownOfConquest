@@ -36,6 +36,7 @@
 			with [% message.attacker.pronoun('posessive-subjective') %] <span class="combat-weapon">[% message.attacker.weapon %]</span> and 
 		
 		[% IF message.damage > 0 %]
+			[% IF message.critical_hit %]<b>critical</b> [% END %]
 			hit for <span class="[% defender_class %]">[% message.damage %]</span> points of						
 			
 			[% IF message.magical_damage %]

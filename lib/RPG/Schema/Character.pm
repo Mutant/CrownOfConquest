@@ -1310,6 +1310,13 @@ sub get_item_action {
     return $action; 
 }
 
+sub critical_hit_chance {
+    my $self = shift;
+    
+    return int ($self->divinity / RPG::Schema->config->{character_divinity_points_per_chance_of_critical_hit}) +
+        int ($self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit});     
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

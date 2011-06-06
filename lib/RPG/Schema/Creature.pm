@@ -245,6 +245,12 @@ sub check_for_auto_cast {
     return $spell->spell;
 }
 
+sub critical_hit_chance {
+    my $self = shift;
+    
+    return int $self->level * RPG::Schema->config->{creature_critical_hit_chance_per_level};   
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

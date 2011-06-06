@@ -432,6 +432,12 @@ sub enter : Local {
 			$c->detach( '/panel/refresh', ['messages'] );
 		}
 	}
+	
+	# Check if the mayor's party has an IP address in common
+	if ($mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with($mayor->party)) {
+		$c->stash->{panel_messages} = [ "You cannot enter this town as the mayor's party has IP addresses in common with yours" ];
+		$c->detach( '/panel/refresh', ['messages'] );
+	}
 
 	my $cost = $town->tax_cost( $c->stash->{party} );
 

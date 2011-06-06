@@ -26,6 +26,9 @@ sub attack : Local {
 	elsif ( ! $building_in_sector && $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
 		$c->stash->{error} = "The garrison is too weak to attack";
 	}
+    elsif ( $c->stash->{party}->is_suspected_of_coop_with($garrison->party) ) {
+        $c->stash->{error} = 'Cannot attack this garrison as the party that owns it has IP addresses in common with your account'; 
+    }
 	else {
 		$c->stash->{in_combat_with_garrison} = $garrison;
 		$c->stash->{party_initiated} = 1;

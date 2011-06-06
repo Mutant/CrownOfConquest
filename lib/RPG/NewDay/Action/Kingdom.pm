@@ -7,6 +7,7 @@ extends 'RPG::NewDay::Base';
 use List::Util qw(shuffle);
 use RPG::Template;
 use Try::Tiny;
+use DateTime;
 
 use RPG::Schema::Quest_Type;
 
@@ -31,6 +32,8 @@ sub run {
         
         my $king = $kingdom->king;
         
+        $self->check_for_coop($kingdom, $king) if ! $king->is_npc;
+        
         $self->cancel_quests_awaiting_acceptance($kingdom);
         
         $self->adjust_party_loyalty($kingdom);
@@ -39,6 +42,8 @@ sub run {
             $self->execute_npc_kingdom_actions($kingdom, $king);
         }
     }
+    
+    $self->force_co_op_change_of_allegiance;
 }
 
 sub quest_type_map {
@@ -405,6 +410,78 @@ sub decrement_banished_parties {
         $party_kingdom->decrement_banished_for;
         $party_kingdom->update;   
     }
+}
+
+sub check_for_coop {
+    my $self = shift;
+    my $kingdom = shift;
+    my $king = shift;
+    
+    return if $king->is_npc;
+    
+    my $c = $self->context;
+    
+    my $kings_party = $king->party;
+    
+    my @parties = $kingdom->parties;
+    
+    foreach my $party (@parties) {
+        next if $party->id == $kings_party->id;
+        
+        if ($party->is_suspected_of_coop_with($kings_party)) {
+            
+            $party->warned_for_kingdom_co_op(DateTime->now());
+            $party->last_allegiance_change(undef);
+            $party->update;
+            
+            $party->add_to_messages(
+                {
+                    day_id => $c->current_day->id,
+                    alert_party => 1,
+                    message => "You are loyal to a Kingdom where the King's party has IP addresses in common with your party. Please change allegiance within "
+                        . $c->config->{kingdom_co_op_grace} . " days or your party will automatically become free citizens.",
+                } 
+            );
+        }
+    }
+}
+
+sub force_co_op_change_of_allegiance {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    my @parties_warned_for_co_op = $c->schema->resultset('Party')->search(
+        {
+            warned_for_kingdom_co_op => {'<=', DateTime->now->subtract( days => $c->config->{kingdom_co_op_grace} )},
+        }
+    );
+    
+    foreach my $party (@parties_warned_for_co_op) {
+        my $kingdom = $party->kingdom;
+        my $king;
+        $king = $party->kingdom->king if $kingdom;
+        
+        if (! $kingdom || $king->is_npc || ! $party->is_suspected_of_coop_with($king->party)) {
+            # They're no longer doing co-op
+            $party->warned_for_kingdom_co_op(undef);
+            $party->update;
+        }
+        else {
+            $party->warned_for_kingdom_co_op(undef);
+            $party->change_allegiance(undef);
+            $party->update;   
+            
+            $party->add_to_messages(
+                {
+                    day_id => $c->current_day->id,
+                    alert_party => 1,
+                    message => "Your allegiance was automatically changed to Free Citizen, as you were loyal to a kingdom where you had IP addresses in " .
+                        "common with the King's party.",
+                } 
+            );            
+        }
+    } 
 }
 
 1;

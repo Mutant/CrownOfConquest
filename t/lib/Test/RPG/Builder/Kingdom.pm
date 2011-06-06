@@ -19,10 +19,14 @@ sub build_kingdom {
         }   
     );
     
-    my $character = Test::RPG::Builder::Character->build_character($schema);
-    $character->status('king');
-    $character->status_context($kingdom->id);
-    $character->update;
+    $params{create_king} //= 1;
+    
+    if ($params{create_king}) {
+        my $character = Test::RPG::Builder::Character->build_character($schema);
+        $character->status('king');
+        $character->status_context($kingdom->id);
+        $character->update;
+    }
     
     return $kingdom;
 }

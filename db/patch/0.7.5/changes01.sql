@@ -84,6 +84,11 @@ CREATE TABLE `Player_Login` (
 )
 ENGINE = InnoDB;
 
+ALTER TABLE `Party` ADD COLUMN `warned_for_kingdom_co_op` DATETIME  DEFAULT NULL;
+
+
+
+
 
 
 

@@ -161,7 +161,7 @@ __PACKAGE__->add_columns(
         'name'              => 'email_hash',
         'is_nullable'       => 0,
         'size'              => '255'
-    },    
+    },   
 );
 __PACKAGE__->set_primary_key('player_id');
 
@@ -178,6 +178,8 @@ sub time_since_last_login {
 sub has_ips_in_common_with {
     my $self = shift;
     my $other_player = shift;
+    
+    return if $self->id == $other_player->id;
     
     my @logins = $self->search_related(
         'logins',

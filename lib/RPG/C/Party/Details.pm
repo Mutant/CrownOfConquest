@@ -441,15 +441,22 @@ sub change_allegiance : Local {
 	
 	my $kingdom;
 	if ($c->req->param('kingdom_id')) {
-	   $kingdom = $c->model('DBIC::Kingdom')->find(
-	       {
-	           kingdom_id => $c->req->param('kingdom_id'),
-	       }  
-	   );
-	   croak "Kingdom doesn't exist\n" unless $kingdom;
+	    $kingdom = $c->model('DBIC::Kingdom')->find(
+	        {
+	            kingdom_id => $c->req->param('kingdom_id'),
+	        }  
+	    );
+        croak "Kingdom doesn't exist\n" unless $kingdom;
 
     	if ($kingdom->king->party_id == $c->stash->{party}->id) {
     	   croak "Can't change your allegiance when you have the king!\n";	       
+    	}
+    	
+    	my $king = $kingdom->king;
+    	if (! $king->is_npc && $c->stash->{party}->is_suspected_of_coop_with($king->party)) {
+            $c->flash->{error} = "You can't change your allegiance to that kingdom, as you have IP addresses in common with the king's party";
+            $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+            return;
     	}
 	}
 

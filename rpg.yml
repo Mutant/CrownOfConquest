@@ -605,6 +605,9 @@ npc_kingdom_min_parties: 10
 # Maximum amount of gold that can be given as a Kingdom quest reward
 max_kingdom_quest_reward: 25000
 
+# Grace period for change of kingdom for parties suspected of co-op (days)
+kingdom_co_op_grace: 7
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

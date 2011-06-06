@@ -183,7 +183,17 @@ __PACKAGE__->add_columns(
         'name'              => 'last_allegiance_change',
         'is_nullable'       => 1,
         'size'              => 0,
-    },       
+    },      
+    
+    'warned_for_kingdom_co_op' => {
+        'data_type'         => 'datetime',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'warned_for_kingdom_co_op',
+        'is_nullable'       => 1,
+        'size'              => '11'
+    },     
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -1011,7 +1021,14 @@ sub is_suspected_of_coop_with {
     my $self = shift;
     my $party = shift;
     
-    return $self->player->has_ips_in_common_with($party->player) ? 1 : 0;  
+    return 0 unless $party;
+    
+    my $player1 = $self->player;
+    my $player2 = $party->player;
+    
+    return 0 unless $player1 && $player2; 
+    
+    return $player1->has_ips_in_common_with($player2) ? 1 : 0;  
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

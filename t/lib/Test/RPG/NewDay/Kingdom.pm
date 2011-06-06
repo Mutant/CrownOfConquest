@@ -264,8 +264,131 @@ sub test_banish_parties : Tests(3) {
     );
     cmp_ok($party_kingdom->banished_for, '>=', '10', "Banished for set"); 
     
-    $self->unmock_dice;
-       
+    $self->unmock_dice;       
 }
+
+sub test_check_for_coop : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, create_king => 0);
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id );
+    my ($king) = $party1->characters;
+    $king->status('king');
+    $king->status_context($kingdom->id);
+    $king->update;
+    
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id );
+    my $party3 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id );
+    
+    $party1->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 3 ),
+        }
+    );
+
+
+    $party2->player->add_to_logins(
+        {
+            ip => '10.10.10.10',
+            login_date => DateTime->now->subtract( days => 9 ),
+        }
+    );
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->check_for_coop($kingdom, $king);
+    
+    # THEN
+    $party1->discard_changes;
+    is($party1->warned_for_kingdom_co_op, undef, "Party 1 not warned for co op");
+    is($party1->messages->count, 0, "No messages added to party 1");
+
+    $party2->discard_changes;
+    isa_ok($party2->warned_for_kingdom_co_op, 'DateTime', "Party 2 warned for co op");
+    is($party2->messages->count, 1, "Message added to party 2");
+
+    $party3->discard_changes;
+    is($party3->warned_for_kingdom_co_op, undef, "Party 3 not warned for co op");
+    is($party3->messages->count, 0, "No messages added to party 3");
+    
+}
+
+sub force_co_op_change_of_allegiance : Tests(15) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, create_king => 0);
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id );
+    my ($king) = $party1->characters;
+    $king->status('king');
+    $king->status_context($kingdom->id);
+    $king->update;
+    
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id, 
+        warned_for_kingdom_co_op => DateTime->now->subtract( days => 7 ));
+ 
+    my $party3 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2,
+        warned_for_kingdom_co_op => DateTime->now->subtract( days => 7 ));
+    my $party4 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id, 
+        warned_for_kingdom_co_op => DateTime->now->subtract( days => 4 ));
+        
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, create_king => 0);
+    my $party5 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom2->id,
+        warned_for_kingdom_co_op => DateTime->now->subtract( days => 7 ) );
+    my ($king2) = $party5->characters;
+    $king2->status('king');
+    $king2->status_context($kingdom2->id);
+    $king2->update;            
+    
+    my $party6 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom2->id,
+        warned_for_kingdom_co_op => DateTime->now->subtract( days => 7 ) );    
+
+    for my $party ($party1, $party2, $party3, $party4, $party5) {         
+        $party->player->add_to_logins(
+            {
+                ip => '10.10.10.10',
+                login_date => DateTime->now->subtract( days => 3 ),
+            }
+        );
+    }
+    $self->{config}{kingdom_co_op_grace} = 7;
+    
+    my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->force_co_op_change_of_allegiance($kingdom, $king);
+    
+    # THEN
+    $party2->discard_changes;
+    is($party2->kingdom_id, undef, "Party 2's allegiance changed");
+    is($party2->messages->count, 2, "1 message left for party 2");
+    is($party2->warned_for_kingdom_co_op, undef, "Party 2 no longer warned for kingdom co op");
+
+    $party3->discard_changes;
+    is($party3->kingdom_id, undef, "Party 3 still free citizens");
+    is($party3->messages->count, 0, "No messages left for party 3");
+    is($party3->warned_for_kingdom_co_op, undef, "Party 3 no longer warned for kingdom co op");
+
+    $party4->discard_changes;
+    is($party4->kingdom_id, $kingdom->id, "Party 4 allegiance not changed");
+    is($party4->messages->count, 0, "No messages left for party 4");
+    is(defined $party4->warned_for_kingdom_co_op, 1, "Party 4 still warned for kingdom co op");
+
+    $party5->discard_changes;
+    is($party5->kingdom_id, $kingdom2->id, "Party 5 allegiance not changed");
+    is($party5->messages->count, 0, "No messages left for party 5");
+    is($party5->warned_for_kingdom_co_op, undef, "Party 5 no longer warned for kingdom co op");
+    
+    $party6->discard_changes;
+    is($party6->kingdom_id, $kingdom2->id, "Party 6 allegiance not changed");
+    is($party6->messages->count, 0, "No messages left for party 6");
+    is($party6->warned_for_kingdom_co_op, undef, "Party 6 no longer warned for kingdom co op");
+
+    
+}
+
 
 1;

@@ -61,6 +61,7 @@ sub main : Local {
 					party_in_town => $in_town,
 					party => $c->stash->{party},
 					mayors => \@mayors,
+					error => $c->flash->{error} || '',
 				},
 			}
 		]
@@ -519,6 +520,13 @@ sub change_allegiance : Local {
     if ($c->req->param('kingdom_id')) {
         $kingdom = $c->model('DBIC::Kingdom')->find( $c->req->param('kingdom_id') );
         croak "Kingdom not found\n" unless $kingdom;
+        
+    	my $king = $kingdom->king;
+    	if (! $king->is_npc && $c->stash->{party}->is_suspected_of_coop_with($king->party)) {
+            $c->flash->{error} = "You can't change the town's allegiance to that kingdom, as you have IP addresses in common with the king's party";
+            $c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=kingdom' );
+            return;
+    	}        
     }
     
     $town->change_allegiance($kingdom);

@@ -483,7 +483,7 @@ sub check_for_npc_election {
 		
 	return unless Games::Dice::Advanced->roll('1d100') <= 1;
 	
-	my $days = Games::Dice::Advanced->roll('1d11') + 4;
+	my $days = Games::Dice::Advanced->roll('1d6') + 2;
 	
 	$self->context->logger->debug("NPC Mayor in town " . $town->id . " schedules election for $days days time");
 	$self->context->schema->resultset('Election')->schedule( $town, $days );		

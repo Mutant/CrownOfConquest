@@ -24,4 +24,39 @@ __PACKAGE__->has_many(
     'election_id',
 );
 
+sub cancel {
+    my $self = shift;
+    
+	$self->status("Cancelled");
+	$self->update;
+	
+	# Give back any campaign spends
+	my @candidates = $self->search_related(
+	   'candidates',
+	   {
+	       campaign_spend => {'>=', 0},
+	   }
+    );
+    
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
+    
+    foreach my $candidate (@candidates) {
+        my $character = $candidate->character;
+        if (! $character->is_npc) {
+            my $party = $character->party;
+            $party->increase_gold($candidate->campaign_spend);
+            $party->update;
+            
+            $party->add_to_messages(
+                {
+                    alert_party => 1,
+                    day_id => $today->id,
+                    message => 'The election in ' . $self->town->town_name . ' has been cancelled. Your campaign spend of ' . 
+                        $candidate->campaign_spend . ' gold has been returned to the party',
+                }
+            );         
+        }   
+    }
+}
+
 1;

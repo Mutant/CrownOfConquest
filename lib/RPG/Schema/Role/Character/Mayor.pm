@@ -111,8 +111,7 @@ sub was_killed {
     # Cancel election, if there's one in progress
     my $election = $town->current_election;
     if ($election) {
-    	$election->status("Cancelled");
-    	$election->update;
+        $election->cancel;
     	$town_history_msg .= " The upcoming election is cancelled.";
     }
            		

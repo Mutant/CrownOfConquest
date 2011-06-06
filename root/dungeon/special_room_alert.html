@@ -1,3 +1,5 @@
 [% IF room.special_room.room_type == 'rare_monster' %]
 	[% INCLUDE dungeon/special_rooms/rare_monster.html room=room %]
+[% ELSIF room.special_room.room_type == 'treasure' %]
+	[% INCLUDE dungeon/special_rooms/treasure.html room=room %]
 [% END %]

@@ -86,8 +86,7 @@ ENGINE = InnoDB;
 
 ALTER TABLE `Party` ADD COLUMN `warned_for_kingdom_co_op` DATETIME  DEFAULT NULL;
 
-
-
+INSERT into Dungeon_Special_Room (room_type) values ('treasure');
 
 
 

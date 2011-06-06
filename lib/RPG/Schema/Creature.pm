@@ -247,7 +247,7 @@ sub check_for_auto_cast {
 
 sub critical_hit_chance {
     my $self = shift;
-    
+
     return int $self->level * RPG::Schema->config->{creature_critical_hit_chance_per_level};   
 }
 

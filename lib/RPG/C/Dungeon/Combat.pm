@@ -25,7 +25,6 @@ sub check_for_attack : Local {
             search_range => 4 * 2 - 1,
             sector => $current_location,
         );
-        warn "cg in range found" if $creature_group;
     }    
 
     # If there are creatures here, check to see if we go straight into combat

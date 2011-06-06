@@ -641,20 +641,7 @@ sub allowed_more_quests {
 sub disband {
 	my $self = shift;
 	
-	$self->defunct(DateTime->now());
-	$self->update;
-	
-	# Turn any mayors into NPCs
-	$self->search_related(
-		'characters',
-		{
-			mayor_of => {'!=', undef},
-		},
-	)->update(
-		{
-			'party_id' => undef,
-		}
-	);
+	$self->deactivate;
 	
 	# Remove any garrisons
 	$self->search_related(
@@ -665,6 +652,51 @@ sub disband {
 			'land_id' => undef,
 		}
 	);
+	
+	# Remove any inn/morgue/street characters
+	$self->search_related(
+	   'characters',
+	   {
+	       status => ['inn','morgue','street'],
+	   }
+    )->update(
+        {
+            status => undef,
+            status_context => undef,
+        }
+    );
+}
+
+# Deactivate party. Could just be they've got inactive, or called via disband()
+sub deactivate {
+    my $self = shift;
+    
+    $self->defunct( DateTime->now() );
+    $self->in_combat_with( undef );
+    
+    # They lose any mayoralties
+    my @mayors = $self->search_related('characters',
+    	{
+    		mayor_of => {'!=', undef},
+    	},
+    );
+    
+    foreach my $mayor (@mayors) {
+        $mayor->lose_mayoralty;
+    }
+    
+    if (my $kingdom = $self->kingdom) {
+        $self->cancel_kingdom_quests($kingdom, 'the party has been disbanded');
+        
+        if ($kingdom->king->party_id == $self->id) {
+            # They have the king. Make him/her an NPC
+            my $king = $kingdom->king;
+            $king->party_id(undef);   
+            $king->update;
+        }
+    }
+    
+    $self->update;           
 }
 
 #  Return an array of equipment in this party.  Optional item category name(s) can be passed.
@@ -916,6 +948,7 @@ sub change_allegiance {
 sub cancel_kingdom_quests {
     my $self = shift;
     my $kingdom = shift;
+    my $reason = shift;
     
     my @kingdom_quests = $self->search_related(
         'quests',
@@ -931,7 +964,7 @@ sub cancel_kingdom_quests {
             'quest/kingdom/terminated.html',
              { 
                 quest => $quest,
-                reason => 'the party is no longer loyal to our kingdom',
+                reason => $reason // 'the party is no longer loyal to our kingdom',
              }
         );
         

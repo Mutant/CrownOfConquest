@@ -23,21 +23,7 @@ sub run {
 
         foreach my $party (@parties) {
             next if $party->defunct;
-            $party->defunct( DateTime->now() );
-            $party->in_combat_with( undef );
-            $party->update;
-            
-            # They lose any mayoralties
-            $party->search_related('characters',
-            	{
-            		mayor_of => {'!=', undef},
-            	},
-            )->update(
-            	{
-            		mayor_of => undef,
-            		party_id => undef,
-            	}
-            );
+            $party->deactivate;
         }
     }
 

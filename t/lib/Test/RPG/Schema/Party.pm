@@ -387,10 +387,31 @@ sub test_disband : Tests(3) {
     is(defined $party->defunct, 1, "Party now defunct");
     
     $character->discard_changes;
-    is($character->party_id, undef, "Mayor now an NPC");
+    is($character->mayor_of, undef, "Mayor no longer a mayor");
     
     $garrison->discard_changes;
     is($garrison->land_id, undef, "Garrison removed from map");
+}
+
+sub test_deactivate_with_king : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN	
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, create_king => 0);
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom->id );
+    my ($king) = $party->characters;
+    $king->status('king');
+    $king->status_context($kingdom->id);
+    $king->update;
+    
+    # WHEN
+    $party->deactivate;
+    
+    # THEN
+    is(defined $party->defunct, 1, "Party now defunct");
+    
+    $king->discard_changes;
+    is($king->party_id, undef, "King now an NPC");    
 }
 
 sub test_number_alive : Tests(1) {

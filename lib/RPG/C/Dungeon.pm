@@ -289,30 +289,7 @@ sub move_to : Local {
     	$c->stash->{error} = "One or more characters are carrying two much equipment. Your party cannot move"; 
 	}   
     
-    else {
-    	# If there's a teleporter here, they actually get moved to the destination of the teleporter
-    	if (my $teleporter = $sector->teleporter) {
-    		$sector_id = $teleporter->destination_id;
-    		
-    		unless ($sector_id) {
-    			# Random teleporter - find a destination
-    			my $random_dest = $c->model('DBIC::Dungeon_Grid')->find_random_sector( $sector->dungeon_room->dungeon_id );
-    			$sector_id = $random_dest->id;
-    		}
-    		
-    		push @{$c->stash->{messages}}, "You are teleported to elsewhere in the dungeon....";
-    	}
-    	else {    	
-	    	$c->forward( '/' . $c->stash->{dungeon_type} . '/check_for_creature_move', [$sector] );
-	
-	       	my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
-	
-	        # If creatures attacked, refresh party panel
-	        if ($creature_group) {
-	            push @{ $c->stash->{refresh_panels} }, 'party';
-	        }
-    	}
-    	
+    else {    	
     	if ($sector->dungeon_room->special_room_id && 
     	   ! $c->session->{special_room_alerts}{$sector->dungeon_room_id} && $sector->dungeon_room_id != $current_location->dungeon_room_id) {
             # They're moving into a special room for the first time in this session, so send an alert.            
@@ -333,6 +310,33 @@ sub move_to : Local {
     	    
     	    # Remember this, so we don't alert again in the session
     	    $c->session->{special_room_alerts}{$sector->dungeon_room_id} = 1;
+    	}        
+        
+        
+    	# If there's a teleporter here, they actually get moved to the destination of the teleporter
+    	if (my $teleporter = $sector->teleporter) {
+    		$sector_id = $teleporter->destination_id;
+    		
+    		unless ($sector_id) {
+    			# Random teleporter - find a destination
+    			my $random_dest = $c->model('DBIC::Dungeon_Grid')->find_random_sector( $sector->dungeon_room->dungeon_id );
+    			$sector_id = $random_dest->id;
+    		}
+    		
+    		push @{$c->stash->{messages}}, "You are teleported to elsewhere in the dungeon....";
+    	}
+    	else {    	
+	    	$c->forward( '/' . $c->stash->{dungeon_type} . '/check_for_creature_move', [$sector] );
+	
+	       	my $creature_group = $c->forward( '/dungeon/combat/check_for_attack', [$sector] );
+	
+	        if ($creature_group) {
+       	        # If creatures attacked, refresh party panel
+	            push @{ $c->stash->{refresh_panels} }, 'party';
+	            
+	            # Store any messages for later (usually the special room message)
+	            $c->session->{temp_dungeon_messages} = $c->stash->{messages};
+	        }
     	}
 
         $c->stash->{party}->dungeon_grid_id($sector_id);
@@ -712,6 +716,11 @@ sub sector_menu : Local {
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
 
     my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
+    
+    $c->stash->{messages} //= [];
+    push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} }
+        if $c->session->{temp_dungeon_messages};
+    undef $c->session->{temp_dungeon_messages};        
 
     return $c->forward(
         'RPG::V::TT',

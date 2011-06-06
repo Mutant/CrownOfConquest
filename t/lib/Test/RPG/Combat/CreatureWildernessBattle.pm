@@ -489,7 +489,7 @@ sub test_attack_character_attack_basic : Tests(1) {
 	};
 
 	my $mock_dice = $self->mock_dice;
-	$self->{rolls} = [ 1, 2, 5 ];
+	$self->{rolls} = [ 100, 1, 2, 5 ];
 
 	my $battle = RPG::Combat::CreatureWildernessBattle->new(
 		schema         => $self->{schema},
@@ -504,7 +504,7 @@ sub test_attack_character_attack_basic : Tests(1) {
 	$battle->set_always( 'combat_factors',         $attack_factors );
 
 	# WHEN
-	my $damage = $battle->attack( $character, $creature );
+	my ($damage, $crit) = $battle->attack( $character, $creature );
 
 	# THEN
 	is( $damage, 5, "Attack hit, did 5 damage" );

@@ -189,21 +189,6 @@ sub test_execute_round : Tests(1) {
 	$character->update;
 	
 	my $home = $ENV{RPG_HOME};
-    $self->{config} = {
-        attack_dice_roll                      => 10,
-        defence_dice_roll                     => 10,
-        creature_defence_base                 => 5,
-        create_defence_factor_increment       => 5,
-        creature_attack_base                  => 5,
-        create_attack_factor_increment        => 5,
-        maximum_turns                         => 300,
-        xp_multiplier                         => 10,
-        chance_to_find_item                   => 0,
-        prevalence_per_creature_level_to_find => 1,
-        nearby_town_range                     => 5,
-        front_rank_attack_chance              => 5,
-        home => $home,
-    };
 
     my $battle = RPG::Combat::GarrisonCreatureBattle->new(
         schema         => $self->{schema},

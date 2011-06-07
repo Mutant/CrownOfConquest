@@ -29,19 +29,19 @@ set @ivn = (select item_variable_name_id from Item_Variable_Name where item_cate
 
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Healing'), @ivn);
 
-INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Strength', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Strength', @magical_cat_id, 1000, 1, 5, 1, 'potionstrength.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Strength'), @ivn);
 
-INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Agility', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Agility', @magical_cat_id, 1000, 1, 5, 1, 'potionagility.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Agility'), @ivn);
 
-INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Constitution', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Constitution', @magical_cat_id, 1000, 1, 5, 1, 'potionconstitution.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Constitution'), @ivn);
 
-INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Divinity', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Divinity', @magical_cat_id, 1000, 1, 5, 1, 'potiondivinity.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Divinity'), @ivn);
 
-INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Intelligence', @magical_cat_id, 1000, 1, 5, 1, 'greenpotion.png');
+INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Intelligence', @magical_cat_id, 1000, 1, 5, 1, 'potionintelligence.png');
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Potion of Intelligence'), @ivn);
 
 INSERT INTO `Item_Type` (item_type, item_category_id, base_cost, prevalence, weight, usable, image) values ('Potion of Diffusion', @magical_cat_id, 750, 8, 5, 1, 'messypotion.png');

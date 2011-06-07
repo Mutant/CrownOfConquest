@@ -16,6 +16,12 @@ function confirmCandidate(name, id) {
 function createCandidate(arguments) {
 	document.location = '[% base %]town/election/create_candidate?character_id=' + arguments.candidate_id;
 }
+
+function runPoll() {
+	dojo.byId('poll-result').style.display = 'block';
+	dijit.byId('poll-result').href = '[% base %]town/election/run_poll?poll_spend=' + dijit.byId('poll-spend').get('value');
+	dijit.byId('poll-result').refresh();
+}
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-candidate-diag" style="display: none" title="Confirm Candidate" execute="createCandidate(arguments[0]);">
@@ -56,6 +62,8 @@ The election is scheduled for day [% election.scheduled_day %].<br><br>
 
 </div>
 
+<div dojoType="dijit.layout.ContentPane" title="Poll" href="[% base %]/town/election/poll?town_id=[% town.id %]" [% IF tab == 'poll' %]selected=true[% END %]></div>
 <div dojoType="dijit.layout.ContentPane" title="Campaign" href="[% base %]/town/election/campaign?town_id=[% town.id %]" [% IF tab == 'campaign' %]selected=true[% END %]></div>
+
 
 [% INCLUDE bottom.html %]

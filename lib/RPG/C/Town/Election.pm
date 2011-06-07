@@ -173,8 +173,70 @@ sub add_to_spend : Local {
 	$c->stash->{party}->decrease_gold($c->req->param('campaign_spend'));
 	$c->stash->{party}->update;
 	
-	$c->res->redirect( $c->config->{url_root} . '/town/election' );
-		
+	$c->res->redirect( $c->config->{url_root} . '/town/election' );		
+}
+
+sub poll : Local {
+	my ($self, $c) = @_;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template      => 'town/election/poll.html',
+				params        => {},
+			}
+		]
+	);
+}
+
+sub run_poll : Local {
+	my ($self, $c) = @_;
+	
+	my $spend = $c->req->param('poll_spend') || 1;
+	
+	if ($c->stash->{party}->gold < $spend) {
+	   $c->res->body("You do not have enough gold");
+	   return;   
+	}
+	
+	$c->stash->{party}->decrease_gold($spend);
+	$c->stash->{party}->update;
+	
+	my %scores = $c->stash->{election}->get_scores;
+	
+	my $pop_modifer = $c->stash->{town}->prosperity * 10;
+	
+	my $accuracy = $spend / $c->stash->{town}->prosperity * 4;
+	$accuracy = 95 if $accuracy > 95;
+	
+	my $dice_size = int 100 - $accuracy;
+	
+	my @results;
+	foreach my $char_id (keys %scores) {
+        my $poll_result = int $scores{$char_id}->{total} * $pop_modifer;
+        
+        my $fudge = (Games::Dice::Advanced->roll('1d' . $dice_size) - int ($dice_size / 2)) / 100;
+        
+        $poll_result += int $poll_result * $fudge;
+        $poll_result = 0 if $poll_result < 0;
+        
+        push @results, { result => $poll_result, character => $scores{$char_id}->{character} };     
+	}
+	
+	@results = sort { $b->{result} <=> $a->{result} } @results;
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template      => 'town/election/poll_result.html',
+				params        => {
+				    results => \@results,
+				},
+			}
+		]
+	);	
 }
 
 1;

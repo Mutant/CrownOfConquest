@@ -1,0 +1,22 @@
+<h4>Poll Result</h4>
+
+<table class="main">
+	<tr>
+		<th></th>
+		<th>Candidate Name</th>
+		<th>Party</th>
+		<th>Poll Result</th>
+	</tr>
+
+[% FOREACH result IN results %]
+	[% character = result.character %]
+	<tr>
+		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png" 
+    	title="[% character.race.race_name %] [% character.class.class_name %]"></td>
+		<td>[% character.name %]</td>
+		<td>[% IF character.is_npc %]NPC[% ELSE %][% character.party.name %][% END %]</td>
+		<td>[% result.result %]</td>
+	</tr>
+[% END %]
+ 
+</table>

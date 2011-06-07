@@ -1,0 +1,16 @@
+<h3>Poll</h3>
+
+Run a poll for this election. The more you spend, the more likely the results are to be accurate.
+
+<br><br>
+
+<input type="hidden" name="town_id" value="[% town.id %]">
+Amount to spend on poll: 
+	<input type="text" dojoType="dijit.form.NumberTextBox" name="poll_spend" id="poll-spend" style="width: 50px"
+			constraints="{min:1,places:0}" required="true"
+			invalidMessage="Enter a positive number of gold to spend on the poll">
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit" onClick="runPoll()">
+	Run Poll
+</button>
+
+<div dojoType="dijit.layout.ContentPane" id="poll-result" style="display: none"></div>

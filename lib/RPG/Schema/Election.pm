@@ -3,6 +3,9 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Games::Dice::Advanced;
+use Math::Round qw(round);
+
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Election');
 
@@ -57,6 +60,65 @@ sub cancel {
             );         
         }   
     }
+}
+
+sub get_scores {
+    my $self = shift;
+    
+    my @candidates = $self->candidates;
+	my $town = $self->town;
+	my $mayor = $town->mayor;
+	
+	my %scores;
+
+	foreach my $candidate (@candidates) {    
+		my $campaign_spend = $candidate->campaign_spend / 20;
+		my $rating_bonus = 0;
+
+		my $character = $candidate->character;
+		
+		if ($character->id == $mayor->id) {
+			$rating_bonus = $town->mayor_rating;
+		}
+		elsif (! $character->is_npc) {			
+			my $party_town = $character->party->find_related(
+                'party_towns',
+				{
+					town_id => $town->id,
+				}
+			);
+			
+			# Bit of a penalty so mayors are harder to oust
+			$rating_bonus = $party_town->prestige - 20 if $party_town;
+			$rating_bonus = 0 if $rating_bonus < 0;
+		}
+		else {
+			# NPC's get a bump based on the town's prosperity
+			my $prosp = $town->prosperity;
+			
+			if ($prosp > 25) {
+				$rating_bonus = round ($prosp / 10);
+			}
+		}
+		
+		my $random = Games::Dice::Advanced->roll('1d20') - 10;
+		
+		my $score = $campaign_spend + $rating_bonus + $random;
+		
+		# If character is in the morgue, they get a score of 0.
+		#  This can happen if they were at the inn, couldn't pay, then went to the street and got killed.
+		$score = 0 if $character->status && $character->status eq 'morgue';
+		
+		$scores{$character->id} = {
+		    character => $character,
+            spend => $campaign_spend,
+            rating => $rating_bonus,
+            random => $random,
+            total => $score,
+		};
+	}
+	
+	return %scores;
 }
 
 1;

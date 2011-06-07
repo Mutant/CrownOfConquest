@@ -82,51 +82,17 @@ sub run_election {
 	
 	$c->logger->debug("Running election for town: " . $town->id);
 	
-	# We shuffle the candidates, in case there is a tie
-	#  The first one we find with that score will win
-	foreach my $candidate (shuffle @candidates) {
-		my $campaign_spend = $candidate->campaign_spend / 20;
-		my $rating_bonus = 0;
-
-		my $character = $candidate->character;
+	my %scores = $election->get_scores();
+	
+	foreach my $char_id (keys %scores) {
+	    my $char_score = $scores{$char_id};
+	
+		$c->logger->debug("Character $char_id scores: " . $char_score->{total} . " [spend: " . $char_score->{spend} . 
+		  ", rating: " . $char_score->{rating} . ", random: " . $char_score->{random} . "]"); 
 		
-		if ($character->id == $mayor->id) {
-			$rating_bonus = $town->mayor_rating;
-		}
-		elsif (! $character->is_npc) {			
-			my $party_town = $c->schema->resultset('Party_Town')->find(
-				{
-					town_id => $town->id,
-					party_id => $character->party->id,
-				}
-			);
-			
-			# Bit of a penalty so mayors are harder to oust
-			$rating_bonus = $party_town->prestige - 20;
-			$rating_bonus = 0 if $rating_bonus < 0;
-		}
-		else {
-			# NPC's get a bump based on the town's prosperity
-			my $prosp = $town->prosperity;
-			
-			if ($prosp > 25) {
-				$rating_bonus = round ($prosp / 10);
-			}
-		}
-		
-		my $random = Games::Dice::Advanced->roll('1d20') - 10;
-		
-		my $score = $campaign_spend + $rating_bonus + $random;
-		
-		# If character is in the morgue, they get a score of 0.
-		#  This can happen if they were at the inn, couldn't pay, then went to the street and got killed.
-		$score = 0 if $character->status eq 'morgue';
-		
-		$c->logger->debug("Character " . $character->id . " scores: $score [spend: $campaign_spend, rating: $rating_bonus, random: $random]"); 
-		
-		if (! defined $highest_score || $highest_score < $score) {
-			$winner	= $character;
-			$highest_score = $score;
+		if (! defined $highest_score || $highest_score < $char_score->{total}) {
+			$winner	= $char_score->{character};
+			$highest_score = $char_score->{total};
 		}
 	}
 	
@@ -148,18 +114,6 @@ sub run_election {
 		
 		$mayor->lose_mayoralty(0);
 				
-		unless ($mayor->is_npc) {					
-			$c->schema->resultset('Party_Messages')->create(
-				{
-					message => $mayor->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '. '
-						. ucfirst $mayor->pronoun('subjective') . " is now at the town inn.",
-					alert_party => 1,
-					party_id => $mayor->party_id,
-					day_id => $c->current_day->id,
-				}
-			);
-		}
-		
 		$winner->mayor_of($town->id);
 		$winner->update;
 				
@@ -172,21 +126,41 @@ sub run_election {
 		);
 	}
 	
-	# Alert any player characters if they lost
+	# Alert the party of any player characters of the result
 	foreach my $candidate (@candidates) {
 		my $character = $candidate->character;
 		
-		# Skip npcs, the winner, and the previous mayor
-		next if $character->is_npc || $character->id == $winner->id || $character->id == $mayor->id;
+		# Skip npcs
+		next if $character->is_npc;
 		
-		$c->schema->resultset('Party_Messages')->create(
-			{
-				message => $character->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '.',
-				alert_party => 1,
-				party_id => $character->party_id,
-				day_id => $c->current_day->id,
-			}
-		);		
+		my $message;
+		if ($character->id != $winner->id) {
+		    # Character was a loser
+		    $message = $character->character_name . " lost the recent election in " . $town->town_name . ' to ' . $winner->character_name . '.';
+		    
+		    if ($character->id == $mayor->id) {
+                $message .= ucfirst $character->pronoun('subjective') . ' is no longer mayor.'; 
+		    }
+		}
+		else {
+		    # Character was the winner
+            $message = $character->character_name . " won the recent election in " . $town->town_name;
+            
+            if ($character->id == $mayor->id) {
+                $message .= ' and is still mayor.';    
+            }
+            else {
+                $message .= ' and is now mayor!';
+            }
+		}
+		
+        $character->party->add_to_messages(
+            {
+                message => $message,
+                alert_party => 1,
+                day_id => $c->current_day->id,
+            }
+        ); 
 	}
 
 	$election->status('Closed');

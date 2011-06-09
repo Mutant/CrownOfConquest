@@ -82,4 +82,24 @@ sub test_lose_mayoralty_killed : Tests(7) {
     is($garrison_char->hit_points, 0, "Garrison char is dead");
 }
 
+sub test_mayors_df_increased : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 60);
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id, mayor_of => $town->id, agility => 10);
+    $char->calculate_defence_factor;
+    $char->update;
+    
+    my $mayor = $town->mayor;    
+    
+    # WHEN
+    my $df = $mayor->defence_factor;
+    
+    # THEN
+    is($df, 13, "Mayor's df increased");
+       
+}
+
 1;

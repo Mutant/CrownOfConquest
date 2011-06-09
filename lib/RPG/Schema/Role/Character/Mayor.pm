@@ -123,4 +123,17 @@ sub was_killed {
    	);           
 }
 
+around 'defence_factor' => sub {
+    my $orig = shift;
+    my $self = shift;
+    
+    my $df = $self->$orig(@_);
+    
+    my $town = $self->mayor_of_town;
+    
+    $df += int $town->prosperity / 20;
+    
+    return $df;      
+};
+
 1;

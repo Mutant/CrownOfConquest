@@ -29,9 +29,6 @@ sub run {
     		type => 'dungeon',
     	}
     );
-    
-    # Fill empty dungeon chests
-    $self->fill_empty_chests();
 
 	# Generate teleporters
 	while (my $dungeon = $dungeons_rs->next) {
@@ -247,72 +244,11 @@ sub generate_treasure_chests {
 				}
 			);
 			
-			$self->fill_chest($chest);
+			$chest->fill($self->get_item_type_by_prevalence);
 		}
 	}
 }
 
-
-sub fill_chest {
-	my $self = shift;
-	my $chest = shift;
-	
-	return unless $chest->dungeon_grid->dungeon_room;
-	
-	my $dungeon = $chest->dungeon_grid->dungeon_room->dungeon;
-	
-	return unless $dungeon;
-	
-	my %item_types_by_prevalence = $self->get_item_type_by_prevalence;
-	
-	my $number_of_items = RPG::Maths->weighted_random_number(1..3);
-
-	for (1..$number_of_items) {
-		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
-		$max_prevalence = 100 if $max_prevalence > 100;		
-
-        my $item_type;
-        while ( !defined $item_type ) {
-            last if $max_prevalence > 100;
-        	
-    	    my @items = map { $_ <= $max_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
-
-			$item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
-			
-			$max_prevalence++;
-		}
-		
-	    # We couldn't find a suitable item. Try again
-	    next unless $item_type;
-	    
-	    my $enchantments = 0;
-	    if (Games::Dice::Advanced->roll('1d100') <= 15) {
-	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
-	    }
-
-		my $item = $self->context->schema->resultset('Items')->create_enchanted(
-			{
-				item_type_id      => $item_type->id,
-			    treasure_chest_id => $chest->id,
-			},
-			{
-				number_of_enchantments => $enchantments,
-				max_value => $dungeon->level * 300,
-			}
-	    );
-	}
-	
-	# Add a trap
-	if (Games::Dice::Advanced->roll('1d100') <= 20) {
-		$chest->add_trap;
-		$chest->update;
-	}
-	else {
-		$chest->trap(undef);
-		$chest->update;
-	}
-	
-}
 
 {
     my %item_types_by_prevalence;
@@ -322,17 +258,7 @@ sub fill_chest {
         
         return %item_types_by_prevalence if %item_types_by_prevalence;
         
-		my @item_types = $self->context->schema->resultset('Item_Type')->search(
-	        {
-	            'category.hidden'           => 0,
-	            'category.findable'			=> 1,
-	        },
-	        {
-	            prefetch => { 'item_variable_params' => 'item_variable_name' },
-	            join     => 'category',
-	        },
-	    );
-	    map { push @{ $item_types_by_prevalence{ $_->prevalence } }, $_ } @item_types;
+        %item_types_by_prevalence = $self->context->schema->resultset('Item_Type')->get_by_prevalence;
 	    
 	    return %item_types_by_prevalence;        
     }
@@ -341,19 +267,6 @@ sub fill_chest {
     sub _clear_item_type_by_prevalence {
         undef %item_types_by_prevalence;
     }
-}
-
-sub fill_empty_chests {
-	my $self = shift;
-	
-	my @chests = $self->context->schema->resultset('Treasure_Chest')->all;
-	foreach my $chest (@chests) {	    
-		if ($chest->is_empty) {
-			if (Games::Dice::Advanced->roll('1d100') <= $self->context->config->{empty_chest_fill_chance}) {
-				$self->fill_chest($chest);
-			} 	
-		}	
-	}	
 }
 
 sub generate_teleporters {

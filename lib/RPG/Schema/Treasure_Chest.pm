@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use List::Util qw(shuffle);
+use RPG::Maths;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Treasure_Chest');
@@ -31,6 +32,64 @@ sub is_empty {
 	my @items = grep { $_->item_type->item_type ne 'Artifact' } $self->items;
 	
 	return @items ? 0 : 1;
+}
+
+sub fill {
+	my $self = shift;
+	my %item_types_by_prevalence = @_;
+	
+	return unless $self->dungeon_grid->dungeon_room;
+	
+	my $dungeon = $self->dungeon_grid->dungeon_room->dungeon;
+	
+	return unless $dungeon;
+		
+	my $number_of_items = RPG::Maths->weighted_random_number(1..3);
+
+	for (1..$number_of_items) {
+		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
+		$max_prevalence = 100 if $max_prevalence > 100;		
+
+        my $item_type;
+        while ( !defined $item_type ) {
+            last if $max_prevalence > 100;
+        	
+    	    my @items = map { $_ <= $max_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
+
+			$item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
+			
+			$max_prevalence++;
+		}
+		
+	    # We couldn't find a suitable item. Try again
+	    next unless $item_type;
+	    
+	    my $enchantments = 0;
+	    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
+	    }
+
+		my $item = $self->result_source->schema->resultset('Items')->create_enchanted(
+			{
+				item_type_id      => $item_type->id,
+			    treasure_chest_id => $self->id,
+			},
+			{
+				number_of_enchantments => $enchantments,
+				max_value => $dungeon->level * 300,
+			}
+	    );
+	}
+	
+	# Add a trap
+	if (Games::Dice::Advanced->roll('1d100') <= 20) {
+		$self->add_trap;		
+	}
+	else {
+		$self->trap(undef);
+	}
+	
+    $self->update;	
 }
 
 1;

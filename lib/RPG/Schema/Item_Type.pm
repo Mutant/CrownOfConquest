@@ -8,6 +8,7 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Item_Type');
 
+__PACKAGE__->resultset_class('RPG::ResultSet::Item_Type');
 
 __PACKAGE__->add_columns(
     'item_type_id' => {

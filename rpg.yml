@@ -79,6 +79,9 @@ dungeon_doors_cron_string: "*/30 * * * *"
 # Generation of mayor's group
 mayors_group_cron_string: "15 */6 * * *"
 
+# Filling of dungeon treasure chests
+treasure_chest_cron_string: "45 * * * *"
+
 # ----- Character / Party Generation Params ----- #
 
 # Pool of points to add to stats for new character
@@ -431,7 +434,7 @@ dungeon_sectors_per_creature: 12
 dungeon_entrance_level_step: 5
 
 # Chance an empty chest will get refilled
-empty_chest_fill_chance: 60
+empty_chest_fill_chance: 20
 
 # Max number of offline combats per dungeon level
 max_offline_combat_per_dungeon_level: 4

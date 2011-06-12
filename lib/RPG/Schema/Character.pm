@@ -8,7 +8,7 @@ use base 'DBIx::Class';
 
 use Carp;
 use Data::Dumper;
-use List::Util qw(shuffle);
+use List::Util qw(shuffle sum);
 use Math::Round qw(round);
 use Sub::Name;
 use DateTime;
@@ -1313,8 +1313,22 @@ sub get_item_action {
 sub critical_hit_chance {
     my $self = shift;
     
+	my @items_with_bonus = $self->search_related(
+		'items',
+		{
+			'enchantment.enchantment_name' => 'critical_hit_bonus',
+		},
+		{
+			join => {'item_enchantments' => 'enchantment'},
+		}
+	);
+	
+	my $bonus = sum map { $_->variable('Critical Hit Bonus') } @items_with_bonus;
+	$bonus //= 0;
+    
     return int ($self->divinity / RPG::Schema->config->{character_divinity_points_per_chance_of_critical_hit}) +
-        int ($self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit});     
+        int ($self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit}) +
+        $bonus;     
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

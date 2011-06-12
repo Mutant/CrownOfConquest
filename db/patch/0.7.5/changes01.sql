@@ -91,6 +91,14 @@ INSERT into Dungeon_Special_Room (room_type) values ('treasure');
 ALTER TABLE `Player` ADD COLUMN `referred_by` INTEGER  DEFAULT NULL;
 ALTER TABLE `Player` ADD COLUMN `refer_reward_given` TINYINT(1)  NOT NULL DEFAULT 0;
 
+INSERT INTO `Enchantments` (enchantment_name, must_be_equipped, one_per_item) values ('critical_hit_bonus', 1, 1);
 
+set @ench_id = (select enchantment_id from Enchantments where enchantment_name = 'critical_hit_bonus');
+
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Melee Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category= 'Armour'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Head Gear'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
 
 

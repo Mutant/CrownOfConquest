@@ -48,6 +48,12 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 				[% END %]
 			[% END %]
 		</td> 
+		<td>
+			<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
+				onClick="document.location='[% base %]kingdom/cancel_quest?quest_id=[% quest.id %]'">
+				Cancel Quest
+			</button>		
+		</td>	
 	</tr>
 [% END %]
 

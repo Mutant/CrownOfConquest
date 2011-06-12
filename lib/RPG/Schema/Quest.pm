@@ -291,7 +291,7 @@ sub interested_actions_by_quest_type {
     return %actions_by_quest_type;
 }
 
-# Called when a quest is terminated (non-amicably)
+# Called when a quest is terminated
 sub terminate {
 	my $self = shift;
 	my %params = @_;
@@ -322,8 +322,10 @@ sub terminate {
     		},
     	);
     	
-    	$party_town->decrease_prestige(3);
-    	$party_town->update;
+    	if (! $params{amicably}) {
+    	   $party_town->decrease_prestige(3);
+    	   $party_town->update;
+    	}
     }
     
     if ($self->kingdom_id) {
@@ -350,8 +352,10 @@ sub terminate {
             },
         );
         
-        $party_kingdom->decrease_loyalty(1);
-        $party_kingdom->update;          
+        if (! $params{amicably}) {
+            $party_kingdom->decrease_loyalty(1);
+            $party_kingdom->update;
+        }          
         
     }
 }

@@ -225,6 +225,43 @@ sub create_quest : Private {
 	
 }
 
+sub cancel_quest : Local {
+    my ( $self, $c ) = @_;
+    
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            kingdom_id => $c->stash->{kingdom}->id,
+            status => ['Not Started', 'In Progress'],
+        }
+    );
+    
+    croak "Invalid quest" unless $quest;
+    
+    my $message = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'quest/kingdom/cancelled.html',
+				params => {
+				    quest => $quest,
+				},
+				return_output => 1,
+			}
+		]
+	);	
+    
+    $quest->terminate(
+        party_message => $message, 
+        amicably => 1,
+    );
+    $quest->update;
+    
+    $c->flash->{messages} = 'Quest cancelled';
+    
+    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );
+}
+
 sub quest_param_list : Local {
 	my ( $self, $c ) = @_;
 	

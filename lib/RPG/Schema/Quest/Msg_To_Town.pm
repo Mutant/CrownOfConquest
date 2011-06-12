@@ -91,6 +91,9 @@ sub check_action {
     my $quest_param = $self->param_record('Been To Town');
     $quest_param->current_value(1);
     $quest_param->update;
+    
+    $self->status('Awaiting Reward');
+    $self->update;
 
     return 1;
 }

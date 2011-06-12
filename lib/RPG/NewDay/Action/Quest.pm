@@ -108,21 +108,16 @@ sub complete_quests {
         }
         
         my $template;
-        my %params;
+        my %params = (
+            quest => $quest,
+            xp_messages => \@messages,
+        );
         
         if ($quest->town_id) {
-            $template = 'quest/completed_quest.html';
-            %params = (
-                quest => $quest,
-            );
+            $template = 'quest/town/completed.html';
         }
         else {
             $template = 'quest/kingdom/completed.html';
-            %params = (
-                quest => $quest,
-                kingdom => $quest->kingdom,
-                xp_messages => \@messages,
-            );
         }   
         
         my $message = RPG::Template->process(

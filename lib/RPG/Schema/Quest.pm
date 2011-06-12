@@ -469,7 +469,7 @@ sub check_quest_action {
     my @params = @_; 
     
     my $message;
-    if ($self->party_id && $actioning_party->id == $self->party_id && $self->check_action( $actioning_party, $action, @params )) {    
+    if ($self->party_id && (! $actioning_party || $actioning_party->id == $self->party_id) && $self->check_action( $actioning_party, $action, @params )) {    
         $message = RPG::Template->process(
             RPG::Schema->config,
             'quest/action_message.html',

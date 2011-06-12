@@ -717,10 +717,11 @@ sub sector_menu : Local {
 
     my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
     
-    $c->stash->{messages} //= [];
-    push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} }
-        if $c->session->{temp_dungeon_messages};
-    undef $c->session->{temp_dungeon_messages};        
+    if ($c->session->{temp_dungeon_messages}) {
+        $c->stash->{messages} //= [];
+        push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
+        undef $c->session->{temp_dungeon_messages};
+    }
 
     return $c->forward(
         'RPG::V::TT',

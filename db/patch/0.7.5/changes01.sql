@@ -88,6 +88,9 @@ ALTER TABLE `Party` ADD COLUMN `warned_for_kingdom_co_op` DATETIME  DEFAULT NULL
 
 INSERT into Dungeon_Special_Room (room_type) values ('treasure');
 
+ALTER TABLE `Player` ADD COLUMN `referred_by` INTEGER  DEFAULT NULL;
+ALTER TABLE `Player` ADD COLUMN `refer_reward_given` TINYINT(1)  NOT NULL DEFAULT 0;
+
 
 
 

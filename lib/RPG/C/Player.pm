@@ -198,6 +198,14 @@ sub register : Local {
             	return "A player with the name '" . $c->req->param('player_name') . "' is already registered";	
             }
             
+            my $referring_player;
+            if ($c->req->param('referred_by_email')) {
+                $referring_player = $c->model('DBIC::Player')->find( { email => $c->req->param('referred_by_email') }, );
+                unless ($referring_player) {
+                    return "Can't find the email address of the player that referred you. Are you sure it's correct?";
+                }   
+            }
+            
             my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
             
             my $code;
@@ -235,8 +243,30 @@ sub register : Local {
                     last_login        => DateTime->now(),
                     $code ? (promo_code_id => $code->code_id) : (),
                     send_email        => $c->req->param('allow_emails') ? 1 : 0,
+                    referred_by       => $referring_player ? $referring_player->id : undef,
                 }
             );
+            
+            if ($referring_player) {
+                # Leave message for referring player's party
+                my $party = $referring_player->find_related(
+                    'parties',
+                    {
+                        defunct => undef,
+                    }
+                );
+                
+                if ($party) {
+                    $party->add_to_messages(
+                        {
+                            alert_party => 1,
+                            day_id => $c->stash->{today}->id,
+                            message => "A player you referred - '$name' - has signed up. You'll receive a reward once they've used " .
+                                $c->config->{referring_player_turn_threshold} . " turns",
+                        }
+                    ); 
+                }
+            }
  
             $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
 

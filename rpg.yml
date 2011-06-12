@@ -149,6 +149,12 @@ verification_reminder_days: 7
 # Number of days we check back for co-op IP address
 ip_coop_window: 90
 
+# Number of turns that must be used before a player gets a reward for referring someone
+referring_player_turn_threshold: 1000
+
+# Turn reward for referring a friend
+refer_a_friend_turn_reward: 250
+
 # ----- Party Params ----- #
 
 # Size of map to display

@@ -23,14 +23,14 @@ sub setup_player : Tests(startup => 1) {
     $self->{mock_mime_lite}->fake_module('MIME::Lite',
         send => sub {},
         'new' => sub { $self->{mock_mime_lite} },
-        header_as_string => sub {},
-        body_as_string => sub {},
     );
     
     $self->{rpg_template} = Test::MockObject::Extra->new();
     $self->{rpg_template}->fake_module('RPG::Template',
         process => sub {},
     );
+    
+    $self->{config}{email_log_file} = 0;
      
     use_ok 'RPG::C::Player';
 }
@@ -315,6 +315,40 @@ sub test_register_duplicate_email : Tests(3) {
     is( $self->{schema}->resultset('Player')->count, 1, "No more players created" );
 }
 
+sub test_register_referring_player_does_not_exist : Tests(3) {
+    my $self = shift;
+
+    # GIVEN
+    $self->{config}->{max_number_of_players}   = 2;
+    $self->{config}->{minimum_password_length} = 4;
+
+    $self->{params} = {
+        email       => 'foo@bar.com',
+        player_name => 'name2',
+        password1   => 'pass',
+        password2   => 'pass',
+        submit => 1,
+        referred_by_email => 'bob@bob.com',
+    };
+
+    $self->{c}->set_always( 'validate_captcha', 1 );
+
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_; return $template_args->[0][0]{template} };
+
+    # WHEN
+    RPG::C::Player->register( $self->{c} );
+
+    # THEN
+    is( $template_args->[0][0]{template}, 'player/register.html', "Forward to register form" );
+    is(
+        $template_args->[0][0]{params}{message},
+        "Can't find the email address of the player that referred you. Are you sure it's correct?",
+        "Correct message"
+    );
+    is( $self->{schema}->resultset('Player')->count, 0, "No players created" );
+}
+
 sub test_register_successful : Tests(6) {
     my $self = shift;
 
@@ -470,6 +504,49 @@ sub test_register_successful_with_promo_code_used : Tests(7) {
     is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
     is($new_player->promo_code_id, undef, "No promo code recorded");
+}
+
+sub test_register_successful_with_referred_player : Tests(8) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'bob@bob.com' } );
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, player_id => $player->id );
+    $self->{config}->{max_number_of_players}   = 2;
+    $self->{config}->{minimum_password_length} = 4;
+
+    $self->{params} = {
+        email       => 'foo@bar.com',
+        player_name => 'name1',
+        password1   => 'pass',
+        password2   => 'pass',
+        promo_code => 1234,
+        submit => 1,
+        referred_by_email => 'bob@bob.com',
+    };
+
+    $self->{c}->set_always( 'validate_captcha', 1 );
+    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
+    
+    $self->{config}->{url_root} = 'url_root';
+
+    # WHEN
+    RPG::C::Player->register( $self->{c} );
+
+    # THEN
+    my ($method, $args) = $self->{mock_response}->next_call();
+    is($method, 'redirect', "Redirected");
+    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
+    
+    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
+    is($new_player->email, 'foo@bar.com', "Email set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
+    isnt($new_player->verification_code, undef, "Verification code set");
+    is($new_player->referred_by, $player->id, "Referred by player recorded"); 
+    
+    is($party->messages->count, 1, "Message added to party");
 }
 
 sub test_login_form : Tests(2) {

@@ -44,9 +44,11 @@ sub build_party {
             combat_type             => $params{combat_type} || undef,
             dungeon_grid_id			=> $params{dungeon_grid_id} || undef,
             kingdom_id              => $params{kingdom_id} || undef,
+            turns_used              => $params{turns_used} // 0,
             name => 'test',
             last_action => $params{last_action} || DateTime->now(),
             warned_for_kingdom_co_op => $params{warned_for_kingdom_co_op} || undef,
+
         }
     );
 

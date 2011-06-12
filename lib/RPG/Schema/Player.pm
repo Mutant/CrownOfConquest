@@ -149,7 +149,7 @@ __PACKAGE__->add_columns(
         'is_auto_increment' => 0,
         'default_value'     => 1,
         'is_foreign_key'    => 0,
-        'name'              => 'send_email',
+        'name'              => 'promo_code_id',
         'is_nullable'       => 1,
         'size'              => '11'
     },
@@ -161,13 +161,34 @@ __PACKAGE__->add_columns(
         'name'              => 'email_hash',
         'is_nullable'       => 0,
         'size'              => '255'
-    },   
+    },  
+    'referred_by' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'referred_by',
+        'is_nullable'       => 1,
+        'size'              => '11'
+    },     
+    'refer_reward_given' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'refer_reward_given',
+        'is_nullable'       => 1,
+        'size'              => '11'
+    },      
+    
 );
 __PACKAGE__->set_primary_key('player_id');
 
 __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'player_id', { cascade_delete => 0 } );
 
 __PACKAGE__->has_many( 'logins', 'RPG::Schema::Player_Login', 'player_id', );
+
+__PACKAGE__->belongs_to( 'referred_by_player', 'RPG::Schema::Player', {'foreign.player_id' => 'self.referred_by'} );
 
 sub time_since_last_login {
     my $self = shift;

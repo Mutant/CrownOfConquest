@@ -60,6 +60,8 @@ sub run {
     }
 
     $self->verification_reminder();
+    
+    $self->refer_a_friend_rewards();
 
     $self->cleanup_sessions();
 }
@@ -105,6 +107,59 @@ sub verification_reminder {
             	body    => $message,
         	}
         );
+    }
+}
+
+sub refer_a_friend_rewards {
+    my $self = shift;   
+    
+    my $c = $self->context;
+    
+    my @referred_players = $c->schema->resultset('Player')->search(
+        {
+            referred_by => {'!=', undef},
+            refer_reward_given => 0,
+        }
+    );
+    
+    foreach my $player (@referred_players) {
+        my $rs = $player->find_related(
+            'parties',
+            {},
+            {
+                'select' => [{'sum' => 'turns_used'}],
+                'as' => ['total_turns_used'],
+            }
+       );
+       my $turns_used = $rs->get_column('total_turns_used');
+       
+       if ($turns_used >= $c->config->{referring_player_turn_threshold}) {
+            # Referring player gets reward
+            my $referring_player = $player->referred_by_player;
+            next unless $referring_player;
+            
+            my $party = $referring_player->find_related(
+                'parties',
+                {
+                    defunct => undef,
+                }
+            );
+            
+            next unless $party;
+            
+            $party->_turns($party->_turns + $c->config->{refer_a_friend_turn_reward});
+            $party->update;
+            
+            $party->add_to_messages(
+                {
+                    alert_party => 1,
+                    day_id => $c->current_day->id,
+                    message => "You received " . $c->config->{refer_a_friend_turn_reward} . " turns for referring the player " . $player->player_name,
+                }
+            );
+            
+            $player->update( {refer_reward_given => 1});
+       }
     }
 }
 

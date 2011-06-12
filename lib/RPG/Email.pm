@@ -53,6 +53,7 @@ sub send {
         		
         	}
         );
+        $email_footer //= '';
 
         my $msg = MIME::Lite->new(
             From    => $config->{send_email_from},

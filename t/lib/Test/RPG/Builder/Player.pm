@@ -19,6 +19,8 @@ sub build_player {
             warned_for_deletion => 1,
             deleted => 1, 
             display_tip_of_the_day => $params{tip_of_the_day} || 1,
+            referred_by => $params{referred_by} || undef,
+            refer_reward_given => $params{refer_reward_given} // 0,
         } 
     );
     

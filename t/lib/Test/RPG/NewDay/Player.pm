@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::NewDay::Quest;
+package Test::RPG::NewDay::Player;
 
 use base qw(Test::RPG::NewDay::ActionBase);
 

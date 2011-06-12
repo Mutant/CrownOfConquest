@@ -49,7 +49,47 @@ function refreshTaxPreview() {
 	dijit.byId('party-tax-preview').refresh();
 }
 
+
+function confirmRelinquishMayoralty() {
+	dijit.byId('confirm-reliquish-mayorlty').show();
+}
+
+function confirmChangeMayor() {
+	dijit.byId('select-new-mayor').show();
+}
 </script>
+
+<div dojoType="dijit.Dialog" id="confirm-reliquish-mayorlty" style="display: none" title="Relinquish Mayoralty?">
+	<form method="POST" action="[% base %]town/mayor/relinquish">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	Are you sure you want to give up the mayoralty of [% town.town_name %]?<br>
+        
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-reliquish-mayorlty').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="select-new-mayor" style="display: none" title="Change Mayor?">
+	<form method="POST" action="[% base %]town/mayor/change">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	Select a character to become mayor of [% town.town_name %]:<br>
+	<select name="character_id" dojoType="dijit.form.FilteringSelect">
+		[% FOREACH character IN party.characters_in_party %]
+			[% UNLESS character.is_dead %]
+				<option value="[% character.id %]">[% character.name %]</option>
+			[% END %]
+		[% END %]
+	</select>
+        
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-reliquish-mayorlty').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
 
 <h2>[% town.town_name %] Mayor's Office</h2>
 
@@ -81,88 +121,11 @@ function refreshTaxPreview() {
 
 Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
-	
-<div dojoType="dijit.layout.ContentPane" title="Tax Settings">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">	
 
-<h3>Tax Settings</h3>
+<div dojoType="dijit.layout.ContentPane" title="Mayor" href="[% base %]/town/mayor/select?town_id=[% town.id %]" [% IF tab == 'mayor' %]selected=true[% END %]></div>
 
-You can change tax settings once per day. [% IF town.tax_modified_today %]You've already changed the tax settings today.[% END %]
-
-[% UNLESS town.tax_modified_today %]
-<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/update" method="POST">
-[% END %]
-
-<input type="hidden" name="town_id" value="[% town.id %]">
-
-<table class="main">
-	<tr>
-		<td>Peasant Tax:</td>
-		<td><input type="text" dojoType="dijit.form.NumberTextBox" name="peasant_tax" id="peasant-tax" style="width: 50px"
-				value="[% town.peasant_tax %]" constraints="{min:0,max:100,places:0}" required="true"
-				invalidMessage="Peasant Tax must be between 0 and 100%">%
-				
-			<div dojoType="dijit.Tooltip"
-	           		connectId="peasant-tax"
-					style="display: none">
-					Percentage to tax the peasants of the town. Too high a tax may lead the peasants to rebel. 		 
-			</div>					
-		</td>
-	</tr>
-	<tr>
-		<td>Sales Tax:</td>
-		<td><input type="text" dojoType="dijit.form.NumberTextBox" name="sales_tax" id="sales-tax" style="width: 50px"
-				value="[% town.sales_tax %]" constraints="{min:0,max:20,places:0}" required="true"
-				invalidMessage="Sales Tax must be between 0 and 20%">%
-				
-				<div dojoType="dijit.Tooltip"
-	           		connectId="sales-tax"
-					style="display: none">
-					Percentage to tax all sales of equipment to or from shops in the town. 		 
-				</div>
-		</td>
-	</tr>
-	<tr>
-		<td>Base Party Tax:</td>
-		<td><input type="text" dojoType="dijit.form.NumberTextBox" name="base_party_tax" id="base-party-tax" style="width: 50px"
-				value="[% town.base_party_tax %]" constraints="{min:0,max:100,places:0}" required="true"
-				invalidMessage="Base Party Tax must be 0 or more"
-				onBlur="updateTaxPreviewBase(this)">
-				
-				<div dojoType="dijit.Tooltip"
-	           		connectId="base-party-tax"
-					style="display: none">
-					Base amount a party must pay to enter the town, regardless of level. 		 
-				</div>				
-		</td>
-	</tr>
-	<tr>
-		<td>Party Tax Per Level:</td>
-		<td><input type="text" dojoType="dijit.form.NumberTextBox" name="party_tax_level_step" id="party-tax-level-step" style="width: 50px"
-				value="[% town.party_tax_level_step %]" constraints="{min:0,max:100,places:0}" required="true"
-				invalidMessage="Party Tax Per Level must be 0 or more"
-				onBlur="updateTaxPreviewLevelStep(this)">
-				
-				<div dojoType="dijit.Tooltip"
-	           		connectId="party-tax-level-step"
-					style="display: none">
-					Amount of tax a party must pay to enter the town, for each party level above 1.
-				</div>					
-		</td>
-	</tr>
-</table>
-
-[% UNLESS town.tax_modified_today %]
-<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
-	Submit
-</button>
-
-</div>
-[% END %]
-
-<div dojoType="dijit.layout.ContentPane" id="party-tax-preview" href="[% base %]/town/mayor/party_tax_preview?town_id=[% town_id %]"></div>
-
-</div>
+<div dojoType="dijit.layout.ContentPane" title="Tax" href="[% base %]/town/mayor/tax?town_id=[% town.id %]" [% IF tab == 'tax' %]selected=true[% END %]></div>
 	
 <div dojoType="dijit.layout.ContentPane" title="Garrison" href="[% base %]/town/mayor/garrison?town_id=[% town.id %]" [% IF tab == 'garrison' %]selected=true[% END %]></div>
 	

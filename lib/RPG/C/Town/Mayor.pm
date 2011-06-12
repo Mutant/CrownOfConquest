@@ -22,6 +22,8 @@ sub auto : Private {
 	croak "Not mayor of this town\n" unless $town->mayor->party_id == $c->stash->{party}->id;	
 	
 	$c->stash->{town} = $town;
+
+	$c->stash->{in_town} = $town->land_id == $c->stash->{party_location}->id ? 1 : 0;
 	
 	return 1;		
 }
@@ -35,11 +37,9 @@ sub default : Path {
 sub main : Local {
 	my ( $self, $c ) = @_;
 	
-	my $in_town = $c->stash->{town}->land_id == $c->stash->{party_location}->id ? 1 : 0;
-	
 	my @mayors;
 	
-	if (! $in_town) {
+	if (! $c->stash->{in_town}) {
 	    @mayors = $c->stash->{party}->search_related(
     		'characters',
     		{
@@ -58,7 +58,7 @@ sub main : Local {
 				template => 'town/mayor/main.html',
 				params => {
 					town => $c->stash->{town},
-					party_in_town => $in_town,
+					party_in_town => $c->stash->{in_town},
 					party => $c->stash->{party},
 					mayors => \@mayors,
 					error => $c->flash->{error} || '',
@@ -66,6 +66,110 @@ sub main : Local {
 			}
 		]
 	);
+}
+
+sub select : Local {
+    my ( $self, $c ) = @_;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/select_tab.html',
+				params => {
+					town => $c->stash->{town},
+					party_in_town => $c->stash->{in_town},
+					party => $c->stash->{party},
+				},
+			}
+		]
+	);	    
+}
+
+sub tax : Local {
+	my ( $self, $c ) = @_;   
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/mayor/tax_tab.html',
+				params => {
+					town => $c->stash->{town},
+					party_in_town => $c->stash->{in_town},
+					party => $c->stash->{party},
+				},
+			}
+		]
+	);	
+}
+
+sub relinquish : Local {
+    my ($self, $c) = @_;
+    
+    my $mayor = $c->stash->{town}->mayor;
+    $mayor->lose_mayoralty(0);
+    
+    my $redirect_url = $c->config->{url_root}; 
+    if (! $c->stash->{in_town}) {
+        $redirect_url .= '/party/details?tab=mayors';
+    }
+    
+    $c->flash->{messages} = "Mayor removed";
+    
+    $c->response->redirect( $redirect_url );    
+}
+
+sub change : Local {
+    my ($self, $c) = @_;
+    
+    croak "Not in town" unless $c->stash->{in_town};
+    
+    my $mayor = $c->stash->{town}->mayor;
+    
+    my ($new_mayor) = grep { $_->id == $c->req->param('character_id') && ! $_->is_dead } $c->stash->{party}->characters_in_party;
+    
+    croak "New mayor not found" unless $new_mayor;
+    
+    my $orig_approval = $c->stash->{town}->mayor_rating;
+    
+    $mayor->lose_mayoralty(0, 1);
+    
+    $new_mayor->mayor_of($c->stash->{town}->id);
+    $new_mayor->update;
+    
+    $mayor->status(undef);
+    $mayor->status_context(undef);
+    $mayor->update;   
+        
+    $c->stash->{party}->adjust_order;
+    
+    my $new_rating = $orig_approval - 10;
+    $new_rating = -5 if $new_rating > -5;
+    
+    $c->stash->{town}->mayor_rating($new_rating);
+    $c->stash->{town}->update;
+    
+	$c->model('DBIC::Party_Mayor_History')->create(
+	   {
+	       mayor_name => $new_mayor->character_name,
+	       character_id => $new_mayor->id,
+	       town_id => $c->stash->{town}->id,
+	       got_mayoralty_day => $c->stash->{today}->id,
+	       party_id => $c->stash->{party}->id,
+	   }
+	);  
+	
+	$c->stash->{town}->add_to_history(
+   		{
+			day_id  => $c->stash->{today}->id,
+           	message => $mayor->character_name . " steps aside as mayor. " . $new_mayor->character_name . ", also from the party " . $c->stash->{party}->name .
+           	    ", replaces " . $mayor->pronoun('objective'),
+   		}
+   	);
+   	
+   	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=mayor');		
+	  
 }
 
 sub update : Local {
@@ -80,7 +184,7 @@ sub update : Local {
 	$c->stash->{town}->tax_modified_today(1);
 	$c->stash->{town}->update;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id );
+	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=tax');
 }
 
 sub guards : Local {

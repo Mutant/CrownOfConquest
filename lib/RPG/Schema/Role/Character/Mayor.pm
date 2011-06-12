@@ -7,6 +7,7 @@ use Moose::Role;
 sub lose_mayoralty {
 	my $self = shift;
 	my $killed = shift // 1;
+	my $switch_mayor = shift // 0;
 	
 	confess "Not a mayor" unless $self->mayor_of;
 
@@ -38,24 +39,28 @@ sub lose_mayoralty {
 	);
 	
 	foreach my $char (@garrison_chars) {
-		if ($killed) {			
-	   		$char->status('morgue');
-			$char->status_context($town->id);
-			$char->hit_points(0);
-		}
-		else {
-			$char->status('inn');
-			$char->status_context($town->id);			
-		}
+	    if (! $switch_mayor) {
+    		if ($killed) {			
+    	   		$char->status('morgue');
+    			$char->status_context($town->id);
+    			$char->hit_points(0);
+    		}
+    		else {
+    			$char->status('inn');
+    			$char->status_context($town->id);			
+    		}
+	    }
 		$char->creature_group_id(undef);
 		$char->update;
 	}
 	
-   	$town->mayor_rating(0);
-   	$town->peasant_state(undef);
-   	$town->last_election(undef);
-   	$town->tax_modified_today(0);
-   	$town->update;
+	if (! $switch_mayor) {
+       	$town->mayor_rating(0);
+       	$town->peasant_state(undef);
+       	$town->last_election(undef);
+       	$town->tax_modified_today(0);
+       	$town->update;
+	}
    	
    	if (! $self->is_npc) { 	    
     	my $history_rec = $self->result_source->schema->resultset('Party_Mayor_History')->find(

@@ -18,7 +18,7 @@ sub schedule {
 	
 	croak "No mayor in this town" unless $mayor;
 	
-	croak "Invalid day\n" if $days < 5;
+	croak "Invalid day\n" if $days < 3;
 	
 	my $schema = $self->result_source->schema;
 	

@@ -158,8 +158,8 @@ refer_a_friend_turn_reward: 250
 # ----- Party Params ----- #
 
 # Size of map to display
-map_x_size: 7
-map_y_size: 7
+map_x_size: 21
+map_y_size: 15
 
 # Area party can "view" (i.e. how far they can see on main map)
 party_viewing_range: 3

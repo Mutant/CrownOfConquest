@@ -344,10 +344,7 @@ function createButton(menu, name, characterId) {
 
 </script>
 
-<div style=""> 
-
-<table [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] 
-	id="party-table" accept="character" moveOnly="true" class="main" align="center" cellspacing=0 cellpadding=2 border=0>
+<table class="main" align="center" cellspacing=0 cellpadding=2 border=0>
 
 	<tr>
 		<td colspan="8">
@@ -362,43 +359,32 @@ function createButton(menu, name, characterId) {
 		<br>
 		</td>
 	</tr>
+</table>
 		
 	
-<tr>
-	<td colspan="8">
-		<h3>Party Members</h3>
-	</td>
-</tr>
-<tr>
-	[% INCLUDE party/party_list_header.html %]
-	<th>Effects</th>
-</tr>
 
 [% FOREACH char IN characters %]
 [% char_id = char.id %]
 
-<tr 
+<div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
+
+<div 
 	[% UNLESS in_combat %]class="dojoDndItem"[% END %] 
 	dndType="character" 
 	accept="character"
 	id="char-[% char.id %]" 
-	jsId="char-[% char.id %]" 
-	[% IF char.is_dead %]style="background: black"[% END %]
+	jsId="char-[% char.id %]"
+	style="height: 40px;" 
 >	
-	[% INCLUDE party/party_list_char_line.html %]
-    <td nowrap="nowrap">[% FOREACH effect IN char.character_effects %][% effect.effect.effect_name %] ([% effect.effect.time_left %])[% UNLESS loop.last() %],[% END %][% END %]</td>
 
-	<td align="center">
-    [% UNLESS char.is_dead %]
-		<div id="char_action_holder_[% char.id %]" class="main"></div>    
-	[% ELSE %]
-		[% UNLESS in_combat %]
-			<button dojoType="dijit.form.Button" onclick="buryDiag('[% char.character_name | replace("'","\\'") %]', '[% char.character_id %]')">Bury</button>
-		[% END %]
-    [% END %]
+	<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" title="[% char.race.race_name %] [% char.class.class_name %]"
+		style="float: left">
 
-	</td>
-
+	<table>
+		<tr>
+			[% char.character_name %]
+		</tr>
+		<tr>
     	<td>
         	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
         	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
@@ -420,16 +406,14 @@ function createButton(menu, name, characterId) {
     		<span id="useSpan_[% char.id %]"></span>
     		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
     	</td>
+    	</tr>
+    </table>
 
     [% IF party.rank_separator_position == char.party_order %]
-    	</tr>
-    	<tr>
-    		<tr [% UNLESS in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
-    			<td colspan="13"></td>
+		</div><div [% UNLESS in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
     [% END %]
    
-</tr>
+</div>
+<br style="clear: right"/>
 [% END %]
-
-</table>
 </div>

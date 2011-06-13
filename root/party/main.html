@@ -458,48 +458,27 @@ function unblockDoor(action) {
 
 </div>
 
-<div id="border-top" style="width: 100%">&nbsp;</div>
-
-<div id="main-middle-section">
+<div id="main-middle-section" style="height: 700px">
 
 <div dojoType="dijit.layout.ContentPane" id="dungeon-pane" style="display: none"></div>
 
-<div dojoType="dijit.layout.BorderContainer"
-				design="sidebar"                
-                style="width: 98%; height: 320px; margin:0px auto;"
-				class="content-background">
-
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" region="left" style="width: 400px;">
+	<div id="map-outer" style="float: left; position: relative">
+		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
 		
-			<div dojoType="dijit.layout.BorderContainer"
-				design="sidebar" gutter=false
-                style="width: 420px; margin:0px auto; padding: 0px">
-					<div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px;">					
-					</div>
+		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
+			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black" >
+		</div>
+	</div>		
 
-					<div dojoType="dijit.layout.ContentPane" selected="true" title="Map" id="map-pane" region="center" style="height: 320px;">					
-				</div>
-			</div>
-	</div>
-
-	<div dojoType="dijit.layout.ContentPane" selected="true" title="Messages" id="messages-pane" region="center" 
-		style="padding-left: 5px; height: 320px" class="content-background">
-		&nbsp;
-	</div>
+	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="overflow: visible; padding-left: 10px" class="content-background"></div>
 </div>
 
 
-</div>
 
-<div id="border-top" style="width: 100%">&nbsp;</div>
 
-<div dojoType="dojox.layout.ContentPane" id="party-pane" style="overflow: visible;" class="content-background">
+<div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px; display: none"></div>
 
-</div>
-
-<div id="popup-messages-pane" style="display: none" dojoType="dijit.layout.ContentPane">
-	
-</div>
+<div id="popup-messages-pane" style="display: none" dojoType="dijit.layout.ContentPane"></div>
 
 
 

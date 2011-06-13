@@ -21,16 +21,18 @@ sub view : Private {
     $c->session->{zoom_level} ||= 2;
     my $zoom_level = $c->session->{zoom_level};
     
-    my $grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
-    $grid_size-- if $c->session->{zoom_level} % 2 == 0;    # Odd numbers cause us problems
+    my $x_grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
+    $x_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
+    my $y_grid_size = $c->config->{map_y_size} + (($zoom_level-2) * 3) + 1;
+    $y_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
     
     my $grid_params =
-        $c->forward( 'generate_grid', [ $grid_size, $grid_size, $party_location->x, $party_location->y, 1, ], );
+        $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $party_location->x, $party_location->y, 1, ], );
 
     $grid_params->{click_to_move} = 1;
-    $grid_params->{x_size}        = $grid_size;
-    $grid_params->{y_size}        = $grid_size;
-    $grid_params->{grid_size}     = $grid_size;
+    $grid_params->{x_size}        = $x_grid_size;
+    $grid_params->{y_size}        = $y_grid_size;
+    $grid_params->{grid_size}     = $x_grid_size;
     $grid_params->{zoom_level}    = $zoom_level;
 
     $c->forward( 'render_grid', [ $grid_params, ] );

@@ -167,19 +167,25 @@ sub check_for_item_found {
 
 	if ( $find_item ) {
 		my $min_prevalence = 100 - ( $avg_creature_level * $self->config->{prevalence_per_creature_level_to_find} );
+		$min_prevalence = 0 if $min_prevalence < 0;
+		
+		my $roll_size = 100 - $min_prevalence;
+		
+		my $prev_roll = Games::Dice::Advanced->roll('1d' . $roll_size) + $min_prevalence;
+		$prev_roll = 90 if $prev_roll > 90;
 
 		# Get item_types within the prevalance roll
 		my @item_types = shuffle $self->schema->resultset('Item_Type')->search(
 			{
-				prevalence          => { '>=', $min_prevalence },
+				prevalence          => { '>=', $prev_roll },
 				'category.hidden'   => 0,
 				'category.findable' => 1,
 			},
 			{ join => 'category', },
 		);
-
+		
 		my $item_type = shift @item_types;
-
+		
 		unless ($item_type) {
 			$self->log->info("Couldn't find item to give to party over prevalence $min_prevalence");
 			return;
@@ -187,13 +193,13 @@ sub check_for_item_found {
 
 		# Choose a character to find it
 		my $finder = $self->character_group->get_least_encumbered_character;
-
+		
 		# Create the item
 		my $item;
 		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
 			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
-			
+						
 			my $avg_divinity = $self->character_group->average_stat('divinity');
 			if($avg_divinity >= $self->config->{min_avg_divinity_for_enchantment_chance_increase}) {
                 my $bonus = int ($avg_divinity - $self->config->{min_avg_divinity_for_enchantment_chance_increase})

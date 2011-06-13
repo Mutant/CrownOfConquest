@@ -1184,6 +1184,47 @@ sub test_check_for_item_found_enchantment_created : Tests(6) {
 
 }
 
+sub test_check_for_item_found_prev_roll : Tests(5) {
+	my $self = shift;
+
+	# GIVEN
+	my $party     = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+	my $character = ( $party->characters )[0];
+	my $cg        = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => 5 );
+
+	$self->{config}{chance_to_find_item}                   = 10;
+	$self->{config}{prevalence_per_creature_level_to_find} = 10;
+
+	my $item_type_1 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, prevalence => 60 );
+	my $item_type_2 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, prevalence => 59 );
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+
+	$self->mock_dice;
+	$self->{rolls} = [1, 10, 100];
+
+	# WHEN
+	$battle->check_for_item_found( [ $party->characters ], $cg->level );
+
+	# THEN
+	my @found_items = @{ $battle->result->{found_items} };
+	is( scalar @found_items, 1, "One item found" );
+	isa_ok( $found_items[0]->{finder}, 'RPG::Schema::Character', "Character set as finder" );
+	is( $found_items[0]->{finder}->id, $character->id, "Correct character is finder" );
+	isa_ok( $found_items[0]->{item}, 'RPG::Schema::Items', "Item set in result" );
+	is( $found_items[0]->{item}->item_type_id, $item_type_1->id, "Item is of correct type" );
+	
+    $self->unmock_dice;
+    undef $self->{rolls};	
+
+}
+
 sub test_oppoent_number_of_being : Tests(2) {
 	my $self = shift;
 

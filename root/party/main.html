@@ -207,7 +207,6 @@ function init() {
 	var scrollTo = dojo.byId('scroll_to');
 
 	if (scrollTo) {
-		console.log("Scrolling to " + scrollTo.innerHTML);
 		dijit.scrollIntoView(scrollTo.innerHTML);
 	}
 }
@@ -460,13 +459,11 @@ function unblockDoor(action) {
 
 <div id="main-middle-section" style="height: 700px">
 
-<div dojoType="dijit.layout.ContentPane" id="dungeon-pane" style="display: none"></div>
-
 	<div id="map-outer" style="float: left; position: relative">
 		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
 		
 		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
-			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black" >
+			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 1000" >
 		</div>
 	</div>		
 

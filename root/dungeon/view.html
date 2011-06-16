@@ -1,12 +1,10 @@
 [% PROCESS dungeon/map_vars.html %]
 [%
 	x = min_x - 1;
-	y = min_y - 1;
-
-	
+	y = min_y - 1;	
 %]
 
-<div style="position: relative;" id="dungeon_outer">
+<div style="width: 750px; height: 500px; border: 1px solid white; overflow: scroll; position: relative" id="dungeon_outer">
 <div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
 [% WHILE y <= max_y %]
 	[% y = y+1 %]

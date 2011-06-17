@@ -56,8 +56,8 @@ sub process_town {
 	
 	my $mayor = $town->mayor;
 	
-	$self->check_for_mayor_replacement($town, $mayor);
-	
+    $mayor = $self->check_for_mayor_replacement($town, $mayor);
+		
 	$self->refresh_mayor($mayor, $town);
 	
 	if ($town->pending_mayor) {

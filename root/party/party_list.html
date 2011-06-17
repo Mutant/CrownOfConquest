@@ -363,10 +363,10 @@ function createButton(menu, name, characterId) {
 		
 	
 
+<div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
+
 [% FOREACH char IN characters %]
 [% char_id = char.id %]
-
-<div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
 
 <div 
 	[% UNLESS in_combat %]class="dojoDndItem"[% END %] 
@@ -374,16 +374,21 @@ function createButton(menu, name, characterId) {
 	accept="character"
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]"
-	style="height: 40px;" 
+	style="margin-bottom: 5px; height: 50px" 
 >	
 
 	<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" title="[% char.race.race_name %] [% char.class.class_name %]"
 		style="float: left">
+		
+	<div style="width: 3px; top: 10%; bottom: 20%; height: 70%; float: left; margin-right: 2px; position: relative" title="HP: [% char.hit_points %] / [% char.hit_points_max %]">
+		<div style="width: 3px; height: [% char.health * 100 %]%; bottom: 0px; position: absolute; background: #9E0B0F;"></div>
+	</div>
 
 	<table>
 		<tr>
-			<a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a>
+			<td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
 		</tr>
+		
 		<tr>
     	<td>
         	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
@@ -409,11 +414,12 @@ function createButton(menu, name, characterId) {
     	</tr>
     </table>
 
+	<br style="clear: right"/>
     [% IF party.rank_separator_position == char.party_order %]
-		</div><div [% UNLESS in_combat %]class="dojoDndItem"[% END %] dndType="separator" id="rank_separator" jsId="rank_separator">
+		</div><div style="border: 1px solid white; margin: 5px">
     [% END %]
-   
+	
 </div>
-<br style="clear: right"/>
+
 [% END %]
 </div>

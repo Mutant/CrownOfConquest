@@ -25,7 +25,8 @@ after 'execute_round' => sub {
     #  This is ok, because rare cg's don't flee... but this check could make sure the rare monster was killed
     #  to be on the safe side.    
     if ($self->result->{combat_complete} && $self->session->{rare_cg} && $self->result->{losers}->id == $self->creature_group->id) {
-        $self->location->dungeon_room->remove_special(rare_creature_killed => 1);
+        $self->location->dungeon_room->remove_special(rare_creature_killed => 1)
+            if $self->location->dungeon_room->can('remove_special');
     }
 
 };

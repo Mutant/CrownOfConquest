@@ -26,85 +26,102 @@ sub run {
 		}
 	);
 
+    my @errors;
 	foreach my $town (@towns) {
-		$self->context->logger->debug("Processing mayor for town " . $town->id); 
-
-		# Reset tax modified flag
-		$town->tax_modified_today(0);
-		$town->update;
-		
-		my $mayor = $town->mayor;
-		
-		$self->check_for_mayor_replacement($town, $mayor);
-		
-		$self->refresh_mayor($mayor, $town);
-		
-		if ($town->pending_mayor) {
-			$self->check_for_pending_mayor_expiry($town);
-		}
-	
-		if ($mayor->is_npc) {
-		    $self->context->logger->debug("Mayor is NPC");
-			# Set default tax rates
-			if ($town->peasant_tax < 8 || $town->peasant_tax > 15) {
-				$town->peasant_tax(Games::Dice::Advanced->roll('1d8') + 7);
-			}  
-			
-			$town->sales_tax(10);
-			$town->base_party_tax(20);
-			$town->party_tax_level_step(30);
-			$town->advisor_fee(0);
-			$town->update;
-			
-			$self->check_for_npc_election($town);
-			
-			$self->check_for_allegiance_change($town);
-		}
-
-		my $revolt_started = $self->check_for_revolt($town);
-		
-		if ($town->peasant_tax && ! $town->peasant_state) {
-			my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
-			$self->context->logger->debug("Collecting $gold peasant tax");
-			$town->increase_gold($gold);
-			$town->update;
-			
-			$c->schema->resultset('Town_History')->create(
-                {
-                    town_id => $town->id,
-                    day_id  => $c->current_day->id,
-                    message => "The mayor collected $gold gold tax from the peasants",
-                }
-            );
-            
-			$town->add_to_history(
-				{
-					type => 'income',
-					value => $gold,
-					message => 'Peasant Tax',
-					day_id => $c->current_day->id,
-				}
-			); 
-		}
-		
-		$self->calculate_kingdom_tax($town);
-
-    	$self->generate_guards($town->castle);
-    	$town->discard_changes;
-		
-		$self->calculate_approval($town);
-
-		$self->check_if_election_needed($town);
-
-    	if (! $revolt_started && $town->peasant_state) {
-    		$self->process_revolt($town);
-    	}
-
-    	$self->generate_advice($town);    	
+	    eval {
+            $self->process_town($town);
+	    };
+	    if ($@) {
+            push @errors, "Error processing town " . $town->id . ": " .  $@;
+	    }
 	}
+	
+	die join "\n", @errors if @errors;
 	
 	# Clear all tax paid / raids today
     $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0, guards_killed => 0 } );	
+}
+
+sub process_town {
+    my $self = shift;
+    my $town = shift;
+    
+    my $c = $self->context;
+    
+	$self->context->logger->debug("Processing mayor for town " . $town->id); 
+
+	# Reset tax modified flag
+	$town->tax_modified_today(0);
+	$town->update;
+	
+	my $mayor = $town->mayor;
+	
+    $mayor = $self->check_for_mayor_replacement($town, $mayor);
+		
+	$self->refresh_mayor($mayor, $town);
+	
+	if ($town->pending_mayor) {
+		$self->check_for_pending_mayor_expiry($town);
+	}
+
+	if ($mayor->is_npc) {
+	    $self->context->logger->debug("Mayor is NPC");
+		# Set default tax rates
+		if ($town->peasant_tax < 8 || $town->peasant_tax > 15) {
+			$town->peasant_tax(Games::Dice::Advanced->roll('1d8') + 7);
+		}  
+		
+		$town->sales_tax(10);
+		$town->base_party_tax(20);
+		$town->party_tax_level_step(30);
+		$town->advisor_fee(0);
+		$town->update;
+		
+		$self->check_for_npc_election($town);
+		
+		$self->check_for_allegiance_change($town);
+	}
+
+	my $revolt_started = $self->check_for_revolt($town);
+	
+	if ($town->peasant_tax && ! $town->peasant_state) {
+		my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
+		$self->context->logger->debug("Collecting $gold peasant tax");
+		$town->increase_gold($gold);
+		$town->update;
+		
+		$c->schema->resultset('Town_History')->create(
+            {
+                town_id => $town->id,
+                day_id  => $c->current_day->id,
+                message => "The mayor collected $gold gold tax from the peasants",
+            }
+        );
+        
+		$town->add_to_history(
+			{
+				type => 'income',
+				value => $gold,
+				message => 'Peasant Tax',
+				day_id => $c->current_day->id,
+			}
+		); 
+	}
+	
+	$self->calculate_kingdom_tax($town);
+
+	$self->generate_guards($town->castle);
+	$town->discard_changes;
+	
+	$self->calculate_approval($town);
+
+	$self->check_if_election_needed($town);
+
+	if (! $revolt_started && $town->peasant_state) {
+		$self->process_revolt($town);
+	}
+
+	$self->generate_advice($town);      
 }
 
 sub calculate_approval {

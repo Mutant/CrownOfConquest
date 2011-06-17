@@ -116,6 +116,18 @@ sub run_election {
 				
 		$winner->mayor_of($town->id);
 		$winner->update;
+		
+		if (! $winner->is_npc) {
+        	$c->schema->resultset('Party_Mayor_History')->create(
+        	   {
+        	       mayor_name => $winner->character_name,
+        	       character_id => $winner->id,
+        	       town_id => $town->id,
+        	       got_mayoralty_day => $c->current_day->id,
+        	       party_id => $winner->party_id,
+        	   }
+        	);
+		}		
 				
 		$c->schema->resultset('Town_History')->create(
         	{

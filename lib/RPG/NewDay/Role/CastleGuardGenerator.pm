@@ -356,7 +356,9 @@ sub check_for_mayor_replacement {
                 message => $town->town_name . " doesn't have a mayor! " . $mayor->character_name . " is appointed by the King",
             }
         );
-	}    
+	}
+	
+	return $mayor;
 }
 
 sub create_mayor {

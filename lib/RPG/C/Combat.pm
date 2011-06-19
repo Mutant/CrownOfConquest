@@ -107,18 +107,12 @@ sub main : Local {
 		$orb = $c->stash->{party_location}->orb;
 	}
 
-	my $creature_group_display;
-	if ($creature_group) {
-		$creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, $c->stash->{creatures_initiated} ] );
-	}
-	
 	return $c->forward(
 		'RPG::V::TT',
 		[
 			{
 				template => 'combat/main.html',
 				params   => {
-					creature_group_display => $creature_group_display,
 					creature_group         => $creature_group,
 					creatures_initiated    => $c->stash->{creatures_initiated},
 					combat_messages        => $c->stash->{combat_messages},
@@ -133,8 +127,12 @@ sub main : Local {
 	);
 }
 
-sub display_cg : Private {
-	my ( $self, $c, $creature_group, $display_factor_comparison ) = @_;
+sub display_cg : Local {
+	my ( $self, $c ) = @_;
+	
+	my $display_factor_comparison;
+		
+	my $creature_group //= $c->stash->{creature_group};
 
 	return unless $creature_group;
 
@@ -265,7 +263,7 @@ sub process_round_result : Private {
 	# We only want messages for opp1, since that's always the online party
 	push @{ $c->stash->{combat_messages} }, @{ $display_messages->{1} };
 
-	my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
+	my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'creatures' );
 	if ( $result->{combat_complete} ) {
 
 		push @panels_to_refesh, 'map';

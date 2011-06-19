@@ -38,33 +38,30 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% INCLUDE graves/main.html %]
 [% END %]
 
+[% IF creature_group %]Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br><br>[% END %]
+
 [% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
 
 <a href="javascript:getPanels('/party/camp')">Camp</a> 
 | <a href="javascript:getPanels('/party/scout')">Scout</a> 
-	[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
-	[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
-	[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
-	[% IF adjacent_towns %]
-		[% FOREACH town IN adjacent_towns %]
-			| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
-		[% END %]
+[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
+[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
+[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
+[% IF adjacent_towns %]
+	[% FOREACH town IN adjacent_towns %]
+		| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
 	[% END %]
-	[% IF can_build_garrison %]
-		| <a href="[% base %]/garrison/create">Create a Garrison</a>
-	[% ELSIF garrison.party_id == party.id %]
-		| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
+[% END %]
+[% IF can_build_garrison %]
+	| <a href="[% base %]/garrison/create">Create a Garrison</a>
+[% ELSIF garrison.party_id == party.id %]
+	| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
+[% END %]
+[% IF !garrison || garrison.party_id == party.id %]
+	[% IF can_build_building %]
+		| <a href="[% base %]/building/create">Construct a Building</a>
 	[% END %]
-	[% IF !garrison || garrison.party_id == party.id %]
-		[% IF can_build_building %]
-			| <a href="[% base %]/building/create">Construct a Building</a>
-		[% END %]
-	[% END %]
-	[% IF can_claim_land %]
-		| <a href="javascript:getPanels('/party/claim_land')">Claim Land</a>
-	[% END %]
-<br>
-
-[% IF creature_group %]
-	[% creature_group_display %]
+[% END %]
+[% IF can_claim_land %]
+	| <a href="javascript:getPanels('/party/claim_land')">Claim Land</a>
 [% END %]

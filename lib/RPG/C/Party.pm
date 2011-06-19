@@ -21,7 +21,7 @@ use DateTime::Format::Duration;
 sub main : Local {
 	my ( $self, $c ) = @_;
 
-	my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom' ] );
+	my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom', 'creatures' ] );
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -82,8 +82,6 @@ sub sector_menu : Private {
 	
 	$c->forward('/party/pending_mayor_check');
 
-	my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
-
 	my @adjacent_towns;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
 		# Remove any the party is a mayor of
@@ -129,7 +127,6 @@ sub sector_menu : Private {
 				template => 'party/sector_menu.html',
 				params   => {
 					party                  => $c->stash->{party},
-					creature_group_display => $creature_group_display,
 					creature_group         => $creature_group,
 					confirm_attack         => $confirm_attack || 0,
 					messages               => $c->flash->{messages} || $c->stash->{messages},
@@ -155,7 +152,15 @@ sub sector_menu : Private {
 				return_output => 1,
 			}
 		]
-	);
+	);	
+}
+
+sub creature_group : Local {
+    my ( $self, $c ) = @_;
+    
+    my $creature_group = $c->stash->{creature_group};
+    
+	my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );   
 }
 
 sub pending_mayor_check : Private {

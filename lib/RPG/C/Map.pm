@@ -435,7 +435,7 @@ sub move_to : Local {
     
     #$c->log->debug("ploc x: " . $c->stash->{party_location}->x . ", ploc y: " . $c->stash->{party_location}->y);
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'creatures' ] );
 }
 
 #  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range

@@ -356,7 +356,7 @@ sub move_to : Local {
         }
     }
 
-    $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'creatures' ] );
 }
 
 # Build the sector data that the party can now view. i.e. only the sectors that
@@ -714,8 +714,6 @@ sub sector_menu : Local {
     my @doors = $current_location->available_doors;
 
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
-
-    my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
     
     if ($c->session->{temp_dungeon_messages}) {
         $c->stash->{messages} //= [];
@@ -731,7 +729,6 @@ sub sector_menu : Local {
                 params   => {
                     doors                  => \@doors,
                     current_location       => $current_location,
-                    creature_group_display => $creature_group_display,
                     creature_group         => $creature_group,
                     messages               => $c->stash->{messages},
                     parties_in_sector      => $parties_in_sector,

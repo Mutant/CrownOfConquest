@@ -136,8 +136,6 @@ sub display_cg : Local {
 	
 	return unless $creature_group;
 
-	warn $creature_group->id;
-
 	my $factor_comparison;
 	
 	$c->stats->profile('Beginning factor comaprison');

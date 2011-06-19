@@ -119,10 +119,22 @@ function executeCallbacks(callBacks) {
 var current_size = 'small';
 function setMessagePanelSize(size) {
 	if (size == 'large' && current_size == 'small') {
-		dojo.byId('messages-pane').style.top = "80px";
-		dojo.byId('messages-pane').style.right = "80px";
-		dojo.byId('messages-pane').style.bottom = '80px';
-		dojo.byId('messages-pane').style.left = '80px';	
+		dojo.animateProperty({
+		  node:"messages-pane",
+		  duration: 700,		  
+		  properties: {
+		      left: 80,
+		      bottom: 80,
+		      top: 80,
+		      right: 80
+		  }
+		}).play();
+	
+	
+		//dojo.byId('messages-pane').style.top = "80px";
+		//dojo.byId('messages-pane').style.right = "80px";
+		//dojo.byId('messages-pane').style.bottom = '80px';
+		//dojo.byId('messages-pane').style.left = '80px';	
 		current_size = 'large';
 	}
 	

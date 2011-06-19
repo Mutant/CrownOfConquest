@@ -439,6 +439,8 @@ sub enter : Local {
 	my $town = $c->model('DBIC::Town')->find( { land_id => $c->req->param('land_id') } );
 
 	unless ( $c->forward( '/map/can_move_to_sector', [ $town->location ] ) ) {
+	    
+	    $c->stash->{message_panel_size} = 'small';
 
 		# Can't move to this town for whatever reason
 		$c->detach( '/panel/refresh', [ 'messages', 'party_status' ] );
@@ -456,6 +458,9 @@ sub enter : Local {
 	if (! $mayor || $mayor->party_id != $c->stash->{party}->id) {
 		my $prestige_threshold = -90 + round( $town->prosperity / 25 );
 		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
+		    
+		    $c->stash->{message_panel_size} = 'small';
+		    
 			$c->stash->{panel_messages} =
 				[ "You've been refused entry to " . $town->town_name . ". You'll need to wait until your prestige improves before coming back" ];
 			$c->detach( '/panel/refresh', ['messages'] );
@@ -463,7 +468,8 @@ sub enter : Local {
 	}
 	
 	# Check if the mayor's party has an IP address in common
-	if ($mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with($mayor->party)) {
+	if ($mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with($mayor->party)) {	    
+	    $c->stash->{message_panel_size} = 'small';
 		$c->stash->{panel_messages} = [ "You cannot enter this town as the mayor's party has IP addresses in common with yours" ];
 		$c->detach( '/panel/refresh', ['messages'] );
 	}
@@ -484,6 +490,7 @@ sub enter : Local {
 		}
 		else {
 			if ( $cost->{turns} > $c->stash->{party}->turns ) {
+			    $c->stash->{message_panel_size} = 'small';
 				$c->stash->{panel_messages} = ["You don't have enough turns to pay the tax"];
 				$c->detach( '/panel/refresh', ['messages'] );
 			}

@@ -45,6 +45,11 @@ sub check_for_attack : Local {
 
             return $creature_group;
         }
+        elsif ( $creature_group->dungeon_grid_id != $current_location->id ) {
+            # If the CG's not in this sector, and they didn't attack, clear them out of
+            #  the stash so they don't get displayed.
+            undef $c->stash->{creature_group};   
+        }
     }
 }
 

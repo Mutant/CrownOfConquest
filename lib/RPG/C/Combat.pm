@@ -132,9 +132,11 @@ sub display_cg : Local {
 	
 	my $display_factor_comparison;
 		
-	my $creature_group //= $c->stash->{creature_group};
-
+	my $creature_group = $c->stash->{creature_group};
+	
 	return unless $creature_group;
+
+	warn $creature_group->id;
 
 	my $factor_comparison;
 	
@@ -281,7 +283,7 @@ sub process_round_result : Private {
 
 	}
 	if ( $result->{creatures_fled} ) {
-		push @panels_to_refesh, 'map';
+		push @panels_to_refesh, ('map', 'creatures');
 
 		undef $c->stash->{creature_group};
 
@@ -291,6 +293,8 @@ sub process_round_result : Private {
 	}
 
 	$c->stash->{combat_complete} = $result->{combat_complete};
+	
+	$c->stash->{message_panel_size} = 'large';
 
 	$c->forward( '/panel/refresh', \@panels_to_refesh );
 }
@@ -308,7 +312,7 @@ sub process_flee_result : Private {
 		$c->stash->{party_location} = $c->stash->{party}->location;
 
 		undef $c->stash->{creature_group};
-		push @panels_to_refesh, 'map';
+		push @panels_to_refesh, ('map', 'creatures');
 
 		$c->forward( '/panel/refresh', \@panels_to_refesh );
 	}

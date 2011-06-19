@@ -1,11 +1,15 @@
-[% IF creatures_initiated %]
-	You have been attacked by a group of 
+[% IF creature_group %]
+	[% IF creatures_initiated %]
+		You have been attacked by a group of 
+	[% ELSE %]
+		You are in combat with a group of
+	[% END %]
 	[% INCLUDE combat/creature_group_summary.html creature_group=creature_group %]
 	<br><br>
 	[% IF orb %]
 	These creatures guard the Orb of [% orb.name %]!
 	<br><br>
-	[% END %]	
+	[% END %]
 [% END %]
 
 [% IF garrison_initiated %]

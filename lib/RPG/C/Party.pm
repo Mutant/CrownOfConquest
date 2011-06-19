@@ -41,7 +41,7 @@ sub main : Local {
 sub refresh_messages : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward( '/panel/refresh', ['messages'] );
+	$c->forward( '/panel/refresh', ['messages', 'creatures'] );
 }
 
 sub sector_menu : Private {
@@ -153,14 +153,6 @@ sub sector_menu : Private {
 			}
 		]
 	);	
-}
-
-sub creature_group : Local {
-    my ( $self, $c ) = @_;
-    
-    my $creature_group = $c->stash->{creature_group};
-    
-	my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );   
 }
 
 sub pending_mayor_check : Private {
@@ -768,7 +760,7 @@ sub enter_dungeon : Local {
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
 
-	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party' ] );
+	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }
 
 sub zoom : Private {

@@ -855,7 +855,7 @@ sub take_stairs : Local {
 		$c->stash->{party}->dungeon_grid_id($new_sector->id);
 		$c->stash->{party}->update;
 		
-		$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+		$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
 	}
 
 }
@@ -874,7 +874,7 @@ sub exit : Private {
     
     undef $c->session->{spotted};
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party' ] );
+    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }
 
 sub search_room : Local {

@@ -381,7 +381,7 @@ function createButton(menu, name, characterId) {
 		style="float: left">
 	
 	<div style="width: 3px; top: 10%; bottom: 20%; height: 70%; float: left; margin-right: 2px; position: relative" 
-		title="HP: [% character.hit_points_current %] / [% character.hit_points_max %]">	
+		title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
 		[% INCLUDE combat/hp_bar.html being=char %]
 	</div>
 
@@ -423,4 +423,5 @@ function createButton(menu, name, characterId) {
 </div>
 
 [% END %]
+
 </div>

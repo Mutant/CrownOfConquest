@@ -119,6 +119,7 @@ function executeCallbacks(callBacks) {
 var current_size = 'small';
 function setMessagePanelSize(size) {
 	if (size == 'large' && current_size == 'small') {
+		dojo.byId('messages-pane').style.overflow = 'hidden';
 		dojo.animateProperty({
 		  node:"messages-pane",
 		  duration: 700,		  
@@ -131,10 +132,8 @@ function setMessagePanelSize(size) {
 		}).play();
 	
 	
-		//dojo.byId('messages-pane').style.top = "80px";
-		//dojo.byId('messages-pane').style.right = "80px";
-		//dojo.byId('messages-pane').style.bottom = '80px';
-		//dojo.byId('messages-pane').style.left = '80px';	
+		dojo.byId('messages-pane').style.opacity = "0.9";
+		dojo.byId('messages-pane').style.overflow = 'auto';
 		current_size = 'large';
 	}
 	
@@ -143,6 +142,7 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.right = "";
 		dojo.byId('messages-pane').style.bottom = '20px';
 		dojo.byId('messages-pane').style.left = '20px';
+		dojo.byId('messages-pane').style.opacity = "0.8";
 		current_size = 'small';		
 	}
 	

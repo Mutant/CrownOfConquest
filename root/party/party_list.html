@@ -361,6 +361,11 @@ function createButton(menu, name, characterId) {
 	</tr>
 </table>
 		
+<style>
+	.dijitArrowButtonInner {
+		display: none;
+	}
+</style>
 	
 
 <div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
@@ -385,17 +390,15 @@ function createButton(menu, name, characterId) {
 		[% INCLUDE combat/hp_bar.html being=char %]
 	</div>
 
-	<table>
-		<tr>
-			<td><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></td>
-		</tr>
+	<div style="float: left">
+		<span style="padding-left: 6px">
+			<a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a>
+		</span>
+		<br>
 		
-		<tr>
-    	<td>
         	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
         	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
-        </td>
-        <td>
+        
         	[% IF in_combat && ! char.is_dead %]    	
     		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
     			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
@@ -403,17 +406,13 @@ function createButton(menu, name, characterId) {
     		</span>
     		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
     		[% END %]
-    	</td>
-    	<td>
+    	
     		<span id="castSpan_[% char.id %]"></span>
     		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
-    	</td>
-    	<td>
+    	
     		<span id="useSpan_[% char.id %]"></span>
     		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
-    	</td>
-    	</tr>
-    </table>
+    </div>
 
 	<br style="clear: right"/>
     [% IF party.rank_separator_position == char.party_order %]

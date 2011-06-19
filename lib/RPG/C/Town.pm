@@ -12,6 +12,12 @@ use List::Util qw(shuffle);
 use Carp;
 use DateTime;
 
+sub begin : Private {
+    my ( $self, $c ) = @_;
+    
+    $c->stash->{message_panel_size} = 'large';
+}
+
 sub main : Local {
 	my ( $self, $c, $return_output ) = @_;
 
@@ -88,6 +94,29 @@ sub shop_list : Local {
 	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
 
 	$c->forward('/panel/refresh');
+}
+
+sub leave : Local {
+    my ( $self, $c ) = @_;
+    
+    my $town = $c->stash->{party_location}->town;
+    
+	my $panel = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template      => 'town/leave.html',
+				params        => { town => $town, },
+				return_output => 1,
+			}
+		]
+	);    
+    
+    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+    
+    $c->stash->{message_panel_size} = 'small';   
+    
+    $c->forward('/panel/refresh');
 }
 
 sub healer : Local {

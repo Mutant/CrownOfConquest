@@ -29,7 +29,7 @@ function getPanels(url) {
 	    		dijit.byId('error').show();
 	    		dijit.byId('messages-pane').setContent(originalContent);
 			}
-			
+							
 			refreshPanels(responseObject);
 			
 			displayPopupMessages();	
@@ -55,7 +55,9 @@ function getPanels(url) {
 	//console.profileEnd();
 }
 
-function refreshPanels(panelData) {    
+function refreshPanels(panelData) {
+	setMessagePanelSize(panelData.message_panel_size);
+
 	if (panelData.panel_messages) {
 		displayMessages(panelData.panel_messages);
 	}				
@@ -113,6 +115,26 @@ function executeCallbacks(callBacks) {
 		window[callbackName](callback.data);		
 	}
 }
+
+var current_size = 'small';
+function setMessagePanelSize(size) {
+	if (size == 'large' && current_size == 'small') {
+		dojo.byId('messages-pane').style.top = '80px';
+		dojo.byId('messages-pane').style.right = '80px';
+		dojo.byId('messages-pane').style.bottom = '80px';
+		dojo.byId('messages-pane').style.left = '80px';
+		current_size = 'large';
+	}
+	
+	if (size == 'small' && current_size == 'large') {
+		dojo.byId('messages-pane').style.top = "";
+		dojo.byId('messages-pane').style.right = "";
+		dojo.byId('messages-pane').style.bottom = '20px';
+		dojo.byId('messages-pane').style.left = '20px';
+		current_size = 'small';		
+	}
+	
+} 
 
 function dungeonCallback(data) {
 	var updatedSectors = data.sectors;
@@ -215,7 +237,6 @@ function dungeonScroll(scroll_to) {
 	scroll_to_sector = 'sector_' + scroll_to.x + "_" + scroll_to.y;
 	loc = dojo.byId(scroll_to_sector);
 	if (loc) {
-		console.log("Scrolling to " + scroll_to_sector);
 		dijit.scrollIntoView(loc);
 	}
 }

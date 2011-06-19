@@ -56,7 +56,9 @@ sub refresh : Private {
 	}
 	
 	$response{panel_callbacks} = $c->stash->{panel_callbacks};
-	
+		
+	$response{message_panel_size} = $c->stash->{message_panel_size} // 'small';
+		
     my $resp = to_json \%response;
     $resp =~ s|script>|scri"+"pt>|g; # Nasty hack
 
@@ -79,12 +81,14 @@ sub find_panel_path : Private {
             return $c->stash->{messages_path};
         }        
     	elsif ($party->in_combat_with) {
+    	    $c->stash->{message_panel_size} = 'large';
     		return '/combat/switch';
     	}	
     	elsif ($party->dungeon_grid_id) {
     	    return '/dungeon/sector_menu';
     	}
     	elsif ($c->stash->{party_location}->town) {
+    	    $c->stash->{message_panel_size} = 'large';
     		return '/town/main';
     	}
     	elsif ($party->in_party_battle) {

@@ -718,6 +718,7 @@ sub sector_menu : Local {
     my $creature_group_display = $c->forward( '/combat/display_cg', [ $creature_group, 1 ] );
     
     if ($c->session->{temp_dungeon_messages}) {
+        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages};
         $c->stash->{messages} //= [];
         push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
         undef $c->session->{temp_dungeon_messages};

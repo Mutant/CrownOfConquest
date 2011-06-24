@@ -510,6 +510,7 @@ sub enter : Local {
 		$party_town->update;
 	}
 
+    $c->stash->{refresh_panels} = ['map'];
 	$c->stash->{entered_town} = 1;
 
 	$c->forward('/map/move_to');

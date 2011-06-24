@@ -21,10 +21,7 @@ sub view : Private {
     $c->session->{zoom_level} ||= 2;
     my $zoom_level = $c->session->{zoom_level};
     
-    my $x_grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
-    $x_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
-    my $y_grid_size = $c->config->{map_y_size} + (($zoom_level-2) * 3) + 1;
-    $y_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
+    my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
     
     my $grid_params =
         $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $party_location->x, $party_location->y, 1, ], );
@@ -36,6 +33,19 @@ sub view : Private {
     $grid_params->{zoom_level}    = $zoom_level;
 
     $c->forward( 'render_grid', [ $grid_params, ] );
+}
+
+sub grid_sizes {
+    my ($self, $c) = @_;
+    
+    my $zoom_level = $c->session->{zoom_level};
+    
+    my $x_grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
+    $x_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
+    my $y_grid_size = $c->config->{map_y_size} + (($zoom_level-2) * 3) + 1;
+    $y_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
+    
+    return ($x_grid_size, $y_grid_size);       
 }
 
 sub party : Local {
@@ -347,6 +357,8 @@ sub move_to : Local {
         $c->stash->{party}->move_to($new_land);
 
         $c->stash->{party}->update;
+        
+        my $old_sector = $c->stash->{party_location};
 
         # Fetch from the DB, since it may have changed recently
         $c->stash->{party_location} = $c->model('DBIC::Land')->find( { land_id => $c->stash->{party}->land_id, } );
@@ -386,6 +398,8 @@ sub move_to : Local {
         
         $c->stash->{mapped_sector} = $mapped_sector;
 
+        $c->stats->profile("Moved party");
+
 		my $already_messaged_garrison = -1;
         if (my $garrison = $new_land->garrison) {
         	# Garrison records a party sighting (unless it's the owner)
@@ -407,8 +421,8 @@ sub move_to : Local {
         	}         	
         }
         
-        my @nearby_garrisoned_blds = $self->find_nearby_garrisoned_buildings($c,
-         $c->stash->{party_location}->x, $c->stash->{party_location}->y);
+        
+        my @nearby_garrisoned_blds = $self->find_nearby_garrisoned_buildings($c, $c->stash->{party_location}->x, $c->stash->{party_location}->y);
         foreach my $finfo (@nearby_garrisoned_blds) {
         	if ($finfo->{garrison}->{garrison_id} != $already_messaged_garrison) {
 
@@ -423,6 +437,8 @@ sub move_to : Local {
         		);
         	}
         }
+        
+        $c->stats->profile("Garrison messages");
 
         my $creature_group = $c->forward( '/combat/check_for_attack', [$new_land] );
 
@@ -430,12 +446,35 @@ sub move_to : Local {
         if ($creature_group) {
             push @{ $c->stash->{refresh_panels} }, 'party';
         }
-
+        
+        my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
+        
+        $c->stash->{panel_callbacks} = [
+        	{
+            	name => 'shiftMap',
+            	data => {
+            	    'xShift' => $new_land->x - $old_sector->x,
+            	    'yShift' => $new_land->y - $old_sector->y,
+            	    'newSector' => {
+            	        x => $new_land->x,
+            	        y => $new_land->y,
+            	    },
+            	    'xGridSize' => $x_grid_size,
+            	    'yGridSize' => $y_grid_size,
+            	},
+        	}
+        ];
     }
     
     #$c->log->debug("ploc x: " . $c->stash->{party_location}->x . ", ploc y: " . $c->stash->{party_location}->y);
+    
+    $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'creatures' ] );
+}
 
-    $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'creatures' ] );
+sub refresh : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->forward( '/panel/refresh', [ 'map' ] );
 }
 
 #  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range

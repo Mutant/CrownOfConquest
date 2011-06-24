@@ -71,50 +71,50 @@ Prosperity: [% position.prosperity %]<br>
 
 
 <div class="container2">
-<div class="holder2"">
+<div class="holder2" id="map-holder">
 
 [% FOREACH y IN y_range %]
-	<div style="clear: left;">
+	<div class="map-row">
 	[% FOREACH x IN x_range %]
 		[% position = undef %]
 		[% IF x > 0 && y > 0 %]
 			[% position = grid.$x.$y %]
 		[% END %] 
+		
+		<span id="outer_sector_[% x %]_[% y %]" class="sector-outer">
 
 		[% FILTER collapse %]	
-		    [% IF click_to_move && position.next_to_centre && ! party_in_combat %]
+		    [% IF click_to_move && ! party_in_combat %]
+		    	[% event = '' %]
+		    	[% IF ! position.next_to_centre %]
+		    		[% event = 'onClick="return false" style="cursor: default"' %]
+		    	[% END %]
+
+		    	<a id="sector_link_[% x %]_[% y %]" [% event %]
+		    
 				[% IF position.town_id %]
 					[% IF town_costs.${position.town_id}.gold && party.turns >= position.party_movement_factor %]
-						<a href="#" onclick="enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')">
+						href="javascript:enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')"
 					[% ELSE %]
-						<a href="#" onclick="getPanels('/town/enter?land_id=[% position.land_id %]')">
+						href="javascript:getPanels('/town/enter?land_id=[% position.land_id %]')"
 					[% END %]
 				[% ELSE %]
-	       			<a href="#" onclick="getPanels('/map/move_to?land_id=[% position.land_id %]')">
+	       			href="javascript:move('[% position.land_id %]', '[% x %]', '[% y %]')" id="link_[% position.land_id %]"
 				[% END %]
+				>
+				
 	       	[% ELSIF ! click_to_move %]
         		<a href="javascript:refreshMap([% x %],[% y %],[% zoom_level %])">
 	       	[% END %]    
-        	
-			<span style="			
-					width: [% sector_width %]px; 
-					height: [% sector_height %]px;
-					float: left; 			
-					text-align: center;
-					display: inline;					
-					font-size: 1px;
-					position: relative;	
-					"
-					[% IF position.town_id %]id="town_[% position.town_id %]"[% END %]
-										
-					>
+
+
 					[% IF position %]
-						<span style = "
+						<span id="sector_[% x %]_[% y %]" style = "
 							width: [% sector_width %]px; 
 							height: [% sector_height %]px;
 							top: 0px;
 							left: 0px; 
-							position: absolute;
+							position: absolute;							
 							">
 						<img 
 							src="[% c.config.static_path %][% image_path %][% gen_image(position) %]" 
@@ -137,6 +137,7 @@ Prosperity: [% position.prosperity %]<br>
 								height="[% sector_height %]"
 								[% title = sector_title(position) %]
 								[%  IF title %]title="[% title %]"[% END %]
+								id="herecircle"
 								>
 			        	[% END %]						
 					
@@ -161,20 +162,20 @@ Prosperity: [% position.prosperity %]<br>
 
 					[% END %]
 					
-				
-					</span>					
 
 					
-			[% IF position.town_id %]
-				<div dojoType="dijit.Tooltip"
-                   connectId="town_[% position.town_id %]"
-                   label="[% town_tooltip(position) | collapse %]"
-                   style="display: none">
-                   </div>
-			[% END %]
-			[% IF ! click_to_move || position.next_to_centre %]
-				</a>
-        	[% END %]
+					[% IF position.town_id %]
+						<div dojoType="dijit.Tooltip"
+		                   connectId="outer_sector_[% x %]_[% y %]"
+		                   label="[% town_tooltip(position) | collapse %]"
+		                   style="display: none">
+		                   </div>
+					[% END %]
+
+					</a>
+				
+			</span>					
+
         [% END %]
 	[% END %]
 	</div>

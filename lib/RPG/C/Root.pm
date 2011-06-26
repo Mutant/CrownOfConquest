@@ -48,6 +48,8 @@ sub auto : Private {
         $allowed_partial_login = 1;   
     }    
 
+    $c->stash->{today} = $c->model('DBIC::Day')->find_today;
+
     if ( !$c->session->{player} || ($c->session->{partial_login} && ! $allowed_partial_login) ) {
         if ( $c->action !~ m|^player(?!/account)| && $c->action !~ m|^donate| ) {
             $c->detach('/player/login');
@@ -60,8 +62,6 @@ sub auto : Private {
     $c->forward('check_for_deleted_player') unless $allowed_partial_login;
 
     $c->stash->{party} = $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
-
-    $c->stash->{today} = $c->model('DBIC::Day')->find_today;
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
         

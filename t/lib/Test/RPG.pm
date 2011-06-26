@@ -61,7 +61,7 @@ sub aa_setup_context : Test(setup) {
 		
 		if (ref $ret eq 'ARRAY' && wantarray) {
 			return @$ret;
-		}
+		}		
 		
 		return $ret;
 	} );

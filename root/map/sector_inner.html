@@ -1,0 +1,88 @@
+[% FILTER collapse %]	
+    [% IF click_to_move %]
+    	[% event = '' %]
+    	[% IF ! position.next_to_centre %]
+    		[% event = 'onClick="return false" style="cursor: default"' %]
+    	[% END %]
+
+    	<a id="sector_link_[% x %]_[% y %]" [% event %]
+    
+		[% IF position.town_id %]
+			[% IF town_costs.${position.town_id}.gold && party.turns >= position.party_movement_factor %]
+				href="javascript:enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')"
+			[% ELSE %]
+				href="javascript:getPanels('/town/enter?land_id=[% position.land_id %]')"
+			[% END %]
+		[% ELSE %]
+   			href="javascript:move('[% position.land_id %]', '[% x %]', '[% y %]')" id="link_[% position.land_id %]"
+		[% END %]
+		>
+		
+   	[% ELSE %]
+		<a href="javascript:refreshMap([% x %],[% y %],[% zoom_level %])">
+   	[% END %]
+
+	[% IF position %]
+		<span id="sector_[% x %]_[% y %]" style = "
+			width: [% sector_width %]px; 
+			height: [% sector_height %]px;
+			top: 0px;
+			left: 0px; 
+			position: absolute;							
+			">
+		<img 
+			src="[% c.config.static_path %][% image_path %][% gen_image(position) %]" 
+			border=0 
+			[% title = sector_title(position) | trim | collapse %]
+			[% IF title %]title="[% title %]"[% END %]
+			width="[% image_width %]"
+			height="[% image_height %]"							
+		>
+		</span>
+		
+    	[% IF position.land_id == current_position.id %]
+			<img src="[% c.config.static_path %]/images/dungeon/herecircle.png" style="
+					position: absolute;
+					top: 0px;
+					left: 0px;												
+				" 
+				border = 0 
+				width="[% sector_width %]"
+				height="[% sector_height %]"
+				[% title = sector_title(position) %]
+				[%  IF title %]title="[% title %]"[% END %]
+				id="herecircle"
+				>
+    	[% END %]						
+	
+		[% FOREACH road IN position.roads %]
+			[% IF road.position %]
+				<img src="[% c.config.static_path %][% image_path %]road/[% road.position | replace('\s+', '_') %].png" style="
+					position: absolute;
+					top: 0px;
+					left: 0px;							
+				"
+				border = 0
+				width="[% sector_width %]"
+				height="[% sector_height %]"
+				[% IF loop.last %]
+				    [% title = sector_title(position) %]
+					[% IF title %]title="[% title %]"[% END %]
+				[% END %]
+				>
+
+			[% END %]
+		[% END %]
+
+	[% END %]
+	
+	[% IF position.town_id %]
+		<div dojoType="dijit.Tooltip"
+           connectId="outer_sector_[% x %]_[% y %]"
+           label="[% town_tooltip(position) | collapse %]"
+           style="display: none">
+           </div>
+	[% END %]
+
+	</a>
+[% END %]

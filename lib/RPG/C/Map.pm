@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use JSON;
 use Carp;
+use Math::Round qw(round);
 
 use RPG::Schema::Land;
 use RPG::Map;
@@ -24,7 +25,7 @@ sub view : Private {
     my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
     
     my $grid_params =
-        $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $party_location->x, $party_location->y, 1, ], );
+        $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $party_location->x, $party_location->y, ], );
 
     $grid_params->{click_to_move} = 1;
     $grid_params->{x_size}        = $x_grid_size;
@@ -178,11 +179,7 @@ sub known_dungeons : Local {
 }
 
 sub generate_grid : Private {
-    my ( $self, $c, $x_size, $y_size, $x_centre, $y_centre, $add_to_party_map ) = @_;
-
-    $c->stats->profile("Entered /map/view");
-
-    $c->stats->profile("Got party's location");
+    my ( $self, $c, $x_size, $y_size, $x_centre, $y_centre ) = @_;
 
     my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1 );
 
@@ -199,9 +196,7 @@ sub generate_grid : Private {
     );
 
     $c->stats->profile("Queried db for sectors");
-   
-    #$c->log->debug("X center: $x_centre; Y Centre: $y_centre");
-   
+      
     my @roads = $c->model('DBIC::Road')->find_in_range(
         {
             x => $x_centre,
@@ -214,6 +209,8 @@ sub generate_grid : Private {
     foreach my $road (@roads) {
         push @{$road_grid->[ $road->{location}->{x} ][ $road->{location}->{y} ]}, $road;
     }
+    
+    $c->stats->profile("Queried db for roads");
 
 	#  Add any buildings
     my @buildings = $c->model('DBIC::Building')->find_in_range(
@@ -229,7 +226,7 @@ sub generate_grid : Private {
         push @{$building_grid->[ $building->{location}->{x} ][ $building->{location}->{y} ]}, $building;
     }
    
-    $c->stats->profile("Queried db for roads");
+    $c->stats->profile("Queried db for buildings");
 
     my @grid;
 
@@ -246,37 +243,6 @@ sub generate_grid : Private {
         }
         else {
             $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
-        }
-
-        # Record sector to the party's map
-        if ( $add_to_party_map && !$location->{mapped_sector_id} ) {
-        	# Only record if they're within the 'viewing range'
-        	my $distance = RPG::Map->get_distance_between_points(
-        		{
-        			x => $x_centre,
-        			y => $y_centre,
-        		},
-        		{
-        			x => $location->{x},
-        			y => $location->{y},
-        		},
-        	);
-        	
-        	if ($distance <= $c->config->{party_viewing_range}) {
-	            $c->model('DBIC::Mapped_Sectors')->create(
-	                {
-	                    party_id => $c->stash->{party}->id,
-	                    land_id  => $location->{land_id},
-	                },
-	            );
-        	}
-        	else {
-        		# Remove it from the grid, as they haven't got it in their map, and it's too far away to see it
-        		$grid[ $location->{x} ][ $location->{y} ] = "";
-        	}
-        }
-        elsif ( !$add_to_party_map && !$location->{mapped_sector_id} ) {
-            $grid[ $location->{x} ][ $location->{y} ] = "";
         }
     }
 
@@ -447,6 +413,8 @@ sub move_to : Local {
             push @{ $c->stash->{refresh_panels} }, 'party';
         }
         
+        $c->stats->profile("Checked for attack");
+        
         my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
         
         $c->stash->{panel_callbacks} = [
@@ -471,10 +439,81 @@ sub move_to : Local {
     $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'creatures' ] );
 }
 
-sub refresh : Local {
+sub load_sectors : Local {
     my ( $self, $c ) = @_;
     
-    $c->forward( '/panel/refresh', [ 'map' ] );
+    my @results;
+    
+    for my $type (qw/row column/) {
+        next unless $c->req->param($type);
+        
+        # We have a list of sectors that have been added to the map
+        #  (as strings, separated by a comma, i.e. "x,y"). We need to 
+        #  turn these into something that can be used by generate_grid
+        #  (which expects an x & y size and a base point).
+        # (Would be easier if generate grid accepted params in a different way, but that would
+        #  involve a lot of refactoring)
+        
+        my @sectors = sort $c->req->param($type);
+                
+        my ($min_x, $min_y, $max_x, $max_y);
+        
+        foreach my $sector (@sectors) {
+            my ($x,$y) = split /,/, $sector;
+            if (! defined $min_x || $x < $min_x) {
+                $min_x = $x;
+            }
+            if (! defined $max_x || $x > $max_x) {
+                $max_x = $x;
+            }
+            if (! defined $min_y || $y < $min_y) {
+                $min_y = $y;
+            }
+            if (! defined $max_y || $y > $max_y) {
+                $max_y = $y;
+            }
+        }
+        
+        my $mid_point = round(scalar @sectors / 2);
+        my ($base_x, $base_y) = split /,/, $sectors[$mid_point-1];
+        
+        my $x_size = $max_x - $min_x + 1;
+        my $y_size = $max_y - $min_y + 1;
+
+        my $grid_params = $c->forward( 'generate_grid', [ $x_size, $y_size, $base_x, $base_y, ], );
+        
+        # Generate the contents of the sector
+        for my $x ( $grid_params->{start_point}{x} .. $grid_params->{end_point}{x} ) {
+            for my $y ($grid_params->{start_point}{y} .. $grid_params->{end_point}{y} ) {
+                
+                my $data = $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'map/single_sector.html',
+                            params        => {
+                                position => $grid_params->{grid}[$x][$y],
+                                click_to_move => 1,
+                                x => $x,
+                                y => $y,
+                                zoom_level => $c->session->{zoom_level},
+                                image_path => RPG->config->{map_image_path},
+                            },
+                            return_output => 1,
+                        }
+                    ]
+                );
+                
+                push @results, {
+                    sector => "$x,$y",
+                    data => $data,
+                };
+            }
+        }
+        
+    }
+    
+    $c->res->body(to_json(\@results));
 }
 
 #  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range

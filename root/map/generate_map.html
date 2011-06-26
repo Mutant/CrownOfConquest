@@ -1,62 +1,6 @@
-[% MACRO sector_title(position) BLOCK %]
-	[% IF ! position.town_id %]
-		[% position.terrain_name | ucfirst %]
-		[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
-		([% position.x %], [% position.y %])
-		[% IF position.known_dungeon %]
-			- Level [% position.known_dungeon %] Dungeon Entrance
-		[% END %]
-	[% END %]
-[% END %]
-
-[% MACRO town_tooltip(position) BLOCK %]
-<b>[% position.town_name %]</b> ([% position.x %], [% position.y %])<br>
-[% IF position.kingdom_name %]Kingdom of [% position.kingdom_name %][% ELSE %]Free City[% END %]<br>
-Prosperity: [% position.prosperity %]<br>
-[% IF click_to_move %]Movement Cost: [% position.party_movement_factor %]<br>[% END %]
-[% IF town_costs.${position.town_id}.paid %]
-	Paid Tax Today
-[% ELSIF town_costs.${position.town_id}.mayor %]
-    Exempt From Tax
-[% ELSE %]
-	Tax: [% town_costs.${position.town_id}.gold %] gold / [% town_costs.${position.town_id}.turns %] turns
-[% END %] 
-[% END %]
-
-[% MACRO gen_image(position) BLOCK ~%]
-	[% IF position.buildings.0 ~%]
-		[%# Only handle 1 building per sector right now ~%]
-		[% building = position.buildings.0 ~%]
-		building/[% building.building_type.image %]
-	[% ELSIF position.known_dungeon ~%]
-		dungeonentrance.png
-	[% ELSIF position.town_id ~%]
-		[% number = 0 ~%]
-		[% IF position.prosperity <= 20 ~%]
-			[% number = 1 ~%]
-		[% ELSIF position.prosperity <= 40 ~%]
-			[% number = 2 ~%]
-		[% ELSIF position.prosperity <= 60 ~%]
-			[% number = 3 ~%]
-		[% ELSIF position.prosperity <= 80 ~%]
-			[% number = 4 ~%]
-		[% ELSIF position.prosperity <= 90 ~%]
-			[% number = 5 ~%]
-		[% ELSE ~%]
-			[% number = 6 ~%]
-		[% END ~%]
-		townpro[% number %].png
-	[% ELSE ~%]
-		[% image = position.terrain_name | replace(' ','_') ~%]
-		[% image %][% position.variation %].png
-	[% END ~%]
-[% END ~%]
+[% PROCESS map/map_common.html %]
 
 [%
-	image_width = 80 div zoom_level
-	image_height = 80 div zoom_level
-	sector_width = image_width;
-	sector_height = image_height;
 	height = sector_height * y_size + 2;
 	width =  sector_width * x_size + 2;
 %]
@@ -82,101 +26,10 @@ Prosperity: [% position.prosperity %]<br>
 		[% END %] 
 		
 		<span id="outer_sector_[% x %]_[% y %]" class="sector-outer">
-
-		[% FILTER collapse %]	
-		    [% IF click_to_move && ! party_in_combat %]
-		    	[% event = '' %]
-		    	[% IF ! position.next_to_centre %]
-		    		[% event = 'onClick="return false" style="cursor: default"' %]
-		    	[% END %]
-
-		    	<a id="sector_link_[% x %]_[% y %]" [% event %]
-		    
-				[% IF position.town_id %]
-					[% IF town_costs.${position.town_id}.gold && party.turns >= position.party_movement_factor %]
-						href="javascript:enterTown('[% position.land_id %]', '[% town_costs.${position.town_id}.gold %]','[% town_costs.${position.town_id}.turns %]')"
-					[% ELSE %]
-						href="javascript:getPanels('/town/enter?land_id=[% position.land_id %]')"
-					[% END %]
-				[% ELSE %]
-	       			href="javascript:move('[% position.land_id %]', '[% x %]', '[% y %]')" id="link_[% position.land_id %]"
-				[% END %]
-				>
-				
-	       	[% ELSIF ! click_to_move %]
-        		<a href="javascript:refreshMap([% x %],[% y %],[% zoom_level %])">
-	       	[% END %]    
+			[% INCLUDE map/sector_inner.html %]
+		</span>					
 
 
-					[% IF position %]
-						<span id="sector_[% x %]_[% y %]" style = "
-							width: [% sector_width %]px; 
-							height: [% sector_height %]px;
-							top: 0px;
-							left: 0px; 
-							position: absolute;							
-							">
-						<img 
-							src="[% c.config.static_path %][% image_path %][% gen_image(position) %]" 
-							border=0 
-							[% title = sector_title(position) | trim | collapse %]
-							[% IF title %]title="[% title %]"[% END %]
-							width="[% image_width %]"
-							height="[% image_height %]"							
-						>
-						</span>
-						
-			        	[% IF position.land_id == current_position.id %]
-							<img src="[% c.config.static_path %]/images/dungeon/herecircle.png" style="
-									position: absolute;
-									top: 0px;
-									left: 0px;												
-								" 
-								border = 0 
-								width="[% sector_width %]"
-								height="[% sector_height %]"
-								[% title = sector_title(position) %]
-								[%  IF title %]title="[% title %]"[% END %]
-								id="herecircle"
-								>
-			        	[% END %]						
-					
-						[% FOREACH road IN position.roads %]
-							[% IF road.position %]
-								<img src="[% c.config.static_path %][% image_path %]road/[% road.position | replace('\s+', '_') %].png" style="
-									position: absolute;
-									top: 0px;
-									left: 0px;							
-								"
-								border = 0
-								width="[% sector_width %]"
-								height="[% sector_height %]"
-								[% IF loop.last %]
-								    [% title = sector_title(position) %]
-									[% IF title %]title="[% title %]"[% END %]
-								[% END %]
-								>
-			
-							[% END %]
-						[% END %]
-
-					[% END %]
-					
-
-					
-					[% IF position.town_id %]
-						<div dojoType="dijit.Tooltip"
-		                   connectId="outer_sector_[% x %]_[% y %]"
-		                   label="[% town_tooltip(position) | collapse %]"
-		                   style="display: none">
-		                   </div>
-					[% END %]
-
-					</a>
-				
-			</span>					
-
-        [% END %]
 	[% END %]
 	</div>
 [% END %]

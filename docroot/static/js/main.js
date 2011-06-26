@@ -11,14 +11,16 @@ function shiftMapCallback(data) {
 	var yShift = data.yShift;
 
 	console.log("xShift: " + xShift + "; yShift: " + yShift);
+	
+	var sectorsAdded = {};
 
 	if (yShift == 1) {
 		removeFirstNonTextNode(dojo.byId('map-holder'));
-		addEmptyRow(data.xGridSize, 'append');
+		sectorsAdded.row = addEmptyRow(data.xGridSize, 'append');
 	}
 	if (yShift == -1) {
 		removeLastNonTextNode(dojo.byId('map-holder'));
-		addEmptyRow(data.xGridSize, 'prepend');
+		sectorsAdded.row = addEmptyRow(data.xGridSize, 'prepend');
 	}
 	if (xShift == 1) {
 		var rowsList = dojo.byId('map-holder').childNodes;
@@ -28,7 +30,7 @@ function shiftMapCallback(data) {
 				removeFirstNonTextNode(row);
 			}
 		}
-		addEmptyColumn(data.yGridSize, 'append');
+		sectorsAdded.column = addEmptyColumn(data.yGridSize, 'append');
 	}
 	if (xShift == -1) {
 		var rowsList = dojo.byId('map-holder').childNodes;
@@ -39,10 +41,12 @@ function shiftMapCallback(data) {
 				removeLastNonTextNode(row);
 			}
 		}
-		addEmptyColumn(data.yGridSize, 'prepend');
+		sectorsAdded.column = addEmptyColumn(data.yGridSize, 'prepend');
 	}
 	
 	moveLinks(data);
+	
+	loadNewSectors(sectorsAdded);
 }
 
 function removeFirstNonTextNode(parent) {
@@ -90,6 +94,8 @@ function addEmptyRow(rowSize, position) {
 	
 	var adjacentChildren = adjacentRow.childNodes;
 	
+	var sectorsAdded = [];
+	
 	for(i=0; i<rowSize; i++) {
 		var adjacentSector = adjacentChildren.item(i);
 		while (adjacentSector.nodeName == '#text') {
@@ -98,18 +104,27 @@ function addEmptyRow(rowSize, position) {
 		}
 		var coords = getSectorsCoords(adjacentSector);
 		
-		console.log(coords);
+		var newCoords = {		
+			x: coords.x,
+			y: coords.y+adjustment
+		};
 		
-		var newSpan = newSector(coords.x, coords.y+adjustment);
+		sectorsAdded.push(newCoords);
+				
+		var newSpan = newSector(newCoords.x, newCoords.y);
 		
 		newRow.appendChild(newSpan);
 	}
+	
+	return sectorsAdded;
 }
 
 function addEmptyColumn(colSize, position) {
 	var map = dojo.byId('map-holder');
 	
 	var rowsList = map.childNodes;
+	
+	var sectorsAdded = [];
 	
 	for (i=0; i<rowsList.length; i++) {
 		var row = rowsList.item(i);
@@ -118,7 +133,14 @@ function addEmptyColumn(colSize, position) {
 			var adjacentSector = getNonTextNode(row, (position=='prepend') ? 'firstChild' : 'lastChild');
 			var coords = getSectorsCoords(adjacentSector);			
 		
-			var newSpan = newSector(coords.x+((position=='prepend') ? -1 : 1), coords.y);
+			var newCoords = {		
+				x: coords.x+((position=='prepend') ? -1 : 1),
+				y: coords.y
+			};
+			
+			sectorsAdded.push(newCoords);
+		
+			var newSpan = newSector(newCoords.x, newCoords.y);
 			
 			if (position == 'prepend') {
 				row.insertBefore(newSpan, row.firstChild);
@@ -128,6 +150,8 @@ function addEmptyColumn(colSize, position) {
 			}
 		}
 	}
+	
+	return sectorsAdded;
 }
 
 function newSector(x, y) {
@@ -195,4 +219,36 @@ function getSectorsCoords(sector) {
 		x: parseInt(parts[2]),
 		y: parseInt(parts[3]),
 	}
+}
+
+function loadNewSectors(sectorsAdded) {
+	var qString = "";
+	for (var val in sectorsAdded) { 
+		for(var i=0; i<sectorsAdded[val].length; i++) {
+			qString += val + '=' + sectorsAdded[val][i].x + "," + sectorsAdded[val][i].y + "&" 
+		}
+	}
+	
+	console.log(qString);
+
+	dojo.xhrGet( {
+        url: urlBase + "map/load_sectors?" + qString,
+        handleAs: "json",
+        
+        load: function(responseObject, ioArgs){
+        console.log(responseObject.length);
+			for(var j=0; j<responseObject.length; j++) {
+				var coords = responseObject[j].sector.split(',');
+				var sector = dojo.byId('outer_sector_' + coords[0] + "_" + coords[1]);
+				
+				if (sector) {
+					sector.innerHTML = responseObject[j].data;
+				}
+			}
+		},
+
+	    timeout: 15000	
+    });
+
+		
 }

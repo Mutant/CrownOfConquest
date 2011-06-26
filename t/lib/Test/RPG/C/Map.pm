@@ -412,4 +412,23 @@ sub test_move_to_garrison_attacks : Tests(3) {
     
 }
 
+sub test_load_sectors : Tests() {
+    my $self = shift;   
+    
+    # GIVEN
+    $self->{params}{row} = ['1,1','1,2','1,3','1,4','1,5'];
+    
+    my $params;
+    $self->{mock_forward}{'generate_grid'} = sub { $params = $_[0] };
+
+    # WHEN
+    RPG::C::Map->load_sectors( $self->{c} );
+    
+    # THEN
+    is($params->[0], 1, "Correct x size");
+    is($params->[1], 5, "Correct y size");
+    is($params->[2], 1, "Correct base point x");
+    is($params->[3], 3, "Correct base point y");
+}
+
 1;

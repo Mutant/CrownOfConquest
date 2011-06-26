@@ -1,0 +1,60 @@
+[% MACRO sector_title(position) BLOCK %]
+	[% IF ! position.town_id %]
+		[% position.terrain_name | ucfirst %]
+		[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
+		([% position.x %], [% position.y %])
+		[% IF position.known_dungeon %]
+			- Level [% position.known_dungeon %] Dungeon Entrance
+		[% END %]
+	[% END %]
+[% END %]
+
+[% MACRO town_tooltip(position) BLOCK %]
+<b>[% position.town_name %]</b> ([% position.x %], [% position.y %])<br>
+[% IF position.kingdom_name %]Kingdom of [% position.kingdom_name %][% ELSE %]Free City[% END %]<br>
+Prosperity: [% position.prosperity %]<br>
+[% IF click_to_move %]Movement Cost: [% position.party_movement_factor %]<br>[% END %]
+[% IF town_costs.${position.town_id}.paid %]
+	Paid Tax Today
+[% ELSIF town_costs.${position.town_id}.mayor %]
+    Exempt From Tax
+[% ELSE %]
+	Tax: [% town_costs.${position.town_id}.gold %] gold / [% town_costs.${position.town_id}.turns %] turns
+[% END %] 
+[% END %]
+
+[% MACRO gen_image(position) BLOCK ~%]
+	[% IF position.buildings.0 ~%]
+		[%# Only handle 1 building per sector right now ~%]
+		[% building = position.buildings.0 ~%]
+		building/[% building.building_type.image %]
+	[% ELSIF position.known_dungeon ~%]
+		dungeonentrance.png
+	[% ELSIF position.town_id ~%]
+		[% number = 0 ~%]
+		[% IF position.prosperity <= 20 ~%]
+			[% number = 1 ~%]
+		[% ELSIF position.prosperity <= 40 ~%]
+			[% number = 2 ~%]
+		[% ELSIF position.prosperity <= 60 ~%]
+			[% number = 3 ~%]
+		[% ELSIF position.prosperity <= 80 ~%]
+			[% number = 4 ~%]
+		[% ELSIF position.prosperity <= 90 ~%]
+			[% number = 5 ~%]
+		[% ELSE ~%]
+			[% number = 6 ~%]
+		[% END ~%]
+		townpro[% number %].png
+	[% ELSE ~%]
+		[% image = position.terrain_name | replace(' ','_') ~%]
+		[% image %][% position.variation %].png
+	[% END ~%]
+[% END ~%]
+
+[%
+	image_width = 80 div zoom_level
+	image_height = 80 div zoom_level
+	sector_width = image_width;
+	sector_height = image_height;
+%]

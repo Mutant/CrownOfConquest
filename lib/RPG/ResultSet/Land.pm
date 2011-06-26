@@ -77,7 +77,7 @@ SELECT me.land_id, me.x, me.y, me.terrain_id, me.creature_threat, ( (x >= ? and 
 	
 	FROM Land me  
 	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id ) 
-	LEFT JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? ) 
+	JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? ) 
 	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
 	LEFT JOIN Kingdom kingdom ON ( me.kingdom_id = kingdom.kingdom_id )
 	WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )

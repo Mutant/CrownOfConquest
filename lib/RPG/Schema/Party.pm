@@ -230,6 +230,8 @@ __PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison',
 
 __PACKAGE__->has_many( 'messages', 'RPG::Schema::Party_Messages', 'party_id', );
 
+__PACKAGE__->has_many( 'mapped_sectors', 'RPG::Schema::Mapped_Sectors', 'party_id', );
+
 # Can't use this for turns..
 __PACKAGE__->numeric_columns(qw/gold/,
     rank_separator_position => {
@@ -286,6 +288,43 @@ sub movement_factor {
 sub after_land_move {
     my $self = shift;
     my $land = shift;
+    
+    # Record any sectors party can now see
+    my ($start, $end) = RPG::Map->surrounds_by_range(
+        $land->x, $land->y, RPG::Schema->config->{party_viewing_range},
+    );
+    
+    my $schema = $self->result_source->schema;
+    
+    my %mapped_sectors = map { $_->{location}{x} . ',' . $_->{location}{y} => 1} $schema->resultset('Mapped_Sectors')->find_in_range(
+        $self->id,
+        {
+            x => $land->x,
+            y => $land->y,
+        },
+        RPG::Schema->config->{party_viewing_range},
+    );
+        
+    for my $x ($start->{x} .. $end->{x}) {
+        for my $y ($start->{y} .. $end->{y}) {
+            if (! $mapped_sectors{"$x,$y"}) {
+                my $land = $schema->resultset('Land')->find(
+                    {
+                        x => $x,
+                        y => $y,
+                    }
+                );
+                
+                next unless $land;
+                
+	            $self->add_to_mapped_sectors(
+	                {
+	                    land_id  => $land->id,
+	                },
+	            );                
+            }
+        }   
+    }
 
     $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
 }

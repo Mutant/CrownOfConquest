@@ -18,6 +18,7 @@ use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Quest;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Land;
 
 use Data::Dumper;
 use DateTime;
@@ -575,6 +576,29 @@ sub test_get_least_encumbered_character : Tests(1) {
     
     # THEN
     is($character->id, $characters[1]->id, "Correct character returned");   
+}
+
+sub test_after_land_move : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3, land_id => $land[0]->id);
+    
+    $party->add_to_mapped_sectors(
+        {
+            land_id  => $land[0]->id,
+        },
+    );    
+    
+    # WHEN
+    $party->after_land_move($land[4]);
+    
+    # THEN
+    my @mapped_sectors = $party->mapped_sectors;
+    is(scalar @mapped_sectors, 9, "All sectors added to mapped sectors");
+    
+       
 }
 
 1;

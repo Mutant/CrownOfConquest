@@ -281,7 +281,7 @@ sub change_allegiance {
     my $location = $self->location;
     my $old_kingdom = $location->kingdom;
         
-    return if $new_kingdom->id == $old_kingdom->id;
+    return if $new_kingdom && $new_kingdom->id == $old_kingdom->id;
     
     $location->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
     $location->update;

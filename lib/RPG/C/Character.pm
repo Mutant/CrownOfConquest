@@ -248,7 +248,7 @@ sub split_item : Local {
 		}
 	);
 	
-	return if ! $item->variable('Quantity') || $item->variable('Quantity') <= $c->req->param('new_quantity');
+	return if $item->variable('Quantity') <= 0 || $item->variable('Quantity') <= $c->req->param('new_quantity') || $c->req->param('new_quantity') <= 0;
 	
 	my $new_item = $c->model('DBIC::Items')->create(
 	   {

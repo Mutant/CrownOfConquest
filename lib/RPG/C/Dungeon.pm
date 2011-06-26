@@ -716,6 +716,7 @@ sub sector_menu : Local {
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
     
     if ($c->session->{temp_dungeon_messages}) {
+        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages};
         $c->stash->{messages} //= [];
         push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
         undef $c->session->{temp_dungeon_messages};

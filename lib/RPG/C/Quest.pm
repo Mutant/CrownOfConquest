@@ -19,8 +19,14 @@ sub offer : Local {
             party_id => undef,
         },
     );
+    
+    my $party_below_min_level = $c->stash->{party}->level < $quest->min_level ? 1 :0;
+    
+    if ($party_below_min_level) {
+        push @{$c->stash->{panel_messages}}, "Your party's level isn't high enough to accept this quest!";   
+    }
 
-    $c->forward(
+    my $panel = $c->forward(
         'RPG::V::TT',
         [
             {
@@ -28,11 +34,18 @@ sub offer : Local {
                 params   => {
                     town  => $c->stash->{party_location}->town,
                     quest => $quest,
-                    party_below_min_level => $c->stash->{party}->level < $quest->min_level ? 1 : 0,
+                    party_below_min_level => $party_below_min_level,
                 },
+                return_output => 1,
             }
         ]
     );
+    
+    $c->stash->{message_panel_size} = 'large';
+    
+	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+	$c->forward('/panel/refresh');    
 }
 
 sub accept : Local {

@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <script>
 function acceptQuest(quest_id) {
 	dojo.xhrGet( {
@@ -18,23 +16,6 @@ function acceptQuest(quest_id) {
 }
 
 </script>
-
-[% IF party_below_min_level %]
-
-<div dojoType="dijit.Dialog" id="level-warning" style="display: none" title="Warning">
-    Your party's level isn't high enough to accept this quest!
-    <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-	</div>
-</div>
-
-<script>
-	function showWarning() { dijit.byId('level-warning').show() }
-	dojo.addOnLoad( showWarning );
-</script>
-
-[% END %]
 
 [% PROCESS quest/description.html %]
 
@@ -64,11 +45,9 @@ Days To Complete: [% quest.days_to_complete %]<br>
 [% UNLESS party_below_min_level %]
 <p>Do you want to accept this quest?</p>
 
-<div id="offer"><a href="javascript:acceptQuest('[% quest.id %]')">Yes</a> <a href="[% base %]">No</a></div>
+<div id="offer"><a href="javascript:acceptQuest('[% quest.id %]')">Yes</a> <a href="javascript:getPanels('town/back_to_main')">No</a></div>
 
-<div id="accepted" style="visibility: hidden">Quest Accepted! <a href="[% base %]">Back To Town</a></div>
+<div id="accepted" style="visibility: hidden">Quest Accepted! <a href="javascript:getPanels('town/back_to_main')">Back To Town</a></div>
 [% ELSE %]
-<br><a href="[% base %]">Back To Town</a>
+<br><a href="javascript:getPanels('town/back_to_main')">Back To Town</a>
 [% END %]
-
-[% INCLUDE bottom.html %]

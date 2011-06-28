@@ -24,15 +24,17 @@
 
 <div>
 [% FOREACH creature IN creature_group.members %]
-	<div style="height: 45px; margin: 0px; padding: 0px; clear: right">
+	<div style="height: 45px; margin: 0px; margin-bottom: 2px; padding: 0px; clear: right;">
+		<span style="border: 1px solid grey; float: left; height: 96%; margin-right: 1px">
 		[% IF creature.is_character %]
 			<img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png" 
     				title="[% creature.name %] ([% creature.race.race_name %] [% creature.class.class_name %])">
 		[% ELSE %]
-	    	<img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]" title="[% creature.name %]" style="float: left">
+	    	<img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]" title="[% creature.name %]">
 	    [% END %]
-	    
-		<div style="width: 3px; top: 5%; bottom: 10%; height: 85%; float: left; margin-right: 2px; position: relative"">	
+	    </span>
+	    	    
+		<div style="width: 3px; height: 100%; float: left; margin-right: 2px; position: relative"">	
 			[% INCLUDE combat/hp_bar.html being=creature %]
 		</div>
 

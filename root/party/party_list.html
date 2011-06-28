@@ -379,40 +379,42 @@ function createButton(menu, name, characterId) {
 	accept="character"
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]"
-	style="margin-bottom: 5px; height: 50px" 
+	style="margin-bottom: 5px; height: 50px; width: 90%;"
 >	
+	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
-	<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" title="[% char.race.race_name %] [% char.class.class_name %]"
-		style="float: left">
-	
-	<div style="width: 3px; top: 10%; bottom: 20%; height: 70%; float: left; margin-right: 2px; position: relative" 
-		title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
-		[% INCLUDE combat/hp_bar.html being=char %]
-	</div>
-
-	<div style="float: left">
-		<span style="padding-left: 6px">
-			<a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a>
+		<span style="height: 96%;float: left; border: 1px solid grey; margin-right: 1px">
+		<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" 
+			title="[% char.race.race_name %] [% char.class.class_name %]">
 		</span>
-		<br>
 		
-        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
-        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
-        
-        	[% IF in_combat && ! char.is_dead %]    	
-    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
-    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
-    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
-    		</span>
-    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
-    		[% END %]
-    	
-    		<span id="castSpan_[% char.id %]"></span>
-    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
-    	
-    		<span id="useSpan_[% char.id %]"></span>
-    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
-    </div>
+		<div style="width: 3px; height: 100%; float: left; margin-right: 2px; position: relative" 
+			title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
+			[% INCLUDE combat/hp_bar.html being=char %]
+		</div>
+	
+		<div style="float: left">
+			<span style="padding-left: 6px"><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></span>
+			<br>
+			
+	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
+	        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
+	        
+	        	[% IF in_combat && ! char.is_dead %]    	
+	    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
+	    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
+	    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
+	    		</span>
+	    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
+	    		[% END %]
+	    	
+	    		<span id="castSpan_[% char.id %]"></span>
+	    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
+	    	
+	    		<span id="useSpan_[% char.id %]"></span>
+	    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
+	    </div>
+	</div>
 
 	<br style="clear: right"/>
     [% IF party.rank_separator_position == char.party_order %]

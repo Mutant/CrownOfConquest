@@ -366,3 +366,29 @@ div.enlargedTitle {
 .stat-label {
 	font-weight: bold;
 }
+
+/* Tooltip */
+
+.tundra .dijitTooltipContainer
+{
+	background: black;
+	color: #EECAA2;
+	padding:3px;
+	margin:0;
+	border:none;
+	height:auto;
+	width:auto;
+	opacity: 0.9;	
+	font-family: verdana, kalimati, helvetica;
+        -moz-border-radius: 10px;
+        -webkit-border-radius: 10px;
+        -khtml-border-radius: 10px;
+        border-radius: 10px;
+}
+
+
+.tundra .dijitTooltipAbove .dijitTooltipConnector { display:none; }
+.tundra .dijitTooltipLeft .dijitTooltipConnector { display:none; }
+.tundra .dijitTooltipBelow .dijitTooltipConnector { display:none; }
+.tundra .dijitTooltipRight .dijitTooltipConnector { display:none; }
+

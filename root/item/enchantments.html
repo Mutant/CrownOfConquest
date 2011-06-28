@@ -1,7 +1,9 @@
 [% enchantments = item.item_enchantments %]
 [% IF enchantments %]
     <br><i>Enchantments</i>
+    <ul style="padding: 0; margin: 0">
 	[% FOREACH enchantment IN enchantments %]	
-		<li>[% enchantment.tooltip %]</li>		
+		<li style="margin: 0; margin-left: 15px; padding: 0;">[% enchantment.tooltip %]</li>		
 	[% END %]
+	</ul>
 [% END %]

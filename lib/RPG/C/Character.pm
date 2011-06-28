@@ -96,8 +96,6 @@ sub stats : Local {
 	my ( $self, $c ) = @_;
 
 	my $character = $c->stash->{character};
-	
-	my $next_level = $c->model('DBIC::Levels')->find( { level_number => $character->level + 1, } );
 
 	$c->forward(
 		'RPG::V::TT',
@@ -106,7 +104,6 @@ sub stats : Local {
 				template => 'character/stats.html',
 				params   => {
 					character => $character,
-					xp_for_next_level   => $next_level ? $next_level->xp_needed : '????',
 				}
 			}
 		]

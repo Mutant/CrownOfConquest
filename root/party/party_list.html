@@ -395,6 +395,13 @@ function createButton(menu, name, characterId) {
 	
 		<div style="float: left">
 			<span style="padding-left: 6px"><a href="[% base %]/character/view?character_id=[% char.character_id %]">[% char.character_name %]</a></span>
+			<a href="[% base %]/character/view?character_id=[% char.character_id %]" id="char_info_[% char.id %]">(i)</a>
+			<div dojoType="dijit.Tooltip"
+	           connectId="char_info_[% char.id %]"           
+	           style="display: none">
+					[% INCLUDE character/list_details.html character=char %]   	
+	           </div>			
+			[% INCLUDE party/party_char_alerts.html %]
 			<br>
 			
 	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>

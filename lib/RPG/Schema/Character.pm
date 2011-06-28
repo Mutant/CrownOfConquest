@@ -1004,6 +1004,14 @@ sub xp {
     }
 }
 
+sub xp_for_next_level {
+    my $self = shift;
+    
+    my $next_level = $self->result_source->schema->resultset('Levels')->find( { level_number => $self->level + 1, } );
+    
+    return $next_level ? $next_level->xp_needed : '????';
+}
+
 sub resurrect_cost {
     my $self = shift;
 

@@ -78,9 +78,9 @@
 	
 	[% IF position.town_id %]
 		<div dojoType="dijit.Tooltip"
-           connectId="outer_sector_[% x %]_[% y %]"
-           label="[% town_tooltip(position) | collapse %]"
+           connectId="outer_sector_[% x %]_[% y %]"           
            style="display: none">
+				[% town_tooltip(position) | collapse %]        	
            </div>
 	[% END %]
 

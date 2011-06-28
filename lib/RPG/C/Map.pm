@@ -229,6 +229,7 @@ sub generate_grid : Private {
     $c->stats->profile("Queried db for buildings");
 
     my @grid;
+    my %town_costs;
 
     my $movement_factor = $c->stash->{party}->movement_factor;
 
@@ -244,6 +245,13 @@ sub generate_grid : Private {
         else {
             $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
         }
+
+        # Find any towns and calculate their tax costs        
+        if ( $location->{town_id} ) {
+            my $town = $c->model('DBIC::Town')->find( { town_id => $location->{town_id} } );
+
+            $town_costs{ $location->{town_id} } = $town->tax_cost( $c->stash->{party} );
+        }        
     }
 
     $c->stats->profile("Built grid");
@@ -252,6 +260,7 @@ sub generate_grid : Private {
         grid        => \@grid,
         start_point => $start_point,
         end_point   => $end_point,
+        town_costs => \%town_costs,
     };
 }
 
@@ -273,21 +282,6 @@ sub render_grid : Private {
     $params->{min_y}            = $params->{start_point}{y};
     $params->{zoom_level} ||= 2;
     $params->{party} = $c->stash->{party};
-
-    # Find any towns and calculate their tax costs
-    my %town_costs;
-    foreach my $row ( @{ $params->{grid} } ) {
-        foreach my $sector (@$row) {
-            next unless $sector;
-            if ( $sector->{town_id} ) {
-                my $town = $c->model('DBIC::Town')->find( { town_id => $sector->{town_id} } );
-
-                $town_costs{ $sector->{town_id} } = $town->tax_cost( $c->stash->{party} );
-            }
-        }
-    }
-
-    $params->{town_costs} = \%town_costs;
 
     return $c->forward(
         'RPG::V::TT',
@@ -321,9 +315,10 @@ sub move_to : Local {
     }
     elsif ($c->stash->{entered_town} || $c->forward('can_move_to_sector', [$new_land])) {   	
         $c->stash->{party}->move_to($new_land);
-
         $c->stash->{party}->update;
+        $c->stats->profile("Moved party");
         
+       
         my $old_sector = $c->stash->{party_location};
 
         # Fetch from the DB, since it may have changed recently
@@ -331,6 +326,8 @@ sub move_to : Local {
 
         $c->stash->{party_location}->creature_threat( $c->stash->{party_location}->creature_threat - 1 );
         $c->stash->{party_location}->update;
+
+        $c->stats->profile("Update party_location");
 
         my $mapped_sector = $c->model('DBIC::Mapped_Sectors')->find_or_create(
             {
@@ -364,7 +361,7 @@ sub move_to : Local {
         
         $c->stash->{mapped_sector} = $mapped_sector;
 
-        $c->stats->profile("Moved party");
+        $c->stats->profile("Checked for dungeons");
 
 		my $already_messaged_garrison = -1;
         if (my $garrison = $new_land->garrison) {
@@ -432,11 +429,13 @@ sub move_to : Local {
             	},
         	}
         ];
+        
+        $c->stats->profile("Created callback");
     }
     
-    #$c->log->debug("ploc x: " . $c->stash->{party_location}->x . ", ploc y: " . $c->stash->{party_location}->y);
-    
     $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'creatures' ] );
+    
+    $c->stats->profile("Done");
 }
 
 sub load_sectors : Local {
@@ -481,23 +480,27 @@ sub load_sectors : Local {
         my $y_size = $max_y - $min_y + 1;
 
         my $grid_params = $c->forward( 'generate_grid', [ $x_size, $y_size, $base_x, $base_y, ], );
-        
+       
         # Generate the contents of the sector
         for my $x ( $grid_params->{start_point}{x} .. $grid_params->{end_point}{x} ) {
             for my $y ($grid_params->{start_point}{y} .. $grid_params->{end_point}{y} ) {
-                
+                                
+                my $location = $grid_params->{grid}[$x][$y];
+                                
                 my $data = $c->forward(
                     'RPG::V::TT',
                     [
                         {
                             template      => 'map/single_sector.html',
                             params        => {
-                                position => $grid_params->{grid}[$x][$y],
+                                position => $location,
                                 click_to_move => 1,
                                 x => $x,
                                 y => $y,
                                 zoom_level => $c->session->{zoom_level},
                                 image_path => RPG->config->{map_image_path},
+                                town_costs => $grid_params->{town_costs},
+                                party => $c->stash->{party},
                             },
                             return_output => 1,
                         }
@@ -507,6 +510,7 @@ sub load_sectors : Local {
                 push @results, {
                     sector => "$x,$y",
                     data => $data,
+                    parse => $location->{town_id} ? 1 : 0,
                 };
             }
         }

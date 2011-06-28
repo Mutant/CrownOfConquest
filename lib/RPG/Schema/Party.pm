@@ -302,9 +302,9 @@ sub after_land_move {
             x => $land->x,
             y => $land->y,
         },
-        RPG::Schema->config->{party_viewing_range},
+        RPG::Schema->config->{party_viewing_range} * 2 + 1,
     );
-        
+            
     for my $x ($start->{x} .. $end->{x}) {
         for my $y ($start->{y} .. $end->{y}) {
             if (! $mapped_sectors{"$x,$y"}) {

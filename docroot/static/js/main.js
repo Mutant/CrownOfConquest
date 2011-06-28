@@ -1,11 +1,3 @@
-function move(locId,x,y) {
-	getPanels('/map/move_to?land_id=' + locId);
-	
-	var newSector = dojo.byId('sector_' + x + '_' + y); 
-	
-	newSector.appendChild(dojo.byId('herecircle'));
-}
-
 function shiftMapCallback(data) {
 	var xShift = data.xShift;
 	var yShift = data.yShift;
@@ -45,6 +37,10 @@ function shiftMapCallback(data) {
 	}
 	
 	moveLinks(data);
+	
+	var newSector = dojo.byId('sector_' + data.newSector.x + '_' + data.newSector.y); 
+	
+	newSector.appendChild(dojo.byId('herecircle'));	
 	
 	loadNewSectors(sectorsAdded);
 }
@@ -229,8 +225,6 @@ function loadNewSectors(sectorsAdded) {
 		}
 	}
 	
-	console.log(qString);
-
 	dojo.xhrGet( {
         url: urlBase + "map/load_sectors?" + qString,
         handleAs: "json",
@@ -243,6 +237,9 @@ function loadNewSectors(sectorsAdded) {
 				
 				if (sector) {
 					sector.innerHTML = responseObject[j].data;
+					if (responseObject[j].parse) {
+						dojo.parser.parse(sector);					
+					}
 				}
 			}
 		},

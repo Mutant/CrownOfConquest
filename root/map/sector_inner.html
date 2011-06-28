@@ -14,7 +14,7 @@
 				href="javascript:getPanels('/town/enter?land_id=[% position.land_id %]')"
 			[% END %]
 		[% ELSE %]
-   			href="javascript:move('[% position.land_id %]', '[% x %]', '[% y %]')" id="link_[% position.land_id %]"
+   			href="javascript:getPanels('/map/move_to?land_id=[% position.land_id %]');"
 		[% END %]
 		>
 		

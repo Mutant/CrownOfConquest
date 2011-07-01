@@ -52,6 +52,14 @@ sub find_in_range {
    }
 
     while ( !@rows_in_range ) {
+        my ($x_range, $y_range);
+        if (! ref $search_range) {
+            ($x_range, $y_range) = ($search_range, $search_range);   
+        }
+        else {
+            ($x_range, $y_range) = ($search_range->{x}, $search_range->{y});
+        }
+        
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $base_point->{x}, $base_point->{y}, $search_range, $search_range, );
 
         my %exclude_criteria;

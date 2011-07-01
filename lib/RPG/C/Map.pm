@@ -196,13 +196,16 @@ sub generate_grid : Private {
     );
 
     $c->stats->profile("Queried db for sectors");
-      
+
     my @roads = $c->model('DBIC::Road')->find_in_range(
         {
             x => $x_centre,
             y => $y_centre,
         },
-        $x_size,
+        {
+            x => $x_size,
+            y => $y_size,
+        },
     );    
     
     my $road_grid;
@@ -218,7 +221,10 @@ sub generate_grid : Private {
             x => $x_centre,
             y => $y_centre,
         },
-        $x_size,
+        {
+            x => $x_size,
+            y => $y_size,
+        },
     );    
     
     my $building_grid;

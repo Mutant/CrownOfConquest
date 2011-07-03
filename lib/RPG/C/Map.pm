@@ -14,6 +14,17 @@ use RPG::Map;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
+sub auto : Private {
+   my ( $self, $c ) = @_;
+   
+   unless ($c->session->{map_dimensions}) {
+        my %dimensions = $c->model('DBIC::Land')->get_x_y_range;
+        $c->session->{map_dimensions} = \%dimensions;
+   }
+   
+   return 1; 
+}
+
 sub view : Private {
     my ( $self, $c ) = @_;
 
@@ -440,6 +451,7 @@ sub move_to : Local {
             	    },
             	    'xGridSize' => $x_grid_size,
             	    'yGridSize' => $y_grid_size,
+            	    'mapDimensions' => $c->session->{map_dimensions},
             	},
         	}
         ];
@@ -464,7 +476,6 @@ sub load_sectors : Local {
     
     if ($c->session->{discovered}) {
         foreach my $discovered_sectors ( @{ $c->session->{discovered} } ) {
-            warn Dumper $discovered_sectors;
             my @disc_lines = RPG::Map->compile_rows_and_columns(@$discovered_sectors);
             push @lines, @disc_lines;            
         }        

@@ -1,8 +1,10 @@
+var mapDimensions;
 function shiftMapCallback(data) {
 	var xShift = data.xShift;
 	var yShift = data.yShift;
+	mapDimensions = data.mapDimensions;
 
-	console.log("xShift: " + xShift + "; yShift: " + yShift);
+	//console.log("xShift: " + xShift + "; yShift: " + yShift);
 	
 	var sectorsAdded = {};
 
@@ -100,13 +102,15 @@ function addEmptyRow(rowSize, position) {
 		}
 		var coords = getSectorsCoords(adjacentSector);
 		
+		var new_y = coords.y+adjustment;
+				
 		var newCoords = {		
 			x: coords.x,
-			y: coords.y+adjustment
+			y: new_y
 		};
 		
 		sectorsAdded.push(newCoords);
-				
+			
 		var newSpan = newSector(newCoords.x, newCoords.y);
 		
 		newRow.appendChild(newSpan);
@@ -128,9 +132,11 @@ function addEmptyColumn(colSize, position) {
 		if (row.nodeName != '#text') {
 			var adjacentSector = getNonTextNode(row, (position=='prepend') ? 'firstChild' : 'lastChild');
 			var coords = getSectorsCoords(adjacentSector);			
-		
+			
+			var new_x = coords.x+((position=='prepend') ? -1 : 1);
+
 			var newCoords = {		
-				x: coords.x+((position=='prepend') ? -1 : 1),
+				x: new_x,
 				y: coords.y
 			};
 			
@@ -174,7 +180,10 @@ function moveLinks(data) {
 		for(var y=startY; y <= endY; y++) {
 			//console.log("Updating link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
-			enableLink(link);
+			
+			if (link) {
+				enableLink(link);
+			}
 		}	
 	}
 	
@@ -185,7 +194,10 @@ function moveLinks(data) {
 		for(var y=startY; y <= endY; y++) {
 			//console.log("Disabling link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
-			disableLink(link);
+			
+			if (link) {
+				disableLink(link);
+			}
 		}
 	}
 	if (data.yShift != 0) {
@@ -193,7 +205,10 @@ function moveLinks(data) {
 		for(var x=startX; x <= endX; x++) {
 			//console.log("Disabling link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
-			disableLink(link);
+			
+			if (link) {
+				disableLink(link);
+			}
 		}
 	}
 }
@@ -221,10 +236,15 @@ function loadNewSectors(sectorsAdded) {
 	var qString = "";
 	for (var val in sectorsAdded) { 
 		for(var i=0; i<sectorsAdded[val].length; i++) {
-			qString += val + '=' + sectorsAdded[val][i].x + "," + sectorsAdded[val][i].y + "&" 
+			//console.log(sectorsAdded[val][i].x + 
+			if (sectorsAdded[val][i].x >= mapDimensions.min_x && sectorsAdded[val][i].x <= mapDimensions.max_x &&
+			    sectorsAdded[val][i].y >= mapDimensions.min_y && sectorsAdded[val][i].y <= mapDimensions.max_y) {
+		
+				qString += val + '=' + sectorsAdded[val][i].x + "," + sectorsAdded[val][i].y + "&"
+			} 
 		}
 	}
-	
+
 	dojo.xhrGet( {
         url: urlBase + "map/load_sectors?" + qString,
         handleAs: "json",

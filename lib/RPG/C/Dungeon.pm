@@ -569,8 +569,8 @@ sub build_updated_sectors_data : Private {
 sub calculate_scroll_to : Private {
 	my ($self, $c, $location, $from) = @_;
 	
-	my $x_modifier = 4;
-	my $y_modifier = 4;
+	my $x_modifier = 10;
+	my $y_modifier = 7;
 	my $boundaries = $c->session->{mapped_dungeon_boundaries};
 	
 	if ($from) {

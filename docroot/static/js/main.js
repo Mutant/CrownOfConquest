@@ -230,18 +230,25 @@ function loadNewSectors(sectorsAdded) {
         handleAs: "json",
         
         load: function(responseObject, ioArgs){
-        console.log(responseObject.length);
-			for(var j=0; j<responseObject.length; j++) {
-				var coords = responseObject[j].sector.split(',');
+        	var herecircle = dojo.byId('herecircle');
+        
+        	var data = responseObject.sector_data;
+
+			for(var j=0; j<data.length; j++) {
+				var coords = data[j].sector.split(',');
 				var sector = dojo.byId('outer_sector_' + coords[0] + "_" + coords[1]);
 				
 				if (sector) {
-					sector.innerHTML = responseObject[j].data;
-					if (responseObject[j].parse) {
+					sector.innerHTML = data[j].data;
+					if (data[j].parse) {
 						dojo.parser.parse(sector);					
 					}
 				}
 			}
+			
+			var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y); 
+	
+			newSector.appendChild(herecircle);				
 		},
 
 	    timeout: 15000	

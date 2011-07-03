@@ -363,9 +363,12 @@ sub move_to : Local {
         		# They in a sector with a dungeon - add it to known dungeons if they're high enough level
         		my $dungeon = $mapped_sector->location->dungeon;
         		
-        		if ($dungeon->party_can_enter($c->stash->{party})) {
+        		if ($mapped_sector->known_dungeon != $dungeon->level && $dungeon->party_can_enter($c->stash->{party})) {
         			$mapped_sector->known_dungeon( $dungeon->level );
         			$mapped_sector->update;
+        			
+        			# Force sector to reload (so dungeon image gets displayed)
+        			push @{ $c->session->{discovered} }, [$new_land->x.','.$new_land->y];
         		}
         	}
         }
@@ -461,11 +464,12 @@ sub load_sectors : Local {
     
     if ($c->session->{discovered}) {
         foreach my $discovered_sectors ( @{ $c->session->{discovered} } ) {
+            warn Dumper $discovered_sectors;
             my @disc_lines = RPG::Map->compile_rows_and_columns(@$discovered_sectors);
             push @lines, @disc_lines;            
-        }
-        undef $c->session->{discovered};
+        }        
     }
+    $c->session->{discovered} = undef;
     
     foreach my $line (@lines) {       
         # We have a list of sectors that have been added to the map
@@ -481,6 +485,8 @@ sub load_sectors : Local {
             
             $x1 <=> $x2 || $y1 <=> $y2;
         } @$line;
+        
+        #warn Dumper \@sectors;
                         
         my ($min_x, $min_y, $max_x, $max_y);
         
@@ -549,7 +555,15 @@ sub load_sectors : Local {
         
     }
     
-    $c->res->body(to_json(\@results));
+    my %res = (
+        loc => {
+            x => $c->stash->{party_location}->x,
+            y => $c->stash->{party_location}->y,
+        },
+        sector_data => \@results,
+    );
+    
+    $c->res->body(to_json(\%res));
 }
 
 #  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range

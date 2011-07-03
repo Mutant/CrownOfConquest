@@ -194,4 +194,24 @@ sub test_get_direction_to_point : Tests {
     }
 }
 
+sub test_compile_rows_and_columns : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    no warnings 'qw';
+    my @sectors = qw/5,1 6,1 7,1 7,2 7,3/;
+    
+    # WHEN
+    my @results = RPG::Map->compile_rows_and_columns(@sectors);
+    
+    # THEN
+    is(scalar @results, 2, "1 col and 1 row returned");
+    
+    my $expected_row = [qw/5,1 6,1/];
+    is_deeply($results[1], $expected_row, "Row is correct");
+
+    my $expected_col = [qw/7,1 7,2 7,3/];
+    is_deeply($results[0], $expected_col, "Col is correct");
+}
+
 1;

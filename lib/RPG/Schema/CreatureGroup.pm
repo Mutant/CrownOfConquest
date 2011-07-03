@@ -48,10 +48,6 @@ sub group_type {
 	return 'creature_group';
 }
 
-sub after_land_move {
-
-}
-
 sub current_location {
 	my $self = shift;
 

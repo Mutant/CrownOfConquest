@@ -5,7 +5,7 @@ use Moose::Role;
 use Carp;
 use Text::Autoformat;
 
-requires qw/members number_alive after_land_move group_type current_location is_online/;
+requires qw/members number_alive group_type current_location is_online/;
 
 sub move_to {
     my $self   = shift;
@@ -15,7 +15,6 @@ sub move_to {
 
     if ( $sector->isa('RPG::Schema::Land') ) {
         $self->land_id( $sector->id );
-        $self->after_land_move($sector);
     }
     elsif ( $sector->isa('RPG::Schema::Dungeon_Grid') ) {
         $self->dungeon_grid_id( $sector->id );

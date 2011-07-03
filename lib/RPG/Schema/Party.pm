@@ -285,7 +285,26 @@ sub movement_factor {
     return round ($base_mf / scalar @characters);
 }
 
-sub after_land_move {
+around 'move_to' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $land = shift;
+    
+    return unless $land;
+    
+    $self->$orig($land);
+    
+    return unless ( $land->isa('RPG::Schema::Land') );
+    
+    # Extra stuff for land move
+    my @discovered = $self->discover_sectors($land);
+
+    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
+    
+    return @discovered;
+};
+
+sub discover_sectors {
     my $self = shift;
     my $land = shift;
     
@@ -304,10 +323,12 @@ sub after_land_move {
         },
         RPG::Schema->config->{party_viewing_range} * 2 + 1,
     );
-            
+
+    my @discovered;
     for my $x ($start->{x} .. $end->{x}) {
         for my $y ($start->{y} .. $end->{y}) {
-            if (! $mapped_sectors{"$x,$y"}) {
+            my $sector = "$x,$y";
+            if (! $mapped_sectors{$sector}) {
                 my $land = $schema->resultset('Land')->find(
                     {
                         x => $x,
@@ -321,12 +342,13 @@ sub after_land_move {
 	                {
 	                    land_id  => $land->id,
 	                },
-	            );                
+	            );
+	            push @discovered, $sector;
             }
         }   
-    }
-
-    $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
+    }   
+    
+    return @discovered;
 }
 
 sub current_location {

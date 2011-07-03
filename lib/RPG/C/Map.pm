@@ -19,6 +19,8 @@ sub view : Private {
 
     my $party_location = $c->stash->{party_location};
     
+    $c->stash->{party}->discover_sectors($party_location);
+    
     $c->session->{zoom_level} ||= 2;
     my $zoom_level = $c->session->{zoom_level};
     
@@ -180,9 +182,11 @@ sub known_dungeons : Local {
 
 sub generate_grid : Private {
     my ( $self, $c, $x_size, $y_size, $x_centre, $y_centre ) = @_;
+    
+    $c->log->debug("In generate_grid");
 
     my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1 );
-
+    
     $c->stats->profile("Got start and end point");
 
     my $locations = $c->model('DBIC::Land')->get_party_grid(
@@ -194,7 +198,7 @@ sub generate_grid : Private {
         },
         party_id => $c->stash->{party}->id,
     );
-
+    
     $c->stats->profile("Queried db for sectors");
 
     my @roads = $c->model('DBIC::Road')->find_in_range(
@@ -320,8 +324,9 @@ sub move_to : Local {
         croak 'Invalid town entrance';
     }
     elsif ($c->stash->{entered_town} || $c->forward('can_move_to_sector', [$new_land])) {   	
-        $c->stash->{party}->move_to($new_land);
+        my @discovered = $c->stash->{party}->move_to($new_land);
         $c->stash->{party}->update;
+        push @{ $c->session->{discovered} }, \@discovered;
         $c->stats->profile("Moved party");
         
        
@@ -449,18 +454,34 @@ sub load_sectors : Local {
     
     my @results;
     
+    my @lines;
     for my $type (qw/row column/) {
-        next unless $c->req->param($type);
-        
+        push @lines, [$c->req->param($type)] if $c->req->param($type);
+    }            
+    
+    if ($c->session->{discovered}) {
+        foreach my $discovered_sectors ( @{ $c->session->{discovered} } ) {
+            my @disc_lines = RPG::Map->compile_rows_and_columns(@$discovered_sectors);
+            push @lines, @disc_lines;            
+        }
+        undef $c->session->{discovered};
+    }
+    
+    foreach my $line (@lines) {       
         # We have a list of sectors that have been added to the map
         #  (as strings, separated by a comma, i.e. "x,y"). We need to 
         #  turn these into something that can be used by generate_grid
         #  (which expects an x & y size and a base point).
         # (Would be easier if generate grid accepted params in a different way, but that would
         #  involve a lot of refactoring)
-        
-        my @sectors = sort $c->req->param($type);
-                
+       
+        my @sectors = sort { 
+            my ($x1, $y1) = split /,/, $a;
+            my ($x2, $y2) = split /,/, $b;
+            
+            $x1 <=> $x2 || $y1 <=> $y2;
+        } @$line;
+                        
         my ($min_x, $min_y, $max_x, $max_y);
         
         foreach my $sector (@sectors) {
@@ -480,11 +501,14 @@ sub load_sectors : Local {
         }
         
         my $mid_point = round(scalar @sectors / 2);
+
         my ($base_x, $base_y) = split /,/, $sectors[$mid_point-1];
         
         my $x_size = $max_x - $min_x + 1;
         my $y_size = $max_y - $min_y + 1;
-
+        $x_size++ if $x_size % 2 == 0;
+        $y_size++ if $y_size % 2 == 0;
+        
         my $grid_params = $c->forward( 'generate_grid', [ $x_size, $y_size, $base_x, $base_y, ], );
        
         # Generate the contents of the sector
@@ -492,6 +516,8 @@ sub load_sectors : Local {
             for my $y ($grid_params->{start_point}{y} .. $grid_params->{end_point}{y} ) {
                                 
                 my $location = $grid_params->{grid}[$x][$y];
+                
+                next unless $location;
                                 
                 my $data = $c->forward(
                     'RPG::V::TT',

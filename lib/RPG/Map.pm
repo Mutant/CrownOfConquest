@@ -258,4 +258,47 @@ sub find_direction_to_adjacent_sector {
     
 }
 
+# Given a list of coords (as x,y strings), compile them into rows and columns, and 
+#  return an array of arrays with the row/col lists
+# Any sectors on a 'corner' (i.e. in both a row and column) will only be returned once
+sub compile_rows_and_columns {
+    my $package = shift;
+    my @sectors = @_;
+    
+    my $sorted;
+    
+    foreach my $sector ( sort @sectors ) {
+        my ($x,$y) = split ',',$sector;
+        
+        push @{$sorted->{x}{$x}}, $sector;
+        push @{$sorted->{y}{$y}}, $sector;
+    }
+    
+    my %used;
+    my @compiled;
+    for my $axis (qw/x y/) {        
+        foreach my $line (keys %{$sorted->{$axis}}) {
+            
+            my @line_contents = @{$sorted->{$axis}{$line}};
+            
+            if (scalar @line_contents > 1) {
+                @line_contents = grep { ! $used{$_} } @line_contents;
+                
+                push @compiled, \@line_contents;
+                
+                foreach my $sector (@line_contents) {
+                    $used{$sector} = 1;   
+                }
+            }   
+        }
+    }
+    
+    # Any sectors not used go in their own line
+    foreach my $sector (@sectors) {
+        push @compiled, [$sector] unless $used{$sector};   
+    }
+    
+    return @compiled;
+} 
+
 1;

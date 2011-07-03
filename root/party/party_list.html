@@ -394,10 +394,9 @@ function createButton(menu, name, characterId) {
 		</div>
 	
 		<div style="float: left">
-			<span style="padding-left: 6px; font-size: 8pt"><a href="[% base %]/character/view?character_id=[% char.character_id %]">
+			<span id="char_info_[% char.id %]" style="padding-left: 6px; font-size: 8pt"><a href="[% base %]/character/view?character_id=[% char.character_id %]">
 				[% char.character_name | truncate(18) %]
 			</a></span>
-			<a href="[% base %]/character/view?character_id=[% char.character_id %]" id="char_info_[% char.id %]">(i)</a>
 			<div dojoType="dijit.Tooltip"
 	           connectId="char_info_[% char.id %]"           
 	           style="display: none">

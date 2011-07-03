@@ -323,7 +323,7 @@ Move the party to a new location
 =cut
 
 sub move_to : Local {
-    my ( $self, $c ) = @_;
+    my ( $self, $c, $params ) = @_;
 
     my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => [ 'terrain', 'town' ] }, );
 
@@ -379,7 +379,7 @@ sub move_to : Local {
         			$mapped_sector->update;
         			
         			# Force sector to reload (so dungeon image gets displayed)
-        			push @{ $c->session->{discovered} }, [$new_land->x.','.$new_land->y];
+        			$params->{refresh_current} = 1;
         		}
         	}
         }
@@ -455,6 +455,8 @@ sub move_to : Local {
             	},
         	}
         ];
+        
+        push @{ $c->session->{discovered} }, [$new_land->x.','.$new_land->y] if $params->{refresh_current};
         
         $c->stats->profile("Created callback");
     }

@@ -512,7 +512,7 @@ sub enter : Local {
 
 	$c->stash->{entered_town} = 1;
 
-	$c->forward('/map/move_to');
+	$c->forward('/map/move_to', [{'refresh_current' => 1}]);
 }
 
 sub raid : Local {

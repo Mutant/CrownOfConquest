@@ -127,10 +127,11 @@ function setMessagePanelSize(size) {
 		      left: 80,
 		      bottom: 80,
 		      top: 80,
-		      right: 80
+		      right: 80,
 		  }
 		}).play();
 	
+		dojo.byId('messages-pane').style.width = "80%";
 	
 		dojo.byId('messages-pane').style.opacity = "0.9";
 		dojo.byId('messages-pane').style.overflow = 'auto';
@@ -143,6 +144,7 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.bottom = '20px';
 		dojo.byId('messages-pane').style.left = '20px';
 		dojo.byId('messages-pane').style.opacity = "0.8";
+		dojo.byId('messages-pane').style.width = "auto";
 		current_size = 'small';		
 	}
 	
@@ -502,7 +504,7 @@ function unblockDoor(action) {
 			z-index: 400"></div>
 	</div>		
 
-	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; padding-left: 10px" class="content-background"></div>
+	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; height: 400px; padding-left: 10px; float: right" class="content-background"></div>
 </div>
 
 

@@ -384,6 +384,10 @@ div.enlargedTitle {
         -webkit-border-radius: 10px;
         -khtml-border-radius: 10px;
         border-radius: 10px;
+	-moz-box-shadow: 0px;
+	-webkit-box-shadow: 0px;
+        box-shadow: 0px;
+
 }
 
 

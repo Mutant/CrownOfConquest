@@ -95,6 +95,7 @@ sub auto : Private {
             && $c->action ne 'party/select_action'
             && $c->action ne 'default'
             && $c->action ne 'player/logout'
+            && $c->action ne 'map/load_sectors'
             && $c->action ne 'party/zoom_change' )
         {
             $c->debug('Forwarding to /party/main since party is in combat');

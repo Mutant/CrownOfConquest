@@ -10,6 +10,8 @@ use List::Util qw(shuffle);
 sub default : Path {
     my ($self, $c) = @_;
     
+    $c->stash->{message_panel_size} = 'large';
+    
     my %params;
     if (! $c->session->{player}->admin_user) {
         $params{activated} = 1;   
@@ -64,14 +66,19 @@ sub default : Path {
         push @player_reward_links, $link;
     }
    
-	$c->forward( 'RPG::V::TT', [ 
+	my $panel = $c->forward( 'RPG::V::TT', [ 
 		{ 
 			template => 'party/reward_links.html',
 			params => {
 				player_reward_links => \@player_reward_links,
-			} 
+			},
+			return_output => 1,
 		} 
 	] );
+	
+	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+	$c->forward('/panel/refresh');	
 }
 
 1;

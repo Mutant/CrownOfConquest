@@ -1,4 +1,4 @@
-[% INCLUDE top.html %]
+[% INCLUDE top.html, called_from_panel = 1 %]
 
 <script>
 dojo.require('dijit.layout.BorderContainer');
@@ -122,7 +122,7 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.overflow = 'hidden';
 		dojo.animateProperty({
 		  node:"messages-pane",
-		  duration: 700,		  
+		  duration: 400,		  
 		  properties: {
 		      left: 80,
 		      bottom: 80,
@@ -239,6 +239,7 @@ var panel_init = [% panels %];
 
 function init() {
 	refreshPanels(panel_init);
+	dojo.byId('map-outer').style.display = 'block';
 	
 	var scrollTo = dojo.byId('scroll_to');
 
@@ -481,19 +482,9 @@ function unblockDoor(action) {
 	</div>
 </div>
 
-<div id="main-top-section">
+<div id="main-middle-section" style="height: 600px; min-heght: 600px; min-width: 1115px;">
 
-<h2>[% party.name %]</h2>
-
-<div id="party_status-pane" dojoType="dijit.layout.ContentPane">
-[% INCLUDE party/status.html %]
-</div>
-
-</div>
-
-<div id="main-middle-section" style="height: 700px">
-
-	<div id="map-outer" style="float: left; position: relative">
+	<div id="map-outer" style="float: left; position: relative; display: none">
 		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
 		
 		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
@@ -504,12 +495,16 @@ function unblockDoor(action) {
 			z-index: 400"></div>
 	</div>		
 
-	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; height: 500px; padding-left: 10px; float: right" class="content-background"></div>
+	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; height: 100%; padding-left: 10px;" class="content-background"></div>
+	
+	<div class="line-sep">&nbsp;</div>
+
+	<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; text-align: center">
+
+	</div>
 </div>
 
-
-
-
+	
 <div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px; display: none"></div>
 
 <div id="popup-messages-pane" style="display: none" dojoType="dijit.layout.ContentPane"></div>

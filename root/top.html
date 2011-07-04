@@ -57,46 +57,39 @@ function show_message(message) {
 	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
 
-<div class="nav">
+<div id="content-outer" class="main">
+
+<div style="width: 100%">
+[% IF c.session.player.player_name %]
+	<div class="login-info">
+		User: <b>[% c.session.player.player_name %]</b> /
+		Party: <b>[% party.name %]</b> /
+		<span id="online-parties" style="text-decoration: underline">[% parties_online.size %] part[% IF parties_online.size > 1 %]ies[% ELSE %]y[% END %] online</span> /
+		<a href="player/logout">Logout</a> 
+		
+		<div dojoType="dijit.Tooltip" connectId="online-parties" style="display: none">
+		<b>Online Parties</b><br>
+		[% FOREACH party IN parties_online %]
+			[% party.name %]<br>
+		[% END %]
+		</div>
+	</div>
+[% END %]
+
+	<div style="width: 50%; margin: auto">
+		<a href="[% base %]"><img src="[% base %]static/images/tmp_banner.jpg" border="0"></a>
+	</div>
+
+</div>
+	
+<div id="nav">
+	<div class="line-sep">&nbsp;</div>
 	[% IF admin_screen %]
 		[% INCLUDE admin/left_hand_nav.html %]
 	[% ELSIF guest_screen %]	
 		[% INCLUDE player/left_hand_nav.html %]
 	[% ELSE %]
-		[% INCLUDE layout/left_hand_nav.html %]
+		[% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
 	[% END %]
-	
-	<br>
-		
-	<div style="font-size: 10px">
-	    [% IF c.session.player %]<a href="[% base %]party/reward_links" class="nav" style="font-size: 8pt">Get More Turns (Free!)</a>[% END %]	    
-		<br><a href="http://forum.kingdoms-game.com/chat/" target="_blank">Web Chat</a>
-		<br><div align="center"><a href="[% base %]donate"><img src="/static/images/donate.gif" border="0"></a></div>
-	</div>
-	
-	<br>
-			
-	<div align="center">
-
+	<div class="line-sep">&nbsp;</div>
 </div>
-	
-</div>
-
-<div id="content-outer" class="main" [% IF width %]style="width: [% width %]px"[% END %]>
-	
-<div id="border-top"><div id="border-left"><div id="border-bottom"><div id="border-right" style="position: relative;">
-	<div style="right:0px; top: 0px; position: absolute">
-		<img src="/static/images/layout/corner.png">
-	</div>
-	<div style="left:0px; top: 0px; position: absolute">
-		<img src="/static/images/layout/corner.png">
-	</div>	
-	<div style="bottom:0px; left: 0px; position: absolute">
-		<img src="/static/images/layout/corner.png">
-	</div>		
-	<div style="bottom:0px; right:0px; position: absolute">
-		<img src="/static/images/layout/corner.png">
-	</div>		
-	
-	<div id="content-inner">	
-		

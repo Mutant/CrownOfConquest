@@ -1,3 +1,5 @@
+/* Map Movement */
+
 var mapDimensions;
 function shiftMapCallback(data) {
 	var xShift = data.xShift;
@@ -272,7 +274,16 @@ function loadNewSectors(sectorsAdded) {
 		},
 
 	    timeout: 15000	
-    });
+    });    
+}
 
-		
+/* Panels */
+
+function conditionalLoad(inPanels, url) {
+	if (inPanels) {
+		getPanels(url);
+	}
+	else {
+		document.location = urlBase + '?panel=' + url;
+	}
 }

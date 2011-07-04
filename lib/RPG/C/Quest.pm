@@ -146,6 +146,8 @@ sub decline : Local {
 
 sub list : Local {
     my ( $self, $c ) = @_;
+    
+    $c->stash->{message_panel_size} = 'large';
 
     my @quests = $c->model('DBIC::Quest')->search(
         {
@@ -159,17 +161,22 @@ sub list : Local {
             order_by => 'kingdom_id', 
         }
     );
-     
 
-    $c->forward(
+    my $panel = $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'quest/list.html',
                 params   => { quests => \@quests, },
-            }
+                return_output => 1,
+            },
+            
         ]
     );
+    
+    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+    $c->forward( '/panel/refresh', [] );    
 }
 
 # Check the party's quests to see if any progress has been made for the particular action just taken

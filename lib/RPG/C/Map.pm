@@ -369,6 +369,7 @@ sub move_to : Local {
             	$mapped_sector->update( { known_dungeon => 0 } );
             
             	$c->stash->{had_phantom_dungeon} = 1;
+            	$params->{refresh_current} = 1;
         	}
         	elsif ($has_dungeon) {
         		# They in a sector with a dungeon - add it to known dungeons if they're high enough level

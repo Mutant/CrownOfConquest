@@ -23,6 +23,8 @@ sub main : Local {
 
 	my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom', 'creatures' ] );
 	
+	my $load_panel = $c->req->param('panel');
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -32,6 +34,7 @@ sub main : Local {
 					party  => $c->stash->{party},
 					panels => $panels,
 					created_message => $c->stash->{created_message} || '',
+					load_panel => $load_panel,
 				},
 			}
 		]

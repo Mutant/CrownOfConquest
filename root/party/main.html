@@ -1,10 +1,6 @@
 [% INCLUDE top.html, called_from_panel = 1 %]
 
 <script>
-dojo.require('dijit.layout.BorderContainer');
-dojo.require('dijit.form.FilteringSelect');
-dojo.require("dijit.form.Textarea");
-dojo.require("dijit.form.DropDownButton");
 
 function getPanels(url) {
 	//console.profile();
@@ -240,6 +236,11 @@ var panel_init = [% panels %];
 function init() {
 	refreshPanels(panel_init);
 	dojo.byId('map-outer').style.display = 'block';
+	
+	var loadPanel = '[% load_panel %]';
+	if (loadPanel) {
+		getPanels(loadPanel);
+	}
 	
 	var scrollTo = dojo.byId('scroll_to');
 

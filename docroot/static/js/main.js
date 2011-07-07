@@ -1,3 +1,10 @@
+/* Load Dojo */
+
+dojo.require("dijit.layout.TabContainer");
+dojo.require("dijit.form.FilteringSelect");
+dojo.require("dijit.Dialog");
+dojo.require("dijit.form.DropDownButton");
+
 /* Map Movement */
 
 var mapDimensions;
@@ -278,7 +285,7 @@ function loadNewSectors(sectorsAdded) {
 }
 
 /* Panels */
-
+ 
 function conditionalLoad(inPanels, url) {
 	if (inPanels) {
 		getPanels(url);
@@ -286,4 +293,12 @@ function conditionalLoad(inPanels, url) {
 	else {
 		document.location = urlBase + '?panel=' + url;
 	}
+}
+
+/* Options */
+
+function toggle_disabled_checkboxes() {
+	setting = dojo.byId('send_email').checked ? false : true;
+	dojo.byId('send_daily_report').disabled = setting;
+	dojo.byId('send_email_announcements').disabled = setting;
 }

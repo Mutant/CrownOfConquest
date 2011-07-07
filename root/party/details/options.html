@@ -1,9 +1,12 @@
+[% INCLUDE layout/close_button.html %]
 <h3>Party Options</h3>
 
 <form method="POST" action="[% base %]/party/details/update_options">
 	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"> 
 	<input type="submit" value="Save Settings" name="save">	
 </form>
+
+<br>
 
 <button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband'">Disband Party</button>
 
@@ -41,5 +44,5 @@
 
 <h3>Account Options</h3>
 
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/change_password'">Change Password</button><br>
+<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/change_password'">Change Password</button>
 <button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/delete_account'">Delete Account</button>

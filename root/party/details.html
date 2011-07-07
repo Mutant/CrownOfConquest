@@ -1,18 +1,5 @@
 [% INCLUDE top.html %]
 
-<script>
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.form.FilteringSelect");
-	dojo.require("dijit.Dialog");
-	
-	function toggle_disabled_checkboxes() {
-		setting = dojo.byId('send_email').checked ? false : true;
-		dojo.byId('send_daily_report').disabled = setting;
-		dojo.byId('send_email_announcements').disabled = setting;
-	}
-	
-</script>
-
 <h2>[% party.name %]</h2>
 
 <b>Characters:</b>
@@ -105,23 +92,10 @@
 <div dojoType="dijit.layout.ContentPane" title="Combat Log" href="[% base %]/party/details/combat_log" [% IF tab == 'combat_log' %]selected=true[% END %]>
 </div>
 
-<div dojoType="dijit.layout.ContentPane" title="Kingdom" href="[% base %]/party/details/kingdom" [% IF tab == 'kingdom' %]selected=true[% END %]>
-</div>
-
-<div dojoType="dijit.layout.ContentPane" title="Garrisons" href="[% base %]/party/details/garrisons" [% IF tab == 'garrisons' %]selected=true[% END %]>
-</div>
-
-<div dojoType="dijit.layout.ContentPane" title="Mayors" href="[% base %]/party/details/mayors" [% IF tab == 'mayors' %]selected=true[% END %]>
-</div>
-
 <div dojoType="dijit.layout.ContentPane" title="Buildings" href="[% base %]/party/details/buildings" [% IF tab == 'buildings' %]selected=true[% END %]>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Trades" href="[% base %]/party/details/trades" [% IF tab == 'trades' %]selected=true[% END %]>
-</div>
-
-
-<div dojoType="dijit.layout.ContentPane" title="Options" href="[% base %]/party/details/options" [% IF tab == 'options' %]selected=true[% END %]>
 </div>
 
 </div>

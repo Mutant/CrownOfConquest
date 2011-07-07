@@ -33,7 +33,7 @@ sub default : Path {
                     message => $c->flash->{messages},
                     error => $c->flash->{error},
                     old_parties => \@old_parties,
-                },
+                },                
             }
         ]
     );
@@ -184,9 +184,11 @@ sub combat_messages : Local {
 
 sub options : Local {
     my ( $self, $c ) = @_;
+    
+    $c->stash->{message_panel_size} = 'large';
 
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
                 template     => 'party/details/options.html',
@@ -198,7 +200,7 @@ sub options : Local {
                 	display_announcements => $c->stash->{party}->player->display_announcements,
                 	send_email => $c->stash->{party}->player->send_email,
                 },
-                fill_in_form => 1,
+                fill_in_form => 1,                
             }
         ]
     );
@@ -213,7 +215,7 @@ sub update_options : Local {
         $c->flash->{messages} = 'Changes Saved';
     }
 
-    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
+    $c->res->redirect( $c->config->{url_root} );
 }
 
 sub update_email_options : Local {
@@ -230,11 +232,13 @@ sub update_email_options : Local {
         $c->flash->{messages} = 'Changes Saved';
     }
 
-    $c->res->redirect( $c->config->{url_root} . '/party/details?tab=options' );
+    $c->res->redirect( $c->config->{url_root} );
 }
 
 sub garrisons : Local {
 	my ($self, $c) = @_;
+	
+	$c->stash->{message_panel_size} = 'large';
 	
 	my @garrisons = $c->stash->{party}->garrisons;
 	
@@ -246,7 +250,7 @@ sub garrisons : Local {
     );
 	
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
                 template => 'party/details/garrisons.html',
@@ -261,6 +265,8 @@ sub garrisons : Local {
 
 sub mayors : Local {
 	my ($self, $c) = @_;
+	
+	$c->stash->{message_panel_size} = 'large';
 	
 	my @mayors = $c->stash->{party}->search_related(
 		'characters',
@@ -281,7 +287,7 @@ sub mayors : Local {
 	   
 	
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
                 template => 'party/details/mayors.html',
@@ -352,11 +358,13 @@ sub buildings : Local {
 sub kingdom : Local {
 	my ($self, $c) = @_;
 	
+	$c->stash->{message_panel_size} = 'large';
+	
 	my $kingdom = $c->stash->{party}->kingdom;
 	
 	if ($kingdom && $kingdom->king->party_id == $c->stash->{party}->id) {
         $c->forward(
-            'RPG::V::TT',
+            '/panel/refresh_with_template',
             [
                 {
                     template => 'kingdom/summary.html',
@@ -409,7 +417,7 @@ sub kingdom : Local {
 	   && $mayor_count >= $c->config->{town_count_for_kingdom_declaration};
 	
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
                 template => 'party/details/kingdom.html',

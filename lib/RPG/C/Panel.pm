@@ -212,4 +212,30 @@ sub create_submit_dialog : Private {
 	push @{$c->stash->{panel_callbacks}}, \%callback; 
 }
 
+# Refresh specified panels, loading a template with params into 
+#  one particular panel
+sub refresh_with_template : Private {
+    my ($self, $c, $params) = @_;
+    
+    my $panel = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => $params->{template},
+                params   => $params->{params},
+                fill_in_form => $params->{fill_in_form},
+                return_output => 1,
+            }
+        ]
+    );
+    
+    $params->{panel_to_load} //= 'messages';
+    
+	push @{ $c->stash->{refresh_panels} }, [ $params->{panel_to_load}, $panel ];
+
+    $params->{panels_to_refresh} //= [];
+
+	$c->forward('/panel/refresh', $params->{panels_to_refresh});
+}
+
 1;

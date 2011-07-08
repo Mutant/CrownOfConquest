@@ -235,7 +235,7 @@ var panel_init = [% panels %];
 
 function init() {
 	refreshPanels(panel_init);
-	dojo.byId('map-outer').style.display = 'block';
+	dojo.byId('map-outer').style.display = 'inline-block';
 	
 	var loadPanel = '[% load_panel %]';
 	if (loadPanel) {
@@ -484,22 +484,22 @@ function unblockDoor(action) {
 </div>
 
 
-<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; text-align: center"></div>
+<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; text-align: center;"></div>
 
-<div id="main-middle-section" style="height: 600px; min-heght: 600px; min-width: 1115px;">
+<div id="main-middle-section" style="height: 600px; min-height: 600px; min-width: 1115px; width: 100%; text-align: center;">
 
-	<div id="map-outer" style="float: left; position: relative; display: none">
+	<div id="map-outer" style="position: relative; display: none">
 		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
 		
 		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
-			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500" >
+			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500; text-align: left" >
 		</div>
 		
 		<div dojoType="dijit.layout.ContentPane" title="Creatures" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 
-			z-index: 400"></div>
+			z-index: 400;"></div>
 	</div>		
 
-	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; height: 100%; padding-left: 10px;" class="content-background"></div>	
+	<div dojoType="dojox.layout.ContentPane" id="party-pane" style="width: 250px; height: 100%; padding-left: 10px; display: inline-block" class="content-background"></div>	
 	
 </div>
 

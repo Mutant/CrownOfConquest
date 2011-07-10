@@ -21,8 +21,6 @@ use DateTime::Format::Duration;
 sub main : Local {
 	my ( $self, $c ) = @_;
 
-	my $message = $c->flash->{messages};
-
     my $load_panel = $c->req->param('panel');
 
     $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures' ];
@@ -41,6 +39,8 @@ sub main : Local {
 					party  => $c->stash->{party},
 					created_message => $c->stash->{created_message} || '',
 					load_panel => $load_panel,
+					message => $c->flash->{message},
+					error => $c->flash->{error},
 				},
 			}
 		]

@@ -49,6 +49,11 @@ sub main : Local {
 
 sub init : Local {
     my ( $self, $c ) = @_;
+
+	if (! $c->flash->{refresh_panels}) {
+        # Protect against flash not getting read properly
+        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages'];
+	}
         
 	$c->forward( '/panel/refresh' );   
 } 
@@ -56,11 +61,6 @@ sub init : Local {
 sub refresh_messages : Local {
 	my ( $self, $c ) = @_;
 	
-	if (! $c->flash->{refresh_panels}) {
-        # Protect against flash not getting read properly
-        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages'];
-	}
-
 	$c->forward( '/panel/refresh', ['messages', 'creatures'] );
 }
 

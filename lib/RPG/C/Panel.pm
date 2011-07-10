@@ -18,12 +18,13 @@ my %PANEL_PATHS = (
 
 sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
-		
-	@panels_to_refresh = uniq ( @panels_to_refresh, @{ $c->stash->{refresh_panels} } )
-		if $c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY';		
+			
+	@panels_to_refresh = uniq ( @panels_to_refresh, @{ $c->stash->{refresh_panels} }, @{ $c->flash->{refresh_panels} } )
+		if ($c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY') ||
+		   ($c->flash->{refresh_panels} && ref $c->flash->{refresh_panels} eq 'ARRAY');		
 	
 	$c->log->info("Refreshing these panels: " . join ',',@panels_to_refresh);
-	
+		
 	my %response;
 	
 	if ($c->stash->{error}) {

@@ -1,13 +1,12 @@
 [% INCLUDE top.html, called_from_panel = 1 %]
 
 <script>
-
 function getPanels(url) {
 	//console.profile();
 	    
 	var originalContent = dojo.byId('messages-pane').innerHTML;
 	
-	dijit.byId('messages-pane').setContent('Loading...');	
+	dijit.byId('messages-pane').setContent('Loading...');
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
     
@@ -37,6 +36,9 @@ function getPanels(url) {
 			if (responseObject.panel_callbacks) {
 				executeCallbacks(responseObject.panel_callbacks);
 			}
+			
+			dojo.byId('map-outer').style.visibility = 'visible';
+			dojo.byId('messages-pane').style.visibility = 'visible';
 		},
         
         error: function(err) {
@@ -231,12 +233,7 @@ function dialogSubmit(submitUrl) {
 	getPanels(submitUrl + '?' + submitString);
 }
 
-var panel_init = [% panels %];
-
 function init() {
-	refreshPanels(panel_init);
-	dojo.byId('map-outer').style.display = 'inline-block';
-	
 	var loadPanel = '[% load_panel %]';
 	if (loadPanel) {
 		getPanels(loadPanel);
@@ -488,12 +485,12 @@ function unblockDoor(action) {
 
 <div id="main-middle-section" style="height: 600px; min-height: 600px; min-width: 1115px; width: 100%; text-align: center;">
 
-	<div id="map-outer" style="position: relative; display: none">
+	<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
 		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
 		
 		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
 			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500; text-align: left;
-			       border: 1px solid #4d4d4d">
+			       border: 1px solid #4d4d4d; visibility: hidden;">
 		</div>
 		
 		<div dojoType="dijit.layout.ContentPane" title="Creatures" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 

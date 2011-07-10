@@ -61,7 +61,7 @@ sub main : Local {
 					current_election  => $town->current_election,
 					kingdom           => $town->location->kingdom,
 				},
-				return_output => $return_output || 0,
+				return_output => $return_output || 1,
 			}
 		]
 	);

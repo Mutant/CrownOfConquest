@@ -21,9 +21,16 @@ use DateTime::Format::Duration;
 sub main : Local {
 	my ( $self, $c ) = @_;
 
-	my $panels = $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'party_status', 'zoom', 'creatures' ] );
-	
-	my $load_panel = $c->req->param('panel');
+	my $message = $c->flash->{messages};
+
+    my $load_panel = $c->req->param('panel');
+
+    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures' ];
+    
+    if (! $load_panel) { 
+        $load_panel = 'party/init';
+        unshift @{ $c->flash->{refresh_panels} }, 'messages';
+    }
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -32,7 +39,6 @@ sub main : Local {
 				template => 'party/main.html',
 				params   => {
 					party  => $c->stash->{party},
-					panels => $panels,
 					created_message => $c->stash->{created_message} || '',
 					load_panel => $load_panel,
 				},
@@ -40,6 +46,12 @@ sub main : Local {
 		]
 	);
 }
+
+sub init : Local {
+    my ( $self, $c ) = @_;
+        
+	$c->forward( '/panel/refresh' );   
+} 
 
 sub refresh_messages : Local {
 	my ( $self, $c ) = @_;

@@ -13,7 +13,7 @@
 		{name => 'help', link => base _ 'help'},			
 	];
 %]
-[% image_base = base _ c.config.static_path %]
+[% image_base = c.config.static_path %]
 
 [% MACRO display_custom_button(name) BLOCK %]
 	[% IF name == 'tools' %]

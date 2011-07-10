@@ -24,6 +24,8 @@ sub refresh : Private {
 		   ($c->flash->{refresh_panels} && ref $c->flash->{refresh_panels} eq 'ARRAY');		
 	
 	$c->log->info("Refreshing these panels: " . join ',',@panels_to_refresh);
+	
+	delete $c->flash->{refresh_panels};
 		
 	my %response;
 	

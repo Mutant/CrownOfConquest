@@ -1,28 +1,69 @@
 [% inPanels = called_from_panel ? 'true' : 'false' %]
 
-<div>
-<a href="[% base %]party/details"><img src="[% base %]static/images/layout/menupartybutton.png" border="0"></a>
-<a href="#" onClick="conditionalLoad([% inPanels %], 'quest/list')"><img src="[% base %]static/images/layout/menuquestsbutton.png" border="0"></a>
-<a href="#" onClick="conditionalLoad([% inPanels %], 'party/details/garrisons')"><img src="[% base %]static/images/layout/menugarrisonsbutton.png" border="0"></a>
-<a href="#" onClick="conditionalLoad([% inPanels %], 'party/details/mayors')"><img src="[% base %]static/images/layout/menumayorsbutton.png" border="0"></a>
-<a href="#" onClick="conditionalLoad([% inPanels %], 'party/details/kingdom')"><img src="[% base %]static/images/layout/menukingdombutton.png" border="0"></a>
-<a href="[% base %]leaderboards"><img src="[% base %]static/images/layout/menustatsbutton.png" border="0"></a>
-<a href="[% c.config.forum_url %]"><img src="[% base %]static/images/layout/menuforumsbutton.png" border="0"></a>
+[%
+	menu_images = [
+		{name => 'party', link => base _ 'party/details'},
+		{name => 'quests', link => '#', on_click => "conditionalLoad(" _ inPanels _ ", 'quest/list')"},
+		{name => 'garrisons', link => '#', on_click => "conditionalLoad(" _ inPanels _ ", 'party/details/garrisons')"},	
+		{name => 'mayors', link => '#', on_click => "conditionalLoad(" _ inPanels _ ", 'party/details/mayors')"},	
+		{name => 'kingdom', link => '#', on_click => "conditionalLoad(" _ inPanels _ ", 'party/details/kingdom')"},
+		{name => 'stats', link => base _ 'leaderboards'},
+		{name => 'forums', link => c.config.forum_url, target => '_new'},
+		{name => 'tools', use_custom => 1},
+		{name => 'help', link => base _ 'help'},			
+	];
+%]
+[% image_base = base _ c.config.static_path %]
 
-<span dojoType="dijit.form.DropDownButton" class="actionButton">
-	<span style="display: none">
-    	<img src="[% base %]static/images/layout/menutoolsbutton.png">
-    </span>
-    
-	<div dojoType="dijit.Menu" id="toolsMenu" style="display: none;">
-	    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/reward_links')">
-	        Get More Turns (free!)
-	    </div>
-	    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/details/options')">
-	        Options
-	    </div>
-	</div>    
-</span>
+[% MACRO display_custom_button(name) BLOCK %]
+	[% IF name == 'tools' %]
+	<span dojoType="dijit.form.DropDownButton" class="actionButton">
+		<span style="display: none">
+	    	<img src="[% base %]static/images/layout/menutoolsbutton.png" name="tools" 
+	    		onMouseOver="selectImage('tools')"  onMouseOut="unselectImage('tools')">
+	    </span>
+	    
+		<div dojoType="dijit.Menu" id="toolsMenu" style="display: none;">
+		    <div dojoType="dijit.MenuItem" >
+		        Get More Turns (free!)
+		    </div>
+		    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/details/options')">
+		        Options
+		    </div>
+		</div>    
+	</span>
+	[% END %]
+[% END %]
 
-<a href="[% base %]help"><img src="[% base %]static/images/layout/menuhelpbutton.png" border="0"></a>
-</div>
+<script>
+	images = new Array();
+  
+[% FOREACH image IN menu_images %]
+	images['[% image.name %]-unsel'] = new Image();
+	images['[% image.name %]-unsel'].src = "[% image_base %]/images/layout/menu[% image.name %]button.png";
+	images['[% image.name %]-sel'] = new Image();
+	images['[% image.name %]-sel'].src = "[% image_base %]/images/layout/menu[% image.name %]buttonhover.png";
+[% END %]
+</script>
+
+[% FOREACH image IN menu_images %]
+	[% IF image.use_custom %]
+		[% display_custom_button(image.name) %]
+	[% ELSE %]
+	
+		[% FILTER collapse %]
+		<a href="[% image.link %]" 
+			[% IF image.target %]target="[% image.target %]"[% END %]
+			[% IF image.on_click %]onClick="[% image.on_click %]"[% END %]
+		>
+				<img 
+					src="[% image_base %]/images/layout/menu[% image.name %]button.png" 
+					name="[% image.name %]" 
+					border=0
+					onMouseOver="selectImage('[% image.name %]')"
+					onMouseOut="unselectImage('[% image.name %]')"
+				>
+		</a>
+		[% END %]
+	[% END %]
+[% END %]

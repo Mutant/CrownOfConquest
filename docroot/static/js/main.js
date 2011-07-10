@@ -302,3 +302,15 @@ function toggle_disabled_checkboxes() {
 	dojo.byId('send_daily_report').disabled = setting;
 	dojo.byId('send_email_announcements').disabled = setting;
 }
+
+/* Layout */
+function unselectImage(name){
+    document[name].src = images[name + "-unsel"].src;
+    return true;
+}
+function selectImage(name){
+    document[name].src = images[name + "-sel"].src;
+    return true;
+}
+
+	

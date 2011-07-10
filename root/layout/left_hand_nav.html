@@ -24,7 +24,7 @@
 	    </span>
 	    
 		<div dojoType="dijit.Menu" id="toolsMenu" style="display: none;">
-		    <div dojoType="dijit.MenuItem" >
+		    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/reward_links')">
 		        Get More Turns (free!)
 		    </div>
 		    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/details/options')">

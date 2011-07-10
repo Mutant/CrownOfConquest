@@ -265,7 +265,7 @@ h1 {margin: 0; padding: 1px}
 }
 
 .actionButton .dijitArrowButtonInner {
-    height: 100%;
+    display: none;
 }
 
 .actionButton {

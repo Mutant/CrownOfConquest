@@ -361,13 +361,6 @@ function createButton(menu, name, characterId) {
 	</tr>
 </table>
 		
-<style>
-	.dijitArrowButtonInner {
-		display: none;
-	}
-</style>
-	
-
 <div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
 
 [% FOREACH char IN characters %]
@@ -384,7 +377,7 @@ function createButton(menu, name, characterId) {
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
 		<span style="height: 96%;float: left; border: 1px solid grey; margin-right: 1px">
-		<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" 
+		<img src="[% c.config.static_path %]images/portraits/characters/[% char.portrait %]small.png" 
 			title="[% char.race.race_name %] [% char.class.class_name %]">
 		</span>
 		

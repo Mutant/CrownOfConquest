@@ -443,7 +443,7 @@ sub change_allegiance : Local {
 	my $day = $c->stash->{party}->last_allegiance_change_day;
 	if ($day && abs $day->difference_to_today <= $c->config->{party_allegiance_change_frequency}) {
 	   $c->flash->{error} = "You changed your allegiance too recently";
-	   $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+	   $c->res->redirect( $c->config->{url_root} . '?panel=party/details/kingdom' );
 	   return;
 	}
 	
@@ -463,7 +463,7 @@ sub change_allegiance : Local {
     	my $king = $kingdom->king;
     	if (! $king->is_npc && $c->stash->{party}->is_suspected_of_coop_with($king->party)) {
             $c->flash->{error} = "You can't change your allegiance to that kingdom, as you have IP addresses in common with the king's party";
-            $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+            $c->res->redirect( $c->config->{url_root} . '?panel=party/details/kingdom' );
             return;
     	}
 	}
@@ -473,7 +473,7 @@ sub change_allegiance : Local {
 	
 	$c->flash->{messages} = "Allegiance changed";
 	
-	$c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+	$c->res->redirect( $c->config->{url_root} . '?panel=party/details/kingdom' );
 }
 
 sub trades : Local {

@@ -31,7 +31,7 @@
 			position: absolute;							
 			">
 		<img 
-			src="[% c.config.static_path %][% image_path %][% gen_image(position) %]" 
+			src="[% FILTER collapse %][% c.config.static_path %][% image_path %][% gen_image(position) %][% END %]" 
 			border=0 
 			[% title = sector_title(position) | trim | collapse %]
 			[% IF title %]title="[% title %]"[% END %]

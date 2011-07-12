@@ -218,7 +218,7 @@ sub upgrade : Local {
 	# TODO: bit of a hack getting the name of the upgraded attribute with a regex...
 	my ($upgraded_attribute) = ( $variable->item_variable_name =~ /(.+) Upgrade$/ );
 
-	$c->flash->{message} = $c->forward(
+	$c->stash->{panel_messages} = $c->forward(
 		'RPG::V::TT',
 		[
 			{
@@ -233,8 +233,8 @@ sub upgrade : Local {
 			}
 		]
 	);
-
-	$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+	
+	$c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
 
 }
 
@@ -265,7 +265,7 @@ sub repair : Local {
     $item->repair;
 
 	$c->flash->{message} = "Repair complete";
-	$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+	$c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
 }
 
 sub full_repair : Local {
@@ -306,7 +306,7 @@ sub full_repair : Local {
 		$c->flash->{message} = "$repaired items repaired";
 	}
 
-	$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+    $c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
 }
 
 1;

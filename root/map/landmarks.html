@@ -1,0 +1,23 @@
+[% INCLUDE layout/close_button.html %]
+<h2>Landmarks</h2>
+
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer"  style="height: 400px; min-height: 400px">
+    <div dojoType="dijit.layout.ContentPane" title="Towns" style="display: none">
+		<h3>Known Towns</h3>
+		
+		<table class="main" cellpadding="5" cellspacing="5">
+			<tr>
+		[% FOREACH town IN known_towns %]
+			<td>[% town.town_name %] ([% town.prosperity %]) ([% town.location.x %], [% town.location.y %])</td>
+			[% IF loop.count % 5 == 0 %]
+				</tr><tr>
+			[% END %]
+		[% END %]
+			</tr>
+		</table>
+	</div>
+	
+	<div dojoType="dijit.layout.ContentPane" title="Dungeons" style="display: none" href="[% base %]/map/known_dungeons">
+			
+	</div>
+</div>

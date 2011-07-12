@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <script type="text/javascript">
 	dojo.require("dojo.dnd.Source");
 	dojo.require("dijit.Tooltip");
@@ -185,7 +183,7 @@ function addStatPoint(char_id, stat) {
 }
 
 function changeNameDiag(char_name, char_id) {
-	dojo.byId('char-id').value = char_id;
+	dojo.byId('name-char-id').value = char_id;
 	dojo.byId('character-name').value = char_name;
 	dojo.byId('character-name').select();
 	dijit.byId('change-name-diag').show();
@@ -246,16 +244,6 @@ function calculateSpellPoints() {
 </div>
 
 
-<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name" execute="changeName(arguments[0]);">
-    Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="character_name">
-    <input id="char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
-	</div>
-</div>
-
 <div dojoType="dijit.Dialog" id="split-diag" style="display: none" title="Split Item" execute="split_item_submit(arguments[0]);">
     Amount to split out: <input type="text" dojoType=dijit.form.TextBox name="new_quantity">
     <input id="split-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
@@ -281,7 +269,7 @@ function calculateSpellPoints() {
 			[% other_character.character_name %]
 		[% ELSE %]
 			[% FILTER collapse %]
-				<a href="[% base %]/character/view?character_id=[% other_character.id %]&selected=[% selected %]">
+				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
 					[% other_character.character_name %]</a>
 			[% END %]
 		[% END %]
@@ -318,7 +306,7 @@ function calculateSpellPoints() {
 	* html #mainTabContainer {height: 700px; overflow: auto}
 </style>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
+<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 200px">
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
     	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    
@@ -336,5 +324,3 @@ function calculateSpellPoints() {
     </div>
 
 </div>
-
-[% INCLUDE bottom.html %]

@@ -1,9 +1,7 @@
 [% INCLUDE top.html, called_from_panel = 1 %]
 
 <script>
-function getPanels(url) {
-	//console.profile();
-	    
+function getPanels(url) {    
 	var originalContent = dojo.byId('messages-pane').innerHTML;
 	
 	dijit.byId('messages-pane').setContent('Loading...');
@@ -27,6 +25,10 @@ function getPanels(url) {
 							
 			refreshPanels(responseObject);
 			
+			if (responseObject.screen_to_load) {
+				dijit.byId('messages-pane').setContent(originalContent);
+			}
+			
 			displayPopupMessages();	
 			
 			if (responseObject.displayDialog) {
@@ -49,8 +51,6 @@ function getPanels(url) {
 
 	    timeout: 15000 // Time in milliseconds	
     });
-	
-	//console.profileEnd();
 }
 
 function refreshPanels(panelData) {
@@ -58,11 +58,16 @@ function refreshPanels(panelData) {
 
 	if (panelData.panel_messages) {
 		displayMessages(panelData.panel_messages);
-	}				
+	}
+	
+	if (panelData.screen_to_load) {
+		loadScreen(panelData.screen_to_load);
+	}
 				
     if (panelData.refresh_panels) {
-		for (var panel in panelData.refresh_panels) {		
+		for (var panel in panelData.refresh_panels) {	
 			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
+
 			if (panel == 'party') {
 				createMenus();
 			}
@@ -480,26 +485,50 @@ function unblockDoor(action) {
 	</div>
 </div>
 
+<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name" execute="changeName(arguments[0]);">
+    Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="character_name">
+    <input id="name-char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+</div>
+
 
 <div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; text-align: center;"></div>
 
-<div id="main-middle-section" style="height: 600px; min-height: 600px; min-width: 1115px; width: 100%; text-align: center;">
+<div id="main-outer" style="position: relative">
 
-	<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
-		<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
-		
-		<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
-			style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500; text-align: left;
-			       border: 1px solid #4d4d4d; visibility: hidden;">
+	<div id="screen-outer"
+		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; background: black; z-index: 600; top: 10px; left: 10px; position: absolute; display: none">	
+
+		<div id="screen-close" style="float: right;">
+			<a href="#" onclick="closeScreen()"><span class="close-icon"></span></a>
 		</div>
 		
-		<div dojoType="dijit.layout.ContentPane" title="Creatures" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 
-			z-index: 400;"></div>
-	</div>		
-
-	<div dojoType="dojox.layout.ContentPane" id="party-pane" 
-		style="width: 250px; height: 100%; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top" class="content-background"></div>	
+		<div id="screen-pane" style="position: relative" dojoType="dojox.layout.ContentPane"></div>
 	
+	</div>
+
+	<div id="main-middle-section" style="height: 600px; min-height: 600px; min-width: 1115px; width: 100%; text-align: center;">
+	
+		<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
+			<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
+			
+			<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
+				style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500; text-align: left;
+				       border: 1px solid #4d4d4d; visibility: hidden;">
+			</div>
+			
+			<div dojoType="dijit.layout.ContentPane" title="Creatures" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 
+				z-index: 400;"></div>
+		</div>		
+	
+		<div dojoType="dojox.layout.ContentPane" id="party-pane" 
+			style="width: 250px; height: 100%; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top" class="content-background"></div>	
+		
+	</div>
 </div>
 
 	

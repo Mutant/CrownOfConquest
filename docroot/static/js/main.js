@@ -4,6 +4,7 @@ dojo.require("dijit.layout.TabContainer");
 dojo.require("dijit.form.FilteringSelect");
 dojo.require("dijit.Dialog");
 dojo.require("dijit.form.DropDownButton");
+dojo.require("dijit.Menu");
 
 /* Map Movement */
 
@@ -293,6 +294,26 @@ function conditionalLoad(inPanels, url) {
 	else {
 		document.location = urlBase + '?panel=' + url;
 	}
+}
+
+function loadScreen(url) {
+	if (dojo.byId('screen-outer').style.display == 'none') {
+		dojo.byId('screen-outer').style.display = 'block';
+	}
+	
+	dojo.xhrGet( {
+        url: urlBase + url,
+        handleAs: "text",
+        
+        load: function(response){	
+        	dijit.byId('screen-pane').set("content", response);
+        }
+    });
+}
+
+function closeScreen() {
+	dojo.byId('screen-outer').style.display = 'none';
+	dijit.byId('screen-pane').set("content", '');
 }
 
 /* Options */

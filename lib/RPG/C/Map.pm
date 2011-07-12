@@ -62,8 +62,10 @@ sub grid_sizes {
     return ($x_grid_size, $y_grid_size);       
 }
 
-sub party : Local {
+sub landmarks : Local {
     my ( $self, $c ) = @_;
+    
+    $c->stash->{message_panel_size} = 'large';
 
     my @known_towns = $c->model('DBIC::Town')->search(
         { 'mapped_sector.party_id' => $c->stash->{party}->id, },
@@ -74,13 +76,14 @@ sub party : Local {
     );
 
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
-                template => 'map/party.html',
+                template => 'map/landmarks.html',
                 params   => {
                     known_towns => \@known_towns,
                 },
+                return_output => 1,
             }
         ]
     );

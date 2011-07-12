@@ -48,12 +48,19 @@ sub refresh : Private {
 			$c->log->debug("Path for $panel: " . $panel_path);
 			$response{refresh_panels}{$panel} = $c->forward($panel_path);
 		}
+		elsif ($panel->[0] eq 'screen') {
+            $response{screen_to_load} = $panel->[1];
+		}
 		else {
 			$response{refresh_panels}{$panel->[0]} = $panel->[1];
 		}
 	}
 
 	if ($c->stash->{panel_messages}) {
+	    if (! ref $c->stash->{panel_messages}) {
+	        $c->stash->{panel_messages} = [$c->stash->{panel_messages}];
+	    } 
+	    
 		confess "Panel messages must be an arrayref" unless ref $c->stash->{panel_messages} eq 'ARRAY';
 		$response{panel_messages} = $c->stash->{panel_messages};
 	}
@@ -112,6 +119,12 @@ sub find_panel_path : Private {
     }
     
     confess "Unknown panel: $panel";
+}
+
+sub load_screen : Private {
+    my ($self, $c, $params) = @_;
+    
+       
 }
 
 sub day_logs_check : Private {

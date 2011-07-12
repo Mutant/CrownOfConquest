@@ -321,6 +321,12 @@ div.enlargedTitle {
 	font-weight: bold;
 }
 
+.kingdomsTabContainer {
+	min-height: 450px;
+	height: 100%;
+        overflow: hidden;
+}
+
 /* Tooltip */
 
 .tundra .dijitTooltipContainer

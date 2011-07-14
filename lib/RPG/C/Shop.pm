@@ -36,6 +36,31 @@ sub purchase : Local {
 
 	my @characters = $party->characters;
 
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'shop/purchase.html',
+				params   => {
+					shop          => $shop,
+					characters    => \@characters,
+					shops_in_town => \@shops_in_town,
+					town          => $party->location->town,
+				}
+			}
+		]
+	);
+}
+
+sub standard_tab : Local {
+    my ( $self, $c ) = @_;
+    
+	my $party = $c->stash->{party};
+
+	my @shops_in_town = $party->location->town->shops;
+
+	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;    
+    
 	my @items = $shop->grouped_items_in_shop;
 
 	# Get item_types 'made'
@@ -54,23 +79,19 @@ sub purchase : Local {
 	foreach my $item_type (@item_types_made) {
 		push @{ $items{ $item_type->category->item_category }{quantity} }, $item_type;
 	}
-
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
 			{
-				template => 'shop/purchase.html',
+				template => 'shop/standard_items.html',
 				params   => {
-					shop          => $shop,
-					characters    => \@characters,
-					shops_in_town => \@shops_in_town,
-					items         => \%items,
-					gold          => $party->gold,
-					town          => $party->location->town,
+					shop  => $shop,
+					items => \%items,
 				}
 			}
 		]
-	);
+	);	    
 }
 
 sub enchanted_tab : Local {
@@ -186,7 +207,7 @@ sub buy_item : Local {
 	my $town = $shop->in_town;
 
 	if ( $town->id != 0 && $town->id != $party->location->town->id ) {
-		$c->res->body( to_json( { error => "Attempting to buy an item in another town" } ) );
+		croak "Attempting to buy an item in another town";
 
 		# TODO: this does allow them to buy items from a different shop in the same town, which may or may not be OK
 		return;
@@ -195,6 +216,7 @@ sub buy_item : Local {
 	my $item;
 	my $count = 0;
 	my $cost = 0;
+	my $enchanted = 0;
 
 	if ( $c->req->param('item_type_id') ) {
 		my $item_rs = $c->model('DBIC::Items')->search(
@@ -210,8 +232,7 @@ sub buy_item : Local {
 		);
 
 		if ( $item_rs->count == 0 ) {
-			$c->res->body(
-				to_json( { error => "The shop no longer has any of those items left. Another party may have just bought the last one!" } ) );
+			push @{ $c->stash->{error} }, "The shop no longer has any of those items left. Another party may have just bought the last one!";
 			return;
 		}
 
@@ -231,15 +252,17 @@ sub buy_item : Local {
 		);
 
 		unless ($item) {
-			$c->res->body( to_json( { error => "The shop no longer has this item. Another party may have bought it!" } ) );
+			push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
 			return;
 		}
 		
 		$cost = $item->sell_price( $item->in_shop, 0 );
+		
+		$enchanted = 1;
 	}
 
 	if ( $party->gold < $cost ) {
-		$c->res->body( to_json( { error => "Your party doesn't have enough gold to buy this item" } ) );
+		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
 		return;
 	}
 	
@@ -253,18 +276,17 @@ sub buy_item : Local {
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
+	
+    $c->stash->{panel_callbacks} = [
+    	{
+        	name => 'purchase',
+        	data => {
+        	    tab => $enchanted ? 'enchanted' : 'standard',
+        	},
+    	}
+    ];	
 
-	my $ret = to_json(
-		{
-			gold          => $party->gold,
-			updated_stock => {
-				item => $c->req->param('item_type_id') ? $c->req->param('item_type_id') : $c->req->param('item_id'),
-				count => $count,
-			},
-		},
-	);
-
-	$c->res->body($ret);
+    $c->forward( '/panel/refresh', ['party_status'] );
 }
 
 # TODO: fair bit of duplication between this and buy_item
@@ -285,7 +307,7 @@ sub buy_quantity_item : Local {
 	);
 
 	unless ($shop) {
-		$c->res->body( to_json( { error => "Attempting to buy an item type not in this shop" } ) );
+	    croak  "Attempting to buy an item type not in this shop";
 		return;
 	}
 
@@ -300,7 +322,7 @@ sub buy_quantity_item : Local {
 	my $cost = $item_type->modified_cost($shop) * $c->req->param('quantity');
 
 	if ( $party->gold < $cost ) {
-		$c->res->body( to_json( { error => "Your party doesn't have enough gold to buy this item" } ) );
+		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
 		return;
 	}
 	
@@ -318,10 +340,9 @@ sub buy_quantity_item : Local {
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
+   
+    $c->forward( '/panel/refresh', ['party_status'] );
 
-	my $ret = to_json( { gold => $party->gold, } );
-
-	$c->res->body($ret);
 }
 
 sub sell_item : Local {
@@ -329,6 +350,8 @@ sub sell_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => 'category' }, }, );
 	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
+	
+	my $original_char = $item->character_id;
 
 	if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
 		return;
@@ -336,15 +359,17 @@ sub sell_item : Local {
 
 	my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
 
-	my $ret = to_json(
-		{
-			gold     => $c->stash->{party}->gold,
-			messages => $messages,
-		}
-	);
+    $c->stash->{panel_callbacks} = [
+    	{
+        	name => 'sell',
+        	data => {
+        	    char_id => $original_char,
+        	    messages => $messages,
+        	},
+    	}
+    ];	
 
-	$c->res->body($ret);
-
+    $c->forward( '/panel/refresh', ['party_status'] );    
 }
 
 sub sell_multi_item : Local {
@@ -360,8 +385,11 @@ sub sell_multi_item : Local {
 		{ prefetch => { 'item_type' => 'category' }, },
 	);
 
+    my $original_char;
 	my @messages;
 	foreach my $item (@items) {
+	    $original_char = $item->character_id;
+	    
 		if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
 			return;
 		}
@@ -369,15 +397,18 @@ sub sell_multi_item : Local {
 		my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
 		@messages = ( @messages, @$messages );
 	}
+	
+    $c->stash->{panel_callbacks} = [
+    	{
+        	name => 'sell',
+        	data => {
+        	    char_id => $original_char,
+        	    messages => \@messages,
+        	},
+    	}
+    ];	
 
-	my $ret = to_json(
-		{
-			gold     => $c->stash->{party}->gold,
-			messages => \@messages,
-		}
-	);
-
-	$c->res->body($ret);
+    $c->forward( '/panel/refresh', ['party_status'] );
 }
 
 sub sell_single_item : Private {

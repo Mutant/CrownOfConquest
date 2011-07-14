@@ -16,6 +16,8 @@ dojo.require("dijit.form.TextBox");
 dojo.require("dojox.layout.ContentPane");
 dojo.require('dijit.Tooltip');
 dojo.require("dojo.dnd.Source");
+dojo.require("dijit.form.NumberSpinner");
+dojo.require("rpg.dnd.Target");
 
 /* Map Movement */
 
@@ -350,11 +352,7 @@ function panelLoadCallback(responseObject, ioArgs) {
 	}
 					
 	refreshPanels(responseObject);
-	
-	if (responseObject.screen_to_load) {
-		dijit.byId('messages-pane').setContent(originalContent);
-	}
-	
+
 	displayPopupMessages();	
 	
 	if (responseObject.displayDialog) {
@@ -376,8 +374,6 @@ function panelErrorCallback(err) {
 }
 
 function refreshPanels(panelData) {
-	setMessagePanelSize(panelData.message_panel_size);
-
 	if (panelData.panel_messages) {
 		displayMessages(panelData.panel_messages);
 	}
@@ -385,6 +381,8 @@ function refreshPanels(panelData) {
 	if (panelData.screen_to_load) {
 		loadScreen(panelData.screen_to_load);
 	}
+	
+	var messagesLoaded = false;
 				
     if (panelData.refresh_panels) {
 		for (var panel in panelData.refresh_panels) {	
@@ -393,8 +391,19 @@ function refreshPanels(panelData) {
 			if (panel == 'party') {
 				createMenus();
 			}
+			
+			if (panel == 'messages') {
+				messagesLoaded = true;
+			}
 		}
-	}	
+	}
+	
+	if (! messagesLoaded) {
+		dijit.byId('messages-pane').setContent(originalContent);
+	}
+	else {
+		setMessagePanelSize(panelData.message_panel_size);
+	}
 }
 
 function displayPopupMessages() {

@@ -29,7 +29,7 @@ forum_url: http://forum.kingdoms-game.com/index.php
 
 static_path: http://kingdoms-game.com/static
 
-dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.5.0
+dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.6.1
 dojo_path: /dojo/dojo.xd.js
 
 home: /home/sam/RPG/
@@ -133,7 +133,7 @@ starting_turns: 400
 new_party_watcher_days: 20
 
 # Size of page on party leaderboard
-leaderboard_page_size: 25
+leaderboard_page_size: 20
 
 # ----- Player Params ----- #
 

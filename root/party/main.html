@@ -23,6 +23,10 @@ function dungeonScroll(scroll_to) {
 }
 
 dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+	if (! nodes[0].id.match('^char-')) {
+		return;
+	}
+
 	var t = dojo.dnd.manager().target;
 
 	order_val = t.current.id.split(/-/);

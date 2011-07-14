@@ -1,15 +1,14 @@
 <script type="text/javascript">
 
-	dojo.require("dojo.dnd.Source");
-	dojo.require("dijit.form.NumberSpinner");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("rpg.dnd.Target");
-
 function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 		var t = dojo.dnd.manager().target;
 
 		var purchasedItem = source.getItem(nodes[0].id).data;
+		
+		if (! purchasedItem) {
+			return;
+		}
 
 		tmp = t.node.id.split(/-/);
 		var char_id = tmp[1];
@@ -21,7 +20,7 @@ function init() {
     	var item_type_id = tmp[1];
 		
 		if (tmp[0] == 'item' || tmp[0] == 'enchanted') {			
-			dojo.byId('confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
+			dojo.byId('equip-purchase-confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
 			dojo.byId('purchasing-char-id').value = char_id;
 			
 			if (tmp[0] == 'item') {
@@ -33,7 +32,7 @@ function init() {
 				dojo.byId('purchasing-item-type-id').value = '';
 			}
 			
-			dijit.byId('confirmation').show();
+			dijit.byId('equip-purchase-confirmation').show();
 		}
 		else if (tmp[0] == 'quantity') {
 			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
@@ -52,80 +51,43 @@ function init() {
 
 function savePurchase(dialogFields) {
 	if (dialogFields.purchasing_item_id) {
-		url = "[% base %]/shop/buy_item?item_id=" + dialogFields.purchasing_item_id;
+		url = "shop/buy_item?item_id=" + dialogFields.purchasing_item_id;
 	}
 	else {
-		url = "[% base %]/shop/buy_item?item_type_id=" + dialogFields.purchasing_item_type_id;
+		url = "shop/buy_item?item_type_id=" + dialogFields.purchasing_item_type_id;
 	}
 	
 	url += "&character_id=" + dialogFields.purchasing_char_id 
 		+  "&shop_id=[% shop.id %]";
 
-	dojo.xhrGet( {
-        url: url, 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) {
-          if (responseObject.error) {
-          	dojo.byId('error-message').innerHTML = responseObject.error;
-          	dijit.byId('error').show();
-          }
-          else if (responseObject.gold) {
-			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
-			  
-			  if (responseObject.updated_stock.count == 0) {
-			    dojo.byId('item_outer_' + responseObject.updated_stock.item).style.display = 'none';
-			  }
-			  else {
-			    dojo.byId('item-quantity-' + responseObject.updated_stock.item).innerHTML = responseObject.updated_stock.count;
-			  }	  	  
-		  }
-          return responseObject;
-        },
-
-	    timeout: 5000 // Time in milliseconds	
-    });
-    	
-	return true;
+	getPanels(url);
 }
 
 function saveQuantityPurchase(dialogFields) {	
-	dojo.xhrGet( {
-        url: "[% base %]/shop/buy_quantity_item?character_id=" + dialogFields.purchasing_char_id 
+	var url = "shop/buy_quantity_item?character_id=" + dialogFields.purchasing_char_id 
         	+ "&item_type_id=" + dialogFields.purchasing_item_type_id + "&shop_id=[% shop.id %]"
-        	+ "&quantity=" + dialogFields.quantity, 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) {
-          if (responseObject.error) {
-          	dojo.byId('error-message').innerHTML = responseObject.error;
-          	dijit.byId('error').show();
-          }
-          else if (responseObject.gold) {
-			  dojo.byId('current-gold').innerHTML = responseObject.gold;		  
-		  }
-          return responseObject;
-        },
+        	+ "&quantity=" + dialogFields.quantity;
 
-	    timeout: 5000 // Time in milliseconds	
-    });
-    	
-	return true;
+	getPanels(url);
+}
+
+function purchaseCallback(data) {
+	dijit.byId(data.tab).refresh();
 }
 
 dojo.addOnLoad( init );
 
 </script>
 
-<div dojoType="dijit.Dialog" id="confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
-    <span id="confirmation-message"></span>
+<div dojoType="dijit.Dialog" id="equip-purchase-confirmation" style="display: none" title="Confirm Purchase" execute="savePurchase(arguments[0]);">
+    <span id="equip-purchase-confirmation-message"></span>
     <input id="purchasing-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="purchasing-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirmation').hide()">Cancel</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('equip-purchase-confirmation').hide()">Cancel</button>
 	</div>
 </div>
 
@@ -175,15 +137,14 @@ dojo.addOnLoad( init );
 <br>
 
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
-		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items" style="display: none;">
-
-[% INCLUDE shop/item_list.html items=items %]
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+		<div id="standard" dojoType="dijit.layout.ContentPane" title="Standard Items"
+			href="[% base %]/shop/standard_tab?shop_id=[% shop.id %]">
 
 		</div>
 
 [% IF shop.has_enchanted_items %]
-	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted & Upgraded Items" style="display: none;"
+	<div id="enchanted" dojoType="dijit.layout.ContentPane" title="Enchanted & Upgraded Items"
 		href="[% base %]/shop/enchanted_tab?shop_id=[% shop.id %]">
 	</div>
 [% END %]

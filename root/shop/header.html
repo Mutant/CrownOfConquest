@@ -5,7 +5,7 @@ Shops in [% town.town_name %]:
 	[% IF shop.id == other_shop.id %]
 		<span id="current-selection">[% other_shop.shop_name %]</span>
 	[% ELSE %]
-		<a href="[% base %]/[% shop_link %]?shop_id=[% other_shop.id %]">[% other_shop.shop_name %]</a>
+		<a href="javascript:loadScreen('[% shop_link %]?shop_id=[% other_shop.id %]')">[% other_shop.shop_name %]</a>
 	[% END %]
 	&nbsp;
 [% END %]
@@ -21,14 +21,10 @@ Shops in [% town.town_name %]:
 	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
 	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
 [% END %]
-<br><br>
-
-<div align="center">Party Gold: <span id="current-gold">[% gold %]</span></div>
 
 <div align="center">
 	[% IF shop.status == 'Open' || shop.status == 'Closing' %]
-	<a href="[% base %]/shop/purchase?shop_id=[% shop.id %]">Buy Items</a> |
-	<a href="[% base %]/shop/sell?shop_id=[% shop.id %]">Sell Items</a> |
+	<a href="javascript:loadScreen('shop/purchase?shop_id=[% shop.id %]')">Buy Items</a> |
+	<a href="javascript:loadScreen('shop/sell?shop_id=[% shop.id %]')">Sell Items</a>
 	[% END %]
-	<a href="[% base %]">Back To Town</a>
 </div> 

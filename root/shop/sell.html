@@ -1,9 +1,6 @@
-[% INCLUDE top.html %]
-
 [% INCLUDE shop/header.html shop_link='shop/sell' %]
 
 <script>
-	dojo.require("dijit.layout.TabContainer");
 	
 function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id) {
 	var message = "Are you sure you want to sell " + item_type + " for " + sell_price + " gold?";
@@ -19,13 +16,7 @@ function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id
 }
 
 function sellItem(dialogFields) {
-	dojo.xhrGet( {
-        url: "[% base %]/shop/sell_item?item_id=" + dialogFields.item_id + "&shop_id=[% shop.id %]", 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) { sellCallback(responseObject, ioArgs, dialogFields.character_id) },
-		timeout: 5000 // Time in milliseconds	 
-    });
+	getPanels('shop/sell_item?item_id=' + dialogFields.item_id + '&shop_id=[% shop.id %]');
 }	
 
 var selectedForSale = Array();
@@ -70,43 +61,28 @@ function sellMultiItem(dialogFields) {
 		if (selectedForSale[dialogFields.character_id][itemIdx] == true) {
 			item_str += "&item_id=" + itemIdx
 		}
-	}	
+	}
 	
-	dojo.xhrGet( {
-        url: "[% base %]/shop/sell_multi_item?" + item_str + "&shop_id=[% shop.id %]", 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) { sellCallback(responseObject, ioArgs, dialogFields.character_id) },
-		timeout: 5000 // Time in milliseconds	 
-    });
+	getPanels('/shop/sell_multi_item?' + item_str + '&shop_id=[% shop.id %]');
 }
 
-function sellCallback(responseObject, ioArgs, characterId) {
-	if (responseObject.error) {
-	  	dojo.byId('error-message').innerHTML = responseObject.error;
-	  	dijit.byId('error').show();
-	}
-	else {
-	  	if (responseObject.gold) {
-		  dojo.byId('current-gold').innerHTML = responseObject.gold;
-		  dijit.byId('chartab_' + characterId).refresh();
-		}
-		if (responseObject.messages) {
-			var messages = responseObject.messages;
-			var message = "";
-			for ( var i in messages ) {
-				if (messages[i]) {
-					message += messages[i] + '<br>';
-				}
-			}
-			if (message) {
-				dojo.byId('message-text').innerHTML = message;
-				dijit.byId('message-diag').show();
+function sellCallback(data) {
+
+	if (data.messages) {
+		var messages = data.messages;
+		var message = "";
+		for ( var i in messages ) {
+			if (messages[i]) {
+				message += messages[i] + '<br>';
 			}
 		}
+		if (message) {
+			dojo.byId('message-text').innerHTML = message;
+			dijit.byId('message-diag').show();
+		}
 	}
-	selectedForSale = Array();
-	return responseObject;
+	
+	dijit.byId('chartab_' + data.char_id).refresh();
 }
 
 
@@ -146,7 +122,7 @@ function sellCallback(responseObject, ioArgs, characterId) {
 
 <br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 [% FOREACH char = characters %]
 	[% FILTER collapse %]
    		<div id="chartab_[% char.id %]" dojoType="dijit.layout.ContentPane" title="[% char.character_name %]" style="display: none;" 
@@ -156,5 +132,3 @@ function sellCallback(responseObject, ioArgs, characterId) {
 	[% END %]	
 [% END %]
 </div>
-
-[% INCLUDE bottom.html %]

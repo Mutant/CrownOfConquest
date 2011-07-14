@@ -1,10 +1,21 @@
 /* Load Dojo */
 
+dojo.registerModulePath("rpg", urlBase + "static/dojo_cust/rpg");
+
+dojo.require("dojo.parser");
 dojo.require("dijit.layout.TabContainer");
 dojo.require("dijit.form.FilteringSelect");
 dojo.require("dijit.Dialog");
 dojo.require("dijit.form.DropDownButton");
 dojo.require("dijit.Menu");
+dojo.require("dijit.form.NumberTextBox");
+dojo.require("dijit.form.Button");
+dojo.require("dijit.layout.ContentPane");
+dojo.require("dijit.Dialog");
+dojo.require("dijit.form.TextBox");
+dojo.require("dojox.layout.ContentPane");
+dojo.require('dijit.Tooltip');
+dojo.require("dojo.dnd.Source");
 
 /* Map Movement */
 
@@ -295,6 +306,251 @@ function conditionalLoad(inPanels, url) {
 		document.location = urlBase + '?panel=' + url;
 	}
 }
+
+var originalContent;
+function getPanels(url) {    
+	originalContent = dojo.byId('messages-pane').innerHTML;
+	
+	dijit.byId('messages-pane').setContent('Loading...');
+    
+    var no_cache = "&no_cache=" + Math.random() *100000000000;
+    
+    if (url.indexOf('?') == -1) {
+    	no_cache = '?' + no_cache;
+    }
+    
+	dojo.xhrGet( {
+        url: urlBase + url + no_cache,
+        handleAs: "json",        
+        load: panelLoadCallback,        
+        error: panelErrorCallback,
+	    timeout: 15000
+    });
+}
+
+function postPanels(form) {
+	originalContent = dojo.byId('messages-pane').innerHTML;
+	
+	dojo.xhrPost( {
+        form: form,
+        handleAs: "json",        
+        load: panelLoadCallback,        
+        error: panelErrorCallback,
+	    timeout: 15000
+    });	
+    
+    return false;
+}
+
+function panelLoadCallback(responseObject, ioArgs) {
+	if (responseObject.error) {
+		dojo.byId('error-message').innerHTML = responseObject.error;
+		dijit.byId('error').show();
+		dijit.byId('messages-pane').setContent(originalContent);
+	}
+					
+	refreshPanels(responseObject);
+	
+	if (responseObject.screen_to_load) {
+		dijit.byId('messages-pane').setContent(originalContent);
+	}
+	
+	displayPopupMessages();	
+	
+	if (responseObject.displayDialog) {
+		dijit.byId(responseObject.displayDialog).show();
+	}
+	
+	if (responseObject.panel_callbacks) {
+		executeCallbacks(responseObject.panel_callbacks);
+	}
+	
+	dojo.byId('map-outer').style.visibility = 'visible';
+	dojo.byId('messages-pane').style.visibility = 'visible';
+}
+
+function panelErrorCallback(err) {
+	errorMsg = "An error occurred processing the action. Please <a href=\"" + urlBase + "\">try again</a> or report a bug.";
+	console.debug(err);
+	dijit.byId('messages-pane').setContent(errorMsg);
+}
+
+function refreshPanels(panelData) {
+	setMessagePanelSize(panelData.message_panel_size);
+
+	if (panelData.panel_messages) {
+		displayMessages(panelData.panel_messages);
+	}
+	
+	if (panelData.screen_to_load) {
+		loadScreen(panelData.screen_to_load);
+	}
+				
+    if (panelData.refresh_panels) {
+		for (var panel in panelData.refresh_panels) {	
+			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
+
+			if (panel == 'party') {
+				createMenus();
+			}
+		}
+	}	
+}
+
+function displayPopupMessages() {
+	if (dojo.trim(dojo.byId('popup-messages-pane').innerHTML)) {
+		show_message(dojo.byId('popup-messages-pane').innerHTML);
+		dojo.byId('popup-messages-pane').innerHTML = '';
+	}
+}
+
+var panel_messages;
+var displayCount = 0;	
+function displayMessages(messages_passed) {
+	if (messages_passed) {
+		panel_messages = messages_passed;
+	}
+	
+	if (! panel_messages) {
+		return;
+	}
+	
+	if (panel_messages[displayCount]) {
+		dojo.byId('party-message-text').innerHTML = panel_messages[displayCount];
+		dijit.byId('party-message').show();
+		displayCount++;
+	}
+	else {
+		dijit.byId('party-message').hide();
+		displayCount = 0;
+	}
+}
+
+function executeCallbacks(callBacks) {
+	for (var callIdx in callBacks) {
+		callback = callBacks[callIdx];
+		
+		var callbackName = callback.name + "Callback"
+		window[callbackName](callback.data);		
+	}
+}
+
+var current_size = 'small';
+function setMessagePanelSize(size) {
+	if (size == 'large' && current_size == 'small') {
+		dojo.byId('messages-pane').style.overflow = 'hidden';
+		dojo.animateProperty({
+		  node:"messages-pane",
+		  duration: 400,		  
+		  properties: {
+		      left: 80,
+		      bottom: 80,
+		      top: 80,
+		      right: 80,
+		  }
+		}).play();
+	
+		dojo.byId('messages-pane').style.width = "80%";
+	
+		dojo.byId('messages-pane').style.opacity = "0.9";
+		dojo.byId('messages-pane').style.overflow = 'auto';
+		current_size = 'large';
+	}
+	
+	if (size == 'small' && current_size == 'large') {
+		dojo.byId('messages-pane').style.top = "";
+		dojo.byId('messages-pane').style.right = "";
+		dojo.byId('messages-pane').style.bottom = '20px';
+		dojo.byId('messages-pane').style.left = '20px';
+		dojo.byId('messages-pane').style.opacity = "0.8";
+		dojo.byId('messages-pane').style.width = "auto";
+		current_size = 'small';		
+	}
+	
+} 
+
+function dungeonCallback(data) {
+	var updatedSectors = data.sectors;
+	for (var x in updatedSectors) {
+		for (var y in updatedSectors[x]) {
+			if (updatedSectors[x][y]) {
+				sector = updatedSectors[x][y];
+			
+				var sector_id = "sector_" + x + "_" + y;
+			
+				if (! dojo.byId(sector_id)) {
+					// Create sector
+					newSector = document.createElement("div");
+					newSector.setAttribute('id', sector_id);
+					newSector.style.position = 'absolute';					
+					newSector.style.top = (y - data.boundaries.min_y) * 40;
+					newSector.style.left = (x - data.boundaries.min_x) * 40; 
+					newSector.style.width = '40px';
+					newSector.style.height = '40px';
+					dojo.byId('dungeon_outer').appendChild(newSector); 
+				}
+
+				dojo.byId(sector_id).innerHTML = sector.sector;
+				
+				if (dijit.byId('cgtt_' + x + '_' + y)) {
+					dijit.byId('cgtt_' + x + '_' + y).destroyRecursive();
+				}					
+				if (sector.cg_desc) {
+					params = {
+						connectId: [sector_id],
+						label: sector.cg_desc,
+						id: 'cgtt_'+ x + '_' + y
+					};		
+					new dijit.Tooltip(params);
+				}
+				
+				if (dijit.byId('ptt_' + x + '_' + y)) {
+					dijit.byId('ptt_' + x + '_' + y).destroyRecursive();
+				}					
+				if (sector.party_desc) {
+					params = {
+						connectId: [sector_id],
+						label: sector.party_desc,
+						id: 'ptt_' + x + '_' + y
+					};		
+					new dijit.Tooltip(params);				
+				}		
+			}		 
+		}	
+	}
+	
+	dungeonScroll(data.scroll_to); 
+}
+
+function dungeonRefreshCallback(scroll_to) {
+	dungeonScroll(scroll_to); 
+}
+
+function dialogCallback(data) {
+	dojo.byId('dialog-content').innerHTML = data.content;
+	
+	if (data.parse_content) {
+		dojo.parser.parse('dialog-content');
+	}	
+	
+	dijit.byId('dialog').attr('execute', function() { dialogSubmit(data.submit_url) });
+	dijit.byId('dialog').attr('title', data.dialog_title);
+	dijit.byId('dialog').show();
+}
+
+function dialogSubmit(submitUrl) {
+	var form = dijit.byId('dialog').attr('value');
+
+	var submitString = '';
+	for(var prop in form) {
+	    if(form.hasOwnProperty(prop))
+	        submitString += prop + '=' + form[prop] + '&';
+	}
+	
+	getPanels(submitUrl + '?' + submitString);
+}
+
+/* Screen */
 
 function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {

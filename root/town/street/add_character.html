@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <h3>Add a Character to the Streets of [% town.town_name %]</h3>
 
 [% IF characters.size > 1 %]
@@ -13,7 +11,7 @@
 	[% FOREACH char IN characters %]
 		<tr>
 		[% INCLUDE party/party_list_char_line.html %]
-		<td><a href="?character_id=[% char.id %]">Add to Streets</a></td>
+		<td><a href="javascript:getPanels('town/street/add_character?character_id=[% char.id %]')">Add to Streets</a></td>
 		</tr>
 	[% END %]
 	
@@ -23,6 +21,4 @@
 [% END %]
 
 <br><br>
-<a href="[% base %]">Back To Town</a>
-
-[% INCLUDE bottom.html %]
+[% INCLUDE town/town_footer.html %]

@@ -40,9 +40,9 @@
 			<td>[% trade.status == 'Offered' ? 'No' : 'Yes' %]</td>
 			<td>
 				[% IF trade.status == 'Offered' %]
-					<a href="[% base %]town/trade/cancel?trade_id=[% trade.id %]">Cancel Trade</a>
+					<a href="javascript:getPanels('town/trade/cancel?trade_id=[% trade.id %]')">Cancel Trade</a>
 				[% ELSE %]
-					<a href="[% base %]town/trade/collect?trade_id=[% trade.id %]">Collect Gold</a>
+					<a href="javascript:getPanels('town/trade/collect?trade_id=[% trade.id %]')">Collect Gold</a>
 				[% END %]
 			</tr>
 		</tr>

@@ -72,8 +72,10 @@ sub add_character : Local {
 		$c->stash->{party}->adjust_order;
 	}
 	
+	push @{$c->stash->{refresh_panels}}, 'party';
+	
 	$c->forward(
-		'RPG::V::TT',
+		'/panel/refresh_with_template',
 		[
 			{
 				template      => "town/$hold/add_character.html",

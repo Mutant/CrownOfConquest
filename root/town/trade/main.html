@@ -1,12 +1,5 @@
-[% INCLUDE top.html %]
-
 <script type="text/javascript">
-	dojo.require("dijit.form.FilteringSelect");
-	dojo.require("dijit.form.NumberTextBox");
-	dojo.require("dijit.form.Button");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.layout.ContentPane");
-	
+
 function tradeConfirmation(itemSpan) {
 	item_id = (itemSpan.id.split('-'))[2];
 
@@ -49,7 +42,7 @@ function purchaseConfirmation(tradeId, item, amount) {
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
-	<form method="POST" action="[% base %]town/trade/create">
+	<form method="POST" action="[% base %]/town/trade/create" onSubmit="postPanels(this); return false">
 	<input id="trade-item-id" name="trade_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<table class="main">
 		<tr>
@@ -84,7 +77,7 @@ function purchaseConfirmation(tradeId, item, amount) {
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-purchase" style="display: none" title="Confirm Purchase">
-	<form method="POST" action="[% base %]town/trade/purchase">
+	<form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
 	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
         
@@ -98,18 +91,10 @@ function purchaseConfirmation(tradeId, item, amount) {
 <h2>Trade Hall Of [% town.town_name %]</h2>
 
 <br>
-
-<a href="[% base %]">Back To Town</a>
-
-<br><br>
-
-Party Gold: [% party.gold %]
-
-<br><br>
 Here, you can buy and sell items from other parties. The buyer comes to the trade hall to buy the item, and the seller will have to
 come back later to pick up the gold.
 	
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; min-height: 700px">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 	<div dojoType="dijit.layout.ContentPane" title="Buy" style="height: 700px; min-height: 150px" 
 		href="[% base %]town/trade/buy"
 		[% IF selected == 'buy' %]selected=true[% END %]>
@@ -120,5 +105,3 @@ come back later to pick up the gold.
 		[% IF selected == 'sell' %]selected=true[% END %]>
 	</div>
 </div>
-
-[% INCLUDE bottom.html %]

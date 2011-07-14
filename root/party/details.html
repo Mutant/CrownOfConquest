@@ -10,7 +10,7 @@
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 	
-<div dojoType="dijit.layout.ContentPane" title="Details">
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Details">
 	<table class="main">
 		<tr>
 			<td></td>
@@ -84,16 +84,16 @@
 	</table>
 	[% END %]
 </div>
-<div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/party/details/history" [% IF tab == 'history' %]selected=true[% END %]>
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/party/details/history" [% IF tab == 'history' %]selected=true[% END %]>
 </div>
 
-<div dojoType="dijit.layout.ContentPane" title="Combat Log" href="[% base %]/party/details/combat_log" [% IF tab == 'combat_log' %]selected=true[% END %]>
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Combat Log" href="[% base %]/party/details/combat_log" [% IF tab == 'combat_log' %]selected=true[% END %]>
 </div>
 
-<div dojoType="dijit.layout.ContentPane" title="Buildings" href="[% base %]/party/details/buildings" [% IF tab == 'buildings' %]selected=true[% END %]>
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Buildings" href="[% base %]/party/details/buildings" [% IF tab == 'buildings' %]selected=true[% END %]>
 </div>
 
-<div dojoType="dijit.layout.ContentPane" title="Trades" href="[% base %]/party/details/trades" [% IF tab == 'trades' %]selected=true[% END %]>
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Trades" href="[% base %]/party/details/trades" [% IF tab == 'trades' %]selected=true[% END %]>
 </div>
 
 </div>

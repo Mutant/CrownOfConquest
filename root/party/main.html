@@ -1,243 +1,6 @@
 [% INCLUDE top.html, called_from_panel = 1 %]
 
 <script>
-function getPanels(url) {    
-	var originalContent = dojo.byId('messages-pane').innerHTML;
-	
-	dijit.byId('messages-pane').setContent('Loading...');
-    
-    var no_cache = "&no_cache=" + Math.random() *100000000000;
-    
-    if (url.indexOf('?') == -1) {
-    	no_cache = '?' + no_cache;
-    }
-    
-	dojo.xhrGet( {
-        url: "[% base %]" + url + no_cache,
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs){
-			if (responseObject.error) {
-				dojo.byId('error-message').innerHTML = responseObject.error;
-	    		dijit.byId('error').show();
-	    		dijit.byId('messages-pane').setContent(originalContent);
-			}
-							
-			refreshPanels(responseObject);
-			
-			if (responseObject.screen_to_load) {
-				dijit.byId('messages-pane').setContent(originalContent);
-			}
-			
-			displayPopupMessages();	
-			
-			if (responseObject.displayDialog) {
-	    		dijit.byId(responseObject.displayDialog).show();
-			}
-			
-			if (responseObject.panel_callbacks) {
-				executeCallbacks(responseObject.panel_callbacks);
-			}
-			
-			dojo.byId('map-outer').style.visibility = 'visible';
-			dojo.byId('messages-pane').style.visibility = 'visible';
-		},
-        
-        error: function(err) {
-        	errorMsg = "An error occurred processing the action. Please <a href=\"[% base %]\">try again</a> or report a bug.";
-        	console.debug(err);
-        	dijit.byId('messages-pane').setContent(errorMsg);
-        },
-
-	    timeout: 15000 // Time in milliseconds	
-    });
-}
-
-function refreshPanels(panelData) {
-	setMessagePanelSize(panelData.message_panel_size);
-
-	if (panelData.panel_messages) {
-		displayMessages(panelData.panel_messages);
-	}
-	
-	if (panelData.screen_to_load) {
-		loadScreen(panelData.screen_to_load);
-	}
-				
-    if (panelData.refresh_panels) {
-		for (var panel in panelData.refresh_panels) {	
-			dijit.byId(panel+'-pane').setContent(panelData.refresh_panels[panel]);
-
-			if (panel == 'party') {
-				createMenus();
-			}
-		}
-	}	
-}
-
-function setPanel(panel, url) {
-	dijit.byId(panel+'-pane').href = url;
-	dijit.byId(panel+'-pane').refresh();
-}
-
-function displayPopupMessages() {
-	if (dojo.trim(dojo.byId('popup-messages-pane').innerHTML)) {
-		show_message(dojo.byId('popup-messages-pane').innerHTML);
-		dojo.byId('popup-messages-pane').innerHTML = '';
-	}
-}
-
-[%# TODO: maybe better with a closure, rather than globals? %]
-var panel_messages;
-var displayCount = 0;	
-function displayMessages(messages_passed) {
-	if (messages_passed) {
-		panel_messages = messages_passed;
-	}
-	
-	if (! panel_messages) {
-		return;
-	}
-	
-	if (panel_messages[displayCount]) {
-		dojo.byId('party-message-text').innerHTML = panel_messages[displayCount];
-		dijit.byId('party-message').show();
-		displayCount++;
-	}
-	else {
-		dijit.byId('party-message').hide();
-		displayCount = 0;
-	}
-}
-
-function executeCallbacks(callBacks) {
-	for (var callIdx in callBacks) {
-		callback = callBacks[callIdx];
-		
-		var callbackName = callback.name + "Callback"
-		window[callbackName](callback.data);		
-	}
-}
-
-var current_size = 'small';
-function setMessagePanelSize(size) {
-	if (size == 'large' && current_size == 'small') {
-		dojo.byId('messages-pane').style.overflow = 'hidden';
-		dojo.animateProperty({
-		  node:"messages-pane",
-		  duration: 400,		  
-		  properties: {
-		      left: 80,
-		      bottom: 80,
-		      top: 80,
-		      right: 80,
-		  }
-		}).play();
-	
-		dojo.byId('messages-pane').style.width = "80%";
-	
-		dojo.byId('messages-pane').style.opacity = "0.9";
-		dojo.byId('messages-pane').style.overflow = 'auto';
-		current_size = 'large';
-	}
-	
-	if (size == 'small' && current_size == 'large') {
-		dojo.byId('messages-pane').style.top = "";
-		dojo.byId('messages-pane').style.right = "";
-		dojo.byId('messages-pane').style.bottom = '20px';
-		dojo.byId('messages-pane').style.left = '20px';
-		dojo.byId('messages-pane').style.opacity = "0.8";
-		dojo.byId('messages-pane').style.width = "auto";
-		current_size = 'small';		
-	}
-	
-} 
-
-function dungeonCallback(data) {
-	var updatedSectors = data.sectors;
-	for (var x in updatedSectors) {
-		for (var y in updatedSectors[x]) {
-			if (updatedSectors[x][y]) {
-				sector = updatedSectors[x][y];
-			
-				var sector_id = "sector_" + x + "_" + y;
-			
-				if (! dojo.byId(sector_id)) {
-					// Create sector
-					newSector = document.createElement("div");
-					newSector.setAttribute('id', sector_id);
-					newSector.style.position = 'absolute';					
-					newSector.style.top = (y - data.boundaries.min_y) * 40;
-					newSector.style.left = (x - data.boundaries.min_x) * 40; 
-					newSector.style.width = '40px';
-					newSector.style.height = '40px';
-					dojo.byId('dungeon_outer').appendChild(newSector); 
-				}
-
-				dojo.byId(sector_id).innerHTML = sector.sector;
-				
-				
-				[%# Create CG descs %]
-				if (dijit.byId('cgtt_' + x + '_' + y)) {
-					[%# Destroy if it used to exist %]
-					dijit.byId('cgtt_' + x + '_' + y).destroyRecursive();
-				}					
-				if (sector.cg_desc) {
-					params = {
-						connectId: [sector_id],
-						label: sector.cg_desc,
-						id: 'cgtt_'+ x + '_' + y
-					};		
-					new dijit.Tooltip(params);
-				}
-				
-				if (dijit.byId('ptt_' + x + '_' + y)) {
-					[%# Destroy if it used to exist %]
-					dijit.byId('ptt_' + x + '_' + y).destroyRecursive();
-				}					
-				if (sector.party_desc) {
-					params = {
-						connectId: [sector_id],
-						label: sector.party_desc,
-						id: 'ptt_' + x + '_' + y
-					};		
-					new dijit.Tooltip(params);				
-				}		
-			}		 
-		}	
-	}
-	
-	dungeonScroll(data.scroll_to); 
-}
-
-function dungeonRefreshCallback(scroll_to) {
-	dungeonScroll(scroll_to); 
-}
-
-function dialogCallback(data) {
-	dojo.byId('dialog-content').innerHTML = data.content;
-	
-	if (data.parse_content) {
-		dojo.parser.parse('dialog-content');
-	}	
-	
-	dijit.byId('dialog').attr('execute', function() { dialogSubmit(data.submit_url) });
-	dijit.byId('dialog').attr('title', data.dialog_title);
-	dijit.byId('dialog').show();
-}
-
-function dialogSubmit(submitUrl) {
-	var form = dijit.byId('dialog').attr('value');
-
-	var submitString = '';
-	for(var prop in form) {
-	    if(form.hasOwnProperty(prop))
-	        submitString += prop + '=' + form[prop] + '&';
-	}
-	
-	getPanels(submitUrl + '?' + submitString);
-}
-
 function init() {
 	var loadPanel = '[% load_panel %]';
 	if (loadPanel) {
@@ -259,8 +22,6 @@ function dungeonScroll(scroll_to) {
 	}
 }
 
-dojo.require("dojo.dnd.Source");
-dojo.require("dijit.Menu");
 dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 	var t = dojo.dnd.manager().target;
 
@@ -501,13 +262,13 @@ function unblockDoor(action) {
 <div id="main-outer" style="position: relative">
 
 	<div id="screen-outer"
-		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; background: black; z-index: 600; top: 10px; left: 10px; position: absolute; display: none">	
+		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; background: black; z-index: 600; top: 10px; position: absolute; display: none">	
 
-		<div id="screen-close" style="float: right;">
+		<div id="screen-close" style="float: right; padding: 2px">
 			<a href="#" onclick="closeScreen()"><span class="close-icon"></span></a>
 		</div>
 		
-		<div id="screen-pane" style="position: relative" dojoType="dojox.layout.ContentPane"></div>
+		<div id="screen-pane" style="" dojoType="dojox.layout.ContentPane"></div>
 	
 	</div>
 

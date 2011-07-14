@@ -158,8 +158,8 @@ sub create : Local {
     my $percent_diff = abs RPG::Maths->precentage_difference($base_price, $sell_price);
     
     if ($sell_price <= 0 || $percent_diff >= $c->config->{trade_max_percentage_difference_in_base_price}) {
-        $c->flash->{error} = "Your sell price is too high or too low!";  
-        $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+        push @{$c->stash->{error}}, "Your sell price is too high or too low!";
+        $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] ); 
         return;
     }
     
@@ -173,20 +173,20 @@ sub create : Local {
         );
         
         if (! $offer_party) {
-            $c->flash->{error} = "The party " . $c->req->param('offer_to') . " does not exist";
-            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            push @{$c->stash->{error}}, "The party " . $c->req->param('offer_to') . " does not exist";
+            $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] ); 
             return;              
         }
         
         if ($offer_party->id == $c->stash->{party}->id) {
-            $c->flash->{error} = "You can't offer to your own party!";
-            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            push @{$c->stash->{error}}, "You can't offer to your own party!";
+            $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] ); 
             return;            
         }
         
         if ($c->stash->{party}->is_suspected_of_coop_with($offer_party)) {
-            $c->flash->{error} = "You can't trade with this party, as you have IP addresses in common";
-            $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' ); 
+            push @{$c->stash->{error}}, "You can't trade with this party, as you have IP addresses in common";
+            $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] ); 
             return;
         }
         
@@ -211,8 +211,7 @@ sub create : Local {
         }
     );
     
-    $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' );
-            
+    $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] );            
 }
 
 sub cancel : Local {
@@ -236,7 +235,7 @@ sub cancel : Local {
     $trade->status('Cancelled');
     $trade->update;
     
-    $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' );
+    $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell']] );
 }
 
 sub purchase : Local {
@@ -255,10 +254,10 @@ sub purchase : Local {
     my $selling_party = $trade->party;
     
     if ($trade->amount > $c->stash->{party}->gold) {        
-        $c->flash->{error} = "You don't have enough gold to buy that item";
+        push @{$c->stash->{error}}, "You don't have enough gold to buy that item";
     }
     elsif ($c->stash->{party}->is_suspected_of_coop_with($selling_party)) {
-        $c->flash->{error} = "You can't trade with this party, as you have IP addresses in common";
+        push @{$c->stash->{error}}, "You can't trade with this party, as you have IP addresses in common";
     }
     else {
         $c->stash->{party}->decrease_gold($trade->amount);
@@ -282,10 +281,11 @@ sub purchase : Local {
             }
         );
         
-        $c->flash->{message} = "Item purchased, and added to " . $character->name . "'s inventory";
+        push @{$c->stash->{error}}, "Item purchased, and added to " . $character->name . "'s inventory";
     }
 
-    $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=buy' );
+
+    $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=buy'], 'party_status'] );
 
 }
 
@@ -304,9 +304,9 @@ sub collect : Local {
     $trade->status('Complete');
     $trade->update;
     
-    $c->flash->{message} = "Gold collected";
+    push @{$c->stash->{error}}, "Gold collected";
     
-    $c->response->redirect( $c->config->{url_root} . '/town/trade?selected=sell' );
+    $c->forward( '/panel/refresh', [[screen => 'town/trade?selected=sell'], 'party_status'] );
 }
 
 1;

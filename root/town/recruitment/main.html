@@ -1,12 +1,6 @@
-[% INCLUDE top.html %]
-
 [% INCLUDE town/recruitment/dialog.html %]
 
 <h2>Recruitment Office</h2>
-
-Party Gold: [% party.gold %]<br><br>
-
-[ <a href="[% base %]">Back To Town</a> ]
 
 [% IF party_full %]
 <br><br>
@@ -40,7 +34,7 @@ The town of [% town.town_name %] has the following characters available for recr
 [% FOREACH character IN town_characters %]
 	<tr>
 		<td>[% character.value %]</td>
-		<td><a href="[% base %]/character/view?character_id=[% character.id %]">[% character.character_name %]</a></td>
+		<td><a href="javascript:loadScreen('character/view?character_id=[% character.id %]')">[% character.character_name %]</a></td>
 		<td>[% character.level %]</td>
 		<td>[% character.xp %]</td>
 		<td>[% character.race.race_name %]</td>
@@ -106,5 +100,3 @@ Or you can sell one of your characters:<br><br></td></tr>
 [% END %]
 
 </table>
-
-[% INCLUDE bottom.html %]

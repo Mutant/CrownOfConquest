@@ -72,7 +72,7 @@ sub buy : Local {
         },
     );
 
-    $c->res->redirect( $c->config->{url_root} . '/town/recruitment' );
+    $c->forward( '/panel/refresh', [[screen => '/town/recruitment'], 'party_status', 'party'] );
 }
 
 sub sell : Local {
@@ -125,8 +125,8 @@ sub sell : Local {
     
     # Rejig party order
     $c->stash->{party}->adjust_order;
-
-    $c->res->redirect( $c->config->{url_root} . '/town/recruitment' );
+    
+    $c->forward( '/panel/refresh', [[screen => '/town/recruitment'], 'party_status', 'party'] );
 }
 
 1;

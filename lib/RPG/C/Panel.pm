@@ -121,12 +121,6 @@ sub find_panel_path : Private {
     confess "Unknown panel: $panel";
 }
 
-sub load_screen : Private {
-    my ($self, $c, $params) = @_;
-    
-       
-}
-
 sub day_logs_check : Private {
 	my ($self, $c) = @_;
 	

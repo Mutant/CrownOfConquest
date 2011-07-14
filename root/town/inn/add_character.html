@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <h3>Add a Character to the Inn of [% town.town_name %]</h3>
 
 [% IF characters.size > 1 %]
@@ -15,7 +13,7 @@
 		<tr>
 		[% INCLUDE party/party_list_char_line.html %]
 		<td align="center">[% town.inn_cost(char) %]</td>
-		<td><a href="?character_id=[% char.id %]">Add to Inn</a></td>
+		<td><a href="javascript:getPanels('town/inn/add_character?character_id=[% char.id %]')">Add to Inn</a></td>
 		</tr>
 	[% END %]
 	
@@ -25,6 +23,4 @@
 [% END %]
 
 <br><br>
-<a href="[% base %]">Back To Town</a>
-
-[% INCLUDE bottom.html %]
+[% INCLUDE town/town_footer.html %]

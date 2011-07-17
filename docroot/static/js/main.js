@@ -355,6 +355,7 @@ function panelLoadCallback(responseObject, ioArgs) {
 	
 	dojo.byId('map-outer').style.visibility = 'visible';
 	dojo.byId('messages-pane').style.visibility = 'visible';
+	dojo.byId('main-loading').style.display = 'none';
 }
 
 function panelErrorCallback(err) {

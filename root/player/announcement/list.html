@@ -2,8 +2,6 @@
 	[% guest = 1 %]
 [% END %]
 
-[% INCLUDE top.html, guest_screen = guest %]
-
 [% UNLESS guest %]
 	[% INCLUDE help/subnav.html %]
 [% END %]
@@ -16,5 +14,3 @@
 	</div>
 	<br>
 [% END %]
-
-[% INCLUDE bottom.html %]

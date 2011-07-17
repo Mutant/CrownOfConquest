@@ -185,28 +185,6 @@ function changeNameDiag(char_name, char_id) {
 	dijit.byId('change-name-diag').show();
 }
 
-function changeName(arguments) {
-	if (! arguments.character_name) {
-		return;
-	}
-	
-	new_name = arguments.character_name;
-	
-	dojo.xhrGet( {
-        url: "[% base %]/character/change_name?new_name=" + arguments.character_name + "&character_id=" + arguments.char_id,
-        handleAs: "json",	
-        load: function(responseObject, ioArgs) {
-        	if (responseObject.error) {
-   	          	dojo.byId('message-text').innerHTML = responseObject.error;
-		      	dijit.byId('message').show();			
-        	}
-        	else {
-        	    dojo.byId('name-header').innerHTML = new_name;
-        	}
-        }
-    });	
-}
-
 function calculateSpellPoints() {
 	inputs = dojo.byId('spells-form').getElementsByTagName('input');
 
@@ -248,6 +226,18 @@ function calculateSpellPoints() {
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 		<button dojoType=dijit.form.Button onclick="dijit.byId('split-diag').hide()">Cancel</button>
 	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name">
+	<form method="POST" action="[% base %]/character/change_name" onSubmit="postPanels(this); return false">
+    Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="new_name">
+    <input id="name-char-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="dijit.byId('change-name-diag').hide()">Cancel</button>
+	</div>
+	</form>
 </div>
 
 <div class="characterStats">

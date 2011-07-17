@@ -609,9 +609,7 @@ sub update_spells : Local {
 		}
 	}
 
-	$c->stash->{selected_tab} = 'spells';
-	$c->forward('/character/view');
-
+    $c->forward( '/panel/refresh', [[screen => 'character/view?selected=spells&character_id=' . $character->id]] );
 }
 
 sub add_stat_point : Local {
@@ -681,8 +679,9 @@ sub change_name : Local {
 			event        => $original_name . " is now known as " . $c->req->param('new_name'),
 		},
 	);
+	
+	$c->forward( '/panel/refresh', [[screen => 'character/view?character_id=' . $character->id], 'party'] );
 
-	$c->res->body( to_json {} );
 }
 
 sub bury : Local {

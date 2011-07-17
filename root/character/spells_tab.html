@@ -18,7 +18,7 @@
 [% IF character.party_id %]
 <h3>Spells To Memorise Tomorrow</h3>
 
-<form method="post" id="spells-form" action="[% base %]/character/update_spells">
+<form method="post" id="spells-form" action="[% base %]/character/update_spells" onSubmit="postPanels(this); return false">
 <input type="hidden" name="character_id" value="[% character.id %]">
 <table class="main" cellpadding="2" cellspacing="0">
 	<tr>

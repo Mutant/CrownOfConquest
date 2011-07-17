@@ -336,6 +336,12 @@ div.enlargedTitle {
 	width: 1100px;
 }
 
+.tundra .dijitContentPaneLoading {
+	background:url(images/layout/loader.gif) no-repeat left center;
+	min-height: 24px;
+	min-width: 24px;
+}
+
 /* Tooltip */
 
 .tundra .dijitTooltipContainer

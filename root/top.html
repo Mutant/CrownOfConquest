@@ -52,11 +52,14 @@ function show_message(message) {
 
 <div style="width: 100%">
 [% IF c.session.player.player_name %]
-	<div class="login-info">
+	<div class="login-info" style="text-align: center">
 		User: <b>[% c.session.player.player_name %]</b> /
 		Party: <b>[% party.name %]</b> /
 		<span id="online-parties" style="text-decoration: underline">[% parties_online.size %] part[% IF parties_online.size > 1 %]ies[% ELSE %]y[% END %] online</span> /
 		<a href="player/logout">Logout</a> 
+		<br>
+		<a href="javascript:getPanels('party/reward_links')">Get More Turns (Free!)</a> /
+		<a href="http://forum.kingdoms-game.com/chat/" target="_new">Web Chat</a>		
 		
 		<div dojoType="dijit.Tooltip" connectId="online-parties" style="display: none">
 		<b>Online Parties</b><br>
@@ -74,7 +77,6 @@ function show_message(message) {
 </div>
 	
 <div id="nav">
-	<div class="line-sep">&nbsp;</div>
 	[% IF admin_screen %]
 		[% INCLUDE admin/left_hand_nav.html %]
 	[% ELSIF guest_screen %]	

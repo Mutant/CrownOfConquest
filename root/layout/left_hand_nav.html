@@ -10,31 +10,11 @@
 		{name => 'landmarks', link => '#', on_click => "conditionalLoad(" _ inPanels _ ", 'map/landmarks')"},
 		{name => 'stats', link => '#' on_click => "loadScreen('leaderboards')"},
 		{name => 'forums', link => c.config.forum_url, target => '_new'},
-		{name => 'tools', use_custom => 1},
+		{name => 'tools', on_click => "getPanels('party/details/options')" link => "#"},
 		{name => 'help', link => base _ 'help'},			
 	];
 %]
 [% image_base = c.config.static_path %]
-
-[% MACRO display_custom_button(name) BLOCK %]
-	[% IF name == 'tools' %]
-	<span dojoType="dijit.form.DropDownButton" class="actionButton">
-		<span style="display: none">
-	    	<img src="[% base %]static/images/layout/menutoolsbutton.png" name="tools" 
-	    		onMouseOver="selectImage('tools')"  onMouseOut="unselectImage('tools')">
-	    </span>
-	    
-		<div dojoType="dijit.Menu" id="toolsMenu" style="display: none;">
-		    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/reward_links')">
-		        Get More Turns (free!)
-		    </div>
-		    <div dojoType="dijit.MenuItem" onClick="conditionalLoad([% inPanels %], 'party/details/options')">
-		        Options
-		    </div>
-		</div>    
-	</span>
-	[% END %]
-[% END %]
 
 <script>
 	images = new Array();
@@ -47,23 +27,15 @@
 [% END %]
 </script>
 
-[% FOREACH image IN menu_images %]
-	[% IF image.use_custom %]
-		[% display_custom_button(image.name) %]
-	[% ELSE %]
-	
-		[% FILTER collapse %]
-		<a href="[% image.link %]" 
+[% FILTER collapse %][% FOREACH image IN menu_images %]<a href="[% image.link %]" 
 			[% IF image.target %]target="[% image.target %]"[% END %]
 			[% IF image.on_click %]onClick="[% image.on_click %]"[% END %]
-		>
-				<img 
-					src="[% image_base %]/images/layout/menu[% image.name %]button.png" 
-					name="[% image.name %]" 
-					border=0
-					onMouseOver="selectImage('[% image.name %]')"
-					onMouseOut="unselectImage('[% image.name %]')"
-				></a>
-		[% END %]
-	[% END %]
-[% END %]
+			style="border: none; margin: none; padding: none"
+		><img 
+			src="[% image_base %]/images/layout/menu[% image.name %]button.png" 
+			name="[% image.name %]" 
+			border=0
+			onMouseOver="selectImage('[% image.name %]')"
+			onMouseOut="unselectImage('[% image.name %]')"
+			style="border: none; margin: none; padding: none"
+		></a>[% END %][% END %]

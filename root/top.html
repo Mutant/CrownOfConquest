@@ -58,7 +58,7 @@ function show_message(message) {
 		<span id="online-parties" style="text-decoration: underline">[% parties_online.size %] part[% IF parties_online.size > 1 %]ies[% ELSE %]y[% END %] online</span> /
 		<a href="player/logout">Logout</a> 
 		<br>
-		<a href="javascript:getPanels('party/reward_links')">Get More Turns (Free!)</a> /
+		<a href="javascript:closeScreen(); getPanels('party/reward_links')">Get More Turns (Free!)</a> /
 		<a href="http://forum.kingdoms-game.com/chat/" target="_new">Web Chat</a>		
 		
 		<div dojoType="dijit.Tooltip" connectId="online-parties" style="display: none">

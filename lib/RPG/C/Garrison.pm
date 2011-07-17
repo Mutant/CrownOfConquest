@@ -122,7 +122,7 @@ sub add : Local {
 	my $messages = $c->forward( '/quest/check_action', [ 'garrison_created', $garrison ] );
 	$c->flash->{message} = $messages->[0] if $messages && @$messages;
 	
-	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $garrison->id );
+	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id], 'messages'] );
 }
 
 sub update : Local {
@@ -187,7 +187,7 @@ sub update : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
-	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id );
+	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id]] );
 	
 }
 
@@ -240,7 +240,7 @@ sub remove : Local {
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];
 		
-		$c->forward('/party/main');
+		$c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] );		
 	}
 }
 
@@ -372,7 +372,7 @@ sub update_orders : Local {
 	$c->stash->{garrison}->attack_parties_from_kingdom($c->req->param('attack_parties_from_kingdom') ? 1 : 0);
 	$c->stash->{garrison}->update;
 	
-	$c->res->redirect( $c->config->{url_root} . 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders' );
+	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders']] );
 }
 
 sub messages_tab : Local {

@@ -1,6 +1,6 @@
 <h3>Garrison Orders</h3>
 
-<form method="post" action="[% base %]garrison/update_orders">
+<form method="post" action="[% base %]garrison/update_orders" onSubmit="postPanels(this); return false">
 <input type="hidden" name="garrison_id" value="[% garrison.id %]">
 <table class="main">
 	<tr id="creature-attack-mode">

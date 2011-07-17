@@ -53,9 +53,9 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% END %]
 [% END %]
 [% IF can_build_garrison %]
-	| <a href="[% base %]/garrison/create">Create a Garrison</a>
+	| <a href="javascript:loadScreen('garrison/create')">Create a Garrison</a>
 [% ELSIF garrison.party_id == party.id %]
-	| <a href="[% base %]/garrison/manage?garrison_id=[% garrison.id %]">Manage Garrison</a>
+	| <a href="javascript:loadScreen('garrison/manage?garrison_id=[% garrison.id %]')">Manage Garrison</a>
 [% END %]
 [% IF !garrison || garrison.party_id == party.id %]
 	[% IF can_build_building %]

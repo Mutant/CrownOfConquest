@@ -1,4 +1,3 @@
-[% INCLUDE top.html %]
 [% INCLUDE garrison/garrison_common.html %]
 
 <script type="text/javascript">
@@ -77,7 +76,7 @@ function confirmRemoveGarrison() {
 
 function removeGarrison() {
 	changes=false;
-	document.location='[% base %]garrison/remove?garrison_id=[% garrison.id %]';
+	getPanels('garrison/remove?garrison_id=[% garrison.id %]');
 }
 
 function changeName(arguments) {
@@ -122,7 +121,7 @@ function changeName(arguments) {
 	Other Garrisons:
 	[% FOREACH other_garrison IN party_garrisons %]
 		[% IF other_garrison.id != garrison.id %]
-			<a href="[% base %]garrison/manage?garrison_id=[% other_garrison.id %]">[% other_garrison.display_name(1) %]</a>
+			<a href="javascript:loadScreen('garrison/manage?garrison_id=[% other_garrison.id %]')">[% other_garrison.display_name(1) %]</a>
 		[% ELSE %]
 			[% other_garrison.display_name(1) %]
 		[% END %]
@@ -132,7 +131,7 @@ function changeName(arguments) {
 
 <br><br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
      <div dojoType="dojox.layout.ContentPane" title="Characters" 
     	href="[% base %]garrison/character_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'garrison' %]selected="true"[% END %]>    
@@ -158,5 +157,3 @@ function changeName(arguments) {
     	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
     </div>
 </div>
-
-[% INCLUDE bottom.html %]

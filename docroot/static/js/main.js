@@ -369,7 +369,12 @@ function refreshPanels(panelData) {
 	}
 	
 	if (panelData.screen_to_load) {
-		loadScreen(panelData.screen_to_load);
+		if (panelData.screen_to_load == 'close') {
+			closeScreen();
+		}
+		else {
+			loadScreen(panelData.screen_to_load);
+		}
 	}
 	
 	var messagesLoaded = false;

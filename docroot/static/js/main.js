@@ -599,4 +599,50 @@ function selectImage(name){
     return true;
 }
 
+/* Character */
+function createCharacterMenu(characters) {	
+	var types = ['in_party', 'garrison', 'mayor', 'other'];
+
+	var menu = new dijit.Menu({});
+
+	dojo.forEach(types, function(type){
+
+		if (characters[type]) {	
+			var subMenu = new dijit.Menu();
+			menu.addChild(new dijit.MenuItem({
+				label: type,
+				popup: subMenu
+			}));
+
+			dojo.forEach(characters[type], function(char){
+				subMenu.addChild(new dijit.MenuItem({
+					label: char.name,
+					onClick: dojo.partial('loadScreen', 'character/view?character_id=' + char.id)
+				}));
+			});
+		}	
+	});
+
+    var params = {
+		label: 'Other Characters',
+        dropDown: menu,
+		id: "progButton"
+    };
+
+    var button = new dijit.form.DropDownButton(params);
+    
+    dojo.byId("other-char-button").appendChild(button.domNode);
+}
+
+var displayed;
+function displayCharList(display) {
+	if (displayed) {
+		dojo.byId('character-list-' + displayed).style.display = 'none';
+		dojo.byId('character-list-link-' + displayed).style.background = 'none';
+	}
+	dojo.byId('character-list-' + display).style.display = 'inline';
+	dojo.byId('character-list-link-' + display).style.background = '#6C6FB5';
+	displayed = display;
+}
+
 	

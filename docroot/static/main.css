@@ -235,6 +235,12 @@ h1 {margin: 0; padding: 1px}
 	color: black;
 }
 
+/* Character View */
+.characterStats {
+	font-size: 8pt;
+	font-family: verdana, kalimati, helvetica;
+}
+
 /* Action buttons */
 .actionButton .dijitButtonNode {
     border-width: 0px;

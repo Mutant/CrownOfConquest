@@ -1,10 +1,4 @@
 <script type="text/javascript">
-	dojo.require("dojo.dnd.Source");
-	dojo.require("dijit.Tooltip");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("rpg.dnd.Target");
-	dojo.require("dijit.form.NumberTextBox");	
-    
     function init() {	
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
@@ -18,8 +12,10 @@
 			
 			if (target_type == 'equip_place') {
 				equip_item(target_id, item_id);
-			}		
+			}
 		});
+
+		displayCharList('[% group %]');
 	}
 	
 	function equip_item(equip_place, item_id) {
@@ -254,6 +250,8 @@ function calculateSpellPoints() {
 	</div>
 </div>
 
+<div class="characterStats">
+
 <img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %].png" style="float: left">
 
 <h1><span id="name-header">[% character.character_name %]</span> 
@@ -264,46 +262,52 @@ function calculateSpellPoints() {
 	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a><br><br>
 [% END %]
 
-<b>[% IF character.party_id %]Party[% ELSE %]Other Characters Available to Recruit[% END %]:</b>
+<div id="other-chars" style="margin-bottom: 3px">
 
-[% MACRO character_links(characters) BLOCK %]
+[% IF ! character.party_id %]<b>Other Characters Available to Recruit</b>[% END %]
+
+[% MACRO character_links(type, characters) BLOCK %]
+	<span id="character-list-[% type %]" style="display: none;">
 	[% FOREACH other_character IN characters %]
 		[% IF other_character.id == character.id %]
-			[% other_character.character_name %]
+			[% other_character.name %]
 		[% ELSE %]
 			[% FILTER collapse %]
 				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
-					[% other_character.character_name %]</a>
+					[% other_character.name %]</a>
 			[% END %]
 		[% END %]
 		&nbsp;
 	[% END %]
+	</span>
 [% END %]
 
-[% character_links(characters) %]
-[% IF garrison_characters.0 %]	
-	<br style="clear: right">
-	<b>Garrison Characters</b>:
-	[% character_links(garrison_characters) %]
+[%# Two passes due to order... could be fixed.. %]
+[% types = ['party', 'garrisons', 'mayors', 'others'] %]
+<span id="other-char-links" 
+	style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
+		background: #5F5F5F;">
+[% FOREACH type IN types %]
+	[% IF character_list.$type.size > 0 %]
+		<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+	[% END %]
 [% END %]
-[% IF mayor_characters.0 %]
-	<br style="clear: right">
-	<b>Mayors</b>:
-	[% character_links(mayor_characters) %]
+</span>
+
+[% FOREACH type IN types %]
+	[% IF character_list.$type.size > 0 %]
+		[% character_links(type, character_list.$type) %]
+	[% END %]
 [% END %]
-[% IF other_characters.0 %]
-	<br style="clear: right">
-	<b>Others</b>:
-	[% character_links(other_characters) %]
-[% END %]
-<br><br>
+
+</div>
 
 <div dojoType="dijit.layout.ContentPane" href="[% base %]/character/stats?character_id=[% character.id %]" 
-	id="stats-panel" loadingMessage=""></div>
+	id="stats-panel" loadingMessage="" class="characterStats"></div>
 
-<br>
+</div>
 
-<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
     	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    

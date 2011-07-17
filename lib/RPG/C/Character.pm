@@ -36,41 +36,22 @@ sub view : Local {
 
 	my $character = $c->stash->{character};
 
-	my @characters;
-	my @garrison_characters;
-	my @mayor_characters;
-	my @other_characters;
-	if ( $character->party_id ) {
-		@characters          = $c->stash->{party}->characters;
-		@garrison_characters = $c->model('DBIC::Character')->search(
-			{
-				party_id    => $c->stash->{party}->id,
-				garrison_id => { '!=', undef },
-			}
-		);
-		
-		@mayor_characters = $c->model('DBIC::Character')->search(
-			{
-				party_id    => $c->stash->{party}->id,
-				mayor_of => { '!=', undef },
-			}
-		);
-		
-		@other_characters = $c->model('DBIC::Character')->search(
-			{
-				party_id    => $c->stash->{party}->id,
-				status => { '!=', undef },
-			}
-		);
-	}
-	else {
-		@characters = $c->stash->{party_location}->town->characters;
-	}
-	
+    my %chars_by_type;
+ 	if ( $character->party_id ) {
+        %chars_by_type = $self->gen_character_list($c);
+ 	}
+ 	else {
+		#@characters = $c->stash->{party_location}->town->characters;
+ 	}
 	my $can_buy = 0;
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
 	   $can_buy = 1; 	          
 	}
+	
+	my $group = 'party';
+	$group = 'mayors' if $character->mayor_of;
+	$group = 'garrisons' if $character->garrison_id;
+	$group = 'others' if $character->status;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -79,17 +60,46 @@ sub view : Local {
 				template => 'character/view.html',
 				params   => {
 					character           => $character,
-					characters          => \@characters,
-					garrison_characters => \@garrison_characters,
-					mayor_characters    => \@mayor_characters,
-					other_characters    => \@other_characters,			
+					character_list      => \%chars_by_type,
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 					can_buy => $can_buy,
+					group => $group,
 				}
 			}
 		]
 	);
+}
+
+# Generate a data structure with the party's characters for the 'jump to' menu 
+sub gen_character_list {
+    my ( $self, $c ) = @_;
+    
+    my %chars_by_type;
+    
+ 	$chars_by_type{party} = [map { {name => $_->character_name, id => $_->id} } $c->stash->{party}->characters];
+	$chars_by_type{garrisons} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
+		{
+			party_id    => $c->stash->{party}->id,
+			garrison_id => { '!=', undef },
+		}
+	)];
+	
+	$chars_by_type{mayors} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
+		{
+			party_id    => $c->stash->{party}->id,
+			mayor_of => { '!=', undef },
+		}
+	)];
+	
+	$chars_by_type{others} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
+		{
+			party_id    => $c->stash->{party}->id,
+			status => { '!=', undef },
+		}
+	)];
+	
+	return %chars_by_type;    
 }
 
 sub stats : Local {

@@ -1,6 +1,6 @@
 <b>Status:</b> [% character.status_description %]<br> 
 
-<table class="main" style="float:left">
+<table class="characterStats" style="float:left">
 	<tr>
 		<td class="stat-label">Race:</td>
     	<td>[% character.race.race_name %]</td>
@@ -29,7 +29,7 @@
 
 <div style="width: 20px; float:left">&nbsp;</div>
 
-<table class="main" style="float:left">
+<table class="characterStats" style="float:left">
 	[% FOREACH stat IN ['strength', 'intelligence', 'agility', 'divinity', 'constitution'] %]
 	<tr>
 	    <td class="stat-label">[% stat | ucfirst %]:</span></td>
@@ -56,7 +56,7 @@
 
 <div style="width: 20px; float:left">&nbsp;</div>
 
-<table class="main" style="float:left">
+<table class="characterStats" style="float:left">
 	<tr>
 	    <td class="stat-label">Hit Points:</td>
 	    <td nowrap>[% character.hit_points %] / [% character.max_hit_points %]</td>

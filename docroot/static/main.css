@@ -135,10 +135,14 @@ h1 {margin: 0; padding: 1px}
 }
 
 .close-icon {
-	background-image: url(/static/images/tmp_close.png); 
-	height: 15px;
-	width: 15px;
+	background-image: url(/static/images/layout/closebutton.png);
+	height: 17px;
+	width: 17px;
 	float: right;
+}
+
+.close-icon:hover {
+	background-image: url(/static/images/layout/closebuttonpressed.png);
 }
 
 /* DnD */

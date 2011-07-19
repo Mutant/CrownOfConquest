@@ -5,7 +5,7 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 <br>
 <br>
 
-<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/update_guards" method="POST">
+<form action="[% base %]/town/mayor/update_guards" method="POST" onSubmit="postPanels(this); return false">
 <input type="hidden" name="town_id" value="[% town_id %]">
 
 <table class="main" cellpadding="2">
@@ -51,4 +51,4 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
 	Update
 </button>
-</div>
+</form>

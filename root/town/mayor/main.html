@@ -1,15 +1,7 @@
-[% INCLUDE top.html %]
-
 [% PROCESS town/mayor/display_approval.html %]
 
 <script>
-    dojo.require("dijit.form.Form");
-    dojo.require("dijit.form.Button");
-	dojo.require("dijit.form.NumberTextBox");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.layout.ContentPane");
-	dojo.require("dijit.form.FilteringSelect");
-	
+
 function changeGold(townGoldInput) {
 	dojo.xhrGet( {
         url: "[% base %]/town/mayor/change_gold?town_id=[% town.id %]&town_gold=" + townGoldInput.value, 
@@ -60,7 +52,7 @@ function confirmChangeMayor() {
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-reliquish-mayorlty" style="display: none" title="Relinquish Mayoralty?">
-	<form method="POST" action="[% base %]town/mayor/relinquish">
+	<form method="POST" action="[% base %]town/mayor/relinquish" onSubmit="postPanels(this); return false">
 	<input type="hidden" name="town_id" value="[% town.id %]">
 	Are you sure you want to give up the mayoralty of [% town.town_name %]?<br>
         
@@ -72,7 +64,7 @@ function confirmChangeMayor() {
 </div>
 
 <div dojoType="dijit.Dialog" id="select-new-mayor" style="display: none" title="Change Mayor?">
-	<form method="POST" action="[% base %]town/mayor/change">
+	<form method="POST" action="[% base %]town/mayor/change" onSubmit="postPanels(this); return false">
 	<input type="hidden" name="town_id" value="[% town.id %]">
 	Select a character to become mayor of [% town.town_name %]:<br>
 	<select name="character_id" dojoType="dijit.form.FilteringSelect">
@@ -93,9 +85,7 @@ function confirmChangeMayor() {
 
 <h2>[% town.town_name %] Mayor's Office</h2>
 
-[% IF party_in_town %]
-	<a href="[% base %]">Back To Town</a><br><br>
-[% ELSIF mayors.size > 1 %]
+[% IF ! party_in_town && mayors.size > 1 %]
 	[% FOREACH mayor IN mayors %]
 		<a href="[% base %]town/mayor?town_id=[% mayor.mayor_of %]">[% mayor.name %]</a>
 		[% IF ! loop.last %] |[% END %]
@@ -121,7 +111,7 @@ function confirmChangeMayor() {
 
 Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">	
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">	
 
 <div dojoType="dijit.layout.ContentPane" title="Mayor" href="[% base %]/town/mayor/select?town_id=[% town.id %]" [% IF tab == 'mayor' %]selected=true[% END %]></div>
 
@@ -143,4 +133,4 @@ Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 
 <div dojoType="dijit.layout.ContentPane" title="News" href="[% base %]/town/mayor/news?town_id=[% town.id %]" [% IF tab == 'news' %]selected=true[% END %]></div>
 
-[% INCLUDE bottom.html %]
+</div>

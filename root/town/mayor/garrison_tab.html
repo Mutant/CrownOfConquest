@@ -13,7 +13,7 @@ Any characters garrisoned in the town will fight alongside the mayor. You can ga
 
 <br><br>
 
-<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/set_character_heal_budget" method="POST">
+<form action="[% base %]/town/mayor/set_character_heal_budget" method="POST" onSubmit="postPanels(this); return false">
 <input type="hidden" name="town_id" value="[% town.id %]">
 You can set a budget to have characters (including the mayor) automatically healed. This will be taken out of the town coffers, up to the maximum you specify
 below. Each night, any dead characters (<i>not</i> including the mayor) will also be resurrected. 
@@ -25,7 +25,7 @@ Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="cha
 <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
 	Update
 </button>				
-</div>
+</form>
 
 <br><br>
 
@@ -49,7 +49,7 @@ Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="cha
 			</select>
 		</td>		
 		[% IF ! party.is_full && party_in_sector %]
-			<td><a href="[% base %]town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Remove</a></td>
+			<td><a href="javascript:getPanels('town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Remove</a></td>
 		[% END %]
 		</tr>		
 	[% END %]
@@ -77,7 +77,7 @@ Add characters to garrison:
 		<tr>
 		[% INCLUDE party/party_list_char_line.html %]
 		[% IF ! last_character && ! garrison_full %]
-			<td><a href="[% base %]town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]">Add</a></td>
+			<td><a href="javascript:getPanels('town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Add</a></td>
 		[% END %]
 		</tr>		
 	[% END %]

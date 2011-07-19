@@ -3,7 +3,7 @@
 You can change tax settings once per day. [% IF town.tax_modified_today %]You've already changed the tax settings today.[% END %]
 
 [% UNLESS town.tax_modified_today %]
-<div dojoType="dijit.form.Form" action="[% base %]/town/mayor/update" method="POST">
+<form action="[% base %]/town/mayor/update" method="POST" onSubmit="postPanels(this); return false">
 [% END %]
 
 <input type="hidden" name="town_id" value="[% town.id %]">
@@ -70,7 +70,7 @@ You can change tax settings once per day. [% IF town.tax_modified_today %]You've
 	Submit
 </button>
 
-</div>
+</form>
 [% END %]
 
 <div dojoType="dijit.layout.ContentPane" id="party-tax-preview" href="[% base %]/town/mayor/party_tax_preview?town_id=[% town_id %]"></div>

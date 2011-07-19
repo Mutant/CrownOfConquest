@@ -66,6 +66,8 @@ sub refresh_messages : Local {
 
 sub sector_menu : Private {
 	my ( $self, $c ) = @_;
+		
+	$c->stash->{message_panel_size} = 'small';
 
 	my $creature_group = $c->stash->{creature_group};
 

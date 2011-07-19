@@ -109,15 +109,11 @@ sub relinquish : Local {
     
     my $mayor = $c->stash->{town}->mayor;
     $mayor->lose_mayoralty(0);
+
+    $c->stash->{panel_messages} = "Mayor removed";
     
-    my $redirect_url = $c->config->{url_root}; 
-    if (! $c->stash->{in_town}) {
-        $redirect_url .= '/party/details?tab=mayors';
-    }
+    $c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] );
     
-    $c->flash->{messages} = "Mayor removed";
-    
-    $c->response->redirect( $redirect_url );    
 }
 
 sub change : Local {
@@ -168,7 +164,7 @@ sub change : Local {
    		}
    	);
    	
-   	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=mayor');		
+   	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=mayor'], 'party'] );		
 	  
 }
 
@@ -184,7 +180,7 @@ sub update : Local {
 	$c->stash->{town}->tax_modified_today(1);
 	$c->stash->{town}->update;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=tax');
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=tax']] );
 }
 
 sub guards : Local {
@@ -279,7 +275,7 @@ sub update_guards : Local {
 		$hired->update;		
 	}
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards' );
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
 }
 
 sub balance_sheet : Local {
@@ -435,7 +431,7 @@ sub schedule_election : Local {
 	
 	my $election = $c->model('DBIC::Election')->schedule( $town, $c->req->param('election_day') );
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections' );	
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections']] );
 }
 
 sub garrison : Local {
@@ -503,8 +499,8 @@ sub add_to_garrison : Local {
 	$character->update;
 	
 	$c->stash->{party}->adjust_order;
-	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
+		
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }
 
 sub remove_from_garrison : Local {
@@ -535,7 +531,7 @@ sub remove_from_garrison : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }
 
 sub advisor : Local {
@@ -579,7 +575,7 @@ sub update_advisor_fee : Local {
 	$town->advisor_fee($c->req->param('advisor_fee'));
 	$town->update;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=advisor' );
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=advisor']] );
 		
 }
 
@@ -657,8 +653,7 @@ sub change_allegiance : Local {
 	my $messages = $c->forward( '/quest/check_action', [ 'changed_town_allegiance', $town ] );
 	# TODO: messages go no where at the moment
     
-    $c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=kingdom' );
-       
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=kingdom']] );       
 }
 
 sub set_character_heal_budget : Local {
@@ -667,7 +662,7 @@ sub set_character_heal_budget : Local {
 	$c->stash->{town}->character_heal_budget($c->req->param('character_heal_budget'));
 	$c->stash->{town}->update;
 	
-	$c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison' );    
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison']] );    
 }
 
 sub combat_log : Local {

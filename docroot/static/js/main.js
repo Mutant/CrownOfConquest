@@ -18,6 +18,8 @@ dojo.require('dijit.Tooltip');
 dojo.require("dojo.dnd.Source");
 dojo.require("dijit.form.NumberSpinner");
 dojo.require("rpg.dnd.Target");
+dojo.require("dijit.form.Form");
+
 
 /* Map Movement */
 

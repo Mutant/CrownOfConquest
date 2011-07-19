@@ -2,7 +2,7 @@
 
 See records for day: <a href="[% base %]/town/mayor?tab=balance_sheet&town_id=[% town_id %]">Today</a>&nbsp;
 [% FOREACH recent_day IN recent_days %]
-	<a href="[% base %]town/mayor?tab=balance_sheet&day_id=[% recent_day.day_id %]&town_id=[% town_id %]">[% recent_day.day_number %]</a>&nbsp;
+	<a href="javascript:loadScreen('town/mayor?tab=balance_sheet&day_id=[% recent_day.day_id %]&town_id=[% town_id %]')">[% recent_day.day_number %]</a>&nbsp;
 [% END %]
 <br><br>
 

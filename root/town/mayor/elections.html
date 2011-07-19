@@ -1,7 +1,7 @@
 [% IF current_election %]
 The next election is scheduled for day [% current_election.scheduled_day %].
 [% ELSE %]
-<form method="POST" action="[% base %]town/mayor/schedule_election">
+<form method="POST" action="[% base %]town/mayor/schedule_election" onSubmit="postPanels(this); return false">
 <input type="hidden" name="town_id" value="[% town_id %]">
 Schedule an election in: 
 	<select name="election_day">

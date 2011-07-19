@@ -360,11 +360,14 @@ div.enlargedTitle {
         -webkit-border-radius: 10px;
         -khtml-border-radius: 10px;
         border-radius: 10px;
-	-moz-box-shadow: 0px;
-	-webkit-box-shadow: 0px;
-        box-shadow: 0px;
-
+	-moz-box-shadow: 3px 3px 1px #6B6B6B;
+        box-shadow: 3px 3px 1px #6B6B6B;
 }
+
+.dj_webkit .tundra .dijitTooltipContainer {
+	-webkit-box-shadow: 3px 3px 1px #6B6B6B;
+}
+
 
 
 .tundra .dijitTooltipAbove .dijitTooltipConnector { display:none; }

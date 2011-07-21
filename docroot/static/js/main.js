@@ -296,7 +296,7 @@ function loadNewSectors(sectorsAdded) {
 			newSector.appendChild(herecircle);				
 		},
 
-	    timeout: 15000	
+	    timeout: 45000	
     });    
 }
 

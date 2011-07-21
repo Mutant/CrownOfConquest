@@ -104,6 +104,7 @@ a:visited {
 
 #body {
         background-color: black;
+	background: url(images/bgtexturegreydark.png);
         color: white;
 }
 

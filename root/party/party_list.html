@@ -372,16 +372,16 @@ function createButton(menu, name, characterId) {
 	accept="character"
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]"
-	style="margin-bottom: 5px; height: 50px; width: 90%;"
+	style="margin-bottom: 3px; height: 56px; width: 90%;"
 >	
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
-		<span style="height: 96%;float: left; border: 1px solid grey; margin-right: 1px">
+		<span style="height: 96%; float: left; margin-right: 1px">
 		<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" 
 			title="[% char.race.race_name %] [% char.class.class_name %]">
 		</span>
 		
-		<div style="width: 3px; height: 100%; float: left; margin-right: 2px; position: relative" 
+		<div style="width: 3px; height: 100%; float: left; margin-right: 1px; position: relative" 
 			title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
 			[% INCLUDE combat/hp_bar.html being=char %]
 		</div>

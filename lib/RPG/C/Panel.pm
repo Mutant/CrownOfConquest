@@ -8,16 +8,20 @@ use Data::Dumper;
 use JSON;
 use Carp;
 use List::MoreUtils qw(uniq);
+use DateTime;
 
 my %PANEL_PATHS = (
 	party => '/party/list',
 	party_status => '/party/status',
 	zoom => '/party/zoom',
 	creatures => '/combat/display_cg',
+	mini_map => '/map/kingdom',
 );
 
 sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
+	
+	$c->forward('check_for_mini_map_refresh');
 			
 	@panels_to_refresh = uniq ( @panels_to_refresh, @{ $c->stash->{refresh_panels} }, @{ $c->flash->{refresh_panels} } )
 		if ($c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY') ||
@@ -35,8 +39,8 @@ sub refresh : Private {
 	
 	if ($c->stash->{dialog_to_display}) {
 		$response{displayDialog} = $c->stash->{dialog_to_display};
-	}	
-
+	}
+	
 	foreach my $panel (@panels_to_refresh) {
 		unless (ref $panel eq 'ARRAY') {
 			if ($panel eq 'messages') {
@@ -246,6 +250,18 @@ sub refresh_with_template : Private {
     $params->{panels_to_refresh} //= [];
 
 	$c->forward('/panel/refresh', $params->{panels_to_refresh});
+}
+
+# Refresh the mini_map every n minutes
+sub check_for_mini_map_refresh : Private {
+    my ($self, $c) = @_;
+    
+    $c->session->{last_mini_map_refresh} //= DateTime->now();
+        
+    if (DateTime->compare(DateTime->now->subtract('minutes' => 5), $c->session->{last_mini_map_refresh}) == 1) {
+        push @{$c->stash->{refresh_panels}}, 'mini_map';
+        $c->session->{last_mini_map_refresh} = DateTime->now();
+    }
 }
 
 1;

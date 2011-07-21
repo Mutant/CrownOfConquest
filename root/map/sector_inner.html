@@ -1,7 +1,7 @@
 [% FILTER collapse %]	
     [% IF click_to_move %]
     	[% event = '' %]
-    	[% IF ! position.next_to_centre %]
+    	[% IF ! clickable || ! position.next_to_centre %]
     		[% event = 'onClick="return false" style="cursor: default"' %]
     	[% END %]
 

@@ -610,4 +610,67 @@ function displayCharList(display) {
 	displayed = display;
 }
 
+/* Mini-map */
+
+function refreshMap(x,y,zoom_level) {
+	getPanels('map/search?x=' + x + '&y=' + y);
+}
+
+var boxedCoords = [];
+function setMapBoxCallback(mapBoxCoords) {
+	for (i = 0; i <= boxedCoords.length; i++) {		
+		old = boxedCoords[i];
+		if (old) {
+			dojo.byId(old.sector).style.background = old.color;
+		}
+	}
+	
+	boxedCoords = [];
+	
+	var top_x = parseInt(mapBoxCoords.top_x);
+	var top_y = parseInt(mapBoxCoords.top_y);
+	var bottom_x = (parseInt(mapBoxCoords.top_x)+parseInt(mapBoxCoords.x_size));		
+	var bottom_y = (parseInt(mapBoxCoords.top_y)+parseInt(mapBoxCoords.y_size));
+	
+	for (x = 0; x <= mapBoxCoords.x_size; x++) {
+		for (y = 0; y <= mapBoxCoords.y_size; y++) {
+			var sec_x = x+top_x;
+			var sec_y = y+top_y;
+		
+			if ((sec_x != mapBoxCoords.top_x && sec_x != bottom_x) && (sec_y != mapBoxCoords.top_y && sec_y != bottom_y)) {					
+				continue;   
+			}
+
+			var sector = dojo.byId('k-' + sec_x + '-' + sec_y);
+			if (sector) {
+				boxedCoords.push(
+					{
+						sector: 'k-' + sec_x + '-' + sec_y,
+						color: sector.style.background
+					}
+				);
+
+				sector.style.background = 'red';
+			}
+		}
+	}
+}
+
+var kingdomMapHidden = false;
+function hideKingdomMap() {
+	dojo.byId('kingdom-map-table').style.display = 'none';
+	dojo.byId('hide-kingdom-map-link').style.display = 'none';
+	dojo.byId('show-kingdom-map-link').style.display = 'inline';
+	dojo.byId('kingdom-map').style.height = '30px';
+	kingdomMapHidden = true;
+}
+
+function showKingdomMap() {
+	dojo.byId('kingdom-map-table').style.display = 'block';
+	dojo.byId('hide-kingdom-map-link').style.display = 'inline';
+	dojo.byId('show-kingdom-map-link').style.display = 'none';
+	dojo.byId('kingdom-map').style.height = '230px';
+	kingdomMapHidden = false;
+}
+
 	

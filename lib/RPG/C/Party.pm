@@ -23,7 +23,7 @@ sub main : Local {
 
     my $load_panel = $c->req->param('panel');
 
-    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures' ];
+    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map' ];
     
     if (! $load_panel) { 
         $load_panel = 'party/init';
@@ -52,7 +52,7 @@ sub init : Local {
 
 	if (! $c->flash->{refresh_panels}) {
         # Protect against flash not getting read properly
-        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages'];
+        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map'];
 	}
         
 	$c->forward( '/panel/refresh' );   

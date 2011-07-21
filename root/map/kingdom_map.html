@@ -1,4 +1,4 @@
-<table border=0 cellspacing="0" cellpadding="0" id="kingdom-map-table"><tr>
+<table border=0 cellspacing="0" cellpadding="0" id="kingdom-map-table" style="cursor: pointer"><tr>
 
 [% last_y = 1 %]
 [% WHILE (sector = land_rs.next) ~%]
@@ -17,6 +17,7 @@
 	<em>Kingdom Map</em><br>
 	<span id="hide-kingdom-map-link"><a href="javascript:hideKingdomMap()">Hide</a></span>
 	<span id="show-kingdom-map-link" style="display: none"><a href="javascript:showKingdomMap()">Show</a></span>
+	<a href="javascript:getPanels('map/center')">Center On Party</a>
 </div>
 	
 

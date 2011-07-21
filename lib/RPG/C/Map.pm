@@ -8,6 +8,7 @@ use Data::Dumper;
 use JSON;
 use Carp;
 use Math::Round qw(round);
+use File::Slurp qw(read_file);
 
 use RPG::Schema::Land;
 use RPG::Map;
@@ -25,12 +26,51 @@ sub auto : Private {
    return 1; 
 }
 
-sub view : Private {
+sub search : Local {
     my ( $self, $c ) = @_;
-
-    my $party_location = $c->stash->{party_location};
     
-    $c->stash->{party}->discover_sectors($party_location);
+    my $loc = $c->model('DBIC::Land')->find(
+        {
+            x => $c->req->param('x'),
+            y => $c->req->param('y'),
+        }
+    );
+    
+    croak "Location not found" unless $loc; 
+    
+    my $map = $c->forward('view', [$loc]);
+        
+    push @{ $c->stash->{refresh_panels} }, [ 'map', $map ];
+    
+    $c->forward('/panel/refresh');
+} 
+
+sub center : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->stash->{refresh_panels} = ['map'];
+    
+    $c->forward('/panel/refresh');    
+}
+
+sub view : Private {
+    my ( $self, $c, $loc ) = @_;
+
+    if (ref $loc ne 'RPG::Model::DBIC::Land') {
+        # Happens with weird forwarding magic
+        undef $loc;
+    }
+   
+    my $party_loc = 0;
+    
+    if (! $loc) {
+        $loc = $c->stash->{party_location};
+        
+        $c->stash->{party}->discover_sectors($loc);
+        
+        $party_loc = 1;
+        
+    }
     
     $c->session->{zoom_level} ||= 2;
     my $zoom_level = $c->session->{zoom_level};
@@ -38,15 +78,18 @@ sub view : Private {
     my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
     
     my $grid_params =
-        $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $party_location->x, $party_location->y, ], );
+        $c->forward( 'generate_grid', [ $x_grid_size, $y_grid_size, $loc->x, $loc->y, ], );
 
     $grid_params->{click_to_move} = 1;
     $grid_params->{x_size}        = $x_grid_size;
     $grid_params->{y_size}        = $y_grid_size;
     $grid_params->{grid_size}     = $x_grid_size;
     $grid_params->{zoom_level}    = $zoom_level;
+    $grid_params->{clickable}      = $party_loc ? 1 : 0;
+    
+    $c->forward('set_map_box_coords', [$loc]);
 
-    $c->forward( 'render_grid', [ $grid_params, ] );
+    return $c->forward( 'render_grid', [ $grid_params, ] );
 }
 
 sub grid_sizes {
@@ -87,6 +130,36 @@ sub landmarks : Local {
             }
         ]
     );
+}
+
+sub set_map_box_coords : Private {
+    my ( $self, $c, $loc ) = @_;  
+    
+    my $zoom_level = $c->req->param('zoom_level') || $c->session->{zoom_level} || 2;
+    
+    my $x_size = $zoom_level * 12 + 1;
+    my $y_size = $zoom_level * 9 + 1;
+    $x_size-- if $zoom_level % 2 == 1;    # Odd numbers cause us problems
+        
+    my @coords = RPG::Map->surrounds(
+        $loc->x,
+        $loc->y,
+        $x_size,
+        $y_size,        
+    );    
+    
+    my ($top_x, $top_y) = ($coords[0]->{x}, $coords[0]->{y});
+    
+    push @{$c->stash->{panel_callbacks}},
+	{
+    	name => 'setMapBox',
+    	data => {
+            'x_size' => int $x_size,
+            'y_size' => int $y_size,
+            'top_x' => int $top_x,
+            'top_y' => int $top_y,
+        },
+	};
 }
 
 sub party_inner : Local {
@@ -443,26 +516,27 @@ sub move_to : Local {
         
         my ($x_grid_size, $y_grid_size) = $self->grid_sizes($c);
         
-        $c->stash->{panel_callbacks} = [
-        	{
-            	name => 'shiftMap',
-            	data => {
-            	    'xShift' => $new_land->x - $old_sector->x,
-            	    'yShift' => $new_land->y - $old_sector->y,
-            	    'newSector' => {
-            	        x => $new_land->x,
-            	        y => $new_land->y,
-            	    },
-            	    'xGridSize' => $x_grid_size,
-            	    'yGridSize' => $y_grid_size,
-            	    'mapDimensions' => $c->session->{map_dimensions},
-            	},
-        	}
-        ];
+        push @{$c->stash->{panel_callbacks}},
+    	{
+        	name => 'shiftMap',
+        	data => {
+        	    'xShift' => $new_land->x - $old_sector->x,
+        	    'yShift' => $new_land->y - $old_sector->y,
+        	    'newSector' => {
+        	        x => $new_land->x,
+        	        y => $new_land->y,
+        	    },
+        	    'xGridSize' => $x_grid_size,
+        	    'yGridSize' => $y_grid_size,
+        	    'mapDimensions' => $c->session->{map_dimensions},
+        	},
+    	};
         
         push @{ $c->session->{discovered} }, [$new_land->x.','.$new_land->y] if $params->{refresh_current};
         
         $c->stats->profile("Created callback");
+        
+        $c->forward('set_map_box_coords', [$new_land]);
     }
     
     $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'creatures' ] );
@@ -681,30 +755,14 @@ sub can_move_to_sector : Private {
 
 sub kingdom : Local {
     my ($self, $c) = @_;
+
+    my $file = $c->config->{home} . '/root/minimap/kingdoms.html';    
+
+    return unless -f $file;
     
-    my $land_rs = $c->model('DBIC::Land')->search(
-        {},
-        {
-            prefetch => 'kingdom',
-            order_by => ['y','x'],
-        }
-    );
+    my $map = read_file($file);
     
-    $Template::Directive::WHILE_MAX = 100000;
-        
-    $land_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-    
-    return $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template      => 'map/kingdom_map.html',
-                params        => {
-                    land_rs => $land_rs,               
-                },
-            }
-        ]
-    );    
+    return $map;       
 }
 
 1;

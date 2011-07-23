@@ -68,7 +68,7 @@ BEGIN {
         },
     );  
     
-    __PACKAGE__->config->{static}->{logging} = 1;
+    #__PACKAGE__->config->{static}->{logging} = 1;
     
 }
 

@@ -3,12 +3,13 @@
 </script>
 
 <div id="minimap" style="display: [% IF mini_map_state == 'open' %]block[% ELSE %]none[% END %]; 
-	position: relaitve; overflow:hidden; width: 200px; height: 200px; cursor: pointer">
+	position: relative; overflow:hidden; width: 200px; height: 200px; cursor: pointer">
 <div id="minimap-view-box" style="display: none; position: absolute; left: 30px; top: 40px; height: 40px; width: 60px; border: 2px solid #FF0000"></div>	  
   <img src="[% base %]static/minimap/kingdoms.png">
 </div>
 
-<div id="minimap-display"></div>
+<div id="minimap-display" style="word-wrap: break-word; width: 200px;">
+</div>
 
 <div align="center" class="main" style="background: black">
 	<em>Kingdom Map</em><br>

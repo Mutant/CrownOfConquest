@@ -60,7 +60,7 @@ my @colours = (
     'Crimson',
     'Green',
     'Firebrick',
-    '#408080',
+    'steelblue',
 );
 
 sub colours { @colours };

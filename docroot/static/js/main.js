@@ -318,7 +318,7 @@ function getPanels(url) {
         handleAs: "json",        
         load: panelLoadCallback,        
         error: panelErrorCallback,
-	    timeout: 15000
+	    timeout: 45000
     });
 }
 
@@ -330,7 +330,7 @@ function postPanels(form) {
         handleAs: "json",        
         load: panelLoadCallback,        
         error: panelErrorCallback,
-	    timeout: 15000
+	    timeout: 45000
     });	
     
     return false;
@@ -612,65 +612,118 @@ function displayCharList(display) {
 
 /* Mini-map */
 
-function refreshMap(x,y,zoom_level) {
-	getPanels('map/search?x=' + x + '&y=' + y);
-}
 
-var boxedCoords = [];
 function setMapBoxCallback(mapBoxCoords) {
-	for (i = 0; i <= boxedCoords.length; i++) {		
-		old = boxedCoords[i];
-		if (old) {
-			dojo.byId(old.sector).style.background = old.color;
-		}
-	}
-	
-	boxedCoords = [];
-	
-	var top_x = parseInt(mapBoxCoords.top_x);
-	var top_y = parseInt(mapBoxCoords.top_y);
-	var bottom_x = (parseInt(mapBoxCoords.top_x)+parseInt(mapBoxCoords.x_size));		
-	var bottom_y = (parseInt(mapBoxCoords.top_y)+parseInt(mapBoxCoords.y_size));
-	
-	for (x = 0; x <= mapBoxCoords.x_size; x++) {
-		for (y = 0; y <= mapBoxCoords.y_size; y++) {
-			var sec_x = x+top_x;
-			var sec_y = y+top_y;
-		
-			if ((sec_x != mapBoxCoords.top_x && sec_x != bottom_x) && (sec_y != mapBoxCoords.top_y && sec_y != bottom_y)) {					
-				continue;   
-			}
+	console.log(mapBoxCoords);
 
-			var sector = dojo.byId('k-' + sec_x + '-' + sec_y);
-			if (sector) {
-				boxedCoords.push(
-					{
-						sector: 'k-' + sec_x + '-' + sec_y,
-						color: sector.style.background
-					}
-				);
-
-				sector.style.background = 'red';
-			}
-		}
-	}
+	var top = parseInt(mapBoxCoords.top_y) * 2;
+	var left = parseInt(mapBoxCoords.top_x) * 2;
+	var width = parseInt(mapBoxCoords.x_size) * 2;		
+	var height = parseInt(mapBoxCoords.y_size) * 2;
+	
+	var box = dojo.byId('minimap-view-box');
+	
+	box.style.top = top + 'px';
+	box.style.left = left + 'px';
+	box.style.width = width + 'px';
+	box.style.height = height + 'px';
+	
+	box.style.display = 'block';
 }
 
-var kingdomMapHidden = false;
 function hideKingdomMap() {
-	dojo.byId('kingdom-map-table').style.display = 'none';
+	dojo.byId('minimap').style.display = 'none';
 	dojo.byId('hide-kingdom-map-link').style.display = 'none';
 	dojo.byId('show-kingdom-map-link').style.display = 'inline';
-	dojo.byId('kingdom-map').style.height = '30px';
-	kingdomMapHidden = true;
+	dojo.byId('center-party-link').style.display = 'none';
+	dojo.byId("minimap-display").innerHTML = '';
+	
+	dojo.xhrGet( {
+        url: urlBase + "map/change_mini_map_state?state=closed",
+        handleAs: "json",
+	    timeout: 45000
+    });
 }
 
 function showKingdomMap() {
-	dojo.byId('kingdom-map-table').style.display = 'block';
+	dojo.byId('minimap').style.display = 'block';
 	dojo.byId('hide-kingdom-map-link').style.display = 'inline';
 	dojo.byId('show-kingdom-map-link').style.display = 'none';
-	dojo.byId('kingdom-map').style.height = '230px';
-	kingdomMapHidden = false;
+	dojo.byId('center-party-link').style.display = 'inline';
+	
+	dojo.xhrGet( {
+        url: urlBase + "map/change_mini_map_state?state=open",
+        handleAs: "json",
+	    timeout: 45000
+    });	
+}
+
+function miniMapClick(evt) {
+	var coords = findMiniMapCoords(evt);
+
+	getPanels('map/search?x=' + coords.x + '&y=' + coords.y);
+}
+
+
+function miniMapMove(evt) {
+	var coords = findMiniMapCoords(evt);
+	
+	if (! coords.x || ! coords.y) {
+		dojo.byId('minimap-display').innerHTML = '';
+		return;
+	}
+	
+	var kingdom = kingdoms_data[coords.x][coords.y];
+	if (kingdom) {
+		kingdom = "Kingdom of " + kingdom;
+	}
+	else {
+		kingdom = "Neutral";
+	}
+	
+	kingdom += " (" + coords.x + ", " + coords.y + ")";
+	
+	dojo.byId('minimap-display').innerHTML = kingdom;
+
+}
+
+function findMiniMapCoords(evt) {
+	var pixelX = evt.layerX;
+	var pixelY = evt.layerY;
+
+	if (evt.target.id == 'minimap-view-box') {
+		var box = dojo.byId('minimap-view-box');
+	
+		pixelX = pixelX + parseInt(box.style.left);
+		pixelY = pixelY + parseInt(box.style.top); 
+	}
+
+	var coords = {};
+	coords.x = Math.floor(pixelX/2);
+	coords.y = Math.floor(pixelY/2);
+	
+	return coords;
+}
+
+var kingdoms_data;
+function setKingdomsData(data) {
+	kingdoms_data = data;
+}
+
+function miniMapInit() {
+	dojo.connect(dojo.byId("minimap"), "onmousemove", window, "miniMapMove");
+	dojo.connect(dojo.byId("minimap"), "onclick", window, "miniMapClick");
+  
+	dojo.xhrGet( {
+        url: urlBase + "map/kingdom_data",
+        handleAs: "json",
+        
+        load: function(responseObject){
+        	setKingdomsData(responseObject);			
+		},
+
+	    timeout: 45000
+    });
 }
 
 	

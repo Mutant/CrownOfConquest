@@ -5,7 +5,10 @@ use Moose;
 extends 'RPG::NewDay::Base';
 
 use RPG::Template;
+use GD::Simple;
 use File::Slurp;
+use JSON;
+use Carp;
 
 sub cron_string {
     my $self = shift;
@@ -26,19 +29,27 @@ sub run {
         }
     );
     
-    $Template::Directive::WHILE_MAX = 100000;
-        
     $land_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
     
-    my $map = RPG::Template->process(
-        $c->config,
-        'map/kingdom_map.html',
-        {
-            land_rs => $land_rs,
-        },
-    );
+    my $img = GD::Simple->new(200,200);
+    my $grid;
+        
+    while (my $land = $land_rs->next) {
+        $img->fgcolor($land->{kingdom}{colour});
+        $img->rectangle($land->{x} * 2 - 1, $land->{y} * 2 - 1, $land->{x} * 2, $land->{y} * 2);
+        
+        $grid->[$land->{x}][$land->{y}] = $land->{kingdom} ? $land->{kingdom}{name} : undef;
+    }
     
-    write_file($c->config->{home} . '/root/minimap/kingdoms.html', $map);
+    mkdir($c->config->{home} . '/docroot/static/minimap/');
+    
+    open my $fh, '>', $c->config->{home} . '/docroot/static/minimap/kingdoms.png' 
+        || croak "Can't open kingdom minimap file for writing";
+    binmode $fh;
+    print $fh $img->png;
+    close $fh;
+    
+    write_file($c->config->{data_file_path} . 'kingdoms.json', to_json($grid)); 
 }
 
 1;

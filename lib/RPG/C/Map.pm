@@ -755,14 +755,33 @@ sub can_move_to_sector : Private {
 
 sub kingdom : Local {
     my ($self, $c) = @_;
-
-    my $file = $c->config->{home} . '/root/minimap/kingdoms.html';    
-
-    return unless -f $file;
     
-    my $map = read_file($file);
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template      => 'map/kingdom_map.html',
+                params        => {
+                    mini_map_state => $c->session->{mini_map_state} // 'open',
+                },
+                return_output => 1,
+            }
+        ]
+    );
+}
+
+sub kingdom_data : Local {
+    my ($self, $c) = @_;
     
-    return $map;       
+    my $data = read_file($c->config->{data_file_path} . 'kingdoms.json');
+    
+    $c->res->body($data);  
+}
+
+sub change_mini_map_state : Local {
+    my ($self, $c) = @_;
+    
+    $c->session->{mini_map_state} = $c->req->param('state');    
 }
 
 1;

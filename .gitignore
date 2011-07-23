@@ -3,3 +3,6 @@
 rpg_local.yml
 log/*
 patch/*
+script/data/kingdoms.json
+docroot/static/minimap/*
+dev/*

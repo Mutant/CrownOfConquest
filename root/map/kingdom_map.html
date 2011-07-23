@@ -1,23 +1,24 @@
-<table border=0 cellspacing="0" cellpadding="0" id="kingdom-map-table" style="cursor: pointer"><tr>
+<script type="text/javascript">
+	miniMapInit();
+</script>
 
-[% last_y = 1 %]
-[% WHILE (sector = land_rs.next) ~%]
-	[% IF sector.y != last_y ~%]
-		</tr>
-		<tr>
-		[% last_y = sector.y ~%]
-	[% END ~%]
-	<td title="[% sector.kingdom.name || "Neutral" %] ([% sector.x %], [% sector.y %])" style="width: 2px; height: 2px; background: [% sector.kingdom.colour %];" 
-		onClick="javascript:refreshMap('[% sector.x %]','[% sector.y %]','')" id="k-[% sector.x %]-[% sector.y %]"></td>	
-[% END ~%]
+<div id="minimap" style="display: [% IF mini_map_state == 'open' %]block[% ELSE %]none[% END %]; 
+	position: relaitve; overflow:hidden; width: 200px; height: 200px; cursor: pointer">
+<div id="minimap-view-box" style="display: none; position: absolute; left: 30px; top: 40px; height: 40px; width: 60px; border: 2px solid blue"></div>	  
+  <img src="[% base %]static/minimap/kingdoms.png">
+</div>
 
-</tr></table>
+<div id="minimap-display"></div>
 
 <div align="center" class="main" style="background: black">
 	<em>Kingdom Map</em><br>
-	<span id="hide-kingdom-map-link"><a href="javascript:hideKingdomMap()">Hide</a></span>
-	<span id="show-kingdom-map-link" style="display: none"><a href="javascript:showKingdomMap()">Show</a></span>
-	<a href="javascript:getPanels('map/center')">Center On Party</a>
+	<span id="hide-kingdom-map-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %];">
+		<a href="javascript:hideKingdomMap()">Hide</a>
+	</span>
+	<span id="show-kingdom-map-link" style="display: [% IF mini_map_state == 'closed' %]inline[% ELSE %]none[% END %]">
+		<a href="javascript:showKingdomMap()">Show</a>
+	</span>
+	<span id="center-party-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %]">
+		<a href="javascript:getPanels('map/center')">Center On Party</a>
+	</span>
 </div>
-	
-

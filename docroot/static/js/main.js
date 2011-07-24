@@ -29,8 +29,6 @@ function shiftMapCallback(data) {
 	var yShift = data.yShift;
 	mapDimensions = data.mapDimensions;
 
-	//console.log("xShift: " + xShift + "; yShift: " + yShift);
-	
 	var sectorsAdded = {};
 
 	if (yShift == 1) {
@@ -191,19 +189,14 @@ function newSector(x, y) {
 
 function moveLinks(data) {
 	var newSector = data.newSector;
-	
-	//console.log(newSector);
-	
+		
 	var startX = parseInt(newSector.x)-1;
 	var endX = parseInt(newSector.x)+1;
 	var startY = parseInt(newSector.y)-1;
 	var endY = parseInt(newSector.y)+1;
 	
-	//console.log("startX: " + startX + ", endX: " + endX + ", startY: " + startY + ", endY: " + endY);
-
 	for(var x=startX; x <= endX; x++) {
 		for(var y=startY; y <= endY; y++) {
-			//console.log("Updating link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
 			
 			if (link) {
@@ -217,7 +210,6 @@ function moveLinks(data) {
 	if (data.xShift != 0) {
 		x = (data.xShift == 1) ? parseInt(newSector.x) - 2 : parseInt(newSector.x) + 2;
 		for(var y=startY; y <= endY; y++) {
-			//console.log("Disabling link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
 			
 			if (link) {
@@ -228,7 +220,6 @@ function moveLinks(data) {
 	if (data.yShift != 0) {
 		y = (data.yShift == 1) ? parseInt(newSector.y) - 2 : parseInt(newSector.y) + 2;
 		for(var x=startX; x <= endX; x++) {
-			//console.log("Disabling link for sector " + x + ", " +y);
 			var link = dojo.byId("sector_link_" + x + "_" + y);
 			
 			if (link) {
@@ -261,7 +252,6 @@ function loadNewSectors(sectorsAdded) {
 	var qString = "";
 	for (var val in sectorsAdded) { 
 		for(var i=0; i<sectorsAdded[val].length; i++) {
-			//console.log(sectorsAdded[val][i].x + 
 			if (sectorsAdded[val][i].x >= mapDimensions.min_x && sectorsAdded[val][i].x <= mapDimensions.max_x &&
 			    sectorsAdded[val][i].y >= mapDimensions.min_y && sectorsAdded[val][i].y <= mapDimensions.max_y) {
 		
@@ -613,8 +603,6 @@ function displayCharList(display) {
 
 
 function setMapBoxCallback(mapBoxCoords) {
-	console.log(mapBoxCoords);
-
 	var top = parseInt(mapBoxCoords.top_y) * 2;
 	var left = parseInt(mapBoxCoords.top_x) * 2;
 	var width = parseInt(mapBoxCoords.x_size) * 2;		

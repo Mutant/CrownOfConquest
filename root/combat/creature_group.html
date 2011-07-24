@@ -22,10 +22,10 @@
 	<br><br>
 [% END %]
 
-<div style="overflow: visible; min-height: [% creature_group.members.size * 55 %]px; width: 52px;">
+<div style="overflow: visible; width: 52px;">
 [% FOREACH creature IN creature_group.members %]
-	<div style="height: 50px; margin: 0px; margin-bottom: 2px; padding: 0px; clear: right;">
-		<span style="border: 1px solid grey; float: left; height: 96%; margin-right: 1px; [% IF creature.is_dead %]opacity: 0.35[% END %];">
+	<div style="height: 50px; margin: 0px; [% IF ! loop.last %]margin-bottom: 2px;[% END %] padding: 0px; clear: right;">
+		<span style="float: left; margin-right: 1px; [% IF creature.is_dead %]opacity: 0.35[% END %];">
 		[% IF creature.is_character %]
 			<img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png" 
     				title="[% creature.name %] ([% creature.race.race_name %] [% creature.class.class_name %])">

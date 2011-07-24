@@ -57,7 +57,7 @@
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/creatures/[% cgs.$x.$y.portrait %]" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/creatures/[% cgs.$x.$y.portrait %]" border=0 width=16.5 height=25></div></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 

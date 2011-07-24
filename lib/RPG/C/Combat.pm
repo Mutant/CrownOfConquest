@@ -303,7 +303,7 @@ sub process_round_result : Private {
 sub process_flee_result : Private {
 	my ( $self, $c, $result ) = @_;
 
-	my @panels_to_refesh = ( 'messages', 'party', 'party_status' );
+	my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'creatures' );
 
 	if ( $result->{party_fled} ) {
 		$c->stash->{messages} = "You got away!";

@@ -23,7 +23,7 @@ function dungeonScroll(scroll_to) {
 }
 
 dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-	if (! nodes[0].id.match('^char-')) {
+	if (! nodes[0].id.match('^char-') && nodes[0].id != 'rank_separator') {
 		return;
 	}
 
@@ -257,7 +257,6 @@ function unblockDoor(action) {
 		<img src="[% base %]static/images/layout/loader.gif">
 	</div> 
 
-
 	<div id="screen-outer"
 		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; background: black; z-index: 600; top: 10px; position: absolute; display: none">	
 
@@ -269,7 +268,7 @@ function unblockDoor(action) {
 	
 	</div>
 
-	<div id="main-middle-section" style="height: 600px; min-height: 600px; min-width: 1115px; width: 100%; text-align: center;">
+	<div id="main-middle-section" style="height: 600px; min-height: 600px; text-align: center;">
 	
 		<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
 			<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>

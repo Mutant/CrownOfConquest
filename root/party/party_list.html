@@ -367,13 +367,11 @@ function createButton(menu, name, characterId) {
 [% char_id = char.id %]
 
 <div 
-	[% UNLESS in_combat %]class="dojoDndItem"[% END %] 
-	dndType="character" 
-	accept="character"
+	[% IF ! in_combat %]class="dojoDndItem"[% END %] 
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]"
 	style="margin-bottom: 3px; height: 56px; width: 90%;"
->	
+>
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
 		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
@@ -390,35 +388,34 @@ function createButton(menu, name, characterId) {
 				<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">[% char.character_name | truncate(25) %]</a>
 			</span>
 			<div dojoType="dijit.Tooltip"
-	           connectId="char_info_[% char.id %],char_portrait_[% char.id %]"           
-	           style="display: none">
+	           connectId="char_info_[% char.id %],char_portrait_[% char.id %]" style="display: none">
 					[% INCLUDE character/list_details.html character=char %]   	
 	           </div>			
 			[% INCLUDE party/party_char_alerts.html %]
-			<br>
+			<br>			
 			
-	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
-	        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
-	        
-	        	[% IF in_combat && ! char.is_dead %]    	
-	    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
-	    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
-	    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
-	    		</span>
-	    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
-	    		[% END %]
-	    	
-	    		<span id="castSpan_[% char.id %]"></span>
-	    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
-	    	
-	    		<span id="useSpan_[% char.id %]"></span>
-	    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
+        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
+        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
+        
+        	[% IF in_combat && ! char.is_dead %]    	
+    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
+    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
+    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
+    		</span>
+    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
+    		[% END %]
+    	
+    		<span id="castSpan_[% char.id %]"></span>
+    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
+    	
+    		<span id="useSpan_[% char.id %]"></span>
+    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
 	    </div>
 	</div>
 
 	<br style="clear: right"/>
     [% IF party.rank_separator_position == char.party_order %]
-		</div><div style="border: 1px solid white; width: 200px; margin: 5px">
+		</div><div id="rank_separator" style="border: 1px solid white; width: 200px; margin: 5px" [% IF ! in_combat %]class="dojoDndItem"[% END %] jsId="rank_separator">
     [% END %]
 	
 </div>

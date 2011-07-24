@@ -48,12 +48,12 @@ sub add : Local {
 	
 	if ( $c->stash->{party}->level < $c->config->{minimum_garrison_level} ) {
 		$c->stash->{error} = "You can't create a garrison - your party level is too low";
-		$c->detach('create');
+		$c->detach( '/panel/refresh' );
 	}
 	
 	if ( $c->stash->{party}->turns < $c->config->{garrison_creation_turn_cost} ) {
 		$c->stash->{error} = "You need at least " . $c->config->{garrison_creation_turn_cost} . " to create a garrison";
-		$c->detach('create');		
+		$c->detach( '/panel/refresh' );
 	}
 	
 	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
@@ -71,13 +71,13 @@ sub add : Local {
 	my %chars_by_id = map { $_->id => $_ } @characters;
 	if ((grep { ! $chars_by_id{$_}->is_dead } @char_ids_to_garrison) <= 0 ) {
 		$c->stash->{error} = "You must have at least one living character in the garrison";
-		$c->detach('create');
+		$c->detach( '/panel/refresh' );
 	}
 	
 	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(@char_ids_to_garrison) };
 	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
 		$c->stash->{error} = "You must have at least one living character in your party";
-		$c->detach('create');		
+		$c->detach( '/panel/refresh' );		
 	}
 	
 	my $hs = HTML::Strip->new();
@@ -146,18 +146,18 @@ sub update : Local {
 	my %chars_by_id = map { $_->id => $_ } (@chars_in_party, @current_garrison_chars);
 	if ((grep { ! $chars_by_id{$_}->is_dead } keys %char_ids_to_garrison ) <= 0 ) {
 		$c->stash->{error} = "You must have at least one living character in the garrison";
-		$c->detach( 'manage' );
+		$c->detach( '/panel/refresh' );
 	}
 	
 	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(keys %char_ids_to_garrison) };
 	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
 		$c->stash->{error} = "You must have at least one living character in your party";
-		$c->detach('manage');		
+		$c->detach( '/panel/refresh' );
 	}	
 
 	if (scalar @chars_left_in_party > $c->config->{max_party_characters}) {
 		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " characters in your party";
-		$c->detach( 'manage' );
+		$c->detach( '/panel/refresh' );
 		return;		
 	}
 	
@@ -202,7 +202,7 @@ sub remove : Local {
 	if (scalar @garrison_characters + scalar @characters > $c->config->{max_party_characters}) {
 		$c->stash->{error} = "You can't remove this garrison - " .
 			"adding these characters would give you more than " . $c->config->{max_party_characters} . " characters in the party";
-		$c->detach( 'manage' );
+		$c->detach( '/panel/refresh' );
 	}
 	else {	
 		foreach my $character (@garrison_characters) {

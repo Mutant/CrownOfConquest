@@ -1,6 +1,6 @@
 [% INCLUDE layout/close_button.html %]
 <div dojoType="dijit.Dialog" id="declare-kingdom-diag" style="display: none" title="Declare Kingdom" execute="return true;">
-	<form dojotType="dijit.form.Form" method="post" action="[% base %]kingdom/create">
+	<form method="post" action="[% base %]kingdom/create" onSubmit="postPanels(this); return false">
 	<table class="main">
 		<tr>
 			<td>Kingdom Name:</td>
@@ -48,7 +48,7 @@ We can change our allegiance once every [% allegiance_change_frequency %] days.
 	So far, we have not changed our allegiance.
 [% END %]
 
-<form method="POST" action="[% base %]party/details/change_allegiance">
+<form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
 Change our allegiance to: 
 	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
 		[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]

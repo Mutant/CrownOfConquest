@@ -4,7 +4,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 
 [% IF quests.size < quests_allowed %]
 <br><br>
-<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="document.location='[% base %]kingdom/new_quest'">
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="loadScreen('kingdom/new_quest')">
 	New Quest
 </button>	
 [% END %]
@@ -50,7 +50,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 		</td> 
 		<td>
 			<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
-				onClick="document.location='[% base %]kingdom/cancel_quest?quest_id=[% quest.id %]'">
+				onClick="getPanels('kingdom/cancel_quest?quest_id=[% quest.id %]')">
 				Cancel Quest
 			</button>		
 		</td>	

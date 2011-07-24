@@ -143,7 +143,7 @@ sub create_quest : Private {
 	
 	if ($c->stash->{kingdom}->gold < $c->req->param('gold_value')) {
 	   $c->stash->{error} = "The Kingdom does not have enough gold to pay for this quest";
-	   $c->detach('new_quest');
+	   $c->detach('/panel/refresh');
 	}
 	
 	$c->stash->{kingdom}->decrease_gold($c->req->param('gold_value'));
@@ -221,8 +221,7 @@ sub create_quest : Private {
     
     $quest->create_party_offer_message;
     
-    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );
-	
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=quests']] );
 }
 
 sub cancel_quest : Local {
@@ -257,9 +256,9 @@ sub cancel_quest : Local {
     );
     $quest->update;
     
-    $c->flash->{messages} = 'Quest cancelled';
+    $c->stash->{panel_messages} = 'Quest cancelled';
     
-    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=quests' );
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=quests']] );
 }
 
 sub quest_param_list : Local {
@@ -500,7 +499,7 @@ sub tax : Local {
         $c->stash->{kingdom}->mayor_tax($c->req->param('mayor_tax'));
         $c->stash->{kingdom}->update;
         
-        $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=tax' );
+        $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=tax']] );
         
         return;
     }
@@ -538,8 +537,8 @@ sub create : Local {
     my $kingdom_name = $hs->parse( $c->req->param('kingdom_name') );    
     
     unless ($kingdom_name) {
-        $c->flash->{error} = 'Please enter a valid Kingdom name';
-        $c->res->redirect( $c->config->{url_root} . '/party/details?tab=kingdom' );
+        $c->stash->{error} = 'Please enter a valid Kingdom name';
+        $c->forward('/panel/refresh');
         return;   
     }
     
@@ -604,7 +603,8 @@ sub create : Local {
         }
     );
     
-    $c->res->redirect( $c->config->{url_root} . 'kingdom' );
+    $c->forward( '/panel/refresh', [[screen => 'kingdom'], 'party'] );
+    
 }
 
 sub banish_party : Local {
@@ -634,7 +634,7 @@ sub banish_party : Local {
     
     $c->flash->{messages} = "Party banished";
     
-    $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );            
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=party']] );     
 }
 
 sub records : Local {

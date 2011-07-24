@@ -1,6 +1,6 @@
 <h4>Tax</h4>
 
-<div dojoType="dijit.form.Form" action="[% base %]/kingdom/tax" method="POST">
+<form action="[% base %]/kingdom/tax" method="POST" onSubmit="postPanels(this); return false">
 
 Tax rate on towns within the Kingdom: 
 <input type="text" dojoType="dijit.form.NumberTextBox" name="mayor_tax"  style="width: 50px"
@@ -10,4 +10,4 @@ Tax rate on towns within the Kingdom:
 <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
 	Submit
 </button>				
-</div>
+</form>

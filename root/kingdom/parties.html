@@ -1,5 +1,5 @@
 <div dojoType="dijit.Dialog" id="banish-party-diag" style="display: none" title="Banish Party" execute="return false">	
-	<form dojotType="dijit.form.Form" method="post" action="[% base %]kingdom/banish_party" id="banish-form">
+	<form dojotType="dijit.form.Form" method="post" action="[% base %]kingdom/banish_party" id="banish-form" onSubmit="postPanels(this); return false">
     <input id="banished-party-id" name="banished_party_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     How many days do you want to banish "<span id="banished-party-name"></span>" for?  
     <input name="duration" dojoType=dijit.form.NumberTextBox type="text" value="" style="width: 50px"

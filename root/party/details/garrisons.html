@@ -19,9 +19,9 @@ You do not have any garrisons
 		<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
 			<td><b>[% garrison.display_name(1) %]</b></td>
 			<td>[% garrison.land.x %], [% garrison.land.y %]</td>
-			<td>[% garrison.gold %]</td>
-			<td>[% garrison.recent_battles_count || 0 %]</td>
-			<td id="garisson-char-link-[% garrison.id %]" align="center">(?)</td>
+			<td align="right">[% garrison.gold %]</td>
+			<td align="right">[% garrison.recent_battles_count || 0 %]</td>
+			<td id="garisson-char-link-[% garrison.id %]" align="center"><a href="#" onClick="return false">(...)</a></td>
 			<td><a href="javascript:loadScreen('garrison/manage?garrison_id=[% garrison.id %]')">Manage</a></td>
 		</tr>
 		<div dojoType="dijit.Tooltip" connectId="garisson-char-link-[% garrison.id %]" style="display: none">
@@ -45,7 +45,7 @@ You do not have any garrisons
 	[% FOREACH garrison IN old_garrisons %]
 	<tr>
 		<td>[% garrison.display_name(1) %]</td>
-		<td>[% garrison.recent_battles_count || 0 %]</td> 
+		<td align="right">[% garrison.recent_battles_count || 0 %]</td> 
 		<td><a href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]">View</a></td>
 	</tr>
 	[% END %]

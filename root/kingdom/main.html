@@ -1,13 +1,4 @@
-[% INCLUDE top.html %]
-
 <script>
-    dojo.require("dijit.form.Form");
-    dojo.require("dijit.form.Button");
-	dojo.require("dijit.form.NumberTextBox");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.layout.ContentPane");
-	dojo.require("dijit.form.FilteringSelect");
-	
 function changeGold(kingdomGoldInput) {
 	dojo.xhrGet( {
         url: "[% base %]/kingdom/change_gold?kingdom_gold=" + kingdomGoldInput.value, 
@@ -45,7 +36,7 @@ function showBanishPartyDiag(partyId, partyName) {
 </table>
 <br><br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
 [% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Tax', 'Records', 'Messages' ] %]
 	[% lower_tab = tab | lower %]
@@ -53,5 +44,3 @@ function showBanishPartyDiag(partyId, partyName) {
 [% END %]
 	
 </div>
-
-[% INCLUDE bottom.html %]

@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <script>
     dojo.require("dijit.form.Form");
     dojo.require("dijit.form.Button");
@@ -11,11 +9,11 @@
 
 <h2>Create A Kingdom Quest</h2>
 
-<div dojoType="dijit.form.Form" action="[% base %]kingdom/new_quest" method="POST" id="quest-form">
+<form action="[% base %]kingdom/new_quest" method="POST" id="quest-form"  onSubmit="postPanels(this); return false">
 
 Type Of Quest:
 <select dojoType="dijit.form.FilteringSelect" name="quest_type_id" autocomplete="false" 
-	onChange="document.location='[% base %]kingdom/new_quest?quest_type_id=' + this.value">
+	onChange="loadScreen('kingdom/new_quest?quest_type_id=' + this.value)">
 	<option></option>
 	[% FOREACH type IN quest_types %]
 		<option value="[% type.id %]">[% type.description %]</option>
@@ -91,6 +89,4 @@ Type Of Quest:
 		
 	[% END %]
 
-</div>
-
-[% INCLUDE bottom.html %]
+</form>

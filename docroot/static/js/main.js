@@ -362,7 +362,6 @@ function panelLoadCallback(responseObject, ioArgs) {
 
 function panelErrorCallback(err) {
 	errorMsg = "An error occurred processing the action. Please <a href=\"" + urlBase + "\">try again</a> or report a bug.";
-	console.debug(err);
 	dijit.byId('messages-pane').setContent(errorMsg);
 }
 
@@ -710,10 +709,10 @@ function setKingdomsData(data) {
 	kingdoms_data = data;
 }
 
-function miniMapInit() {
+function miniMapInitCallback() {
 	dojo.connect(dojo.byId("minimap"), "onmousemove", window, "miniMapMove");
 	dojo.connect(dojo.byId("minimap"), "onclick", window, "miniMapClick");
-  
+
 	dojo.xhrGet( {
         url: urlBase + "map/kingdom_data",
         handleAs: "json",

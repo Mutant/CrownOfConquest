@@ -756,6 +756,12 @@ sub can_move_to_sector : Private {
 sub kingdom : Local {
     my ($self, $c) = @_;
     
+    push @{$c->stash->{panel_callbacks}},
+    	{
+        	name => 'miniMapInit',
+        	data => { },
+    	};    
+    
     return $c->forward(
         'RPG::V::TT',
         [

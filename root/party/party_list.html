@@ -376,7 +376,7 @@ function createButton(menu, name, characterId) {
 >	
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
-		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px">
+		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
 		<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png">
 		</span>
 		

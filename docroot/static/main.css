@@ -158,10 +158,6 @@ h1 {margin: 0; padding: 1px}
 .dojoDndItemBefore {border-left: 2px dotted gray; }
 .dojoDndItemAfter {border-right: 2px dotted gray; }
 .target .dojoDndItemAnchor {border:1px solid gray;}
-.dojoDndAvatar {font-size: 75%; color: black;}
-.dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px}
-.dojoDndAvatarHeader {background: #ccc; background-repeat: no-repeat;}
-.dojoDndAvatarItem {background: #eee;}
 .dojoDndMove .dojoDndAvatarHeader {background-image: url(images/dndNoMove.png);}
 .dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {background-image:
         url(images/dndMove.png);}
@@ -171,6 +167,11 @@ h1 {margin: 0; padding: 1px}
 .dojoDndItemAfter {border-right: 2px dotted gray; }
 
 .dijitButtonText { font-size: 10pt }
+
+.tundra .dojoDndAvatar {font-size: 75%; color: white;}
+.tundra .dojoDndAvatar td {padding-left: 20px; padding-right: 4px;height:20px;}
+.tundra .dojoDndAvatarHeader { background-repeat: no-repeat;}
+.tundra .dojoDndAvatarItem {background: #000;}
 
 /* Login Form */
 

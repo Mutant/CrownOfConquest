@@ -46,7 +46,7 @@ You do not have any garrisons
 	<tr>
 		<td>[% garrison.display_name(1) %]</td>
 		<td align="right">[% garrison.recent_battles_count || 0 %]</td> 
-		<td><a href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]">View</a></td>
+		<td><a href="javascript:loadScreen('garrison/combat_log_tab?garrison_id=[% garrison.id %]')">View</a></td>
 	</tr>
 	[% END %]
 </table>

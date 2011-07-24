@@ -12,6 +12,8 @@ use Digest::SHA1 qw(sha1_hex);
 sub change_password : Local {
     my ( $self, $c ) = @_;
 
+    $c->stash->{message_panel_size} = 'large';
+
     my $message;
 
     if ( $c->req->param('current_password') ) {
@@ -32,12 +34,15 @@ sub change_password : Local {
 
             $c->session->{player} = $player;
 
-            $message = 'Password changed';
+            $c->stash->{panel_messages} = 'Password changed';
+            
+            $c->forward('/party/details/options');
+            return;
         }
     }
 
     $c->forward(
-        'RPG::V::TT',
+        '/panel/refresh_with_template',
         [
             {
                 template => 'player/change_password.html',

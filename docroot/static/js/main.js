@@ -356,6 +356,12 @@ function panelErrorCallback(err) {
 }
 
 function refreshPanels(panelData) {
+	if (panelData.redirect) {
+		console.log(panelData.redirect);
+		document.location = panelData.redirect;
+		return;
+	}
+
 	if (panelData.panel_messages) {
 		displayMessages(panelData.panel_messages);
 	}

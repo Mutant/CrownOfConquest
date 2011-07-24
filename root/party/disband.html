@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 <h2>Disband Party</h2>
 
 <p>So you want to disband your party..? This is an irreversible action! Your characters will disperse across the countryside, take up jobs as farmers, blacksmiths 
@@ -9,6 +7,4 @@ or village idiots, and never be heard from again.</p>
 
 <p>Just to be 100% clear, once you click the button below, <b>THERE'S NO GOING BACK!</b></p>
 
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband?confirmed=1'">I Really Want To Disband My Party</button> 
-
-[% INCLUDE bottom.html %]
+<button dojoType="dijit.form.Button" onclick="getPanels('party/disband?confirmed=1')">I Really Want To Disband My Party</button> 

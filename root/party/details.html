@@ -78,7 +78,7 @@
 				<td>[% old_party.name %]</td>
 				<td>[% old_party.time_since_created %]</td>
 				<td>[% old_party.time_since_defunct %]</td>
-				<td><a href="[% base %]party/details/combat_log?party_id=[% old_party.party_id %]">View</a></td>
+				<td><a href="javascript:loadScreen('party/details/combat_log?party_id=[% old_party.party_id %]')">View</a></td>
 			</tr>
 		[% END %]
 	</table>

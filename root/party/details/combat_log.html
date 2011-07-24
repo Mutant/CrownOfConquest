@@ -1,9 +1,5 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
-[% IF old_party %]
-	[% INCLUDE top.html %]
-[% END %]
-
 [%# TODO: refactor so it's not so tied to 'party' %]
 
 [% IF old_party %]
@@ -85,7 +81,3 @@
 	</tr>
 [% END %]
 </table>
-
-[% IF old_party %]
-	[% INCLUDE bottom.html %]
-[% END %]

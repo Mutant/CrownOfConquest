@@ -34,7 +34,7 @@ None of your characters are mayors of a town
 			<td>[% mayor_history.town.town_name %]</td>
 			<td>Day [% mayor_history.got_mayoralty_day %] ([% mayor_history.got_mayoralty_day_rec.difference_to_today_str %])</td>
 			<td>Day [% mayor_history.lost_mayoralty_day %] ([% mayor_history.lost_mayoralty_day_rec.difference_to_today_str %])</td>
-			<td><a href="[% base %]party/details/old_mayor_combat_log?creature_group_id=[% mayor_history.creature_group_id %]">View</a></td>
+			<td><a href="javascript:loadScreen('party/details/old_mayor_combat_log?creature_group_id=[% mayor_history.creature_group_id %]')">View</a></td>
 		</tr>
 	[% END %]
 </table>

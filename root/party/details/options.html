@@ -1,20 +1,20 @@
 [% INCLUDE layout/close_button.html %]
 <h3>Party Options</h3>
 
-<form method="POST" action="[% base %]/party/details/update_options">
+<form method="POST" action="[% base %]/party/details/update_options" onSubmit="postPanels(this); return false">
 	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"> 
 	<input type="submit" value="Save Settings" name="save">	
 </form>
 
 <br>
 
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/party/disband'">Disband Party</button>
+<button dojoType="dijit.form.Button" onclick="loadScreen('party/disband')">Disband Party</button>
 
 <br>
 
 <h3>Notification Options</h3>
 
-<form method="POST" action="[% base %]/party/details/update_email_options">
+<form method="POST" action="[% base %]/party/details/update_email_options" onSubmit="postPanels(this); return false">
 <table class="main">
 	<tr>
 		<td>Send emails from Kingdoms (unchecking overrides other email options):</td>
@@ -44,5 +44,5 @@
 
 <h3>Account Options</h3>
 
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/change_password'">Change Password</button>
-<button dojoType="dijit.form.Button" onclick="document.location='[% base %]/player/account/delete_account'">Delete Account</button>
+<button dojoType="dijit.form.Button" onclick="getPanels('player/account/change_password')">Change Password</button>
+<button dojoType="dijit.form.Button" onclick="loadScreen('player/account/delete_account')">Delete Account</button>

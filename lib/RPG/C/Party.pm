@@ -661,7 +661,7 @@ sub disband : Local {
 	# If this is a confirmation disband the party. Otherwise check for confirmation
 	if ( $c->req->param('confirmed') ) {
 		$c->stash->{party}->disband;
-		$c->res->redirect( $c->config->{url_root} );
+		$c->forward( '/panel/refresh', [[redirect => $c->config->{url_root}]] );
 		return;
 	}
 

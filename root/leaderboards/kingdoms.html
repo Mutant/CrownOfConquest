@@ -1,5 +1,3 @@
-[% INCLUDE top.html %]
-
 [% INCLUDE stats/subnav.html %]
 
 <h2>Top Kingdoms</h2>
@@ -16,7 +14,7 @@ Top Kingdoms By:
 	[% IF current_sort == sort_param.param %]
 		<span id="current-selection">[% sort_param.label %]</span>
 	[% ELSE %]
-		<a href="[% base %]/leaderboards/kingdoms?sort=[% sort_param.param %]">[% sort_param.label %]</a>
+		<a href="javascript:loadScreen('leaderboards/kingdoms?sort=[% sort_param.param %]')">[% sort_param.label %]</a>
 	[% END %]
 [% END %]
 
@@ -43,5 +41,3 @@ Top Kingdoms By:
 	</tr>	
 [% END %]
 </table>
-
-[% INCLUDE bottom.html %]

@@ -55,6 +55,9 @@ sub refresh : Private {
 		elsif ($panel->[0] eq 'screen') {
             $response{screen_to_load} = $panel->[1];
 		}
+		elsif ($panel->[0] eq 'redirect') {
+		    $response{redirect} = $panel->[1];
+		}
 		else {
 			$response{refresh_panels}{$panel->[0]} = $panel->[1];
 		}

@@ -34,8 +34,15 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	<br><br>
 [% END %]
 
-[% IF graves.0 %]
-	[% INCLUDE graves/main.html %]
+[% IF graves.size > 0 %]
+	[% IF graves.size == 1 %]
+		You see a solitary grave here.
+	[% ELSE %]
+		You see a collection of graves here.
+	[% END %]	
+	<span id="view-graves"><a href="#" onClick="return false;">View</a></span>
+	<div dojoType="dijit.Tooltip" connectId="view-graves">[% INCLUDE graves/main.html %]</div>
+	<br><br>
 [% END %]
 
 [% IF creature_group %]Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br><br>[% END %]

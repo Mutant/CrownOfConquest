@@ -1,10 +1,3 @@
-[% IF graves.0 %]
-	[% INCLUDE graves/main.html %]
-[% ELSE %]
-	No one is buried in the cemetery (yet).
-	<br><br>
-[% END %]
-
 [% IF morgue %]
 	The following bodies have been interred in the morgue:
 	<ul>
@@ -16,6 +9,19 @@
 		<br>
 	[% END %]
 	</ul>
+[% END %]
+
+[% IF graves.0 %]
+	[% IF graves.size == 1 %]
+		You see a solitary grave here.
+	[% ELSE %]
+		You see a collection of graves here.
+	[% END %]
+	<br><br>	
+	[% INCLUDE graves/main.html %]
+[% ELSE %]
+	No one is buried in the cemetery (yet).
+	<br><br>
 [% END %]
 
 [% INCLUDE town/town_footer.html %]

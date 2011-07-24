@@ -1,10 +1,9 @@
 [% FOREACH grave IN graves %]
-	[% grave.character_name %] is buried here. <span id="grave_[% grave.id %]">(Epitaph)</span>
-	<div dojoType="dijit.Tooltip" connectId="grave_[% grave.id %]" style="display: none">
-	Here lies [% grave.character_name %]<br><br>
-	Buried on Day [% grave.day_created %]<br><br>
-	[% IF grave.epitaph %][% grave.epitaph | html_line_break %]<br><br>[% END %]
+	[% grave.character_name %] is buried here.
+	<br><br>
+	The epitaph reads:<br><br>
+	Here lies [% grave.character_name %], Buried on Day [% grave.day_created %]. 
+	[% IF grave.epitaph %][% grave.epitaph | html_line_break %][% END %]
 	R.I.P.
-	</div>
 	<br><br>
 [% END %]

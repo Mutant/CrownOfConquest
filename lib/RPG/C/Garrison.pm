@@ -122,7 +122,7 @@ sub add : Local {
 	my $messages = $c->forward( '/quest/check_action', [ 'garrison_created', $garrison ] );
 	$c->flash->{message} = $messages->[0] if $messages && @$messages;
 	
-	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id], 'messages'] );
+	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id], 'messages', 'party'] );
 }
 
 sub update : Local {
@@ -187,7 +187,7 @@ sub update : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
-	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id]] );
+	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id], 'party'] );
 	
 }
 
@@ -240,7 +240,7 @@ sub remove : Local {
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];
 		
-		$c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] );		
+		$c->forward( '/panel/refresh', [[screen => 'close'], 'messages', 'party'] );		
 	}
 }
 

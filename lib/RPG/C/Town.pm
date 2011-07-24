@@ -593,6 +593,8 @@ sub raid : Local {
 	$party_town->last_raid_end(undef);
 	$party_town->increment_raids_today;
 	$party_town->update;
+	
+	$c->stash->{message_panel_size} = 'small';   
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
 }

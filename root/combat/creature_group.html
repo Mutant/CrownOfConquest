@@ -22,9 +22,9 @@
 	<br><br>
 [% END %]
 
-<div>
+<div style="overflow: visible; min-height: 450px; width: 52px;">
 [% FOREACH creature IN creature_group.members %]
-	<div style="height: 45px; margin: 0px; margin-bottom: 2px; padding: 0px; clear: right;">
+	<div style="height: 50px; margin: 0px; margin-bottom: 2px; padding: 0px; clear: right;">
 		<span style="border: 1px solid grey; float: left; height: 96%; margin-right: 1px">
 		[% IF creature.is_character %]
 			<img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png" 

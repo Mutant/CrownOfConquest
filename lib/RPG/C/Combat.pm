@@ -127,7 +127,7 @@ sub main : Local {
 	);
 }
 
-sub display_cg : Local {
+sub display_opponents : Local {
 	my ( $self, $c ) = @_;
 	
 	my $display_factor_comparison;
@@ -169,6 +169,8 @@ sub display_cg : Local {
 	$c->stats->profile('Completed factor comaprison');
 
 	# Load effects, to make sure they're current (i.e. include current round)
+	my %creature_effects_by_id;
+=comment	
 	my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
 		{
 			creature_id     => [ map { $_->id } $creature_group->creatures ],
@@ -177,10 +179,11 @@ sub display_cg : Local {
 		{ prefetch => 'effect', },
 	);
 
-	my %creature_effects_by_id;
+
 	foreach my $effect (@creature_effects) {
 		push @{ $creature_effects_by_id{ $effect->creature_id } }, $effect;
 	}
+=cut	
 	
 	$c->stats->profile('Got creature effects');
 

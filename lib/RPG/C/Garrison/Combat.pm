@@ -35,11 +35,15 @@ sub attack : Local {
 		$c->stash->{party}->initiate_combat($garrison);
 	}
 
-	$c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
+	$c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'creatures' ] );
 }
 
 sub main : Private {
 	my ( $self, $c ) = @_;
+
+    $c->stash->{creature_group} = $c->stash->{party_location}->garrison;
+    
+    $c->stash->{message_panel_size} = 'large';
 	
 	my $output = $c->forward(
 		'RPG::V::TT',
@@ -47,9 +51,9 @@ sub main : Private {
 			{
 				template => 'combat/main.html',
 				params   => {
-					opposing_garrison => $c->stash->{party_location}->garrison,
 					combat_messages   => $c->stash->{combat_messages},
 					garrison_initiated  => $c->stash->{garrison_initiated} ? 1 : 0,
+					type => 'garrison',
 				},
 				return_output => 1,
 			},

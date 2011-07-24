@@ -202,6 +202,8 @@ sub has_ips_in_common_with {
     
     return if $self->id == $other_player->id;
     
+    return if RPG::Schema->config->{check_for_coop} == 0;
+    
     my @logins = $self->search_related(
         'logins',
         {

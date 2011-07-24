@@ -20,9 +20,9 @@
 [% prefix = '' %]
 [% IF in_dungeon %]
 	[% prefix = '/dungeon' %]
-[% ELSIF opposing_party %]
+[% ELSIF type == 'party' %]
 	[% prefix = '/party' %]
-[% ELSIF opposing_garrison %]
+[% ELSIF type == 'garrison' %]
 	[% prefix = '/garrison' %]
 [% END %]	
 
@@ -30,14 +30,6 @@
 <a href="javascript:getPanels('[% prefix %]/combat/flee')"><img src="[% c.config.static_path %]/images/fleeunsel.png" border="0"></a>
 
 <br><br>
-[% END %]
-
-[% IF opposing_party %]
-	[% INCLUDE combat/opposing_party.html %]
-[% ELSIF opposing_garrison %]
-	[% INCLUDE combat/opposing_party.html opposing_party=opposing_garrison %]
-[% ELSE %]
-	[% creature_group_display %]
 [% END %]
 
 [% IF combat_messages %]

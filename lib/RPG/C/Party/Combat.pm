@@ -40,9 +40,11 @@ sub attack : Local {
         $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
 
         $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
+        
+        $c->stash->{creature_group} = $party_attacked;
     }
-
-    $c->forward( '/panel/refresh', [ 'messages', 'map', 'party' ] );
+    
+    $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'creatures' ] );
 }
 
 sub main : Private {
@@ -68,6 +70,10 @@ sub main : Private {
             ],
         );
     }
+    
+    $c->stash->{creature_group} = $c->stash->{party}->in_party_battle_with;
+
+    $c->stash->{message_panel_size} = 'large';
 
     return $c->forward(
         'RPG::V::TT',
@@ -75,8 +81,8 @@ sub main : Private {
             {
                 template => 'combat/main.html',
                 params   => {
-                    opposing_party  => $c->stash->{party}->in_party_battle_with,
                     combat_messages => $c->stash->{combat_messages},
+                    type => 'party',
                 },
                 return_output => 1,
             },

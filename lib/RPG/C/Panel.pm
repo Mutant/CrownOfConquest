@@ -14,7 +14,7 @@ my %PANEL_PATHS = (
 	party => '/party/list',
 	party_status => '/party/status',
 	zoom => '/party/zoom',
-	creatures => '/combat/display_cg',
+	creatures => '/combat/display_opponents',
 	mini_map => '/map/kingdom',
 );
 

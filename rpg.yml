@@ -155,6 +155,9 @@ referring_player_turn_threshold: 1000
 # Turn reward for referring a friend
 refer_a_friend_turn_reward: 250
 
+# Perform various checks based on IP for coop
+check_for_coop: 1
+
 # ----- Party Params ----- #
 
 # Size of map to display

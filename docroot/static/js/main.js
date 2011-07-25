@@ -264,7 +264,7 @@ function loadNewSectors(sectorsAdded) {
         url: urlBase + "map/load_sectors?" + qString,
         handleAs: "json",
         
-        load: 'updateSectors',
+        load: updateSectors,
 
 	    timeout: 45000	
     });    

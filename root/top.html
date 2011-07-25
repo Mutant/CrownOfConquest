@@ -51,8 +51,8 @@ function show_message(message) {
 <div id="content-outer" class="main">
 
 <div style="width: 100%">
-[% IF c.session.player.player_name %]
 	<div class="login-info" style="text-align: center">
+	[% IF c.session.player.player_name %]
 		User: <b>[% c.session.player.player_name %]</b> /
 		Party: <b>[% party.name %]</b> /
 		<span id="online-parties" style="text-decoration: underline">[% parties_online.size %] part[% IF parties_online.size > 1 %]ies[% ELSE %]y[% END %] online</span> /
@@ -67,8 +67,13 @@ function show_message(message) {
 			[% party.name %]<br>
 		[% END %]
 		</div>
+	[% END %]	
+	<br><br>
+	<a href="[% IF c.session.player.player_name %]javascript:loadScreen('donate')[% ELSE %][% base %]donate[% END %]">
+		<img src="/static/images/donate.gif" border="0">
+	</a>		
 	</div>
-[% END %]
+
 
 	<div style="background:url([% base %]static/images/logofin.png) no-repeat center center; height: 60px;">
 		&nbsp;

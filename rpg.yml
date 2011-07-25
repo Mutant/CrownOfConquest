@@ -599,6 +599,9 @@ building_min_spacing: 1
 # Maximum 'visibility' value for any building type
 max_building_visibility: 7
 
+# Turn cost to seize a building
+building_seize_turn_cost: 15
+
 # ----- Kingdom Params ----- #
 
 # Number of land required per kingdom quest

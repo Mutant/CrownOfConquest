@@ -28,53 +28,6 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' },
     {cascade_delete => 0}
 );
-
-
-sub upgrades_to {
-	my $self = shift;
-	return $self->{upgrades_to};
-}
-sub set_upgrades_to {
-	my $self = shift;
-	$self->{upgrades_to} = shift;
-}
-
-sub type {
-	my $self = shift;
-	return $self->{type};
-}
-sub set_type {
-	my $self = shift;
-	$self->{type} = shift;
-}
-
-sub class {
-	my $self = shift;
-	return $self->{'class'};
-}
-sub set_class {
-	my $self = shift;
-	$self->{class} = shift;
-}
-
-sub level {
-	my $self = shift;
-	return $self->{level};
-}
-sub set_level {
-	my $self = shift;
-	$self->{level} = shift;
-}
-
-sub image {
-	my $self = shift;
-	return $self->{image};
-}
-sub set_image {
-	my $self = shift;
-	$self->{image} = shift;
-}
-
 #  Get owner_name.  TODO: this is inefficient, should be joined but owner_id / owner_type needs a special join.
 sub owner_name {
 	my $self = shift;

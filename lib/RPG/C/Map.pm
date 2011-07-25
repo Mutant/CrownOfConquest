@@ -544,8 +544,8 @@ sub move_to : Local {
     $c->stats->profile("Done");
 }
 
-sub load_sectors : Local {
-    my ( $self, $c ) = @_;
+sub generate_sectors {
+    my ( $self, $c, $sectors_passed ) = @_;
     
     my @results;
     
@@ -561,6 +561,8 @@ sub load_sectors : Local {
         }        
     }
     $c->session->{discovered} = undef;
+    
+    push @lines, @{ $sectors_passed } if $sectors_passed;
     
     foreach my $line (@lines) {       
         # We have a list of sectors that have been added to the map
@@ -654,7 +656,30 @@ sub load_sectors : Local {
         sector_data => \@results,
     );
     
-    $c->res->body(to_json(\%res));
+    return %res;
+    
+}
+
+sub load_sectors : Local {
+    my ($self, $c) = @_;
+    
+    my $res = to_json($self->generate_sectors($c));
+    
+    $c->res->body($res);
+}
+
+sub refresh_current_loc : Private {
+    my ($self, $c) = @_;
+    
+    my $loc = $c->stash->{party_location};
+    
+    my %res = $self->generate_sectors($c, [[$loc->x . ',' . $loc->y]]);
+    
+    push @{$c->stash->{panel_callbacks}},
+    	{
+        	name => 'refreshSector',
+        	data => \%res, 
+        };
 }
 
 #  find_nearby_garrisoned_buildings - returns an array given information on nearby garrisoned buildings within the range

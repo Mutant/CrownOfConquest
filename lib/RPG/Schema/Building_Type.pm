@@ -210,4 +210,45 @@ sub turns_needed {
     return round $self->labor_needed / $party->characters_in_party->count;   
 }
 
+sub enough_resources {
+    my $self = shift;
+    my %resources = @_;
+    
+    my $enough = 1;
+    foreach my $resource (keys %resources) {
+        my $needed = $self->amount_of_res_required($resource);
+        
+        if ($resources{$resource} < $needed) {
+            $enough = 0;
+            last;
+        }
+    }
+    
+    return $enough;       
+}
+
+sub amount_of_res_required {
+    my $self = shift;
+    my $resource_type = shift // croak "Please supply resource type";
+    
+     my $col = lc $resource_type . '_needed';
+     my $needed = $self->$col;  
+     
+     return $needed;     
+}
+
+sub enough_turns {
+    my $self = shift;
+    my $party = shift;
+    
+    return $party->turns >= $self->turns_needed($party) ? 1 : 0;
+}
+
+sub turns_to_raze {
+    my $self = shift;
+    my $party = shift;
+    
+    return round $self->labor_to_raze / $party->characters_in_party->count; 
+}
+
 1;

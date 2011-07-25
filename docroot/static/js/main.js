@@ -264,30 +264,37 @@ function loadNewSectors(sectorsAdded) {
         url: urlBase + "map/load_sectors?" + qString,
         handleAs: "json",
         
-        load: function(responseObject, ioArgs){
-        	var herecircle = dojo.byId('herecircle');
-        
-        	var data = responseObject.sector_data;
-
-			for(var j=0; j<data.length; j++) {
-				var coords = data[j].sector.split(',');
-				var sector = dojo.byId('outer_sector_' + coords[0] + "_" + coords[1]);
-				
-				if (sector) {
-					sector.innerHTML = data[j].data;
-					if (data[j].parse) {
-						dojo.parser.parse(sector);					
-					}
-				}
-			}
-			
-			var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y); 
-	
-			newSector.appendChild(herecircle);				
-		},
+        load: 'updateSectors',
 
 	    timeout: 45000	
     });    
+}
+
+function updateSectors(responseObject) {
+	var herecircle = dojo.byId('herecircle');
+
+	var data = responseObject.sector_data;
+
+	for(var j=0; j<data.length; j++) {
+		var coords = data[j].sector.split(',');
+		var sector = dojo.byId('outer_sector_' + coords[0] + "_" + coords[1]);
+		
+		if (sector) {
+			sector.innerHTML = data[j].data;
+			if (data[j].parse) {
+				dojo.parser.parse(sector);					
+			}
+		}
+	}
+	
+	var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y); 
+
+	newSector.appendChild(herecircle);
+}
+
+function refreshSectorCallback(data) {
+console.log(data);
+	updateSectors(data);
 }
 
 /* Panels */
@@ -353,6 +360,7 @@ function panelLoadCallback(responseObject, ioArgs) {
 function panelErrorCallback(err) {
 	errorMsg = "An error occurred processing the action. Please <a href=\"" + urlBase + "\">try again</a> or report a bug.";
 	dijit.byId('messages-pane').setContent(errorMsg);
+	closeScreen();
 }
 
 function refreshPanels(panelData) {
@@ -423,7 +431,6 @@ function displayMessages(messages_passed) {
 		displayCount++;
 	}
 	else {
-		dijit.byId('party-message').hide();
 		displayCount = 0;
 	}
 }

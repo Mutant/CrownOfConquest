@@ -1,0 +1,56 @@
+<h2>Manage Building</h2>
+
+<form method="POST" id="create" action="[% base %]/building/upgrade"  onSubmit="postPanels(this); return false"> 
+<div style=" padding:10px; height:125px;">
+	<div id="building_types" style="float:left;width:300px;">
+		<div class="enlargedTitle" style="text-align: center; margin:10px;">
+			<span>[% building_type.name %]</span>
+		</div>
+		<div style="text-align: center; margin:10px;">
+			<img height=40 width=40 src="[% c.config.static_path %]/images/map/building/[% building_type.image %]">
+		</div>
+		
+		[% IF upgradable_to_type %]
+		<div style="text-align: center;">Upgrade [% building_type.name %] to [% upgradable_to_type.name %]</div>
+		
+		<div style="text-align: center; margin:10px;">
+			[% IF ! upgradable_to_type.enough_turns(party) %]
+				<input type="button" disabled="disabled" value="Not enough turns to build"></input>
+			[% ELSIF ! enough_resources %]
+				<input type="button" disabled="disabled" value="Not enough resources"></input>
+			[% ELSE %]
+				<input type="submit" value="Upgrade"></input>
+			[% END %]
+		</div>
+		[% ELSE %]
+			No further upgrades available.
+		[% END %]
+	</div>
+
+	[% INCLUDE building/building_details.html upgrade=1, building_type=upgradable_to_type %]
+		
+</div>
+</form>
+
+
+<br style="clear: both" />
+<br>
+		
+<div align="center">
+	[% IF ! garrison_in_sector %]
+		<button id="raze-building" onClick="getPanels('building/raze'); return false;">Raze Building</button>
+	[% END %]
+	[% IF party.kingdom_id %]
+		<button id="cede-building" onClick="getPanels('building/cede'); return false;">Cede Building</button>
+	[% END %]
+	<div dojoType="dijit.Tooltip"
+       		connectId="raze-building"
+			style="display: none">
+		Raze the building to the ground. Be sure you want to do this, as it will be lost forever!			 
+	</div>
+	<div dojoType="dijit.Tooltip"
+       		connectId="cede-building"
+			style="display: none">
+		Cede control of this building to your Kingdom.			 
+	</div>
+</div>	

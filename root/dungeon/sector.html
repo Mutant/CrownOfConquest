@@ -26,11 +26,13 @@
 [% IF current_location.treasure_chest %]
 	| <a href="javascript:getPanels('/dungeon/open_chest')">Open Treasure Chest</a>
 [% END %]
-
+[% IF creature_group %]
+	| <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)">Attack Creatures</a>
+[% END %]
 
 [% IF parties_in_sector %]
 	<br><br>
 	[% parties_in_sector %]
 [% END %]
 
-[% IF creature_group %]<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)">Attack Creatures</a>[% END %] 
+ 

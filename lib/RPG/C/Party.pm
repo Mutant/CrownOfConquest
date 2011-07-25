@@ -64,6 +64,12 @@ sub refresh_messages : Local {
 	$c->forward( '/panel/refresh', ['messages', 'creatures'] );
 }
 
+sub refresh_party_list : Local {
+	my ( $self, $c ) = @_;
+	
+	$c->forward( '/panel/refresh', ['party'] );
+}
+
 sub sector_menu : Private {
 	my ( $self, $c ) = @_;
 		

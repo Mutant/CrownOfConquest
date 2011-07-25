@@ -173,6 +173,8 @@ function addStatPoint(char_id, stat) {
         		
         		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
         		dojo.byId('stat-' + stat).innerHTML = statVal;
+        		
+        		getPanels('party/refresh_party_list');
         	}
         }
     });

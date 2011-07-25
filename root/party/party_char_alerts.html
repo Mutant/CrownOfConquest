@@ -1,5 +1,5 @@
 [% IF char.stat_points %]
-	<span id="statPoint-[% char.character_id %]"><a href="[% base %]/character/view?character_id=[% char.character_id %]">[+]</a></span>
+	<span id="statPoint-[% char.character_id %]"><a href="javascript:loadScreen('character/view?character_id=[% char.character_id %]')">[+]</a></span>
 	<div dojoType="dijit.Tooltip"
            connectId="statPoint-[% char.character_id %]"
            label="[% char.stat_points %] stat points to be assigned">

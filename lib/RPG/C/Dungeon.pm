@@ -103,15 +103,17 @@ sub build_viewable_sector_grids : Private {
     foreach my $cg_rec (@cg_recs) {
         my $cg = $cg_rec->creature_group;
         
-        if ($cg) {
-            my @creatures = sort { $a->id <=> $b->id } grep { ! $_->is_dead && $_->type->image ne 'defaultportsmall.png' } $cg->creatures;
-            
-            if (@creatures) {
-                $cg->{portrait} = $creatures[0]->type->image;
-            }
-            else {
-                $cg->{portrait} = 'defaultportsmall.png';
-            }
+        next unless $cg;
+        
+        my $group_size = $cg->number_alive;
+        if ($group_size <= 3) {
+            $cg->{group_size} = 'small';
+        }
+        elsif ($group_size <= 6) {
+            $cg->{group_size} = 'medium';   
+        }
+        else {
+            $cg->{group_size} = 'large';
         }
         
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;

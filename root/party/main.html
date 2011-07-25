@@ -258,13 +258,16 @@ function unblockDoor(action) {
 	</div> 
 
 	<div id="screen-outer"
-		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; background: black; z-index: 600; top: 10px; position: absolute; display: none">	
+		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 95%; max-height: 95%; background: black; 
+			z-index: 600; top: 10px; position: absolute; display: none; overflow: auto">	
 
-		<div id="screen-close" style="float: right; padding: 2px">
+		<div style="float: right; margin-right: 25px">
+		<div id="screen-close" style="position: fixed; padding: 2px">
 			<a href="#" onclick="closeScreen()"><span class="close-icon"></span></a>
 		</div>
+		</div>
 		
-		<div id="screen-pane" style="" dojoType="dojox.layout.ContentPane"></div>
+		<div id="screen-pane" dojoType="dojox.layout.ContentPane"></div>
 	
 	</div>
 

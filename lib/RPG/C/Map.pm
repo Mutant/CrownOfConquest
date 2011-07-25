@@ -663,7 +663,9 @@ sub generate_sectors {
 sub load_sectors : Local {
     my ($self, $c) = @_;
     
-    my $res = to_json($self->generate_sectors($c));
+    my %res = $self->generate_sectors($c);
+    
+    my $res = to_json(\%res);
     
     $c->res->body($res);
 }

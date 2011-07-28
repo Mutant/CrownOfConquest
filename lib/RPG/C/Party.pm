@@ -561,9 +561,14 @@ sub select_action : Local {
 			}
 			else {
 				$target = $c->stash->{party};
-			}		
+			}
 			
 			$result = $spell->cast( $character, $target );
+			
+			# HACK: refresh map screen if casting portal 
+			if ($spell->spell_name eq 'Portal') {
+                push @{ $c->stash->{refresh_panels} }, 'map';
+			}
 		}
 
 		when ('Use') {
@@ -600,7 +605,7 @@ sub select_action : Local {
 
 	$c->stash->{messages} = $message;	
 
-	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party', 'map' ] );
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
 }
 
 sub scout : Local {

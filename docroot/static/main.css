@@ -89,9 +89,9 @@ br {
 
 #content-outer {
 	height: auto;
-	min-height: 250px;	
-	margin-left: 3%; 
-	margin-right: 3%;
+	min-height: 250px;
+	width: 1156px;
+	margin: auto;
 }
 
 a {

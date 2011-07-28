@@ -250,9 +250,16 @@ function unblockDoor(action) {
 	</div>
 </div>
 
-<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; text-align: center; overflow: hidden"></div>
 
-<div id="main-outer" style="position: relative">
+<div style="position: relative">
+[% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
+</div>
+
+<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; overflow: hidden"></div>
+
+<div class="line-sep"></div>
+
+<div id="main-outer" style="position: relative;">
 	<div id="main-loading" style="position: absolute; height: 24px; width: 24px; top: 48%; left: 48%">
 		<img src="[% base %]static/images/layout/loader.gif">
 	</div> 

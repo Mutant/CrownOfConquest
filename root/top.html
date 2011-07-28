@@ -86,8 +86,5 @@ function show_message(message) {
 		[% INCLUDE admin/left_hand_nav.html %]
 	[% ELSIF guest_screen %]	
 		[% INCLUDE player/left_hand_nav.html %]
-	[% ELSE %]
-		[% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
-	[% END %]
-	<div class="line-sep">&nbsp;</div>
+	[% END %]	
 </div>

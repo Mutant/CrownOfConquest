@@ -6,7 +6,6 @@ use warnings;
 use base qw(RPG::Combat::MagicalDamage);
 
 use Games::Dice::Advanced;
-use RPG::Combat::MagicalDamageResult;
 use RPG::Maths;
 use List::Util qw(shuffle);
 use RPG::Combat::ActionResult;

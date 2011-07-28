@@ -5,10 +5,6 @@ use warnings;
 
 use Games::Dice::Advanced;
 
-use RPG::Combat::MagicalDamage::Ice;
-use RPG::Combat::MagicalDamage::Fire;
-use RPG::Combat::MagicalDamage::Poison;
-
 sub opponent_resisted {
 	my $self = shift;
 	my $opponent = shift;

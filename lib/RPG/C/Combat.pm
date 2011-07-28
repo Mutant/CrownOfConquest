@@ -278,7 +278,7 @@ sub process_round_result : Private {
 			my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
 			push @{ $c->stash->{combat_messages} }, @$messages;
 		}
-
+					
 		# Force combat main to display final time
 		$c->stash->{messages_path} = '/combat/main';
 
@@ -289,8 +289,13 @@ sub process_round_result : Private {
 		undef $c->stash->{creature_group};
 
 	}
-	
+		
 	$c->stash->{combat_complete} = $result->{combat_complete};
+	
+	if ($c->stash->{combat_complete} && $c->stash->{party}->dungeon_grid_id) {
+	    # If combat is over and we're in a dungeon, refresh the map screen
+	    push @panels_to_refesh, 'map';	   
+	}
 	
 	$c->stash->{message_panel_size} = 'large';
 

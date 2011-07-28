@@ -14,6 +14,10 @@ use RPG::Combat::MessageDisplayer;
 use RPG::Combat::MagicalDamage;
 use RPG::Combat::EffectResult;
 
+use RPG::Combat::MagicalDamage::Fire;
+use RPG::Combat::MagicalDamage::Ice;
+use RPG::Combat::MagicalDamage::Poison;
+
 use feature 'switch';
 
 requires qw/process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by is_online/;
@@ -475,7 +479,7 @@ sub apply_magical_damage {
 	return if $action_result->damage == 0 || $opponent->is_dead;
 
 	my $package = 'RPG::Combat::MagicalDamage::' . $type;
-
+	
 	my $magical_damage_result = $package->apply(
 		character      => $character,
 		opponent       => $opponent,

@@ -51,6 +51,7 @@
 	        			}
 	        			reloadInventory();
 	        			reloadStats();
+	        			getPanels('party/refresh_party_list');
 	        		}
 				}
 	        },
@@ -66,7 +67,8 @@
 	        handleAs: "json",	
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
-	        	reloadStats();	        	
+	        	reloadStats();
+	        	getPanels('party/refresh_party_list');	        	
 	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
@@ -83,6 +85,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
 	        	reloadStats();
+	        	getPanels('party/refresh_party_list');
 				
 				if (responseObject.clear_equip_place) {
 					clearEquipSlot(responseObject.clear_equip_place);					
@@ -98,6 +101,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
 	        	reloadStats();
+	        	getPanels('party/refresh_party_list');
 				clearEquipSlot(responseObject.clear_equip_place);
 	        }
 	    });	       

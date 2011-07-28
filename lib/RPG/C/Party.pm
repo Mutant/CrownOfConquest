@@ -363,6 +363,23 @@ sub list : Private {
 
 	$c->stats->profile("Got Broken weapons");
 	
+	my @effects = $c->model('DBIC::Effect')->search(
+	   {
+	       'character_effect.character_id' => [map { $_->id } @characters],
+	       'combat' => 1,
+	   },
+	   {
+	       prefetch => 'character_effect',
+	   }
+	);
+	
+	my %effects_by_character;
+	foreach my $effect (@effects) {
+        push @{ $effects_by_character{$effect->character_effect->character_id} }, $effect;
+	}
+	
+	$c->stats->profile("Got effects");
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -374,6 +391,7 @@ sub list : Private {
 					characters     => \@characters,
 					broken_items   => \%broken_items_by_char_id,
 					combat_params  => \%combat_params,
+					effects_by_character => \%effects_by_character,
 				},
 				return_output => 1,
 			}

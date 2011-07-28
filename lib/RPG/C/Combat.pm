@@ -92,14 +92,7 @@ sub main : Local {
 
 	my $creature_group = $c->stash->{creature_group};
 	if ( !$c->stash->{combat_complete} && !$creature_group ) {
-		$creature_group = $c->model('DBIC::CreatureGroup')->find(
-			{
-				creature_group_id => $c->stash->{party}->in_combat_with,
-			},
-			{
-				prefetch => { 'creatures' => 'type' },
-			},
-		);
+		$creature_group = $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
 	}
 
 	my $orb;
@@ -132,6 +125,7 @@ sub display_opponents : Local {
 	
 	my $display_factor_comparison;
 		
+	# It's called 'creature_group' even though it could be a party or garrison
 	my $creature_group = $c->stash->{creature_group};
 	
 	return unless $creature_group;
@@ -169,23 +163,33 @@ sub display_opponents : Local {
 	$c->stats->profile('Completed factor comaprison');
 
 	# Load effects, to make sure they're current (i.e. include current round)
-	my %creature_effects_by_id;
-=comment	
-	my @creature_effects = $c->model('DBIC::Creature_Effect')->search(
-		{
-			creature_id     => [ map { $_->id } $creature_group->creatures ],
-			'effect.combat' => 1,
-		},
-		{ prefetch => 'effect', },
-	);
-
-
-	foreach my $effect (@creature_effects) {
-		push @{ $creature_effects_by_id{ $effect->creature_id } }, $effect;
-	}
-=cut	
+    my %ids;
+    $ids{creature}  = [ map { $_->id } grep { ! $_->is_character } $creature_group->members ];
+    $ids{character} = [ map { $_->id } grep { $_->is_character   } $creature_group->members ];   
 	
-	$c->stats->profile('Got creature effects');
+	my %effects_by_id;
+	for my $type (keys %ids) {
+	    if (my @ids = @{ $ids{$type} }) {
+        	my @effects = $c->model('DBIC::Effect')->search(
+        		{
+        		    $type . '_effect.' . "${type}_id" => \@ids,
+        			'combat' => 1,
+        		},
+        		{ 
+        		    prefetch => [$type . '_effect'],
+        		}
+        	);
+        	
+        	foreach my $effect (@effects) {
+        	    my $effect_method = $type . '_effect';
+        	    my $id_method = $type . '_id';
+                my $id = $effect->$effect_method->$id_method;
+                push @{ $effects_by_id{$type}{$id} }, $effect;
+        	}	        
+	    } 
+	}
+	
+	$c->stats->profile('Got effects');
 
 	return $c->forward(
 		'RPG::V::TT',
@@ -195,7 +199,7 @@ sub display_opponents : Local {
 				params   => {
 					creature_group         => $creature_group,
 					factor_comparison      => $factor_comparison,
-					creature_effects_by_id => \%creature_effects_by_id,
+					effects_by_id => \%effects_by_id,
 				},
 				return_output => 1,
 			}

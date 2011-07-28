@@ -392,7 +392,11 @@ function createButton(menu, name, characterId) {
 					[% INCLUDE character/list_details.html character=char %]   	
 	           </div>			
 			[% INCLUDE party/party_char_alerts.html %]
-			<br>			
+			[% FOREACH effect IN effects_by_character.${char.id} ~%]
+				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | lower %]effect.png" 
+					title="[% effect.effect_name %] ([% effect.time_left %])">
+			[% END ~%]
+			<br>
 			
         	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
         	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>

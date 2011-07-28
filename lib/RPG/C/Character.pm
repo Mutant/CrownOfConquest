@@ -609,7 +609,7 @@ sub update_spells : Local {
 		}
 	}
 
-    $c->forward( '/panel/refresh', [[screen => 'character/view?selected=spells&character_id=' . $character->id]] );
+    $c->forward( '/panel/refresh', [[screen => 'character/view?selected=spells&character_id=' . $character->id], 'party'] );
 }
 
 sub add_stat_point : Local {

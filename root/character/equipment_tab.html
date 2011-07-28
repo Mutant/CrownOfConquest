@@ -12,12 +12,14 @@
 				style="[% IF ! item.item_type.image %]display: none[% END %]"
 				>
 			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>
+			[% IF item %]
 			<div dojoType="dijit.Tooltip"
 	           		connectId="[% slot %]-equip_place"
 	           		id="[% slot %]-tooltip"
 					style="display: none">
-						[% IF item %][% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %][% END %] 
-	        </div>        
+						[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
+	        </div>
+	        [% END %]
 	        <span id="[% slot %]-slot-label" [% IF item %]style="display: none"[% END %]>[% slot_orig %]</span>
 	        </span>
 		</td>

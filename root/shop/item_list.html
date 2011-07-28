@@ -50,8 +50,8 @@
 				
 					<div dojoType="dijit.Tooltip"
                    		connectId="item_source_[% id %]"
-                   		label="[% INCLUDE item/tooltip_specific.html item_type=item_type, item=sell_type == 'item' ? undef : item | collapse %]"
 						style="display: none">
+						[% INCLUDE item/tooltip_specific.html item_type=item_type, item=sell_type == 'item' ? undef : item | collapse %]
                    </div>
 			</div>
 		[% END %]

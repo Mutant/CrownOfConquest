@@ -41,8 +41,6 @@ sub party_attacks : Local {
 
 	my $creature_group = $c->stash->{party_location}->available_creature_group;
 
-	push @{ $c->stash->{refresh_panels} }, 'map';
-
 	$c->forward( 'execute_attack', [$creature_group] );
 
 }
@@ -273,8 +271,6 @@ sub process_round_result : Private {
 	my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'creatures' );
 	if ( $result->{combat_complete} ) {
 
-		push @panels_to_refesh, 'map';
-
 		if ( !$c->stash->{party}->defunct && ! $result->{creatures_fled} ) {
 
 			# Check for state of quests
@@ -288,15 +284,12 @@ sub process_round_result : Private {
 
 	}
 	if ( $result->{creatures_fled} ) {
-		push @panels_to_refesh, ('map', 'creatures');
+		push @panels_to_refesh, ('creatures');
 
 		undef $c->stash->{creature_group};
 
 	}
-	if ( $result->{offline_party_fled} ) {
-		push @panels_to_refesh, 'map';
-	}
-
+	
 	$c->stash->{combat_complete} = $result->{combat_complete};
 	
 	$c->stash->{message_panel_size} = 'large';

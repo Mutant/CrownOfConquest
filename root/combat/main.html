@@ -1,4 +1,4 @@
-[% IF creature_group %]
+[% IF creature_group && creature_group.number_alive > 0 %]
 	[% IF creatures_initiated %]
 		You have been attacked by a group of 
 	[% ELSE %]

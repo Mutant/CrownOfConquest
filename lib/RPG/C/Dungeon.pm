@@ -261,7 +261,7 @@ sub move_to : Local {
 	
 	if (! $current_location) {
         # No longer in the dungeon?
-        $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+        $c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
         return;
 	}
 	

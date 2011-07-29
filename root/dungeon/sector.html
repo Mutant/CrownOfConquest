@@ -1,5 +1,6 @@
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 
+[% IF creature_group %]Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br><br>[% END %]
 
 [% IF doors.0 %]
 	Open Doors: 

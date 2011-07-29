@@ -99,7 +99,7 @@ sub auto : Private {
             && $c->action ne 'map/load_sectors'
             && $c->action ne 'map/kingdom_data'
             && $c->action ne 'map/kingdom'
-            && $c->action ne 'map/search'            
+            && $c->action ne 'map/search'
             && $c->action ne 'party/zoom_change' )
         {
             $c->debug('Forwarding to /party/main since party is in combat');

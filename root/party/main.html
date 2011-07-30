@@ -1,4 +1,4 @@
-[% INCLUDE top.html, called_from_panel = 1 %]
+[% INCLUDE top.html %]
 
 <script>
 function init() {
@@ -255,9 +255,9 @@ function unblockDoor(action) {
 [% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
 </div>
 
-<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="clear: left; font-size: 8pt; overflow: hidden"></div>
-
 <div class="line-sep"></div>
+
+<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="margin-top: 2px; clear: left; font-size: 8pt; overflow: hidden"></div>
 
 <div id="loader-gif" style="display: none">
 	<img src="[% c.config.static_path %]/images/layout/loader.gif">

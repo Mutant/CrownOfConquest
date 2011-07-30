@@ -28,28 +28,27 @@ function displaySizeWarning() {
 
 dojo.addOnLoad( displaySizeWarning );
 
+var shotDescs = {
+	1: 'The Main Screen',
+	2: "A charater's screen - mouse over an item to see its stats",
+	3: "An Equipment Shop - drag an item onto a character's name to buy it",
+	4: "Combat - cast a spell by selecting it from the action menu",
+	7: "Constructing a new building",
+	8: "Exploring a dungeon",
+};
+
+function showShot(shotId) {
+	dojo.byId('screeshot-view').style.visibility = 'visible';
+	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".png";
+	dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
+}
+
+function closeShotScreen() {
+	dojo.byId('screeshot-view').style.visibility = 'hidden';
+}
+
 </script>
 
-<h1>Welcome to Kingdoms</h1>
-
-<p>Kingdoms is an online "persistent world" role-playing game. It's 100% web-based, meaning there's no download, Flash, Silverlight, etc. And it's free!</p>
-
-<p>In Kingdoms, you control a party of characters, adventuring around a grid-based world, discovering new towns, exploring dungeons, fighting all manner of
-foul creatures, and much more. For more on the game, see the <a href="[% base %]/player/about">About</a> page or check out some 
-<a href="[% base %]/player/screenshots">Screenshots</a>.</p>
-
-<p>Kingdoms is currently in "pre-beta", meaning that - while it's playable - many of the planned features are missing. The <a href="[% base %]/player/about">About</a>
-page has more info on the pre-beta.</p>
-
-<div align="center">
-<a href="[% c.config.static_path %]/images/shots/2.png"><img src="[% c.config.static_path %]/images/shots/2t.png" border="0" style="border: 1px solid white"></a>
-<a href="[% c.config.static_path %]/images/shots/1.png"><img src="[% c.config.static_path %]/images/shots/1t.png" border="0" style="border: 1px solid white"></a>
-<br>
-<a href="[% base %]/player/screenshots">More Screenshots</a>
-</div>
-
-<br style="clear:both">
-<div class="line-sep"></div>
 
 <div dojoType="dijit.Dialog" id="ie-diag" style="display: none" title="Internet Explorer 7 Limitations">
     It seems like you're using Internet Explorer 7 or earlier.
@@ -79,36 +78,111 @@ page has more info on the pre-beta.</p>
 	</div>
 </div>
 
-<div align="center">
-<form method="POST" action="[% base %]/player/login">
-<table>
-	<tr><td colspan=2><h2>Login To Kingdoms</h2></td></tr>
-	<tr>
-		<td nowrap>Email Address:</td>
-		<td><input type="text" name="email" style="width: 300px"></td>
-	</tr>
-	<tr>
-		<td>Password:</td>
-		<td><input type="password" name="password" style="width: 300px"></td>
-	</tr>
-	<tr>
-		<td></td>
-		<td><input type="submit" value="Login"></td>
-	</tr>
-</table>
-</form>
+<div id="login-content" style="position: relative;">
+
+<div style="float: right;">
+	<div style="background: black; border: 2px solid #4d4d4d; margin: 2px">
+		<form method="POST" action="[% base %]/player/login">
+		<table>
+			<tr><td colspan=2><h2>Login To Kingdoms</h2></td></tr>
+			<tr>
+				<td nowrap>Email Address:</td>
+				<td><input type="text" name="email" style="width: 300px"></td>
+			</tr>
+			<tr>
+				<td>Password:</td>
+				<td><input type="password" name="password" style="width: 300px"></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><input type="submit" value="Login"></td>
+			</tr>
+		</table>
+		</form>
+		
+		<table class="main" align="center">
+			<tr>
+				<td align="right">Don't have an account? <strong><a href="[% base %]/player/register">Register</a></strong></td>
+				<td>|</td>
+				<td>Forgot Your Password? <strong><a href="[% base %]/player/forgot_password">Reset Password</a></strong></td>
+			</tr>
+			<tr>
+				<td align="right">Got a verification code? <strong><a href="[% base %]/player/verify">Verify</a></strong></td>
+				<td>|</td>
+				<td>Need a new code? <strong><a href="[% base %]/player/reverify">Re-verify</a></strong></td>
+			</tr>
+		</table>
+	</div>
+
+
+	<div style="background: black; border: 2px solid #4d4d4d; margin: 2px">
+		<h2>Screenshots</h2>
+	
+		<div style="text-align: center">
+		<a href="#" onClick="showShot(1)"><img src="[% c.config.static_path %]/images/shots/1t.png" border="0"></a>
+		<a href="#" onClick="showShot(2)"><img src="[% c.config.static_path %]/images/shots/2t.png" border="0"></a>
+		<br>
+		<a href="#" onClick="showShot(3)">More Screenshots</a>
+		</div>
+	</div>
+
 </div>
 
-<table class="main" align="center">
-	<tr>
-		<td align="right">Don't have an account? <strong><a href="[% base %]/player/register">Register</a></strong></td>
-		<td>|</td>
-		<td>Forgot Your Password? <strong><a href="[% base %]/player/forgot_password">Reset Password</a></strong></td>
-	</tr>
-	<tr>
-		<td align="right">Got a verification code? <strong><a href="[% base %]/player/verify">Verify</a></strong></td>
-		<td>|</td>
-		<td>Need a new code? <strong><a href="[% base %]/player/reverify">Re-verify</a></strong></td>
-	</tr>
-</table>
+<div style="height: 450px">
+
+<h1>Welcome to Kingdoms</h1>
+
+<p>Kingdoms is an online "persistent world" role-playing game. It's 100% web-based, meaning there's no download, Flash, Silverlight, etc. And it's free!</p>
+
+<p>In Kingdoms, you control a party of characters, adventuring around a grid-based world, discovering new towns, exploring dungeons, fighting all manner of
+foul creatures, and much more. For more on the game, see the <a href="[% base %]/player/about">About</a> page or check out some 
+<a href="#" onClick="showShot(1)">Screenshots</a>.</p>
+
+<p>Kingdoms is currently in "pre-beta", meaning that - while it's playable - many of the planned features are missing. The <a href="[% base %]/player/about">About</a>
+page has more info on the pre-beta.</p>
+
+<h2>Features</h2>
+
+<ul>
+	<li>Dynamic, graphical, grid-based world to explore</li>
+	<li>Hoards of monsters to fight</li>
+	<li>Thousands of unique items to find</li>
+	<li>Dungeons that appear and disappear over time</li>
+	<li>Begin with 5 characters, but recruit more (or sell your old ones) as you need to</li>
+	<li>Shape the world yourself by seizing control of towns, becoming mayor, setting taxes, buying defences, and much more</li>
+	<li>For the ultimate in power, form your own Kingdom, and play politics against the other kings and queens of the realm</li> 
+	<li>Much more - you'll have to play the game to discover everything!</li>
+</ul>
+
+</div>
+
+
+<div id="screeshot-view" style="position: fixed; left: 50%; top: 50%; margin-left: -400px; margin-top: -250px; min-width: 800px; height: 550px; visibility: hidden; 
+	border: 2px solid #4d4d4d; background: black">
+	
+	<div style="float: right; margin-right: 25px">
+	<div id="screen-close" style="position: fixed; padding: 2px">
+		<a href="#" onclick="closeShotScreen()"><span class="close-icon"></span></a>
+	</div>	
+	</div>
+	
+	<div id="shot">	
+		<img id="shot-img" src="[% c.config.static_path %]/images/layout/loader.gif">
+	</div>
+	
+	<div id="shot-desc" style="text-align: center; font-style:italic;">
+	</div>
+	
+	<br>
+	
+	<div style="text-align: center; position: absolute; margin: 0 auto; width: 100%; bottom: 15px;">
+	More Screenshots:
+	[% FOREACH shot IN [1,2,3,4,7,8] %]
+		<a href="#" onClick="showShot([% shot %])">#[% loop.count %]</a>&nbsp;
+	[% END %]
+	</div>
+</div>
+
+</div>
+
 [% INCLUDE bottom.html %]

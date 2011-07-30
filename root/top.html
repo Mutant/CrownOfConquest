@@ -52,17 +52,21 @@ function show_message(message) {
 
 <div style="width: 100%">
 	<div class="login-info" style="text-align: center">
-	[% IF c.session.player.player_name %]
+	[% IF main_screen %]
 		User: <b>[% c.session.player.player_name %]</b> /
 		Party: <b>[% party.name %]</b> /
-		<span id="online_parties-pane" dojoType="dijit.layout.ContentPane" style="display: inline"></span>		
-		<a href="player/logout">Logout</a> 
+		<span id="online_parties-pane" dojoType="dijit.layout.ContentPane" style="display: inline"></span>
+	[% END %]
+	[% IF c.session.player %]		
+		<a href="[% base %]player/logout">Logout</a>
+	[% END %]
+	[% IF main_screen %] 
 		<br>
 		<a href="javascript:closeScreen(); getPanels('party/reward_links')">Get More Turns (Free!)</a> /
 		<a href="http://forum.kingdoms-game.com/chat/" target="_new">Web Chat</a>		
 	[% END %]	
 	<br><br>
-	<a href="[% IF c.session.player.player_name %]javascript:loadScreen('donate')[% ELSE %][% base %]donate[% END %]">
+	<a href="[% IF main_screen %]javascript:loadScreen('donate')[% ELSE %][% base %]donate[% END %]">
 		<img src="/static/images/donate.gif" border="0">
 	</a>		
 	</div>

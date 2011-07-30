@@ -565,6 +565,8 @@ function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
 	}
+		
+	dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
 	
 	dojo.xhrGet( {
         url: urlBase + url,

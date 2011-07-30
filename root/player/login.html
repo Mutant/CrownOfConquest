@@ -1,5 +1,7 @@
 [% INCLUDE top.html, guest_screen = 1 %]
 
+[% shots = [1,2,3,4,7,8] %]
+
 <script>
 function displayIEDiag() {
 	if (dojo.isIE <= 7) {
@@ -16,7 +18,6 @@ dojo.addOnLoad( displayIEDiag );
 function displaySizeWarning() {
 	var vs = dojo.window.getBox();
 	if (vs.w < 1200 || vs.h < 700) {
-		alert(vs.w + ", " + vs.h);
 		var warning = dojo.cookie('sizeWarning');
 		
 		if (! warning) {
@@ -37,9 +38,15 @@ var shotDescs = {
 	8: "Exploring a dungeon",
 };
 
+var images = {};
+[% FOREACH shot IN shots %]
+	images['shot-[% shot %]'] = new Image();
+	images['shot-[% shot %]'].src = "[% c.config.static_path %]/images/shots/[% shot %].png";
+[% END %]
+
 function showShot(shotId) {
 	dojo.byId('screeshot-view').style.visibility = 'visible';
-	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".png";
+	dojo.byId('shot-img').src = images['shot-' + shotId].src;
 	dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
 }
 
@@ -177,7 +184,8 @@ page has more info on the pre-beta.</p>
 	
 	<div style="text-align: center; position: absolute; margin: 0 auto; width: 100%; bottom: 15px;">
 	More Screenshots:
-	[% FOREACH shot IN [1,2,3,4,7,8] %]
+	[% FOREACH shot IN shots %]
+	
 		<a href="#" onClick="showShot([% shot %])">#[% loop.count %]</a>&nbsp;
 	[% END %]
 	</div>

@@ -81,8 +81,31 @@ sub sector_menu : Private {
 
 	my $confirm_attack = 0;
 
+    my $factor_comparison;
 	if ($creature_group) {
 		$confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
+  	
+    	$c->stats->profile('Beginning factor comaprison');
+		    
+		# Check for a watcher effect
+		my $has_watcher = $c->model('DBIC::Effect')->search(
+            {
+                'party_effect.party_id' => $c->stash->{party}->id,
+                'effect_name' => 'Watcher',
+                'time_left' => {'>', 0},
+            },
+            {
+                join => 'party_effect',
+            }
+		)->count >= 1 ? 1 : 0;		
+		
+		$c->stats->profile('Got watcher boolean');
+
+		if ($has_watcher) {
+			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
+		}
+		    	
+    	$c->stats->profile('Completed factor comaprison');		
 	}
 
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
@@ -176,6 +199,7 @@ sub sector_menu : Private {
 					kingdom                => $kingdom || undef,
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 					movement_cost          => $c->stash->{movement_cost} // 0,
+					factor_comparison      => $factor_comparison,
 				},
 				return_output => 1,
 			}

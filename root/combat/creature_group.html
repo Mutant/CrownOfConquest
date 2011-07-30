@@ -1,27 +1,3 @@
-[% IF factor_comparison != '' && ! combat_complete %]
-	Your chances against this group:
-		[% IF factor_comparison < -35 %]
-			None whatsoever
-		[% ELSIF factor_comparison < -25 %]
-			Extremely slim
-		[% ELSIF factor_comparison < -15 %]
-	 		It's going to be tough
-		[% ELSIF factor_comparison < -5 %]
-			You've got a shot
-		[% ELSIF factor_comparison < 5 %]
-			It's pretty even
-		[% ELSIF factor_comparison < 15 %]
-			Not too bad
-		[% ELSIF factor_comparison < 25 %]
-			Pretty good
-		[% ELSIF factor_comparison < 35 %]
-			Very good
-		[% ELSE %]
-		    They'll barely touch you
-		[% END %]
-	<br><br>
-[% END %]
-
 <div style="overflow: visible; width: 39px;">
 [% FOREACH creature IN creature_group.members %]
 	<div style="height: 50px; margin: 0px; [% IF ! loop.last %]margin-bottom: 2px;[% END %] padding: 0px; clear: right; position: relative;">

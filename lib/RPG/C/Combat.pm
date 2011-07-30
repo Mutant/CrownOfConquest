@@ -120,45 +120,11 @@ sub main : Local {
 
 sub display_opponents : Local {
 	my ( $self, $c ) = @_;
-	
-	my $display_factor_comparison;
-		
+			
 	# It's called 'creature_group' even though it could be a party or garrison
 	my $creature_group = $c->stash->{creature_group};
 	
 	return unless $creature_group;
-
-	my $factor_comparison;
-	
-	$c->stats->profile('Beginning factor comaprison');
-
-	if ($display_factor_comparison) {
-
-		# Check for a watcher effect
-		my @effects = $c->stash->{party}->party_effects;
-		
-		$c->stats->profile('Got party effects');
-
-		my $has_watcher = 0;
-		foreach my $effect (@effects) {
-			if ( $effect->effect && $effect->effect->effect_name eq 'Watcher' && $effect->effect->time_left > 0 ) {
-				$has_watcher = 1;
-				last;
-			}
-		}
-		
-		$c->stats->profile('Got watcher boolean');
-
-		if ($has_watcher) {
-			$c->log->debug('About to compare cg to party');
-			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
-			$c->log->debug('Done comparing cg to party');
-		}
-		
-		$c->stats->profile('Compared to party');
-	}
-	
-	$c->stats->profile('Completed factor comaprison');
 
 	# Load effects, to make sure they're current (i.e. include current round)
     my %ids;
@@ -196,7 +162,6 @@ sub display_opponents : Local {
 				template => 'combat/creature_group.html',
 				params   => {
 					creature_group         => $creature_group,
-					factor_comparison      => $factor_comparison,
 					effects_by_id => \%effects_by_id,
 				},
 				return_output => 1,

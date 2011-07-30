@@ -15,7 +15,8 @@ dojo.addOnLoad( displayIEDiag );
 
 function displaySizeWarning() {
 	var vs = dojo.window.getBox();
-	if (vs.w < 1200 || vs.h < 720) {
+	if (vs.w < 1200 || vs.h < 700) {
+		alert(vs.w + ", " + vs.h);
 		var warning = dojo.cookie('sizeWarning');
 		
 		if (! warning) {
@@ -71,7 +72,7 @@ page has more info on the pre-beta.</p>
     <br><br>
     Please use a large browser window or higher desktop resolution if possible.
     <br><br>
-    For best results, the viewing window of the browser should be at least 1200 pixels wide, by 720 high.
+    For best results, the viewing window of the browser should be at least 1200 pixels wide, by 700 high.
 	<br><br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>

@@ -2,7 +2,7 @@
 
 <b>Characters:</b>
 [% FOREACH character IN party.characters %]	
-	<a href="[% base %]/character/view?character_id=[% character.id %]">
+	<a href="#" onClick="loadScreen('character/view?character_id=[% character.id %]')">
 		[% character.character_name %]</a>
 	&nbsp;
 [% END %]

@@ -212,6 +212,11 @@ h1 {margin: 0; padding: 1px}
         font-size: 9pt;
 }
 
+.dj_webkit .tundra .dijitDialog {
+	-webkit-box-shadow: 1px 1px 1px #6B6B6B;
+}
+
+
 .tundra .dijitDialogTitleBar, .tundra .dijitDialogTitle, .tundra .dijitButtonContents, .tundra .dijitMenuItemLabel, .tundra .dijitMenu, .tundra .dijitReset {
 	color: black;
 }
@@ -343,6 +348,16 @@ div.enlargedTitle {
 	background:url(images/layout/loader.gif) no-repeat left center;
 	min-height: 24px;
 	min-width: 24px;
+}
+
+.login-box {
+	background: black; 
+	border: 2px solid #4d4d4d; 
+	margin: 2px;
+        -moz-border-radius: 10px;
+        -webkit-border-radius: 10px;
+        -khtml-border-radius: 10px;
+        border-radius: 10px;	
 }
 
 /* Tooltip */

@@ -38,15 +38,10 @@ var shotDescs = {
 	8: "Exploring a dungeon",
 };
 
-var images = {};
-[% FOREACH shot IN shots %]
-	images['shot-[% shot %]'] = new Image();
-	images['shot-[% shot %]'].src = "[% c.config.static_path %]/images/shots/[% shot %].png";
-[% END %]
-
 function showShot(shotId) {
 	dojo.byId('screeshot-view').style.visibility = 'visible';
-	dojo.byId('shot-img').src = images['shot-' + shotId].src;
+	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/layout/loader.gif";
+	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".png";
 	dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
 }
 

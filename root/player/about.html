@@ -2,7 +2,9 @@
 	[% guest = 1 %]
 [% END %]
 
-[% UNLESS guest %]
+[% IF guest %]
+	[% INCLUDE top.html guest_screen=1 %]
+[% ELSE %]
 	[% INCLUDE help/subnav.html %]
 [% END %]
 
@@ -57,3 +59,7 @@ Sam Crawley (Mutant)
 
 Kalle Haapaniemi<br>
 Shane Heres
+
+[% IF guest %]
+	[% INCLUDE bottom.html %]
+[% END %]

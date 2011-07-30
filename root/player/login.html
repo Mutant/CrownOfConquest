@@ -1,20 +1,32 @@
 [% INCLUDE top.html, guest_screen = 1 %]
 
 <script>
-dojo.require("dojo.cookie");
 function displayIEDiag() {
 	if (dojo.isIE <= 7) {
 		var ieWarn = dojo.cookie('ieWarn');
-		console.log(ieWarn);
 
 		if (! ieWarn) {	
 			dijit.byId('ie-diag').show();
-			dojo.cookie('ieWarn', 1);
+			dojo.cookie('ieWarn', 1, {expires: 60});
 		}
 	}
 }
-
 dojo.addOnLoad( displayIEDiag );
+
+function displaySizeWarning() {
+	var vs = dojo.window.getBox();
+	if (vs.w < 1200 || vs.h < 720) {
+		var warning = dojo.cookie('sizeWarning');
+		
+		if (! warning) {
+			dijit.byId('size-diag').show();
+			dojo.cookie('sizeWarning', 1, {expires: 60});		
+		}
+	} 
+}
+
+dojo.addOnLoad( displaySizeWarning );
+
 </script>
 
 <h1>Welcome to Kingdoms</h1>
@@ -46,6 +58,21 @@ page has more info on the pre-beta.</p>
     Please upgrade to a newer version of IE, or use an alternative browser such as <a href="http://www.google.com/chrome">Google Chrome</a> or 
     <a href="http://www.firefox.com">Mozilla Firefox</a>.  
 	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+	</div>
+</div>
+
+<div dojoType="dijit.Dialog" id="size-diag" style="display: none" title="Browser Window Size">
+    The browser window you're using is too small for Kingdoms to work correctly. You can still play the game, but you might have problems with
+    scrolling.
+    <br><br>
+    Yes, this annoying, but Kingdoms is a browser-based game, not just a normal web site.
+    <br><br>
+    Please use a large browser window or higher desktop resolution if possible.
+    <br><br>
+    For best results, the viewing window of the browser should be at least 1200 pixels wide, by 720 high.
+	<br><br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
 	</div>

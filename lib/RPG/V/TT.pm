@@ -21,7 +21,6 @@ sub process {
 
     %{$c->stash} = (%{$c->req->params}, %{$params->{params}});
     $c->stash->{template} = $params->{template};
-    $c->stash->{parties_online} = $old_stash{parties_online};
 
     $self->SUPER::process($c);
     

@@ -77,16 +77,6 @@ sub auto : Private {
 
         $c->stash->{party_location} = $c->stash->{party}->location;
 
-        # Get parties online
-        my @parties_online = $c->model('DBIC::Party')->search(
-            {
-                last_action => { '>=', DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) },
-                defunct     => undef,
-                name => { '!=', '' },
-            }
-        );
-        $c->stash->{parties_online} = \@parties_online;
-
         # If the party is currently in combat, they must stay on the combat screen
         # TODO: clean up this logic!
         if (   $c->stash->{party}->in_combat

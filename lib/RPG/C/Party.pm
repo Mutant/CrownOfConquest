@@ -23,7 +23,7 @@ sub main : Local {
 
     my $load_panel = $c->req->param('panel');
 
-    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map' ];
+    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map', 'online_parties' ];
     
     if (! $load_panel) { 
         $load_panel = 'party/init';
@@ -52,7 +52,7 @@ sub init : Local {
 
 	if (! $c->flash->{refresh_panels}) {
         # Protect against flash not getting read properly
-        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map'];
+        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map', 'online_parties'];
 	}
         
 	$c->forward( '/panel/refresh' );   
@@ -896,6 +896,36 @@ sub claim_land : Local {
     push @{ $c->stash->{messages} }, @$quest_messages if $quest_messages;
 	
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub online : Private {
+	my ( $self, $c ) = @_;
+		
+    # Get parties online
+    my @parties_online = $c->model('DBIC::Party')->search(
+        {
+            last_action => { '>=', DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) },
+            defunct     => undef,
+            name => { '!=', '' },
+        },
+        {
+            order_by => 'last_action desc',
+        }
+    );
+        
+	return $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/online.html',
+				params   => {
+					parties_online => \@parties_online,
+					foo => 1,
+				},
+				return_output => 1,
+			}
+		]
+	);      
 }
 
 1;

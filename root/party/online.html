@@ -1,0 +1,8 @@
+<span id="online-parties" style="text-decoration: underline">[% parties_online.size %] part[% IF parties_online.size > 1 %]ies[% ELSE %]y[% END %] online</span> /
+ 
+<div dojoType="dijit.Tooltip" connectId="online-parties" style="display: none">
+<b>Online Parties</b><br>
+[% FOREACH party IN parties_online %]
+	[% party.name %]<br>
+[% END %]
+</div>

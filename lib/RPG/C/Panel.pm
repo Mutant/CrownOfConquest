@@ -16,12 +16,13 @@ my %PANEL_PATHS = (
 	zoom => '/party/zoom',
 	creatures => '/combat/display_opponents',
 	mini_map => '/map/kingdom',
+	online_parties => '/party/online',
 );
 
 sub refresh : Private {
 	my ($self, $c, @panels_to_refresh) = @_;
 	
-	$c->forward('check_for_mini_map_refresh');
+	$c->forward('check_for_timed_panels');
 			
 	@panels_to_refresh = uniq ( @panels_to_refresh, @{ $c->stash->{refresh_panels} }, @{ $c->flash->{refresh_panels} } )
 		if ($c->stash->{refresh_panels} && ref $c->stash->{refresh_panels} eq 'ARRAY') ||
@@ -255,16 +256,25 @@ sub refresh_with_template : Private {
 	$c->forward('/panel/refresh', $params->{panels_to_refresh});
 }
 
-# Refresh the mini_map every n minutes
-sub check_for_mini_map_refresh : Private {
+# Some panels are refreshed on a timer
+sub check_for_timed_panels : Private {
     my ($self, $c) = @_;
-    
+
+    # Refresh the mini_map every n minutes    
     $c->session->{last_mini_map_refresh} //= DateTime->now();
         
     if (DateTime->compare(DateTime->now->subtract('minutes' => 5), $c->session->{last_mini_map_refresh}) == 1) {
         push @{$c->stash->{refresh_panels}}, 'mini_map';
         $c->session->{last_mini_map_refresh} = DateTime->now();
     }
+    
+    # Refresh online parties every n minutes
+    $c->session->{last_online_parties_refresh} //= DateTime->now();
+    
+    if (DateTime->compare(DateTime->now->subtract('minutes' => $c->config->{online_threshold}), $c->session->{last_online_parties_refresh}) == 1) {
+        push @{$c->stash->{refresh_panels}}, 'online_parties';
+        $c->session->{last_online_parties_refresh} = DateTime->now();
+    }    
 }
 
 1;

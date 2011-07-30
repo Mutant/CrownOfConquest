@@ -749,7 +749,7 @@ sub deactivate {
     if (my $kingdom = $self->kingdom) {
         $self->cancel_kingdom_quests($kingdom, 'the party has been disbanded');
         
-        if ($kingdom->king->party_id == $self->id) {
+        if ($kingdom->king && $kingdom->king->party_id == $self->id) {
             # They have the king. Make him/her an NPC
             my $king = $kingdom->king;
             $king->party_id(undef);   

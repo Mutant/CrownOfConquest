@@ -596,7 +596,7 @@ sub raid : Local {
 	
 	$c->stash->{message_panel_size} = 'small';   
 
-	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map' ] );
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
 }
 
 sub become_mayor : Local {

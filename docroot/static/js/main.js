@@ -302,7 +302,7 @@ var originalContent;
 function getPanels(url) {    
 	originalContent = dojo.byId('messages-pane').innerHTML;
 	
-	dijit.byId('messages-pane').setContent('Loading...');
+	dijit.byId('messages-pane').set("content", dojo.byId('loader-gif').innerHTML);
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
     

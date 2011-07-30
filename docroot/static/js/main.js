@@ -432,6 +432,7 @@ function displayMessages(messages_passed) {
 	}
 	else {
 		displayCount = 0;
+		setTimeout(function() {dijit.byId('party-message').hide()}, 400)
 	}
 }
 

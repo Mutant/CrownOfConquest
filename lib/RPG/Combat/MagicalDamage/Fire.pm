@@ -9,6 +9,7 @@ use Games::Dice::Advanced;
 use RPG::Maths;
 use List::Util qw(shuffle);
 use RPG::Combat::ActionResult;
+use RPG::Combat::MagicalDamageResult;
 
 sub apply {
 	my $self   = shift;

@@ -49,20 +49,7 @@ function confirmedMove(arguments) {
 	moveItem(itemSpan, true);
 }
 
-function changeGold(garrisonGoldInput) {
-	dojo.xhrGet( {
-        url: "[% base %]/garrison/change_gold?garrison_id=[% garrison.id %]&garrison_gold=" + garrisonGoldInput.value, 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) { 
-        	dojo.byId('party_gold').innerHTML = responseObject.party_gold;
-        	if (garrisonGoldInput.value != responseObject.garrison_gold) {
-        		garrisonGoldInput.value = responseObject.garrison_gold;
-        	}
-        },
-		timeout: 5000	 
-    }); 
-}
+
 
 window.onbeforeunload = function() {
 	if (changes) {
@@ -90,6 +77,20 @@ function changeName(arguments) {
         }
     });
 }
+
+function adjustGarrisonGold(action) {
+	var textAction;
+	if (action == 'add') {
+		textAction = 'add to';
+	}
+	else {
+		textAction = 'take from';
+	}
+
+	dojo.byId('garrison-adjust-gold-action').innerHTML = textAction;
+	dojo.byId('gold-action').value = action;
+	dijit.byId('garrison-adjust-gold').show();
+}
 </script>
 
 <style>
@@ -115,6 +116,28 @@ function changeName(arguments) {
 	</div>
 </div>
 
+<div dojoType="dijit.Dialog" id="garrison-adjust-gold" style="display: none" title="Gold">
+	<form method="POST" action="[% base %]garrison/adjust_gold" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="garrison_id" value="[% garrison.id %]">
+	<input type="hidden" name="action" id="gold-action" />
+    Amount of gold you want to <span id="garrison-adjust-gold-action"></span> the garrison:
+    <input type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name="gold"
+        value="1"
+        constraints="{min:1,places:0}"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+		style="width: 80px"
+        />
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onClick="dijit.byId('garrison-adjust-gold').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
+
 <h3>Manage "[% garrison.display_name(1) %]"</h3>
 
 [% IF party_garrisons.size > 1 %]
@@ -127,6 +150,15 @@ function changeName(arguments) {
 		[% END %]
 		&nbsp;
 	[% END %]
+[% END %]
+
+<br><br>
+Garrison Gold: [% garrison.gold %]
+[% IF editable %]
+<span style="font-size: 10px">
+	<a href="#" onClick="adjustGarrisonGold('add')">Add Gold</a>
+	<a href="#" onClick="adjustGarrisonGold('take')">Take Gold</a>
+</span>
 [% END %]
 
 <br><br>

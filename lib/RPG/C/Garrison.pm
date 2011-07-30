@@ -300,6 +300,7 @@ sub manage : Local {
                     party_garrisons => \@party_garrisons,
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
+                    editable => $c->stash->{party_location}->id == $c->stash->{garrison}->land->id,
                 },
             }
         ]
@@ -505,7 +506,7 @@ sub move_item : Local {
 	}
 }
 
-sub change_gold : Local {
+sub adjust_gold : Local {
 	my ($self, $c) = @_;
 	
 	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
@@ -515,30 +516,29 @@ sub change_gold : Local {
 	my $party = $c->stash->{party};
 	my $garrison = $c->stash->{garrison};
 		
-	my $garrison_gold = $c->req->param('garrison_gold');
-	my $total_gold = $garrison->gold + $party->gold;
-	if ($garrison_gold > $total_gold) {
-		$garrison_gold = $total_gold
+	if ($c->req->param('action') eq 'add' && $party->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "You don't have enough party gold to add that amount to the garrison";   
+	    $c->detach('/panel/refresh');
+	}
+
+	if ($c->req->param('action') eq 'take' && $garrison->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "There's not enough gold in the garrison to take that amount";   
+	    $c->detach('/panel/refresh');
 	}
 	
-	$garrison_gold = 0 if $garrison_gold < 0;
+	if ($c->req->param('action') eq 'add') {
+	   $party->decrease_gold($c->req->param('gold'));
+	   $garrison->increase_gold($c->req->param('gold'));
+	}
+	if ($c->req->param('action') eq 'take') {
+	   $garrison->decrease_gold($c->req->param('gold'));
+	   $party->increase_gold($c->req->param('gold'));	    
+	}
 	
-	my $party_gold = $total_gold - $garrison_gold;
-	
-	$party->gold($party_gold);
-	$party->update;
-	
-	$garrison->gold($garrison_gold);
+	$party->update;	
 	$garrison->update;
 	
-	$c->res->body(
-		to_json(
-			{
-				party_gold => $party_gold,
-				garrison_gold => $garrison_gold,
-			}
-		),
-	);
+	$c->forward('/panel/refresh', ['party_status', ['screen' => 'garrison/manage?garrison_id=' . $garrison->id]]);
 }
 
 sub update_garrison_name : Local {

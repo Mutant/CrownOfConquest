@@ -346,40 +346,35 @@ sub news : Local {
 	$c->res->body($c->forward('/town/generate_news', [$c->stash->{town}, 7]));			
 }
 
-sub change_gold : Local {
+sub adjust_gold : Local {
 	my ($self, $c) = @_;
-	
-	my $editable = $c->stash->{party_location}->id == $c->stash->{town}->land_id;
-	
-	return unless $editable;
-	
+		
 	my $party = $c->stash->{party};
 	my $town = $c->stash->{town};
-		
-	my $town_gold = $c->req->param('town_gold');
-	my $total_gold = $town->gold + $party->gold;
-	if ($town_gold > $total_gold) {
-		$town_gold = $total_gold
+	
+	if ($c->req->param('action') eq 'add' && $party->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "You don't have enough party gold to add that amount to the town";   
+	    $c->detach('/panel/refresh');
+	}
+
+	if ($c->req->param('action') eq 'take' && $town->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "There's not enough gold in the town to take that amount";   
+	    $c->detach('/panel/refresh');
 	}
 	
-	$town_gold = 0 if $town_gold < 0;
+	if ($c->req->param('action') eq 'add') {
+	   $party->decrease_gold($c->req->param('gold'));
+	   $town->increase_gold($c->req->param('gold'));
+	}
+	if ($c->req->param('action') eq 'take') {
+	   $town->decrease_gold($c->req->param('gold'));
+	   $party->increase_gold($c->req->param('gold'));	    
+	}
 	
-	my $party_gold = $total_gold - $town_gold;
-	
-	$party->gold($party_gold);
-	$party->update;
-	
-	$town->gold($town_gold);
+	$party->update;	
 	$town->update;
 	
-	$c->res->body(
-		to_json(
-			{
-				party_gold => $party_gold,
-				town_gold => $town_gold,
-			}
-		),
-	);
+	$c->forward('/panel/refresh', ['party_status', ['screen' => 'town/mayor?town_id=' . $town->id]]);
 }
 
 sub party_tax_preview : Local {

@@ -2,21 +2,6 @@
 
 <script>
 
-function changeGold(townGoldInput) {
-	dojo.xhrGet( {
-        url: "[% base %]/town/mayor/change_gold?town_id=[% town.id %]&town_gold=" + townGoldInput.value, 
-        handleAs: "json",
-        
-        load: function(responseObject, ioArgs) { 
-        	dojo.byId('party_gold').innerHTML = responseObject.party_gold;
-        	if (townGoldInput.value != responseObject.town_gold) {
-        		townGoldInput.value = responseObject.town_gold;
-        	}
-        },
-		timeout: 5000
-    }); 
-}	
-
 var base_cost = [% town.base_party_tax %];
 var level_step = [% town.party_tax_level_step %];
 function updateTaxPreviewBase(input) {
@@ -48,6 +33,20 @@ function confirmRelinquishMayoralty() {
 
 function confirmChangeMayor() {
 	dijit.byId('select-new-mayor').show();
+}
+
+function adjustMayorGold(action) {
+	var textAction;
+	if (action == 'add') {
+		textAction = 'add to';
+	}
+	else {
+		textAction = 'take from';
+	}
+
+	dojo.byId('mayor-adjust-gold-action').innerHTML = textAction;
+	dojo.byId('gold-action').value = action;
+	dijit.byId('mayor-adjust-gold').show();
 }
 </script>
 
@@ -82,6 +81,27 @@ function confirmChangeMayor() {
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="mayor-adjust-gold" style="display: none" title="Gold">
+	<form method="POST" action="[% base %]town/mayor/adjust_gold" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	<input type="hidden" name="action" id="gold-action" />
+    Amount of gold you want to <span id="mayor-adjust-gold-action"></span> the Town Coffers:
+    <input type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name="gold"
+        value="1"
+        constraints="{min:1,places:0}"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+		style="width: 80px"
+        />
+    <br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onClick="dijit.byId('mayor-adjust-gold').hide()">Cancel</button>
+	</div>
+	</form>
+</div>
 
 <h2>[% town.town_name %] Mayor's Office</h2>
 
@@ -93,19 +113,12 @@ function confirmChangeMayor() {
 	<br><br>
 [% END %]
 
+Town Coffers: [% town.gold %] gold
 [% IF party_in_town %]
-	<table class="main">
-		<tr>
-			<td>Town Coffers:</td>
-			<td><input type="text" name="town_gold" value="[% town.gold %]" size="5" onchange="changeGold(this)"></td>
-		</tr>
-		<tr>
-			<td>Party Gold:</td>
-			<td id="party_gold">[% party.gold %]</td>
-		</tr>
-	</table>
-[% ELSE %]
-	Town Coffers: [% town.gold %] gold
+<span style="font-size: 10px">
+	<a href="#" onClick="adjustMayorGold('add')">Add Gold</a>
+	<a href="#" onClick="adjustMayorGold('take')">Take Gold</a>
+</span>
 [% END %]
 <br><br>
 

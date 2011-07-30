@@ -433,36 +433,35 @@ sub towns : Local {
 	
 }    
 
-sub change_gold : Local {
+sub adjust_gold : Local {
 	my ($self, $c) = @_;
 		
 	my $party = $c->stash->{party};
 	my $kingdom = $c->stash->{kingdom};
-		
-	my $kingdom_gold = $c->req->param('kingdom_gold');
-	my $total_gold = $kingdom->gold + $party->gold;
-	if ($kingdom_gold > $total_gold) {
-		$kingdom_gold = $total_gold
+	
+	if ($c->req->param('action') eq 'add' && $party->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "You don't have enough party gold to add that amount to the kingdom";   
+	    $c->detach('/panel/refresh');
+	}
+
+	if ($c->req->param('action') eq 'take' && $kingdom->gold < $c->req->param('gold')) {
+	    $c->stash->{error} = "There's not enough gold in the kingdom to take that amount";   
+	    $c->detach('/panel/refresh');
 	}
 	
-	$kingdom_gold = 0 if $kingdom_gold < 0;
+	if ($c->req->param('action') eq 'add') {
+	   $party->decrease_gold($c->req->param('gold'));
+	   $kingdom->increase_gold($c->req->param('gold'));
+	}
+	if ($c->req->param('action') eq 'take') {
+	   $kingdom->decrease_gold($c->req->param('gold'));
+	   $party->increase_gold($c->req->param('gold'));	    
+	}
 	
-	my $party_gold = $total_gold - $kingdom_gold;
-	
-	$party->gold($party_gold);
-	$party->update;
-	
-	$kingdom->gold($kingdom_gold);
+	$party->update;	
 	$kingdom->update;
 	
-	$c->res->body(
-		to_json(
-			{
-				party_gold => $party_gold,
-				kingdom_gold => $kingdom_gold,
-			}
-		),
-	);
+	$c->forward('/panel/refresh', ['party_status', ['screen' => 'kingdom']]);
 }
 
 sub messages : Local {

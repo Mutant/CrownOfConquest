@@ -23,22 +23,6 @@
 	[% END %]
 [% END %]
 
-[% IF editable %]
-<input type="hidden" name="orig_garrison_gold" value="[% garrison.gold %]"> 
-<table class="main">
-	<tr>
-		<td>Garrison gold:</td><td><input type="text" size="6" onChange="changeGold(this)" value="[% garrison.gold %]"></td>
-	</tr>
-	<tr>
-		<td>Party gold:</td><td><span id="party_gold">[% party.gold %]</span></td>
-	</tr>
-</table>
-[% ELSE %]
-Garrison Gold: [% garrison.gold %]<br>
-[% END %]
-
-<hr size=1>
-
 <h3>Garrison Equipment</h3>
 
 <div id="garrison-equipment" style="overflow: auto; width: 100%; min-height: 140px">

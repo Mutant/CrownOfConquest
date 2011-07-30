@@ -1,12 +1,4 @@
-[% INCLUDE top.html %]
-
 <script>
-    dojo.require("dijit.form.Form");
-    dojo.require("dijit.form.Button");
-	dojo.require("dijit.form.NumberTextBox");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.layout.ContentPane");
-	
 function confirmCandidate(name, id) {
 	dojo.byId('candidate-name').innerHTML = name;
 	dojo.byId('candidate-id').value = id;
@@ -14,7 +6,7 @@ function confirmCandidate(name, id) {
 }
 
 function createCandidate(arguments) {
-	document.location = '[% base %]town/election/create_candidate?character_id=' + arguments.candidate_id;
+	getPanels('town/election/create_candidate?character_id=' + arguments.candidate_id);
 }
 
 function runPoll() {
@@ -37,7 +29,7 @@ function runPoll() {
 
 The election is scheduled for day [% election.scheduled_day %].<br><br>
 
-<div id="mainTabContainer" dojoType="dijit.layout.TabContainer" style="height: 700px; overflow: auto">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
 <div dojoType="dijit.layout.ContentPane" title="Candidates">
 
@@ -64,6 +56,3 @@ The election is scheduled for day [% election.scheduled_day %].<br><br>
 
 <div dojoType="dijit.layout.ContentPane" title="Poll" href="[% base %]/town/election/poll?town_id=[% town.id %]" [% IF tab == 'poll' %]selected=true[% END %]></div>
 <div dojoType="dijit.layout.ContentPane" title="Campaign" href="[% base %]/town/election/campaign?town_id=[% town.id %]" [% IF tab == 'campaign' %]selected=true[% END %]></div>
-
-
-[% INCLUDE bottom.html %]

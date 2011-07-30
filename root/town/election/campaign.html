@@ -5,8 +5,7 @@
 	<br><br>
 	Amount spent on campaign so far: [% candidacy.campaign_spend || 0 %] gold
 	<br><br>
-	Party Gold: [% party.gold %]<br><br>
-	<div dojoType="dijit.form.Form" action="[% base %]/town/election/add_to_spend" method="POST">
+	<form action="[% base %]/town/election/add_to_spend" method="POST" onSubmit="postPanels(this); return false">
 	<input type="hidden" name="town_id" value="[% town.id %]">
 	Spend more on campaign: 
 		<input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 50px"
@@ -15,7 +14,7 @@
 	<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
 		Update
 	</button>
-	</div>
+	</form>
 [% ELSE %]
 	[% IF ! new_candidates_allowed %]
 		It's too late to register a candidate for this election.

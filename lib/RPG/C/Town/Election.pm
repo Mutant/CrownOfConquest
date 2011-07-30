@@ -130,7 +130,7 @@ sub create_candidate : Local {
 	
 	$c->flash->{tab} = 'campaign';
 	
-	$c->res->redirect( $c->config->{url_root} . '/town/election' );	
+	$c->forward( '/panel/refresh', [[screen => 'town/election'], 'party'] );
 }
 
 sub add_to_spend : Local {
@@ -173,7 +173,7 @@ sub add_to_spend : Local {
 	$c->stash->{party}->decrease_gold($c->req->param('campaign_spend'));
 	$c->stash->{party}->update;
 	
-	$c->res->redirect( $c->config->{url_root} . '/town/election' );		
+	$c->forward( '/panel/refresh', [[screen => 'town/election'], 'party_status'] );
 }
 
 sub poll : Local {

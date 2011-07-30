@@ -33,7 +33,7 @@ Your prestige here:
 [% IF mayor %]
 	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br>
 	[% IF current_election %]
-	    The town will hold an election on day [% current_election.scheduled_day %] (<a href="[% base %]town/election">Details</a>)
+	    The town will hold an election on day [% current_election.scheduled_day %] (<a href="javascript:loadScreen('town/election')">Details</a>)
 	    <br>
 	[% END %]
 [% END %]	  

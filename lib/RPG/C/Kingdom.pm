@@ -545,6 +545,12 @@ sub create : Local {
         return;   
     }
     
+    if ($c->stash->{party}->characters_in_party->count <= 1) {
+        $c->stash->{error} = 'You must have at least 2 characters in your party when forming a kingdom.';
+        $c->forward('/panel/refresh');
+        return;        
+    }
+    
     my ($king) = grep { $_->id == $c->req->param('king') } $c->stash->{party}->characters_in_party;
     croak "Invalid king" unless $king && ! $king->is_dead;
     

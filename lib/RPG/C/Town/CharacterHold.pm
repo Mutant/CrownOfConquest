@@ -72,7 +72,7 @@ sub add_character : Local {
 		$c->stash->{party}->adjust_order;
 	}
 	
-	push @{$c->stash->{refresh_panels}}, 'party';
+	push @{$c->stash->{refresh_panels}}, 'party', 'party_status';
 	
 	$c->forward(
 		'/panel/refresh_with_template',
@@ -114,7 +114,7 @@ sub remove_character : Local {
 	
 	$c->stash->{party}->adjust_order;
 	
-	push @{$c->stash->{refresh_panels}}, 'party';
+	push @{$c->stash->{refresh_panels}}, 'party', 'party_status';
 	
 	$c->forward('character_list', $hold);
 }

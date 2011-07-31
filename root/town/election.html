@@ -1,3 +1,4 @@
+[% PROCESS layout/diag_buttons.html %]
 <script>
 function confirmCandidate(name, id) {
 	dojo.byId('candidate-name').innerHTML = name;
@@ -19,10 +20,7 @@ function runPoll() {
 <div dojoType="dijit.Dialog" id="confirm-candidate-diag" style="display: none" title="Confirm Candidate" execute="createCandidate(arguments[0]);">
 	Are you sure you want <span id="candidate-name"></span> to run for mayor of [% town.town_name %]?
 	<input id="candidate-id" name="candidate_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<div align="center">
-		<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-candidate-diag').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm-candidate-diag') %]
 </div>
 
 <h2>[% town.town_name %] Election</h2>

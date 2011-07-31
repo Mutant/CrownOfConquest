@@ -1,4 +1,5 @@
 [% INCLUDE top.html main_screen = 1 %]
+[% PROCESS layout/diag_buttons.html %]
 
 <script>
 function init() {
@@ -133,7 +134,7 @@ function enterTown(land_id, gold_cost, turn_cost) {
 
 function enterTownSubmit(land_id, paymentMethod){
 	getPanels('/town/enter?land_id=' + land_id + "&payment_method=" + paymentMethod);
-	dijit.byId('town-tax').hide();
+	hideDiag('town-tax');
 }
 
 function confirmRaidTown(town_name, town_id) {
@@ -153,7 +154,7 @@ function unblockDoorDiag(direction, door_id) {
 }
 
 function unblockDoor(action) {
-	dijit.byId('unblock-door-diag').hide();
+	hideDiag('unblock-door-diag');
 	getPanels('/dungeon/unblock_door?door_id=' + dojo.byId('door-id').value + '&character_id=' + dojo.byId('character-id').value + '&action=' + action);
 }
 
@@ -181,11 +182,7 @@ function unblockDoor(action) {
 <div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
     <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>
     <input id="creature-group-id" name="creature_group_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button> 
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-attack').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm-attack') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-bury" style="display: none" title="Bury Character" execute="bury(arguments[0]);">
@@ -197,11 +194,7 @@ function unblockDoor(action) {
 	<div align="center"><input dojoType=dijit.form.TextBox name="epitaph" style="width: 400px"></div>
 	<br><br>
 	Graves in the wilderness will eventually disappear.<br>Those in a town will remain permanently in the Cemetery.    
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button> 
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-bury').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm-bury') %]
 	 
 </div>
 
@@ -220,18 +213,14 @@ function unblockDoor(action) {
 	<div align="center">
     	<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'gold')">Pay Gold</button>
 		<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'work')">Work</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('town-tax').hide()">Cancel</button>
+		<button dojoType=dijit.form.Button onClick="hideDiag('town-tax')">Cancel</button>
 	</div>
 </div>
 
 <div dojoType="dijit.Dialog" id="town-raid" style="display: none" title="Raid Town" execute="raidTown(arguments[0])">
 	<input id="town-id" name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <span id="raid-town-text"></span>
-    <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">Yes</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('town-raid').hide()">No</button>
-	</div>
+    [% dialog_buttons('town-raid') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="unblock-door-diag" style="display: none" title="Unblock Door">
@@ -253,7 +242,7 @@ function unblockDoor(action) {
 		<button dojoType=dijit.form.Button onclick="unblockDoor('charge')">Charge Down</button>
 		<button dojoType=dijit.form.Button onclick="unblockDoor('pick')">Pick Lock</button>
     	<button dojoType=dijit.form.Button onclick="unblockDoor('break')">Break Seals</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('unblock-door-diag').hide()">Ignore</button>
+		<button dojoType=dijit.form.Button onClick="hideDiag('unblock-door-diag')">Ignore</button>
 	</div>
 </div>
 
@@ -262,7 +251,7 @@ function unblockDoor(action) {
     <br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">Disarm Trap</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('chest-trap').hide()">Ignore Chest</button>
+		<button dojoType=dijit.form.Button onClick="hideDiag('chest-trap')">Ignore Chest</button>
 	</div>
 </div>
 

@@ -224,9 +224,7 @@ sub create_submit_dialog : Private {
 			dialog_title => $params->{dialog_title},
 		}
 	);
-	
-	$c->log->debug("Displaying dialog: " . Dumper \%callback);
-	
+		
 	push @{$c->stash->{panel_callbacks}}, \%callback; 
 }
 

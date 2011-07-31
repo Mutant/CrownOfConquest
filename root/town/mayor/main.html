@@ -1,4 +1,5 @@
 [% PROCESS town/mayor/display_approval.html %]
+[% PROCESS layout/diag_buttons.html %]
 
 <script>
 
@@ -55,10 +56,7 @@ function adjustMayorGold(action) {
 	<input type="hidden" name="town_id" value="[% town.id %]">
 	Are you sure you want to give up the mayoralty of [% town.town_name %]?<br>
         
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-reliquish-mayorlty').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('confirm-reliquish-mayorlty') %]
 	</form>
 </div>
 
@@ -74,10 +72,7 @@ function adjustMayorGold(action) {
 		[% END %]
 	</select>
         
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-reliquish-mayorlty').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('select-new-mayor') %]
 	</form>
 </div>
 
@@ -95,11 +90,7 @@ function adjustMayorGold(action) {
         invalidMessage= "Invalid quantity."
 		style="width: 80px"
         />
-    <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('mayor-adjust-gold').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('mayor-adjust-gold') %]
 	</form>
 </div>
 

@@ -560,6 +560,10 @@ function dialogSubmit(submitUrl) {
 	getPanels(submitUrl + '?' + submitString);
 }
 
+function hideDiag(diagName) {
+	setTimeout(function() {dijit.byId(diagName).hide()}, 300);
+}
+
 /* Screen */
 
 function loadScreen(url) {

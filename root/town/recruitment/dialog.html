@@ -1,3 +1,6 @@
+[% PROCESS layout/diag_buttons.html %]
+
+
 <script>
 function confirmPurchase(charName, charId, charCost) {
 	dojo.byId('recruitment-confirmation-message').innerHTML = "Are you sure you want to recruit " + charName + " for " + charCost + " gold?";
@@ -22,9 +25,5 @@ function saveRecruitment(dialogFields) {
     <span id="recruitment-confirmation-message"></span>
 	<input id="action" name="action" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="rchar-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('recruitment-confirmation').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('recruitment-confirmation') %]
 </div>

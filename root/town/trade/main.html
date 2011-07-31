@@ -1,3 +1,6 @@
+[% PROCESS layout/diag_buttons.html %]
+
+
 <script type="text/javascript">
 
 function tradeConfirmation(itemSpan) {
@@ -5,11 +8,7 @@ function tradeConfirmation(itemSpan) {
 
 	dojo.byId('trade-item-id').value = item_id;
 	
-	[%# Get around dojo bug (fixed in 1.7?) %]
-	try {
-		dijit.byId('confirm-trade').show();
-	}
-	catch(err) {}
+	dijit.byId('confirm-trade').show();	
 }	
 
 function filterItems() {
@@ -36,14 +35,14 @@ function purchaseConfirmation(tradeId, item, amount) {
 	dojo.byId('trade-item').innerHTML = item;
 	dojo.byId('trade-amount').innerHTML = amount;
 	
-	dijit.byId('confirm-purchase').show();
+	dijit.byId('trade-confirm-purchase').show();
 }
 
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
 	<form method="POST" action="[% base %]/town/trade/create" onSubmit="postPanels(this); return false">
-	<input id="trade-item-id" name="trade_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<input id="trade-item-id" name="trade_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
 	<table class="main">
 		<tr>
 			<td>How much do you want to offer this item for?</td>
@@ -65,26 +64,20 @@ function purchaseConfirmation(tradeId, item, amount) {
 		    Do you want to offer this trade only to a particular party?<br>
 		    (Leave blank to offer to all parties)
 		    </td>
-		    <td><input name="offer_to" dojoType=dijit.form.TextBox type="text" style="width: 250px"></td>
+		    <td><input name="offer_to" dojoType="dijit.form.TextBox" type="text" style="width: 250px"></td>
 		</tr>
 	</table>
         
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-trade').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('confirm-trade') %]
 	</form>
 </div>
 
-<div dojoType="dijit.Dialog" id="confirm-purchase" style="display: none" title="Confirm Purchase">
+<div dojoType="dijit.Dialog" id="trade-confirm-purchase" style="display: none" title="Confirm Purchase">
 	<form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
 	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
         
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-purchase').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('trade-confirm-purchase') %]
 	</form>
 </div>
 

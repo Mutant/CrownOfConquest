@@ -1,8 +1,7 @@
+[% PROCESS layout/diag_buttons.html %]
+
 Enter a message to graffiti on the walls:
 <br>
 <input dojoType=dijit.form.TextBox name="message" style="width: 75em;" >
 
-<div align="center">
-	<button dojoType=dijit.form.Button type="submit" onClick="return dijit.byId('dialog').isValid();">OK</button>
-	<button dojoType=dijit.form.Button onClick="dijit.byId('dialog').hide()">Cancel</button>
-</div>
+[% dialog_buttons('dialog') %]

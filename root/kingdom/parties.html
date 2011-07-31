@@ -1,14 +1,12 @@
+[% PROCESS layout/diag_buttons.html %]
+
 <div dojoType="dijit.Dialog" id="banish-party-diag" style="display: none" title="Banish Party" execute="return false">	
 	<form dojotType="dijit.form.Form" method="post" action="[% base %]kingdom/banish_party" id="banish-form" onSubmit="postPanels(this); return false">
     <input id="banished-party-id" name="banished_party_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     How many days do you want to banish "<span id="banished-party-name"></span>" for?  
     <input name="duration" dojoType=dijit.form.NumberTextBox type="text" value="" style="width: 50px"
     	constraints="{min:[% banish_min %],max:[% banish_max %],places:0}" required="true"> ([% banish_min %] - [% banish_max %])
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit" name="submitButton">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('banish-party-diag').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('banish-party-diag') %]
 	</form>
 </div>
 

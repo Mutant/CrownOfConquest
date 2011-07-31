@@ -1,4 +1,6 @@
 [% INCLUDE top.html %]
+[% PROCESS layout/diag_buttons.html %]
+
 
 <h1>New Character</h1>
 
@@ -124,8 +126,7 @@ function submitForm() {
 <div dojoType="dijit.Dialog" id="stats-alert" title="Alert" execute="submitForm();">
 You haven't used all your stat points for this character.<br>
 You won't be able to regain these stat points if you continue!<br>
-<center><button dojoType=dijit.form.Button type="submit">Continue</button>
-<button dojoType="dijit.form.Button" onclick="dijit.byId('stats-alert').hide()">Cancel</button></center>
+[% dialog_buttons('stats-alert') %]
 </div>
 
 <form name="form" method="post" id="form" action="[% base %]/party/create/create_character" onsubmit="return checkStats()">

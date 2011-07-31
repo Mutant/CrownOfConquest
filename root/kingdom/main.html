@@ -1,3 +1,5 @@
+[% PROCESS layout/diag_buttons.html %]
+
 <script>
 function showBanishPartyDiag(partyId, partyName) {
 	dojo.byId('banished-party-id').value = partyId;
@@ -34,11 +36,7 @@ function adjustKingdomGold(action) {
         invalidMessage= "Invalid quantity."
 		style="width: 80px"
         />
-    <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('kingdom-adjust-gold').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('kingdom-adjust-gold') %]
 	</form>
 </div>
 

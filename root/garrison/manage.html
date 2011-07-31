@@ -1,4 +1,5 @@
 [% INCLUDE garrison/garrison_common.html %]
+[% PROCESS layout/diag_buttons.html %]
 
 <script type="text/javascript">
 	dojo.require("dojox.layout.ContentPane");
@@ -102,18 +103,12 @@ function adjustGarrisonGold(action) {
 <div dojoType="dijit.Dialog" id="confirm-move" style="display: none" title="Confirm Move" execute="confirmedMove(arguments[0]);">
     Are you sure you want to move this equipped item to the garrison?
 	<input id="move-item-id" name="move_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-move').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm-move') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-remove" style="display: none" title="Confirm Remove" execute="removeGarrison(arguments[0]);">
     Are you sure you want to remove this garrison?	
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm-remove').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm-remove') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="garrison-adjust-gold" style="display: none" title="Gold">
@@ -130,11 +125,7 @@ function adjustGarrisonGold(action) {
         invalidMessage= "Invalid quantity."
 		style="width: 80px"
         />
-    <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onClick="dijit.byId('garrison-adjust-gold').hide()">Cancel</button>
-	</div>
+    [% dialog_buttons('garrison-adjust-gold') %]
 	</form>
 </div>
 

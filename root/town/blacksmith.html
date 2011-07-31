@@ -1,3 +1,6 @@
+[% PROCESS layout/diag_buttons.html %]
+
+
 <h2>Blacksmith</h2>
 
 [% IF town.blacksmith_age == 0 %]
@@ -79,20 +82,14 @@
 	<input id="upgrade-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<input id="upgrade-variable-id" name="variable_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<input id="upgrade-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<div align="center">
-		<button dojoType=dijit.form.Button type="submit" id="upgrade-diag-submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('upgrade-diag').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('upgrade-diag') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="repair-diag" style="display: none" title="Repair Item" execute="repairItem(arguments[0]);">
 	Are you sure you want to repair <span id="repair-item-name"></span> for <span id="repair-cost"></span> gold?
 	<input id="repair-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	<input id="repair-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<div align="center">
-		<button dojoType=dijit.form.Button type="submit" id="repair-diag-submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('repair-diag').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('repair-diag') %]
 </div>
 		
 [% END %]

@@ -1,4 +1,6 @@
 [% INCLUDE layout/close_button.html %]
+[% PROCESS layout/diag_buttons.html %]
+
 <div dojoType="dijit.Dialog" id="declare-kingdom-diag" style="display: none" title="Declare Kingdom" execute="return true;">
 	<form method="post" action="[% base %]kingdom/create" onSubmit="postPanels(this); return false">
 	<table class="main">
@@ -18,11 +20,7 @@
 			</tr>
 		</tr>
 	</table>    
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('declare-kingdom-diag').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('declare-kingdom-diag') %]
 	</form>
 </div>
 

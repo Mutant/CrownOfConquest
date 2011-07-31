@@ -1,13 +1,10 @@
 [% INCLUDE top.html admin_screen=1 %]
+[% PROCESS layout/diag_buttons.html %]
 
 [% IF player_name %]
 <div dojoType="dijit.Dialog" id="confirm" style="display: none" title="Confirm" execute="confirm();">
     <span id="confirmation-message">Are you sure you want to give [% amount %] [% type %] to [% player_name %]?</span>
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button> 
-		<button dojoType=dijit.form.Button onclick="dijit.byId('confirm').hide()">Cancel</button>
-	</div>
+	[% dialog_buttons('confirm') %]
 </div>
 <script>
 dojo.addOnLoad( init );

@@ -1,4 +1,6 @@
 [% INCLUDE top.html %]
+[% PROCESS layout/diag_buttons.html %]
+
 
 <script>
 	[% IF characters.size == 0 %]
@@ -18,20 +20,14 @@
 	This will give you a reasonable starting party, which is useful if this is your first time playing Kingdoms.
 	<br><br>
 	You'll still be able to tweak your party afterwards, or even start again.
-	<div align="center">
-		<button dojoType=dijit.form.Button type="submit">Yes</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('autogen-diag').hide()">No</button>
-	</div>
+	[% dialog_buttons('autogen-diag') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="regen-diag" style="display: none" title="Regenerate Party" execute="autogenerate(arguments[0]);">
 	This will delete any characters you currently have, and auto-generate a new party for you.
 	<br><br>
 	Are you sure you want to do this?
-	<div align="center">
-		<button dojoType=dijit.form.Button type="submit">Yes</button>
-		<button dojoType=dijit.form.Button onclick="dijit.byId('regen-diag').hide()">No</button>
-	</div>
+	[% dialog_buttons('regen-diag') %]
 </div>
 
 <h1>Create Party</h1>

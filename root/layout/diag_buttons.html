@@ -1,0 +1,7 @@
+[% MACRO dialog_buttons(diag_name) BLOCK %]
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+		<button dojoType=dijit.form.Button onclick="hideDiag('[% diag_name %]'); return false;">Cancel</button>
+	</div>
+[% END %]

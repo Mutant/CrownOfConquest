@@ -103,7 +103,7 @@ sub accept : Local {
     $c->res->body($message);
     
     if ($quest->kingdom_id) {
-        $c->res->redirect( $c->config->{url_root} . "/quest/list" );   
+        $c->forward('/quest/list');  
     }
 }
 
@@ -140,7 +140,7 @@ sub decline : Local {
     );
     $quest->update;
     
-    $c->res->redirect( $c->config->{url_root} . "/quest/list" ); 
+    $c->forward('/quest/list'); 
     
 }
 

@@ -621,10 +621,10 @@ sub banish_party : Local {
     
     my $duration = $c->req->param('duration');
     if ($duration < $c->config->{min_banish_days} || $duration > $c->config->{max_banish_days}) {
-        $c->flash->{messages} = "A party can only be banished for between " . $c->config->{min_banish_days} .
+        $c->stash->{error} = "A party can only be banished for between " . $c->config->{min_banish_days} .
             ' and ' . $c->config->{max_banish_days} . ' days';
         
-        $c->response->redirect( $c->config->{url_root} . '/kingdom?selected=party' );       
+        $c->forward('/panel/refresh');       
         
         return; 
     }

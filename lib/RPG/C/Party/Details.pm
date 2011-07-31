@@ -444,7 +444,7 @@ sub change_allegiance : Local {
 	
 	my $day = $c->stash->{party}->last_allegiance_change_day;
 	if ($day && abs $day->difference_to_today <= $c->config->{party_allegiance_change_frequency}) {
-	   $c->flash->{error} = "You changed your allegiance too recently";
+	   $c->stash->{error} = "You changed your allegiance too recently";
 	   $c->forward( '/panel/refresh', ['messages'] );
 	   return;
 	}

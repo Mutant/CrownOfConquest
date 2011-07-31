@@ -142,8 +142,8 @@ sub add_to_spend : Local {
 	
 	if ($c->req->param('campaign_spend') > $c->stash->{party}->gold) {
 		$c->flash->{error} = "You don't have enough gold to spend that much on the campaign";
-			
-		$c->res->redirect( $c->config->{url_root} . '/town/election' );	
+		
+		$c->forward( '/panel/refresh' );	
 		
 		return;			
 	}

@@ -618,8 +618,8 @@ sub change_allegiance : Local {
         
     	my $king = $kingdom->king;
     	if (! $king->is_npc && $c->stash->{party}->is_suspected_of_coop_with($king->party)) {
-            $c->flash->{error} = "You can't change the town's allegiance to that kingdom, as you have IP addresses in common with the king's party";
-            $c->response->redirect( $c->config->{url_root} . '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=kingdom' );
+            $c->stash->{error} = "You can't change the town's allegiance to that kingdom, as you have IP addresses in common with the king's party";
+            $c->forward('/panel/refresh');
             return;
     	}        
     }

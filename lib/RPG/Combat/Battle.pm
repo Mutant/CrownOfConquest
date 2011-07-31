@@ -425,6 +425,9 @@ sub character_action {
 			$target = $self->combatants_by_id->{'character'}{ $character->last_combat_param2 } ||
                 $self->combatants_by_id->{'creature'}{ $character->last_combat_param2 };
 		}
+		elsif ( $target_type eq 'self' ) {
+            $target = $character;   
+		}
 		else {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}

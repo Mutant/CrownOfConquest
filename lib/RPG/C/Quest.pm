@@ -214,6 +214,8 @@ sub complete_quest : Private {
     			]
             );
 	}
+	
+	$c->stash->{party}->discard_changes;
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
 

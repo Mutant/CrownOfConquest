@@ -45,8 +45,6 @@ sub main : Local {
 				params   => {
 					town                 => $c->stash->{party_location}->town,
 					party                => $c->stash->{party},
-					error                => $c->flash->{error},
-					message              => $c->flash->{message},
 					current_tab          => $c->flash->{current_tab},
 					gold                 => $c->stash->{party}->gold,
 					full_repair_cost     => $full_repair_cost,
@@ -125,8 +123,8 @@ sub upgrade : Local {
 	my $item = $c->forward('item_valid_check');
 
 	if ( !$item->variable('Indestructible') && $item->variable('Durability') < $c->config->{min_upgrade_durability} ) {
-		$c->flash->{error} = "The item is too fragile to upgrade";
-		$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+		$c->stash->{error} = "The item is too fragile to upgrade";
+		$c->forward( '/panel/refresh' );
 		return;
 	}
 
@@ -147,8 +145,8 @@ sub upgrade : Local {
 
 	if ( $item->upgrade_cost( $variable->item_variable_name ) > $c->stash->{party}->gold ) {
 		$c->log->debug("Not enough gold for upgrade");
-		$c->flash->{error} = "You don't have enough gold for that upgrade";
-		$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+		$c->stash->{error} = "You don't have enough gold for that upgrade";
+		$c->forward( '/panel/refresh' );
 		return;
 	}
 
@@ -248,14 +246,13 @@ sub repair : Local {
 	my $town = $c->stash->{party_location}->town;
 
 	if ( $item->repair_cost($town) == 0 ) {
-		$c->flash->{error} = "That item doesn't need repairing";
-		$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+        # No repair needed
 		return;
 	}
 
 	if ( $item->repair_cost($town) > $c->stash->{party}->gold ) {
-		$c->flash->{error} = "You don't have enough gold for that upgrade";
-		$c->response->redirect( $c->config->{url_root} . '/town/blacksmith/main' );
+		$c->stash->{error} = "You don't have enough gold for that repair";
+		$c->forward( '/panel/refresh');
 		return;
 	}
 
@@ -264,7 +261,7 @@ sub repair : Local {
 
     $item->repair;
 
-	$c->flash->{message} = "Repair complete";
+	$c->stash->{message} = "Repair complete";
 	$c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
 }
 
@@ -297,13 +294,13 @@ sub full_repair : Local {
 	$party->update;
 
 	if ( $repaired == 0 ) {
-		$c->flash->{error} = "You don't have enough gold to repair any items";
+		$c->stash->{error} = "You don't have enough gold to repair any items";
 	}
 	elsif ( $repaired < scalar @items ) {
-		$c->flash->{error} = "You don't have enough gold to repair all those items. Only the first $repaired items were repaired.";
+		$c->stash->{error} = "You don't have enough gold to repair all those items. Only the first $repaired items were repaired.";
 	}
 	else {
-		$c->flash->{message} = "$repaired items repaired";
+		$c->stash->{panel_messages} = "$repaired items repaired";
 	}
 
     $c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );

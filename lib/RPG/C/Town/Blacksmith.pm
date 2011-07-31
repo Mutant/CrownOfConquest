@@ -262,7 +262,7 @@ sub repair : Local {
     $item->repair;
 
 	$c->stash->{message} = "Repair complete";
-	$c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
+	$c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status', 'party'] );
 }
 
 sub full_repair : Local {
@@ -303,7 +303,7 @@ sub full_repair : Local {
 		$c->stash->{panel_messages} = "$repaired items repaired";
 	}
 
-    $c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status'] );
+    $c->forward( '/panel/refresh', [[screen => 'town/blacksmith/main'], 'party_status', 'party'] );
 }
 
 1;

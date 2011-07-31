@@ -1,20 +1,5 @@
 <script type="text/javascript">
-    function init() {	
-		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-			var t = dojo.dnd.manager().target;
-
-			tmp = t.node.id.split(/-/);
-			var target_id = tmp[0];
-			var target_type = tmp[1];
-
-	   		order_val = nodes[0].id.split(/-/);
-			var item_id = order_val[1];
-			
-			if (target_type == 'equip_place') {
-				equip_item(target_id, item_id);
-			}
-		});
-
+    function init() {
 		displayCharList('[% group %]');
 	}
 	
@@ -123,13 +108,14 @@
 	}
 	
 	
-	dojo.addOnLoad( init );	
+	dojo.addOnLoad( init );
 	
 function clearEquipSlot(slot_name) {
 	dojo.byId(slot_name + '-equip-place-image').style.display = 'none';
 	dojo.byId(slot_name + '-slot-label').style.display = 'block';
 	dojo.byId(slot_name + '-equip-place-image').src = '';
-	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	 
+	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	
+	dijit.byId(changed_slot + '-tooltip').label = ''; 
 }	
 
 function reloadInventory() {
@@ -137,8 +123,9 @@ function reloadInventory() {
          url: "[% base %]/character/inventory?character_id=[% character.id %]",
          load: function(data,ioa){
               dijit.byId('inventory-panel').setContent(data);
-              createMenus();
-         } 
+              createItemMenus();
+         },
+         timeout: 15000,
      });
 }
 

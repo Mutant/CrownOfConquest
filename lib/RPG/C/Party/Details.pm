@@ -428,6 +428,7 @@ sub kingdom : Local {
                     minimum_kingdom_level => $c->config->{minimum_kingdom_level},
                     can_declare_kingdom => $can_declare_kingdom,
                     banned => \@banned,
+                    in_combat => $c->stash->{party}->in_combat,
                 },
             }
         ]
@@ -436,6 +437,10 @@ sub kingdom : Local {
 
 sub change_allegiance : Local {
 	my ($self, $c) = @_;
+	
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't change allegiance while in combat";   
+    }
 	
 	my $day = $c->stash->{party}->last_allegiance_change_day;
 	if ($day && abs $day->difference_to_today <= $c->config->{party_allegiance_change_frequency}) {

@@ -11,15 +11,13 @@
 			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
 				style="[% IF ! item.item_type.image %]display: none[% END %]"
 				>
-			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>
-			[% IF item %]
+			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>			
 			<div dojoType="dijit.Tooltip"
 	           		connectId="[% slot %]-equip_place"
 	           		id="[% slot %]-tooltip"
-					style="display: none">
-						[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
-	        </div>
-	        [% END %]
+					style="display: none;">
+						[% IF item %][% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %][% END %] 
+	        </div>	        
 	        <span id="[% slot %]-slot-label" [% IF item %]style="display: none"[% END %]>[% slot_orig %]</span>
 	        </span>
 		</td>
@@ -36,7 +34,7 @@
 		currentItemId = id;
 	}
 	
-function createMenus() {
+function createItemMenus() {
 	createInventoryMenu(); 
 	createEquippedMenu();
 	createQuantityMenu();
@@ -195,12 +193,12 @@ function addCommonMenuItems(menu) {
 
 <br><br>
 
-[% IF character.is_in_party %]
+[% IF character.item_change_allowed %]
 	Mouse over an item to get it's stats. Drag an item onto an equip slot to the left to equip it. Alternatively, right click an 
 	item to equip it, drop it, or give it to another character.<br> 
 [% END %]
 
 <div dojoType="dojox.layout.ContentPane" href="[% base %]/character/inventory?character_id=[% character.id %]" 
-	id="inventory-panel" [% IF character.is_in_party %]onDownloadEnd="createMenus()"[% END %] loadingMessage=""></div>
+	id="inventory-panel" [% IF character.item_change_allowed %]onDownloadEnd="createItemMenus()"[% END %] loadingMessage=""></div>
 
 </td></tr></table>

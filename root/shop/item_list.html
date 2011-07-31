@@ -36,7 +36,7 @@
 					<div style="text-align: center">
 						[% IF sell_type == 'item' %]<span id="item-quantity-[% item_type.id %]">[% item.get_column('number_of_items') %]</span> x[% END %]
 						<span dojoType="dojo.dnd.Source" copyOnly="true" id="item_source_[% id %]">
-							<span class="dojoDndItem" dndType="item" id="[% sell_type %]-[% id %]" dndData="[% item_type.item_type %]">
+							<span class="dojoDndItem" dndType="item" id="shop-[% sell_type %]-[% id %]" dndData="[% item_type.item_type %]">
 								[% IF item_type.image %]
 									<img src="[% c.config.static_path %]/images/items/[% item_type.image %]">
 								[% ELSE %]

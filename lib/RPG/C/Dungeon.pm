@@ -250,6 +250,10 @@ sub render_dungeon_grid : Private {
 sub move_to : Local {
     my ( $self, $c, $sector_id, $turn_cost ) = @_;
 
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't move while in combat";   
+    }
+
     $sector_id ||= $c->req->param('sector_id');
     
     $turn_cost //= $c->config->{cost_of_moving_through_dungeons};

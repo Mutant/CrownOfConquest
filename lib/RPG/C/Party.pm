@@ -710,6 +710,11 @@ sub new_party_message : Local {
 
 sub disband : Local {
 	my ( $self, $c ) = @_;
+	
+	if ($c->stash->{party}->in_combat) {
+        $c->res->body("You can't disband your party while you're in combat");
+        return;
+	}
 
 	# If this is a confirmation disband the party. Otherwise check for confirmation
 	if ( $c->req->param('confirmed') ) {

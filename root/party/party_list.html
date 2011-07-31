@@ -272,6 +272,10 @@ function createMenus() {
    [% END %]
 
    [% IF in_combat %]
+   	if (dijit.byId("fightMenu_[% character.id %]")) {
+		dijit.byId("fightMenu_[% character.id %]").destroyRecursive();
+	}
+   
 	var params = {id:"fightMenu_[% character.id %]" };
 
 	var menu = new dijit.Menu(params,document.createElement("div"));
@@ -290,6 +294,9 @@ function createMenus() {
     [% END %]
     
     [% IF character.is_spell_caster && character.has_castable_spells(in_combat) %]
+    	if (dijit.byId("castMenu_[% character.id %]")) {
+    		dijit.byId("castMenu_[% character.id %]").destroyRecursive();
+    	}
 
     	var params = {id:"castMenu_[% character.id %]" };
     	var menu = new dijit.Menu(params,document.createElement("div"));
@@ -308,6 +315,10 @@ function createMenus() {
     [% END %]
     
     [% IF character.get_item_actions(in_combat) %]
+       	if (dijit.byId("useMenu_[% character.id %]")) {
+			dijit.byId("useMenu_[% character.id %]").destroyRecursive();
+		}
+    
 
     	params = {id:"useMenu_[% character.id %]" };
     	var menu = new dijit.Menu(params,document.createElement("div"));
@@ -331,6 +342,10 @@ function createMenus() {
 }
 
 function createButton(menu, name, characterId) {
+	if (dijit.byId(name + "Button_" + characterId)) {
+		dijit.byId(name + "Button_" + characterId).destroyRecursive();
+	}
+
     var params = {
 		label: '<img id="' + name + 'Off_' + characterId + '" src="[% c.config.static_path %]/images/actions/' + name + '.png">' +
         	   '<img id="' + name + 'On_' + characterId + '" style="display: none" src="[% c.config.static_path %]/images/actions/' + name + '_glow.png">',

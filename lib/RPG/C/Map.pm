@@ -402,6 +402,10 @@ sub move_to : Local {
     my ( $self, $c, $params ) = @_;
 
     my $new_land = $c->model('DBIC::Land')->find( $c->req->param('land_id'), { prefetch => [ 'terrain', 'town' ] }, );
+    
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't move while in combat";   
+    }
 
     unless ($new_land) {
         $c->error('Land does not exist!');

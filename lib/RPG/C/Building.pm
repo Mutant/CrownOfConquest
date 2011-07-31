@@ -9,6 +9,16 @@ use Data::Dumper;
 
 use List::Util qw(shuffle);
 
+sub auto : Private {
+    my ($self, $c) = @_;
+    
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't manage buildings while in combat";   
+    }
+    
+    return 1;
+}
+
 sub get_party_resources {
     my ($self, $c) = @_;
     

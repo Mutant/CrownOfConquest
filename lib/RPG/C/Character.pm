@@ -242,18 +242,21 @@ sub item_details : Local {
 
 sub split_item : Local {
    	my ( $self, $c ) = @_;
-   	
+   	   	
 	my $item = $c->model('DBIC::Items')->find(
 		{
 			'item_id' => $c->req->param('item_id'),
 			'belongs_to_character.party_id' => $c->stash->{party}->id,
 		},
 		{
-			join => [
+			prefetch => [
                 'belongs_to_character',                
             ]
 		}
 	);
+    
+    $c->stash->{character} = $item->belongs_to_character;
+    $c->forward('check_character_can_change_items');	
 	
 	return if $item->variable('Quantity') <= 0 || $item->variable('Quantity') <= $c->req->param('new_quantity') || $c->req->param('new_quantity') <= 0;
 	
@@ -296,18 +299,12 @@ sub equip_item : Local {
 		$c->model('DBIC::Items')
 		->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } }, }, );
 
-	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters_in_sector;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
-		$c->log->warn( "Attempted to equip item "
-				. $item->id
-				. " by party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
-	}
+    my $character = $item->belongs_to_character;
+    
+    croak "Character not in party" unless $character->party_id == $c->stash->{party}->id;
+    
+    $c->stash->{character} = $character;
+    $c->forward('check_character_can_change_items');
 
 	my @slots_changed;
 	my $equip_place = $c->req->param('equip_place');
@@ -359,7 +356,7 @@ sub equip_item : Local {
 sub give_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_character_is_in_party');
+	$c->forward('check_character_can_change_items');
 
 	my $character = $c->stash->{character};
 
@@ -399,7 +396,7 @@ sub give_item : Local {
 sub drop_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_character_is_in_party');
+	$c->forward('check_character_can_change_items');
 
 	my $character = $c->stash->{character};
 
@@ -445,7 +442,7 @@ sub drop_item : Local {
 sub unequip_item : Local {
 	my ( $self, $c ) = @_;
 
-	$c->forward('check_character_is_in_party');
+	$c->forward('check_character_can_change_items');
 
 	my $character = $c->stash->{character};
 
@@ -720,12 +717,13 @@ sub check_action_allowed : Private {
 	}
 }
 
-sub check_character_is_in_party : Private {
+sub check_character_can_change_items : Private {
 	my ( $self, $c ) = @_;
 
-	unless ( $c->stash->{character}->is_in_party ) {
-		croak "Can only make changes to a character in the same sector as your party\n";
+	unless ( $c->stash->{character}->item_change_allowed ) {
+		croak "Attempt to change items on a character that is not allowed to do so\n";
 	}
 }
+
 
 1;

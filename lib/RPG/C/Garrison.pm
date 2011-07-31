@@ -132,6 +132,10 @@ sub update : Local {
 	
 	croak "Must be in correct sector to update garrison" unless $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
 	
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't update garrison while in combat";
+    }	
+	
 	my @current_garrison_chars = $c->stash->{garrison}->characters;
 		
 	my %char_ids_to_garrison = map { $_ => 1 } $c->req->param('chars_in_garrison');
@@ -300,17 +304,24 @@ sub manage : Local {
                     party_garrisons => \@party_garrisons,
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
-                    editable => $c->stash->{party_location}->id == $c->stash->{garrison}->land->id,
+                    editable => $self->is_editable($c),
                 },
             }
         ]
     );		
 }
 
+sub is_editable {
+    my ($self, $c) = @_;
+    
+    return $c->stash->{party_location}->id == $c->stash->{garrison}->land->id && ! $c->stash->{party}->in_combat ? 1 : 0;
+   
+}
+
 sub character_tab : Local {
 	my ($self, $c) = @_;
 
-	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	my $editable = $self->is_editable($c);
 
     $c->forward(
         'RPG::V::TT',
@@ -426,7 +437,7 @@ sub get_owned_equipment : Local {
 sub equipment_tab : Local {
 	my ($self, $c) = @_;
 	
-	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	my $editable = $self->is_editable($c);
 	
 	my @party_equipment;
 	
@@ -480,7 +491,7 @@ sub equipment_tab : Local {
 sub move_item : Local {
 	my ($self, $c) = @_;
 	
-	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	my $editable = $self->is_editable($c);
 	
 	return unless $editable;
 	
@@ -509,7 +520,7 @@ sub move_item : Local {
 sub adjust_gold : Local {
 	my ($self, $c) = @_;
 	
-	my $editable = $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
+	my $editable = $self->is_editable($c);
 	
 	return unless $editable;
 	

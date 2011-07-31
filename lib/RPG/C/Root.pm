@@ -77,26 +77,6 @@ sub auto : Private {
 
         $c->stash->{party_location} = $c->stash->{party}->location;
 
-        # If the party is currently in combat, they must stay on the combat screen
-        # TODO: clean up this logic!
-        if (   $c->stash->{party}->in_combat
-            && $c->action ne 'party/main'
-            && $c->action ne 'party/init'
-            && $c->action !~ m{^((dungeon|party|garrison)/)?combat}
-            && $c->action ne 'party/select_action'
-            && $c->action ne 'default'
-            && $c->action ne 'player/logout'
-            && $c->action ne 'map/load_sectors'
-            && $c->action ne 'map/kingdom_data'
-            && $c->action ne 'map/kingdom'
-            && $c->action ne 'map/search'
-            && $c->action ne 'party/zoom_change' )
-        {
-            $c->debug('Forwarding to /party/main since party is in combat');
-            $c->stash->{error} = "You must flee before trying to move away!";
-            $c->forward('/party/main');
-            return 0;
-        }
     }
     elsif ( $c->action !~ m|^party/create| && $c->action !~ m|^help| && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
        	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );

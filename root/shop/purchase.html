@@ -3,7 +3,15 @@
 function init() {	
 	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 		var t = dojo.dnd.manager().target;
-
+	
+    	tmp = nodes[0].id.split(/-/);
+    	var purchaseType = tmp[1];    	
+    	var item_type_id = tmp[2];
+    	
+    	if (! item_type_id || ! tmp[0] == 'shop') {
+    		return;
+    	}
+    	
 		var purchasedItem = source.getItem(nodes[0].id).data;
 		
 		if (! purchasedItem) {
@@ -13,17 +21,14 @@ function init() {
 		tmp = t.node.id.split(/-/);
 		var char_id = tmp[1];
 	
-		var purchasingChar = dojo.byId(t.node.id).innerHTML;
+		var purchasingChar = dojo.byId(t.node.id).innerHTML;		
+
 		
-    	tmp = nodes[0].id.split(/-/);
-    	
-    	var item_type_id = tmp[1];
-		
-		if (tmp[0] == 'item' || tmp[0] == 'enchanted') {			
+		if (purchaseType == 'item' || purchaseType == 'enchanted') {			
 			dojo.byId('equip-purchase-confirmation-message').innerHTML =  "Are you sure you want to purchase a " + purchasedItem + " for " + purchasingChar + "?";
 			dojo.byId('purchasing-char-id').value = char_id;
 			
-			if (tmp[0] == 'item') {
+			if (purchaseType == 'item') {
 			    dojo.byId('purchasing-item-id').value = '';
 				dojo.byId('purchasing-item-type-id').value = item_type_id;
 			}
@@ -34,7 +39,7 @@ function init() {
 			
 			dijit.byId('equip-purchase-confirmation').show();
 		}
-		else if (tmp[0] == 'quantity') {
+		else if (purchaseType == 'quantity') {
 			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
 			dojo.byId('quantity-char-id').value = char_id;
 			dojo.byId('quantity-item-type-id').value = item_type_id;
@@ -42,7 +47,8 @@ function init() {
 			dijit.byId('quantity-selection').show();
 		}
 		else {
-			alert("Invalid drag/drop");
+			console.error("Invalid drag/drop");
+			return;
 		}
 		
 		return true;

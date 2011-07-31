@@ -48,6 +48,7 @@ We can change our allegiance once every [% allegiance_change_frequency %] days.
 	So far, we have not changed our allegiance.
 [% END %]
 
+[% IF ! in_combat %]
 <form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
 Change our allegiance to: 
 	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
@@ -58,6 +59,9 @@ Change our allegiance to:
 	</select>
 	<input type="submit" value="Change">
 </form>
+[% ELSE %]
+<br><br>You cannot change your allegiance while you're in combat.
+[% END %]
 
 [% IF banned.size > 0 %]
 <br>
@@ -74,7 +78,7 @@ We have been banished from the following kingdoms:
 	We currently have [% mayor_count %] mayors. [% town_count_for_kingdom_declaration %] mayors (and a party level of [% minimum_kingdom_level %])
 	are required in order to declare a Kingdom.
 	
-	[% IF can_declare_kingdom %]
+	[% IF can_declare_kingdom && ! in_combat %]
 		<br><br>
 		<button dojoType="dijit.form.Button" onClick="dijit.byId('declare-kingdom-diag').show()">Declare Kingdom</button>
 	[% END %]

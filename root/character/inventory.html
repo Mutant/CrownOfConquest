@@ -10,14 +10,11 @@
 		[% last_category = item.item_type.category.item_category %]
 	[% END %]
 	
-	[% IF character.is_in_party %]
+	[% IF character.item_change_allowed %]
 	<span id="item-menu-[% item.id %]" onmouseover="saveCurrentItemId('[% item.id %]')">
 		<span dojoType="dojo.dnd.Source" jsId="c1" class="source" copyOnly="true" id="item-connecter-[% item.id %]">
 	[% END %]	
-			<span class="dojoDndItem" dndType="[% last_category %]" 
-				id="item-[% item.id %]"
-				
-				>
+			<span class="dojoDndItem" dndType="[% last_category %]" id="item-[% item.id %]">
 				<span id="item-tooltip-[% item.id %]">
 				[% IF item.item_type.image %]
 					<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
@@ -33,14 +30,14 @@
 					[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
             </div>
             
-    [% IF character.is_in_party %]
+    [% IF character.item_change_allowed %]
 		</span>	
 	</span>
 	[% END %]
 	
 [% END %]
 
-[% IF character.is_in_party %]
+[% IF character.item_change_allowed %]
 <script>
 var itemMenuData = [[% FOREACH item IN items %]{id: "item-menu-[% item.id %]", equipped: "[% item.slot_equipped_in %]", quantity: "[% item.variable('Quantity') %]"}[% UNLESS loop.last %],[% END %][% END %]];
 

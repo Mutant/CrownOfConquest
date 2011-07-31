@@ -1339,6 +1339,20 @@ sub critical_hit_chance {
         $bonus;     
 }
 
+# Are they allowed to move their items around (drop, equip, etc)?
+sub item_change_allowed {
+    my $self = shift;
+    my $party = shift // $self->party;
+    
+	# Set whether items are allowed to be moved, dropped, etc.
+	my $item_change_allowed = 1;
+	if (! $self->is_in_party || $party->in_combat) {
+	   $item_change_allowed = 0;   
+	}
+	
+	return $item_change_allowed;
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

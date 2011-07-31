@@ -519,6 +519,10 @@ sub tax : Local {
 sub create : Local {
     my ($self, $c) = @_;
     
+    if ($c->stash->{party}->in_combat) {
+        croak "Can't declar kingdom while in combat";   
+    }    
+    
     my $mayor_count = $c->stash->{party}->search_related(
 		'characters',
 		{

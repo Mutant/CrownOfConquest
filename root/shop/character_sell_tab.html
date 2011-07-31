@@ -25,8 +25,8 @@
 	[% END %]
 		<div dojoType="dijit.Tooltip"
         	connectId="item_image_[% item.id %]"
-            label="[% INCLUDE item/tooltip_specific.html item_type=item.item_type, item=item | collapse %]"
 			style="display: none">
+			[% INCLUDE item/tooltip_specific.html item_type=item.item_type, item=item | collapse %]
 		</div>
 				
 		<div style="text-align: center" id="item_image_[% item.id %]">

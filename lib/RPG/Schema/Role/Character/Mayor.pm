@@ -30,6 +30,13 @@ sub lose_mayoralty {
 	
 	$self->update;
 	
+    
+    # Cancel election, if there's one in progress
+    my $election = $town->current_election;
+    if ($election) {
+        $election->cancel;
+    }	
+	
 	my @garrison_chars = $self->result_source->schema->resultset('Character')->search(
 		{
 			status => 'mayor_garrison',
@@ -111,13 +118,6 @@ sub was_killed {
            		
     if ($town->peasant_state eq 'revolt') {
     	$town_history_msg .= " The peasants give up their revolt."; 
-    }
-    
-    # Cancel election, if there's one in progress
-    my $election = $town->current_election;
-    if ($election) {
-        $election->cancel;
-    	$town_history_msg .= " The upcoming election is cancelled.";
     }
            		
 	$town->add_to_history(

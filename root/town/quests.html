@@ -9,7 +9,7 @@
 [% END %]
 
 [% IF party_quest %]
-	You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="[% base %]quest/list">Quest List</a> for
+	You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="javascript:getPanels('quest/list')">Quest List</a> for
 	details on what you still have to do.
 [% ELSIF ! allowed_more_quests %]
 	You've reached the maximum number of quests allowed for a party of your level.

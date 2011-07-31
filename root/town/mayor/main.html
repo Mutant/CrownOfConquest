@@ -98,7 +98,7 @@ function adjustMayorGold(action) {
 
 [% IF ! party_in_town && mayors.size > 1 %]
 	[% FOREACH mayor IN mayors %]
-		<a href="[% base %]town/mayor?town_id=[% mayor.mayor_of %]">[% mayor.name %]</a>
+		<a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of %]')">[% mayor.name %]</a>
 		[% IF ! loop.last %] |[% END %]
 	[% END %]
 	<br><br>

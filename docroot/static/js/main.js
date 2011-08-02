@@ -733,4 +733,23 @@ function miniMapInitCallback() {
     });
 }
 
+/* Quests */
+
+function acceptQuest(quest_id) {
+	dojo.xhrGet( {
+        url: "[% base %]/quest/accept?quest_id=" + quest_id, 
+        handleAs: "text",
+        
+        load: function(responseObject, ioArgs) {
+        	if (responseObject) {
+        		dojo.byId('accept-message-text').innerHTML = responseObject;
+        		dijit.byId('message').show();
+        	}
+        
+        	dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
+        }
+    });
+}
+
+
 	

@@ -116,7 +116,7 @@ sub generate_kingdom_quests {
     my $total_current_quests = $kingdom->search_related(
         'quests',
         {
-            status => {'!=', ['Complete', 'Terminated']},
+            status => ['Not Started', 'In Progress'],
         }
     )->count;
     
@@ -164,10 +164,7 @@ sub _create_quests_of_type {
         
         next unless @eligible;
         
-        # Sort eligible parties by loyalty. Note, we divide loyalty scores by 10, and remove decimals to break
-        #  up the parties a bit. Otherwise someone on a slightly higher loyalty is instantly going to get 1 of
-        #  every quest type
-        @eligible = sort { int ($b->loyalty_for_kingdom($kingdom->id) / 10) <=> int ($a->loyalty_for_kingdom($kingdom->id) / 10) } shuffle @eligible;
+        @eligible = shuffle @eligible;
             
         my $party = shift @eligible;
             

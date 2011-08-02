@@ -613,6 +613,11 @@ sub select_action : Local {
 			}
 			
 			$result = $action->use($target);
+			
+			# HACK: refresh map screen if casting portal 
+			if ($action->can('spell') && $action->spell->spell_name eq 'Portal') {
+                push @{ $c->stash->{refresh_panels} }, 'map';
+			}
 		}
 	}
 

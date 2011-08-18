@@ -198,11 +198,11 @@ function unblockDoor(action) {
 	 
 </div>
 
-<div dojoType="dijit.Dialog" id="party-message" style="display: none" title="Message" execute="displayMessages()">
+<div dojoType="dijit.Dialog" id="party-message" style="display: none" title="Message">
     <span id="party-message-text"></span>
     <br>
 	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
+    	<button dojoType=dijit.form.Button type="submit" onclick="hideDiag('party-message');">OK</button>
 	</div>
 </div>
 

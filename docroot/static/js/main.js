@@ -424,16 +424,22 @@ function displayMessages(messages_passed) {
 	if (! panel_messages) {
 		return;
 	}
-	
-	if (panel_messages[displayCount]) {
-		dojo.byId('party-message-text').innerHTML = panel_messages[displayCount];
-		dijit.byId('party-message').show();
-		displayCount++;
+
+	if (panel_messages.length == 1) {
+		message = panel_messages[0];
 	}
 	else {
-		displayCount = 0;
-		setTimeout(function() {dijit.byId('party-message').hide()}, 400)
+		var message = '<ul style="margin: 0px; padding: 10px">';	
+		for (var i = 0; i < panel_messages.length; i++) {
+			if (panel_messages[i]) {
+				message += '<li>' + panel_messages[i] + '</li>';
+			}
+		}
+		message += '</ul>';
 	}
+
+	dojo.byId('party-message-text').innerHTML = message;
+	dijit.byId('party-message').show();
 }
 
 function executeCallbacks(callBacks) {

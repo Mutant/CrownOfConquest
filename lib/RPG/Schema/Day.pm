@@ -31,6 +31,12 @@ sub difference_to_today_str {
     
     my $diff = $self->difference_to_today;
     
+    return _diff_str($diff);
+}
+
+sub _diff_str {
+    my $diff = shift;
+    
     if ($diff == 1) {
         return 'tomorrow';   
     }
@@ -45,7 +51,7 @@ sub difference_to_today_str {
     }
     else {
         return "today";
-    }
+    }   
 }
 
 1;

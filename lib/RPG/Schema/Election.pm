@@ -6,6 +6,8 @@ use warnings;
 use Games::Dice::Advanced;
 use Math::Round qw(round);
 
+use RPG::Schema::Day;
+
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Election');
 
@@ -26,6 +28,14 @@ __PACKAGE__->has_many(
     'RPG::Schema::Election_Candidate',
     'election_id',
 );
+
+sub days_until_election {
+    my $self = shift;
+    
+    my $today = $self->result_source->schema->resultset('Day')->find_today();
+    
+    return RPG::Schema::Day::_diff_str($self->scheduled_day - $today->day_number);
+}
 
 sub cancel {
     my $self = shift;

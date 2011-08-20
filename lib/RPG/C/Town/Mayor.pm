@@ -400,25 +400,6 @@ sub party_tax_preview : Local {
 	);
 }
 
-sub elections : Local {
-	my ($self, $c) = @_;
-	
-	my $town = $c->stash->{town};
-	
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'town/mayor/elections.html',
-				params => {
-					town => $town,
-					current_election => $town->current_election,
-				}
-			}
-		]
-	);	
-}
-
 sub schedule_election : Local {
 	my ($self, $c) = @_;	
 	
@@ -426,7 +407,7 @@ sub schedule_election : Local {
 	
 	my $election = $c->model('DBIC::Election')->schedule( $town, $c->req->param('election_day') );
 	
-	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=elections']] );
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=select']] );
 }
 
 sub garrison : Local {

@@ -16,3 +16,20 @@ The mayor of [% town.town_name %] is <b>[% town.mayor.character_name %]</b>.
 (You can change the mayor if your party is in the mayor's town).
 [% END %]
 
+<h4>Elections</h4>
+
+[% IF town.current_election %]
+The next election is scheduled for day [% town.current_election.scheduled_day %] ([% town.current_election.days_until_election %])
+[% ELSE %]
+<form method="POST" action="[% base %]town/mayor/schedule_election" onSubmit="postPanels(this); return false">
+<input type="hidden" name="town_id" value="[% town.id %]">
+Schedule an election in: 
+	<select name="election_day">
+		<option value="3">3 days</option>
+		<option value="6">6 days</option>
+		<option value="9">9 days</option>
+	</select>
+<input type="submit" value="Schedule">
+</form>
+[% END %]
+

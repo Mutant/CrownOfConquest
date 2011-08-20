@@ -233,7 +233,7 @@ sub process_round_result : Private {
 	# We only want messages for opp1, since that's always the online party
 	push @{ $c->stash->{combat_messages} }, @{ $display_messages->{1} };
 
-	my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'creatures' );
+	my @panels_to_refesh = ( 'messages', 'party_status' );
 	if ( $result->{combat_complete} ) {
 
 		if ( !$c->stash->{party}->defunct && ! $result->{creatures_fled} ) {
@@ -252,7 +252,6 @@ sub process_round_result : Private {
 		push @panels_to_refesh, ('creatures');
 
 		undef $c->stash->{creature_group};
-
 	}
 		
 	$c->stash->{combat_complete} = $result->{combat_complete};
@@ -263,6 +262,8 @@ sub process_round_result : Private {
 	}
 	
 	$c->stash->{message_panel_size} = 'large';
+	
+	push @{$c->stash->{panel_callbacks}}, { name => 'postRound' };
 
 	$c->forward( '/panel/refresh', \@panels_to_refesh );
 }
@@ -270,9 +271,9 @@ sub process_round_result : Private {
 sub process_flee_result : Private {
 	my ( $self, $c, $result ) = @_;
 
-	my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'creatures' );
-
 	if ( $result->{party_fled} ) {
+	    my @panels_to_refesh = ( 'messages', 'party', 'party_status', 'map', 'creatures' );
+	    
 		$c->stash->{messages} = "You got away!";
 		$c->log->debug("discarding party");
 		
@@ -280,7 +281,6 @@ sub process_flee_result : Private {
 		$c->stash->{party_location} = $c->stash->{party}->location;
 
 		undef $c->stash->{creature_group};
-		push @panels_to_refesh, ('map', 'creatures');
 
 		$c->forward( '/panel/refresh', \@panels_to_refesh );
 	}
@@ -289,6 +289,14 @@ sub process_flee_result : Private {
 
 		$c->forward( '/combat/process_round_result', [$result] );
 	}
+}
+
+sub refresh_combatants : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->stash->{creature_group} = $c->stash->{party}->opponents;
+    
+    $c->forward( '/panel/refresh', ['party', 'creatures'] );   
 }
 
 sub target_list : Local {

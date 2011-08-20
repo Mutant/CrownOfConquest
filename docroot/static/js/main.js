@@ -757,5 +757,9 @@ function acceptQuest(quest_id) {
     });
 }
 
+/* Combat */
 
+function postRoundCallback() {
+	getPanels('combat/refresh_combatants');
+}
 	

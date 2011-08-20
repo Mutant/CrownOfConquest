@@ -437,6 +437,7 @@ sub sell_price {
     my $shop = shift;
     my $use_modifier = shift // 1;
     my $adjust_for_damage = shift // 1;
+    my $single_item = shift // 0;
 
     my $modifier = $use_modifier ? RPG::Schema->config->{shop_sell_modifier} : 0;
 
@@ -454,7 +455,7 @@ sub sell_price {
     	$price += ($enchantment->sell_price_adjustment || 0);	
     }
 
-    $price *= $self->variable('Quantity') if $self->variable('Quantity');
+    $price *= $self->variable('Quantity') if $self->variable('Quantity') && ! $single_item;
     
     # Adjust for repair cost
     if ($adjust_for_damage and my $repair_cost = $self->repair_cost) {
@@ -464,8 +465,30 @@ sub sell_price {
     $price = int( $price / ( 100 / ( 100 + $modifier ) ) );
 
     $price = 1 if $price <= 0;
+    
+    # Can't be less than 1 gold per item (for quantity items)
+    if ($self->variable('Quantity') && ! $single_item && $price < $self->variable('Quantity')) {
+       $price = $self->variable('Quantity');
+    }
 
     return $price;
+}
+
+# Sell price for an individual item
+#  Returns undef is not a quantity item, or there is only 1 of this item
+sub individual_sell_price {
+    my $self = shift;
+    my $shop = shift;
+    
+    return if ! $self->variable('Quantity') || $self->variable('Quantity') == 1;
+    
+    return $self->sell_price($shop, undef, undef, 1);
+}
+
+sub is_quantity {
+    my $self = shift;
+    
+    return $self->variable('Quantity') ? 1 : 0;
 }
 
 =head2 equip_item($equipment_slot_name, $replace_existing_equipment)

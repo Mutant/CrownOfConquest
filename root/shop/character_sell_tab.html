@@ -15,12 +15,15 @@
 		'[% item.character_id %]'
 	)"	
 	
-	onDblClick="sellItemConfirm(
+	[% single_confirm_func = item.is_quantity && item.variable('Quantity') > 1 ? 'sellQuantityConfirm' : 'sellItemConfirm' %]
+	
+	onDblClick="[% single_confirm_func %](
 		'[% item.item_type.item_type %]',
 		'[% item.id %]', 
 		'[% item.sell_price(shop) %]', 
 		'[% item.equip_place_id %]',
-		'[% item.character_id %]'
+		'[% item.character_id %]',
+		'[% item.variable('Quantity') %]'
 	)">
 	[% END %]
 		<div dojoType="dijit.Tooltip"
@@ -38,6 +41,10 @@
 		</div>
 		<div style="text-align: center">
 			([% item.sell_price(shop) %] gold)
+			[% individual_sell_price = item.individual_sell_price %]
+			[% IF individual_sell_price %]
+				<br>([% individual_sell_price %] gold each)
+			[% END %]
 			[% IF item.equip_place_id %]
 				<br>(Equipped)
 			[% END %]

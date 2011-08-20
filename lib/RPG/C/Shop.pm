@@ -434,20 +434,33 @@ sub sell_single_item : Private {
 		# TODO: this does allow them to sell items from a different shop, which may or may not be OK
 		return;
 	}
-
-	$c->stash->{party}->gold( $c->stash->{party}->gold + $item->sell_price($shop) );
-	$c->stash->{party}->update;
-
-	$item->character_id(undef);
-	$item->equip_place_id(undef);
+	
+	my $sell_price = $item->sell_price($shop);
 
 	if ( $item->variable('Quantity') ) {
+	    if ($c->req->param('quantity') && $c->req->param('quantity') != $item->variable('Quantity')) {
+            if ($c->req->param('quantity') > $item->variable('Quantity')) {
+                $c->res->body( to_json( { error => "You can't sell more than you have!" } ) );
+                return;
+            }
+            
+            if ($c->req->param('quantity') < 0) {
+                $c->res->body( to_json( { error => "Invalid quantity" } ) );
+                return;
+            }
 
-		# Qunatity items get deleted
-		$item->delete;
+            $sell_price = $item->individual_sell_price($shop) * $c->req->param('quantity');            
+            $item->variable('Quantity', $item->variable('Quantity') - $c->req->param('quantity'));
+	    }
+	    else {
+    		# Selling the whole thing, just delete it.
+            $item->delete;
+	    }
 	}
 
 	else {
+    	$item->character_id(undef);
+    	$item->equip_place_id(undef);
 
 		# If it's not a quantity item, give it back to the shop, except for item categories without "auto_add_to_shop"
 		if ( $item->item_type->category->auto_add_to_shop ) {
@@ -463,6 +476,9 @@ sub sell_single_item : Private {
 			$item->delete;
 		}
 	}
+	
+	$c->stash->{party}->gold( $c->stash->{party}->gold + $sell_price );
+	$c->stash->{party}->update;
 
 	return 1;
 }

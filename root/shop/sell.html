@@ -17,7 +17,7 @@ function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id
 }
 
 function sellItem(dialogFields) {
-	getPanels('shop/sell_item?item_id=' + dialogFields.item_id + '&shop_id=[% shop.id %]');
+	getPanels('shop/sell_item?item_id=' + dialogFields.item_id + '&shop_id=[% shop.id %]' + '&quantity=' + dialogFields.quantity_to_sell);
 }	
 
 var selectedForSale = Array();
@@ -67,6 +67,13 @@ function sellMultiItem(dialogFields) {
 	getPanels('/shop/sell_multi_item?' + item_str + '&shop_id=[% shop.id %]');
 }
 
+function sellQuantityConfirm(item_type, item_id, sell_price, equip_place_id, char_id, quantity) {
+	dojo.byId('quantity-to-sell').value = quantity;
+	dojo.byId('quantity-item-to-sell').value = item_id;
+	dojo.byId('quantity-character-id').value = char_id;
+	dijit.byId('quantity-confirm-sale').show();
+}
+
 function sellCallback(data) {
 
 	if (data.messages) {
@@ -108,12 +115,22 @@ function sellCallback(data) {
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-<h3 style="text-align: center">Sell Items</h3>
-
-<div align="center">
-	Click on an item to select it for sale, or double click to sell an individual item.
-	<br>The item will be sold to the shop for the indicated price
+<div dojoType="dijit.Dialog" id="quantity-confirm-sale" style="display: none" title="Confirm Sale" execute="sellItem(arguments[0]);">
+    How many do you want to sell? <input type="text" dojoType=dijit.form.NumberSpinner name="quantity_to_sell" id="quantity-to-sell">
+    <input id="quantity-item-to-sell" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<input id="quantity-character-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	[% dialog_buttons('quantity-confirm-sale') %]
 </div>
+
+<br>
+
+<div style="text-align: center"><b>Sell Items</b> <span id="sell_help">(?)</span></div>
+	<div dojoType="dijit.Tooltip"
+   		connectId="sell_help"
+		style="display: none">
+		Click on an item to select it for sale, or double click to sell an individual item.
+		<br>The item will be sold to the shop for the indicated price.
+   </div>
 
 <br>
 

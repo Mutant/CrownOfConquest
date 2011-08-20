@@ -121,7 +121,12 @@ dojo.addOnLoad( init );
 [% INCLUDE shop/header.html shop_link='shop/purchase' %]
 
 <div align="center">
-<h3>Buy Items</h3>
+<br><b>Buy Items</b> <span id="purchase_help">(?)</span><br><br>
+	<div dojoType="dijit.Tooltip"
+   		connectId="purchase_help"
+		style="display: none">
+		Drag an item below onto a character's name to purchase it
+   </div>
 	
 [% FOREACH char = characters %]
 <span style="padding: 5px">
@@ -133,8 +138,6 @@ dojo.addOnLoad( init );
 [% END %]
 </div>
 
-<br><br>
-<div align="center">Drag an item below onto a character's name to purchase it</div>
 <br>
 
 

@@ -23,6 +23,7 @@ Top Kingdoms By:
 		<th>Rank</th>
 		<th>Kingdom</th>
 		<th>King/Queen</th>
+		<th>Capital</th>
 		<th>Total Land</th>
 		<th># Of Towns</th>
 		<th># Of Parties</th>
@@ -35,6 +36,7 @@ Top Kingdoms By:
 		<td>[% king = kingdom.king %]
 		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %][% king.party.name %][% END %])
 		</td>
+		<td>[% kingdom.capital_city.town_name %]</td>
 		<td align="right">[% kingdom.get_column('total_land') %]</td>
 		<td align="right">[% kingdom.get_column('town_count') %]</td>
 		<td align="right">[% kingdom.get_column('party_count') %]</td>

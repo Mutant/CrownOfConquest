@@ -886,7 +886,7 @@ sub claim_land : Local {
 		return;
 	}
 	
-	$c->stash->{party}->turns($c->stash->{party}->turns - 5);
+	$c->stash->{party}->turns($c->stash->{party}->turns - 1);
 	$c->stash->{party}->update;
 	
 	$c->stash->{party_location}->kingdom_id($c->stash->{party}->kingdom_id);

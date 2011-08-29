@@ -344,6 +344,20 @@ sub can_be_claimed {
     
     return 0 if $self->claimed_by_id;
     
+    my @surrounds_in_kingdom = RPG::ResultSet::RowsInSectorRange->find_in_range(
+        resultset           => $self->result_source->resultset,
+        relationship        => 'me',
+        base_point          => { x => $self->x, y => $self->y },
+        search_range        => 3,
+        increment_search_by => 0,
+        rows_as_hashrefs    => 1,
+        criteria            => {
+            'kingdom_id' => $kingdom_id,    
+        },
+    );
+
+    return 0 if scalar @surrounds_in_kingdom <= 0;
+    
     return 1;
     
 }

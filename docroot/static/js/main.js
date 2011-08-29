@@ -743,7 +743,7 @@ function miniMapInitCallback() {
 
 function acceptQuest(quest_id) {
 	dojo.xhrGet( {
-        url: "[% base %]/quest/accept?quest_id=" + quest_id, 
+        url: urlBase + "/quest/accept?quest_id=" + quest_id, 
         handleAs: "text",
         
         load: function(responseObject, ioArgs) {

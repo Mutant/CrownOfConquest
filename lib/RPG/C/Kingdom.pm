@@ -10,6 +10,7 @@ use Carp;
 use JSON;
 use HTML::Strip;
 use List::Util qw(shuffle);
+use Try::Tiny;
 
 use RPG::Schema::Kingdom;
 
@@ -426,12 +427,48 @@ sub towns : Local {
 				template => 'kingdom/towns.html',
 				params => {
 				    towns => \@towns,
+				    capital => $c->stash->{kingdom}->capital_city,
+				    capital_move_cost => $c->stash->{kingdom}->move_capital_cost,
+				    kingdom => $c->stash->{kingdom},
 				},
 			}
 		]
 	);	
 	
-}    
+}
+
+sub change_capital : Local {
+    my ($self, $c) = @_;
+    
+    my $kingdom = $c->stash->{kingdom};
+    
+    my $new_capital = $c->model('DBIC::Town')->find(
+        {
+            town_id => $c->req->param('town_id'),
+        }
+    );
+    
+	if (! $new_capital || $new_capital->location->kingdom_id != $kingdom->id ) {
+	    $c->stash->{error} = "Invalid town";   
+	    $c->detach('/panel/refresh');
+	}
+		
+	try {
+	   $kingdom->change_capital($new_capital->id);
+	}
+	catch {
+	    if (ref $_ eq 'RPG::Exception' && $_->type eq 'insufficient_gold') {
+    	    $c->stash->{error} = "The kingdom does not have enough gold to change the capital";   
+    	    $c->detach('/panel/refresh');
+	    }
+	    else {
+	       die $_;
+	    }
+	};
+	
+	$c->forward( '/panel/refresh', [[screen => 'kingdom?selected=towns']] );
+    
+}
 
 sub adjust_gold : Local {
 	my ($self, $c) = @_;

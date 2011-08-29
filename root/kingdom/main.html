@@ -21,6 +21,20 @@ function adjustKingdomGold(action) {
 	dijit.byId('kingdom-adjust-gold').show();
 }
 
+function showCapitalDiag(townId, townName, cost) {
+	dojo.byId('new-capital-id').value = townId;
+	dojo.byId('new-capital-name').innerHTML = townName;
+	
+	if (cost > 0) {
+		dojo.byId('capital-extra-message').innerHTML = '<br>This will cost ' + cost + ' gold.';
+	}
+	else {
+		dojo.byId('capital-extra-message').innerHTML = '';
+	}	
+	
+	dijit.byId('capital-select-diag').show();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="kingdom-adjust-gold" style="display: none" title="Gold">
@@ -39,6 +53,16 @@ function adjustKingdomGold(action) {
 	[% dialog_buttons('kingdom-adjust-gold') %]
 	</form>
 </div>
+
+<div dojoType="dijit.Dialog" id="capital-select-diag" style="display: none" title="Capital">
+	<form method="POST" action="[% base %]kingdom/change_capital" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="town_id" id="new-capital-id" />
+    Are you sure you want to make <span id="new-capital-name"></span> the capital?
+    <span id="capital-extra-message"></span>
+	[% dialog_buttons('capital-select-diag') %]
+	</form>
+</div>
+
 
 <h2>Manage the Kingdom of [% kingdom.name %]</h2>
 

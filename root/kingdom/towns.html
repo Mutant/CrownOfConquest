@@ -1,5 +1,15 @@
 <h4>Towns</h4>
 
+[% IF capital %]
+	The capital of [% kingdom.name %] is <b>[% capital.town_name %]</b>
+[% ELSE %]
+	[% kingdom.name %] currently has no capital.
+[% END %]
+[% IF capital_move_cost > 0 %]
+	<br>It will cost [% capital_move_cost %] gold to move the capital.
+[% END %]
+<br><br>
+
 The following towns are loyal to our Kingdom.
 
 <table cellpadding="10" cellspacing="0">
@@ -22,9 +32,13 @@ The following towns are loyal to our Kingdom.
 				Loyal To: [% IF mayor_kingdom %]Kingdom Of [% mayor_kingdom.name %][% ELSE %]No one[% END %]
 			[% ELSE %]
 				(NPC)
-			[% END %]
-			
+			[% END %]			
 		</td>
+		[% UNLESS town.id == capital.id %]
+		<button dojoType="dijit.form.Button" onClick="showCapitalDiag('[% town.id %]', '[% town.town_name %]', '[% capital_move_cost %]')">
+			Make Capital
+		</button>
+		[% END %]
 	</tr>
 [% END %]
 </table>

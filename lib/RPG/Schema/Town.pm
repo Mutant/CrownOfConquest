@@ -304,18 +304,27 @@ sub change_allegiance {
     if ($new_kingdom) {
         $new_kingdom->add_to_messages(
             {
-                message => "The town of " . $self->town_name . " is now loyal to our kingdom",
+                message => "The town of " . $self->town_name . " is now loyal to our kingdom.",
                 day_id => $today->id,
             }
         );
     }
     if ($old_kingdom) {
+        my $message = "The town of " . $self->town_name . " is no longer loyal to our kingdom.";
+
+        # Remove as capital (if it was)
+        if ($old_kingdom->capital == $self->id) {
+            $old_kingdom->change_capital(undef);
+            $message .= ' We no longer have a capital!';
+        }
+        
         $old_kingdom->add_to_messages(
             {
-                message => "The town of " . $self->town_name . " is no longer loyal to our kingdom",
+                message => $message,
                 day_id => $today->id,
             }
-        );        
+        );
+
     }       
 }
 

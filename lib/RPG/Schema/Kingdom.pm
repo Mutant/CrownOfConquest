@@ -5,6 +5,7 @@ use warnings;
 
 use DBIx::Class::ResultClass::HashRefInflator;
 
+use RPG::Exception;
 use Math::Round qw(round);
 
 __PACKAGE__->load_components(qw/Numeric Core/);
@@ -12,7 +13,7 @@ __PACKAGE__->table('Kingdom');
 
 __PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active inception_day_id fall_day_id
                             highest_land_count highest_land_count_day_id highest_town_count highest_town_count_day_id
-                            highest_party_count highest_party_count_day_id/);
+                            highest_party_count highest_party_count_day_id capital/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 
@@ -46,6 +47,9 @@ __PACKAGE__->belongs_to( 'king', 'RPG::Schema::Character',
         'where' => { 'status' => 'king' },
     }, 
 );
+
+__PACKAGE__->belongs_to( 'capital_city', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.capital' } );
+__PACKAGE__->has_many( 'capital_history', 'RPG::Schema::Capital_History', 'kingdom_id' );
 
 my @colours = (
     'Silver',
@@ -141,6 +145,69 @@ sub border_sectors {
         
     return @border_sectors;    
     
+}
+
+sub move_capital_cost {
+    my $self = shift;
+    
+    my $capital_count = $self->capital_history->count;
+    
+    return 0 if $capital_count <= 0;
+    
+    my $land_size = $self->sectors->count;
+    
+    my $cost = RPG::Schema->config->{capital_move_cost_per_sector} * $land_size;
+    
+    return $cost;
+}
+
+sub change_capital {
+    my $self = shift;
+    my $new_capital_id = shift;
+    
+    if ($new_capital_id) {
+        my $cost = $self->move_capital_cost;
+        die RPG::Exception->new(
+            type => 'insufficient_gold',
+            message => 'Not enough gold to change the capital',
+        ) if $self->gold < $cost;
+        
+        $self->decrease_gold($cost);
+    }
+    
+    $self->capital($new_capital_id);
+    $self->update;
+    
+    my $today = $self->result_source->schema->resultset('Day')->find_today();
+    
+    # Set end date of old capital (if there is one)
+    my $old_capital_history = $self->find_related(
+        'capital_history',
+        {
+            end_date => undef,
+        }
+    );
+    if ($old_capital_history) {
+        $old_capital_history->end_date($today->day_id);
+        $old_capital_history->update;
+    }
+    
+    if ($new_capital_id) {
+        $self->add_to_capital_history(
+            {
+                town_id => $new_capital_id,
+                start_date => $today->id,
+            }
+        );
+
+        $self->add_to_messages(
+            {
+                message => "The capital has been moved to " . $self->capital_city->town_name,
+                day_id => $today->id,
+            }
+        );        
+        
+    } 
 }
 
 1;

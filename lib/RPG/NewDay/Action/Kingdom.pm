@@ -501,8 +501,19 @@ sub select_capital {
     
     return unless $highest_prosp_town;
     
-    $kingdom->change_capital($highest_prosp_town->id);
-       
+    try {
+        $kingdom->change_capital($highest_prosp_town->id);
+    }
+    catch {
+        if (ref $_ && $_->isa('RPG::Exception')) {
+            if ($_->type eq 'insufficient_gold') {
+                # Not enough gold, just skip
+                return;
+            }
+            die $_->message;
+        }
+        die $_;
+    }       
 }
 
 1;

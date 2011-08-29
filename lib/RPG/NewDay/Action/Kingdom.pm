@@ -4,7 +4,7 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
-use List::Util qw(shuffle);
+use List::Util qw(shuffle reduce);
 use RPG::Template;
 use Try::Tiny;
 use DateTime;
@@ -28,9 +28,11 @@ sub run {
     );
 
     foreach my $kingdom (@kingdoms) {
-        return if $self->check_for_inactive($kingdom);
+        next if $self->check_for_inactive($kingdom);
         
         my $king = $kingdom->king;
+        
+        next unless $king;
         
         $self->check_for_coop($kingdom, $king) if ! $king->is_npc;
         
@@ -67,6 +69,10 @@ sub execute_npc_kingdom_actions {
     my $king = shift;
     
     $self->context->logger->info("Processing NPC Actions for Kingdom " . $kingdom->name . " id: " . $kingdom->id);
+    
+    if (! $kingdom->capital) {
+        $self->select_capital($kingdom);   
+    }
    
     my @parties = $kingdom->search_related(
         'parties',
@@ -479,6 +485,24 @@ sub force_co_op_change_of_allegiance {
             );            
         }
     } 
+}
+
+sub select_capital {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my $c = $self->context;
+    
+    my @towns = $kingdom->towns;
+    
+    return unless @towns;
+    
+    my $highest_prosp_town = reduce { $a->prosperity > $b->prosperity ? $a : $b } @towns;
+    
+    return unless $highest_prosp_town;
+    
+    $kingdom->change_capital($highest_prosp_town->id);
+       
 }
 
 1;

@@ -404,7 +404,7 @@ decay_ctr_ratio: 30
 mayor_garrison_max_characters: 8
 
 # Amount of sectors automatically claimed by a town for its kingdom
-town_land_claim_range: 3
+town_land_claim_range: 1
 
 # Chance the treasury will be moved in the castle (daily)
 castle_treasury_movement_chance: 5

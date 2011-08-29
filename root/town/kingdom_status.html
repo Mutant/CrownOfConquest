@@ -1,5 +1,9 @@
 [% IF kingdom %]
-	The town of [% town.town_name %] is loyal to the Kingdom of <b>[% kingdom.name %]</b>
+	[% IF kingdom.capital == town.id %]
+		The town of [% town.town_name %] is the capital of the Kingdom of <b>[% kingdom.name %]</b>
+	[% ELSE %]
+		The town of [% town.town_name %] is loyal to the Kingdom of <b>[% kingdom.name %]</b>
+	[% END %]
 [% ELSE %]
 	The town of [% town.town_name %] is a free town.
 [% END %]

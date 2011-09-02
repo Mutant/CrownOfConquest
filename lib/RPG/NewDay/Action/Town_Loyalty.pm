@@ -44,7 +44,7 @@ sub run {
          
             # Calculate adjustment based on whether town is connected to capital by claimed land
             my $capital_block_adjustment = 0;
-                        
+            
             if (@capital_block) {
                 if ($self->_sector_in_block({x=>$town_sector->x, y=>$town_sector->y}, @capital_block)) {
                     $capital_block_adjustment = 5;
@@ -92,8 +92,32 @@ sub run {
                 "capital_block_adjustment: $capital_block_adjustment; " .
                 "distance_to_capital_adjustment: $distance_to_capital_adjustment"
             );
-                                
         }  
+        
+        # Find land owned by Kingdom that's not connected to the capital, and make it neutral
+        my @land = $schema->resultset('Land')->search(
+            {
+                kingdom_id => $kingdom->id,
+                claimed_by_id => undef,
+            }
+        );
+        
+        if (@capital_block) {
+            my $changed = 0;
+            foreach my $land (@land) {
+                if (! _sector_in_block({x=>$land->x, y=>$land->y}, @capital_block)) {
+                    # Sector not connected to capital, roll to see if it should be made neutral
+                    if (Games::Dice::Advanced->roll('1d100') <= $c->config->{chance_unconnected_sector_becomes_neutral}) {
+                        $land->kingdom_id(undef);
+                        $land->update;
+                        $changed++;   
+                    }
+                }                   
+            }
+            
+            $c->logger->debug("Changed $changed disconnected sectors to neutral");
+        }    
+       
     }    
 }
 

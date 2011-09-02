@@ -412,9 +412,6 @@ castle_treasury_movement_chance: 5
 # Chance a character will get deleted when sold
 character_sell_deletion_chance: 15
 
-# Chance npc mayor will change kingdom allegiance over night
-npc_mayor_kingdom_change_chance: 5 
-
 # Max % difference to base price allowed when trading items
 trade_max_percentage_difference_in_base_price: 175
 
@@ -634,6 +631,9 @@ kingdom_co_op_grace: 7
 
 # Gold cost per sector of kingdom to move the capital
 capital_move_cost_per_sector: 6
+
+# Chance sectors not connected to capital go neutral
+chance_unconnected_sector_becomes_neutral: 15
 
 # ----- Debug ----- #
 

@@ -31,6 +31,18 @@ sub build_town {
         }   
     );
     
+    if ($params{kingdom_loyalty}) {
+        foreach my $kingdom_id (keys %{ $params{kingdom_loyalty} }) {
+            $schema->resultset('Kingdom_Town')->create(
+                {
+                    kingdom_id => $kingdom_id,
+                    town_id => $town->id,
+                    loyalty => $params{kingdom_loyalty}->{$kingdom_id},                              
+                }   
+            );
+        }
+    }
+    
     return $town;
 }
 

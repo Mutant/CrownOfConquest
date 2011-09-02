@@ -315,7 +315,7 @@ sub change_allegiance {
         my $message = "The town of " . $self->town_name . " is no longer loyal to our kingdom.";
 
         # Remove as capital (if it was)
-        if ($old_kingdom->capital == $self->id) {
+        if ($old_kingdom->capital && $old_kingdom->capital == $self->id) {
             $old_kingdom->change_capital(undef);
             $message .= ' We no longer have a capital!';
         }
@@ -354,6 +354,26 @@ sub kingdom_loyalty {
     );
     
     return $kingdom_town->loyalty;
+}
+
+# Add in Kingdom_Town records for all active kingdoms
+sub create_kingdom_town_recs {
+    my $self = shift;
+    
+    my @kingdoms = $self->result_source->schema->resultset('Kingdom')->search(
+        {
+            active => 1,
+        }
+    );
+    
+    foreach my $kingdom (@kingdoms) {
+        $self->result_source->schema->resultset('Kingdom_Town')->find_or_create(
+            {
+                kingdom_id => $kingdom->id,
+                town_id => $self->id,
+            }
+        );
+    }   
 }
 
 1;

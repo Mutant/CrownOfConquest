@@ -715,25 +715,50 @@ sub calculate_kingdom_tax {
 	); 
 }
 
+# Allegiance has a chance of changing if town is more loyal to another kingdom
 sub check_for_allegiance_change {
     my $self = shift;
     my $town = shift;
     
-    my $c = $self->context;
+    my $c = $self->context;    
+
+    my $current_loyalty = $town->kingdom_loyalty;
+    my $current_kingdom_id = $town->location->kingdom_id;
     
-    return unless Games::Dice::Advanced->roll('1d100') <= $c->config->{npc_mayor_kingdom_change_chance};
+    # Make sure it's a fair comparison (i.e. everything they have a loyalty rating for
+    #  could be in the negatives).
+    $town->create_kingdom_town_recs;
     
-    # Change allegiance, decide on kingdom
-    my @kingdoms = $c->schema->resultset('Kingdom')->search(
+    my $max_loyalty_rs = $c->schema->resultset('Kingdom_Town')->search(
         {
-            active => 1,
-            kingdom_id => {'!=', $town->location->kingdom_id},
+            town_id => $town->id,
+        },
+        {
+            select => [
+                { max => 'loyalty' }
+            ],
+            as => 'loyalty',
         }
     );
-        
-    my $new_kingdom = (shuffle @kingdoms)[0];
     
-    $town->change_allegiance($new_kingdom);
+    my @highest_loyalty_kingdoms = $c->schema->resultset('Kingdom_Town')->search(
+        {
+            town_id => $town->id,
+            loyalty => { '=', $max_loyalty_rs->get_column('loyalty')->as_query },
+        },
+    );
+    
+    my $highest_loyalty_kingdom = (shuffle @highest_loyalty_kingdoms)[0];
+    
+    return if $highest_loyalty_kingdom->kingdom_id == $current_kingdom_id;
+        
+    my $loyalty_diff = $highest_loyalty_kingdom->loyalty - $current_loyalty;
+    
+    my $change_chance = round($loyalty_diff / 3);
+    
+    return unless Games::Dice::Advanced->roll('1d100') <= $change_chance;
+            
+    $town->change_allegiance($highest_loyalty_kingdom->kingdom);
 }
 
 1;

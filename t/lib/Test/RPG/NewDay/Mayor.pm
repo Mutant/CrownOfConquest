@@ -363,20 +363,77 @@ sub test_check_for_allegiance_change : Tests(1) {
     # GIVEN        
     my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
     my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    my $kingdom3 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, active => 0);
-    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, kingdom_id => $kingdom1->id );
-    
+    my $kingdom3 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, kingdom_id => $kingdom1->id,
+        kingdom_loyalty => {
+            $kingdom1->id => 10,
+            $kingdom2->id => 20,
+            $kingdom3->id => 30,
+        }
+     );
+
     my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
     
-    $self->{config}{npc_mayor_kingdom_change_chance} = 100;
+    $self->{roll_result} = 5;
     
     # WHEN
     $action->check_for_allegiance_change($town);
     
     # THEN
     $town->discard_changes;
-    is($town->location->kingdom_id, $kingdom2->id, "Allegiance of town changed");
-           
+    is($town->location->kingdom_id, $kingdom3->id, "Allegiance of town changed");           
+}
+
+sub test_check_for_allegiance_change_negative_loyalty : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN        
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom3 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom4 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, active => 0);
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, kingdom_id => $kingdom1->id,
+        kingdom_loyalty => {
+            $kingdom1->id => -10,
+            $kingdom2->id => -5,
+        }
+     );
+
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 3;
+    
+    # WHEN
+    $action->check_for_allegiance_change($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->location->kingdom_id, $kingdom3->id, "Allegiance of town changed");           
+}
+
+sub test_check_for_allegiance_change_existing_kingdom_ok : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN        
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, kingdom_id => $kingdom1->id,
+        kingdom_loyalty => {
+            $kingdom1->id => 98,
+            $kingdom2->id => 97,
+        }
+     );
+
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 3;
+    
+    # WHEN
+    $action->check_for_allegiance_change($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->location->kingdom_id, $kingdom1->id, "Allegiance of town not changed");           
 }
 
 sub test_caclulate_approval_basic : Tests(1) {

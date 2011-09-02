@@ -145,7 +145,7 @@ sub test_check_for_inactive_still_active : Tests(2) {
     
 }
 
-sub test_check_for_inactive_marked_inactive : Tests(13) {
+sub test_check_for_inactive_marked_inactive : Tests(14) {
     my $self = shift;
     
     # GIVEN
@@ -157,6 +157,12 @@ sub test_check_for_inactive_marked_inactive : Tests(13) {
     }
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
     my $character = $kingdom->king;
+    
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema},
+        kingdom_loyalty => {
+            $kingdom->id => 30,
+        }
+    );
     
     my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom->id, character_count => 2);
     
@@ -181,6 +187,15 @@ sub test_check_for_inactive_marked_inactive : Tests(13) {
     
     $party2->discard_changes;
     is($party2->kingdom_id, undef, "Party 2 no longer loyal to kingdom");
+    
+    my $kingdom_town = $self->{schema}->resultset('Kingdom_Town')->find(
+        {
+            kingdom_id => $kingdom->id,
+            town_id => $town->id,
+        }
+    );
+    is($kingdom_town, undef, "Kingdom_Town records deleted"); 
+       
 }
 
 sub test_adjust_party_loyalty : Tests(1) {

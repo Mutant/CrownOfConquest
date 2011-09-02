@@ -299,6 +299,7 @@ sub check_for_inactive {
     $kingdom->update;
     
     $kingdom->search_related('sectors')->update( { kingdom_id => undef } );
+    $kingdom->town_loyalty->delete;
     
     my $king = $kingdom->king;
 

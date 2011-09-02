@@ -244,6 +244,7 @@ sub check_for_revolt {
 	my $c = $self->context;
 	
 	my $start_revolt = 0;
+	my $revolt_reason = 'mayor';
 	
 	if ($town->mayor_rating < 0) {
 		my $rating = $town->mayor_rating + 100;
@@ -255,6 +256,14 @@ sub check_for_revolt {
 	elsif ($town->peasant_tax >= 35) {
 		$start_revolt = 1;	
 	}
+	elsif ($town->kingdom_loyalty < 0) {
+		my $rating = $town->kingdom_loyalty + 80;
+	
+		my $roll = Games::Dice::Advanced->roll('1d100');
+		
+		$start_revolt = 1 if $roll > $rating;
+		$revolt_reason = 'kingdom';  
+	}
 		
 	if ($start_revolt) {
 		$town->peasant_state('revolt');
@@ -263,7 +272,7 @@ sub check_for_revolt {
 		$town->add_to_history(
 			{
 				day_id  => $c->current_day->id,
-            	message => "The peasants have had enough of being treated poorly, and revolt against the mayor!",
+            	message => "The peasants have had enough of being treated poorly, and revolt against the $revolt_reason!",
 			}		
 		);
 		

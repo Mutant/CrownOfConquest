@@ -1,0 +1,25 @@
+[% MACRO display_kingdom_loyalty(rating) BLOCK %]
+	[% IF rating < -80 %]
+		The peasants are considering treason
+	[% ELSIF rating < -60 %]
+		Abysmal
+	[% ELSIF rating < -40 %]
+		Terrible
+	[% ELSIF rating < -20 %]
+		Very Poor
+	[% ELSIF rating < -10 %]
+		Poor
+	[% ELSIF rating < 10 %]
+		Neutral
+	[% ELSIF rating < 20 %]
+		Good
+	[% ELSIF rating < 40 %]
+		Very Good
+	[% ELSIF rating < 60 %]
+		Excellent
+	[% ELSIF rating < 80 %]
+		Astounding
+	[% ELSE %]
+		The peasants are proud citizens of the Kingdom
+	[% END %]		
+[% END %]

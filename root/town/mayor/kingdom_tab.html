@@ -1,11 +1,16 @@
 <h3>Kingdom</h3>
 
 [% INCLUDE town/kingdom_status.html %]
+[% PROCESS town/display_kingdom_loyalty.html %]
 
 <br>
 [% IF kingdom %]
-The town must pay [% kingdom.mayor_tax %]% of all daily income to the kingdom as tax.
-<br><br>
+	The town must pay [% kingdom.mayor_tax %]% of all daily income to the kingdom as tax.
+	<br><br>
+	[% IF town.id != kingdom.capital %]
+		Town's loyalty to the Kingdom: [% display_kingdom_loyalty(town.kingdom_loyalty) %]
+		<br><br>
+	[% END %]
 [% END %]
 
 <form method="POST" action="[% base %]town/mayor/change_allegiance" onSubmit="postPanels(this); return false">

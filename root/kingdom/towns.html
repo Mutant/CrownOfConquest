@@ -1,3 +1,5 @@
+[% PROCESS town/display_kingdom_loyalty.html %]
+
 <h4>Towns</h4>
 
 [% IF capital %]
@@ -17,6 +19,7 @@ The following towns are loyal to our Kingdom.
 		<th>Town</th>
 		<th>Prosperity</th>
 		<th>Mayor</th>
+		<th>Loyalty</th>
 	</tr>
 	
 [% FOREACH town IN towns %]
@@ -34,7 +37,8 @@ The following towns are loyal to our Kingdom.
 				(NPC)
 			[% END %]			
 		</td>
-		[% UNLESS town.id == capital.id %]
+		<td>[% IF town.id == capital.id %]N/A[% ELSE %][% display_kingdom_loyalty(town.kingdom_loyalty) %][% END %]</td>
+		[% IF town.id != capital.id %]
 		<button dojoType="dijit.form.Button" onClick="showCapitalDiag('[% town.id %]', '[% town.town_name %]', '[% capital_move_cost %]')">
 			Make Capital
 		</button>

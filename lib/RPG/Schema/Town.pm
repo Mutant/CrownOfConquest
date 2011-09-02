@@ -343,4 +343,17 @@ sub decline_mayoralty {
 	); 
 }
 
+sub kingdom_loyalty {
+    my $self = shift;
+    
+    my $kingdom_town = $self->result_source->schema->resultset('Kingdom_Town')->find_or_create(
+        {
+            kingdom_id => $self->location->kingdom_id,
+            town_id => $self->id,
+        }
+    );
+    
+    return $kingdom_town->loyalty;
+}
+
 1;

@@ -256,7 +256,7 @@ sub check_for_revolt {
 	elsif ($town->peasant_tax >= 35) {
 		$start_revolt = 1;	
 	}
-	elsif ($town->kingdom_loyalty < 0) {
+	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
 		my $rating = $town->kingdom_loyalty + 80;
 	
 		my $roll = Games::Dice::Advanced->roll('1d100');
@@ -720,7 +720,10 @@ sub check_for_allegiance_change {
     my $self = shift;
     my $town = shift;
     
-    my $c = $self->context;    
+    my $c = $self->context;
+    
+    # Free cities don't change their loyalty of their own accord
+    return unless $town->location->kingdom_id;
 
     my $current_loyalty = $town->kingdom_loyalty;
     my $current_kingdom_id = $town->location->kingdom_id;

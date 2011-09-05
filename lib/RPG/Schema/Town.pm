@@ -346,6 +346,8 @@ sub decline_mayoralty {
 sub kingdom_loyalty {
     my $self = shift;
     
+    return unless $self->location->kingdom_id;
+    
     my $kingdom_town = $self->result_source->schema->resultset('Kingdom_Town')->find_or_create(
         {
             kingdom_id => $self->location->kingdom_id,

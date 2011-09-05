@@ -1,8 +1,8 @@
 [% MACRO sector_title(position) BLOCK %]
 	[% IF ! position.town_id %]
+		[% position.x %], [% position.y %] - 
 		[% position.terrain_name | ucfirst %]
-		[% IF click_to_move %] ([% position.party_movement_factor %])[% END %]
-		([% position.x %], [% position.y %])
+		[% IF click_to_move %] (Move Cost: [% position.party_movement_factor %])[% END %]
 		[% IF position.known_dungeon %]
 			- Level [% position.known_dungeon %] Dungeon Entrance
 		[% END %]

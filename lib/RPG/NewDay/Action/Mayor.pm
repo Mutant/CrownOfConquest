@@ -12,7 +12,7 @@ use feature 'switch';
 
 with 'RPG::NewDay::Role::CastleGuardGenerator';
 
-sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Town RPG::NewDay::Action::Player/ }
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Town RPG::NewDay::Action::Player RPG::NewDay::Action::Town_Loyalty/ }
 
 sub run {
 	my $self = shift;
@@ -753,8 +753,9 @@ sub check_for_allegiance_change {
     
     my $highest_loyalty_kingdom = (shuffle @highest_loyalty_kingdoms)[0];
     
-    return if $highest_loyalty_kingdom->kingdom_id == $current_kingdom_id;
-        
+    # Don't change if nothing is higher than current loyalty
+    return if $highest_loyalty_kingdom->loyalty == $current_loyalty;
+            
     my $loyalty_diff = $highest_loyalty_kingdom->loyalty - $current_loyalty;
     
     my $change_chance = round($loyalty_diff / 3);

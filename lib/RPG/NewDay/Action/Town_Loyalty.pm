@@ -13,8 +13,6 @@ use Carp;
 use Math::Round qw(round);
 use AI::Pathfinding::AStar::Rectangle;
 
-sub depends { qw/RPG::NewDay::Action::Kingdom/ }
-
 sub run {
     my $self = shift;
     my $c = $self->context;

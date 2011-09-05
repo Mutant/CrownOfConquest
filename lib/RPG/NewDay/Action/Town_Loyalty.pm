@@ -11,6 +11,7 @@ use RPG::Map;
 use Data::Dumper;
 use Carp;
 use Math::Round qw(round);
+use AI::Pathfinding::AStar::Rectangle;
 
 sub depends { qw/RPG::NewDay::Action::Kingdom/ }
 
@@ -29,11 +30,15 @@ sub run {
     foreach my $kingdom (@kingdoms) {
         $c->logger->debug("Calculating town loyalty for kingdom: " . $kingdom->name);
         
-        my @capital_block;
+        my $sectors_rs = $kingdom->sectors;
+        
+        $sectors_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');    
+        
+        my @sectors = $sectors_rs->all;
+        
+        my $connected_sectors = $self->_calculate_connected_sectors($kingdom, @sectors);
+        
         my $capital = $kingdom->capital_city;
-        if ($capital) {
-            @capital_block = $self->find_capital_block($kingdom);          
-        }
                 
         my @towns = $kingdom->towns;
         
@@ -45,14 +50,14 @@ sub run {
             # Calculate adjustment based on whether town is connected to capital by claimed land
             my $capital_block_adjustment = 0;
             
-            if (@capital_block) {
-                if ($self->_sector_in_block({x=>$town_sector->x, y=>$town_sector->y}, @capital_block)) {
+            if ($capital) {
+                if ($connected_sectors->{$town_sector->x}{$town_sector->y}) {
                     $capital_block_adjustment = 5;
-                    #$c->logger->debug("Town " . $town->town_name . " in capital block");
+                    $c->logger->debug("Town " . $town->town_name . " in capital block");
                 }
                 else {
                     $capital_block_adjustment = -8;
-                    #$c->logger->debug("Town " . $town->town_name . " not in capital block");
+                    $c->logger->debug("Town " . $town->town_name . " not in capital block");
                 }
             }
             else {
@@ -92,22 +97,15 @@ sub run {
                 "capital_block_adjustment: $capital_block_adjustment; " .
                 "distance_to_capital_adjustment: $distance_to_capital_adjustment"
             );
-        }  
+        }
         
-        # Find land owned by Kingdom that's not connected to the capital, and make it neutral
-        my @land = $schema->resultset('Land')->search(
-            {
-                kingdom_id => $kingdom->id,
-                claimed_by_id => undef,
-            }
-        );
-        
-        if (@capital_block) {
+        if ($capital) {
             my $changed = 0;
-            foreach my $land (@land) {
-                if (! _sector_in_block({x=>$land->x, y=>$land->y}, @capital_block)) {
+            foreach my $sector (@sectors) {
+                if (! $sector->{claimed_by_id} && ! $connected_sectors->{$sector->{x}}{$sector->{y}}) {
                     # Sector not connected to capital, roll to see if it should be made neutral
                     if (Games::Dice::Advanced->roll('1d100') <= $c->config->{chance_unconnected_sector_becomes_neutral}) {
+                        my $land = $schema->resultset('Land')->find($sector->{land_id});
                         $land->kingdom_id(undef);
                         $land->update;
                         $changed++;   
@@ -116,109 +114,38 @@ sub run {
             }
             
             $c->logger->debug("Changed $changed disconnected sectors to neutral");
-        }    
-       
+        }       
     }    
 }
 
-sub find_capital_block {
+sub _calculate_connected_sectors {
     my $self = shift;
     my $kingdom = shift;
+    my @sectors = @_;
     
     my $c = $self->context;
     
-    my @border_sectors = $kingdom->border_sectors(1);
-    
-    my %world_range = $c->schema->resultset('Land')->get_x_y_range();
-    
-    my %grid;
-    foreach my $sector (@border_sectors) {
-        $grid{$sector->{x} . ',' . $sector->{y}} = $sector;
+    my %size = $c->schema->resultset('Land')->get_x_y_range();
+    my $map = AI::Pathfinding::AStar::Rectangle->new({height=>$size{max_x}+1, width=>$size{max_y}+1});
+    foreach my $sector (@sectors) {   
+        $map->set_passability($sector->{x}, $sector->{y}, 1);
     }
     
-    my @blocks;
-    while (%grid) {
-        my $start_coords = _find_start(\%world_range, %grid);
-        my $start_sector = delete $grid{$start_coords};
-        
-        #warn Dumper $start_sector;
-        
-        last unless $start_sector;
-        
-        my @block_sectors = ($start_sector);
-        my $last_sector = $start_sector;
-        while (my $adjacent_sector = _get_adj_sector($last_sector, %grid)) {
-            delete $grid{$adjacent_sector->{x} . ',' . $adjacent_sector->{y}};
-            push @block_sectors, $adjacent_sector;
-            $last_sector = $adjacent_sector;   
-        }
-        
-        push @blocks, \@block_sectors;        
+    my $capital = $kingdom->capital_city;
+    
+    return unless $capital;
+    
+    my $capital_loc = $capital->location;
+    
+    my $connected;
+    
+    foreach my $sector (@sectors) {
+        if ($map->astar($capital_loc->x, $capital_loc->y, $sector->{x}, $sector->{y})) {
+            $connected->{$sector->{x}}{$sector->{y}} = 1;
+        }           
     }
     
-    #$c->logger->debug("Found " . scalar @blocks . " blocks in kingdom");
-    
-    # Find the block with the capital
-    my $capital_sector = $kingdom->capital_city->location;
-    foreach my $block (@blocks) {
-        return @$block if $self->_sector_in_block(
-            {
-                x => $capital_sector->x,
-                y => $capital_sector->y,
-            },
-            @$block,
-        );
-    }
-}
-
-sub _find_start {
-    my $world_range = shift;
-    my %grid = @_;
-    
-    for my $x ($world_range->{min_x} .. $world_range->{max_x}) {
-        for my $y ($world_range->{min_y} .. $world_range->{max_y}) {
-            return "$x,$y" if $grid{"$x,$y"};   
-        }    
-    } 
-}
-
-sub _get_adj_sector {
-    my $current = shift;
-    my %grid = @_;
-    
-    return $grid{($current->{x}+1).','.$current->{y}} ||
-           $grid{$current->{x}.','.($current->{y}+1)} ||
-           $grid{($current->{x}-1).','.$current->{y}} ||
-           $grid{$current->{x}.','.($current->{y}-1)} ||
-           $grid{($current->{x}+1).','.($current->{y}+1)} ||
-           $grid{($current->{x}+1).','.($current->{y}-1)} ||
-           $grid{($current->{x}-1).','.($current->{y}+1)} ||
-           $grid{($current->{x}-1).','.($current->{y}-1)};      
-}
-
-sub _sector_in_block {
-    my $self = shift;
-    my $sector = shift;
-    my @border_sectors = @_;
-    
-    my %matches;
-    foreach my $border_sector (@border_sectors) {
-        next unless $border_sector;
-        if ($sector->{x} >= $border_sector->{x}) {
-            $matches{min_x} = 1;
-        }
-        if ($sector->{x} <= $border_sector->{x}) {
-            $matches{max_x} = 1;
-        }
-        if ($sector->{y} >= $border_sector->{y}) {
-            $matches{min_y} = 1;
-        }
-        if ($sector->{y} <= $border_sector->{y}) {
-            $matches{max_y} = 1;
-        }
-        
-        return 1 if (grep { $matches{$_} } qw(min_x max_x min_y max_y)) >= 4;
-    }   
+    return $connected;    
 }
 
 1;

@@ -17,8 +17,8 @@ sub set_quest_params {
     $self->define_quest_param( 'Amount Claimed', 0 );
     
     $self->min_level(3);
-    $self->gold_value($amount_to_claim * 8);
-    $self->xp_value($amount_to_claim * 3);
+    $self->gold_value($amount_to_claim * 25);
+    $self->xp_value($amount_to_claim * 6);
     $self->days_to_complete(round $amount_to_claim / 10 + 2);
     $self->update;
 }

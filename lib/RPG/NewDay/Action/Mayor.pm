@@ -329,10 +329,16 @@ sub process_revolt {
 	my $garrison_bonus = int $garrison_aggregate / 15;
 	
     my $prosp_penalty = int $town->prosperity / 10;
+    
+    my $kingdom_loyalty_penalty = 0;
+    if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
+        $kingdom_loyalty_penalty = abs int $town->kingdom_loyalty / 5;
+    }
 
-	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus");
+	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus;" .
+	   " kingdom loyalty penalty: $kingdom_loyalty_penalty");
 
-    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus;
+    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty;
     
     $c->logger->debug("Overthrow roll: $roll");
 
@@ -370,6 +376,9 @@ sub process_revolt {
     	       event => $mayor->character_name . " was killed in a rebellion by the peasants of " . $town->town_name,
     	   } 
     	);
+    	
+    	# Check for allegiance change now there's a new mayor
+    	$self->check_for_allegiance_change($town);
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);

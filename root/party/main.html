@@ -13,22 +13,6 @@ function init() {
 	if (scrollTo) {
 		dijit.scrollIntoView(scrollTo.innerHTML);
 	}
-	
-	/* Inventory DND */
-	dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-		var t = dojo.dnd.manager().target;
-
-		tmp = t.node.id.split(/-/);
-		var target_id = tmp[0];
-		var target_type = tmp[1];
-
-   		order_val = nodes[0].id.split(/-/);
-		var item_id = order_val[1];
-		
-		if (target_type == 'equip_place') {
-			equip_item(target_id, item_id);
-		}
-	});	
 }
 
 function dungeonScroll(scroll_to) {

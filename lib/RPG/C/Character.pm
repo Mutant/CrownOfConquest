@@ -65,6 +65,7 @@ sub view : Local {
 					item_mode => $c->req->param('item_mode') || '',
 					can_buy => $can_buy,
 					group => $group,
+					window => $c->req->param('window'),
 				}
 			}
 		]

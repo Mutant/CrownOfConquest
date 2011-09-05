@@ -1,8 +1,28 @@
+[% IF window %]
+	[% INCLUDE top.html %]
+[% END %]
+
 [% PROCESS layout/diag_buttons.html %]
 
 <script type="text/javascript">
     function init() {
 		displayCharList('[% group %]');
+		
+		/* Inventory DND */
+		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
+			var t = dojo.dnd.manager().target;
+	
+			tmp = t.node.id.split(/-/);
+			var target_id = tmp[0];
+			var target_type = tmp[1];
+	
+	   		order_val = nodes[0].id.split(/-/);
+			var item_id = order_val[1];
+			
+			if (target_type == 'equip_place') {
+				equip_item(target_id, item_id);
+			}
+		});			
 	}
 	
 	function equip_item(equip_place, item_id) {
@@ -38,7 +58,7 @@
 	        			}
 	        			reloadInventory();
 	        			reloadStats();
-	        			getPanels('party/refresh_party_list');
+	        			[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
 	        		}
 				}
 	        },
@@ -55,7 +75,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
 	        	reloadStats();
-	        	getPanels('party/refresh_party_list');	        	
+	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]	        	
 	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
 				
 				if (responseObject.clear_equip_place) {
@@ -72,7 +92,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
 	        	reloadStats();
-	        	getPanels('party/refresh_party_list');
+	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
 				
 				if (responseObject.clear_equip_place) {
 					clearEquipSlot(responseObject.clear_equip_place);					
@@ -88,7 +108,7 @@
 	        load: function(responseObject, ioArgs) {
 	        	reloadInventory();
 	        	reloadStats();
-	        	getPanels('party/refresh_party_list');
+	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
 				clearEquipSlot(responseObject.clear_equip_place);
 	        }
 	    });	       
@@ -167,7 +187,7 @@ function addStatPoint(char_id, stat) {
         		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
         		dojo.byId('stat-' + stat).innerHTML = statVal;
         		
-        		getPanels('party/refresh_party_list');
+        		[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
         	}
         }
     });
@@ -231,8 +251,14 @@ function calculateSpellPoints() {
 
 <img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %].png" style="float: left">
 
-<h1><span id="name-header">[% character.character_name %]</span> 
-	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]</h1>
+<h1>
+<span id="name-header">[% character.character_name %]</span>
+[% IF ! window %]
+	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]
+	<a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank" class="main">Open in New Window</a>
+[% END %]
+</h1>
+
 
 [% IF character.town_id %]
 	[% IF can_buy %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | [% END %]
@@ -250,8 +276,13 @@ function calculateSpellPoints() {
 			[% other_character.name %]
 		[% ELSE %]
 			[% FILTER collapse %]
+				[% IF window %]
+				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]" target="_blank">
+					[% other_character.name %]</a>				
+				[% ELSE %]
 				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
 					[% other_character.name %]</a>
+				[% END %]
 			[% END %]
 		[% END %]
 		&nbsp;
@@ -280,7 +311,7 @@ function calculateSpellPoints() {
 </div>
 
 <div dojoType="dijit.layout.ContentPane" href="[% base %]/character/stats?character_id=[% character.id %]" 
-	id="stats-panel" loadingMessage="" class="characterStats"></div>
+	id="stats-panel" loadingMessage="" [% IF ! window %]class="characterStats"[% END %]></div>
 
 </div>
 
@@ -290,7 +321,7 @@ function calculateSpellPoints() {
     	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    
     </div>
 
-	[% IF character.class.class_name == 'Mage' || character.class.class_name == 'Priest' %]
+	[% IF ! window && (character.class.class_name == 'Mage' || character.class.class_name == 'Priest') %]
     <div dojoType="dijit.layout.ContentPane" title="Spells" 
     	href="[% base %]/character/spells_tab?character_id=[% character.id %]"
          [% IF selected == 'spells' %]selected="true"[% END %]>    
@@ -302,3 +333,7 @@ function calculateSpellPoints() {
     </div>
 
 </div>
+
+[% IF window %]
+	[% INCLUDE bottom.html %]
+[% END %]

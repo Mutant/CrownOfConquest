@@ -897,7 +897,7 @@ sub test_hit_character_killed_by_character : Tests(3) {
     
     # GIVEN   
     my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);  
-    my $killer = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $killer = Test::RPG::Builder::Character->build_character($self->{schema}, class => 'Archer');
     
     # WHEN
     $character->hit(7, $killer);
@@ -906,7 +906,7 @@ sub test_hit_character_killed_by_character : Tests(3) {
     is($character->hit_points, 0, "Character took damage"); 
     my @history = $character->history;
     is(scalar @history, 1, "1 item added to history");
-    is($history[0]->event, "test was slain by a test_class");
+    is($history[0]->event, "test was slain by an Archer");
 }
 
 sub test_hit_character_killed_by_effect : Tests(3) {

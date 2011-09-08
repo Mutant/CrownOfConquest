@@ -762,10 +762,10 @@ sub hit {
 		    $message .= "by $effect_type";
 		}
 		elsif ($attacker->is_character) {
-		    $message .= "by " . A( $attacker->class->class_name );
+		    $message .= "by " . A( $attacker->class->class_name, 1 );
 		}
 		elsif ($attacker->isa('RPG::Schema::Creature')) { 
-		    $message .= "by " . A( $attacker->type->creature_type );
+		    $message .= "by " . A( $attacker->type->creature_type, 1 );
 		}
 		else {
             $message .= "during combat";

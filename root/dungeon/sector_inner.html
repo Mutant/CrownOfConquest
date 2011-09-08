@@ -61,8 +61,9 @@
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
-					connectId="m_[% x _ y %]"								
-					label="[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]"></div>
+					connectId="m_[% x _ y %]">
+					[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
+				</div>
 				[% END %]
 			[% ELSIF parties.$x.$y.0 %]
 				[%# TODO: handle multiple parties in a sector %]
@@ -71,8 +72,9 @@
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
-					connectId="p_[% x _ y %]"
-					label="[% INCLUDE party/summary.html party=other_party %]"></div>
+					connectId="p_[% x _ y %]">
+					[% INCLUDE party/summary.html party=other_party %]
+				</div>
 				[% END %]
 			[% ELSIF can_move_to_sector %]
 			    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto">

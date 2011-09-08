@@ -19,3 +19,7 @@ CREATE TABLE `Kingdom_Town` (
 )
 ENGINE = InnoDB;
 
+
+ALTER TABLE `Item_Category` ADD COLUMN `delete_when_sold_to_shop` TINYINT(4)  NOT NULL DEFAULT 0;
+UPDATE `Item_Category` SET delete_when_sold_to_shop = 1 where item_category = 'Jewel' or item_category = 'Special Items';
+UPDATE `Item_Category` SET findable = 0, auto_add_to_shop = 1 where item_category = 'Jewel';

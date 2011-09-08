@@ -5,6 +5,8 @@ use warnings;
 
 use base 'DBIx::Class';
 
+use Moose;
+
 use Carp;
 use Data::Dumper;
 
@@ -38,6 +40,8 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.dungeon_grid_
 __PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 __PACKAGE__->might_have( 'teleporter', 'RPG::Schema::Dungeon_Teleporter', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
+
+with qw/RPG::Schema::Role::Sector/;
 
 sub new {
 	my ( $class, $attr ) = @_;
@@ -206,24 +210,6 @@ sub has_path_to {
     return $path ? 1 : 0;
 }
 
-sub available_creature_group {
-    my $self = shift;
-
-    my $creature_group = $self->find_related(
-        'creature_group',
-        {
-            'in_combat_with.party_id' => undef,
-        },
-        {
-            prefetch => { 'creatures' => [ 'type', 'creature_effects' ] },
-            join     => 'in_combat_with',
-            order_by => 'type.creature_type, group_order',
-        }
-    );
-
-    return $creature_group;
-}
-
 sub get_as_hash {
     my $self = shift;
     
@@ -253,4 +239,4 @@ sub available_doors {
     );
 }
 
-1;
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);

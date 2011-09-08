@@ -3,6 +3,8 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
+use Moose;
+
 use Data::Dumper;
 use Carp qw(cluck croak confess);
 
@@ -46,6 +48,8 @@ __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.land_id' => 'se
 __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join_type => 'LEFT' } );
+
+with qw/RPG::Schema::Role::Sector/;
 
 sub label {
     my $self = shift;
@@ -97,29 +101,6 @@ sub movement_cost {
     $cost = 1 if $cost < 1;
 
     return $cost;
-}
-
-# Returns the creature group in this sector, if they're "available" (i.e. not on combat)
-sub available_creature_group {
-    my $self = shift;
-
-    my $creature_group = $self->search_related(
-        'creature_group',
-        { 
-        	'in_combat_with.party_id' => undef,
-        },
-        {
-            prefetch => { 'creatures' => [ 'type', 'creature_effects' ] },
-            join     => 'in_combat_with',
-            order_by => 'type.creature_type, group_order',
-        },
-    )->first;
-
-    return unless $creature_group;
-
-    return $creature_group if $creature_group->number_alive > 0;
-
-    return;
 }
 
 sub get_surrounding_ctr_average {
@@ -362,4 +343,4 @@ sub can_be_claimed {
     
 }
 
-1;
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);

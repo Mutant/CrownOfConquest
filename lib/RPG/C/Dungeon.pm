@@ -94,12 +94,14 @@ sub build_viewable_sector_grids : Private {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'dungeon_room.floor'           => $current_location->dungeon_room->floor,
+            'in_combat_with.party_id'      => undef,
         },
         {
             prefetch => [ { 'creature_group' => { 'creatures' => 'type' } }, ],
-            join     => 'dungeon_room',
+            join     => ['dungeon_room', {'creature_group' => 'in_combat_with'}],
         },
     );
+    
     foreach my $cg_rec (@cg_recs) {
         my $cg = $cg_rec->creature_group;
         

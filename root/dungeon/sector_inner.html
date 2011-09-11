@@ -57,7 +57,8 @@
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/dungeongroup[% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
+				[% group_img = cgs.$x.$y.group_img || 'dungeon' %]
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %]group[% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 

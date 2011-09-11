@@ -29,7 +29,10 @@ sub run {
     $self->move_monsters();
 
     # Spawn dungeon monsters
-    $self->spawn_dungeon_monsters();    
+    $self->spawn_dungeon_monsters();
+
+    # Spawn sewer monsters
+    $self->spawn_sewer_monsters();
     
     # Move dungeon monsters
     $self->move_dungeon_monsters();
@@ -143,10 +146,26 @@ sub spawn_dungeon_monsters {
     }
 }
 
+sub spawn_sewer_monsters {
+     my $self = shift;
+    my $c    = $self->context;
+    
+    my $dungeon_rs = $c->schema->resultset('Dungeon')->search(
+    	{
+    		type => 'sewer',
+    	}
+    );
+    
+    while ( my $dungeon = $dungeon_rs->next ) {
+		$self->_spawn_in_dungeon($c, $dungeon, ['Rodent']);
+    }   
+}
+
 sub _spawn_in_dungeon {
 	my $self = shift;
 	my $c = shift;
 	my $dungeon = shift;
+	my $categories = shift;
 	
     $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->dungeon_id );
 
@@ -181,7 +200,7 @@ sub _spawn_in_dungeon {
         my $cg;
 		try {
 		    return if $sector_to_spawn->teleporter;
-           	$cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end );
+           	$cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end, $categories );
 		}
 		catch {
 			if (ref $_ && $_->isa('RPG::Exception')) {

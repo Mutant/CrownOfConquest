@@ -605,4 +605,60 @@ sub _generate_extra_doors {
 	}
 }
 
+sub generate_treasure_chests {
+	my $self = shift;
+	my $dungeon = shift;
+	my $chest_chance_per_room = shift // 20;
+	
+	my @rooms = $dungeon->rooms;    
+	
+	foreach my $room (@rooms) {
+		my $chest_roll = Games::Dice::Advanced->roll('1d100');
+		if ($chest_roll <= $chest_chance_per_room) {
+			# Create a chest in this room
+			my @sectors = $room->sectors;
+			
+			# Choose a sector
+			my $sector_to_use;
+			foreach my $sector (shuffle @sectors) {
+				unless ($sector->has_door) {
+					$sector_to_use = $sector;
+					last;
+				}
+			}
+			
+			# Couldn't find a sector to use... skip this room
+			next unless $sector_to_use;
+			
+			my $chest = $self->context->schema->resultset('Treasure_Chest')->create(
+				{
+					dungeon_grid_id => $sector_to_use->id,
+				}
+			);
+			
+			$chest->fill($self->get_item_type_by_prevalence);
+		}
+	}
+}
+
+
+{
+    my %item_types_by_prevalence;
+    
+    sub get_item_type_by_prevalence {
+        my $self = shift;
+        
+        return %item_types_by_prevalence if %item_types_by_prevalence;
+        
+        %item_types_by_prevalence = $self->context->schema->resultset('Item_Type')->get_by_prevalence;
+	    
+	    return %item_types_by_prevalence;        
+    }
+    
+    # Used for testing
+    sub _clear_item_type_by_prevalence {
+        undef %item_types_by_prevalence;
+    }
+}
+
 1;

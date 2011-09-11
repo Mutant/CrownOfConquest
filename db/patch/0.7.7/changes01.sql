@@ -23,3 +23,12 @@ ENGINE = InnoDB;
 ALTER TABLE `Item_Category` ADD COLUMN `delete_when_sold_to_shop` TINYINT(4)  NOT NULL DEFAULT 0;
 UPDATE `Item_Category` SET delete_when_sold_to_shop = 1 where item_category = 'Jewel' or item_category = 'Special Items';
 UPDATE `Item_Category` SET findable = 0, auto_add_to_shop = 1 where item_category = 'Jewel';
+
+ALTER TABLE `Creature_Category` ADD COLUMN `dungeon_group_img` VARCHAR(50)  AFTER `name`;
+INSERT INTO `Creature_Category` (name, dungeon_group_img) VALUES ('Rodent', 'rodent');
+INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, creature_category_id, image)
+	VALUES ('Rat', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');
+INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, creature_category_id, image)
+	VALUES ('Weasel', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');
+INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, creature_category_id, image)
+	VALUES ('Ferret', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');

@@ -47,16 +47,25 @@ sub create_in_wilderness {
 }
 
 sub _create_group {
-    my ( $self, $sector, $min_level, $max_level ) = @_;
+    my ( $self, $sector, $min_level, $max_level, $categories ) = @_;
 
     # TODO: check if level range is valid, i.e. check against max creature level from DB
 
     return if $sector->creature_group;
 
     unless ( $self->{creature_types_by_level} ) {
+        my %extra;
+        if ($categories) {
+            $extra{'category.name'} = $categories;
+        }
+        else {
+            $extra{'category.name'} = {'!=', 'Guards'};
+        }
+        
+        
         my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
         	{
-        		'category.name' => {'!=', 'Guards'},
+        		%extra,
         		'rare' => 0,
         	},
         	{
@@ -116,9 +125,9 @@ sub _create_group {
 }
 
 sub create_in_dungeon {
-    my ( $self, $sector, $min_level, $max_level ) = @_;
+    my ( $self, $sector, $min_level, $max_level, $categories ) = @_;
 
-    my $cg = $self->_create_group( $sector, $min_level, $max_level );
+    my $cg = $self->_create_group( $sector, $min_level, $max_level, $categories );
 
     return unless $cg;
 

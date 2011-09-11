@@ -22,7 +22,7 @@ sub run {
 	my $town_rs = $c->schema->resultset('Town')->search(
 		{},
 		{
-			prefetch => 'castle',
+			join => 'castle',
 		}
 	);
 	

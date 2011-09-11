@@ -13,6 +13,7 @@ use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
+use Test::RPG::Builder::Dungeon;
 
 use RPG::Schema::Town;
 
@@ -180,6 +181,21 @@ sub test_take_sales_tax : Tests(5) {
 	is($logs[0]->value, 20, "History line correct value");
 	is($logs[0]->day_id, $self->{stash}{today}->id, "Correct day used for history");
 		
+}
+
+sub test_get_sewer : Tests(2) {
+ 	my $self = shift;
+	
+	# GIVEN
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'sewer', land_id => $town->land_id);
+	
+	# WHEN
+	my $sewer = $town->sewer;
+	
+	# THEN
+	isa_ok($sewer, 'RPG::Schema::Dungeon', "Sewer");
+	is($sewer->type, 'sewer', "Correct type");
 }
 
 

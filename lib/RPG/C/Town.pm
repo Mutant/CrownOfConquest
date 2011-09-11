@@ -41,7 +41,7 @@ sub main : Local {
 			party_id => $c->stash->{party}->id,
 			town_id  => $town->id,
 		},
-	);
+	);	
 
 	$c->forward(
 		'RPG::V::TT',
@@ -60,6 +60,7 @@ sub main : Local {
 					party             => $c->stash->{party},
 					current_election  => $town->current_election,
 					kingdom           => $town->location->kingdom,
+					sewer             => $town->sewer,
 				},
 				return_output => $return_output || 1,
 			}
@@ -533,6 +534,7 @@ sub raid : Local {
 		{
 			'dungeon.land_id' => $town->land_id,
 			'stairs_up'       => 1,
+			'dungeon.type'    => 'castle',
 		},
 		{
 			join => { 'dungeon_room' => 'dungeon' },
@@ -597,6 +599,32 @@ sub raid : Local {
 	$c->stash->{message_panel_size} = 'small';   
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
+}
+
+sub enter_sewer : Local {
+	my ( $self, $c ) = @_;
+	
+	my $town = $c->model('DBIC::Town')->find( { land_id => $c->stash->{party_location}->id } );
+	
+	my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
+		{
+			'dungeon.land_id' => $town->land_id,
+			'stairs_up'       => 1,
+			'dungeon.type'    => 'sewer',
+		},
+		{
+			join => { 'dungeon_room' => 'dungeon' },
+		}
+	);
+
+	confess "Sewer not found for town " . $town->id unless $start_sector;	
+	
+	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
+	$c->stash->{party}->update;
+
+	$c->stash->{message_panel_size} = 'small';
+
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );	
 }
 
 sub become_mayor : Local {

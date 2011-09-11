@@ -111,7 +111,12 @@ sub leave : Local {
 				return_output => 1,
 			}
 		]
-	);    
+	);
+	
+	if ($c->stash->{party}->level <= $c->config->{max_party_level_leave_town_warning}) {
+        $c->stash->{panel_messages} = "The wilderness is full of dangerous monsters.\n\n" . 
+            "You may want to level up your party in the sewers before leaving the safety of town!";
+	}
     
     push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
     

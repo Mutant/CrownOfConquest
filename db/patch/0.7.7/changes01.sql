@@ -24,7 +24,7 @@ ALTER TABLE `Item_Category` ADD COLUMN `delete_when_sold_to_shop` TINYINT(4)  NO
 UPDATE `Item_Category` SET delete_when_sold_to_shop = 1 where item_category = 'Jewel' or item_category = 'Special Items';
 UPDATE `Item_Category` SET findable = 0, auto_add_to_shop = 1 where item_category = 'Jewel';
 
-ALTER TABLE `Creature_Category` ADD COLUMN `dungeon_group_img` VARCHAR(50)  AFTER `name`;
+ALTER TABLE `Creature_Category` ADD COLUMN `dungeon_group_img` VARCHAR(50);
 INSERT INTO `Creature_Category` (name, dungeon_group_img) VALUES ('Rodent', 'rodent');
 INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, creature_category_id, image)
 	VALUES ('Rat', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');
@@ -32,3 +32,7 @@ INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, cr
 	VALUES ('Weasel', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');
 INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, creature_category_id, image)
 	VALUES ('Ferret', 1, 'Claws', 3, 3, 3, (select creature_category_id from Creature_Category where name = 'Rodent'), 'defaultport.png');
+
+ALTER TABLE `Creature_Category` ADD COLUMN `standard` TINYINT  NOT NULL DEFAULT 1;
+UPDATE `Creature_Category` set standard = 0 where name = 'Guards' or name = 'Rodent';
+

@@ -59,9 +59,8 @@ sub _create_group {
             $extra{'category.name'} = $categories;
         }
         else {
-            $extra{'category.name'} = {'!=', 'Guards'};
-        }
-        
+            $extra{'category.standard'} = 1;
+        }        
         
         my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
         	{

@@ -1123,6 +1123,17 @@ sub is_suspected_of_coop_with {
     return $player1->has_ips_in_common_with($player2) ? 1 : 0;  
 }
 
+# Returns true if party has the king of the specified kingdom
+sub has_king_of {
+    my $self = shift;
+    my $kingdom = shift // croak "Kingdom not supplied";
+    
+    return 1 if $kingdom->king->party_id == $self->id;
+    
+    return 0;
+    
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

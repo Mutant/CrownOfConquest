@@ -508,6 +508,7 @@ sub messages : Local {
 	   'messages',
 	   {
 	       'day.day_number' => {'>=', $c->stash->{today}->day_number - 14},
+	       'type' => 'message',
 	   },
 	   {
 	       prefetch => 'day',

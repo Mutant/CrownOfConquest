@@ -1,0 +1,37 @@
+<h3>Discussion Board for The Kingdom of [% kingdom.name %]</h3>
+
+<style>
+.bbcode_quote_body {
+	border: 1px solid black; 
+}
+</style>
+
+[% FOREACH message IN messages %]
+<div style="margin-bottom: 2px; padding: 2px">
+	Posted On Day <i>[% message.day.day_number %] ( [% message.day.difference_to_today_str %] )</i> by <b>[% message.party.name %]</b>
+		[% IF message.party.has_king_of(kingdom) %][King's Party][% END %]<br>
+	<div style="background: #2F2F2F; padding: 1px">
+	[% bbc.parse(message.message) %]
+	</div>
+</div>
+[% END %]
+
+[% IF more_messages || older_count > 1 %]
+	[% IF more_messages %]
+	<a href="javascript:loadScreen('kingdomboard/view?older=[% older_count %]')"><< Older messages</a>
+	[% END %]
+	[% IF older_count > 1 %]
+	[% new_count = older_count - 2 %]
+	<a href="javascript:loadScreen('kingdomboard/view?older=[% new_count %]')">Newer Messages >></a>
+	[% END %]
+<br><br>
+[% END %]
+
+<br>
+
+<form method="post" action="[% base %]kingdomboard/post" onSubmit="postPanels(this); return false">
+Add your message:<br>
+<textarea name="message" style="width: 60%; height: 100px"></textarea>
+<br>
+<input type="submit" value="Post">
+</form>

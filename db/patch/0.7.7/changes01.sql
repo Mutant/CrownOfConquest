@@ -36,3 +36,7 @@ INSERT INTO `Creature_Type` (creature_type, level, weapon, fire, ice, poison, cr
 ALTER TABLE `Creature_Category` ADD COLUMN `standard` TINYINT  NOT NULL DEFAULT 1;
 UPDATE `Creature_Category` set standard = 0 where name = 'Guards' or name = 'Rodent';
 
+ALTER TABLE `Kingdom_Messages` ADD COLUMN `type` VARCHAR(50)  NOT NULL DEFAULT 'message';
+ALTER TABLE `Kingdom_Messages` ADD COLUMN `party_id` INTEGER;
+
+

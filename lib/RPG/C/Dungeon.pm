@@ -109,13 +109,13 @@ sub build_viewable_sector_grids : Private {
         
         my $group_size = $cg->number_alive;
         if ($group_size <= 3) {
-            $cg->{group_size} = 'small';
+            $cg->{group_size} = '1';
         }
         elsif ($group_size <= 6) {
-            $cg->{group_size} = 'medium';   
+            $cg->{group_size} = '2';   
         }
         else {
-            $cg->{group_size} = 'large';
+            $cg->{group_size} = '3';
         }
         
         # Find category of first creatures
@@ -147,8 +147,16 @@ sub build_viewable_sector_grids : Private {
     foreach my $party_rec (@party_recs) {
         my @parties = $party_rec->parties;
         if ($parties[0]) {
-            my @characters = sort { $a->party_order <=> $b->party_order } grep { ! $_->is_dead } $parties[0]->members;
-            $parties[0]->{portrait} = $characters[0]->portrait;
+            my $group_size = $parties[0]->number_alive;
+            if ($group_size <= 3) {
+                $parties[0]->{group_size} = '1';
+            }
+            elsif ($group_size <= 6) {
+                $parties[0]->{group_size} = '2';   
+            }
+            else {
+                $parties[0]->{group_size} = '3';
+            }            
         }
         
         $parties->[ $party_rec->x ][ $party_rec->y ] = \@parties;

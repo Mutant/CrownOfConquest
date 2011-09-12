@@ -57,8 +57,8 @@
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
-				[% group_img = cgs.$x.$y.group_img || 'dungeon' %]
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %]group[% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
+				[% group_img = cgs.$x.$y.group_img %]
+				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %][% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 
@@ -69,7 +69,7 @@
 			[% ELSIF parties.$x.$y.0 %]
 				[%# TODO: handle multiple parties in a sector %]
 			    [% other_party = parties.$x.$y.0 %]
-				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/portraits/characters/[% other_party.portrait %]small.png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
+				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/dungeon/humanoid[% other_party.portrait %].png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
 			    [% IF create_tooltips %]
 			    <div 
 					dojoType="dijit.Tooltip" 

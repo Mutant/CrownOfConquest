@@ -39,4 +39,19 @@ UPDATE `Creature_Category` set standard = 0 where name = 'Guards' or name = 'Rod
 ALTER TABLE `Kingdom_Messages` ADD COLUMN `type` VARCHAR(50)  NOT NULL DEFAULT 'message';
 ALTER TABLE `Kingdom_Messages` ADD COLUMN `party_id` INTEGER;
 
+UPDATE `Creature_Type` set image = 'bugbear.png' where creature_type = 'Bugbear';
+UPDATE `Creature_Type` set image = 'hellhound.png' where creature_type = 'Hell Hound';
+UPDATE `Creature_Type` set image = 'hypnoslime.png' where creature_type = 'Hypnotic Slime';
+UPDATE `Creature_Type` set image = 'minotaur.png' where creature_type = 'Minotaur';
+UPDATE `Creature_Type` set image = 'spectre.png' where creature_type = 'Spectre';
+
+UPDATE `Creature_Category` set dungeon_group_img = 'monsters' where name = 'Beast';
+UPDATE `Creature_Category` set dungeon_group_img = 'demons' where name = 'Demon';
+UPDATE `Creature_Category` set dungeon_group_img = 'golems' where name = 'Golem';
+UPDATE `Creature_Category` set dungeon_group_img = 'dragons' where name = 'Dragon';
+UPDATE `Creature_Category` set dungeon_group_img = 'undeads' where name = 'Undead';
+UPDATE `Creature_Category` set dungeon_group_img = 'humanoid' where name = 'Humanoid';
+UPDATE `Creature_Category` set dungeon_group_img = 'lycanthropes' where name = 'Lycanthrope';
+UPDATE `Creature_Category` set dungeon_group_img = 'guards' where name = 'Guards';
+
 

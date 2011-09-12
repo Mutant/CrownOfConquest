@@ -1203,7 +1203,7 @@ sub sell_value {
 
 my %starting_equipment = (
     'Warrior' => [ 'Short Sword', 'Wooden Shield' ],
-    'Archer'  => [ 'Sling',       'Sling Stones' ],
+    'Archer'  => [ 'Sling',       'Sling Stones', 'Wooden Shield' ],
     'Priest'  => [ 'Short Sword', 'Wooden Shield' ],
     'Mage'    => [ 'Dagger',      'Wooden Shield' ],
 );

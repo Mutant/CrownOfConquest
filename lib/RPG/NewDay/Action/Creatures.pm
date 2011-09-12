@@ -206,7 +206,7 @@ sub _spawn_in_dungeon {
 			if (ref $_ && $_->isa('RPG::Exception')) {
 				if ($_->type eq 'creature_type_error') {
 					# Couldn't find a creature type.. just skip this group
-					next;
+					return;
 				}
 			}
 				

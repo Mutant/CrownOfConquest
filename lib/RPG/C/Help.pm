@@ -59,4 +59,28 @@ sub tips : Local {
     );		
 }
 
+sub tutorial : Local : Args(1) {
+	my ($self, $c, $template) = @_;
+	
+	my $template_path = "help/tutorial/$template.html";
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => $template_path,
+        }]
+    );
+}
+
+sub reference : Local : Args(1) {
+	my ($self, $c, $template) = @_;
+	
+	my $template_path = "help/reference/$template.html";
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => $template_path,
+        }]
+    );
+}
+
 1;

@@ -1,6 +1,6 @@
 [% INCLUDE top.html, guest_screen = 1 %]
 
-[% shots = [1,2,3,4,7,8] %]
+[% shots = [1,2,9,3,4,7,8] %]
 
 <script>
 function displayIEDiag() {
@@ -30,10 +30,11 @@ function displaySizeWarning() {
 dojo.addOnLoad( displaySizeWarning );
 
 var shotDescs = {
-	1: 'The Main Screen',
+	1: 'The Main Screen',	
 	2: "A charater's screen - mouse over an item to see its stats",
+	9: "A Town",
 	3: "An Equipment Shop - drag an item onto a character's name to buy it",
-	4: "Combat - cast a spell by selecting it from the action menu",
+	4: "Combat - cast a spell by selecting it from the action menu",	
 	7: "Constructing a new building",
 	8: "Exploring a dungeon",
 };

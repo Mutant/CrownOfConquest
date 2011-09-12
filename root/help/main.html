@@ -1,169 +1,29 @@
-[% INCLUDE help/subnav.html %]
+<h2>Kingdoms Help</h2>
 
-<br><br>
-<b>Note</b>: The help is really only a basic guide at the moment. The focus right now is getting the features completed, so there are
-a lot of holes in the Help. But if you have any questions or problems, please post them in the <a href="[% forum_url %]">forum</a>. 
-You can be sure they'll be answered promptly!
-<br>
+<p>For those wanting to dive right in, the <a href="[% base %]help/tutorial/quick_start" target="_blank">Quick Start Guide</a> is a good place to start.</p>
 
-<h2>Party</h2>
+<p>The Kingdom's help is split into several sections:</p>
 
-See <a href="[% base %]/help/create_party">Party Creation</a>.
+<ul>
+	<li><b>Getting Starting</b> is for new parties, and provides an introduction to the game and some hints on how to play.</li>
+	<li><b>Reference</b> provides some more general information on parts of the game.</li>
+	<li><b>Miscellaneous</b> has information about Kingdoms, the change log, and announcements about the game.</li>
+</ul>
 
-<h2>Equipment</h2>
+<h3>Getting Started</h3>
+<ul>
+	<li><a href="[% base %]help/tutorial/quick_start" target="_blank">Quick Start Guide</a></li>
+	<li><a href="javascript:loadScreen('help/tips')">Tips</a></li>
+	<li><a href="[% base %]help/tutorial/getting_started" target="_blank">Getting Started Guide</a></li>
+	[% INCLUDE help/tutorial/index.html target="_blank" %]
+</ul>
 
-<p>Equipment fits into several different categories, such as Melee Weapons, Ranged Weapons, Shields and Armour. Items can be purchased from the shops in
-a town, or found on defeated creatures.</p>
+<h3>Reference</h3>
+[% INCLUDE help/reference/index.html target="_blank" %]
 
-<p>Once bought, items must be equipped to use. To do this, click on the character's name on the main screen to go to the character's page. Click on the
-equipment tab, and drag the item into the appropriate slot.</p>
-
-<p>Some items are more frequently found than others. Larger towns (i.e. those with higher prosperity) tend to have more shops, and a bigger range of items.</p>
-
-<h2>Towns</h2>
-
-<p>Towns are essential to survival. Each town has the same basic options screen (see screenshot below).
-
-<p>Starting from the top; the town name is shown as well as its prosperity rating. Prosperity varies from town to town and is an indicator of how large the town is 
-and how bountiful its quests and equipment might be. A number of factors affect prosperity such as killing monster mobs within a certain area of the city, 
-destroying orbs, completing quests, how well the mayor runs the city, etc.</p>
-
-<img src="[% c.config.static_path %]/images/help/town_menu.png" border="1" align="left">
-
-<p>Next we have "your" prestige rating for the town. You start out with a neutral rating in each town, this can be increased simply by completing quests for the 
-town. The more you do for a town the more prestige you will gain naturally.</p>
-
-<p>Next is the mayor of the town. Each town starts out with a NPC mayor whom can be overthrown by players by either winning an election and simply taking the 
-mayor out of office or by raiding the town. If a raid is successful you may appoint one of your party members as mayor. Being mayor of a town has many 
-benefits such as collecting tax money from the towns people and gaining discounted prices of equipment.</p>
-
-<p>Shops and services allow player parties to accomplish many things.</p> 
-
-<p>Equipment shops takes you to the list of shops within each town. Some towns may have multiple shops open and some may have only one. 
-Again prosperity is a relatively good way to judge this.</p>
-
-<p>Healer is self explanatory! If you need to resurrect a party member or simply heal up your entire party go here.</p>
- 
-<p>Sage is all knowing, if you are trying to find a specific town, dungeon, or item go here and the sage will tell you for a price of course.</p>
- 
-<p>The blacksmith is a very useful tool within Kingdoms. Each town has a different blacksmith, and some have no blacksmith at all. Before using a blacksmith 
-be sure to read up on him each blacksmith can range in skill level from "terrible" to "god-like". Blacksmiths can repair all items damaged from combat and
-more importantly upgrade your party's items. Depending on the blacksmiths skill you could have the blacksmith fail to upgrade your item, or he could upgrade it
-without any penalties at all. Please take note that there is a difference between magic items and upgraded items.</p>
-
-<p>The recruitment office allows players to purchase new party members as well as sell the ones already owned. The available characters range in price determined 
-of course by level, xp and skill points. This feature will play a very important role in the game once you start using Garrisons. Each group starts with five 
-characters but a player is allowed up to 8 in his party total at one time.</p>
-
-<p>The Town Hall gives you three options. "Quests" is simply where you go to take on quests for a town and also generally speaking where you go to complete a quest.</p>
-
-<p>News tells you detailed news for the town from day to day. Finally the cemetery if you feel like burying your dead for all to see.</p> 
-
-<h3>Tax</h3>
-
-<p>Each town charges a tax to enter for the day. You can pay this by "working" (using up turns), or in gold. Each game day you'll have to pay tax again
-to enter the town.</p>
-
-<p>The amount of tax you pay is determined by a number of factors, including the size of the town, and your prestige with the town.</p>
-
-<h2>The Wilderness</h2>
-
-<p>Once you leave town, you're in the wilderness. Here, you'll find groups of monsters roaming free. Some may attack you, or you may choose to initiate combat
-yourself.</p>
-
-<p>To move around, click on a sector on the map next to the current location of your party (indicated by the blue square). You can zoom the map with the zoom
-buttons to the left. Any blank squares are ones you have yet to explore.</p>
-
-<p>As you move through the wilderness, your party will record the terrain around them. Clicking on the "Map" link on the left hand menu will display all the
-terrain your party has currently seen. Clicking on a sector on this screen will centre the map on it, allowing you to view the entire map.</p>
-
-<p>The amount of turns it takes to move to a particular sector depends on your party's Movement Factor (displayed above the map, based on the constitution of
-your characters), and the type of terrain. Mousing over a sector on the map will tell you how many turns it will cost to move there. (For towns, 
-it will also display the name of the town, and its prosperity).</p>
-
-<h3>Orbs</h3>
-
-<p>You'll find Orbs scattered throughout the wilderness. These evil devices are responsible for spawning monsters. If you're high enough level, you may be able
-to destroy the orb (be careful though - they'll be protected!) Destroying orbs can help towns increase their prosperity.</p> 
-
-<h2>Combat</h2>
-
-<p>When moving through the wilderness, you will encounter groups of creatures. They may attack you, or you can choose to initiate combat yourself. Be careful
-though, as some are much tougher than others!</p>
-
-<p>Combat is divided into rounds. Each round, you can select which action a character will take. They can either attack (choosing an opponent at random), 
-defend (gaining a defensive bonus), target a particular opponent, or cast a spell. To execute the round, choose either "Fight" or "Flee" (if you've
-had enough of this battle, and want to get out alive).</p>
-
-<p>In most cases, characters will only attack once per round. However, under certain circumstances, characters will attack more frequently. For example,
-when using ranged weapons, archers will attack twice every second round.</p>
-
-<p>Each round of combat also uses one of your party's turns. However, you can keep fighting even if your turns go below zero.</p>
-
-<p>At the end of combat, if you've defeated the creatures, you will receive experience, gold and maybe even find an item.</p>
-
-<h3>Party Rank</h3>
-
-<p>During combat, your party will divide itself into two ranks - front and back. In the party list on the main screen, a black line indicates the
-separation between front and back ranks. This line can't be changed during combat. Outside of combat, you can drag the line, or characters themselves,
-to change how the ranks will form.</p>
-
-<p>Characters in the front rank have a greater chance of being targetted by opponents. However those in the back rank will receive penalties when trying
-to attack with a melee weapon.</p>
-
-<h3>The Watcher</h3>
-
-<p>When your party starts out, they'll automatically get a "Watcher" effect. This is a force that stays with the party, and gives them an indication of how
-tough a group of creatures in the current sector is. This effect lasts for a few game days. After that, you'll need one of your mages to cast another
-"Watcher" spell.</p>
-
-<h3>Offline Combat</h3>
-
-<p>If you log out of the game in the middle of a battle, or if you leave your party in the wilderness, your party can be attacked while you're offline. You'll
-receive notification of any battles you were in when you next log in.</p>
-
-<h2>Spells</h2>
-
-<p>Two character classes - Mages and Priests - have the ability to cast spells. A particular spell can be cast either in or outside of combat (or sometimes
-both). If a character has an appropriate spell memorised, it will be available to you in the "Action" menu next to the character's name.</p>
-
-<p>To choose which spells a character has memorised, click on the character's name in the main screen to go to the character's page, and click the "Spells"
-tab. There you can see which spells the character has memorised today, and which s/he'll memorise tomorrow. You can change which spells s/he will memorise
-tomorrow, and these will be updated the next day. A new character has a default set of spells memorised, and these probably need to be changed.</p>
-
-<h2>Quests</h2>
-
-<p>Each town has a town hall where your party can elect to take on a Quest. Various different types of quests are available, and these will be explained
-before you accept the quest. Clicking on the "Quests" link on the left hand menu will display the quests your party has accepted, and give instructions
-on what needs to be done to complete the quest.</p>
-
-<p>The number of quests a party can accept is limited by your party's level. Additionally, only one quest per town can be accepted.</p>
-
-<p>Each quest has a time limit to complete. If you don't complete the quest in time, you'll lose prestige with the town.</p>
-
-<h2>New Day</h2>
-
-<p>Every 24 hours, a new day will be started within the game. This will give your party another [% c.config.daily_turns %] turns, up to a maximum of
-[% c.config.maximum_turns %]. Your spell-casters' spells will also be re-memorised, and if your party is rested, they will heal.</p>
-
-<h2>Dungeons</h2>
-
-<p>If you've tired of the wilderness, you can find dungeons to explore. These underground labyrinths have large concentrations of high level creatures. You can find
-them by accident (by entering a sector with a dungeon entrance), or through a sage.</p>
-
-<h2>Garrisons</h2>
-
-<p>At party level [% c.config.minimum_garrison_level %], you can create garrisons. A garrison lets you assign one or more characters to stay in the sector, and
-battle monsters while the party is away. You can give the garrison certain orders (letting it know what to do when a group of monsters or another party enter
-the sector), and you can also store equipment and gold there.</p>
-
-<h2>Kingdoms</h2>
-
-<p>The world is divided up into several Kingdoms. Each town is loyal to a Kingdom (unless they are a free town), and each sector can be owned by a Kingdom. Parties
-can also declare their loyalty to a Kingdom, or become free citizens. You can change your loyalty by going to Party > Kingdom.</p>
-
-<p>Some Kingdoms are controlled by NPCs, some by players. Either way, the king or queen can give you quests. Like town quests, these offer rewards of gold and
-experience, and in addition will help further the cause of your Kingdom.</p>
-
-<p>If you control [% c.config.town_count_for_kingdom_declaration %] or more towns, and have a party level of [% c.config.minimum_kingdom_level %] or higher, you
-can declare your own Kingdom. This will let you set quests for the parties in your Kingdom, and collect tax from any towns loyal to you.</p>
+<h3>Miscellaneous</h3>
+<ul>
+	<li><a href="javascript:loadScreen('player/announcements')">Announcements</a></li>
+	<li><a href="javascript:loadScreen('player/about')">About</a></li>
+	<li><a href="javascript:loadScreen('help/about')">Changelog</a></li>
+</ul>

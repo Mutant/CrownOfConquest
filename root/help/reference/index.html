@@ -1,0 +1,7 @@
+[% pages = ['Party Creation', 'Equipment', 'Towns', 'Wilderness', 'Spells', 'Quests', 'New Day', 'Dungeons', 'Garrisons', 'Kingdoms' ] %]
+
+<ul>
+	[% FOREACH page IN pages %]
+	<li><a href="[% base %]help/reference/[% page | lower | replace('\s', '_') %]" [% IF target %]target="[% target %]"[% END %]>[% page %]</a></li>
+	[% END %]
+</ul>

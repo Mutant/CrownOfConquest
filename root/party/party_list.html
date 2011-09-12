@@ -390,7 +390,9 @@ function createButton(menu, name, characterId) {
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
 		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
-		<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png">
+			<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">
+				<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0">
+			</a>
 		</span>
 		
 		<div style="width: 3px; height: 100%; float: left; margin-right: 1px; position: relative" 

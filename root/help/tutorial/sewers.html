@@ -1,0 +1,55 @@
+[% INCLUDE help/top.html %]
+
+<h3>The Sewers</h3>
+
+<div style="float: right; margin: 4px" align="center">
+	<img src="[% c.config.static_path %]/images/help/sewer_movement.png" style="border: 1px solid white;"><br>
+	<i>Click on a white dot to move your party</i>
+</div>
+
+<p>There are two places where your new party can find monsters to battle. They can leave town and explore the wilderness, or they can venture down into the town's sewer
+system. The sewers are much safer, and a good place for your party to earn some gold and experience, so we'll start there. From the town's main menu, click on
+"Enter The Town Sewer".</p>
+
+<p>Your party will enter the sewers via the stairs, and will immediately be presented with a map of the area around them. The white circle shows the location
+of your party, and the white dots indicate which sectors of the dungeon your party can move to. Click on one to move your party around the sewer 
+(each move costs [% c.config.cost_of_moving_through_dungeons %] turns). The grey boxes on the side of the walls indicate doors. If you move into the sector 
+next to the door, an option to open that door will appear in the message window in the bottom left. Clicking that will open the door, move your party through 
+it, and reveal another area of the sewer.<p>
+
+<div style="float: left; margin: 4px" align="center">
+	<img src="[% c.config.static_path %]/images/help/sewer_rodents.png" style="border: 1px solid white;"><br>
+	<i>Find the rodents!</i>
+</div>
+
+<p>To initiate combat, we first have to find some foes. The sewers are overflowing with rodents of various kinds, which you can see indicated on the map. Move into
+one of the sectors containing the rodents (by clicking on it). On the left hand side of the map, you'll see portraits of the rodents appear, along with their hit
+point bars. In the message window in the bottom left, an option to "Attack Creatures" will appear. Click it to start the battle!</p>
+
+<p>When the battle starts, you'll see the combat window open. Here, you'll see buttons that let you "Fight" or "Flee", but don't click them yet! We first need to
+select the actions your party will take during the round. You'll see each character in your party list to the right now has 2 or 3 action buttons. These let your
+character Attack, Defend or (for spell casters) Cast.</p>
+
+<p>Clicking on the 'Attack' button (the first button) will show the list of opponents you're fighting. Click on one of them to order that character to attack that
+particular opponent in the next round. You can also double click the attack button to target a random opponent (the default). Clicking 'Defend' will order that
+character to try to defend themselves instead of attacking.</p>
+
+<p>If you have spell casters in the party, they will also have the option of casting spells. These may target members of your party (mostly Priest spells) or your 
+opponents (mostly Mage spells). See the reference guide on <a href="[% base %]help/reference/spells">spells</a> for more information.</p>
+
+<p>Once you've selected your party's actions, click on the 'Fight' button to start the round. The messages from the round will be displayed, showing you how much
+damage each member of your party did, how much the rodents did, and the results of any spells. You'll also see the hit point bars of both your characters and your opponents
+change, and the portraits of dead characters or monsters will be greyed out. You can then click 'Fight' again to start the next round, after changing any orders. If
+you ordered a character to target a particular opponent, you don't have to do it again - they'll keep attacking that opponent until they're dead. After that, they'll
+select a random opponent to fight.</p>
+
+<p>Of course, if things get too tough, you can always try the 'Flee' button. If you succeed, your party will live to fight another day. If not, the round will go on
+as normal, and you can try to flee again the next time.</p>
+
+<p>After a while, you might find fighting only rodents is a bit boring, and may even become easy. For something a bit more interesting, we can head to the wilderness,
+which is covered in the next section.</p>
+
+
+[% INCLUDE help/tutorial/nav.html prev_link = 'your_starting_town', prev_name = 'Your Starting Town', next_link = 'wilderness', next_name = 'The Wilderness' %]
+
+[% INCLUDE help/bottom.html %]

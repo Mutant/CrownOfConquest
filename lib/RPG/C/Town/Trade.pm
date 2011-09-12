@@ -203,9 +203,9 @@ sub create : Local {
             item_id => $item->id,
             party_id => $c->stash->{party}->id,
             town_id => $c->stash->{party_location}->town->id,
-            amount => $c->req->param('price'),
+            amount => $sell_price,
             status => 'Offered',
-            item_base_value => $sell_price,
+            item_base_value => $base_price,
             item_type => $item->display_name,
             offered_to => $offer_to,        
         }

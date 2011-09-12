@@ -233,17 +233,13 @@ h1 {margin: 0; padding: 1px}
 
 .text-block {
 	border: 1px solid black; 
-	background: white; 
-	color: black; 
+	background: #2F2F2F;
+	color: #EECAA2; 
 	-moz-border-radius-bottomleft:14pt; 
 	-moz-border-radius-bottomright:14pt;
 	-moz-border-radius-topleft:14pt; 
 	-moz-border-radius-topright:14pt; 
 	padding: 5px
-}
-
-.text-block a {
-	color: black;
 }
 
 /* Character View */

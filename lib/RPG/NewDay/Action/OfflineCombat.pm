@@ -185,6 +185,9 @@ sub initiate_dungeon_battles {
         
         my $dungeon = $sector->dungeon_room->dungeon;
         
+        # No offline combat for the noobs
+        next if $dungeon->type eq 'sewer';
+        
         next if $offline_combat_count >= $c->config->{max_offline_combat_per_dungeon_level} * $dungeon->level;
         
         my $cg = $sector->available_creature_group;

@@ -270,7 +270,8 @@ sub known_dungeons : Local {
 sub generate_grid : Private {
     my ( $self, $c, $x_size, $y_size, $x_centre, $y_centre ) = @_;
     
-    $c->log->debug("In generate_grid");
+    confess "Invalid call to generate_grid(): $x_size, $y_size, $x_centre, $y_centre"
+        unless $x_size && $y_size && $x_centre && $y_centre;
 
     my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1 );
     
@@ -335,13 +336,10 @@ sub generate_grid : Private {
         $location->{buildings} = $building_grid->[ $location->{x} ][ $location->{y} ];
         
         $grid[ $location->{x} ][ $location->{y} ] = $location;
+        
+        my $has_roads = defined $road_grid->[ $location->{x} ][ $location->{y} ] ? 1 : 0;
 
-        if ($location->{next_to_centre}) {
-            $location->{party_movement_factor} = RPG::Schema::Land::movement_cost( $location, $movement_factor, $location->{modifier}, $c->stash->{party_location} );
-        }
-        else {
-            $location->{party_movement_factor} = RPG::Schema::Land->movement_cost( $movement_factor, $location->{modifier}, );
-        }
+        $location->{party_movement_factor} = RPG::Schema::Land::movement_cost( $location, $movement_factor, $location->{modifier}, $has_roads );
 
         # Find any towns and calculate their tax costs        
         if ( $location->{town_id} ) {
@@ -561,6 +559,9 @@ sub generate_sectors {
     if ($c->session->{discovered}) {
         foreach my $discovered_sectors ( @{ $c->session->{discovered} } ) {
             my @disc_lines = RPG::Map->compile_rows_and_columns(@$discovered_sectors);
+
+            next unless @disc_lines;
+
             push @lines, @disc_lines;            
         }        
     }

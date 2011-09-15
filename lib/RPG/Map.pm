@@ -284,6 +284,8 @@ sub compile_rows_and_columns {
             if (scalar @line_contents > 1) {
                 @line_contents = grep { ! $used{$_} } @line_contents;
                 
+                next unless @line_contents;
+                
                 push @compiled, \@line_contents;
                 
                 foreach my $sector (@line_contents) {

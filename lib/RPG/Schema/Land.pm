@@ -10,6 +10,7 @@ use Carp qw(cluck croak confess);
 
 use RPG::ResultSet::RowsInSectorRange;
 use Statistics::Basic qw(average);
+use Scalar::Util qw(blessed);
 use RPG::Map;
 
 __PACKAGE__->load_components(qw/Numeric Core/);
@@ -80,23 +81,21 @@ sub movement_cost {
     my $self = shift // confess 'base sector not supplied';
     my $movement_factor = shift // confess 'movement factor not supplied';            
     my $terrain_modifier = shift;
-    my $from_sector = shift;
-    
-    if (! defined $terrain_modifier) {        
-        if (ref $self && $self->isa('RPG::Schema::Land')) {
-            $terrain_modifier = $self->terrain->modifier;
-        }
-        else {
-            confess 'terrain modifier not supplied';
-        }
+    my $has_road = shift;
+            
+    if (blessed $self && $self->isa('RPG::Schema::Land')) {
+        $terrain_modifier = $self->terrain->modifier;
+        $has_road = $self->roads->count > 0 ? 1 : 0;
+    }
+    else {
+        confess 'terrain modifier not supplied' unless defined $terrain_modifier;
+        confess 'has_road not supplied' unless defined $has_road;
     }
 
     my $cost = $terrain_modifier - $movement_factor;
     
-    # If from sector is next to current one, factor roads into movement cost calculation
-    if ($from_sector && has_road_joining_to($from_sector, $self)) {
-        $cost -= 2;   
-    }
+    # Reduce movement cost if sector has at least one road segment
+    $cost -= 2 if $has_road;
     
     $cost = 1 if $cost < 1;
 

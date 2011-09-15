@@ -288,12 +288,11 @@ function updateSectors(responseObject) {
 	}
 	
 	var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y); 
-
+	
 	newSector.appendChild(herecircle);
 }
 
 function refreshSectorCallback(data) {
-console.log(data);
 	updateSectors(data);
 }
 
@@ -365,7 +364,6 @@ function panelErrorCallback(err) {
 
 function refreshPanels(panelData) {
 	if (panelData.redirect) {
-		console.log(panelData.redirect);
 		document.location = panelData.redirect;
 		return;
 	}

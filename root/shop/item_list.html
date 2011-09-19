@@ -51,7 +51,8 @@
 					<div dojoType="dijit.Tooltip"
                    		connectId="item_source_[% id %]"
 						style="display: none">
-						[% INCLUDE item/tooltip_specific.html item_type=item_type, item=sell_type == 'item' ? undef : item | collapse %]
+						[% item_to_use = sell_type != 'enchanted' ? undef : item %]
+						[% INCLUDE item/tooltip_specific.html item_type=item_type, item=item_to_use | collapse %]
                    </div>
 			</div>
 		[% END %]

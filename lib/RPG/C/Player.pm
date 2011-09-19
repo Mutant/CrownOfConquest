@@ -511,12 +511,6 @@ sub about : Local {
     $c->forward( 'RPG::V::TT', [ { template => 'player/about.html', } ] );
 }
 
-sub screenshots : Local {
-    my ( $self, $c ) = @_;
-
-    $c->forward( 'RPG::V::TT', [ { template => 'player/screenshots.html', } ] );
-}
-
 sub survey : Local {
 	my ( $self, $c ) = @_;
 	

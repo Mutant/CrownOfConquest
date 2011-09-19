@@ -309,6 +309,8 @@ function getPanels(url) {
     	no_cache = '?' + no_cache;
     }
     
+    _gaq.push(['_trackPageview', url]);
+    
 	dojo.xhrGet( {
         url: urlBase + url + no_cache,
         handleAs: "json",        
@@ -576,6 +578,8 @@ function loadScreen(url) {
 	}
 		
 	dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
+
+	_gaq.push(['_trackPageview', url]);
 	
 	dojo.xhrGet( {
         url: urlBase + url,

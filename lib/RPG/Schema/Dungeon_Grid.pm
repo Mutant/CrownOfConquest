@@ -55,7 +55,8 @@ sub new {
     }
     
     # See if there's an overlay
-    if ((Games::Dice::Advanced->roll('1d100') || 100) <= 8) {
+    if (! $self->stairs_up && ! $self->stairs_down && ! $self->treasure_chest && ! $self->teleporter && 
+        (Games::Dice::Advanced->roll('1d100') || 100) <= 4) {
         $self->overlay('skeleton');   
     }
     

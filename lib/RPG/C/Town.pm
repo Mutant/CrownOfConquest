@@ -272,6 +272,8 @@ sub res_impl : Private {
 		}
 		else {
             my $message = $char_to_res->resurrect($town);
+            
+            $c->stash->{party}->discard_changes;
 
 			$c->stash->{messages} = $message;
 			

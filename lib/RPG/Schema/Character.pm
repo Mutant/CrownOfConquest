@@ -291,6 +291,10 @@ sub is_in_party {
 		return 1 if $self->mayor_of_town->land_id == $self->party->land_id;	
 	}
 	
+	if (my $town = $self->party->location->town) {	    
+	    return 1 if $self->status eq 'mayor_garrison' && $self->status_context == $town->id;
+	}
+	
 	return 0;
 }
 

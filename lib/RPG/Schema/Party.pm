@@ -390,6 +390,15 @@ sub characters_in_sector {
 	my $mayor;
 	if ($town and $mayor = $town->mayor and $mayor->party_id == $self->id) {
 		push @chars, $mayor;
+		
+		my @garrison_chars = $self->search_related(
+            'characters',
+            {
+                status => 'mayor_garrison',
+                status_context => $town->id,
+            }
+        );
+        push @chars, @garrison_chars;		
 	}
 	
 	return @chars;		

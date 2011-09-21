@@ -466,10 +466,6 @@ sub new_day {
 
     my @log;    # TODO: should be a template
 
-    $self->increase_turns( $self->turns + RPG::Schema->config->{daily_turns} );
-
-    push @log, "You now have " . $self->turns . " turns.";
-
     foreach my $character ( $self->characters ) {
         next if $character->is_dead;
 

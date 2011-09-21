@@ -167,8 +167,8 @@ map_y_size: 15
 # Area party can "view" (i.e. how far they can see on main map)
 party_viewing_range: 3
 
-# Number of turns a party gets each day
-daily_turns: 250
+# Number of turns a party gets each hour
+turns_per_hour: 12
 
 # Maximum number of turns a party is allowed to have
 maximum_turns: 750

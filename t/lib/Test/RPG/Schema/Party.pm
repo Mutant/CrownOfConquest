@@ -42,7 +42,7 @@ sub shutdown : Tests(shutdown) {
 	$self->{mock_config}->unfake_module();	
 }
 
-sub test_new_day : Tests(2) {
+sub test_new_day : Tests(1) {
     my $self = shift;
 
     # GIVEN
@@ -69,7 +69,6 @@ sub test_new_day : Tests(2) {
 
     # THEN
     $party->discard_changes;
-    is($party->turns, 110, "Party turns incremented");
     is($party->rest, 0, "Rest is set to 0");
 
 }
@@ -578,7 +577,7 @@ sub test_get_least_encumbered_character : Tests(1) {
     is($character->id, $characters[1]->id, "Correct character returned");   
 }
 
-sub test_after_land_move : Tests(1) {
+sub test_move_to : Tests(1) {
     my $self = shift;
     
     # GIVEN
@@ -592,7 +591,7 @@ sub test_after_land_move : Tests(1) {
     );    
     
     # WHEN
-    $party->after_land_move($land[4]);
+    $party->move_to($land[4]);
     
     # THEN
     my @mapped_sectors = $party->mapped_sectors;

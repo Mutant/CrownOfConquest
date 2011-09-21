@@ -427,21 +427,17 @@ sub status : Private {
 	my ( $self, $c ) = @_;
 
 	my $party = $c->stash->{party};
+	
+	my $dt = DateTime->now();
 
 	# TODO: should use config, but it still uses old style cron strings
-	my $event = DateTime::Event::Cron::Quartz->new('0 5 4 * * ?');
-
-	my $dt = DateTime->now();
-	$dt->set_time_zone('local');
-
-	my $next_date = $event->get_next_valid_time_after($dt);
-	$next_date->add( minutes => 10 );    # Give it about 10 mins for the script to run.
-
-	my $dur = $next_date->subtract_datetime($dt);
-
-	my $d = DateTime::Format::Duration->new( pattern => '%H hours, %M minutes' );
-
-	my $time_to_next_day = $d->format_duration_from_deltas( $d->normalise($dur) );
+	my $time_to_next_day = $self->_generate_date_string_from_quartz(
+	   '0 5 4 * * ?', $dt, '%H hours, %M minutes', { minutes => 10 }, # Give it about 10 mins for the script to run.
+	);
+	
+	my $time_to_next_turns = $self->_generate_date_string_from_quartz(
+	   '0 0 * * * ?', $dt, '%M minutes',
+	);
 
 	$c->forward(
 		'RPG::V::TT',
@@ -453,11 +449,35 @@ sub status : Private {
 					location         => $c->stash->{party_location},
 					day_number       => $c->stash->{today}->day_number,
 					time_to_next_day => $time_to_next_day,
+					time_to_next_turns => $time_to_next_turns,
 				},
 				return_output => 1,
 			}
 		]
 	);
+}
+
+sub _generate_date_string_from_quartz {
+    my $self = shift;
+    my $quartz_string = shift;
+    my $dt = shift;
+    my $pattern = shift;   
+    my $add_to_dt = shift;
+    
+    
+    $dt->set_time_zone('local');
+    
+    my $event = DateTime::Event::Cron::Quartz->new($quartz_string);
+    
+    my $next_date = $event->get_next_valid_time_after($dt);
+    if ($add_to_dt) {
+        $next_date->add( %$add_to_dt );
+    }
+    
+    my $dur = $next_date->subtract_datetime($dt);
+    my $d = DateTime::Format::Duration->new( pattern => $pattern );
+    
+    return $d->format_duration_from_deltas( $d->normalise($dur) );
 }
 
 sub swap_chars : Local {

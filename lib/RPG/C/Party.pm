@@ -67,7 +67,7 @@ sub refresh_messages : Local {
 sub refresh_party_list : Local {
 	my ( $self, $c ) = @_;
 	
-	$c->forward( '/panel/refresh', ['party'] );
+	$c->forward( '/panel/refresh', ['party', 'messages'] );
 }
 
 sub sector_menu : Private {

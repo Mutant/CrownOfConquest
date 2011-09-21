@@ -270,7 +270,7 @@ sub buy_item : Local {
 	$town->take_sales_tax($cost);
 	$town->update;	
 
-	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters;
+	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
 
 	$item->add_to_characters_inventory($character);
 
@@ -334,9 +334,10 @@ sub buy_quantity_item : Local {
 	# Create the item
 	my $item = $c->model('DBIC::Items')->create( { item_type_id => $c->req->param('item_type_id'), } );
 
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
+
 	$item->variable( 'Quantity', $c->req->param('quantity') );
-	$item->character_id( $c->req->param('character_id') );
-	$item->update;
+	$item->add_to_characters_inventory($character);
 
 	$party->gold( $party->gold - $cost );
 	$party->update;

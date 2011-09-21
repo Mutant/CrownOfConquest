@@ -29,6 +29,9 @@ sub main : Local {
         $load_panel = 'party/init';
         unshift @{ $c->flash->{refresh_panels} }, 'messages';
     }
+    
+    # Don't update the last action of the party, since we'll do that when running the init
+    $c->stash->{dont_update_last_action} = 1;
 	
 	$c->forward(
 		'RPG::V::TT',

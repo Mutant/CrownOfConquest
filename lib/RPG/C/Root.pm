@@ -187,7 +187,7 @@ sub default : Private {
 sub end : Private {
     my ( $self, $c ) = @_;
 
-    if ( $c->stash->{party} ) {
+    if ( $c->stash->{party} && ! $c->stash->{dont_update_last_action} ) {
         $c->stash->{party}->last_action( DateTime->now() );
         $c->stash->{party}->update;
     }

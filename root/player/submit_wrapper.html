@@ -1,0 +1,48 @@
+[% INCLUDE top.html %]
+
+<br>
+<div class="line-sep"></div>
+
+[% content %]
+
+<p>Alternatively, you can post a message in the <a href="[% c.config.forum_url %]" target="_blank">Forum</a></p>
+
+[% IF ! logged_in %]
+<p><b>Note:</b> As you're not logged in, you must provide your email address, and enter the CAPTCHA code below. If you already have an account, you may be better
+<a href="[% base %]player/login">logging in</a> first.</p>
+[% END %]
+
+<form method="POST" action="[% base %]player/[% submit_action %]">
+<table class="main">
+[% IF ! logged_in %]
+	<tr>
+		<td>Your Email Address:</td>
+		<td><input size="40" name="email"></td>
+	</tr>
+[% END %]
+	<tr>
+		<td>Subject:</td>
+		<td><input size="79" name="subject"></td>
+	</tr>
+	<tr>
+		<td valign="top">Message:</td>
+		<td><textarea rows="10" cols="90" name="body"></textarea></td>
+	</tr>
+[% IF ! logged_in %]
+	<tr>
+		<td><b>CAPTCHA Code:</b><br>(Type the code in the picture to<br>the right to verify you're not<br>a robot)</td>		
+		<td><img src="[% base %]/player/captcha"><br>
+		    <input type="text" name="captcha" style="width: 300px">
+		</td>
+	</tr>
+[% END %]	
+	<tr>
+		<td></td>
+		<td><input type="submit" value="Submit" name="submit"></td>
+	</tr>
+</table>
+</form>
+
+<p>If you have trouble with this form, you can email us directly at: support AT kingdoms-game DOT com.</p>
+
+[% INCLUDE bottom.html %] 

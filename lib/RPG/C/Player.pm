@@ -630,4 +630,70 @@ sub reward_callback : Local : Args(1) {
     }    
 }
 
+sub submit_bug : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('submit_email', ['submit_bug']);   
+}
+
+sub contact : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('submit_email', ['contact_us']);   
+}
+
+sub submit_email : Private {
+    my ($self, $c, $type) = @_;   
+    
+   my $logged_in = $c->session->{player} ? 1 : 0;
+    
+    if ($c->req->param('submit') && $c->req->param('subject')) {
+        my $email;
+        if (! $logged_in) {
+            $email = $c->req->param('email');
+            
+            if (! $c->validate_captcha( $c->req->param('captcha') )) {
+            	$c->detach( 'RPG::V::TT', [ 
+            		{ 
+            			template => "player/$type.html",
+            			fill_in_form => 1,
+            			params => {
+            			    logged_in => $logged_in,
+            			    error => "CAPTCHA code is incorrect!",
+            			}
+            		},
+            	] );                
+            }
+        }
+        else {
+            $email = $c->session->{player}->email;
+        }        
+        
+    	my $msg = MIME::Lite->new(
+    		From    => $c->config->{send_email_from},
+    		To      => $c->config->{send_email_from},
+    		'Reply-To' => $email,
+    		Subject => "[Kingdoms] ($type): " . $c->req->param('subject'),
+    		Data    => $c->req->param('body'),
+    	);
+    	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );        
+    	
+    	$c->forward( 'RPG::V::TT', [ 
+    		{ 
+    			template => "player/${type}_thanks.html",
+    		} 
+    	] );    	
+    }
+    else {          
+    	$c->forward( 'RPG::V::TT', [ 
+    		{ 
+    			template => "player/$type.html",
+    			params => {
+    			    logged_in => $logged_in,
+    			}
+    		},
+    	] ); 
+    }       
+}
+
 1;

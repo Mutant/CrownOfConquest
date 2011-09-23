@@ -933,6 +933,10 @@ sub claim_land : Local {
 
 sub online : Private {
 	my ( $self, $c ) = @_;
+	
+	# Make sure logged in party is included in online parties
+    $c->stash->{party}->last_action( DateTime->now() );
+    $c->stash->{party}->update;		
 		
     # Get parties online
     my @parties_online = $c->model('DBIC::Party')->search(

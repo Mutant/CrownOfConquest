@@ -176,6 +176,7 @@ sub test_raid_party_ip_address_common_with_mayor : Tests(1) {
     $self->{stash}{party} = $party1;
     $self->{stash}{party_location} = $party1->location;
     $self->{params}{town_id} = $town->id;
+    $self->{config}{check_for_coop} = 1;
     
     $self->{mock_forward}{'/panel/refresh'} = sub {};
     
@@ -242,6 +243,7 @@ sub test_raid_party_ip_address_common_with_previous_mayor : Tests(1) {
     $self->{stash}{party} = $party1;
     $self->{stash}{party_location} = $party1->location;
     $self->{params}{town_id} = $town->id;
+    $self->{config}{check_for_coop} = 1;
     
     $self->{mock_forward}{'/panel/refresh'} = sub {};
     

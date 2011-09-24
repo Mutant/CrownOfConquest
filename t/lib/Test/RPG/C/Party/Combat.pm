@@ -126,6 +126,7 @@ sub test_attack_when_parties_are_multi : Tests(1) {
     );    
     
     $self->{config}{ip_coop_window} = 10;
+    $self->{config}{check_for_coop} = 1;
     
     $self->{stash}{party} = $party1;
     $self->{params}{party_id} = $party2->id;

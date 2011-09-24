@@ -50,6 +50,7 @@ sub test_has_ips_in_common_with_common_ips : Tests(1) {
     );      
     
     $self->{config}{ip_coop_window} = 10;
+    $self->{config}{check_for_coop} = 1;
     
     # WHEN
     my $res = $player1->has_ips_in_common_with($player2);
@@ -101,6 +102,7 @@ sub test_has_ips_in_common_with_no_common_ips_in_window : Tests(1) {
     );    
     
     $self->{config}{ip_coop_window} = 10;
+    $self->{config}{check_for_coop} = 1;
     
     # WHEN
     my $res = $player1->has_ips_in_common_with($player2);

@@ -313,6 +313,8 @@ sub test_check_for_coop : Tests(6) {
     
     my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
     
+    $self->{config}{check_for_coop} = 1;
+    
     # WHEN
     $action->check_for_coop($kingdom, $king);
     
@@ -331,7 +333,7 @@ sub test_check_for_coop : Tests(6) {
     
 }
 
-sub force_co_op_change_of_allegiance : Tests(15) {
+sub test_force_co_op_change_of_allegiance : Tests(15) {
     my $self = shift;
     
     # GIVEN
@@ -370,6 +372,7 @@ sub force_co_op_change_of_allegiance : Tests(15) {
         );
     }
     $self->{config}{kingdom_co_op_grace} = 7;
+    $self->{config}{check_for_coop} = 1;
     
     my $action = RPG::NewDay::Action::Kingdom->new( context => $self->{mock_context} );
     
@@ -379,7 +382,7 @@ sub force_co_op_change_of_allegiance : Tests(15) {
     # THEN
     $party2->discard_changes;
     is($party2->kingdom_id, undef, "Party 2's allegiance changed");
-    is($party2->messages->count, 2, "1 message left for party 2");
+    is($party2->messages->count, 2, "Messages left for party 2");
     is($party2->warned_for_kingdom_co_op, undef, "Party 2 no longer warned for kingdom co op");
 
     $party3->discard_changes;

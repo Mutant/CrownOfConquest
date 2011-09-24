@@ -132,6 +132,8 @@ sub test_party_flee : Tests(5) {
     $land->set_always( 'id', 999 );
     $land->set_isa('RPG::Schema::Land');
     $land->set_always( 'movement_cost', 1 );
+    $land->set_always( 'x', 1 );
+    $land->set_always( 'y', 1 );    
 
     $battle = Test::MockObject::Extends->new($battle);
     $battle->set_always( 'get_sector_to_flee_to', $land );
@@ -186,6 +188,8 @@ sub test_offline_party_flee : Tests(6) {
     $land->set_always( 'id', 999 );
     $land->set_isa('RPG::Schema::Land');
     $land->set_always( 'movement_cost', 1 );
+    $land->set_always( 'x', 1 );
+    $land->set_always( 'y', 1 );
 
     $battle = Test::MockObject::Extends->new($battle);
     $battle->set_always( 'get_sector_to_flee_to', $land );

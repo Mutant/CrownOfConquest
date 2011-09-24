@@ -46,7 +46,7 @@ sub build_party {
             kingdom_id              => $params{kingdom_id} || undef,
             turns_used              => $params{turns_used} // 0,
             created                 => $params{created} // DateTime->now(),
-            name => 'test',
+            name                    => $params{name } // 'test',
             last_action => $params{last_action} || DateTime->now(),
             warned_for_kingdom_co_op => $params{warned_for_kingdom_co_op} || undef,
 

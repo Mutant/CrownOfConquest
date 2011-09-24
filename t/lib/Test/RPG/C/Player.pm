@@ -93,6 +93,93 @@ sub test_reactivate_reform_party : Tests(4) {
     isnt( $party2->defunct, undef, "Other party still defunct" );
 }
 
+sub test_reactivate_reform_party_dupe_name : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( {} );
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, player_id => $player->id, name => 'foo' );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, name => 'foo' );
+    $self->{config}->{max_number_of_players} = 2;
+
+    $party1->defunct( DateTime->now() );
+    $party1->update;
+
+    $self->{params}{reform_party} = 1;
+    $self->{session}{player}      = $player;
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+
+    # WHEN
+    RPG::C::Player->reactivate( $self->{c} );
+
+    # THEN
+    $party1->discard_changes;
+    isnt( $party1->defunct, undef, "Party1 still defunt" );
+    
+    is( $template_args->[0][0]{template}, 'player/reactivate_dupe_name.html', "Forward to correct template" );
+
+}
+
+sub test_reactivate_reform_party_dupe_name_even_when_changed : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( {} );
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, player_id => $player->id, name => 'foo' );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, name => 'foo' );
+    my $party3 = Test::RPG::Builder::Party->build_party( $self->{schema}, name => 'bar' );
+    $self->{config}->{max_number_of_players} = 2;
+
+    $party1->defunct( DateTime->now() );
+    $party1->update;
+
+    $self->{params}{reform_party} = 1;
+    $self->{params}{new_name} = 'bar';
+    $self->{session}{player}      = $player;
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+
+    # WHEN
+    RPG::C::Player->reactivate( $self->{c} );
+
+    # THEN
+    $party1->discard_changes;
+    isnt( $party1->defunct, undef, "Party1 still defunt" );
+    
+    is( $template_args->[0][0]{template}, 'player/reactivate_dupe_name.html', "Forward to correct template" );
+}
+
+sub test_reactivate_reform_party_dupe_name_name_changed : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( {} );
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, player_id => $player->id, name => 'foo' );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, name => 'foo' );
+    $self->{config}->{max_number_of_players} = 2;
+
+    $party1->defunct( DateTime->now() );
+    $party1->update;
+
+    $self->{params}{reform_party} = 1;
+    $self->{params}{new_name} = 'bar';
+    $self->{session}{player}      = $player;
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+
+    # WHEN
+    RPG::C::Player->reactivate( $self->{c} );
+
+    # THEN
+    $party1->discard_changes;
+    is( $party1->defunct, undef, "Party1 no longer defunt" );
+    is( $party1->name, 'bar', "Party1 name changed" );
+}
+
 sub test_register_game_full : Tests(1) {
     my $self = shift;
 

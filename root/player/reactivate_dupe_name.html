@@ -1,0 +1,12 @@
+[% INCLUDE top.html %]
+
+<h1>Duplicate Party Name!</h1>
+
+<p>Since you've been away, another party has formed using the name [% party_name %]. Please choose a new name:</p>
+
+<form type="POST" action="[% base %]player/reactivate">
+<input type="hidden" name="reform_party" value="1">
+New Name: <input type="text" size="50" name="new_name" value="[% party_name %]"> <input type="submit" value="Change">
+</form>
+
+[% INCLUDE bottom.html %]

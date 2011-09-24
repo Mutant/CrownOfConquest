@@ -388,6 +388,31 @@ sub reactivate : Local {
         	);
 		}
 		else {
+		    my $name_to_check = $c->req->param('new_name') || $party->name;
+		    
+		    # Make sure party to be reformed doesn't have a dupe name
+		    my $dupe_party_count = $c->model('DBIC::Party')->search(
+                {
+                    party_id => {'!=', $party->id },
+                    name => $name_to_check,
+                    defunct => undef,
+                }
+            )->count;
+                        
+            if ($dupe_party_count > 0) {
+                $c->forward( 'RPG::V::TT', [ 
+                    { 
+                        template => 'player/reactivate_dupe_name.html',
+                        params => {
+                            party_name => $party->name,
+                            ($c->req->param('new_name') ? (error => "The new name you've chosen is also taken") : ()),
+                        } 
+                    } 
+                ] );
+                return;
+            }
+		    
+		    $party->name($name_to_check);
         	$party->defunct(undef);
         	$party->update;
 		}

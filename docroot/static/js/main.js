@@ -359,7 +359,8 @@ function panelLoadCallback(responseObject, ioArgs) {
 }
 
 function panelErrorCallback(err) {
-	errorMsg = "An error occurred processing the action. Please <a href=\"" + urlBase + "\">try again</a> or report a bug.";
+	errorMsg = "An error occurred processing the action. Please <a href=\"" + urlBase + "\">try again</a> or " + 
+		"<a href=\"" + urlBase + "player/submit_bug\" target=\"_blank\">report a bug</a>.";
 	dijit.byId('messages-pane').setContent(errorMsg);
 	closeScreen();
 }

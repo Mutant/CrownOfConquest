@@ -763,6 +763,17 @@ function acceptQuest(quest_id) {
 /* Combat */
 
 function postRoundCallback() {
-	getPanels('combat/refresh_combatants');
+	dojo.xhrGet( {
+        url: urlBase + 'combat/refresh_combatants',
+        handleAs: "json",        
+        load: function(responseObject, args) {
+        	dijit.byId('party-pane').setContent(responseObject.refresh_panels.party);
+        	dijit.byId('creatures-pane').setContent(responseObject.refresh_panels.creatures);
+        	createMenus();
+        },
+        error: panelErrorCallback,
+	    timeout: 45000,
+	    preventCache: true	    
+    });
 }
 	

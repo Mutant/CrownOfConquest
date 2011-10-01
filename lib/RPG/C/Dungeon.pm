@@ -120,8 +120,10 @@ sub build_viewable_sector_grids : Private {
         
         # Find category of first creatures
         my $cret = ($cg->creatures)[0];
-        my $category = $cret->type->category;
-        $cg->{group_img} = $category->dungeon_group_img;
+        if ($cret) {
+            my $category = $cret->type->category;
+            $cg->{group_img} = $category->dungeon_group_img;
+        }
         
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
     }

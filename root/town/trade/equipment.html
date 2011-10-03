@@ -25,7 +25,8 @@ Filter by Item Category:<br>
 Click on an item to sell:
 <br>
 [% FOREACH item IN equipment %]
-	<span id="item-tooltip-[% item.id %]" onClick="tradeConfirmation(this)" style="float: left; height: 140px">
+	[%# Tab index on the span needed so that the dialog will display... bug in dojo 1.6.x ~%]
+	<span id="item-tooltip-[% item.id %]" onClick="tradeConfirmation(this)" tabindex="1" style="float: left;">
 		[% IF item.item_type.image %]
 			<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
 		[% ELSE %]

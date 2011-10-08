@@ -1,0 +1,25 @@
+[% max_width = 12 %]
+[% max_height = 8 %]
+
+[% width =max_width %]
+[% height = max_height %]
+
+<div id="shop_grid" style="position: relative">
+
+[% counter = 0 %]
+
+[% WHILE height > 0 %]
+	[% height = height - 1 %]
+	[% WHILE width > 0 %]
+		[% width = width - 1 %]
+		[% item = items.$counter %]
+		
+		<div style="float: left; border: 1px solid white; height: 40px; width: 40px; text-align: center">
+			[% IF item %]<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">[% END %]		
+		</div>
+		
+		[% counter = counter + 1 %]
+	[% END %]
+	<br style="clear: left"/>
+	[% width = max_width %]
+[% END %]

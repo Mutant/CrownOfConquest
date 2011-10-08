@@ -1,14 +1,14 @@
 [% PROCESS layout/diag_buttons.html %]
 
-
 <script type="text/javascript">
 
 function tradeConfirmation(itemSpan) {
+
 	item_id = (itemSpan.id.split('-'))[2];
 
 	dojo.byId('trade-item-id').value = item_id;
 	
-	dijit.byId('confirm-trade').show();	
+	dijit.byId('confirm-trade').show();
 }	
 
 function filterItems() {
@@ -40,6 +40,15 @@ function purchaseConfirmation(tradeId, item, amount) {
 
 </script>
 
+<div dojoType="dijit.Dialog" id="trade-confirm-purchase" style="display: none" title="Confirm Purchase">
+	<form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
+	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
+        
+    [% dialog_buttons('trade-confirm-purchase') %]
+	</form>
+</div>
+
 <div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
 	<form method="POST" action="[% base %]/town/trade/create" onSubmit="postPanels(this); return false">
 	<input id="trade-item-id" name="trade_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
@@ -69,15 +78,6 @@ function purchaseConfirmation(tradeId, item, amount) {
 	</table>
         
     [% dialog_buttons('confirm-trade') %]
-	</form>
-</div>
-
-<div dojoType="dijit.Dialog" id="trade-confirm-purchase" style="display: none" title="Confirm Purchase">
-	<form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
-	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
-        
-    [% dialog_buttons('trade-confirm-purchase') %]
 	</form>
 </div>
 

@@ -40,7 +40,7 @@ sub purchase : Local {
 		'RPG::V::TT',
 		[
 			{
-				template => 'shop/purchase.html',
+				template => 'shop/purchase2.html',
 				params   => {
 					shop          => $shop,
 					characters    => \@characters,
@@ -72,13 +72,13 @@ sub standard_tab : Local {
 	my %items;
 
 	# Put everything into a hash by category
-	foreach my $item (@items) {
-		push @{ $items{ $item->item_type->category->item_category }{item} }, $item;
-	}
+	#foreach my $item (@items) {
+	#	push @{ $items{ $item->item_type->category->item_category }{item} }, $item;
+	#}
 
-	foreach my $item_type (@item_types_made) {
-		push @{ $items{ $item_type->category->item_category }{quantity} }, $item_type;
-	}
+	#foreach my $item_type (@item_types_made) {
+	#	push @{ $items{ $item_type->category->item_category }{quantity} }, $item_type;
+	#}
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -87,7 +87,8 @@ sub standard_tab : Local {
 				template => 'shop/standard_items.html',
 				params   => {
 					shop  => $shop,
-					items => \%items,
+					#items => \%items,
+					items => \@items,
 				}
 			}
 		]

@@ -43,7 +43,7 @@ Your prestige here:
 <br>
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
-<div style="float: left; width: 25%">
+<div style="float: left;">
 <b>Shops & Services</b>
 <ul>
 <li><a href="javascript:getPanels('town/shop_list')">Equipment Shops</a></li>
@@ -55,7 +55,7 @@ Your prestige here:
 </ul>
 </div>
 
-<div style="float: left; width: 25%">
+<div style="float: left;">
 <b>Town Hall</b>
 <ul>
 <li><a href="javascript:getPanels('town/quests')">Quests</a></li>
@@ -71,6 +71,6 @@ Your prestige here:
 
 [% IF sewer %]<a href="javascript:getPanels('town/enter_sewer')">Enter The Town Sewer</a><br><br>[% END %]
 
-[% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
-
 <a href="javascript:getPanels('town/leave')">Leave Town</a>
+
+[% IF parties_in_sector %]<br><br>[% parties_in_sector %][% END %]

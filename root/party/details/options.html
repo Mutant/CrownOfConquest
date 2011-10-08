@@ -44,5 +44,37 @@
 
 <h3>Account Options</h3>
 
+Select your screen sizes. It's usually safe to leave it on 'auto' - it will be detected each time you log in to Kingdoms. 
+
+<form method="POST" action="[% base %]/player/update_screen_sizes" onSubmit="setBrowserSize(); postPanels(this); return false">
+<input type="hidden" id="login-width"  name="width"/>
+<input type="hidden" id="login-height" name="height"/>
+<table class="main">
+	<tr>
+		<td>Screen Height:</td>
+		<td>
+			<select name="screen_height">
+			<option value="auto">Auto</option>
+			<option value="small">Small</option>
+			<option value="medium">Medium</option>
+			<option value="large">Large</option>
+		</td>
+	</tr>
+	<tr>
+		<td>Screen Width:</td>
+		<td>
+			<select name="screen_width">
+			<option value="auto">Auto</option>
+			<option value="small">Small</option>
+			<option value="medium">Medium</option>
+			<option value="large">Large</option>
+		</td>
+	</tr>	
+</table>
+<input type="submit" value="Save Settings">
+</form>
+
+<br><br>
+
 <button dojoType="dijit.form.Button" onclick="getPanels('player/account/change_password')">Change Password</button>
 <button dojoType="dijit.form.Button" onclick="loadScreen('player/account/delete_account')">Delete Account</button>

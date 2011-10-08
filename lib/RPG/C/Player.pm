@@ -16,6 +16,8 @@ use MIME::Lite;
 use Data::Dumper;
 use HTML::Strip;
 
+use feature 'switch';
+
 sub login : Local {
     my ( $self, $c ) = @_;
 
@@ -43,11 +45,15 @@ sub login : Local {
                         ip => $c->req->address,
                         login_date => DateTime->now(),
                         player_id => $user->id,
+                        screen_width => $c->req->param('width'),
+                        screen_height => $c->req->param('height'),
                     }
                 );
                                 
                 # Various post login checks
                 $c->forward('post_login_checks');
+                
+                $c->forward('set_screen_size');
                 
                 my $url_to_redirect_to = $c->session->{login_url} || '';
                 undef $c->session->{login_url};
@@ -138,6 +144,65 @@ sub post_login_checks : Private {
     	
     	$c->flash->{tip} = $tip if $tip;
     }
+ 
+}
+
+sub set_screen_size : Private {
+    my ( $self, $c ) = @_;    
+    
+    my $player = $c->session->{player};
+    
+    # Set screen size in session
+    $c->session->{screen_width} = $player->screen_width;
+    if ($player->screen_width eq 'auto') {
+        given ($c->req->param('width')) {
+            when ($_ >= 1200) {
+                $c->session->{screen_width} = 'large';
+            }
+            when ($_ >= 1100) {
+                $c->session->{screen_width} = 'medium';
+            }
+            default {                
+                $c->session->{screen_width} = 'small';
+            }
+        }    
+    }
+    
+    $c->session->{screen_height} = $player->screen_height;
+    if ($player->screen_height eq 'auto') {
+        given ($c->req->param('height')) {
+            when ($_ >= 750) {
+                $c->session->{screen_height} = 'large';
+            }
+            when ($_ >= 650) {
+                $c->session->{screen_height} = 'medium';
+            }
+            default {                
+                $c->session->{screen_height} = 'small';
+            }
+        }    
+    }    
+    
+    $c->log->info("Screen height: " . $c->session->{screen_height} . "; Screen width: " . $c->session->{screen_width});
+}
+
+sub update_screen_sizes : Local {
+    my ( $self, $c ) = @_;    
+    
+    my $player = $c->model('DBIC::Player')->find($c->session->{player}->id);
+    
+    $player->screen_width($c->req->param('screen_width'));
+    $player->screen_height($c->req->param('screen_height'));
+    $player->update;
+    
+    $c->session->{player} = $player;
+    
+    $c->forward('set_screen_size');
+    
+    $c->stash->{panel_messages} = 'Changes Saved';
+
+    $c->forward('/party/details/options');    
+    
 }
 
 sub logout : Local {
@@ -498,6 +563,18 @@ sub verify : Local {
                 $player->warned_for_deletion(0);
                 $player->update;
                 $c->session->{player} = $player;
+                
+                $c->model('DBIC::Player_Login')->create(
+                    {
+                        ip => $c->req->address,
+                        login_date => DateTime->now(),
+                        player_id => $player->id,
+                        screen_width => $c->req->param('width'),
+                        screen_height => $c->req->param('height'),
+                    }
+                );   
+                
+                $c->forward('set_screen_size');             
 
                 $c->res->redirect( $c->config->{url_root} );
 

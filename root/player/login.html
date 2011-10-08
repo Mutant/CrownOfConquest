@@ -17,7 +17,7 @@ dojo.addOnLoad( displayIEDiag );
 
 function displaySizeWarning() {
 	var vs = dojo.window.getBox();
-	if (vs.w < 1200 || vs.h < 700) {
+	if (vs.w < 1024 || vs.h < 570) {
 		var warning = dojo.cookie('sizeWarning');
 		
 		if (! warning) {
@@ -74,7 +74,7 @@ function closeShotScreen() {
     <br><br>
     Please use a large browser window or higher desktop resolution if possible.
     <br><br>
-    For best results, the viewing window of the browser should be at least 1200 pixels wide, by 700 high.
+    For best results, the viewing window of the browser should be at least 1024 pixels wide, by 570 high.
 	<br><br>
 	<div align="center">
     	<button dojoType=dijit.form.Button type="submit">OK</button>
@@ -85,7 +85,9 @@ function closeShotScreen() {
 
 <div style="float: right;">
 	<div class="login-box">
-		<form method="POST" action="[% base %]/player/login">
+		<form method="POST" action="[% base %]/player/login" onSubmit="setBrowserSize(); return true;">
+		<input type="hidden" id="login-width"  name="width"/>
+		<input type="hidden" id="login-height" name="height"/>
 		<table>
 			<tr><td colspan=2><h2>Login To Kingdoms</h2></td></tr>
 			<tr>
@@ -130,8 +132,6 @@ function closeShotScreen() {
 
 </div>
 
-<div style="height: 450px">
-
 <h1>Welcome to Kingdoms</h1>
 
 <p>Kingdoms is an online "persistent world" role-playing game like no other.</p>
@@ -157,9 +157,6 @@ explore dungeons, fight all manner of foul creatures, conquer cities, construct 
 	<li>For the ultimate in power, form your own Kingdom, and play politics against the other kings and queens of the realm</li> 
 	<li>Much more - you'll have to play the game to discover everything!</li>
 </ul>
-
-</div>
-
 
 <div id="screeshot-view" style="position: fixed; left: 50%; top: 50%; margin-left: -400px; margin-top: -250px; min-width: 800px; height: 550px; visibility: hidden; 
 	border: 2px solid #4d4d4d; background: black; -moz-border-radius: 10px; -webkit-border-radius: 10px; -khtml-border-radius: 10px; border-radius: 10px;">

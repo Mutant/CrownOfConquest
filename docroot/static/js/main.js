@@ -468,6 +468,7 @@ function setMessagePanelSize(size) {
 		}).play();
 	
 		dojo.byId('messages-pane').style.width = "80%";
+		dojo.byId('messages-pane').style.height = "70%";
 	
 		dojo.byId('messages-pane').style.opacity = "0.9";
 		dojo.byId('messages-pane').style.overflow = 'auto';
@@ -481,6 +482,7 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.left = '20px';
 		dojo.byId('messages-pane').style.opacity = "0.8";
 		dojo.byId('messages-pane').style.width = "auto";
+		dojo.byId('messages-pane').style.height = "auto";
 		current_size = 'small';		
 	}
 	
@@ -610,9 +612,17 @@ function unselectImage(name){
     document[name].src = images[name + "-unsel"].src;
     return true;
 }
+
 function selectImage(name){
     document[name].src = images[name + "-sel"].src;
     return true;
+}
+
+function setBrowserSize() {
+	var vs = dojo.window.getBox();
+	
+	dojo.byId('login-height').value = vs.h;
+	dojo.byId('login-width').value = vs.w;
 }
 
 /* Character */

@@ -239,8 +239,7 @@ function unblockDoor(action) {
 	</div>
 </div>
 
-
-<div style="position: relative">
+<div style="position: relative; width: 100%">
 [% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
 </div>
 
@@ -273,7 +272,7 @@ function unblockDoor(action) {
 	
 	</div>
 
-	<div id="main-middle-section" style="height: 600px; min-height: 600px; text-align: center;">
+	<div id="main-middle-section" style="min-height: 440px; text-align: center;">
 	
 		<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
 			<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
@@ -291,7 +290,8 @@ function unblockDoor(action) {
 		</div>		
 	
 		<div dojoType="dojox.layout.ContentPane" id="party-pane" 
-			style="width: 300px; height: 100%; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top" class="content-background"></div>	
+			style="width: 290px; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top; overflow: visible" 
+			class="content-background"></div>	
 		
 	</div>
 </div>

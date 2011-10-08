@@ -161,8 +161,14 @@ check_for_coop: 1
 # ----- Party Params ----- #
 
 # Size of map to display
-map_x_size: 21
-map_y_size: 15
+map_height:
+  small: 11
+  medium: 13
+  large: 15
+map_width:
+  small: 17
+  medium: 19
+  large: 21
 
 # Area party can "view" (i.e. how far they can see on main map)
 party_viewing_range: 3
@@ -636,7 +642,7 @@ kingdom_co_op_grace: 7
 capital_move_cost_per_sector: 6
 
 # Chance sectors not connected to capital go neutral
-chance_unconnected_sector_becomes_neutral: 15
+chance_unconnected_sector_becomes_neutral: 20
 
 # ----- Debug ----- #
 

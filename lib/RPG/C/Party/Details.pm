@@ -199,6 +199,8 @@ sub options : Local {
                 	display_tip_of_the_day => $c->stash->{party}->player->display_tip_of_the_day,
                 	display_announcements => $c->stash->{party}->player->display_announcements,
                 	send_email => $c->stash->{party}->player->send_email,
+                	screen_width => $c->session->{player}->screen_width,
+                	screen_height => $c->session->{player}->screen_height,
                 },
                 fill_in_form => 1,                
             }
@@ -211,7 +213,6 @@ sub update_options : Local {
 
     $c->stash->{party}->flee_threshold( $c->req->param('flee_threshold') );
     $c->stash->{party}->update;
-    $c->stash->{panel} = 'Changes Saved';
     $c->stash->{panel_messages} = 'Changes Saved';
 
     $c->forward('options');

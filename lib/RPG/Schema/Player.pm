@@ -180,6 +180,24 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 1,
         'size'              => '11'
     },      
+    'screen_height' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'screen_height',
+        'is_nullable'       => 1,
+        'size'              => '255'
+    },
+    'screen_width' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'screen_width',
+        'is_nullable'       => 1,
+        'size'              => '255'
+    },    
     
 );
 __PACKAGE__->set_primary_key('player_id');

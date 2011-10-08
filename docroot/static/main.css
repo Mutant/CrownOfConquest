@@ -90,7 +90,7 @@ br {
 #content-outer {
 	height: auto;
 	min-height: 250px;
-	width: 1156px;
+	width: 100%;
 	margin: auto;
 }
 
@@ -335,8 +335,7 @@ div.enlargedTitle {
 }
 
 .kingdomsTabContainer {
-	height:500px;
-	width: 1050px;
+	height:400px;
 	margin: auto;
 }
 

@@ -91,6 +91,7 @@ br {
 	height: auto;
 	min-height: 250px;
 	width: 100%;
+	max-width: 1250px;
 	margin: auto;
 }
 

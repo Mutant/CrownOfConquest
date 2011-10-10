@@ -256,7 +256,7 @@ sub check_for_revolt {
 	elsif ($town->peasant_tax >= 35) {
 		$start_revolt = 1;	
 	}
-	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
+	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0 && ! $town->capital_of) {
 		my $rating = $town->kingdom_loyalty + 80;
 	
 		my $roll = Games::Dice::Advanced->roll('1d100');

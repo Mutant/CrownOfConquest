@@ -340,6 +340,11 @@ div.enlargedTitle {
 	margin: auto;
 }
 
+.smallTabContainer {
+	height: 390px;
+	min-height: 390px;
+}
+
 .tundra .dijitContentPaneLoading {
 	background:url(images/layout/loader.gif) no-repeat left center;
 	min-height: 24px;

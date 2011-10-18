@@ -240,13 +240,6 @@ sub garrisons : Local {
 	
 	my @garrisons = $c->stash->{party}->garrisons;
 	
-	my @old_garrisons = $c->model('DBIC::Garrison')->search(
-	   {
-	       party_id => $c->stash->{party}->id,
-	       land_id => undef,
-	   }
-    );
-	
     $c->forward(
         '/panel/refresh_with_template',
         [
@@ -254,11 +247,35 @@ sub garrisons : Local {
                 template => 'party/details/garrisons.html',
                 params   => {
                     garrisons => \@garrisons,
-                    old_garrisons => \@old_garrisons,
                 },
             }
         ]
     );	
+}
+
+sub garrisons_historical : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{message_panel_size} = 'large';
+	
+	my @old_garrisons = $c->model('DBIC::Garrison')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       land_id => undef,
+	   }
+    );
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/garrisons_historical.html',
+                params   => {
+                    old_garrisons => \@old_garrisons,
+                },
+            }
+        ]
+    );	    
 }
 
 sub mayors : Local {
@@ -274,15 +291,7 @@ sub mayors : Local {
 		{
 			prefetch => 'mayor_of_town',
 		}
-	);	
-	
-	my @old_mayors = $c->model('DBIC::Party_Mayor_History')->search(
-	   {
-	       party_id => $c->stash->{party}->id,
-	       lost_mayoralty_day => {'!=', undef},
-	   }
-    );
-	   
+	);
 	
     $c->forward(
         '/panel/refresh_with_template',
@@ -291,11 +300,33 @@ sub mayors : Local {
                 template => 'party/details/mayors.html',
                 params   => {
                     mayors => \@mayors,
-                    old_mayors => \@old_mayors,
                 },
             }
         ]
     );	
+}
+
+sub mayors_historical : Local {
+	my ($self, $c) = @_;    
+	
+	my @old_mayors = $c->model('DBIC::Party_Mayor_History')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       lost_mayoralty_day => {'!=', undef},
+	   }
+    );	
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/mayors_historical.html',
+                params   => {
+                    old_mayors => \@old_mayors,
+                },
+            }
+        ]
+    );	    
 }
 
 sub old_mayor_combat_log : Local {

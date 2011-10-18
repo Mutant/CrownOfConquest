@@ -18,11 +18,13 @@ use feature 'switch';
 sub run {
     my $self = shift;
 
-    $self->check_for_dungeon_deletion();
-
-    $self->reconfigure_doors();
-
     my $c = $self->context;
+    
+    my @dungeons = $c->schema->resultset('Dungeon')->search( { type => 'dungeon' }, { prefetch => 'location', }, );
+
+    $self->check_for_dungeon_deletion(@dungeons);
+
+    $self->reconfigure_doors(@dungeons);
 
     my $dungeons_rs = $c->schema->resultset('Dungeon')->search(
     	{
@@ -139,10 +141,9 @@ sub _find_sector_to_create {
 
 sub check_for_dungeon_deletion {
     my $self = shift;
+    my @dungeons = @_;
 
     my $c = $self->context;
-
-    my @dungeons = $c->schema->resultset('Dungeon')->search( { type => 'dungeon' }, { prefetch => 'location', }, );
 
     foreach my $dungeon (@dungeons) {
         if ( Games::Dice::Advanced->roll('1d100') <= 1 ) {
@@ -179,38 +180,60 @@ sub check_for_dungeon_deletion {
 
 sub reconfigure_doors {
     my $self = shift;
+    my @dungeons = @_;
 
-    my $c = $self->context;
+    my $c = $self->context;    
 
-    my @doors = $c->schema->resultset('Door')->search( {} );
+    foreach my $dungeon (@dungeons) {
+        my $parties_in_dungeon = $c->schema->resultset('Party')->search( 
+            { 
+                'dungeon.dungeon_id' => $dungeon->id, 
+            }, 
+            { 
+                join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' } }, 
+            }, 
+        )->count;
+        
+        # Don't reconfigure doors if there are parties in the dungeon
+        next if $parties_in_dungeon > 0;        
 
-    my $processed_doors;
-
-    foreach my $door (@doors) {
-        unless ( $processed_doors->[ $door->id ] ) {
-        	next unless $door->dungeon_grid->dungeon_room;
-        	        	
-            my $opp_door = $door->opposite_door;
-
-            my $door_type;
-            if ( Games::Dice::Advanced->roll('1d100') <= 15 ) {
-                $door_type = ( shuffle($self->alternative_door_types) )[0];
+        my @doors = $c->schema->resultset('Door')->search(
+            { 
+                'dungeon.dungeon_id' => $dungeon->id, 
+            }, 
+            { 
+                join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' } }, 
+            }, 
+        );
+    
+        my $processed_doors;
+    
+        foreach my $door (@doors) {
+            unless ( $processed_doors->[ $door->id ] ) {
+            	next unless $door->dungeon_grid->dungeon_room;
+            	        	
+                my $opp_door = $door->opposite_door;
+    
+                my $door_type;
+                if ( Games::Dice::Advanced->roll('1d100') <= 10 ) {
+                    $door_type = ( shuffle($self->alternative_door_types) )[0];
+                }
+                else {
+                    $door_type = 'standard';
+                }
+                $door->type($door_type);
+                $door->update;
+    
+                if ($opp_door) {
+                    $opp_door->type($door_type);
+                    $opp_door->update;
+                }
+    
+                $processed_doors->[ $door->id ] = 1;
+                $processed_doors->[ $opp_door->id ] = 1 if $opp_door;
             }
-            else {
-                $door_type = 'standard';
-            }
-            $door->type($door_type);
-            $door->update;
-
-            if ($opp_door) {
-                $opp_door->type($door_type);
-                $opp_door->update;
-            }
-
-            $processed_doors->[ $door->id ] = 1;
-            $processed_doors->[ $opp_door->id ] = 1 if $opp_door;
+    
         }
-
     }
 }
 

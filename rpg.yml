@@ -127,7 +127,7 @@ max_number_of_players: 300
 minimum_password_length: 4
 
 # Number of turns a new party starts with
-starting_turns: 400
+starting_turns: 750
 
 # Number of days to give the watcher effect for new parties
 new_party_watcher_days: 20
@@ -174,7 +174,7 @@ map_width:
 party_viewing_range: 3
 
 # Number of turns a party gets each hour
-turns_per_hour: 12
+turns_per_hour: 25
 
 # Maximum number of turns a party is allowed to have
 maximum_turns: 750

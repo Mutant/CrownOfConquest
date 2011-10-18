@@ -46,29 +46,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% END %]
 
 [% IF creature_group %]
-	Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br>
-	[% IF factor_comparison %]
-	Your chances against this group:
-		[% IF factor_comparison < -35 %]
-			None whatsoever
-		[% ELSIF factor_comparison < -25 %]
-			Extremely slim
-		[% ELSIF factor_comparison < -15 %]
-	 		It's going to be tough
-		[% ELSIF factor_comparison < -5 %]
-			You've got a shot
-		[% ELSIF factor_comparison < 5 %]
-			It's pretty even
-		[% ELSIF factor_comparison < 15 %]
-			Not too bad
-		[% ELSIF factor_comparison < 25 %]
-			Pretty good
-		[% ELSIF factor_comparison < 35 %]
-			Very good
-		[% ELSE %]
-		    They'll barely touch you
-		[% END %]
-	[% END %]
+	Creatures here: [% INCLUDE combat/creature_group_summary.html %]
 	<br><br>
 [% END %]
 

@@ -742,6 +742,8 @@ sub sector_menu : Local {
         push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
         undef $c->session->{temp_dungeon_messages};
     }
+    
+    my ($factor_comparison, $confirm_attack) = $c->forward('/party/get_watcher_factor_comparison', [$creature_group]);    
 
     return $c->forward(
         'RPG::V::TT',
@@ -756,6 +758,8 @@ sub sector_menu : Local {
                     parties_in_sector      => $parties_in_sector,
                     dungeon_type           => $current_location->dungeon_room->dungeon->type,
                     castle_move_type       => $c->session->{castle_move_type} || '',
+                    factor_comparison      => $factor_comparison,
+                    coonfirm_attack        => $confirm_attack,
                 },
                 return_output => 1,
             }

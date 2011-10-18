@@ -902,6 +902,8 @@ sub can_claim_land {
     my $self = shift;
     my $land = shift;
     
+    return 0 unless $self->kingdom_id;
+    
     return 0 unless $self->level >= RPG::Schema->config->{minimum_land_claim_level};
         
     return $land->can_be_claimed($self->kingdom_id);

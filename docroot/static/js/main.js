@@ -752,6 +752,15 @@ function miniMapInitCallback() {
     });
 }
 
+function setMinimapVisibilityCallback(data) {
+	if (data == 1) {
+		dojo.byId('mini_map-pane').style.display = 'block';
+	}
+	else { 
+		dojo.byId('mini_map-pane').style.display = 'none';
+	}
+}
+
 /* Quests */
 
 function acceptQuest(quest_id) {

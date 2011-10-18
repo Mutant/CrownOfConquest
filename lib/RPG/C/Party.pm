@@ -867,6 +867,11 @@ sub enter_dungeon : Local {
 
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };
 
 	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }

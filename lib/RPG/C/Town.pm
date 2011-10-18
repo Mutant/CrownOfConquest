@@ -603,7 +603,14 @@ sub raid : Local {
 	$party_town->increment_raids_today;
 	$party_town->update;
 	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };	
+	
 	$c->stash->{message_panel_size} = 'small';   
+	
+	
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
 }
@@ -630,6 +637,11 @@ sub enter_sewer : Local {
 	$c->stash->{party}->update;
 
 	$c->stash->{message_panel_size} = 'small';
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );	
 }

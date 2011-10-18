@@ -226,12 +226,10 @@ sub render_dungeon_grid : Private {
 
     my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
    
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'dungeonRefresh',
-        	data => $scroll_to,
-    	}
-    ];    
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'dungeonRefresh',
+        data => $scroll_to,
+    };    
     
     return $c->forward(
         'RPG::V::TT',
@@ -897,6 +895,11 @@ sub exit : Private {
     $c->stash->{party}->update;
     
     undef $c->session->{spotted};
+    
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 1,
+    };    
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }

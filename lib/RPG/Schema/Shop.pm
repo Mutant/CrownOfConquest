@@ -193,4 +193,26 @@ sub shop_name {
 	return $self->shop_owner_name . "'s " . $self->shop_suffix;	
 }
 
+sub items_in_grid {
+    my $self = shift;
+    
+    my @sectors = $self->result_source->schema->resultset('Item_Grid')->search(
+        {
+            owner_type => 'shop',
+            owner_id => $self->id,
+            start_sector => 1,
+        }
+    );
+    
+    my %grid;
+    
+    foreach my $sector (@sectors) {
+        next unless $sector->item_id;
+        $grid{$sector->x . ',' . $sector->y} = $sector->item;   
+    }
+    
+    return %grid;
+       
+}
+
 1;

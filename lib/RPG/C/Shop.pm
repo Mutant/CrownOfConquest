@@ -61,7 +61,9 @@ sub standard_tab : Local {
 
 	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;    
     
-	my @items = $shop->grouped_items_in_shop;
+	#my @items = $shop->grouped_items_in_shop;
+	
+	my %items_in_grid = $shop->items_in_grid;
 
 	# Get item_types 'made'
 	my @item_types_made = $shop->item_types_made;
@@ -87,8 +89,9 @@ sub standard_tab : Local {
 				template => 'shop/standard_items.html',
 				params   => {
 					shop  => $shop,
+					items_in_grid => \%items_in_grid,					
 					#items => \%items,
-					items => \@items,
+					#items => \@items,
 				}
 			}
 		]

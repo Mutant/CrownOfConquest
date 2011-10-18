@@ -1,25 +1,76 @@
 [% max_width = 12 %]
 [% max_height = 8 %]
 
-[% width =max_width %]
-[% height = max_height %]
+[% MACRO create_grid(class, id_prefix, height, width) BLOCK %]
+[% x = 0 %]
+[% y = 0 %]
+[% WHILE y < height %]
+	[% y = y + 1 %]
+	[% WHILE x < width %]
+		[% x = x + 1 %]
+		
+		<div class="[% class %]" id="[% id_prefix %]-[% x %]-[% y %]" style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center">		
+		</div>
+		
+	[% END %]
+	<br style="clear: left"/>
+	[% x = 0 %]
+[% END %]
+[% END %]
+
 
 <div id="shop_grid" style="position: relative">
 
 [% counter = 0 %]
 
-[% WHILE height > 0 %]
-	[% height = height - 1 %]
-	[% WHILE width > 0 %]
-		[% width = width - 1 %]
-		[% item = items.$counter %]
+<style>
+.ui-state-active { background: green }
+</style>
+<script>
+$( ".shop-item" ).draggable({revert: "invalid"});
+
+$( ".purchase-sector" ).droppable({
+	accept: ".shop-item",
+	drop: function( event, ui ) {
+		var targetParts = event.target.id.split('-');
 		
-		<div style="float: left; border: 1px solid white; height: 40px; width: 40px; text-align: center">
-			[% IF item %]<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">[% END %]		
-		</div>
+		var item = ui.draggable[0];
+		item = item.parentNode.removeChild(item);
 		
-		[% counter = counter + 1 %]
-	[% END %]
-	<br style="clear: left"/>
-	[% width = max_width %]
+		$( "#purchase-grid" ).append(item);
+
+		item.style.top  = (parseInt(targetParts[2] - 1) * 42) + 'px';
+		item.style.left = (parseInt(targetParts[1] - 1) * 42) + 'px';
+	},
+	
+	hoverClass: "ui-state-active",
+		
+	over: function(event, ui) {
+		//console.log(ui);
+	}
+	
+});
+
+</script>
+
+<div id="purchase-grid" style="position: relative; float: left">
+[% create_grid('purchase-sector', 'purchase', max_height, max_width) %]
+</div>
+
+<div style="width: 10px; float: left">&nbsp;</div>
+
+[% width  = 0 %]
+[% height = 0 %]
+<div id="shop-grid" style="position: relative; float: left">
+[% create_grid('shop-sector', 'shop', max_height, max_width) %]
+
+[% FOREACH item_data IN items_in_grid %]
+	[% item = item_data.value %]
+	[% coords = item_data.key.split(',') %]
+	<div id="item-[% item.id %]" class="shop-item height[% item.item_type.height %] width[% item.item_type.width %]" 
+		style="position: absolute; left: [% (coords.1 - 1) * 42 %]px; top: [% (coords.0 - 1) * 42 %]px; padding: auto; margin: 1px;
+			width: [% item.item_type.width * 40 %]px; height: [% item.item_type.height * 40%]px; text-align: center; overflow: hidden; background: black"> 
+		<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]" style="margin: auto">
+	</div>
 [% END %]
+</div>

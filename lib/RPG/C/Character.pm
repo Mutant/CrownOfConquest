@@ -37,22 +37,25 @@ sub view : Local {
 	my $character = $c->stash->{character};
 
     my %chars_by_type;
+    my @characters;
+    my $group;
  	if ( $character->party_id ) {
         %chars_by_type = $self->gen_character_list($c);
+    	$group = 'party';
+    	$group = 'mayors' if $character->mayor_of;
+    	$group = 'garrisons' if $character->garrison_id;
+    	$group = 'others' if $character->status;
  	}
  	else {
-		#@characters = $c->stash->{party_location}->town->characters;
+		@characters = $c->stash->{party_location}->town->characters;
  	}
 	my $can_buy = 0;
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
 	   $can_buy = 1; 	          
 	}
 	
-	my $group = 'party';
-	$group = 'mayors' if $character->mayor_of;
-	$group = 'garrisons' if $character->garrison_id;
-	$group = 'others' if $character->status;
-
+	warn $group;
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -60,7 +63,7 @@ sub view : Local {
 				template => 'character/view.html',
 				params   => {
 					character           => $character,
-					character_list      => \%chars_by_type,
+					character_list      => %chars_by_type ? \%chars_by_type : \@characters,
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 					can_buy => $can_buy,

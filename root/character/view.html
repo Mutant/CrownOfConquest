@@ -6,7 +6,7 @@
 
 <script type="text/javascript">
     function init() {
-		displayCharList('[% group %]');
+		[% IF group %]displayCharList('[% group %]');[% END %]
 		
 		/* Inventory DND */
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
@@ -253,7 +253,7 @@ function calculateSpellPoints() {
 
 <h1>
 <span id="name-header">[% character.character_name %]</span>
-[% IF ! window %]
+[% IF ! window && ! character.town_id %]
 	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]
 	<a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank" class="main">Open in New Window</a>
 [% END %]
@@ -262,22 +262,20 @@ function calculateSpellPoints() {
 
 [% IF character.town_id %]
 	[% IF can_buy %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | [% END %]
-	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a><br><br>
+	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a>
 [% END %]
 
 <div id="other-chars" style="margin-bottom: 3px">
 
-[% IF ! character.party_id %]<b>Other Characters Available to Recruit</b>[% END %]
-
-[% MACRO character_links(type, characters) BLOCK %]
-	<span id="character-list-[% type %]" style="display: none;">
+[% MACRO character_links(type, characters, display) BLOCK %]
+	<span id="character-list-[% type %]" [% UNLESS display %]style="display: none;"[% END %]>
 	[% FOREACH other_character IN characters %]
 		[% IF other_character.id == character.id %]
 			[% other_character.name %]
 		[% ELSE %]
 			[% FILTER collapse %]
 				[% IF window %]
-				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]" target="_blank">
+				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]">
 					[% other_character.name %]</a>				
 				[% ELSE %]
 				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
@@ -290,21 +288,26 @@ function calculateSpellPoints() {
 	</span>
 [% END %]
 
-[%# Two passes due to order... could be fixed.. %]
-[% types = ['party', 'garrisons', 'mayors', 'others'] %]
-<span id="other-char-links" 
-	style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
-		background: #5F5F5F;">
-[% FOREACH type IN types %]
-	[% IF character_list.$type.size > 0 %]
-		<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+[% IF ! character.party_id %]
+	<b>Other Characters Available to Recruit</b>:
+	[% character_links(type, character_list, 1) %]
+[% ELSE %]
+	[%# Two passes due to order... could be fixed.. %]
+	[% types = ['party', 'garrisons', 'mayors', 'others'] %]
+	<span id="other-char-links" 
+		style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
+			background: #5F5F5F;">
+	[% FOREACH type IN types %]
+		[% IF character_list.$type.size > 0 %]
+			<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+		[% END %]
 	[% END %]
-[% END %]
-</span>
-
-[% FOREACH type IN types %]
-	[% IF character_list.$type.size > 0 %]
-		[% character_links(type, character_list.$type) %]
+	</span>
+	
+	[% FOREACH type IN types %]
+		[% IF character_list.$type.size > 0 %]
+			[% character_links(type, character_list.$type) %]
+		[% END %]
 	[% END %]
 [% END %]
 

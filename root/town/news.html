@@ -1,3 +1,4 @@
+[% INCLUDE layout/close_button.html %]
 News for the town of [% town.town_name %]:
 <br><br>
 [% IF logs.0 %]
@@ -10,5 +11,5 @@ News for the town of [% town.town_name %]:
 		[% log.message %]<br><br>
 	[% END %]
 [% ELSE %]
-	Nothing of interest has occured in days!<br><br>
+	Nothing of interest has occurred in days!<br><br>
 [% END %]

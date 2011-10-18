@@ -15,6 +15,7 @@ use Digest::SHA1 qw(sha1_hex);
 use MIME::Lite;
 use Data::Dumper;
 use HTML::Strip;
+use Email::Valid;
 
 use feature 'switch';
 
@@ -240,6 +241,10 @@ sub register : Local {
 
             if ( length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
                 return "Password must be at least " . $c->config->{minimum_password_length} . " characters";
+            }
+            
+            if ( ! Email::Valid->address($c->req->param('email')) ) {
+                return "The email address '" . $c->req->param('email') . "' does not appear to be valid";  
             }
 
             my $existing_player = $c->model('DBIC::Player')->find( { email => $c->req->param('email') }, );

@@ -18,6 +18,8 @@ function sellItemConfirm(item_type, item_id, sell_price, equip_place_id, char_id
 
 function sellItem(dialogFields) {
 	getPanels('shop/sell_item?item_id=' + dialogFields.item_id + '&shop_id=[% shop.id %]' + '&quantity=' + dialogFields.quantity_to_sell);
+	
+	selectedForSale = Array();
 }	
 
 var selectedForSale = Array();
@@ -65,6 +67,8 @@ function sellMultiItem(dialogFields) {
 	}
 	
 	getPanels('/shop/sell_multi_item?' + item_str + '&shop_id=[% shop.id %]');
+	
+	selectedForSale = Array();
 }
 
 function sellQuantityConfirm(item_type, item_id, sell_price, equip_place_id, char_id, quantity) {

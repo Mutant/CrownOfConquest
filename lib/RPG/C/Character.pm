@@ -53,9 +53,7 @@ sub view : Local {
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
 	   $can_buy = 1; 	          
 	}
-	
-	warn $group;
-	
+
 	$c->forward(
 		'RPG::V::TT',
 		[

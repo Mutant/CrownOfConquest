@@ -39,6 +39,8 @@ sub auto : Private {
     $c->model('DBIC')->schema->config( RPG->config );
     
     $c->model('DBIC')->schema->log( $c->log );
+    
+    $c->model('DBIC')->storage->dbh->do("SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 
     $c->model('DBIC')->storage->txn_begin;
     

@@ -45,4 +45,31 @@ sub time_since_datetime {
     return $str;
 }
 
+sub time_since_datetime_detailed {
+    my $self = shift;
+    my $date_time = shift;
+    
+    return 'Never' unless $date_time;    
+    
+    my $now = DateTime->now;
+    my $dur = $date_time->subtract_datetime($now);
+    
+    my $size = 0;
+    my $str;
+    
+    for my $type (qw/years months weeks days hours minutes seconds/) {
+        if ($dur->$type) {
+            my $text = $type;
+            chop $text;
+            $str .= $dur->$type . PL_N(" $text", $dur->$type) . ' ';
+            $size++;
+        }
+        last if $size >= 2;   
+    }
+    
+    $str .= " ago";    
+    
+    return $str;        
+}
+
 1;

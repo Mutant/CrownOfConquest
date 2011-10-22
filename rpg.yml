@@ -77,7 +77,7 @@ creatures_cron_string: 20,50 * * * *
 dungeon_doors_cron_string: "*/30 * * * *"
 
 # Generation of mayor's group
-mayors_group_cron_string: "15 */6 * * *"
+mayors_group_cron_string: "15 */3 * * *"
 
 # Filling of dungeon treasure chests
 treasure_chest_cron_string: "45 * * * *"

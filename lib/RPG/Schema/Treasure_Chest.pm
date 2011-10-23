@@ -41,31 +41,25 @@ sub fill {
 	return unless $self->dungeon_grid->dungeon_room;
 	
 	my $dungeon = $self->dungeon_grid->dungeon_room->dungeon;
-	
+		
 	return unless $dungeon;
 		
 	my $number_of_items = RPG::Maths->weighted_random_number(1..3);
 
 	for (1..$number_of_items) {
-		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
-		$max_prevalence = 100 if $max_prevalence > 100;		
+		my $min_prevalence = 15 * (5 - $dungeon->level);
 
-        my $item_type;
-        while ( !defined $item_type ) {
-            last if $max_prevalence > 100;
-        	
-    	    my @items = map { $_ <= $max_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
+        my @items = map { $_ >= $min_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
 
-			$item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
-			
-			$max_prevalence++;
-		}
-		
+	    my $item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
+	    
 	    # We couldn't find a suitable item. Try again
 	    next unless $item_type;
 	    
+	    my $enchantment_chance = 5 * $dungeon->level;
+	    
 	    my $enchantments = 0;
-	    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+	    if (Games::Dice::Advanced->roll('1d100') <= $enchantment_chance) {
 	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
 	    }
 

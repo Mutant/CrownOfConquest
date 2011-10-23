@@ -606,11 +606,18 @@ sub raid : Local {
     push @{$c->stash->{panel_callbacks}}, {
         name => 'setMinimapVisibility',
         data => 0,
-    };	
+    };
+    
+    if (! $mayor) {
+        push @{$c->stash->{panel_messages}}, "This town doesn't have a mayor! You won't be able to conquer this town until one is appointed";
+    }
+    
+    elsif (! $mayor->creature_group_id) {
+        push @{$c->stash->{panel_messages}}, "The mayor of this town changed recently, and the mayor is not yet in the castle. You won't be able to conquer this " .
+            "town until the mayor enters the castle";
+    }
 	
-	$c->stash->{message_panel_size} = 'small';   
-	
-	
+	$c->stash->{message_panel_size} = 'small'; 
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
 }

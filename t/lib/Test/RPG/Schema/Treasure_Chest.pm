@@ -13,6 +13,8 @@ use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Treasure_Chest;
 use Test::RPG::Builder::Item_Type;
+use Test::RPG::Builder::Quest::Find_Dungeon_Item;
+use Test::RPG::Builder::Quest::Find_Jewel;
 
 sub startup : Tests(startup) {
     my $self = shift;
@@ -87,4 +89,29 @@ sub test_fill : Tests(2) {
     
 }
 
+sub test_delete_removed_related_quests : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $quest = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $quest2 = Test::RPG::Builder::Quest::Find_Jewel->build_quest($self->{schema});
+	my $quest3 = Test::RPG::Builder::Quest::Find_Dungeon_Item->build_quest($self->{schema});
+	my $dungeon = $quest->dungeon;
+	my $item = $quest->item;
+	
+	my $chest = $self->{schema}->resultset('Treasure_Chest')->find( $item->treasure_chest_id ); 
+	
+	# WHEN
+	$chest->delete;
+	
+	# THEN
+	$quest->discard_changes;
+	is($quest->in_storage, 0, "Quest deleted when chest deleted");
+		
+	$quest2->discard_changes;
+	is($quest2->in_storage, 1, "Non-dungeon quest not deleted");	
+	
+	$quest3->discard_changes;
+	is($quest3->in_storage, 1, "Quest relating to different chest not deleted");	
+}
 1;

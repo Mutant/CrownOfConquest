@@ -88,4 +88,28 @@ sub fill {
     $self->update;	
 }
 
+sub delete {
+    my ( $self, @args ) = @_;
+
+	# Check if any items in the chest are for a quest. If so, delete the quest
+	my @item_ids = map { $_->id } $self->items;
+	
+	my @quests = $self->result_source->schema->resultset('Quest')->search(
+		{
+			'type.quest_type' => 'find_dungeon_item',
+			'quest_param_name.quest_param_name' => 'Item',
+			'start_value' => \@item_ids,
+		},
+		{
+			join => ['type', {'quest_params' => 'quest_param_name'}],
+		}
+	);
+	
+	map { $_->delete } @quests;
+	
+    my $ret = $self->next::method(@args);
+
+    return $ret;
+}
+
 1;

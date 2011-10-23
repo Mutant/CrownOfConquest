@@ -5,13 +5,7 @@
 [% IF doors.0 %]
 	Open Doors: 
 	[% FOREACH door IN doors %]
-		[% IF door.can_be_passed %]		
-			[% link = "javascript:getPanels('/dungeon/open_door?door_id=" _  door.id  _ "')" %]
-		[% ELSE %]
-			[% link = "javascript:unblockDoorDiag('" _ door.display_position _ "', '" _ door.id _ "')" %]
-		[% END %]
-			
-		<a href="[% link %]">[% door.display_position %]</a>&nbsp;		
+		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% door.display_position %]</a>&nbsp;		
 	[% END %]
 	<br><br>
 [% END %]

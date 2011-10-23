@@ -691,9 +691,37 @@ sub open_door : Local {
             'dungeon_grid_id' => $c->stash->{party}->dungeon_grid_id,
         },
     );
+    
+    croak "Invalid door" unless $door;
 
-    if ( !$door || !$door->can_be_passed ) {
-        croak "Cannot open door";
+    if ( ! $door->can_be_passed ) {
+    	my $message = $c->forward(
+    		'RPG::V::TT',
+    		[
+    			{
+    				template => 'dungeon/unblock_door_diag.html',
+    				params   => {
+    					party => $c->stash->{party},
+    					door => $door,
+    				},
+    				return_output => 1,
+    			}
+    		]
+    	);
+    	
+    	$c->forward('/panel/create_submit_dialog', 
+    		[
+    			{
+    				content => $message,
+    				submit_url => 'dungeon/unblock_door',
+    				dialog_title => 'Unblock Door',
+    			}
+    		],
+    	);    
+    	
+    	$c->forward( '/panel/refresh', [ 'messages' ] );
+    	
+    	return;    
     }
 
     my ( $opposite_x, $opposite_y ) = $door->opposite_sector;

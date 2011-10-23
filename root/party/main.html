@@ -131,14 +131,8 @@ function raidTown(dialogFields){
 	getPanels('/town/raid?town_id=' + dialogFields.town_id);
 }
 
-function unblockDoorDiag(direction, door_id) {
-	dojo.byId('unblock-door-direction').innerHTML = direction;
-	dojo.byId('door-id').value = door_id;
-	dijit.byId('unblock-door-diag').show();
-}
-
 function unblockDoor(action) {
-	hideDiag('unblock-door-diag');
+	hideDiag('dialog');
 	getPanels('/dungeon/unblock_door?door_id=' + dojo.byId('door-id').value + '&character_id=' + dojo.byId('character-id').value + '&action=' + action);
 }
 
@@ -205,29 +199,6 @@ function unblockDoor(action) {
 	<input id="town-id" name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <span id="raid-town-text"></span>
     [% dialog_buttons('town-raid') %]
-</div>
-
-<div dojoType="dijit.Dialog" id="unblock-door-diag" style="display: none" title="Unblock Door">
-	<input id="door-id" name="door_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    The door to the <span id="unblock-door-direction"></span> appears to be blocked.
-	<br><br> 
-	Do you want to charge it down, pick the lock, break any magical seals or ignore it?
-	<br><br>
-	Character to attempt action:
-    <select id="character-id">
-    	[% FOREACH character IN party.characters %]
-    		[% UNLESS character.is_dead %]
-				<option value="[% character.id %]">[% character.name %]</option>
-			[% END %]
-		[% END %]
-    </select>
-	<br><br>
-	<div align="center">
-		<button dojoType=dijit.form.Button onclick="unblockDoor('charge')">Charge Down</button>
-		<button dojoType=dijit.form.Button onclick="unblockDoor('pick')">Pick Lock</button>
-    	<button dojoType=dijit.form.Button onclick="unblockDoor('break')">Break Seals</button>
-		<button dojoType=dijit.form.Button onClick="hideDiag('unblock-door-diag')">Ignore</button>
-	</div>
 </div>
 
 <div dojoType="dijit.Dialog" id="chest-trap" style="display: none" title="Trap Detected" execute="disarmTrap(arguments[0]);">

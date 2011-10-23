@@ -575,7 +575,7 @@ sub generate_advice {
 		return;	
 	}
 	
-	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt/;
+	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty/;
 
 	my $advice;	
 	for (shuffle @checks) {
@@ -662,6 +662,13 @@ sub generate_advice {
 				$advice = "The peasants are in revolt - it must be crushed! Garrison more characters and hire more guards";
 				last; 
 			}					
+		}
+		
+		when ('kingdom_loyalty') {
+            if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
+                $advice = "The towns people are not very loyal to the town's kingdom. Make sure the town is joined to the kingdom's capital by claimed land";
+                last;
+            }   
 		}
 	}
 	

@@ -626,7 +626,10 @@ sub calculate_attack_factor {
         # Record rank penalty
         if ($item->attribute('Back Rank Penalty')) {
             $self->back_rank_penalty($item->attribute('Back Rank Penalty')->item_attribute_value || 0);
-        }        
+        }
+        else {
+            $self->back_rank_penalty(0);
+        }     
     }
 
     $self->_attack_factor($attack_factor);

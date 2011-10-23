@@ -48,6 +48,8 @@ sub fill {
 
 	for (1..$number_of_items) {
 		my $min_prevalence = 15 * (5 - $dungeon->level);
+		$min_prevalence -= Games::Dice::Advanced->roll('1d20');
+		$min_prevalence = 1 if $min_prevalence < 1;
 
         my @items = map { $_ >= $min_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
 

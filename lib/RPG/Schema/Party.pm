@@ -975,6 +975,7 @@ sub change_allegiance {
             {
                 day_id => $today->id,
                 message => "The party known as " . $self->name . " renounced their loyalty to the kingdom",
+                type => 'public_message',
             }
         );
         
@@ -999,6 +1000,7 @@ sub change_allegiance {
                 {
                     day_id => $today->id,
                     message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
+                    type => 'public_message',
                 }
             );
         }

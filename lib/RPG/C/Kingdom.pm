@@ -26,6 +26,7 @@ sub auto : Private {
 	
 	$c->stash->{kingdom} = $kingdom;
 	$c->stash->{king} = $king;
+	$c->stash->{is_king} = 1;
 	
 	return 1;		
 }
@@ -370,38 +371,9 @@ sub parties_to_offer : Local {
 }
 
 sub parties : Local {
-	my ( $self, $c ) = @_;
-	
-	my @parties = $c->stash->{kingdom}->search_related(
-	   'parties',
-	   {},
-	   {
-	       order_by => 'name',
-	       join      => 'characters',
-	       '+select' => [
-	           {count => 'characters.character_id'},
-	       ],
-	       '+as' => ['character_count'],
-	       group_by  => 'me.party_id',
-	   }
-    );
+    my ( $self, $c ) = @_;
     
-    @parties = sort { $b->level <=> $a->level } @parties;
-	
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'kingdom/parties.html',
-				params => {
-				    parties => \@parties,
-				    kingdom => $c->stash->{kingdom},
-				    banish_min => $c->config->{min_banish_days},
-				    banish_max => $c->config->{max_banish_days},
-				},
-			}
-		]
-	);	 	
+    $c->visit('/party/kingdom/parties');
 }
 
 sub towns : Local {
@@ -502,31 +474,9 @@ sub adjust_gold : Local {
 }
 
 sub messages : Local {
-	my ($self, $c) = @_;
-	
-	my @messages = $c->stash->{kingdom}->search_related(
-	   'messages',
-	   {
-	       'day.day_number' => {'>=', $c->stash->{today}->day_number - 14},
-	       'type' => 'message',
-	   },
-	   {
-	       prefetch => 'day',
-	       order_by => ['day.day_id desc', 'message_id desc'],
-	   }
-	);
-	
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'kingdom/messages.html',
-				params => {
-				    messages => \@messages,
-				},
-			}
-		]
-	);		  
+    my ($self, $c) = @_;
+    
+    $c->visit('/party/kingdom/messages');
 }
 
 sub tax : Local {
@@ -687,17 +637,7 @@ sub banish_party : Local {
 sub records : Local {
     my ($self, $c) = @_;
     
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'kingdom/records.html',
-				params => {
-				    kingdom => $c->stash->{kingdom},
-				},
-			}
-		]
-	);       
+    $c->visit('/party/kingdom/records');       
 }
 
 1;

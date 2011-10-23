@@ -1,0 +1,13 @@
+<h2>Kingdom</h2>
+
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+
+[% FOREACH tab IN [ 'Allegiance', 'Parties', 'Towns', 'Records', 'Messages' ] %]
+	[% IF ! kingdom && tab != 'Allegiance' %]
+		[% NEXT %]
+	[% END %]
+	[% lower_tab = tab | lower %]
+	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]party/kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
+[% END %]
+	
+</div>

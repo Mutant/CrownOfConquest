@@ -310,6 +310,7 @@ sub change_allegiance {
             {
                 message => "The town of " . $self->town_name . " is now loyal to our kingdom.",
                 day_id => $today->id,
+                type => 'public_message',
             }
         );
     }
@@ -326,6 +327,7 @@ sub change_allegiance {
             {
                 message => $message,
                 day_id => $today->id,
+                type => 'public_message',
             }
         );
 

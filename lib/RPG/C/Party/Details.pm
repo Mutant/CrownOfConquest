@@ -392,79 +392,11 @@ sub kingdom : Local {
 	my $kingdom = $c->stash->{party}->kingdom;
 	
 	if ($kingdom && $kingdom->king->party_id == $c->stash->{party}->id) {
-        $c->forward(
-            '/panel/refresh_with_template',
-            [
-                {
-                    template => 'kingdom/summary.html',
-                    params => {
-                        kingdom => $kingdom,  
-                    },
-                }
-            ]
-        );
+        $c->visit('/kingdom/main');
         return;
 	}
 	
-	my @kingdoms = $c->model('DBIC::Kingdom')->search(
-	   {
-	       active => 1,
-	       'me.kingdom_id' => {'!=', $c->stash->{party}->kingdom_id},
-	   },
-	   {
-	       order_by => 'name',
-	   }
-    );
-    
-    @kingdoms = grep { 
-        my $party_kingdom = $_->find_related('party_kingdoms',
-            {
-                'party_id' => $c->stash->{party}->id,
-            }
-        );
-        $party_kingdom && $party_kingdom->banished_for > 0 ? 0 : 1;
-    } @kingdoms;
-    
-    my @banned = $c->model('DBIC::Party_Kingdom')->search(
-        {
-            party_id => $c->stash->{party}->id,
-            banished_for => {'>=', 0},
-        },
-        {
-            prefetch => 'kingdom',
-        }
-    );
-    
-	my $mayor_count = $c->stash->{party}->search_related(
-		'characters',
-		{
-			mayor_of => {'!=', undef},
-		},
-	)->count;	    
-	
-	my $can_declare_kingdom = $c->stash->{party}->level >= $c->config->{minimum_kingdom_level} 
-	   && $mayor_count >= $c->config->{town_count_for_kingdom_declaration};
-	
-    $c->forward(
-        '/panel/refresh_with_template',
-        [
-            {
-                template => 'party/details/kingdom.html',
-                params   => {
-                    kingdom => $kingdom,
-                    kingdoms => \@kingdoms,
-                    allegiance_change_frequency => $c->config->{party_allegiance_change_frequency},
-                    party => $c->stash->{party},
-                    mayor_count => $mayor_count,
-                    town_count_for_kingdom_declaration => $c->config->{town_count_for_kingdom_declaration},
-                    minimum_kingdom_level => $c->config->{minimum_kingdom_level},
-                    can_declare_kingdom => $can_declare_kingdom,
-                    banned => \@banned,
-                    in_combat => $c->stash->{party}->in_combat,
-                },
-            }
-        ]
-    );		
+	$c->visit('/party/kingdom/main');	
 }
 
 sub change_allegiance : Local {
@@ -477,7 +409,7 @@ sub change_allegiance : Local {
 	my $day = $c->stash->{party}->last_allegiance_change_day;
 	if ($day && abs $day->difference_to_today <= $c->config->{party_allegiance_change_frequency}) {
 	   $c->stash->{error} = "You changed your allegiance too recently";
-	   $c->forward( '/panel/refresh', ['messages'] );
+	   $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=allegiance']] );
 	   return;
 	}
 	
@@ -497,7 +429,7 @@ sub change_allegiance : Local {
     	my $king = $kingdom->king;
     	if (! $king->is_npc && $c->stash->{party}->is_suspected_of_coop_with($king->party)) {
             $c->stash->{error} = "You can't change your allegiance to that kingdom, as you have IP addresses in common with the king's party";
-            $c->forward( '/panel/refresh', ['messages'] );
+            $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=allegiance']] );
             return;
     	}
 	}
@@ -507,7 +439,7 @@ sub change_allegiance : Local {
 	
 	$c->stash->{panel_messages} = "Allegiance changed";
 	
-	$c->forward( '/panel/refresh', ['messages'] );
+	$c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=allegiance']] );
 }
 
 sub trades : Local {

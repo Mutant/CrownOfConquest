@@ -1110,7 +1110,7 @@ sub active_quests_of_type {
         'quests', 
         { 
             'type.quest_type' => $quest_type_name,
-            'status' => ['In Progress','Not Started'],
+            'status' => ['In Progress','Not Started','Requested'],
         },
         {
             join => 'type',
@@ -1132,10 +1132,13 @@ sub is_suspected_of_coop_with {
     return $player1->has_ips_in_common_with($player2) ? 1 : 0;  
 }
 
-# Returns true if party has the king of the specified kingdom
+# Returns true if party has the king of the specified kingdom,
+#  or their own kingdom, if it's not passed 
 sub has_king_of {
     my $self = shift;
-    my $kingdom = shift // croak "Kingdom not supplied";
+    my $kingdom = shift // $self->kingdom;
+    
+    return 0 unless $kingdom;
     
     return 1 if $kingdom->king->party_id == $self->id;
     

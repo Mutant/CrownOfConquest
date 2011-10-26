@@ -1,0 +1,23 @@
+<p>
+	<b>[% short_description(quest) %]</b><br>
+	Offered by: 
+	[% IF quest.town_id %]
+		[% quest.town.town_name %] ([% quest.town.location.x %], [% quest.town.location.y %])
+	[% ELSE %]
+		The Kingdom Of [% quest.kingdom.name %]<br>
+		Status: 
+		[% IF quest.status == 'Not Started' %]
+			Offered <a href="javascript:getPanels('quest/accept?quest_id=[% quest.id %]')">Accept</a> 
+				<a href="javascript:getPanels('quest/decline?quest_id=[% quest.id %]')">Decline</a>
+		[% ELSIF quest.status == 'Awaiting Reward' %]
+			Awaiting Reward
+		[% ELSIF quest.status == 'Requested' %]
+			Awaiting Acceptance from Monarch
+		[% ELSE %]
+			Accepted
+		[% END %]	 
+	[% END %]<br>
+	Reward: [% quest.gold_value %] gold<br>
+	Days [% IF quest.status == 'Not Started' || quest.status == 'Requested' %]to complete[% ELSE %]left[% END %]: [% quest.days_to_complete %]<br>
+	[% list_quest(quest) %]
+</p>

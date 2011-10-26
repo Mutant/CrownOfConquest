@@ -152,7 +152,7 @@ sub list : Local {
     my @quests = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            status   => ['Not Started', 'In Progress', 'Awaiting Reward'],
+            status   => ['Not Started', 'In Progress', 'Awaiting Reward', 'Requested'],
         },
         { 
             prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ],

@@ -35,6 +35,13 @@ function showCapitalDiag(townId, townName, cost) {
 	dijit.byId('capital-select-diag').show();
 }
 
+function confirmQuest(questId, goldValue) {
+	dojo.byId('confirm-quest-gold-value').value = goldValue;
+	dojo.byId('confirm-quest-id').value = questId;
+	
+	dijit.byId('confirm-quest-diag').show();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="kingdom-adjust-gold" style="display: none" title="Gold">
@@ -60,6 +67,15 @@ function showCapitalDiag(townId, townName, cost) {
     Are you sure you want to make <span id="new-capital-name"></span> the capital?
     <span id="capital-extra-message"></span>
 	[% dialog_buttons('capital-select-diag') %]
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="confirm-quest-diag" style="display: none" title="Confirm Quest">
+	<form method="POST" action="[% base %]kingdom/confirm_quest" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="quest_id" id="confirm-quest-id" />
+    Confirm the quest. Adjusting the gold reward will require the party to accept the quest.<br>
+    Gold Reward: <input type="text" name="gold_value" id="confirm-quest-gold-value" style="width: 50px"/>
+	[% dialog_buttons('confirm-quest-diag') %]
 	</form>
 </div>
 

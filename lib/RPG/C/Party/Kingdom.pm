@@ -6,6 +6,11 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 
+use feature 'switch';
+
+use JSON;
+use Carp;
+
 sub auto : Private {
     my ( $self, $c ) = @_;
     
@@ -25,6 +30,7 @@ sub main : Local {
 				params => {
 					party => $c->stash->{party},
 					kingdom => $c->stash->{kingdom},
+					selected => $c->req->param('selected') // undef,
 				},
 			}
 		]
@@ -205,6 +211,190 @@ sub messages : Local {
 			}
 		]
 	);		  
+}
+
+sub quests : Local {
+    my ($self, $c) = @_;
+    
+    my @quests = $c->model('DBIC::Quest')->search(
+        {
+            party_id => $c->stash->{party}->id,
+            status   => ['In Progress', 'Requested', 'Awaiting Reward'],
+            kingdom_id => {'!=', undef},
+        },
+        { 
+            prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ],
+        }
+    );
+    
+	my @types = $c->model('DBIC::Quest_Type')->search(
+	   {
+	       owner_type => 'kingdom',
+	       hidden => 0,
+	   },
+    );
+    
+    my $party_level = $c->stash->{party}->level;
+    @types = grep { $party_level >= RPG::Schema::Quest_Type->min_level( $_->quest_type ) } @types;  
+    
+    my $existing_petition_count = $c->model('DBIC::Quest')->search(  
+        {
+            party_id => $c->stash->{party}->id,
+            status => 'Requested',
+            kingdom_id => $c->stash->{kingdom}->id,
+        }
+    )->count;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/kingdom/quests.html',
+				params => {
+				    quests => \@quests,
+				    can_do_quests => scalar @types >= 1 ? 1 : 0,
+				    has_existing_petition => $existing_petition_count > 0 ? 1 : 0,
+				},
+			}
+		]
+	);	    
+}
+
+sub request_quest : Local {
+    my ($self, $c) = @_;    
+    
+	my @types = $c->model('DBIC::Quest_Type')->search(
+	   {
+	       owner_type => 'kingdom',
+	       hidden => 0,
+	   },
+    );
+    
+    my $party_level = $c->stash->{party}->level;
+    @types = grep {$party_level >= RPG::Schema::Quest_Type->min_level( $_->quest_type ) } @types;
+    
+    my @params;
+    my $current_type;
+    if ($c->req->param('quest_type_id')) {
+        ($current_type) = grep { $_->id == $c->req->param('quest_type_id') } @types;
+        @params = $c->model('DBIC::Quest_Param_Name')->search(
+            {
+                quest_type_id => $c->req->param('quest_type_id'),
+                user_settable => 1,
+            }
+        );   
+    }    
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/new_quest.html',
+				params => {
+				    request => 1,
+				    quest_types => \@types,
+				    params => \@params,
+				    current_type => $current_type || undef,
+				    error => $c->stash->{error} || undef,		    
+				},
+				fill_in_form => 1,
+			}
+		]
+	);	    
+}
+
+sub create_quest_request : Local {
+    my ($self, $c) = @_;
+    
+    my $existing_petition_count = $c->model('DBIC::Quest')->search(  
+        {
+            party_id => $c->stash->{party}->id,
+            status => 'Requested',
+            kingdom_id => $c->stash->{kingdom}->id,
+        }
+    )->count;
+    
+    croak "Already have a kingdom quest petition" if $existing_petition_count > 0;
+    
+	my $quest_type = $c->model('DBIC::Quest_Type')->find(
+	   {
+	       quest_type_id => $c->req->param('quest_type_id'),
+	   }
+	);    
+    
+    if ($c->stash->{party}->active_quests_of_type($quest_type->quest_type)->count > 0) {
+        $c->stash->{error} = "You already have an active Kingdom quest of that type";
+        $c->detach('/panel/refresh');
+    } 
+    
+    my $quest = $c->forward('/kingdom/insert_quest', [$c->stash->{party}, 'Requested']);
+    
+    push @{$c->stash->{panel_messages}}, "Petition sent!";
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=quests'], 'messages'] );   
+    
+}
+
+sub quest_param_list : Local {
+	my ( $self, $c ) = @_;
+	
+	my $quest_param = $c->model('DBIC::Quest_Param_Name')->find(
+	   {
+	       quest_param_name_id => $c->req->param('quest_param_name_id'),
+	   },
+	);
+	
+	return unless $quest_param;
+	
+	return if $quest_param->user_settable == 0;
+	
+	my @data;
+	
+	given ($quest_param->variable_type) {
+	    when ('Town') {	
+	       my @towns = $c->model('DBIC::Town')->search(
+                { 
+                    'mapped_sector.party_id' => $c->stash->{party}->id,
+                },
+                {
+                    prefetch => { 'location' => 'mapped_sector' },
+                    order_by => 'town_name',
+                },
+           );
+    
+
+           foreach my $town (@towns) {
+               push @data, {
+                   id => $town->id,
+                   name => $town->label,
+               }
+            }
+	    }
+        
+        when ('Building_Type') {
+            my $building_type = $c->model('DBIC::Building_Type')->find(
+               {
+                    name => 'Tower',
+                }
+            );
+            
+            
+            push @data, {
+                id => $building_type->id,
+                name => $building_type->name,
+            }
+        }
+	}
+	
+	$c->res->body(
+		to_json(
+			{
+			    identifier => 'id',
+			    label => 'name',
+				items => \@data,
+			}
+		),
+	);
 }
 
 1;

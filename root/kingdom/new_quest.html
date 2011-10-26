@@ -1,27 +1,30 @@
-<script>
-    dojo.require("dijit.form.Form");
-    dojo.require("dijit.form.Button");
-	dojo.require("dijit.form.NumberTextBox");
-	dojo.require("dijit.form.FilteringSelect");
-	dojo.require("dojo.data.ItemFileReadStore");
-	
-</script>
+[% IF request %]
+	<h2>Petition For A Kingdom Quest</h2>
+	[% change_url = 'party/kingdom/request_quest' %]
+[% ELSE %]
+	<h2>Create A Kingdom Quest</h2>
+	[% change_url = '/kingdom/new_quest' %]
+[% END %]
 
-<h2>Create A Kingdom Quest</h2>
-
-<form action="[% base %]kingdom/new_quest" method="POST" id="quest-form"  onSubmit="postPanels(this); return false">
+<form action="[% base %][% IF request %]party/kingdom/create_quest_request[% ELSE %]kingdom/new_quest[% END %]" 
+	method="POST" id="quest-form"  onSubmit="postPanels(this); return false">
 
 Type Of Quest:
 <select dojoType="dijit.form.FilteringSelect" name="quest_type_id" autocomplete="false" 
-	onChange="loadScreen('kingdom/new_quest?quest_type_id=' + this.value)">
+	onChange="loadScreen('[% change_url %]?quest_type_id=' + this.value)">
 	<option></option>
 	[% FOREACH type IN quest_types %]
+	[% type %]
 		<option value="[% type.id %]">[% type.description %]</option>
 	[% END %]
 </select>
 
 <br><br>
-[% current_type.long_desc %]
+[% IF request %]
+	You can send one petition at a time to the King or Queen to ask for a quest.
+[% ELSE %]
+	[% current_type.long_desc %]
+[% END %]
 <br><br>
 	
 	[% IF params.size > 0 %]
@@ -29,6 +32,7 @@ Type Of Quest:
 		<legend>Quest Parameters</legend>
 		<table class="main">
 		
+		[% IF ! request %]
 		<tr>
 			<td>Party To Offer To:</td>
 			<td>				
@@ -38,7 +42,8 @@ Type Of Quest:
 				        store = "party_store"
 				        id="quest_party_id" id="quest_party_id"></select>
 			</td>
-		</tr>		
+		</tr>
+		[% END %]		
 		
 		[% FOREACH param IN params %]
 			<tr>
@@ -57,7 +62,7 @@ Type Of Quest:
 				y: <input type="text" dojoType="dijit.form.NumberTextBox" name="param_[% param.id %]" style="width: 30px" required="true">
 			[% ELSE %]
 				<div jsId="store[% param.id %]" dojoType="dojo.data.ItemFileReadStore" 
-					 url="[% base %]kingdom/quest_param_list?quest_param_name_id=[% param.id %]"></div>
+					 url="[% base %]party/kingdom/quest_param_list?quest_param_name_id=[% param.id %]"></div>
 				<select dojoType="dijit.form.FilteringSelect" name="param_[% param.id %]"
 				        store="store[% param.id %]"
 				        id="param_[% param.id %]"></select>
@@ -84,7 +89,7 @@ Type Of Quest:
 		</table>
 		
 		<button dojoType="dijit.form.Button" type="submit" name="submitButton">
-			Create Quest
+			[% IF request %]Send Request[% ELSE %]Create Quest[% END %]
 		</button>			
 		
 	[% END %]

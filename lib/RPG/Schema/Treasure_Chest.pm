@@ -58,7 +58,7 @@ sub fill {
 	    # We couldn't find a suitable item. Try again
 	    next unless $item_type;
 	    
-	    my $enchantment_chance = 5 * $dungeon->level;
+	    my $enchantment_chance = 7 * ($dungeon->level - 1);
 	    
 	    my $enchantments = 0;
 	    if (Games::Dice::Advanced->roll('1d100') <= $enchantment_chance) {

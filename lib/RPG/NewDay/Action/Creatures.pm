@@ -352,6 +352,9 @@ sub move_dungeon_monsters {
         next if $cg->in_combat_with;
 
         next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+        
+        # Don't move the mayor's group
+        next if $cg->has_mayor;
 
         # Find sector to move to (if we can)
         my $allowed_sectors = $cg->dungeon_grid->sectors_allowed_to_move_to( 3, 0 );

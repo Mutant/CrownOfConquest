@@ -267,8 +267,10 @@ sub buy_item : Local {
 	}
 	
 	# The town takes its cut
-	$town->take_sales_tax($cost);
-	$town->update;	
+	if ($cost > 1) {
+	   $town->take_sales_tax($cost);
+	   $town->update;
+	}
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
 
@@ -319,17 +321,20 @@ sub buy_quantity_item : Local {
 		return;
 	}
 
-	my $cost = $item_type->modified_cost($shop) * $c->req->param('quantity');
+    my $indvidual_cost = $item_type->modified_cost($shop);
+	my $cost = $indvidual_cost * $c->req->param('quantity');
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
 		return;
 	}
-	
-	# The town takes its cut
-	my $town = $shop->in_town;
-	$town->take_sales_tax($cost);
-	$town->update;	
+
+	# The town takes its cut, so long as the indvidual items are worth at least 1 gold
+	if ($indvidual_cost > 1) {
+        my $town = $shop->in_town;
+        $town->take_sales_tax($cost);
+        $town->update;
+	}	
 
 	# Create the item
 	my $item = $c->model('DBIC::Items')->create( { item_type_id => $c->req->param('item_type_id'), } );

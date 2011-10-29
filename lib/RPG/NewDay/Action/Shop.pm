@@ -72,7 +72,7 @@ sub run {
             my $added_count = 0;
 
             while ( $item_value_to_add > 0 ) {
-                my $min_prevalence = 100 - ( $town->prosperity + ( Games::Dice::Advanced->roll('1d40') - 20 ) );
+                my $min_prevalence = 100 - ( $town->prosperity + ( Games::Dice::Advanced->roll('1d10') ) - 20 );
                 $min_prevalence = 100 if $min_prevalence > 100;
                 $min_prevalence = 1   if $min_prevalence < 1;
 

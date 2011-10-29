@@ -36,6 +36,8 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 					Awaiting Party Acceptance
 				[% ELSIF quest.status == 'Requested' %]
 					Requested By Party
+				[% ELSIF quest.status == 'Negotiating' %]
+					New Gold Amount Requested By Party
 				[% ELSE %]
 					[% quest.status %]
 				[% END %]
@@ -53,7 +55,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 				[% END %]
 			</td>
 			<td>
-				[% IF quest.status == 'Requested' && quests.size < quests_allowed %]
+				[% IF (quest.status == 'Requested' || quest.status == 'Negotiating') && quests.size < quests_allowed %]
 				<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
 					onClick="confirmQuest('[% quest.id %]', '[% quest.gold_value %]')">
 					Confirm Quest

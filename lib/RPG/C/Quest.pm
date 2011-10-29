@@ -144,6 +144,29 @@ sub decline : Local {
     
 }
 
+sub negotiate : Local {
+    my ( $self, $c ) = @_;
+    
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            status => 'Not Started',
+            kingdom_id => $c->stash->{party}->kingdom_id,
+            party_id => $c->stash->{party}->party_id,
+        },
+    );
+    
+    croak "Invalid quest" unless $quest;    
+    
+    $quest->status('Negotiating');
+    $quest->gold_value($c->req->param('gold_value'));
+    $quest->update;
+    
+    push @{$c->stash->{panel_messages}}, "Negotiation request sent to the King";
+    
+    $c->forward('/quest/list'); 
+}
+
 sub list : Local {
     my ( $self, $c ) = @_;
     

@@ -9,6 +9,7 @@
 		[% IF quest.status == 'Not Started' %]
 			Offered <a href="javascript:getPanels('quest/accept?quest_id=[% quest.id %]')">Accept</a> 
 				<a href="javascript:getPanels('quest/decline?quest_id=[% quest.id %]')">Decline</a>
+				<a href="javascript:showQuestNegotiateDiag('[% quest.id %]', '[% quest.gold_value %]')">Negotiate</a>
 		[% ELSIF quest.status == 'Awaiting Reward' %]
 			Awaiting Reward
 		[% ELSIF quest.status == 'Requested' %]

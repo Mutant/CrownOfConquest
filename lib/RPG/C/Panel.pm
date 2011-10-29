@@ -212,7 +212,7 @@ sub messages : Private {
             my $quest_count = $c->model('DBIC::Quest')->search(
         	   {
         	       kingdom_id => $c->stash->{party}->kingdom_id,
-        	       status => 'Requested',
+        	       status => ['Requested', 'Negotiating'],
         	   },            
             )->count;
             

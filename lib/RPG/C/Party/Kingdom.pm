@@ -335,6 +335,28 @@ sub create_quest_request : Local {
     
 }
 
+sub cancel_petition : Local {
+    my ( $self, $c ) = @_;
+    
+    my @petitions = $c->model('DBIC::Quest')->search(  
+        {
+            party_id => $c->stash->{party}->id,
+            status => 'Requested',
+            kingdom_id => $c->stash->{kingdom}->id,
+        }
+    );
+    
+    foreach my $petition (@petitions) {
+        $petition->status('Cancelled');
+        $petition->update;   
+    }
+    
+    push @{$c->stash->{panel_messages}}, "Petition cancelled!";
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=quests'], 'messages'] );         
+    
+}
+
 sub quest_param_list : Local {
 	my ( $self, $c ) = @_;
 	

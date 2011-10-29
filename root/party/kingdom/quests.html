@@ -6,7 +6,7 @@
 	<h4>Petition for a Kingdom Quest</h4>
 	
 	[% IF has_existing_petition %]
-		You already have a petition for a Kingdom Quest.
+		You already have a petition for a Kingdom Quest. <a href="javascript:getPanels('party/kingdom/cancel_petition')">Cancel</a>
 	[% ELSE %]
 		<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="loadScreen('party/kingdom/request_quest')">
 			Petition

@@ -71,7 +71,7 @@ sub quests : Local {
 	my @requested = $c->model('DBIC::Quest')->search(
 	   {
 	       kingdom_id => $c->stash->{kingdom}->id,
-	       status => ['Requested'],
+	       status => ['Requested', 'Negotiating'],
 	   },
 	   {
 	       prefetch => ['type', 'quest_params'],

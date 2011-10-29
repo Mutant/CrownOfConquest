@@ -188,7 +188,7 @@ sub manage : Local {
                 building_type => $building_type,
                 upgradable_to_type => $upgradable_to_type,
                 party_resources => \%party_resources,
-                enough_resources => $upgradable_to_type->enough_resources(%party_resources),
+                enough_resources => $upgradable_to_type ? $upgradable_to_type->enough_resources(%party_resources) : 1,
                 resources => \%resources,
             },
         }]

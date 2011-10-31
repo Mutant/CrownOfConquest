@@ -84,8 +84,17 @@
 	        }
 	    });	       
 	}
+	
+	function drop_item_diag(item_id, char_id) {
+		dojo.byId('drop-item-id').value = item_id;
+		dojo.byId('drop-char-id').value = char_id;
+		dijit.byId('drop-item-diag').show();
+	}
 
-	function drop_item(item_id, char_id) {
+	function drop_item(args) {
+		var item_id = args.item_id;
+		var char_id = args.char_id;
+	
 		dojo.xhrGet( {
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
@@ -137,7 +146,7 @@ function clearEquipSlot(slot_name) {
 	dojo.byId(slot_name + '-slot-label').style.display = 'block';
 	dojo.byId(slot_name + '-equip-place-image').src = '';
 	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	
-	dijit.byId(changed_slot + '-tooltip').label = ''; 
+	dijit.byId(slot_name + '-tooltip').label = ''; 
 }	
 
 function reloadInventory() {
@@ -244,6 +253,15 @@ function calculateSpellPoints() {
     Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="new_name">
     <input id="name-char-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	[% dialog_buttons('change-name-diag') %]
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="drop-item-diag" style="display: none" title="Drop Item Confirmation" execute="drop_item(arguments[0])">
+	<input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
+	<input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
+    Are you sure you want to drop the item?<br>
+    (Note, items dropped in town will disappear forever!)
+	[% dialog_buttons('drop-item-diag') %]
 	</form>
 </div>
 

@@ -164,7 +164,7 @@ function addCommonMenuItems(menu) {
 	params = {
 		label: "Drop Item",
 		onClick: function() {
-			drop_item(currentItemId, '[% character.id %]');
+			drop_item_diag(currentItemId, '[% character.id %]');
 		}
 	};			
 	var dropItem = new dijit.MenuItem(params,document.createElement("div"));

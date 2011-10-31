@@ -136,6 +136,17 @@ function unblockDoor(action) {
 	getPanels('/dungeon/unblock_door?door_id=' + dojo.byId('door-id').value + '&character_id=' + dojo.byId('character-id').value + '&action=' + action);
 }
 
+var messagesContent;
+function hideMessages() {
+	messagesContent = dojo.byId('messages-pane').innerHTML;
+	dojo.byId('messages-pane').innerHTML = dojo.byId('show-messages').innerHTML;
+}
+
+function showMessages() {
+	dojo.byId('messages-pane').innerHTML = messagesContent;
+	messagesContent = null;
+}
+
 </script>
 
 [% IF created_message %]
@@ -151,6 +162,12 @@ function unblockDoor(action) {
 	</div>
 </div>
 [% END %]
+
+<div id="show-messages">
+	<div style="font-size: 9px; padding: 0px">
+		<a href="javascript:showMessages()" style="text-decoration: none;" title="Show">&#9650</a>
+	</div>
+</div>
 
 <div dojoType="dijit.Dialog" id="dialog" style="display: none" title="Dialog">
 	<div id="dialog-content"></div>
@@ -252,7 +269,7 @@ function unblockDoor(action) {
 				style="padding: 5px; position: absolute; bottom: 10px; left: 10px; opacity:0.8; background: black; z-index: 500; text-align: left;
 				       border: 1px solid #4d4d4d; visibility: hidden;">
 			</div>
-			
+						
 			<div dojoType="dijit.layout.ContentPane" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 
 				z-index: 400;"></div>
 				

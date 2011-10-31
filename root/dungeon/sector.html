@@ -1,3 +1,9 @@
+<div style="position: absolute; right: 1px; top: 0px;">
+	<a href="javascript:hideMessages()" style="text-decoration: none; font-size: 9px" title="Hide">&#9660</a>
+</div>
+
+<div style="padding-right: 4px">
+
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 
 [% IF creature_group %]Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br><br>[% END %]
@@ -29,5 +35,5 @@
 	<br><br>
 	[% parties_in_sector %]
 [% END %]
-
+</div>
  

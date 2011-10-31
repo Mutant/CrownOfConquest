@@ -1,3 +1,8 @@
+<div style="position: absolute; right: 1px; top: 0px;">
+	<a href="javascript:hideMessages()" style="text-decoration: none; font-size: 9px" title="Hide">&#9660</a>
+</div>
+
+<div style="padding-right: 4px">
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terrain_name %][% IF kingdom %], Kingdom of [% kingdom.name %][% END %])
 [% IF movement_cost %]
@@ -75,3 +80,4 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% IF can_claim_land %]
 	| <a href="javascript:getPanels('party/claim_land')">Claim Land</a>
 [% END %]
+</div>

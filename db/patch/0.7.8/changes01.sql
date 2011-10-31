@@ -21,3 +21,4 @@ update Creature_Type set image = 'stonegolem.png' where creature_type = 'Stone G
 update Creature_Type set image = 'rookieguard.png' where creature_type = 'Rookie Town Guard';
 update Creature_Type set image = 'seasonedguard.png' where creature_type = 'Seasoned Town Guard';
 update Creature_Type set image = 'veteranguard.png' where creature_type = 'Veteran Town Guard';
+update Creature_Type set image = 'cyclops.png' where creature_type = 'Cyclops';

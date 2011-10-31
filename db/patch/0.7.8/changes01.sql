@@ -14,3 +14,10 @@ update Levels set xp_needed = 16000 where level_number = 11;
 update Levels set xp_needed = 18500 where level_number = 12;
 update Levels set xp_needed = 21000 where level_number = 13;
 update Levels set xp_needed = 24000 where level_number = 14;
+
+update Creature_Type set image = 'claygolem.png' where creature_type = 'Clay Golem';
+update Creature_Type set image = 'irongolem.png' where creature_type = 'Iron Golem';
+update Creature_Type set image = 'stonegolem.png' where creature_type = 'Stone Golem';
+update Creature_Type set image = 'rookieguard.png' where creature_type = 'Rookie Town Guard';
+update Creature_Type set image = 'seasonedguard.png' where creature_type = 'Seasoned Town Guard';
+update Creature_Type set image = 'veteranguard.png' where creature_type = 'Veteran Town Guard';

@@ -495,8 +495,10 @@ sub _generate_date_string_from_quartz {
 sub swap_chars : Local {
 	my ( $self, $c ) = @_;
 
-	return if $c->req->param('target') == $c->req->param('moved');
+	return unless $c->req->param('target') && $c->req->param('moved');
 
+	return if $c->req->param('target') == $c->req->param('moved');
+	
 	my %characters = map { $_->id => $_ } $c->stash->{party}->characters_in_party;
 
 	# Moved char moves to the position of the target char

@@ -1138,11 +1138,14 @@ sub change_hit_points {
 # Returns true if character is in the front rank
 sub in_front_rank {
     my $self = shift;
+    my $rank_sep_pos = shift;
 
     # If character isn't in a party, say they're in the front rank
     return 1 unless $self->party_id;
+    
+    $rank_sep_pos //= $self->party->rank_separator_position;
 
-    return $self->party->rank_separator_position >= $self->party_order ? 1 : 0;
+    return $rank_sep_pos >= $self->party_order ? 1 : 0;
 }
 
 # Return the number of attacks allowed by this character

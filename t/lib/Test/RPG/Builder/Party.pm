@@ -59,6 +59,7 @@ sub build_party {
                 $schema,
                 party_id   => $party->id,
                 level      => $params{character_level},
+                party_order => $_,
                 %params,
             );
         }

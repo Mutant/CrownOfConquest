@@ -13,7 +13,7 @@ after 'finish' => sub {
     my $self = shift;
     my $losers = shift;
     
-    if ($losers->id == $self->creature_group->id) {            
+    if ($losers->is($self->creature_group)) {
 	    # Improve prestige with nearby towns   
 	    foreach my $town ($self->nearby_towns) {
 	        my $party_town_recs = $self->schema->resultset('Party_Town')->find_or_create(

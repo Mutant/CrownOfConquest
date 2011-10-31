@@ -257,9 +257,6 @@ flee_chance_attempt_modifier: 5
 # Bonus modifier on flee chance for level 1 parties
 flee_chance_low_level_bonus: 10
 
-# Chance creatures will attack the front rank
-front_rank_attack_chance: 70
-
 # Chance per level of finding an item on defeated creatures
 chance_to_find_item: 10
 

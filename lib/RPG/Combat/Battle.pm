@@ -551,23 +551,18 @@ sub creature_action {
 	my $rank_pos = $party->rank_separator_position;
 
 	$rank_pos = scalar @characters if $rank_pos > scalar @characters;
-
-	unless ( $rank_pos == scalar @characters ) {
-		my $rank_roll = Games::Dice::Advanced->roll('1d100');
-		if ( $rank_roll <= $self->config->{front_rank_attack_chance} ) {
-
-			# Remove everything but front rank
-			splice @characters, $rank_pos;
-		}
-		else {
-
-			# Remove everything but back rank
-			splice @characters, 0, $rank_pos;
-		}
+	
+	# Any character in the front-rank gets put in the char list twice
+	if (scalar @characters > 1) {
+    	my @front_rank_chars;
+    	foreach my $char (@characters) {
+            if ($char->in_front_rank($rank_pos)) {
+                push @front_rank_chars, $char;
+            }
+    	}
+    	
+    	@characters = (@front_rank_chars, @characters);
 	}
-
-	# Go back to original list if there's nothing in characters (i.e. there are only dead (or no) chars in this rank)
-	@characters = $party->members unless scalar @characters > 0;
 
 	my $character;
 	foreach my $char_to_check ( shuffle @characters ) {

@@ -468,6 +468,56 @@ sub test_creature_action_cant_target_chars_not_in_party : Tests(11) {
 	$override->restore;
 }
 
+sub test_creature_action_check_correct_rank_targetted : Tests(10) {
+	my $self = shift;
+
+	# GIVEN
+	my $party    = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, rank_separator_position => 1 );
+	my @characters = $party->characters;
+	my $cg       = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id, character_count => 1);
+	my $creature = ( $cg->creatures )[0];
+		
+	my @shuffled;
+	my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub { @shuffled = @_; return $_[0] } );	
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => { front_rank_attack_chance => 20 },
+		log            => $self->{mock_logger},
+	);
+
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'attack', 1 );
+
+	# WHEN
+	my $results = $battle->creature_action($creature);
+
+	# THEN
+	isa_ok( $results->defender, "RPG::Schema::Character", "opponent was a character" );
+	is($results->defender->character_id, $characters[0]->id, "Front-rank character targetted");
+	is( $results->damage,                                           1,          "Damage returned correctly" );
+	is( $battle->session->{attack_count}{ $results->defender->id }, 1,          "Session updated with attack count" );
+	
+	my ( $method, $args ) = $battle->next_call();
+
+	is( $method, "attack", "Attack called" );
+	isa_ok( $args->[1], "RPG::Schema::Creature", "First param passed to attack was a creature" );
+	is( $args->[1]->id, $creature->id, "Correct creature passed" );
+	isa_ok( $args->[2], "RPG::Schema::Character", "Second param passed to attack was a character" );
+	is( $args->[2]->id, $results->defender->id, "Correct character passed" );
+	
+	my @shuffled_char_ids = map { $_->id } @shuffled;
+	is_deeply(\@shuffled_char_ids, [$characters[0]->id, $characters[0]->id, $characters[1]->id], "Front-rank char added to shuffled list twice")
+	   or diag join ',', @shuffled_char_ids; 
+	
+	
+	# CLEANUP
+	$override->restore;
+}
+
 sub test_attack_character_attack_basic : Tests(1) {
 	my $self = shift;
 

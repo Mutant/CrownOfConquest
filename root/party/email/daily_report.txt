@@ -188,5 +188,5 @@ You don't current have any active quests.
 [% END %]
 
 <br><br>
-Note, you can disable this email by logging into Kingdoms, clicking on "Tols", and un-checking the "Send a Daily Report" option.  
+Note, you can disable this email by logging into Kingdoms, clicking on "Tools", and un-checking the "Send a Daily Report" option.  
 

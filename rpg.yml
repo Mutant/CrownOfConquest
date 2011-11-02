@@ -122,7 +122,7 @@ min_starting_prosperity: 20
 max_starting_prosperity: 40
 
 # Max number of players allowed to register
-max_number_of_players: 300
+max_number_of_players: 600
 
 minimum_password_length: 4
 

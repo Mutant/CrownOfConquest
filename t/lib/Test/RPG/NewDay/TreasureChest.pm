@@ -44,7 +44,7 @@ sub test_run : Tests(13) {
     	push @chests, $chest;
 	}
 	
-	my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema});
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, prevalence => 100);
 	
 	my $item1 = Test::RPG::Builder::Item->build_item($self->{schema}, treasure_chest_id => $chests[2]->id, item_type_id => $item_type->id);		
 	my $item2 = Test::RPG::Builder::Item->build_item($self->{schema}, treasure_chest_id => $chests[4]->id, item_type_id => $item_type->id);

@@ -102,8 +102,8 @@ sub test_remove_of_chars_works_when_near_full_party : Tests(7) {
 	@garrison_chars = $garrison->characters;
 	
 	is(scalar @party_chars, 2, "Correct number of chars in party");
-	is($party_chars[0]->id, $orig_party_char_2->id, "Correct party char 1");
-	is($party_chars[1]->id, $orig_garrison_char_2->id, "Correct party char 2");
+	is($party_chars[1]->id, $orig_party_char_2->id, "Correct party char 1");
+	is($party_chars[0]->id, $orig_garrison_char_2->id, "Correct party char 2");
 
 	is(scalar @garrison_chars, 2, "Correct number of chars in party");
 	is($garrison_chars[0]->id, $orig_party_char_1->id, "Correct garrsion char 1");

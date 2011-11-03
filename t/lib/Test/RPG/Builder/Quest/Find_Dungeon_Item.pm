@@ -65,6 +65,11 @@ sub build_quest {
     	die $error->message if $error->isa('RPG::Exception');
     	die $error;    		
     }
+    
+    my $item = $quest->item;
+    $item->treasure_chest_id($chest->id);
+    $item->update;
+    
 
     return $quest;
 

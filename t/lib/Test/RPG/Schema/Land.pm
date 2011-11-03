@@ -175,7 +175,7 @@ sub test_movement_cost_with_roads_objects : Tests(1) {
     my $movement_cost = $land[0]->movement_cost(5, undef, $land[4]);
     
     # THEN
-    is($movement_cost, 3, "Movement cost calculated correctly");
+    is($movement_cost, 1, "Movement cost calculated correctly");
        
 }
 

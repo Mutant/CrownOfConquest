@@ -217,6 +217,10 @@ sub test_sector_menu_confirm_attack_set : Tests(3) {
         $creature_group = Test::MockObject::Extends->new($creature_group);
         $creature_group->set_always('compare_to_party', $test->{factor_comparison});
         
+        $self->{mock_forward}->{'get_watcher_factor_comparison'} = sub {            
+            RPG::C::Party->get_watcher_factor_comparison( $self->{c}, $creature_group ) 
+         };
+        
         $self->{c}->stash->{creature_group} = $creature_group;
         
         my $party = Test::RPG::Builder::Party->build_party(

@@ -281,7 +281,8 @@ sub check_for_revolt {
 		unless ($mayor->is_npc) {
 			$c->schema->resultset('Party_Messages')->create(
 				{
-					message => $mayor->character_name . " sends word that the peasants of " . $town->town_name . " have risen up in open rebellion",
+					message => $mayor->character_name . " sends word that the peasants of " . $town->town_name . " have risen up in open rebellion"
+					   . " against the $revolt_reason",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,

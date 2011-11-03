@@ -160,7 +160,7 @@ sub test_raid_party_ip_address_common_with_mayor : Tests(1) {
     $party1->update;
     $town->land_id($land[1]->id);
     $town->update;    
-    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id, type => 'castle');
     my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
         top_left => {x=>1,y=>1}, 
         bottom_right=>{x=>5,y=>5}, 
@@ -213,7 +213,7 @@ sub test_raid_party_ip_address_common_with_previous_mayor : Tests(1) {
     $party1->update;
     $town->land_id($land[1]->id);
     $town->update;    
-    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id, type => 'castle');
     my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
         top_left => {x=>1,y=>1}, 
         bottom_right=>{x=>5,y=>5}, 
@@ -267,7 +267,7 @@ sub test_raid_successful : Tests(3) {
     $party1->update;
     $town->land_id($land[1]->id);
     $town->update;    
-    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id);
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id, type => 'castle');
     my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
         top_left => {x=>1,y=>1}, 
         bottom_right=>{x=>5,y=>5}, 

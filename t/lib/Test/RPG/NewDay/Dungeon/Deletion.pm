@@ -43,7 +43,7 @@ sub test_check_for_dungeon_deletion : Tests(3) {
 	$self->{roll_result} = 1;
 	
 	# WHEN
-	$action->check_for_dungeon_deletion();	
+	$action->check_for_dungeon_deletion($dungeon);	
 	
 	# THEN
 	$dungeon->discard_changes;

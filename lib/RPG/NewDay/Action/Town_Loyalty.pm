@@ -80,7 +80,11 @@ sub run {
                 $distance_to_capital_adjustment = round(10 - ($distance_to_capital / 10));
             }
             
-            my $loyalty_adjustment = $capital_block_adjustment + $distance_to_capital_adjustment;
+            # Charisma bonus
+            my $king = $kingdom->king;
+            my $charisma_bonus = $king->execute_skill('Charisma', 'kingdom_loyalty') // 0;
+            
+            my $loyalty_adjustment = $capital_block_adjustment + $distance_to_capital_adjustment + $charisma_bonus;
            
             my $kingdom_town = $schema->resultset('Kingdom_Town')->find_or_create(
                 {
@@ -93,7 +97,8 @@ sub run {
 
             $c->logger->debug("Adjusting town loyalty for town " . $town->id . " to " . $kingdom_town->loyalty . "; " . 
                 "capital_block_adjustment: $capital_block_adjustment; " .
-                "distance_to_capital_adjustment: $distance_to_capital_adjustment"
+                "distance_to_capital_adjustment: $distance_to_capital_adjustment" .
+                "charisma_bonus: $charisma_bonus"
             );
         }
         

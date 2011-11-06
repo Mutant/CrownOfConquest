@@ -182,7 +182,6 @@ sub calculate_approval {
 	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
 	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);
-	$guards_hired_adjustment++ unless $mayor->is_npc; # Make a few less guards required
 	
 	my $garrison_chars_adjustment = 0;
 	
@@ -206,12 +205,15 @@ sub calculate_approval {
 		
 		$garrison_chars_adjustment = round(($actual_garrison_chars_level - $expected_garrison_chars_level) / 10);
 	}
+	
+	my $charisma_adjustment = $mayor->execute_skill('Charisma', 'mayor_approval') // 0;
 		
 	# A random component to approval
 	my $random_adjustment += Games::Dice::Advanced->roll('1d5') - 3;
 	
 	my $adjustment = $raids_adjustment + $guards_killed_adjustment + $party_tax_adjustment + 
-		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $random_adjustment;
+		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $charisma_adjustment 
+		+ $random_adjustment;
 
 	$adjustment = -10 if $adjustment < -10;
 	$adjustment =  10 if $adjustment >  10;
@@ -219,7 +221,7 @@ sub calculate_approval {
 	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
 		"[Raid: $raids_adjustment; Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
 		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Garrison Chars: $garrison_chars_adjustment; " .
-		"Random: $random_adjustment]");
+		"Charisma: $charisma_adjustment; Random: $random_adjustment]");
 	
 	$town->adjust_mayor_rating($adjustment);
 	$town->update;

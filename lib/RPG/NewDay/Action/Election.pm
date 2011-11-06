@@ -91,7 +91,7 @@ sub run_election {
 	    my $char_score = $scores{$char_id};
 	
 		$c->logger->debug("Character $char_id scores: " . $char_score->{total} . " [spend: " . $char_score->{spend} . 
-		  ", rating: " . $char_score->{rating} . ", random: " . $char_score->{random} . "]"); 
+		  ", rating: " . $char_score->{rating} . ", charisma: " . $char_score->{charisma} . ", random: " . $char_score->{random} . "]"); 
 		
 		if (! defined $highest_score || $highest_score < $char_score->{total}) {
 			$winner	= $char_score->{character};

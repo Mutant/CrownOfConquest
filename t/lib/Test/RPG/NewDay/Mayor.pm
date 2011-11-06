@@ -484,4 +484,37 @@ sub test_caclulate_approval_mayoralty_changed : Tests(1) {
            
 }
 
+sub test_caclulate_approval_with_charisma : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Charisma',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 4,
+        }
+    );    
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_approval($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->mayor_rating, -2, "Mayor rating reduced");
+           
+}
+
 1;

@@ -65,6 +65,8 @@ sub build_item {
             garrison_id => $params{garrison_id} || undef,
         }
     );
+    
+    $params{variables} = [$params{variables}] if $params{variables} && ref $params{variables} ne 'ARRAY';
 
     foreach my $variable ( @{ $params{variables} } ) {
         my $ivn = $schema->resultset('Item_Variable_Name')->find_or_create(

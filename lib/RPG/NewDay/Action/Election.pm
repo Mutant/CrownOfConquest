@@ -84,6 +84,9 @@ sub run_election {
 	
 	my %scores = $election->get_scores();
 	
+    $election->status('Closed');
+	$election->update;
+	
 	foreach my $char_id (keys %scores) {
 	    my $char_score = $scores{$char_id};
 	
@@ -174,9 +177,6 @@ sub run_election {
             }
         ); 
 	}
-
-	$election->status('Closed');
-	$election->update;
 
 	$town->last_election($election->scheduled_day);
 	$town->update;	

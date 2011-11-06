@@ -1367,6 +1367,26 @@ sub item_change_allowed {
 	return $item_change_allowed;
 }
 
+sub execute_skill {
+    my $self = shift;
+    my $skill_name = shift // confess "Skill name not provided";
+    my $event = shift;
+    
+    my $character_skill = $self->find_related(
+        'character_skills',
+        {
+            'skill.skill_name' => $skill_name,
+        },
+        {
+            join => 'skill',
+        }
+    );
+    
+    return unless $character_skill;
+    
+    return $character_skill->execute($event);   
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

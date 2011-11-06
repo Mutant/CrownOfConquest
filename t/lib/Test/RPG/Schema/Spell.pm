@@ -268,4 +268,45 @@ sub test_cast_party_effect_spells : Tests(14) {
 
 }
 
+sub test_recalled_spell : Test(2) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );    
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Recall',
+        }
+    );        
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 100,
+        }
+    );    
+
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );   
+    
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+    
+    # THEN
+    is($result->recalled, 1, "Spell was recalled");
+    
+    $mem_spell->discard_changes;
+    is( $mem_spell->casts_left_today, 1, "Memorised spell count not decremented" );    
+}
+
 1;

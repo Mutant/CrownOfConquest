@@ -62,9 +62,14 @@ sub cast {
     confess "Character has not memorised spell" if !$memorised_spell || $memorised_spell->casts_left_today <= 0;
 
     my $result = $self->_cast_impl($character, $target);
-
-    $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
-    $memorised_spell->update;
+    
+    if ($character->execute_skill('Recall', 'cast')) {
+        $result->recalled(1);
+    }
+    else {    
+        $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
+        $memorised_spell->update;
+    }
 
     return $result;
 }

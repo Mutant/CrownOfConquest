@@ -76,6 +76,12 @@ sub quests_allowed {
     my $land_count = $self->sectors->count;
     
     my $quest_count = round $land_count / RPG::Schema->config->{land_per_kingdom_quests};
+        
+    my $king = $self->king;
+    my $leadership_bonus = $king->execute_skill('Leadership', 'kingdom_quests_allowed') // 0;
+    
+    $quest_count += $leadership_bonus;
+    
     $quest_count = RPG::Schema->config->{minimum_kingdom_quests} if $quest_count < RPG::Schema->config->{minimum_kingdom_quests};
     
     return $quest_count;   

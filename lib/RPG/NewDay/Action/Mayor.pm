@@ -85,27 +85,8 @@ sub process_town {
 	my $revolt_started = $self->check_for_revolt($town);
 	
 	if ($town->peasant_tax && ! $town->peasant_state) {
-		my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
-		$self->context->logger->debug("Collecting $gold peasant tax");
-		$town->increase_gold($gold);
-		$town->update;
-		
-		$c->schema->resultset('Town_History')->create(
-            {
-                town_id => $town->id,
-                day_id  => $c->current_day->id,
-                message => "The mayor collected $gold gold tax from the peasants",
-            }
-        );
-        
-		$town->add_to_history(
-			{
-				type => 'income',
-				value => $gold,
-				message => 'Peasant Tax',
-				day_id => $c->current_day->id,
-			}
-		); 
+	    
+
 	}
 	
 	$self->calculate_kingdom_tax($town);
@@ -122,6 +103,39 @@ sub process_town {
 	}
 
 	$self->generate_advice($town);      
+}
+
+sub collect_tax {
+    my $self = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    my $c = $self->context;
+    
+    my $bonus = 15 + ($mayor->execute_skill('Leadership', 'town_peasant_tax') // 0);
+    
+	my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * $bonus) * ($town->peasant_tax / 100)) * 10;
+	$self->context->logger->debug("Collecting $gold peasant tax");
+	$town->increase_gold($gold);
+	$town->update;
+	
+	$c->schema->resultset('Town_History')->create(
+        {
+            town_id => $town->id,
+            day_id  => $c->current_day->id,
+            message => "The mayor collected $gold gold tax from the peasants",
+        }
+    );
+    
+	$town->add_to_history(
+		{
+			type => 'income',
+			value => $gold,
+			message => 'Peasant Tax',
+			day_id => $c->current_day->id,
+		}
+	);     
+       
 }
 
 sub calculate_approval {

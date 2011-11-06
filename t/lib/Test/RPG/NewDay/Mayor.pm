@@ -264,6 +264,8 @@ sub test_generate_advice : Tests(2) {
 	
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
 	
+	undef $self->{roll_result};
+	
 	# WHEN
 	$action->generate_advice($town);
 	
@@ -516,5 +518,67 @@ sub test_caclulate_approval_with_charisma : Tests(1) {
     is($town->mayor_rating, -2, "Mayor rating reduced");
            
 }
+
+sub test_collect_tax : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 10, gold => 0 );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    
+    $self->{roll_result} = 20;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->collect_tax($town, $mayor);  
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 770, "Tax collected");
+    
+    is($town->history->count, 2, "Messages added to town's history");
+    my @history = $town->history;
+    is($history[0]->message, "The mayor collected 770 gold tax from the peasants", "Correct town message");
+
+    
+    is($history[1]->type, "income", "Second history line records income");
+    is($history[1]->value, "770", "Second history line records income value");
+    is($history[1]->message, "Peasant Tax", "Second history line records income label");        
+}
+
+sub test_collect_tax_with_leadership : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 10, gold => 0 );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    
+    $self->{roll_result} = 20;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Leadership',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 5,
+        }
+    );      
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->collect_tax($town, $mayor);  
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 1270, "Tax collected"); 
+}
+
 
 1;

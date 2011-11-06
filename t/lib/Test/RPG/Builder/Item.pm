@@ -37,6 +37,8 @@ sub build_item {
 
     my $eq_place_id = $params{no_equip_place} ? undef : $schema->resultset('Equip_Places')->find(1)->id;
     
+    $params{attributes} = [$params{attributes}] if $params{attributes} && ref $params{attributes} ne 'ARRAY';
+    
     foreach my $attribute ( @{ $params{attributes} } ) {
         my $ian = $schema->resultset('Item_Attribute_Name')->find_or_create(
             {

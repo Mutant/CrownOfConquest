@@ -335,7 +335,6 @@ function calculateSpellPoints() {
 	id="stats-panel" loadingMessage="" [% IF ! window %]class="characterStats"[% END %]></div>
 
 </div>
-
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
@@ -349,8 +348,14 @@ function calculateSpellPoints() {
     </div>
     [% END %]
     
-    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]
-    	[% IF selected == 'history' %]selected="true"[% END %]">    
+    [% IF ! window %]
+    <div dojoType="dijit.layout.ContentPane" title="Skills" href="[% base %]/character/skills?character_id=[% character.id %]"
+    	[% IF selected == 'skills' %]selected="true"[% END %]>
+    </div>    
+    [% END %]
+    
+    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]"
+    	[% IF selected == 'history' %]selected="true"[% END %]>    
     </div>
 
 </div>

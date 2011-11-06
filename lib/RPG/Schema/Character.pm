@@ -27,11 +27,11 @@ __PACKAGE__->add_columns(
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance online_cast_chance
         creature_group_id mayor_of status status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-        movement_factor_bonus/
+        movement_factor_bonus skill_points/
 );
 
 __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-								movement_factor_bonus/,
+								movement_factor_bonus skill_points/,
 								hit_points => {
 							 		upper_bound_col => 'max_hit_points',
 							 	},
@@ -85,6 +85,10 @@ __PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_i
 __PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id', {cascade_delete => 0} );
 
 __PACKAGE__->might_have( 'mayoral_candidacy', 'RPG::Schema::Election_Candidate', 'character_id', {cascade_delete => 0} );
+
+__PACKAGE__->has_many( 'character_skills', 'RPG::Schema::Character_Skill', 'character_id', );
+
+__PACKAGE__->many_to_many( 'skills' => 'character_skills', 'skill' );
 
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);

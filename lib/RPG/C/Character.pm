@@ -53,7 +53,7 @@ sub view : Local {
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
 	   $can_buy = 1; 	          
 	}
-
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -609,6 +609,97 @@ sub update_spells : Local {
 	}
 
     $c->forward( '/panel/refresh', [[screen => 'character/view?selected=spells&character_id=' . $character->id], 'party'] );
+}
+
+sub skills : Local {
+    my ( $self, $c ) = @_;
+   
+   	my $character = $c->stash->{character};
+
+	return unless $character;
+	
+	my @known_skills =$c->model('DBIC::Skill')->search(
+	   {
+	       'character_skills.character_id' => $character->id,
+	   },
+	   {
+	       prefetch => 'character_skills',
+	       order_by => 'skill_name',
+	   }
+	);
+	
+	my $can_assign_skill_points = $character->party_id && $character->skill_points > 0 ? 1 : 0;
+	
+	my @available_skills;
+	if ($can_assign_skill_points) {
+	    my @skills = $c->model('DBIC::Skill')->search(
+	       {},
+	       {
+	           order_by => 'skill_name',
+	       },	    
+	    );
+	    
+	    foreach my $skill (@skills) {
+	       # Remove all skills that are already know by this character
+	       if (! grep { $_->id == $skill->id } @known_skills) {
+	           push @available_skills, $skill;   
+	       }   
+	    }	    
+	}
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'character/skills.html',
+				params   => {
+					character              => $character,
+                    known_skills           => \@known_skills,
+                    available_skills       => \@available_skills,
+                    can_assign_skill_points => $can_assign_skill_points,
+				}
+			}
+		]
+	);
+}
+
+sub use_skill_point : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
+    
+    my $character = $c->stash->{character};
+    
+    if ($character->skill_points < 0) {
+        $c->stash->{error} = 'No stat points to assign';
+        $c->forward( '/panel/refresh' );
+        return;
+    }
+    
+    my $skill = $c->model('DBIC::Skill')->find({ skill_id => $c->req->param('skill_id') });
+    croak "Invalid skill\n" unless $skill;
+    
+    my $character_skill = $c->model('DBIC::Character_Skill')->find_or_create(
+        {
+            character_id => $character->id,
+            skill_id => $skill->id,
+        },
+    );
+    
+    if ($character_skill->level >= $c->config->{max_skill_level}) {
+        $c->stash->{error} = 'That skill is already at the max level!';
+        $c->forward( '/panel/refresh' );
+        return;
+    }
+    
+    $character_skill->increment_level;
+    $character_skill->update;
+    
+    $character->decrement_skill_points;
+    $character->update;
+    
+    $c->forward( '/panel/refresh', [[screen => 'character/view?selected=skills&character_id=' . $character->id], 'party'] );
+    
 }
 
 sub add_stat_point : Local {

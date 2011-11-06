@@ -641,6 +641,11 @@ capital_move_cost_per_sector: 6
 # Chance sectors not connected to capital go neutral
 chance_unconnected_sector_becomes_neutral: 20
 
+# ----- Skills Params ----- #
+
+# Maximum level allowed for a particular skill
+max_skill_level: 10
+
 # ----- Debug ----- #
 
 #   Buildings are free (no resources used)

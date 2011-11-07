@@ -48,8 +48,7 @@ sub get_role_name {
 	
 	my $name = $self->skill->skill_name;
 	
-	# Camel case-ify the name
-	$name =~ s/(\b|_)(\w)/$1\u$2/g;	
+    $name =~ s/ /_/g;	
 	
 	return 'RPG::Schema::Skill::' . $name;
 }

@@ -1347,10 +1347,13 @@ sub critical_hit_chance {
 	
 	my $bonus = sum map { $_->variable('Critical Hit Bonus') } @items_with_bonus;
 	$bonus //= 0;
+	
+	my $skill_bonus = $self->execute_skill('Eagle Eye', 'critical_hit_chance') // 0;
     
     return int ($self->divinity / RPG::Schema->config->{character_divinity_points_per_chance_of_critical_hit}) +
         int ($self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit}) +
-        $bonus;     
+        $bonus +
+        $skill_bonus;
 }
 
 # Are they allowed to move their items around (drop, equip, etc)?

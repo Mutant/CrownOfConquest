@@ -1061,8 +1061,53 @@ sub test_get_item_actions : Tests(3) {
 	my $action1 = $actions[0]->isa('RPG::Schema::Items') ? $actions[0] : $actions[1];
 	
 	is($action1->id, $item1->id, "Usable item returned");
-	is($actions[1]->id, $enchantment->id, "Enchantment returned");
+	is($actions[1]->id, $enchantment->id, "Enchantment returned");    
+}
+
+sub test_critical_hit_chance : Tests(1) {
+    my $self = shift;
     
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, divinity => 10, level => 3);
+    
+    $self->{config}{character_divinity_points_per_chance_of_critical_hit} = 10;	
+	$self->{config}{character_level_per_bonus_point_to_critical_hit} = 1;
+	
+	# WHEN
+	my $chance = $character->critical_hit_chance;
+	
+	# THEN
+	is($chance, 4, "Critical hit chance correct");
+}
+
+sub test_critical_hit_chance_with_eagle_eye : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, divinity => 10, level => 3);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Eagle Eye',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 5,
+        }
+    );    
+    
+    $self->{config}{character_divinity_points_per_chance_of_critical_hit} = 10;	
+	$self->{config}{character_level_per_bonus_point_to_critical_hit} = 1;
+	
+	# WHEN
+	my $chance = $character->critical_hit_chance;
+	
+	# THEN
+	is($chance, 9, "Critical hit chance correct with eagle eye");
 }
 
 1;

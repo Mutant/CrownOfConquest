@@ -90,13 +90,7 @@ sub creature_flee {
 	#  Only flee if cg level is lower than party
 	if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 2 == 0 ) {
 		if ( $self->creature_group->level < $self->character_group->level ) {
-		    my $level_diff = $self->character_group->level - $self->creature_group->level;		    
-		    
-			my $chance_of_fleeing = ( $level_diff - 2 ) * $self->config->{chance_creatures_flee_per_level_diff};
-			
-			$chance_of_fleeing += $level_diff if $level_diff > 5;
-				
-		    $chance_of_fleeing = 75 if $chance_of_fleeing > 75;
+		    my $chance_of_fleeing = $self->creature_group->flee_chance($self->character_group);
 
 			$self->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 

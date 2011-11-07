@@ -35,6 +35,7 @@ sub build_character {
 			status         => $params{status} || undef,
 			status_context => $params{status_context} || undef,
 			mayor_of       => $params{mayor_of} || undef,
+			creature_group_id => $params{creature_group_id} // undef,
 		}
 	);
 

@@ -19,6 +19,7 @@ use Test::RPG::Builder::Quest;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Land;
+use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
 use DateTime;
@@ -595,9 +596,61 @@ sub test_move_to : Tests(1) {
     
     # THEN
     my @mapped_sectors = $party->mapped_sectors;
-    is(scalar @mapped_sectors, 9, "All sectors added to mapped sectors");
+    is(scalar @mapped_sectors, 9, "All sectors added to mapped sectors");   
+}
+
+sub test_flee_chance : Tests(1) {
+    my $self = shift;
     
-       
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 50, "Correct flee chance");    
+}
+
+sub test_flee_chance_with_tactics : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, level => 3, creature_group_id => $cg->id);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Tactics',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    );    
+
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 42, "Correct flee chance");
 }
 
 1;

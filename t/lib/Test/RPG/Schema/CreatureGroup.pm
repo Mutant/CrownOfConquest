@@ -12,6 +12,8 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Town;
+use Test::RPG::Builder::CreatureGroup;
+use Test::RPG::Builder::Party;
 
 
 sub startup : Test(startup => 1) {
@@ -377,8 +379,54 @@ sub test_auto_heal_no_healing_if_no_mayor : Tests(2) {
     is($char1->hit_points, 5, "Character was not healed");
     
     $town->discard_changes;
-    is($town->gold, 1000, "Town's gold the same");    
+    is($town->gold, 1000, "Town's gold the same");
+}
+
+sub test_flee_chance : Tests(1) {
+    my $self = shift;
     
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+    $self->{config}{chance_creatures_flee_per_level_diff} = 2;
+    
+    # WHEN
+    my $flee_chance = $cg->flee_chance($party);
+    
+    # THEN
+    is($flee_chance, 4, "Flee chance is correct");   
+}
+
+sub test_flee_chance_with_tactics : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 10);
+    my ($char) = $party->characters;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Tactics',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    );       
+    
+    $self->{config}{chance_creatures_flee_per_level_diff} = 2;
+    
+    # WHEN
+    my $flee_chance = $cg->flee_chance($party);
+    
+    # THEN
+    is($flee_chance, 2, "Flee chance is correct with Tactician skill");   
 }
 
 1;

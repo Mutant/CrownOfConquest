@@ -804,18 +804,8 @@ sub roll_flee_attempt {
 	my $opponents        = shift;
 	my $fleer_opp_number = shift;
 
-	my $level_difference = $opponents->level - $fleers->level;
-	my $flee_chance =
-		$self->config->{base_flee_chance} + ( $self->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
-
-	if ( $fleers->level == 1 ) {
-
-		# Bonus chance for being low level
-		$flee_chance += $self->config->{flee_chance_low_level_bonus};
-	}
-
-	my $flee_attempts_column = 'opponent_' . $fleer_opp_number . '_flee_attempts';
-	$flee_chance += ( $self->config->{flee_chance_attempt_modifier} * ( $self->combat_log->get_column($flee_attempts_column) || 0 ) );
+    my $flee_attempts_column = 'opponent_' . $fleer_opp_number . '_flee_attempts';
+    my $flee_chance = $fleers->flee_chance($opponents, $self->combat_log->get_column($flee_attempts_column));
 
 	my $rand = Games::Dice::Advanced->roll("1d100");
 

@@ -33,6 +33,17 @@ sub build_dungeon_room {
     
     my $stairs_made = 0;
     
+    if ($params{x_size} && $params{'y_size'}) {
+        $params{top_left} = {
+            'x' => 1,
+            'y' => 1,
+        };
+        $params{bottom_right} = {
+            'x' => $params{x_size},
+            'y' => $params{'y_size'},
+        };
+    }
+    
     # Size parameters can be specified to create some dungeon sectors
     if ($params{top_left} && $params{bottom_right}) {
         for my $x ($params{top_left}{x} .. $params{bottom_right}{x}) {

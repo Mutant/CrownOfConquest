@@ -99,29 +99,24 @@ sub average_stat {
     return average @stats;
 }
 
-sub skill_aggregate {
+sub flee_chance {
     my $self = shift;
-    my $skill = shift;
-    my $event = shift;
+    my $opponents = shift;
+    my $flee_attempts = shift // 0;
     
-    my @characters = $self->members;
-    
-    my @character_skills = $self->result_source->schema->resultset('Character_Skill')->search(
-        {
-            'character_id' => [map { $_->id } @characters],
-            'skill.skill_name' => $skill,
-        },
-        {
-            join => 'skill',
-        }
-    );
-    
-    my $aggregate = 0;
-    foreach my $char_skill (@character_skills) {
-        $aggregate += $char_skill->execute($event);   
-    }
-    
-    return $aggregate;
+	my $level_difference = $opponents->level - $self->level;
+	my $flee_chance =
+		RPG::Schema->config->{base_flee_chance} + ( RPG::Schema->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+		
+    my $opp_skill_benefit = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
+    $flee_chance -= $opp_skill_benefit;		
+
+	if ( $self->level == 1 ) {
+		# Bonus chance for being low level
+		$flee_chance += RPG::Schema->config->{flee_chance_low_level_bonus};
+	}
+
+	$flee_chance += ( RPG::Schema->config->{flee_chance_attempt_modifier} * $flee_attempts );       
 }
 
 1;

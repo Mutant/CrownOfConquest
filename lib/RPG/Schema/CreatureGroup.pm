@@ -291,6 +291,27 @@ sub in_combat {
     return $self->in_combat_with ? 1 : 0;
 }
 
+sub flee_chance {
+    my $self = shift;
+    my $opponents = shift;
+    
+    my $level_diff = $opponents->level - $self->level;
+    
+	my $chance_of_fleeing = ( $level_diff - 2 ) * RPG::Schema->config->{chance_creatures_flee_per_level_diff};
+	
+	$chance_of_fleeing += $level_diff if $level_diff > 7;
+
+    my $skill_benefit = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
+    $chance_of_fleeing -= $skill_benefit;
+		
+    $chance_of_fleeing = 75 if $chance_of_fleeing > 75; 
+    
+    $chance_of_fleeing = 0 if $chance_of_fleeing < 0;
+    
+    return $chance_of_fleeing;   
+       
+}
+
 __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;

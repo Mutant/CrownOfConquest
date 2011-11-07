@@ -18,4 +18,6 @@ ENGINE = InnoDB;
 
 ALTER TABLE `Character` ADD COLUMN `skill_points` INTEGER  NOT NULL DEFAULT 0;
 
+UPDATE `Creature_Category` set name = 'Guard' where name = 'Guards';
+
 

@@ -25,7 +25,7 @@ sub generate_guards {
 
 	my @creature_types = $c->schema->resultset('CreatureType')->search(
 		{
-			'category.name' => 'Guards',
+			'category.name' => 'Guard',
 		},
 		{
 			join     => 'category',

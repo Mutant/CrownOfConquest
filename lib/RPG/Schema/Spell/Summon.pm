@@ -19,7 +19,7 @@ sub _cast {
                  '>', $level - 6,
             },
             'rare' => 0,
-            'category.name' => {'!=', 'Guards'},
+            'category.name' => {'!=', 'Guard'},
         },
         {
             join => 'category',

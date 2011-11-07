@@ -44,8 +44,8 @@ sub test_generate_guards_basic : Tests(3) {
 	$sector->stairs_up(1);
 	$sector->update;
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
-	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guard', hire_cost => 0);
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 0);
 	
 	my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
 	
@@ -81,8 +81,8 @@ sub test_generate_guards_high_prosperity : Tests(4) {
 	$sector->stairs_up(1);
 	$sector->update;		
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
-	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guard', hire_cost => 0);
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 0);
 	
 	my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
 	
@@ -119,7 +119,7 @@ sub test_generate_guards_pays_for_guards_correct : Tests(3) {
 	$sector->stairs_up(1);
 	$sector->update;	
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 10);
 	
 	my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
 	
@@ -156,7 +156,7 @@ sub test_generate_guards_changes_as_per_requests : Tests(3) {
 	$sector->stairs_up(1);
 	$sector->update;		
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 0);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 0);
 
     my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
@@ -205,7 +205,7 @@ sub test_generate_guards_changes_with_existing : Tests(3) {
 	$sector->stairs_up(1);
 	$sector->update;		
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 10);
 	
 	my @sectors = $room->sectors;	
 
@@ -262,8 +262,8 @@ sub test_generate_guards_mayors_group : Tests(4) {
 	$sector->stairs_up(1);
 	$sector->update;
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guards', hire_cost => 0);
-	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 0);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 6, category_name => 'Guard', hire_cost => 0);
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 0);
 	
 	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
 	$mayor->mayor_of($town->id);
@@ -311,9 +311,9 @@ sub test_generate_guards_multiple_guard_types : Tests(3) {
 	$character->mayor_of($town->id);
 	$character->update;		
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
-	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 20);
-	my $type3 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 15, category_name => 'Guards', hire_cost => 30);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 10);
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 20);
+	my $type3 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 15, category_name => 'Guard', hire_cost => 30);
 	
 	my @sectors = $room->sectors;
 	my $count = 0;
@@ -379,9 +379,9 @@ sub test_generate_guards_multiple_guard_types_firings_needed : Tests(3) {
 	$character->mayor_of($town->id);
 	$character->update;		
 		
-	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guards', hire_cost => 10);
-	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guards', hire_cost => 20);
-	my $type3 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 15, category_name => 'Guards', hire_cost => 30);
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 10);
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 20);
+	my $type3 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 15, category_name => 'Guard', hire_cost => 30);
 	
 	my @sectors = $room->sectors;
 	my $count = 0;

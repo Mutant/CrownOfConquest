@@ -190,7 +190,7 @@ sub guards : Local {
 	
 	my %guard_types = map { $_->id =>  $_ } $c->model('DBIC::CreatureType')->search(
 		{
-			'category.name' => 'Guards',
+			'category.name' => 'Guard',
 		},
 		{
 			join     => 'category',
@@ -262,7 +262,7 @@ sub update_guards : Local {
 			}
 		);
 		
-		croak "Invalid creature group" unless $creature_type->category->name eq 'Guards';			
+		croak "Invalid creature group" unless $creature_type->category->name eq 'Guard';			
 		
 		my $hired = $c->model('DBIC::Town_Guards')->find(
 			{

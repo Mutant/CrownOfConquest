@@ -175,4 +175,104 @@ sub test_open_chest_with_quest_item : Tests(2) {
 	is_deeply(\@got, \@expected, "Correct items found");  
 }
 
+sub test_handle_chest_trap_not_triggered : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->mock_dice;
+	
+	my $dungeon_grid = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, dungeon_grid_id => $dungeon_grid->id);
+	
+	$self->{stash}{party} = $party;
+	
+	$self->{roll_result} = 9;
+	
+	my $triggered = 0;
+	$self->{mock_forward}{trigger_trap} = sub { $triggered = 1 }; 
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	
+	# WHEN
+	RPG::C::Dungeon->handle_chest_trap($self->{c}, $dungeon_grid);
+	
+	# THEN
+	is($triggered, 0, "Trap not triggered");
+	
+	$self->unmock_dice;
+	
+}
+
+sub test_handle_chest_trap_triggered : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->mock_dice;
+	
+	my $dungeon_grid = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, dungeon_grid_id => $dungeon_grid->id);
+	
+	$self->{stash}{party} = $party;
+	
+	$self->{roll_result} = 11;
+	
+	my $triggered = 0;
+	$self->{mock_forward}{trigger_trap} = sub { $triggered = 1 }; 
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	
+	# WHEN
+	RPG::C::Dungeon->handle_chest_trap($self->{c}, $dungeon_grid);
+	
+	# THEN
+	is($triggered, 1, "Trap triggered");
+	
+	$self->unmock_dice;
+	
+}
+
+sub test_handle_chest_trap_with_skill_bonus : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->mock_dice;
+	
+	my $dungeon_grid = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, dungeon_grid_id => $dungeon_grid->id);
+	my @chars = $party->characters;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Awareness',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $chars[0]->id,
+            level => 5,
+        }
+    );	
+	
+	$self->{stash}{party} = $party;
+	
+	$self->{roll_result} = 18;
+	
+	my $triggered = 0;
+	$self->{mock_forward}{trigger_trap} = sub { $triggered = 1 }; 
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	
+	# WHEN
+	RPG::C::Dungeon->handle_chest_trap($self->{c}, $dungeon_grid);
+	
+	# THEN
+	is($triggered, 0, "Trap not triggered");
+	
+	$self->unmock_dice;
+	
+	
+}
+
 1;

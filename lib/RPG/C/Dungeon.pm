@@ -969,10 +969,11 @@ sub search_room : Local {
 
     if (@secret_doors) {
         my $avg_int = $c->stash->{party}->average_stat('intelligence');
+        my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'search_room');
 
         my $roll = Games::Dice::Advanced->roll( '1d' . ( 15 + ( $current_location->dungeon_room->dungeon->level * 5 ) ) );
 
-        if ( $roll <= $avg_int ) {
+        if ( $roll <= $avg_int + $bonus) {
             my $door_found = ( shuffle @secret_doors )[0];
 
             $door_found->state('open');
@@ -1114,10 +1115,13 @@ sub handle_chest_trap : Private {
 	my ( $self, $c, $current_location ) = @_;
 	
 	my $avg_div = $c->stash->{party}->average_stat('divinity');
+	my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'chest_trap');
+	
 	unless ($c->session->{detected_trap}[$current_location->x][$current_location->y] || 
-		Games::Dice::Advanced->roll('1d30') <= $avg_div) {
+		Games::Dice::Advanced->roll('1d30') <= $avg_div + $bonus) {
 		# Failed to detect trap
-		$c->detach('trigger_trap', [$current_location]);
+		$c->forward('trigger_trap', [$current_location]);
+		return;
 	}
 	
 	$c->stash->{dialog_to_display} = 'chest-trap';

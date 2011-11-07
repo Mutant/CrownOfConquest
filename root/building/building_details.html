@@ -1,8 +1,10 @@
 <div>
 [% drawn_title = 0 %]
 [% FOREACH resource IN ['wood','iron','stone','clay'] %]
-	[% res_required = building_type.amount_of_res_required(resource) %]
 	[% party_res = resource | ucfirst %] 
+	
+	[% res_required = resources_needed.$party_res %]
+
 	[% res_got = party_resources.$party_res || 0 %]
 		
 	[% title_span_style = "" %]

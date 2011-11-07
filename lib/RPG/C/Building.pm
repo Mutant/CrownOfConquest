@@ -51,7 +51,9 @@ sub construct : Local {
         {
             join => 'category',
         }
-    ); 
+    );
+    
+    my %resources_needed = $building_type->cost_to_build($c->stash->{party});
     	
 	$c->forward('RPG::V::TT',
         [{
@@ -60,8 +62,9 @@ sub construct : Local {
             	party => $c->stash->{party},
                 building_type => $building_type,
                 party_resources => \%party_resources,
-                enough_resources => $building_type->enough_resources(%party_resources),
+                enough_resources => $building_type->enough_resources($c->stash->{party}, %party_resources),
                 resources => \%resources,
+                resources_needed => \%resources_needed,
             },
         }]
     );    
@@ -87,12 +90,8 @@ sub build : Local {
         $c->detach('/panel/refresh');
     }
    
-	my %resources_needed = (
-       'Clay'  => $building_type->clay_needed,
-       'Iron'  => $building_type->iron_needed,
-       'Wood'  => $building_type->wood_needed,
-       'Stone' => $building_type->stone_needed,
-	);
+	my %resources_needed = $building_type->cost_to_build($c->stash->{party});
+	
 	if (! $c->stash->{party}->consume_items('Resource', %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to create this building";
 		$c->detach('/panel/refresh');			
@@ -179,6 +178,8 @@ sub manage : Local {
             join => 'category',
         }
     );	
+    
+    my %resources_needed = $building_type->cost_to_build($c->stash->{party});
 
 	$c->forward('RPG::V::TT',
         [{
@@ -188,8 +189,9 @@ sub manage : Local {
                 building_type => $building_type,
                 upgradable_to_type => $upgradable_to_type,
                 party_resources => \%party_resources,
-                enough_resources => $upgradable_to_type ? $upgradable_to_type->enough_resources(%party_resources) : 1,
+                enough_resources => $upgradable_to_type ? $upgradable_to_type->enough_resources($c->stash->{party}, %party_resources) : 1,
                 resources => \%resources,
+                resources_needed => \%resources_needed,
             },
         }]
     );     
@@ -227,14 +229,9 @@ sub upgrade : Local {
     if (! $upgradable_to_type->enough_turns($c->stash->{party})) {
         $c->stash->{error} = "You don't have enough turns to upgrade the building";
         $c->detach('/panel/refresh');
-    }	
+    }
 	
-	my %resources_needed = (
-       'Clay'  => $upgradable_to_type->clay_needed,
-       'Iron'  => $upgradable_to_type->iron_needed,
-       'Wood'  => $upgradable_to_type->wood_needed,
-       'Stone' => $upgradable_to_type->stone_needed,
-	);
+	my %resources_needed = $upgradable_to_type->cost_to_build($c->stash->{party});
 	
 	if (! $c->stash->{party}->consume_items('Resource', %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to upgrade this building";

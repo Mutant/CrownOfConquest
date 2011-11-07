@@ -99,4 +99,29 @@ sub average_stat {
     return average @stats;
 }
 
+sub skill_aggregate {
+    my $self = shift;
+    my $skill = shift;
+    my $event = shift;
+    
+    my @characters = $self->members;
+    
+    my @character_skills = $self->result_source->schema->resultset('Character_Skill')->search(
+        {
+            'character_id' => [map { $_->id } @characters],
+            'skill.skill_name' => $skill,
+        },
+        {
+            join => 'skill',
+        }
+    );
+    
+    my $aggregate = 0;
+    foreach my $char_skill (@character_skills) {
+        $aggregate += $char_skill->execute($event);   
+    }
+    
+    return $aggregate;
+}
+
 1;

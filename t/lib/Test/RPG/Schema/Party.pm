@@ -650,7 +650,42 @@ sub test_flee_chance_with_tactics : Tests(1) {
 	my $chance = $party->flee_chance($cg);
 	
 	# THEN
-	is($chance, 42, "Correct flee chance");
+	is($chance, 44, "Correct flee chance");
+}
+
+sub test_flee_chance_with_strategy : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+    my ($char) = $party->characters;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Strategy',
+        }
+    );
+ 
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    ); 
+
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 56, "Correct flee chance");
 }
 
 1;

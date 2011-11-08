@@ -301,8 +301,11 @@ sub flee_chance {
 	
 	$chance_of_fleeing += $level_diff if $level_diff > 7;
 
-    my $skill_benefit = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
-    $chance_of_fleeing -= $skill_benefit;
+    my $opp_skill_penalty = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
+    $chance_of_fleeing -= $opp_skill_penalty;
+
+    my $skill_bonus = $self->skill_aggregate('Strategy', 'flee_bonus') // 0;
+    $chance_of_fleeing += $skill_bonus;
 		
     $chance_of_fleeing = 75 if $chance_of_fleeing > 75; 
     

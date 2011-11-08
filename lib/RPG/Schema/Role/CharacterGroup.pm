@@ -110,6 +110,9 @@ sub flee_chance {
 		
     my $opp_skill_benefit = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
     $flee_chance -= $opp_skill_benefit;		
+    
+    my $skill_bonus = $self->skill_aggregate('Strategy', 'flee_bonus') // 0;
+    $flee_chance += $skill_bonus;   
 
 	if ( $self->level == 1 ) {
 		# Bonus chance for being low level

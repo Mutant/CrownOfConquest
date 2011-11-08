@@ -42,6 +42,7 @@ around '_build_combat_factors' => sub {
     return $combat_factors if defined $refresh_type && $refresh_type ne 'creature';    
     
     # If we're in a castle, any guards get an AF bonus from the mayor's Tactics skill
+    #  and DF bonus from their Strategy skill
     my $dungeon = $self->location->dungeon_room->dungeon;
     
     if ($dungeon->type eq 'castle') {
@@ -55,14 +56,16 @@ around '_build_combat_factors' => sub {
         return $combat_factors unless $mayor;
         
         my $af_bonus = $mayor->execute_skill('Tactics', 'guard_af') // 0;
+        my $df_bonus = $mayor->execute_skill('Strategy', 'guard_df') // 0;
         
-        return $combat_factors unless $af_bonus > 0;
+        return $combat_factors if $af_bonus < 0 && $df_bonus < 0;
         
         foreach my $creature ($self->creature_group->creatures) {
             next if defined $id && $id != $creature->id;
             
             if ($creature->type->category->name eq 'Guard') {
-                $combat_factors->{creature}{ $creature->id }{af} += $af_bonus;    
+                $combat_factors->{creature}{ $creature->id }{af} += $af_bonus;
+                $combat_factors->{creature}{ $creature->id }{df} += $df_bonus;
             }   
         }
     }

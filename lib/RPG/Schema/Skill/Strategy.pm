@@ -1,4 +1,4 @@
-package RPG::Schema::Skill::Tactics;
+package RPG::Schema::Skill::Strategy;
 
 use Moose::Role;
 
@@ -13,11 +13,11 @@ sub execute {
     my $character = $self->char_with_skill;
     
     given ($event) {
-        when ('opponent_flee') {
+        when ('flee_bonus') {
             return round $self->level + ($character->intelligence / 8);
         }
         
-        when ('guard_af') {
+        when ('guard_df') {
             return $self->level;   
         }
     }    

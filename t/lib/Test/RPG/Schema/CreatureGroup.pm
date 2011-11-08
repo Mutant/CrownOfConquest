@@ -411,14 +411,14 @@ sub test_flee_chance_with_tactics : Tests(1) {
             skill_name => 'Tactics',
         }
     );
-    
+ 
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
             skill_id => $skill->id,
             character_id => $char->id,
             level => 5,
         }
-    );       
+    );          
     
     $self->{config}{chance_creatures_flee_per_level_diff} = 2;
     
@@ -426,7 +426,38 @@ sub test_flee_chance_with_tactics : Tests(1) {
     my $flee_chance = $cg->flee_chance($party);
     
     # THEN
-    is($flee_chance, 2, "Flee chance is correct with Tactician skill");   
+    is($flee_chance, 4, "Flee chance is correct with Tactics skill");   
+}
+
+sub test_flee_chance_with_strategy : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 10);
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, creature_group_id => $cg->id, level => 3);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Strategy',
+        }
+    );
+ 
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    );  
+    
+    $self->{config}{chance_creatures_flee_per_level_diff} = 2;
+    
+    # WHEN
+    my $flee_chance = $cg->flee_chance($party);
+    
+    # THEN
+    is($flee_chance, 16, "Flee chance is correct with Strategy skill");   
 }
 
 1;

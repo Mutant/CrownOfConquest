@@ -131,8 +131,11 @@ sub tax_cost {
     my $level_cost = round ($level_modifier * ($party_level - 1 ));
     
     my $prestige_modifier = (0-$prestige) / 300;
+    
+    my $negotiation_skill = $party->skill_aggregate('Negotiation', 'town_entrance_tax');
+    my $negotiation_modifier = 1 - ($negotiation_skill / 100);
 
-    my $gold_cost = round ($base_cost + $level_cost);
+    my $gold_cost = round (($base_cost + $level_cost) * $negotiation_modifier);
     $gold_cost += round ($gold_cost * $prestige_modifier); 
     $gold_cost = 1 if $gold_cost < 1;
 

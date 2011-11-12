@@ -89,6 +89,46 @@ sub test_process_revolt_overthrow : Tests(7) {
 	is($garrison_character->hit_points, 0, "Garrison character has 0 hps");
 }
 
+sub test_process_revolt_with_negotiation : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->{roll_result} = 20;
+	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+	$town->peasant_state('revolt');
+	$town->update;	
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->mayor_of($town->id);
+	$character->update;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Negotiation',
+        }
+    ); 
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 10,
+        }
+    );
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	$self->{config}{level_hit_points_max}{test_class} = 6;
+	
+	# WHEN
+	$action->process_revolt($town);
+	
+	# THEN
+	$character->discard_changes;
+	is(defined $character->mayor_of, 1, "Character still mayor of town due to negotaition bonus");	
+}
+
 sub test_check_for_pending_mayor_expiry : Tests(2) {
 	my $self = shift;
 	

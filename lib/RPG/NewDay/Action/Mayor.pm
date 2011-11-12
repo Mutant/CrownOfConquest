@@ -351,15 +351,19 @@ sub process_revolt {
     if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
         $kingdom_loyalty_penalty = abs int $town->kingdom_loyalty / 5;
     }
+    
+    my $mayor = $town->mayor;
+    my $negotiation_bonus = 0;
+    if ($mayor) {
+        $negotiation_bonus = $mayor->execute_skill('Negotiation', 'mayor_overthrow_check');
+    }
 
 	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus;" .
-	   " kingdom loyalty penalty: $kingdom_loyalty_penalty");
+	   " kingdom loyalty penalty: $kingdom_loyalty_penalty; negotiation bonus: $negotiation_bonus");
 
-    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty;
-    
+    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty + $negotiation_bonus;
+        
     $c->logger->debug("Overthrow roll: $roll");
-
-    my $mayor = $town->mayor;
         
     if ($roll < 20) {
     	$mayor->lose_mayoralty;

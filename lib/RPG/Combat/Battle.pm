@@ -110,6 +110,8 @@ sub execute_round {
 	@combatants = $self->get_combatant_list(@combatants);
 
 	my @combat_messages;
+	
+	push @combat_messages, $self->check_skills;
 
 	foreach my $combatant (@combatants) {
 	    $combatant->discard_changes;
@@ -318,6 +320,36 @@ sub get_combatant_list {
 	@sorted_combatants = shuffle @sorted_combatants;
 
 	return @sorted_combatants;
+}
+
+sub check_skills {
+    my $self = shift;
+    
+    my @messages;
+    
+    my $character_weapons = $self->character_weapons;
+   
+    foreach my $char_id (keys %$character_weapons) {
+        my $character = $self->combatants_by_id->{character}{$char_id};
+        
+        foreach my $skill ( keys %{ $character_weapons->{$char_id}{skills} }) {
+            $self->log->debug("Checking $skill skill for character $char_id");
+            
+            my $char_skill = $character->get_skill($skill);
+            
+            my %results = $char_skill->execute('combat', $character);            
+            
+            if ($results{fired}) {
+                push @messages, $results{message};
+                
+                if ($results{factor_changed}) {
+                    $self->refresh_factor_cache('character', $char_id);   
+                }   
+            }
+        }
+    }
+    
+    return @messages;
 }
 
 sub character_action {
@@ -952,7 +984,7 @@ sub _build_combat_log {
 # Refresh a combatant's details in the factor cache
 sub refresh_factor_cache {
 	my ( $self, $combatant_type, $combatant_id_to_refresh ) = @_;
-
+$self->log->debug("refresh factors: $combatant_type $combatant_id_to_refresh");
     delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
 
 	$self->combat_factors( $self->_build_combat_factors($combatant_type, $combatant_id_to_refresh) );
@@ -994,6 +1026,12 @@ sub _build_character_weapons {
 	my %character_weapons;
 
 	return $self->session->{character_weapons} if defined $self->session->{character_weapons};
+	
+	my @combat_skills = $self->schema->resultset('Skill')->search(
+	   {
+	       type => 'combat',
+	   }
+    );
 
 	foreach my $combatant ( $self->combatants ) {
 		next unless $combatant->is_character;
@@ -1022,6 +1060,15 @@ sub _build_character_weapons {
 		else {
 			$character_weapons{ $combatant->id }{durability} = 1;
 		}
+		
+		# Also cache any combat skills
+		foreach my $skill (@combat_skills) {
+		    my $skill_name = $skill->skill_name;		    
+		    my $char_skill = $combatant->get_skill($skill_name);
+
+            $character_weapons{ $combatant->id }{skills}{$skill_name} = 1
+                if $char_skill;   
+		}		
 	}
 
 	$self->session->{character_weapons} = \%character_weapons;

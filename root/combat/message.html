@@ -31,6 +31,9 @@
 	[% ELSIF message.effect %]
 		<span class="[% defender_class %]">[% message.defender.name %]</span> took <span class="[% defender_class %]">[% message.damage %]</span> 
 		[% message.effect %] damage. [% display_death(message) %]
+	[% ELSIF message.skill %]
+		[% skill_tmpl = 'skills/' _ message.skill _ '.html' %]
+		[% INCLUDE $skill_tmpl, message=message %]
 	[% ELSE %]	
 		<span class="[% attacker_class %]">[% message.attacker.name %]</span> attacked <span class="[% defender_class %]">[% message.defender.name %]</span> 
 			with [% message.attacker.pronoun('posessive-subjective') %] <span class="combat-weapon">[% message.attacker.weapon %]</span> and 

@@ -1370,10 +1370,9 @@ sub item_change_allowed {
 	return $item_change_allowed;
 }
 
-sub execute_skill {
+sub get_skill {
     my $self = shift;
-    my $skill_name = shift // confess "Skill name not provided";
-    my $event = shift;
+    my $skill_name = shift // confess "Skill name not provided";   
     
     my $character_skill = $self->find_related(
         'character_skills',
@@ -1384,6 +1383,16 @@ sub execute_skill {
             join => 'skill',
         }
     );
+    
+    return $character_skill;    
+}
+
+sub execute_skill {
+    my $self = shift;
+    my $skill_name = shift // confess "Skill name not provided";
+    my $event = shift;
+    
+    my $character_skill = $self->get_skill($skill_name);
     
     return unless $character_skill;
     

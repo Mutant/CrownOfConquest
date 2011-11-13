@@ -732,7 +732,7 @@ sub test_roll_flee_attempt : Tests(5) {
 			roll                   => 60,
 			expected_result        => 1,
 			previous_flee_attempts => 0,
-		},
+		},		
 	);
 
 	$self->mock_dice;
@@ -994,6 +994,60 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	is( $combat_log_message->round,           1, "Round number recorded" );
 	is( $combat_log_message->opponent_number, 1, "Opp number set correctly" );
 	like( $combat_log_message->message, qr/You fled the battle!/, "Flee message set" );
+}
+
+sub test_execute_round_skills_checked : Tests(2) {
+	my $self = shift;
+
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	
+	my ($character) = $party->characters;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Beserker Rage',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );	
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'get_combatant_list', sub { () } );
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	my $combat_log_message = $self->{schema}->resultset('Combat_Log_Messages')->search->first;
+	like( $combat_log_message->message, qr/increasing his damage for 3 rounds/, "Message set correctly");
+	
+	is( $character->character_effects->count, 1, "Effect added to character");
+	
+	$self->unmock_dice;
+	$self->clear_dice_data;	
 }
 
 sub test_characters_killed_during_round_are_skipped : Tests(1) {

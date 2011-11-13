@@ -78,6 +78,8 @@ sub generate_character {
 
         $character->update;
     }
+    
+    $self->_allocate_stat_points;
 
     if ($roll_points) {
         $character->hit_points( $character->max_hit_points );
@@ -207,6 +209,40 @@ sub _allocate_equipment {
 
         $item->equip_item( $equip_place->equip_place_name, 0 );
     }
+}
+
+sub _assign_skill_points {
+    my $self = shift;
+    my $character = shift;
+    
+    my $skill_points = $character->level - 1;
+    
+    return if $skill_points <= 0;
+    
+    my @skills = shuffle $self->result_source->schema->resultset('Skill')->search();
+    
+    foreach my $skill (@skills) {
+        if ($skill->skill_name eq 'Recall' && ! $character->is_spell_caster) {
+            next;
+        }
+        
+        my $level = Games::Dice::Advanced->roll('1d10');
+        
+        $level = $skill_points if $level > $skill_points;
+        
+        $character->add_to_character_skills(
+            {
+                skill_id => $skill->id,
+                level => $level,
+            }
+        );
+        
+        $skill_points -= $level;
+        
+        last if $skill_points <= 0;
+    }
+    
+       
 }
 
 1;

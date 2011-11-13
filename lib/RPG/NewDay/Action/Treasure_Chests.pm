@@ -28,10 +28,10 @@ sub run {
 	
 	foreach my $chest (@chests) {	    
 		if ($chest->is_empty) {
-		    if ($chest->dungeon_gird->dungeon_room->special_room->room_type eq 'treasure') {
+		    if ($chest->dungeon_grid->dungeon_room->special_room_id && $chest->dungeon_grid->dungeon_room->special_room->room_type eq 'treasure') {
                 # Add some more gold to some of the chests in the treasure room
                 if (Games::Dice::Advanced->roll('1d100') <= 10) {
-                    my $gold = (Games::Dice::Advanced->roll('1d200') + 250) * $chest->dungeon_gird->dungeon_room->dungeon->level;
+                    my $gold = (Games::Dice::Advanced->roll('1d200') + 250) * $chest->dungeon_grid->dungeon_room->dungeon->level;
                     $chest->gold($gold);
                     $chest->add_trap;
                     $chest->update;

@@ -92,10 +92,10 @@ sub test_execute : Tests(5) {
     is($log->log, 'test used his Metallurgy skills, and made minor repairs to his Broken Item 1, and Broken Item 2.', "Log message is correct");
     
     $item1->discard_changes;
-    is($item1->variable('Durability'), 6, "Item1 repaired");
+    is($item1->variable('Durability'), 8, "Item1 repaired");
 
     $item2->discard_changes;
-    is($item2->variable('Durability'), 6, "Item2 repaired");
+    is($item2->variable('Durability'), 8, "Item2 repaired");
 
     $item3->discard_changes;
     is($item3->variable('Durability'), 10, "Item3 not repaired");

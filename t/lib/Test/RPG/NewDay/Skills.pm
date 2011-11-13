@@ -57,7 +57,7 @@ sub test_run : Tests(2) {
     is($party->day_logs->count, 1, "Party day logs updated");
         
     $chars[1]->discard_changes;
-    is($chars[1]->hit_points, 3, "Victim was healed");    
+    is($chars[1]->hit_points, 5, "Victim was healed");    
 }
 
 1;

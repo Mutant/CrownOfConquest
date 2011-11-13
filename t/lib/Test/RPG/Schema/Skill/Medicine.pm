@@ -59,10 +59,10 @@ sub test_execute_when_char_in_party : Tests(4) {
     my ($log) = $party->day_logs;
     
     like($log->log, qr/test used his Medicine skills, and healed/, "Healer in log msg");
-    like($log->log, qr/Victim by 1 hit point/, "Victim in log msg");
+    like($log->log, qr/Victim by 3 hit points/, "Victim in log msg");
     
     $chars[1]->discard_changes;
-    is($chars[1]->hit_points, 3, "Victim was healed");
+    is($chars[1]->hit_points, 5, "Victim was healed");
 }
 
 sub test_execute_when_char_in_garrison_with_multiple_wounded : Tests(6) {
@@ -104,13 +104,13 @@ sub test_execute_when_char_in_garrison_with_multiple_wounded : Tests(6) {
     my ($log) = $party->day_logs;
     
     like($log->log, qr/Victim\+Healer used his Medicine skills, and healed/, "Healer in log msg");
-    like($log->log, qr/Victim by 2 hit points, and Victim\+Healer by 1 hit point./, "Victims in log msg");
+    like($log->log, qr/Victim by 4 hit points, and Victim\+Healer by 3 hit points./, "Victims in log msg");
     
     $chars[1]->discard_changes;
-    is($chars[1]->hit_points, 4, "Victim was healed");
+    is($chars[1]->hit_points, 6, "Victim was healed");
 
     $chars[0]->discard_changes;
-    is($chars[0]->hit_points, 3, "Victim+Healer was healed");
+    is($chars[0]->hit_points, 5, "Victim+Healer was healed");
     
     $party_char->discard_changes;
     is($party_char->hit_points, 5, "Party char not healed");

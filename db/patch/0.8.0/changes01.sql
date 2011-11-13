@@ -54,3 +54,8 @@ UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select te
 UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'light forest');
 UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'mountain') and variation = 3;
 
+UPDATE `Creature_Type` set hire_cost = 50 where creature_type = 'Seasoned Town Guard';
+UPDATE `Creature_Type` set hire_cost = 100 where creature_type = 'Veteran Town Guard';
+INSERT INTO `Creature_Type`(creature_type, level, weapon, fire, ice, poison, creature_category_id, hire_cost, image, special_damage)
+	VALUES ('Elite Town Guard', 22, 'Melee Weapon', 65, 65, 65, (select creature_category_id from Creature_Category where name = 'Guard'), 400, 'veteranguard.png', 'Fire');
+

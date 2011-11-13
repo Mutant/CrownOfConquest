@@ -1,4 +1,4 @@
-package RPG::Schema::Skill::Beserker_Rage;
+package RPG::Schema::Skill::Berserker_Rage;
 
 use Moose::Role;
 
@@ -18,7 +18,7 @@ sub execute {
         fired => 0,
     );
 
-    my $has_beserk = $character->search_related('character_effects',
+    my $has_berserk = $character->search_related('character_effects',
         {
             'effect.effect_name' => 'Berserk',
             'effect.time_left' => {'>=', 1},
@@ -28,7 +28,7 @@ sub execute {
         }
     )->count;
     
-    return %results if $has_beserk;
+    return %results if $has_berserk;
     
     my $chance = $self->level * 3 + ($character->constitution / 5);
 

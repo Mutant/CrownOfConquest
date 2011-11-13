@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Schema::Skill::Beserker_Rage;
+package Test::RPG::Schema::Skill::Berserker_Rage;
 
 use base qw(Test::RPG::DB);
 
@@ -18,7 +18,7 @@ sub startup : Tests(startup) {
     
     $self->{skill} = $self->{schema}->resultset('Skill')->find(
         {
-            skill_name => 'Beserker Rage',
+            skill_name => 'Berserker Rage',
         }
     );    
 }

@@ -52,6 +52,7 @@ sub set_quest_params {
     my @chests = $self->result_source->schema->resultset('Treasure_Chest')->search(
     	{
     		'dungeon.dungeon_id' => $dungeon_to_use->id,
+    		'dungeon_room.special_room_id' => undef,
     	},
     	{
     		join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' }},

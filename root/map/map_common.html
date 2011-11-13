@@ -23,13 +23,13 @@ Prosperity: [% position.prosperity %]<br>
 [% END %] 
 [% END %]
 
-[% MACRO gen_image(position) BLOCK ~%]
+[% MACRO gen_image(position) BLOCK ~%]	
 	[% IF position.buildings.0 ~%]
 		[%# Only handle 1 building per sector right now ~%]
 		[% building = position.buildings.0 ~%]
-		building/[% building.building_type.image %]
+		building/[% position.prefix %][% building.building_type.image %]
 	[% ELSIF position.known_dungeon ~%]
-		dungeonentrance.png
+		[% position.prefix %]dungeonentrance.png
 	[% ELSIF position.town_id ~%]
 		[% number = 0 ~%]
 		[% IF position.prosperity <= 20 ~%]
@@ -45,10 +45,9 @@ Prosperity: [% position.prosperity %]<br>
 		[% ELSE ~%]
 			[% number = 6 ~%]
 		[% END ~%]
-		townpro[% number %].png
+		[% position.prefix %]town[% number %].png
 	[% ELSE ~%]
-		[% image = position.terrain_name | replace(' ','_') ~%]
-		[% image %][% position.variation %].png
+		[% position.prefix %][% position.image %][% position.variation %].png
 	[% END ~%]
 [% END ~%]
 

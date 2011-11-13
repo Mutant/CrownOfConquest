@@ -24,3 +24,33 @@ INSERT INTO `Skill` VALUES (1,'Recall','','Allows spell casters a chance of reca
 
 ALTER TABLE `Character_Skill` ADD INDEX `char_id`(`character_id`);
 
+CREATE TABLE `Map_Tileset` (
+  `tileset_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(50)  NOT NULL,
+  `prefix` VARCHAR(50)  NOT NULL,
+  PRIMARY KEY (`tileset_id`)
+)
+ENGINE = InnoDB;
+
+ALTER TABLE `Land` ADD COLUMN `tileset_id` INTEGER  NOT NULL;
+
+ALTER TABLE `Terrain` ADD COLUMN `image` VARCHAR(255)  NOT NULL AFTER `modifier`;
+update Terrain set image = REPLACE(terrain_name, ' ', '_');
+insert into `Terrain`(terrain_name, modifier, image) values ('chasm', '4', 'chasm');
+
+INSERT INTO `Map_Tileset`(name, prefix) values ('Standard', '');
+INSERT INTO `Map_Tileset`(name, prefix) values ('Snow', 'snow');
+INSERT INTO `Map_Tileset`(name, prefix) values ('Snow Fading Bottom', 'snowfadingbottom');
+
+UPDATE `Land` set tileset_id = 1;
+UPDATE `Land` set tileset_id = 2 where y <= 20;
+UPDATE `Land` set tileset_id = 3 where y = 21;
+
+UPDATE `Land` set terrain_id = (select terrain_id from Terrain where terrain_name = 'chasm') where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'marsh');
+
+UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'hill');
+UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'dense forest');
+UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'medium forest');
+UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'light forest');
+UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'mountain') and variation = 3;
+

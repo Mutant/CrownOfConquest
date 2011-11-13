@@ -20,16 +20,25 @@ sub run {
 	my @chests = $self->context->schema->resultset('Treasure_Chest')->search(
 	   {
 	       'dungeon.type' => {'!=', 'castle'},
-	       'dungeon_room.special_room_id' => undef, # Treasure rooms shouldn't be re-filled
 	   },
 	   {
-	       join => {'dungeon_grid' => {'dungeon_room' => 'dungeon'}},
+	       prefetch => {'dungeon_grid' => {'dungeon_room' => 'dungeon'}},
 	   },
 	);
 	
 	foreach my $chest (@chests) {	    
 		if ($chest->is_empty) {
-			if (Games::Dice::Advanced->roll('1d100') <= $self->context->config->{empty_chest_fill_chance}) {
+		    if ($chest->dungeon_gird->dungeon_room->special_room->room_type eq 'treasure') {
+                # Add some more gold to some of the chests in the treasure room
+                if (Games::Dice::Advanced->roll('1d100') <= 10) {
+                    my $gold = (Games::Dice::Advanced->roll('1d200') + 250) * $chest->dungeon_gird->dungeon_room->dungeon->level;
+                    $chest->gold($gold);
+                    $chest->add_trap;
+                    $chest->update;
+                }
+		    }
+		    
+			elsif (Games::Dice::Advanced->roll('1d100') <= $self->context->config->{empty_chest_fill_chance}) {
 				$chest->fill(%item_types_by_prevalence);
 			} 	
 		}

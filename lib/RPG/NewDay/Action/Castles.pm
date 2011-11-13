@@ -134,8 +134,6 @@ sub fill_chests {
 		$chest->add_trap;
 		$chest->update; 
 	}
-	
-	
 }
 
 __PACKAGE__->meta->make_immutable;

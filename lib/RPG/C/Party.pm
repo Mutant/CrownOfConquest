@@ -626,6 +626,10 @@ sub select_action : Local {
 			# HACK: refresh map screen if casting portal 
 			if ($spell->spell_name eq 'Portal') {
                 push @{ $c->stash->{refresh_panels} }, 'map';
+                push @{$c->stash->{panel_callbacks}}, {
+                    name => 'setMinimapVisibility',
+                    data => 1,
+                };                
 			}
 		}
 

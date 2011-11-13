@@ -29,7 +29,7 @@ sub execute {
         
         if (Games::Dice::Advanced->roll('1d100') <= $chance) {
             my $inc_roll = round ($self->level * 1.5);
-            my $increase = Games::Dice::Advanced->roll('1d' . $inc_roll);
+            my $increase = Games::Dice::Advanced->roll('1d' . $inc_roll) + round ( $character->intelligence / 6 );
             
             my $new_val = $variable_rec->item_variable_value + $increase;
             $new_val = $variable_rec->max_value if $new_val > $variable_rec->max_value;

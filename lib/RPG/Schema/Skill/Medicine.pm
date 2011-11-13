@@ -4,6 +4,7 @@ use Moose::Role;
 
 use Games::Dice::Advanced;
 use RPG::Template;
+use Math::Round qw(round);
 
 sub execute {
     my $self = shift;
@@ -33,7 +34,7 @@ sub execute {
         my $chance = $self->level * 3;
         
         if (Games::Dice::Advanced->roll('1d100') <= $chance) {
-            my $amount_to_heal = Games::Dice::Advanced->roll('1d' . $self->level);
+            my $amount_to_heal = Games::Dice::Advanced->roll('1d' . $self->level) + round $character->divinity / 6;
 
             my $actual_increase = $char_to_heal->change_hit_points($amount_to_heal);
             $char_to_heal->update;

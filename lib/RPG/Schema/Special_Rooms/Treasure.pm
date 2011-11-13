@@ -87,14 +87,18 @@ sub remove_special {
     
     my $schema = $self->result_source->schema;
     
-    $schema->resultset('Treasure_Chest')->search(
+    my @chests = $schema->resultset('Treasure_Chest')->search(
         {
             'dungeon_grid.dungeon_room_id' => $self->id,
         },
         {
             join => 'dungeon_grid',
         }
-    )->delete;
+    );
+    
+    foreach my $chest (@chests) {
+        $chest->delete;
+    }
 } 
 
 1;

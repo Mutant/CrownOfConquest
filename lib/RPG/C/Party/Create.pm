@@ -372,7 +372,8 @@ sub autogenerate : Local {
         	race => $race, 
         	class => $class, 
         	level => 1,
-        	roll_points => 0
+        	roll_points => 0,
+        	stat_weight => 8,
         );
         $character->party_id( $c->stash->{party}->id );
         $character->party_order($order);

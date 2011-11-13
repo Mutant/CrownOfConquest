@@ -45,7 +45,8 @@ sub generate_character {
     my $stat_max  = RPG::Schema->config->{stat_max};
 
     # Initial allocation of stat points
-    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
+    my $stat_weight = $params{stat_weight} // Games::Dice::Advanced->roll('1d10');
+    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, $stat_weight, \%stats );
 
     # Yes, we're quite sexist
     my $gender = Games::Dice::Advanced->roll('1d3') > 1 ? 'male' : 'female';
@@ -79,7 +80,7 @@ sub generate_character {
         $character->update;
     }
     
-    $self->_allocate_stat_points;
+    $self->_assign_skill_points($character);
 
     if ($roll_points) {
         $character->hit_points( $character->max_hit_points );
@@ -98,11 +99,17 @@ sub _allocate_stat_points {
     my $stat_pool    = shift;
     my $stat_max     = shift;
     my $primary_stat = shift;
+    my $weight       = shift;
     my $stats        = shift;
 
     my @stats = keys %$stats;
     # Primary stat goes in multiple times to make it more likely to get added
-    push @stats, $primary_stat if defined $primary_stat;
+    if (defined $primary_stat) {
+        push @stats, $primary_stat for (1..$weight);    
+    }
+    
+    # Also add constitution multiple times
+    push @stats, 'constitution' for (1..($weight > 3 ? $weight - 3 : 1));
 
     # Allocate 1 point to a random stat until the pool is used
     while ( $stat_pool > 0 ) {

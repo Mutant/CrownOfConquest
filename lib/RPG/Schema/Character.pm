@@ -1001,6 +1001,8 @@ sub xp {
         # Add stat points
         $self->stat_points( $self->stat_points + RPG::Schema->config->{stat_points_per_level} );
         $rolls{stat_points} = RPG::Schema->config->{stat_points_per_level};
+        
+        $self->skill_points(1);
 
         my $today = $self->result_source->schema->resultset('Day')->find_today;
 

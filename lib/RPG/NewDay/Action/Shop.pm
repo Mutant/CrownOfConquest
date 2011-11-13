@@ -70,15 +70,15 @@ sub run {
             $c->logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value, to add $item_value_to_add" );
 
             my $added_count = 0;
+            my $retries = 0;
 
             while ( $item_value_to_add > 0 ) {
-                my $min_prevalence = 100 - ( ($town->prosperity + Games::Dice::Advanced->roll('1d10') ) - 20 );
-                $min_prevalence = 100 if $min_prevalence > 100;
+                my $min_prevalence = 100 - ($town->prosperity + Games::Dice::Advanced->roll('1d10') ) - 20;
+                $min_prevalence = 80 if $min_prevalence > 100;
                 $min_prevalence = 1   if $min_prevalence < 1;
 
-                #warn "Min_prevalance: $min_prevalence\n";
-
                 my $actual_prevalance = Games::Dice::Advanced->roll( '1d' . ( 100 - $min_prevalence ) ) + $min_prevalence;
+                $actual_prevalance = 100 if $actual_prevalance > 100;
 
                 my $item_type;
                 while ( !defined $item_type ) {
@@ -93,7 +93,11 @@ sub run {
                 }
 
                 # We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
-                next unless $item_type;
+                if (! $item_type) {
+                    $retries++;
+                    last if $retries > 50;
+                    next;   
+                }
                 
                 $added_count++;
 

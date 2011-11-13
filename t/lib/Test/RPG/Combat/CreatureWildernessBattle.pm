@@ -1006,7 +1006,7 @@ sub test_execute_round_skills_checked : Tests(2) {
 	
     my $skill = $self->{schema}->resultset('Skill')->find(
         {
-            skill_name => 'Beserker Rage',
+            skill_name => 'Berserker Rage',
         }
     );    	
 	
@@ -1405,6 +1405,60 @@ sub test_combatants_always_gives_same_objects : Tests(3) {
 	is($combatants1[0], $combatants2[0], "Character is the same object");
 	is($combatants1[1], $combatants2[1], "Creature is the same object");
 	
+}
+
+sub test_check_skills : Tests(2) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);
+	my ($cret) = $cg->creatures;
+	
+	my ($character) = $party->characters;
+    $character->last_combat_action('Attack');
+    $character->update;	
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Shield Bash',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );		
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Shield', character_id => $character->id); 
+    
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	# WHEN
+	my @messages = $battle->check_skills;
+	
+	# THEN
+	is(scalar @messages, 1, "1 Message returned");
+	
+	$cret->discard_changes;
+	is($cret->hit_points_current, 2, "Creature hit points reduced");
+	
+	$self->unmock_dice;
+	$self->clear_dice_data;	
+       
 }
 
 1;

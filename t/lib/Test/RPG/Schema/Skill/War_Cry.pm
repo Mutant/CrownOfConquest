@@ -34,6 +34,8 @@ sub test_execute : Tests(9) {
     
     # GIVEN
     my $character =  Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->last_combat_action('Attack');
+    $character->update;       
     
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
@@ -70,6 +72,8 @@ sub test_execute_already_berserk : Tests(3) {
     
     # GIVEN
     my $character =  Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->last_combat_action('Attack');
+    $character->update;       
     
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {

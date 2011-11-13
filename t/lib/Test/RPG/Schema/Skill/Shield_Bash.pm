@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Schema::Skill::Berserker_Rage;
+package Test::RPG::Schema::Skill::Shield_Bash;
 
 use base qw(Test::RPG::DB);
 
@@ -10,6 +10,7 @@ __PACKAGE__->runtests() unless caller();
 use Test::More;
 
 use Test::RPG::Builder::Character;
+use Test::RPG::Builder::Item;
 
 sub startup : Tests(startup) {
     my $self = shift;
@@ -18,7 +19,7 @@ sub startup : Tests(startup) {
     
     $self->{skill} = $self->{schema}->resultset('Skill')->find(
         {
-            skill_name => 'Berserker Rage',
+            skill_name => 'Shield Bash',
         }
     );    
 }
@@ -29,13 +30,17 @@ sub shutdown : Tests(shutdown) {
     $self->unmock_dice;
 }
 
-sub test_execute : Tests(9) {
+sub test_execute : Tests(5) {
     my $self = shift;
     
     # GIVEN
     my $character =  Test::RPG::Builder::Character->build_character($self->{schema});
     $character->last_combat_action('Attack');
-    $character->update;    
+    $character->update;
+    
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Shield', character_id => $character->id);    
+    
+    my $defender =  Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 10);
     
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
@@ -48,32 +53,27 @@ sub test_execute : Tests(9) {
     $self->{rolls} = [4, 2];
     
     # WHEN
-    my %results = $char_skill->execute('combat');
+    my %results = $char_skill->execute('combat', $character, $defender);
     
     # THEN
     is($results{fired}, 1, "Marked as firing");
-    is($results{factor_changed}, 1, "Marked as factor changing");
-    isa_ok($results{message}, 'RPG::Combat::SkillActionResult', "Action returned");
-    is($results{message}->skill, 'berserker_rage', "Correct skill name");
-    is($results{message}->duration, 3, "Correct duration");
+    isa_ok($results{message}, 'RPG::Combat::ActionResult', "Action returned");
+    is($results{message}->special_weapon, "Shield Bash", "Correct special weapon");
+    is($results{message}->damage, 3, "Correct damage");
     
-    my @effects = $character->character_effects;
-    is(scalar @effects, 1, "1 effect created");
-    
-    my $effect = $effects[0]->effect;
-    is($effect->effect_name, 'Berserk', "Effect has correct name");
-    is($effect->modifier, '6.00', "Effect has correct modifier");
-    is($effect->modified_stat, 'damage', "Effect has correct modified_stat");
+    $defender->discard_changes;
+    is($defender->hit_points, 7, "Defenders hit points reduced");
     
 }
 
-sub test_execute_already_berserk : Tests(3) {
+sub test_execute_no_shield : Tests(2) {
     my $self = shift;
     
     # GIVEN
     my $character =  Test::RPG::Builder::Character->build_character($self->{schema});
     $character->last_combat_action('Attack');
     $character->update;    
+    my $defender =  Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 10);
     
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
@@ -81,30 +81,18 @@ sub test_execute_already_berserk : Tests(3) {
             character_id => $character->id,
             level => 1,
         }
-    );
-    
-    $self->{schema}->resultset('Effect')->create_effect({
-            effect_name => 'Berserk',
-            target => $character,
-            modifier => 5,
-            combat => 1,
-            modified_state => 'damage',
-            duration => 5,
-    });    
+    );  
     
     $self->{rolls} = [4, 2];
     
     # WHEN
-    my %results = $char_skill->execute('combat');
+    my %results = $char_skill->execute('combat', $character, $defender);
     
     # THEN
     is($results{fired}, 0, "Not marked as firing");
     
-    my @effects = $character->character_effects;
-    is(scalar @effects, 1, "Has 1 effect");
-    
-    my $effect = $effects[0]->effect;
-    is($effect->time_left, '5', "Duration not changed");
+    $defender->discard_changes;
+    is($defender->hit_points, 10, "Defender hit points not reduced");
     
 }
 

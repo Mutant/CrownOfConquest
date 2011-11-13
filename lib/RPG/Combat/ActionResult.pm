@@ -12,6 +12,7 @@ has 'no_ammo'         => ( is => 'ro', isa => 'Bool',   default  => 0 );
 has 'weapon_broken'   => ( is => 'ro', isa => 'Bool',   default  => 0 );
 has 'magical_damage'  => ( is => 'rw', isa => 'RPG::Combat::MagicalDamageResult', required => 0 );
 has 'critical_hit'    => ( is => 'ro', isa => 'Bool',   default  => 0 );
+has 'special_weapon'  => ( is => 'ro', isa => 'Str' );
 
 sub _build_defender_killed {
     my $self = shift;

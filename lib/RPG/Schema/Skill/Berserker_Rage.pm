@@ -7,6 +7,8 @@ use Math::Round qw(round);
 
 use RPG::Combat::SkillActionResult;
 
+sub needs_defender { 0 };
+
 sub execute {
     my $self = shift;
     my $event = shift;
@@ -17,6 +19,8 @@ sub execute {
     my %results = (
         fired => 0,
     );
+    
+    return %results unless $character->last_combat_action eq 'Attack';
 
     my $has_berserk = $character->search_related('character_effects',
         {

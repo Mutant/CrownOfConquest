@@ -7,6 +7,8 @@ use Math::Round qw(round);
 
 use RPG::Combat::SkillActionResult;
 
+sub needs_defender { 0 };
+
 sub execute {
     my $self = shift;
     my $event = shift;
@@ -17,6 +19,8 @@ sub execute {
     my %results = (
         fired => 0,
     );
+    
+    return %results unless $character->last_combat_action eq 'Attack';
 
     my $has_war_cry = $character->search_related('character_effects',
         {
@@ -32,7 +36,7 @@ sub execute {
     
     my $chance = $self->level * 3 + ($character->divinity / 5);
 
-    if (1) { #Games::Dice::Advanced->roll('1d100') <= $chance) {
+    if (Games::Dice::Advanced->roll('1d100') <= $chance) {
         $results{fired} = 1;
         $results{factor_changed} = 1;
         

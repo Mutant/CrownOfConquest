@@ -337,7 +337,12 @@ sub check_skills {
             
             my $char_skill = $character->get_skill($skill);
             
-            my %results = $char_skill->execute('combat', $character);            
+            my $defender;
+            if ($char_skill->needs_defender) {
+                $defender = $self->select_opponent($character);
+            }
+            
+            my %results = $char_skill->execute('combat', $character, $defender);            
             
             if ($results{fired}) {
                 push @messages, $results{message};
@@ -352,12 +357,48 @@ sub check_skills {
     return @messages;
 }
 
-sub character_action {
-	my ( $self, $character ) = @_;
-
+sub select_opponent {
+    my $self = shift;
+    my $character = shift;
+    
 	my $opp_group = $self->opponents_of($character);
 
-	my %opponents = map { $_->id => $_ } $opp_group->members;
+	my %opponents = map { $_->id => $_ } $opp_group->members;   
+	
+	my $opponent; 
+    
+	# If they've selected a target, or have one saved from last round make sure it's still alive
+	my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
+
+	if ( $targetted_opponent_id && $opponents{$targetted_opponent_id} && !$opponents{$targetted_opponent_id}->is_dead ) {
+		$opponent = $opponents{$targetted_opponent_id};
+	}
+
+	# If we don't have a target, choose one randomly
+	unless ($opponent) {
+		for my $id ( shuffle keys %opponents ) {
+			unless ( $opponents{$id}->is_dead ) {
+				$opponent = $opponents{$id};
+				last;
+			}
+		}
+
+		unless ($opponent) {
+
+			# No living opponent found, something weird has happened
+			confess "Couldn't find an opponent to attack!\n";
+		}
+	}
+	
+	# Save opponent in session for next round so they keep attacking the same guy
+	#  (Unless they die, or they target someone else)
+	$self->session->{previous_opponents}{$character->id} = $opponent->id;    
+	
+	return $opponent;
+}
+
+sub character_action {
+	my ( $self, $character ) = @_;
 
 	# Check if spell casters should do an auto cast
 	my $autocast = $character->last_combat_param1 eq 'autocast' ? 1 : 0;
@@ -378,37 +419,10 @@ sub character_action {
 	my $result;	    
 
 	if ( $character->last_combat_action eq 'Attack' ) {
-
-		my ( $opponent, $damage, $crit );
-
-		# If they've selected a target, or have one saved from last round make sure it's still alive
-		my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
-
-		if ( $targetted_opponent_id && $opponents{$targetted_opponent_id} && !$opponents{$targetted_opponent_id}->is_dead ) {
-			$opponent = $opponents{$targetted_opponent_id};
-		}
-
-		# If we don't have a target, choose one randomly
-		unless ($opponent) {
-			for my $id ( shuffle keys %opponents ) {
-				unless ( $opponents{$id}->is_dead ) {
-					$opponent = $opponents{$id};
-					last;
-				}
-			}
-
-			unless ($opponent) {
-
-				# No living opponent found, something weird has happened
-				confess "Couldn't find an opponent to attack!\n";
-			}
-		}
 		
-		# Save opponent in session for next round so they keep attacking the same guy
-		#  (Unless they die, or they target someone else)
-		$self->session->{previous_opponents}{$character->id} = $opponent->id;
+		my $opponent = $self->select_opponent($character);
 
-		($damage, $crit) = $self->attack( $character, $opponent );
+		my ($damage, $crit) = $self->attack( $character, $opponent );
 
 		# Store damage done for XP purposes
 		my %action_params;

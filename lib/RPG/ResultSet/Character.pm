@@ -45,7 +45,7 @@ sub generate_character {
     my $stat_max  = RPG::Schema->config->{stat_max};
 
     # Initial allocation of stat points
-    my $stat_weight = $params{stat_weight} // Games::Dice::Advanced->roll('1d10');
+    my $stat_weight = $params{stat_weight} // Games::Dice::Advanced->roll('1d6') + 4;
     %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, $stat_weight, \%stats );
 
     # Yes, we're quite sexist
@@ -71,7 +71,7 @@ sub generate_character {
     for ( 2 .. $level ) {
         $character->roll_all;
 
-        %stats = $self->_allocate_stat_points( RPG::Schema->config->{stat_points_per_level}, undef, $class->primary_stat, \%stats );
+        %stats = $self->_allocate_stat_points( RPG::Schema->config->{stat_points_per_level}, undef, $class->primary_stat, $stat_weight, \%stats );
 
         for my $stat ( keys %stats ) {
             $character->set_column( $stat, $stats{$stat} );

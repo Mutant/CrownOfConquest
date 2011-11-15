@@ -451,7 +451,13 @@ sub character_action {
 		my $obj;
 		my $target_type;
 		my $action;
+		my $blocked = 0;
 		if ( $character->last_combat_action eq 'Cast' ) {
+		    if (grep { $_->effect->modified_stat eq 'block_spell_casting' } $character->character_effects) {
+                # Spell casting blocked...
+                $blocked = 1;
+		    }
+		    
 			$obj = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
 
 			$target_type = $obj->target;
@@ -478,7 +484,16 @@ sub character_action {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
 		
-		if (! $target->is_dead) {
+		if ($blocked) {
+            $result = RPG::Combat::SpellActionResult->new(
+                defender => $target,
+                attacker => $character,
+                spell_name => $obj->spell_name,
+                blocked => 1,
+                type => 'blocked',
+            );   
+		}		
+		elsif (! $target->is_dead) {
     		if ( $character->last_combat_action eq 'Cast' ) {
     			$result = $obj->cast( $character, $target );
     		}
@@ -502,8 +517,6 @@ sub character_action {
 		}		  
 
         $character->last_combat_action('Attack');
-
-
 	}
 	
 	# If they were auto-casting, set them back to auto-cast for next round

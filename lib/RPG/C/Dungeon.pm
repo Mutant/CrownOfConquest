@@ -1215,6 +1215,18 @@ sub execute_trap : Private {
 			});	
 		}	
 		
+		when ("Mute") {
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
+			$c->model('DBIC::Effect')->create_effect({
+				effect_name => 'Muted',
+				target => $target,
+				duration => $trap_variable,
+				modifier => 0,
+				combat => 0,
+				modified_state => 'block_spell_casting',					
+			});	
+		}			
+		
 		when ("Detonate") {
 			$trap_variable = Games::Dice::Advanced->roll('2d4') * $level;
 			$target->hit($trap_variable, undef, 'an explosion');
@@ -1238,6 +1250,8 @@ sub execute_trap : Private {
     );
 
     push @{$c->stash->{messages}}, $message;
+    
+    push @{$c->stash->{refresh_panels}}, 'party';
      
 }
  

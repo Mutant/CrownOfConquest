@@ -43,7 +43,7 @@ sub move_to : Local {
 
 	       if ($trap_quot > $party_quot) {
 	           # Trap triggered
-	           my @types = qw/Curse Hypnotise Detonate/;
+	           my @types = qw/Curse Hypnotise Mute Detonate/;
 	           
 	           my $trap = ( shuffle @types )[0];
 	           my $level = round $town->spent_on_traps / 300;

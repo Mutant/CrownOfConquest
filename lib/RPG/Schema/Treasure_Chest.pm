@@ -17,7 +17,7 @@ __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'treasure_chest_id' );
 
 __PACKAGE__->belongs_to( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
-my @TRAPS = qw/Curse Hypnotise Detonate/;
+my @TRAPS = qw/Curse Hypnotise Detonate Mute/;
 sub add_trap {
 	my $self = shift;
 

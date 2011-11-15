@@ -39,7 +39,7 @@ sub test_allocate_stat_points_doesnt_exceed_max : Tests(5) {
     $self->{roll_result} = 5;
 
     # WHEN
-    %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, \%stats );
+    %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, 5, \%stats );
 
     # THEN
     is( $stats{strength},     10, "Strength at max" );

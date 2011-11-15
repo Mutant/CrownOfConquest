@@ -101,6 +101,8 @@ sub _allocate_stat_points {
     my $primary_stat = shift;
     my $weight       = shift;
     my $stats        = shift;
+    
+    confess "Too much weight: $weight" if $weight > 30;
 
     my @stats = keys %$stats;
     # Primary stat goes in multiple times to make it more likely to get added

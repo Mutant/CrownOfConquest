@@ -1194,7 +1194,7 @@ sub execute_trap : Private {
 		when ("Curse") {
 			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
-				effect_name => 'cursed',
+				effect_name => 'Cursed',
 				target => $target,
 				duration => $trap_variable,
 				modifier => -8 * $level,
@@ -1206,7 +1206,7 @@ sub execute_trap : Private {
 		when ("Hypnotise") {
 			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
-				effect_name => 'hypnotised',
+				effect_name => 'Hypnotised',
 				target => $target,
 				duration => $trap_variable,
 				modifier => -4,

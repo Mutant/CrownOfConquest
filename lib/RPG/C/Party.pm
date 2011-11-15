@@ -402,7 +402,6 @@ sub list : Private {
 	my @effects = $c->model('DBIC::Effect')->search(
 	   {
 	       'character_effect.character_id' => [map { $_->id } @characters],
-	       'combat' => 1,
 	   },
 	   {
 	       prefetch => 'character_effect',

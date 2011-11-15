@@ -123,6 +123,8 @@ Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 	
 <div dojoType="dijit.layout.ContentPane" title="Garrison" href="[% base %]/town/mayor/garrison?town_id=[% town.id %]" [% IF tab == 'garrison' %]selected=true[% END %]></div>
 	
+<div dojoType="dijit.layout.ContentPane" title="Defences" href="[% base %]/town/mayor/defences?town_id=[% town.id %]" [% IF tab == 'defences' %]selected=true[% END %]></div>
+	
 <div dojoType="dijit.layout.ContentPane" title="Guards" href="[% base %]/town/mayor/guards?town_id=[% town.id %]" [% IF tab == 'guards' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Balance Sheet" href="[% base %]/town/mayor/balance_sheet?town_id=[% town.id %]&day_id=[% day_id %]" [% IF tab == 'balance_sheet' %]selected=true[% END %]></div>

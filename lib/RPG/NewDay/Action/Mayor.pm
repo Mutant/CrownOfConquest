@@ -75,6 +75,7 @@ sub process_town {
 		$town->base_party_tax(20);
 		$town->party_tax_level_step(30);
 		$town->advisor_fee(0);
+		$town->trap_budget(50);
 		$town->update;
 		
 		$self->check_for_npc_election($town);
@@ -85,14 +86,29 @@ sub process_town {
 	my $revolt_started = $self->check_for_revolt($town);
 	
 	if ($town->peasant_tax && ! $town->peasant_state) {
-	    
-
+	    $self->collect_tax($town, $mayor);
 	}
 	
 	$self->calculate_kingdom_tax($town);
 
 	$self->generate_guards($town->castle);
 	$town->discard_changes;
+	
+	if ($town->trap_budget) {
+        my $to_spend = $town->trap_budget > $town->gold ? $town->gold : $town->trap_budget;
+        $town->decrease_gold($to_spend);
+        $town->spent_on_traps($to_spend);
+        $town->update;
+        
+    	$town->add_to_history(
+    		{
+    			type => 'expense',
+    			value => $to_spend,
+    			message => 'Traps',
+    			day_id => $c->current_day->id,
+    		}
+    	);        
+	}
 	
 	$self->calculate_approval($town);
 
@@ -102,7 +118,7 @@ sub process_town {
 		$self->process_revolt($town);
 	}
 
-	$self->generate_advice($town);      
+	$self->generate_advice($town);
 }
 
 sub collect_tax {

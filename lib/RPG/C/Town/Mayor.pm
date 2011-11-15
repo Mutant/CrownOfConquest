@@ -670,4 +670,29 @@ sub combat_log : Local {
     );       
 }
 
+sub defences : Local {
+    my ($self, $c) = @_;  
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'town/mayor/defences.html',
+                params   => {
+                    town => $c->stash->{town},
+                },
+            }
+        ]
+    );     
+}
+
+sub set_trap_budget : Local {
+    my ($self, $c) = @_;   
+    
+	$c->stash->{town}->trap_budget($c->req->param('trap_budget'));
+	$c->stash->{town}->update;
+	
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );    
+}
+
 1;

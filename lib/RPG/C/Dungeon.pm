@@ -768,11 +768,13 @@ sub sector_menu : Local {
     my @doors = $current_location->available_doors;
 
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
-    
+
     if ($c->session->{temp_dungeon_messages}) {
-        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages};
+        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages} eq 'ARRAY';
         $c->stash->{messages} //= [];
-        push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
+
+        my $temp = ref $c->session->{temp_dungeon_messages} eq 'ARRAY' ? $c->session->{temp_dungeon_messages} : [$c->session->{temp_dungeon_messages}];
+        push @{ $c->stash->{messages} }, @$temp;
         undef $c->session->{temp_dungeon_messages};
     }
     
@@ -1174,26 +1176,37 @@ sub trigger_trap : Private {
 	
 	my $dungeon = $current_location->dungeon_room->dungeon;
 	
+	$c->forward('execute_trap', [$chest->trap, $dungeon->level]);
+	
+	$current_location->treasure_chest->trap(undef);
+	$current_location->treasure_chest->update;
+	
+    $c->detach( '/panel/refresh', [ 'messages', 'party' ] );		
+}
+
+sub execute_trap : Private {
+    my ($self, $c, $trap_type, $level) = @_;
+
 	my $target = (shuffle(grep { ! $_->is_dead } $c->stash->{party}->characters))[0];
 	my $trap_variable;
-	
-	given($chest->trap) {
+    
+	given($trap_type) {
 		when ("Curse") {
-			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
-				effect_name => 'Cursed',
+				effect_name => 'cursed',
 				target => $target,
 				duration => $trap_variable,
-				modifier => -8 * $dungeon->level,
+				modifier => -8 * $level,
 				combat => 0,
 				modified_state => 'attack_factor',					
 			});	
 		}
 		
 		when ("Hypnotise") {
-			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
-				effect_name => 'Hypnotised',
+				effect_name => 'hypnotised',
 				target => $target,
 				duration => $trap_variable,
 				modifier => -4,
@@ -1203,7 +1216,7 @@ sub trigger_trap : Private {
 		}	
 		
 		when ("Detonate") {
-			$trap_variable = Games::Dice::Advanced->roll('2d4') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d4') * $level;
 			$target->hit($trap_variable, undef, 'an explosion');
 		}				
 	}
@@ -1215,7 +1228,7 @@ sub trigger_trap : Private {
                 template => 'dungeon/trigger_chest_trap.html',
                 params   => {
                     target => $target,
-                    trap => $chest->trap,
+                    trap => $trap_type,
                     trap_variable => $trap_variable,
                     
                 },
@@ -1224,13 +1237,8 @@ sub trigger_trap : Private {
         ]
     );
 
-    $c->stash->{messages} = $message;	
-	
-	$current_location->treasure_chest->trap(undef);
-	$current_location->treasure_chest->update;
-	
-    $c->detach( '/panel/refresh', [ 'messages', 'party' ] );
-		
+    push @{$c->stash->{messages}}, $message;
+     
 }
  
 

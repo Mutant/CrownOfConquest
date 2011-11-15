@@ -1,0 +1,22 @@
+<h3>Town Defences</h3>
+
+<h4>Traps</h4>
+
+Select a budget for traps in the town's castle. These will trigger against raiders, with more severe effects, depending on the budget. The money will be deducted
+from the town coffers each day.
+
+<br><br>
+
+<form action="[% base %]/town/mayor/set_trap_budget" method="POST" onSubmit="postPanels(this); return false">
+<input type="hidden" name="town_id" value="[% town.id %]">
+
+Trap Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="trap_budget" 
+				value="[% town.trap_budget %]" constraints="{min:0,places:0}" required="true">
+<br><br>
+Spend Yesterday: [% town.spent_on_traps %] gold
+<br><br>
+
+<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+	Update
+</button>				
+</form>

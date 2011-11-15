@@ -177,6 +177,35 @@ sub test_successful_flee : Tests(4) {
 			party_id => $party->id,
 		}
 	);
-	is($party_town->prestige, -10, "Prestige reduced");
+	is($party_town->prestige, -10, "Prestige reduced");	
+}
+
+sub test_move_to_with_trap : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, dungeon_id => $castle->id, 'y_size' => 4, 'x_size' => 4);
+	my @sectors = $room->sectors;
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, prosperity => 50);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $castle->land_id, character_count => 1, dungeon_grid_id => $sectors[0]->id);
 	
+	$town->spent_on_traps(1000);
+	$town->update;    
+	
+	$self->{stash}{party} = $party;
+	$self->{stash}{party_location} = $castle->location;
+	
+	$self->{rolls} = [ '25', '20', '20' ]; 
+	
+	my ($trap, $level);
+	$self->{mock_forward}{'/dungeon/execute_trap'} = sub { $trap = $_[0]->[0]; $level = $_[0]->[1] };
+	$self->{mock_forward}{'/dungeon/move_to'} = sub {};
+	
+	# WHEN
+	RPG::C::Castle->move_to($self->{c});
+	
+	# THEN
+	is($level, 3, "Trap executed, with correct level");
+       
 }

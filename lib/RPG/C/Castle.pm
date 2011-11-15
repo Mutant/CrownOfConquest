@@ -8,11 +8,55 @@ use Games::Dice::Advanced;
 use Math::Round qw(round);
 use Data::Dumper;
 use DateTime;
+use List::Util qw(shuffle);
 
 sub move_to : Local {
 	my ( $self, $c ) = @_;
 
-	my $turn_cost = $c->session->{castle_move_type} eq 'stealth' ? 4 : $c->config->{cost_of_moving_through_dungeons};
+	my $turn_cost = ($c->session->{castle_move_type} // '') eq 'stealth' ? 4 : $c->config->{cost_of_moving_through_dungeons};
+	
+	my $sector = $c->model('DBIC::Dungeon_Grid')->find( 
+	   { 
+	       'dungeon_grid_id' => $c->stash->{party}->dungeon_grid_id, 
+	   }, 
+	   { 
+	       prefetch => {'dungeon_room' => 'dungeon'}, 
+	   } 
+    );
+	
+	my $town = $sector->dungeon_room->dungeon->town;
+
+	if ($town->spent_on_traps) {
+	   # Check to see if a trap is triggered
+	   my $divisor = 20 + (round $town->prosperity / 5); 
+	   
+	   my $chance = round $town->spent_on_traps / $divisor;
+	   $chance = 30 if $chance > 30;
+	   
+	   if (Games::Dice::Advanced->roll('1d100') <= $chance) {
+	       # Check if party sees trap
+	       my $avg_div = $c->stash->{party}->average_stat('divinity') // 0;
+	       my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'chest_trap') // 0;
+	       
+	       my $trap_quot = $chance + Games::Dice::Advanced->roll('1d50');
+	       my $party_quot = $avg_div + $bonus + Games::Dice::Advanced->roll('1d50');
+
+	       if ($trap_quot > $party_quot) {
+	           # Trap triggered
+	           my @types = qw/Curse Hypnotise Detonate/;
+	           
+	           my $trap = ( shuffle @types )[0];
+	           my $level = round $town->spent_on_traps / 300;
+	           $level = 5 if $level > 5; 
+	           
+	           $c->forward('/dungeon/execute_trap', [ $trap, $level ]);
+	       }
+	       else {
+	           # Party avoid trap
+	           push @{$c->stash->{messages}}, "There was trap here, but we found and disarmed it!";
+	       }	          
+	   }   
+	}
 
 	$c->forward( '/dungeon/move_to', [ undef, $turn_cost ] );
 }

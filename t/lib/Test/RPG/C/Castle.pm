@@ -190,7 +190,7 @@ sub test_move_to_with_trap : Tests(1) {
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id, prosperity => 50);
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, land_id => $castle->land_id, character_count => 1, dungeon_grid_id => $sectors[0]->id);
 	
-	$town->spent_on_traps(1000);
+	$town->trap_level(5);
 	$town->update;    
 	
 	$self->{stash}{party} = $party;

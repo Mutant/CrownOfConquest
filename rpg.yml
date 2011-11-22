@@ -421,6 +421,15 @@ character_sell_deletion_chance: 15
 # Max % difference to base price allowed when trading items
 trade_max_percentage_difference_in_base_price: 175
 
+# Maintenance cost of town traps per day per level
+town_trap_maint_cost: 5
+
+# Cost to upgrade to a trap level (per level)
+town_trap_upgrade_cost: 500
+
+# Max level of town traps
+town_trap_max_level: 10
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

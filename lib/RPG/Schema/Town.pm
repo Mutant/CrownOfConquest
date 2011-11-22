@@ -19,7 +19,7 @@ __PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age 
 						    discount_type discount_value discount_threshold pending_mayor gold peasant_tax
 						    party_tax_level_step base_party_tax sales_tax tax_modified_today
 						    mayor_rating peasant_state last_election advisor_fee character_heal_budget
-						    trap_budget spent_on_traps/);
+						    trap_level/);
 						    
 __PACKAGE__->add_columns(
 	pending_mayor_date => {data_type => 'datetime'},
@@ -55,7 +55,11 @@ __PACKAGE__->numeric_columns(
 	},
 	advisor_fee => {
 		min_value => 0,	
-	}
+	},
+	trap_level => {
+	    min_value => 0,
+	    max_value => 10,
+	},
 ); 
 
 __PACKAGE__->set_primary_key('town_id');

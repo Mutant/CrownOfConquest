@@ -75,7 +75,6 @@ sub process_town {
 		$town->base_party_tax(20);
 		$town->party_tax_level_step(30);
 		$town->advisor_fee(0);
-		$town->trap_budget(50);
 		$town->update;
 		
 		$self->check_for_npc_election($town);
@@ -94,21 +93,7 @@ sub process_town {
 	$self->generate_guards($town->castle);
 	$town->discard_changes;
 	
-	if ($town->trap_budget) {
-        my $to_spend = $town->trap_budget > $town->gold ? $town->gold : $town->trap_budget;
-        $town->decrease_gold($to_spend);
-        $town->spent_on_traps($to_spend);
-        $town->update;
-        
-    	$town->add_to_history(
-    		{
-    			type => 'expense',
-    			value => $to_spend,
-    			message => 'Traps',
-    			day_id => $c->current_day->id,
-    		}
-    	);        
-	}
+    $self->pay_trap_maintenance($town);
 	
 	$self->calculate_approval($town);
 
@@ -816,6 +801,35 @@ sub check_for_allegiance_change {
     return unless Games::Dice::Advanced->roll('1d100') <= $change_chance;
             
     $town->change_allegiance($highest_loyalty_kingdom->kingdom);
+}
+
+sub pay_trap_maintenance {
+    my $self = shift;
+    my $town = shift;
+    
+    my $c = $self->context;
+    
+	if ($town->trap_level > 0) {
+	    my $maint_cost = $town->trap_level * $c->config->{town_trap_maint_cost};
+	    
+	    if ($town->gold >= $maint_cost) {
+            $town->decrease_gold($maint_cost);   
+	       
+            $town->add_to_history(
+            	{
+            		type => 'expense',
+            		value => $maint_cost,
+            		message => 'Trap Maintenance',
+            		day_id => $c->current_day->id,
+            	}
+            );            
+	    }
+	    else {
+	        $town->decrement_trap_level;
+	    }
+	    
+        $town->update;
+	}   
 }
 
 1;

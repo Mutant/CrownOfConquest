@@ -620,5 +620,51 @@ sub test_collect_tax_with_leadership : Tests(1) {
     is($town->gold, 1270, "Tax collected"); 
 }
 
+sub test_pay_trap_maintenance : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 100 );
+    $town->trap_level(2);
+    $town->update;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->pay_trap_maintenance($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 90, "Trap maintenance paid");
+    
+    is($town->history->count, 1, "Message added to town's history");
+    my @history = $town->history;
+    
+    is($history[0]->type, "expense", "Second history line records expense");
+    is($history[0]->value, "10", "Second history line records expense value");
+    is($history[0]->message, "Trap Maintenance", "Second history line records expense label");
+   
+}
+
+sub test_pay_trap_maintenance_couldnt_afford : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 5 );
+    $town->trap_level(2);
+    $town->update;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->pay_trap_maintenance($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 5, "No trap maintenance paid");
+    is($town->trap_level, 1, "Trap level decreased");
+    
+    is($town->history->count, 0, "No messages added to town's history");
+}
 
 1;

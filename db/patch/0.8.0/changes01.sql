@@ -59,7 +59,6 @@ UPDATE `Creature_Type` set hire_cost = 100 where creature_type = 'Veteran Town G
 INSERT INTO `Creature_Type`(creature_type, level, weapon, fire, ice, poison, creature_category_id, hire_cost, image, special_damage)
 	VALUES ('Elite Town Guard', 22, 'Melee Weapon', 65, 65, 65, (select creature_category_id from Creature_Category where name = 'Guard'), 400, 'veteranguard.png', 'Fire');
 
-ALTER TABLE `Town` ADD COLUMN `trap_budget` INTEGER  NOT NULL DEFAULT 0;
-ALTER TABLE `Town` ADD COLUMN `spent_on_traps` INTEGER  NOT NULL DEFAULT 0;
+ALTER TABLE `Town` ADD COLUMN `trap_level` INTEGER  NOT NULL DEFAULT 0;
 
 

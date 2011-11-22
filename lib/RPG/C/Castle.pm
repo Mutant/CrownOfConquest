@@ -26,11 +26,11 @@ sub move_to : Local {
 	
 	my $town = $sector->dungeon_room->dungeon->town;
 
-	if ($town->spent_on_traps) {
+	if ($town->trap_level > 0) {
 	   # Check to see if a trap is triggered
-	   my $divisor = 20 + (round $town->prosperity / 5); 
+	   my $prosp_adjustment = 20 - (round $town->prosperity / 5);
 	   
-	   my $chance = round $town->spent_on_traps / $divisor;
+	   my $chance = $town->trap_level * 3 + $prosp_adjustment;
 	   $chance = 30 if $chance > 30;
 	   
 	   if (Games::Dice::Advanced->roll('1d100') <= $chance) {
@@ -46,8 +46,7 @@ sub move_to : Local {
 	           my @types = qw/Curse Hypnotise Mute Detonate/;
 	           
 	           my $trap = ( shuffle @types )[0];
-	           my $level = round $town->spent_on_traps / 300;
-	           $level = 5 if $level > 5; 
+	           my $level = round $town->trap_level / 2; 
 	           
 	           $c->forward('/dungeon/execute_trap', [ $trap, $level ]);
 	       }

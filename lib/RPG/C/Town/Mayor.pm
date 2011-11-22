@@ -671,7 +671,9 @@ sub combat_log : Local {
 }
 
 sub defences : Local {
-    my ($self, $c) = @_;  
+    my ($self, $c) = @_;
+    
+    my $town = $c->stash->{town};
     
     $c->forward(
         'RPG::V::TT',
@@ -679,20 +681,50 @@ sub defences : Local {
             {
                 template => 'town/mayor/defences.html',
                 params   => {
-                    town => $c->stash->{town},
+                    town => $town,
+                    trap_maint_cost => $town->trap_level   * $c->config->{town_trap_maint_cost},
+                    trap_upgrade_cost => ($town->trap_level + 1) * $c->config->{town_trap_upgrade_cost},
+                    trap_max_level => $c->config->{town_trap_max_level},
                 },
             }
         ]
     );     
 }
 
-sub set_trap_budget : Local {
-    my ($self, $c) = @_;   
+sub upgrade_traps : Local {
+    my ($self, $c) = @_;
     
-	$c->stash->{town}->trap_budget($c->req->param('trap_budget'));
-	$c->stash->{town}->update;
+    my $town = $c->stash->{town};
+    my $upgrade_cost = ($town->trap_level + 1) * $c->config->{town_trap_upgrade_cost};
+   
+    if ($town->gold >= $upgrade_cost) {
+        $town->increment_trap_level;
+        $town->decrease_gold($upgrade_cost);
+        $town->update;
+        
+    	$town->add_to_history(
+    		{
+    			type => 'expense',
+    			value => $upgrade_cost,
+    			message => 'Trap Upgrade',
+    			day_id => $c->stash->{today}->id,
+    		}
+    	);         
+    }
+    else {
+        push @{$c->stash->{panel_messages}}, "The town does not have enough gold for the upgrade";
+    }
 	
-	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );    
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );
+}
+
+sub downgrade_traps : Local {
+    my ($self, $c) = @_;
+    
+    $c->stash->{town}->decrement_trap_level;
+    $c->stash->{town}->update;
+    
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );
 }
 
 1;

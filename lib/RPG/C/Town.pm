@@ -705,7 +705,7 @@ sub become_mayor : Local {
 	
 	$town->add_to_history(
    		{
-			day_id  => $c->stash->{today}->id,,
+			day_id  => $c->stash->{today}->id,
            	message => "The towns people allow the triumphant party " . $c->stash->{party}->name . " to appoint a new mayor. They select "
            	    . $character->character_name . " for the job",
    		}
@@ -727,6 +727,13 @@ sub become_mayor : Local {
 	       town_id => $town->id,
 	       got_mayoralty_day => $c->stash->{today}->id,
 	       party_id => $c->stash->{party}->id,
+	   }
+	);
+	
+	$character->add_to_history(
+	   {
+	       day_id => $c->stash->{today}->id,
+	       event => $character->character_name . ' is now the mayor of ' . $town->town_name,
 	   }
 	);
 	

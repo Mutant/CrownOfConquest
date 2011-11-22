@@ -12,6 +12,7 @@ sub lose_mayoralty {
 	confess "Not a mayor" unless $self->mayor_of;
 
 	my $town = $self->mayor_of_town;
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
 	
 	$self->mayor_of(undef);
 	$self->creature_group_id(undef);
@@ -30,6 +31,12 @@ sub lose_mayoralty {
 	
 	$self->update;
 	
+	$self->add_to_history(
+        {
+            event => $self->character_name . " is no longer the mayor of " . $town->town_name,
+            day_id => $today->id,
+        }
+	);
     
     # Cancel election, if there's one in progress
     my $election = $town->current_election;
@@ -78,9 +85,7 @@ sub lose_mayoralty {
             }
         );
         
-        if ($history_rec) {
-            my $today = $self->result_source->schema->resultset('Day')->find_today;
-                    
+        if ($history_rec) {                  
             $history_rec->lost_mayoralty_day($today->id);
             $history_rec->update;
         }

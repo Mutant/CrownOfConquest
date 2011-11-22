@@ -23,6 +23,15 @@
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="tribute-diag" style="display: none" title="Pay Tribute To The King" execute="return true;">
+	<form method="post" action="[% base %]party/kingdom/tribute" onSubmit="postPanels(this); return false">
+	Enter the amount of gold to pay as tribute to the king:
+	<input type="text" dojoType="dijit.form.NumberTextBox" name="tribute" style="width: 50px"
+					constraints="{min:0,places:0}" required="true">	  
+	[% dialog_buttons('tribute-diag') %]
+	</form>
+</div>
+
 <h4>Allegiance</h4>
 
 [% PROCESS kingdom/loyalty_rating.html %]
@@ -33,6 +42,10 @@
 	Our monarch is: [% king.name %] ([% IF king.party_id %][% king.party.name %][% ELSE %]NPC[% END %])<br>
 	Our loyalty rating: [% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]<br>
 	<a href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a>
+	<br><br>
+	<button dojoType="dijit.form.Button" onClick="dijit.byId('tribute-diag').show()">
+		Pay Tribute
+	</button>	
 [% ELSE %]
 	We are Free Citizens, loyal to no one.
 [% END %]

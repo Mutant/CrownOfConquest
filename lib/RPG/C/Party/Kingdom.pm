@@ -353,7 +353,7 @@ sub cancel_petition : Local {
     
     push @{$c->stash->{panel_messages}}, "Petition cancelled!";
     
-    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=quests'], 'messages'] );         
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main?selected=quests'], 'messages'] );        
     
 }
 
@@ -417,6 +417,35 @@ sub quest_param_list : Local {
 			}
 		),
 	);
+}
+
+sub tribute : Local {
+    my ($self, $c) = @_;
+    
+    my $tribute = $c->req->param('tribute');
+    
+    if ($tribute >= 1) {
+        if ($c->stash->{party}->gold >= $tribute) {
+            $c->stash->{party}->decrease_gold($tribute);
+            $c->stash->{party}->update;
+            
+            $c->stash->{kingdom}->increase_gold($tribute);
+            $c->stash->{kingdom}->update;
+            
+        	$c->stash->{kingdom}->add_to_messages(
+        	   {
+        	       message => "The party " . $c->stash->{party}->name . " paid us $tribute gold as a tribute",
+        	       day_id => $c->stash->{today}->id,
+        	   }	       
+        	);
+        }
+        else {
+            push @{ $c->stash->{panel_messages} }, "You do not have enough gold to make that tribute";
+        }
+    }
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party_status'] );
+       
 }
 
 1;

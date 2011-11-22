@@ -42,6 +42,14 @@ function confirmQuest(questId, goldValue) {
 	dijit.byId('confirm-quest-diag').show();
 }
 
+
+function showContributeDiag(townId, townName) {
+	dojo.byId('contribute-town-id').value = townId;
+	dojo.byId('contribute-town-name').innerHTML = townName;
+	
+	dijit.byId('contribute-diag').show();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="kingdom-adjust-gold" style="display: none" title="Gold">
@@ -79,6 +87,15 @@ function confirmQuest(questId, goldValue) {
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="contribute-diag" style="display: none" title="Contribute Gold To A Town">
+	<form method="POST" action="[% base %]kingdom/contribute" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="town_id" id="contribute-town-id" />
+    How much gold do you want to contribute to <span id="contribute-town-name"></span>?
+	<input type="text" dojoType="dijit.form.NumberTextBox" name="contribution" style="width: 50px"
+					constraints="{min:0,places:0}" required="true">	     
+	[% dialog_buttons('contribute-diag') %]
+	</form>
+</div>
 
 <h2>Manage the Kingdom of [% kingdom.name %] - <a class="main" href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a></h2>
 

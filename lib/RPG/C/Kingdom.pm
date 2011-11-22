@@ -654,13 +654,60 @@ sub banish_party : Local {
     
     $c->flash->{messages} = "Party banished";
     
-    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=party']] );     
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=party']] );
 }
 
 sub records : Local {
     my ($self, $c) = @_;
     
     $c->visit('/party/kingdom/records');       
+}
+
+sub contribute : Local {
+    my ($self, $c) = @_;
+    
+    my $contribution = $c->req->param('contribution');
+    
+    if ($contribution > 0) {
+        if ($c->stash->{kingdom}->gold >= $contribution) {
+            my $town = $c->model('DBIC::Town')->find(
+                {
+                    town_id => $c->req->param('town_id'),
+                    'location.kingdom_id' => $c->stash->{kingdom}->id,
+                },
+                {
+                    join => 'location',
+                }
+            );
+            
+            if (! $town) {
+                $c->stash->{error} = 'Invalid town';
+                $c->forward('/panel/refresh');
+                return;
+            }
+            
+            $c->stash->{kingdom}->decrease_gold($contribution);
+            $c->stash->{kingdom}->update;
+            
+            $town->increase_gold($contribution);
+            $town->update;
+            
+        	$town->add_to_history(
+        		{
+        			type => 'income',
+        			value => $contribution,
+        			message => 'Kingdom Contribution',
+        			day_id => $c->stash->{today}->id,
+        		}
+        	);
+        }
+        else {
+            push @{ $c->stash->{panel_messages} }, "The kingdom does not have enough gold to make that contribution";
+        }
+    }
+        
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=towns']] );
+        
 }
 
 1;

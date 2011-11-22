@@ -39,6 +39,11 @@ The following towns are loyal to our Kingdom.
 		</td>
 		<td>[% IF town.id == capital.id %]N/A[% ELSE %][% display_kingdom_loyalty(town.kingdom_loyalty) %][% END %]</td>
 		<td>
+			<button dojoType="dijit.form.Button" onClick="showContributeDiag('[% town.id %]', '[% town.town_name %]')">
+				Contribute
+			</button>
+		</td>
+		<td>
 		[% IF town.id != capital.id %]
 		<button dojoType="dijit.form.Button" onClick="showCapitalDiag('[% town.id %]', '[% town.town_name %]', '[% capital_move_cost %]')">
 			Make Capital

@@ -111,12 +111,10 @@ sub sector_menu : Private {
 	$c->forward('/party/pending_mayor_check');
 
 	my @adjacent_towns;
-	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
-		# Remove any the party is a mayor of
-		my @party_mayoralties = map { $_->mayor_of ? $_->mayor_of : () } $c->stash->{party}->characters;
-		
+	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {	
 		foreach my $town ($c->stash->{party_location}->get_adjacent_towns) {
-			unless (grep { $_ == $town->id} @party_mayoralties) {
+            # Remove any the party is a mayor of
+		    if ($town->mayor->party_id != $c->stash->{party}->id) {
 				push @adjacent_towns, $town;	
 			}	
 		}

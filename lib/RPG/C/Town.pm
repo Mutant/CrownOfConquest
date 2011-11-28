@@ -534,8 +534,7 @@ sub raid : Local {
 
 	croak "Not next to that town" unless $c->stash->{party_location}->next_to( $town->location );
 	
-	my @party_mayoralties = map { $_->mayor_of ? $_->mayor_of : () } $c->stash->{party}->characters;
-	croak "Can't raid a town you're mayor of" if grep { $_ == $town->id } @party_mayoralties;
+	croak "Can't raid a town you're mayor of" if $town->mayor->party_id == $c->stash->{party}->id;
 
 	my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
 		{

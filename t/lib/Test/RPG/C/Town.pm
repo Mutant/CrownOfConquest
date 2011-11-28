@@ -359,7 +359,7 @@ sub test_calculate_heal_cost_discount_available : Tests(1) {
        
 }
 
-sub test_become_mayor : Tests(5) {
+sub test_become_mayor : Tests(7) {
 	my $self = shift;
 	
 	# GIVEN
@@ -395,6 +395,9 @@ sub test_become_mayor : Tests(5) {
 	$character->discard_changes;
 	is($character->mayor_of, $town->id, "Character now mayor of town");	
 	
+	my $cg = $character->creature_group;
+	is(defined $cg, 1, "Mayor added to CG");
+	
 	$party_town->discard_changes;
 	is($party_town->prestige, 0, "Prestige reset");	
 	
@@ -408,6 +411,7 @@ sub test_become_mayor : Tests(5) {
     is($history_rec->got_mayoralty_day, $self->{stash}{today}->id, "Got mayoralty day recorded");
     is($history_rec->character_id, $character->id, "Character id recorded in history");
     is($history_rec->mayor_name, $character->character_name, "Mayor name recorded in history");
+    is($history_rec->creature_group_id, $cg->id, "Creature group recorded in history");
 	
 }
 

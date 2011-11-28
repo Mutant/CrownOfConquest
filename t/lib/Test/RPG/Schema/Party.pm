@@ -536,6 +536,7 @@ sub test_consume_items : Tests() {
     # WHEN
     $party->consume_items(
         'Resource',
+        undef,
         (
             'Type1' => 150,
             'Type2' => 150,

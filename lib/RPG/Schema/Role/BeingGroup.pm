@@ -114,4 +114,21 @@ sub skill_aggregate {
     return $aggregate;
 }
 
+#  Get all equipment the group has for a given category
+sub get_equipment {
+	my $self = shift;
+	my $category = shift;	
+
+	my @equipment = $self->result_source->schema->resultset('Items')->search(
+    	{
+    	    'category.item_category' => $category,
+    	    'character_id' => [map { $_->is_character && $_->id } $self->members],
+    	},
+        {
+            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+        },
+	);
+	return @equipment;
+}
+
 1;

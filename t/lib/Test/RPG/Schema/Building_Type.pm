@@ -71,7 +71,7 @@ sub test_cost_to_build_with_skilled_party : Tests(1) {
     );
     
     # WHEN
-    my %costs = $building_type->cost_to_build($party);
+    my %costs = $building_type->cost_to_build([$party]);
     
     # THEN
     my %expected = (

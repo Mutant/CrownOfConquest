@@ -73,7 +73,7 @@ sub test_run_election_mayor_retains_office : Tests(7) {
     is($party2->messages->count, 1, "Char's party gets a message");
 }
 
-sub test_run_election_mayor_loses_office : Tests(8) {
+sub test_run_election_mayor_loses_office : Tests(9) {
     my $self = shift;
     
     # GIVEN
@@ -113,6 +113,7 @@ sub test_run_election_mayor_loses_office : Tests(8) {
     
     $char->discard_changes;
     is($char->mayor_of, $town->id, "Char is the new mayor");
+    is(defined $char->creature_group_id, 1, "char is now in a cg");
     
     $town->discard_changes;
     is($town->mayor_rating, 0, "Mayor rating reset");

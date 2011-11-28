@@ -765,51 +765,18 @@ sub deactivate {
     $self->update;           
 }
 
-#  Return an array of equipment in this party.  Optional item category name(s) can be passed.
-sub get_equipment {
-	my $self = shift;
-	my @categories = @_;
-	
-	my %search_criteria = (
-			'belongs_to_character.party_id' => $self->id, 
-			'belongs_to_character.garrison_id' => { '=', undef},
-			'belongs_to_character.mayor_of' => { '=', undef},
-			'belongs_to_character.status' => { '=', undef},
-	);
-	my $count = @categories;
-	if ($count) {
-		my %item_types;
-		foreach my $next_category (@categories) {
-			push @{$item_types{item_category}}, $next_category;
-		}
-		if ($count > 1) {
-			$search_criteria{'-or'} = \%item_types;
-		} else {
-			%search_criteria = (%search_criteria, %item_types);
-		}
-	}
-
-	my @party_equipment = $self->result_source->schema->resultset('Items')->search(
-        	\%search_criteria,
-	        {
-	        	join => ['belongs_to_character', 'item_type'],
-	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-	            order_by => 'item_category',
-	        },
-	);
-	return @party_equipment;
-}
-
 #  This function consumes items that are possessed by the party.  Note that this sub will accept items that are
 #    both individual items and those with 'Quantity'.
-sub consume_items{
+sub consume_items {
 	my $self = shift;
-	my $categories = shift;
-	$categories = [$categories] unless ref $categories;
+	my $category = shift;
+	my $secondary_group = shift;
     my %items_to_consume = @_;
 
-	#  Get the party's equipment.
-	my @party_equipment = $self->get_equipment(@$categories);
+	#  Get the party's equipment.	
+	my @party_equipment = $self->get_equipment($category);
+	push @party_equipment, $secondary_group->get_equipment($category)
+	   if $secondary_group;
 
 	#  Go through the items, decreasing the needed counts.
 	my @items_to_consume;

@@ -134,27 +134,14 @@ sub change : Local {
     $new_mayor->mayor_of($c->stash->{town}->id);
     $new_mayor->update;
     
-    $mayor->status(undef);
-    $mayor->status_context(undef);
-    $mayor->update;   
-        
-    $c->stash->{party}->adjust_order;
+    $new_mayor->apply_roles;
+    $new_mayor->gain_mayoralty($c->stash->{town});
     
     my $new_rating = $orig_approval - 10;
     $new_rating = -5 if $new_rating > -5;
     
     $c->stash->{town}->mayor_rating($new_rating);
     $c->stash->{town}->update;
-    
-	$c->model('DBIC::Party_Mayor_History')->create(
-	   {
-	       mayor_name => $new_mayor->character_name,
-	       character_id => $new_mayor->id,
-	       town_id => $c->stash->{town}->id,
-	       got_mayoralty_day => $c->stash->{today}->id,
-	       party_id => $c->stash->{party}->id,
-	   }
-	);  
 	
 	$c->stash->{town}->add_to_history(
    		{
@@ -670,7 +657,7 @@ sub combat_log : Local {
     );       
 }
 
-sub defences : Local {
+sub traps : Local {
     my ($self, $c) = @_;
     
     my $town = $c->stash->{town};
@@ -679,7 +666,7 @@ sub defences : Local {
         'RPG::V::TT',
         [
             {
-                template => 'town/mayor/defences.html',
+                template => 'town/mayor/traps.html',
                 params   => {
                     town => $town,
                     trap_maint_cost => $town->trap_level   * $c->config->{town_trap_maint_cost},
@@ -715,7 +702,7 @@ sub upgrade_traps : Local {
         push @{$c->stash->{panel_messages}}, "The town does not have enough gold for the upgrade";
     }
 	
-	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=traps']] );
 }
 
 sub downgrade_traps : Local {
@@ -724,7 +711,35 @@ sub downgrade_traps : Local {
     $c->stash->{town}->decrement_trap_level;
     $c->stash->{town}->update;
     
-    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=defences']] );
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=traps']] );
+}
+
+sub buildings : Local {
+    my ($self, $c) = @_;
+    
+    if ($c->stash->{town}->location->building->count > 0) {
+        $c->forward('/building/manage', [$c->stash->{town}]);
+    }
+    else {    
+        $c->forward('/building/construct', [$c->stash->{town}]);
+    }
+}
+
+sub build : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('/building/build', [$c->stash->{town}]);    
+    
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+}
+
+sub building_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('/building/upgrade', [$c->stash->{town}]);    
+    
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    
 }
 
 1;

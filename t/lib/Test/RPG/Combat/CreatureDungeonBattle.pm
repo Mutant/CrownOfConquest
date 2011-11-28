@@ -20,6 +20,7 @@ use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::CreatureType;
+use Test::RPG::Builder::Building;
 
 use RPG::Combat::CreatureDungeonBattle;
 
@@ -227,6 +228,44 @@ sub test_mayor_strategy_bonus_applied_to_guards_df : Tests(2) {
     # THEN
     is($factors->{creature}{$crets[0]->id}{df}, 21, "First guard has df bonus");
     is($factors->{creature}{$crets[1]->id}{df}, 21, "Second guard has df bonus");
+}
+
+sub test_buildings_bonus_applied_to_mayors_group : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 5, dungeon_id => $dungeon->id);
+    my @sectors = $dungeon_room->sectors;    
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, mayor_of => $town->id, party_id => $party->id);    
+    my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $town->land_id, owner_id => $town->id, owner_type => 'town' );
+    
+    my @chars = $party->characters;
+    $chars[0]->status('mayor_garrison');
+    $chars[0]->status_context($town->id);
+    $chars[0]->update;
+    
+    my $cg = $town->mayor->create_creature_group;
+    
+    my $opponent = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, dungeon_grid_id => $sectors[1]->id );
+    
+    my $battle = RPG::Combat::CreatureDungeonBattle->new(
+        schema             => $self->{schema},
+        party              => $opponent,
+        creature_group     => $cg,
+        log                => $self->{mock_logger},
+        config             => $self->{config},
+    );    
+    
+    # WHEN
+    my $factors = $battle->combat_factors;     
+    
+    is($factors->{character}{$mayor->id}{df}, 4, "Correct df for mayor");
+    is($factors->{character}{$chars[0]->id}{df}, 2, "Correct df for garrison char");
+       
 }
 
 1;

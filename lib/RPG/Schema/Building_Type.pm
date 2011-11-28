@@ -203,19 +203,19 @@ sub label {
     return $self->name;
 }
 
-sub turns_needed {
-    my $self = shift;
-    my $party = shift;
-    
-    return round $self->labor_needed / $party->characters_in_party->count;   
+ sub turns_needed {
+     my $self = shift;
+     my $party = shift;
+     
+     return round $self->labor_needed / $party->characters_in_party->count;   
 }
 
 sub enough_resources {
     my $self = shift;
-    my $build_group = shift;
+    my $build_groups = shift;
     my %resources = @_;
     
-    my %resources_needed = $self->cost_to_build($build_group);
+    my %resources_needed = $self->cost_to_build($build_groups);
     
     my $enough = 1;
     foreach my $resource (keys %resources) {
@@ -232,7 +232,7 @@ sub enough_resources {
 
 sub cost_to_build {
     my $self = shift;
-    my $build_group = shift;
+    my $build_groups = shift;
     
     my %resources_needed = (
        'Clay'  => $self->clay_needed,
@@ -241,14 +241,18 @@ sub cost_to_build {
        'Stone' => $self->stone_needed,
     );
 	
-    if ($build_group) {
-        my $construction_bonus = $build_group->skill_aggregate('Construction', 'building_cost');
+    if ($build_groups) {        
+        my $construction_bonus = 0;
+        
+        foreach my $build_group (@$build_groups) {
+            $construction_bonus += $build_group->skill_aggregate('Construction', 'building_cost');
+        }
 
         $construction_bonus = 50 if $construction_bonus > 50;
 	   
         foreach my $res (keys %resources_needed) {
             $resources_needed{$res} = int $resources_needed{$res} * (1-($construction_bonus/100));            
-        }   
+        }
 	}
 	
 	return %resources_needed

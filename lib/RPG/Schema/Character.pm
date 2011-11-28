@@ -98,12 +98,18 @@ sub inflate_result {
 
     my $self = $pkg->next::method(@_);
 
+    $self->apply_roles;
+
+    return $self;
+}
+
+sub apply_roles {
+    my $self = shift;
+    
     if ($self->mayor_of) {
     	$self->ensure_class_loaded('RPG::Schema::Role::Character::Mayor');
     	RPG::Schema::Role::Character::Mayor->meta->apply($self);		
-    }
-
-    return $self;
+    }    
 }
 
 sub strength {

@@ -19,14 +19,40 @@ sub auto : Private {
     return 1;
 }
 
+sub get_valid_groups {
+    my ($self, $c, $town) = @_;
+    
+    my @groups;
+    
+	if ($town) {
+	    push @groups, $town->mayor->creature_group;
+        
+        if ($c->stash->{party}->land_id == $town->land_id) {
+            push @groups, $c->stash->{party};
+        }
+	}
+	else {
+	    @groups = ($c->stash->{party});
+	}
+	
+	return @groups;
+	
+}
+
 sub get_party_resources {
-    my ($self, $c) = @_;
+    my ($self, $c, $town) = @_;
     
 	#  Get the list of resources owned by the current party.
 	my %resources;
 	
-	my @party_equipment = $c->stash->{party}->get_equipment(qw(Resource));
-	foreach my $resource (@party_equipment) {
+	my @equipment;
+	my @groups = $self->get_valid_groups($c, $town);
+	
+	foreach my $group (@groups) {
+	    push @equipment, $group->get_equipment('Resource');
+	}
+	
+	foreach my $resource (@equipment) {
         $resources{$resource->item_type->item_type} += $resource->variable('Quantity') // 0;	
 	}
 	
@@ -34,7 +60,7 @@ sub get_party_resources {
 }
 
 sub construct : Local {
-    my ($self, $c) = @_;
+    my ($self, $c, $town) = @_;
    
     my $building_type = $c->model('DBIC::Building_Type')->find(
         {
@@ -42,7 +68,7 @@ sub construct : Local {
         }
     );
     
-    my %party_resources = $self->get_party_resources($c);
+    my %party_resources = $self->get_party_resources($c, $town);
     
     my %resources = map { $_->item_type => $_ } $c->model('DBIC::Item_Type')->search(
         {
@@ -53,7 +79,10 @@ sub construct : Local {
         }
     );
     
-    my %resources_needed = $building_type->cost_to_build($c->stash->{party});
+    my @groups = $self->get_valid_groups($c, $town);
+    
+    my %resources_needed = $building_type->cost_to_build(\@groups);
+    my $enough_resources = $building_type->enough_resources(\@groups, %party_resources);
     	
 	$c->forward('RPG::V::TT',
         [{
@@ -62,18 +91,21 @@ sub construct : Local {
             	party => $c->stash->{party},
                 building_type => $building_type,
                 party_resources => \%party_resources,
-                enough_resources => $building_type->enough_resources($c->stash->{party}, %party_resources),
+                enough_resources => $enough_resources,
                 resources => \%resources,
                 resources_needed => \%resources_needed,
+                town => $town,
             },
         }]
     );    
 }
 
 sub build : Local {
-    my ($self, $c) = @_; 
+    my ($self, $c, $town) = @_;
     
-	my @current_building = $c->stash->{party_location}->building;
+    my $location = $town ? $town->location : $c->stash->{party_location};
+    
+	my @current_building = $location->building;
     if (@current_building) {
         $c->stash->{error} = "There's already a building in this sector!";
         $c->detach('/panel/refresh');
@@ -84,15 +116,17 @@ sub build : Local {
             level => 1,
         }
     );
+    
+    my @groups = $self->get_valid_groups($c, $town);
 
-    if (! $building_type->enough_turns($c->stash->{party})) {
+    if (! $town && ! $building_type->enough_turns($c->stash->{party})) {
         $c->stash->{error} = "You don't have enough turns to construct the building";
         $c->detach('/panel/refresh');
     }
    
-	my %resources_needed = $building_type->cost_to_build($c->stash->{party});
+	my %resources_needed = $building_type->cost_to_build(\@groups);
 	
-	if (! $c->stash->{party}->consume_items('Resource', %resources_needed) ) {
+	if (! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to create this building";
 		$c->detach('/panel/refresh');			
 	}    
@@ -100,10 +134,10 @@ sub build : Local {
 	#  Create the building.
 	my $building = $c->model('DBIC::Building')->create(
 		{
-			land_id => $c->stash->{party_location}->land_id,
+			land_id => $location->land_id,
 			building_type_id => $building_type->id,
-			owner_id => $c->stash->{party}->id,
-			owner_type => "party",
+			owner_id => $town ? $town->id : $c->stash->{party}->id,
+			owner_type => $town ? 'town' : 'party',
 			name => $building_type->name,
 			
 			#  For now, partial construction not allowed, so we use all the materials up front
@@ -115,44 +149,45 @@ sub build : Local {
 		}
 	);   
 	
-	$c->forward('change_building_ownership', [$building]);
-
-	$c->model('DBIC::Party_Messages')->create(
-		{
-			message => "We created a " . $building_type->name . " at " . $c->stash->{party}->location->x . ", "
-			 . $c->stash->{party}->location->y,
-			alert_party => 0,
-			party_id => $c->stash->{party}->id,
-			day_id => $c->stash->{today}->id,
-		}
-	);
-
-	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
-	$c->stash->{party}->update;
+	if (! $town) {	
+    	$c->forward('change_building_ownership', [$building]);
+    
+    	$c->model('DBIC::Party_Messages')->create(
+    		{
+    			message => "We created a " . $building_type->name . " at " . $c->stash->{party}->location->x . ", "
+    			 . $c->stash->{party}->location->y,
+    			alert_party => 0,
+    			party_id => $c->stash->{party}->id,
+    			day_id => $c->stash->{today}->id,
+    		}
+    	);
+    
+    	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
+    	$c->stash->{party}->update;
+    	
+    	my $message = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
+    	
+    	push @$message, "Building created";
+    	
+    	$c->stash->{panel_messages} = $message if @$message;
+    		
+    	$c->forward('/map/refresh_current_loc');
 	
-	my $message = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
-	
-	push @$message, "Building created";
-	
-	$c->stash->{panel_messages} = $message if @$message;
-		
-	$c->forward('/map/refresh_current_loc');
-	
-	$c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
+	   $c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
+	}
 }
 
 sub manage : Local {
-    my ($self, $c) = @_;
+    my ($self, $c, $town) = @_;
+    
+    my $location = $town ? $town->location : $c->stash->{party_location};
     
 	#  Get a list of the currently built (or under construction) buildings owned by the party.
 	my @existing_buildings = $c->model('DBIC::Building')->search(
     	{
-    		'land_id' => $c->stash->{party_location}->id,
-        	'owner_id' => $c->stash->{party}->id,
-        	'owner_type' => 'party'
-        },
-        {
-            order_by => 'labor_needed'
+    		'land_id' => $location->id,
+        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
+        	'owner_type' => $town ? 'town' : 'party',
         },
 	);
 	
@@ -162,13 +197,15 @@ sub manage : Local {
 	
 	my $building_type = $building->building_type;
 	
+	my @groups = $self->get_valid_groups($c, $town);
+	
 	my $upgradable_to_type = $c->model('DBIC::Building_Type')->find(
 	   {
 	       level => $building_type->level + 1,
 	   }
 	);
 	
-    my %party_resources = $self->get_party_resources($c);
+    my %party_resources = $self->get_party_resources($c, $town);
     
     my %resources = map { $_->item_type => $_ } $c->model('DBIC::Item_Type')->search(
         {
@@ -179,7 +216,8 @@ sub manage : Local {
         }
     );	
     
-    my %resources_needed = $building_type->cost_to_build($c->stash->{party});
+    my %resources_needed = $upgradable_to_type->cost_to_build(\@groups);
+    my $enough_resources = $upgradable_to_type ? $upgradable_to_type->enough_resources(\@groups, %party_resources) : 1;
 
 	$c->forward('RPG::V::TT',
         [{
@@ -189,26 +227,26 @@ sub manage : Local {
                 building_type => $building_type,
                 upgradable_to_type => $upgradable_to_type,
                 party_resources => \%party_resources,
-                enough_resources => $upgradable_to_type ? $upgradable_to_type->enough_resources($c->stash->{party}, %party_resources) : 1,
+                enough_resources => $enough_resources,
                 resources => \%resources,
                 resources_needed => \%resources_needed,
+                town => $town,
             },
         }]
     );     
 }
 
 sub upgrade : Local {
-    my ($self, $c) = @_;
+    my ($self, $c, $town) = @_;
+    
+    my $location = $town ? $town->location : $c->stash->{party_location};
     
 	#  Get a list of the currently built (or under construction) buildings owned by the party.
 	my @existing_buildings = $c->model('DBIC::Building')->search(
     	{
-    		'land_id' => $c->stash->{party_location}->id,
-        	'owner_id' => $c->stash->{party}->id,
-        	'owner_type' => 'party'
-        },
-        {
-            order_by => 'labor_needed'
+    		'land_id' => $location->id,
+        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
+        	'owner_type' => $town ? 'town' : 'party',
         },
 	);
 	
@@ -226,14 +264,16 @@ sub upgrade : Local {
 	
 	croak "Building can't be upgraded\n" unless $upgradable_to_type;	
 	
-    if (! $upgradable_to_type->enough_turns($c->stash->{party})) {
+    if (! $town && ! $upgradable_to_type->enough_turns($c->stash->{party})) {
         $c->stash->{error} = "You don't have enough turns to upgrade the building";
         $c->detach('/panel/refresh');
     }
+    
+    my @groups = $self->get_valid_groups($c, $town);
 	
-	my %resources_needed = $upgradable_to_type->cost_to_build($c->stash->{party});
+	my %resources_needed = $upgradable_to_type->cost_to_build(\@groups);
 	
-	if (! $c->stash->{party}->consume_items('Resource', %resources_needed) ) {
+	if (! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to upgrade this building";
 		$c->detach('/panel/refresh');			
 	}
@@ -241,17 +281,18 @@ sub upgrade : Local {
 	$building->building_type_id($upgradable_to_type->id);
 	$building->update;
 	
-	$c->forward('change_building_ownership', [$building]);
-
-
-	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
-	$c->stash->{party}->update;
-	
-	$c->stash->{panel_messages} = ["Building upgraded"];
-		
-	$c->forward('/map/refresh_current_loc');
-	
-	$c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );	
+	if (! $town) {	
+    	$c->forward('change_building_ownership', [$building]);    
+    
+    	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
+    	$c->stash->{party}->update;
+    	
+    	$c->stash->{panel_messages} = ["Building upgraded"];
+    		
+    	$c->forward('/map/refresh_current_loc');
+    	
+    	$c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
+	}	
 }
 
 sub seize : Local {
@@ -274,6 +315,8 @@ sub seize : Local {
 	#   Grab the building list, report on each on seized.
 	my @existing_buildings = $c->stash->{party_location}->building;	
 	my ($building) = @existing_buildings;
+	
+	croak "Cannot raze a town's building" if $building->owner_type eq 'town';
 	
 	croak "No building to seize\n" unless $building;
 	
@@ -359,6 +402,8 @@ sub raze : Local {
 	my ($building) = @existing_buildings;
 	
 	croak "No building to raze\n" unless $building;
+	
+	croak "Cannot raze a town's building" if $building->owner_type eq 'town';
 	
 	my $turns_to_raze = $building->building_type->turns_to_raze($c->stash->{party});
 		

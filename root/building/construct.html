@@ -1,10 +1,17 @@
 <h2>Construct A Building</h2>
 
-Buildings give benefits to a garrison in the same sector.
+Buildings give benefits
+[% IF town %]
+to the mayor's group and any garrisoned characters.<br>
+Resources are taken from the mayor, town garrison characters, and your party, if they are in town.
+[% ELSE %]
+to a garrison in the same sector.
+[% END %]
 
 <br><br>
 
-<form method="POST" id="create" action="[% base %]/building/build"  onSubmit="postPanels(this); return false"> 
+<form method="POST" id="create" action="[% base %]/[% IF town %]town/mayor[% ELSE %]building[% END %]/build"  onSubmit="postPanels(this); return false">
+[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %]
 <div style=" padding:10px; height:125px;">
 	<div id="building_types" style="float:left;width:300px;">
 		<div class="enlargedTitle" style="text-align: center; margin:10px;">

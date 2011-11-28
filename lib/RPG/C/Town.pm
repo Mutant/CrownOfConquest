@@ -684,21 +684,10 @@ sub become_mayor : Local {
 
 	$character->mayor_of( $town->id );	
 	$character->update;
-
-	$c->stash->{party}->adjust_order;
 	
-	# If they have negative prestige, reset it to 0
-	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
-		{
-			party_id => $c->stash->{party}->id,
-			town_id  => $town->id,
-		},
-	);
-	if ($party_town->prestige < 0) {
-		$party_town->prestige(0);
-		$party_town->update;	
-	}
-
+	$character->apply_roles;
+	$character->gain_mayoralty($town);
+	
 	$town->pending_mayor(undef);
 	$town->pending_mayor_date(undef);
 	$town->update;
@@ -719,24 +708,7 @@ sub become_mayor : Local {
 			day_id => $c->stash->{today}->id,
 		}
 	);
-	
-	$c->model('DBIC::Party_Mayor_History')->create(
-	   {
-	       mayor_name => $character->character_name,
-	       character_id => $character->id,
-	       town_id => $town->id,
-	       got_mayoralty_day => $c->stash->{today}->id,
-	       party_id => $c->stash->{party}->id,
-	   }
-	);
-	
-	$character->add_to_history(
-	   {
-	       day_id => $c->stash->{today}->id,
-	       event => $character->character_name . ' is now the mayor of ' . $town->town_name,
-	   }
-	);
-	
+
     $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
 
 	my $messages = $c->forward( '/quest/check_action', [ 'taken_over_town', $town ] );

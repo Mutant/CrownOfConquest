@@ -102,4 +102,33 @@ sub test_mayors_df_increased : Tests(1) {
        
 }
 
+sub test_create_creature_group : Tests() {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 60);
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id, mayor_of => $town->id);
+    
+    foreach my $garrison_char ($party->characters) {
+        $garrison_char->status('mayor_garrison');
+        $garrison_char->status_context($town->id);
+        $garrison_char->update;   
+    }
+    
+    # WHEN
+    $town->mayor->create_creature_group();
+    
+    # THEN
+    $mayor->discard_changes;
+    my $cg = $mayor->creature_group;
+
+    is(defined $cg, 1, "Mayor's cg created");
+    
+    foreach my $garrison_char ($party->characters) {
+        is($garrison_char->creature_group_id, $cg->id, "Garrison char in CG");
+    }    
+    
+}
+
 1;

@@ -287,23 +287,9 @@ sub generate_mayors_group {
                 $history_rec->update;
             }
 		}
-    		      
+ 
 		
-        # Move the group into a sector away from the stairs
-        unless ($mayors_group->in_combat) {
-    		my $sector;
-    		my $sector_rs = $castle->find_sectors_not_near_stairs(1);
-    		
-    		while ($sector = $sector_rs->next) {
-                next if $sector->creature_group;
-                last;
-    		}
-    		
-    		if ($sector) {
-                $mayors_group->dungeon_grid_id($sector->id);
-                $mayors_group->update;
-    		}
-        }
+
 	}
 	
 	# Ensure mayor's group has a sector. Could be that finding a sector not near stairs didn't give them one
@@ -313,6 +299,22 @@ sub generate_mayors_group {
         $mayors_group->dungeon_grid_id($random_sector->id);
         $mayors_group->update; 
 	}
+
+    # Move the group into a sector away from the stairs
+    unless ($mayors_group->in_combat) {
+		my $sector;
+		my $sector_rs = $castle->find_sectors_not_near_stairs(1);
+		
+		while ($sector = $sector_rs->next) {
+            next if $sector->creature_group;
+            last;
+		}
+		
+		if ($sector) {
+            $mayors_group->dungeon_grid_id($sector->id);
+            $mayors_group->update;
+		}
+    }
 	
 	# Add any garrisoned chars into the group
 	my @garrison_chars = $c->schema->resultset('Character')->search(

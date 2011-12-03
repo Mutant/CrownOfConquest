@@ -179,7 +179,7 @@ sub ready_to_complete {
 sub finish_quest {
 	my $self = shift;
 	
-	my $item = $self->item;
+	my $item = eval {$self->item};
 	return unless $item;
 	$item->character_id(undef);
 	$item->treasure_chest_id(undef);

@@ -70,5 +70,9 @@ UPDATE `Building_Type` set defense_factor = 4 where name = 'Tower';
 UPDATE `Building_Type` set defense_factor = 6 where name = 'Fort';
 UPDATE `Building_Type` set defense_factor = 8 where name = 'Castle';
 
+UPDATE `Creature_Type` set image = 'vampire.png' where creature_type = 'Vampire';
+UPDATE `Creature_Type` set image = 'centaur.png' where creature_type = 'Centaur';
+UPDATE `Creature_Type` set image = 'blacksorcerer.png' where creature_type = 'Black Sorcerer';
+UPDATE `Creature_Type` set image = 'harpy.png' where creature_type = 'Harpy';
 
 

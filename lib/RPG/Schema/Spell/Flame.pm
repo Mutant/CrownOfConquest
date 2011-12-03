@@ -11,7 +11,7 @@ sub _cast {
     my ( $self, $character, $target, $level ) = @_;
     my $dice_count = int $level / 3 + 1;
 
-    my $flame = Games::Dice::Advanced->roll( $dice_count . "d10" );
+    my $flame = Games::Dice::Advanced->roll( $dice_count . "d6" );
 
     $target->hit( $flame, $character );
     $target->update;

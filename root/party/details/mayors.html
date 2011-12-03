@@ -1,5 +1,6 @@
 [% INCLUDE layout/close_button.html %]
 [% PROCESS town/mayor/display_approval.html %]
+[% USE wrap %]
 
 <h4>Mayors</h4>
 
@@ -22,7 +23,7 @@
 			<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
 				<td><b><a href="javascript:loadScreen('character/view?character_id=[% mayor.id %]')">[% mayor.character_name %]</a></b></td>
 				<td>[% town.town_name %] ([% town.location.x %], [% town.location.y %])</td>
-				<td>[% display_rating(mayor.mayor_of_town.mayor_rating) %]</td>
+				<td>[% display_rating(mayor.mayor_of_town.mayor_rating) | trim | wrap(20, '', '<br>') %]</td>				
 				<td><a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of_town.id %]')">Manage</a></td>
 			</tr>
 		[% END %]

@@ -66,5 +66,9 @@ UPDATE `Item_Type` set weight = 7, base_cost = 25 where item_type = 'Clay';
 UPDATE `Item_Type` set weight = 6, base_cost = 12 where item_type = 'Wood';
 UPDATE `Item_Type` set weight = 12, base_cost = 35 where item_type = 'Stone';
 
+UPDATE `Building_Type` set defense_factor = 4 where name = 'Tower';
+UPDATE `Building_Type` set defense_factor = 6 where name = 'Fort';
+UPDATE `Building_Type` set defense_factor = 8 where name = 'Castle';
+
 
 

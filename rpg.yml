@@ -351,10 +351,10 @@ sage_dungeon_find_range: 40
 characters_per_prosperity: 10
 
 # Chance a blacksmith's skill will go up on a given day
-blacksmith_skill_increase_chance: 33
+blacksmith_skill_increase_chance: 40
 
 # Chance a blacksmith will retire
-blacksmith_retire_chance: 15
+blacksmith_retire_chance: 3
 
 # Max blacksmith starting skill
 blacksmith_max_start_skill: 5

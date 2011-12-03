@@ -61,4 +61,10 @@ INSERT INTO `Creature_Type`(creature_type, level, weapon, fire, ice, poison, cre
 
 ALTER TABLE `Town` ADD COLUMN `trap_level` INTEGER  NOT NULL DEFAULT 0;
 
+UPDATE `Item_Type` set weight = 10, base_cost = 70 where item_type = 'Iron';
+UPDATE `Item_Type` set weight = 7, base_cost = 25 where item_type = 'Clay';
+UPDATE `Item_Type` set weight = 6, base_cost = 12 where item_type = 'Wood';
+UPDATE `Item_Type` set weight = 12, base_cost = 35 where item_type = 'Stone';
+
+
 

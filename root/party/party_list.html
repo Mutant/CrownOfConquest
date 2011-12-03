@@ -336,9 +336,9 @@ function createMenus() {
 
     [% END %]
     
-    highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 %]', '[% combat_params.${character.id}.1 %]');
+    highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 | html_entity %]', '[% combat_params.${character.id}.1 | html_entity %]');
     
-    [% END %]    
+    [% END %]
 }
 
 function createButton(menu, name, characterId) {

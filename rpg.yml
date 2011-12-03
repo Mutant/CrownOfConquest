@@ -343,6 +343,8 @@ sage_distance_cost: 100
 sage_location_cost: 600
 sage_item_find_cost: 100
 sage_find_dungeon_cost_per_level: 300
+sage_find_orb_base_cost: 100
+sage_find_orb_level_step: 200
 
 # Range from the town where a dungeon can be found
 sage_dungeon_find_range: 40

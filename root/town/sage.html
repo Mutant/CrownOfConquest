@@ -4,6 +4,7 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	<li><a href="#" onClick="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
+	<li><a href="#" onClick="javascript:dijit.byId('sage-orb-diag').show()">Find an orb</a></li>
 </ul>
 
 <div dojoType="dijit.Dialog" id="sage-town-diag" style="display: none" title="Find A Town" execute="findTown(arguments[0]);">
@@ -57,6 +58,22 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 		</tr>
 	</table>
 	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-orb-diag" style="display: none" title="Find An Orb">
+	<form method="post" action="[% base %]town/sage/find_orb" onSubmit="postPanels(this); return false">
+	<table>
+	    <tr>
+		    <td>What orb would you like to find?</td>
+		    <td><input type="text" size="50" name="orb_name" dojoType="dijit.form.TextBox"></td>
+		</tr>
+		<tr>
+			<td>How much would you like to spend on finding the orb?<br>(The more you pay me, the more likely I am to be accurate with its location).
+			<td><input type="text" style="width: 40px" size="5" name="amount_to_spend" dojoType="dijit.form.TextBox"></td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+	</form>
 </div>
 
 [% INCLUDE town/discount_message.html shop_type='sage' %] 

@@ -214,6 +214,13 @@ sub check_action : Private {
         }
     }
     
+    # Check if this action affects any other quests    
+    my @quests = $c->model('DBIC::Quest')->find_quests_by_interested_action($action);
+    
+    foreach my $quest (@quests) {
+        $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
+    }    
+    
     return \@messages;
 }
 

@@ -485,14 +485,7 @@ sub check_quest_action {
             },
         );   
     }
-    
-    # Check if this action affects any other quests    
-    my @quests = $self->result_source->schema->resultset('Quest')->find_quests_by_interested_action($action);
-    
-    foreach my $quest (@quests) {
-        $quest->check_action_from_another_party( $actioning_party, $action, @params );
-    }
-    
+   
     return $message;
 }
 

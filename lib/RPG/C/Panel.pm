@@ -230,7 +230,32 @@ sub messages : Private {
                     ]
                 );                
             }
+        }
+        
+        # See if there are any Kingdom discussion board messages posted recently
+        if ($c->stash->{party}->kingdom_id) {
+            my $msg_count = $c->stash->{party}->kingdom->search_related(
+                'messages',
+                {
+                    type => 'board',
+                    day_id => $c->stash->{today}->id,
+                }   
+            )->count;
             
+            if ($msg_count > 0) {
+                push @{ $c->stash->{messages} }, $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'party/messages/kingdom_board_messages.html',
+                            params => {
+                                msg_count   => $msg_count,
+                            },
+                            return_output => 1,
+                        }
+                    ]
+                );
+            }
         }
     }
 }

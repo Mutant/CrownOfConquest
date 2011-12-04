@@ -383,7 +383,6 @@ sub test_become_mayor : Tests(7) {
 	$self->{params}{town_id} = $town->id;
 	
 	$self->{stash}{party} = $party;
-	$self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});
 	
 	$self->{mock_forward}{'/panel/refresh'} = sub {};
 	$self->{mock_forward}{'/quest/check_action'} = sub {};

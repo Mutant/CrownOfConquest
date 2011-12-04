@@ -240,8 +240,8 @@ sub test_garrison_gets_bonus_in_building : Tests(2) {
     my $combat_factors = $battle->combat_factors;
     
     # THEN
-    is($combat_factors->{ character }{ $character1->id }{ df }, 12, "Character 1 df bonus added");
-    is($combat_factors->{ character }{ $character2->id }{ df }, 17, "Character 2 df bonus added");
+    is($combat_factors->{ character }{ $character1->id }{ df }, 14, "Character 1 df bonus added");
+    is($combat_factors->{ character }{ $character2->id }{ df }, 19, "Character 2 df bonus added");
 	
 	
 }

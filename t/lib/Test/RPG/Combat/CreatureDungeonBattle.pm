@@ -263,8 +263,8 @@ sub test_buildings_bonus_applied_to_mayors_group : Tests(2) {
     # WHEN
     my $factors = $battle->combat_factors;     
     
-    is($factors->{character}{$mayor->id}{df}, 4, "Correct df for mayor");
-    is($factors->{character}{$chars[0]->id}{df}, 2, "Correct df for garrison char");
+    is($factors->{character}{$mayor->id}{df}, 6, "Correct df for mayor");
+    is($factors->{character}{$chars[0]->id}{df}, 4, "Correct df for garrison char");
        
 }
 

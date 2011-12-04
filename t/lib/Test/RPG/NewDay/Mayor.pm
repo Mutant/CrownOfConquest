@@ -668,11 +668,11 @@ sub test_pay_trap_maintenance_couldnt_afford : Tests(3) {
     is($town->history->count, 0, "No messages added to town's history");
 }
 
-sub test_train_guards : Tests(6) {
+sub test_train_guards_gold_limited : Tests(9) {
     my $self = shift;
     
     # GIVEN
-    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1100, prosperty => 10 );  
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1100, prosperty => 30 );  
     
     my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 100);
     my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 200);
@@ -700,6 +700,51 @@ sub test_train_guards : Tests(6) {
     
     $town->discard_changes;
     is($town->gold, 0, "Correct amount of gold spent");
+    
+    my @history = $town->history;
+    is(scalar @history, 1, "1 item in history");
+    is($history[0]->type, 'expense', "History is an expense");
+    is($history[0]->value, '1100', "Value is correct");
+       
+}
+
+sub test_train_guards_level_limited : Tests(9) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 10000, prosperty => 1 );  
+    
+    my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 100);
+    my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 200);
+    
+    $self->{roll_result} = 1;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->train_guards($town);
+    
+    # THEN
+    my @hires = $self->{schema}->resultset('Town_Guards')->search(
+        {
+            town_id => $town->id,
+        },
+    );
+    is(scalar @hires, 2, "2 hire records created");
+
+    is($hires[0]->creature_type_id, $type1->id, "First hire record is correct cret type id");
+    is($hires[0]->amount, 0, "Correct number hired for first guard type");
+
+    is($hires[1]->creature_type_id, $type2->id, "Second hire record is correct cret type id");
+    is($hires[1]->amount, 31, "Correct number hired for second guard type");
+    
+    $town->discard_changes;
+    is($town->gold, 3800, "Correct amount of gold spent");
+       
+    my @history = $town->history;
+    is(scalar @history, 1, "1 item in history");
+    is($history[0]->type, 'expense', "History is an expense");
+    is($history[0]->value, '6200', "Value is correct");       
        
 }
 

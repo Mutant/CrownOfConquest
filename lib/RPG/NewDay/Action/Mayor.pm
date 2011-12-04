@@ -860,7 +860,6 @@ sub train_guards {
 	my @sorted_types = sort { $b->hire_cost <=> $a->hire_cost } @$creature_guard_types;
 	
 	my $spent = 0;
-	 
 	while ($level_aggregate <= $minimum_level_aggregate) {
 	    my $hired = 0;
         foreach my $type (@sorted_types) {
@@ -871,6 +870,11 @@ sub train_guards {
          
             $spent += $type->hire_cost;
             
+            $town->decrease_gold($type->hire_cost);
+            $town->update;
+            
+            $level_aggregate += $type->level;
+            
             $hired = 1;
             
             last;
@@ -879,10 +883,7 @@ sub train_guards {
         last if ! $hired;
 	}
 	
-	if ($spent) {
-        $town->decrease_gold($spent);
-        $town->update;	
-        
+	if ($spent) {      
         $town->add_to_history(
             {
                 day_id => $self->context->current_day->id,

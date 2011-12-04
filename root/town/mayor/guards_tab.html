@@ -1,35 +1,73 @@
 <h3>Town Guards</h3>
 
-Choose how many guards you'd like to hire to protect the town. Guards will be hired and fired immediately after tax is collected for the day.
-If there's not enough money in the town coffers to pay for all the guards, only the ones the town can afford will be hired.
-<br>
-<br>
+[% PROCESS layout/diag_buttons.html %]
 
-<form action="[% base %]/town/mayor/update_guards" method="POST" onSubmit="postPanels(this); return false">
-<input type="hidden" name="town_id" value="[% town_id %]">
+<div dojoType="dijit.Dialog" id="train-guards-diag" style="display: none" title="Train Guards">
+	<form method="POST" action="[% base %]town/mayor/train_guards" onSubmit="postPanels(this); return false" autocomplete="off">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	<table class="main">
+		<tr>
+			<td>Select Amount Of New Guards To Train:</td>
+			<td><input type="text" name="amount" size="5"></td>
+		</tr>
+		<tr>
+			<td>Select Type Of Guard To Train:</td>
+			<td><select name="guard_type_id" dojoType="dijit.form.FilteringSelect" style="width: 200px">
+				[% FOREACH guard_type IN guard_types %]
+					<option value="[% guard_type.id %]">[% guard_type.creature_type %] ([% guard_type.hire_cost %] gold each)</option>
+				[% END %]
+				</select>
+			</td>
+		</tr>
+	</table>    
+    [% dialog_buttons('town-guards-diag') %]
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="fire-guards-diag" style="display: none" title="Train Guards">
+	<form method="POST" action="[% base %]town/mayor/fire_guards" onSubmit="postPanels(this); return false" autocomplete="off">
+	<input type="hidden" name="town_id" value="[% town.id %]">
+	<table class="main">
+		<tr>
+			<td>Select Amount Of Guards To Fire:</td>
+			<td><input type="text" name="amount" size="5"></td>
+		</tr>
+		<tr>
+			<td>Select Type Of Guard To Fire:</td>
+			<td><select name="guard_type_id" dojoType="dijit.form.FilteringSelect" style="width: 200px">
+				[% FOREACH guard_type IN guard_types %]
+					<option value="[% guard_type.id %]">[% guard_type.creature_type %]</option>
+				[% END %]
+				</select>
+			</td>
+		</tr>
+	</table>    
+    [% dialog_buttons('town-guards-diag') %]
+	</form>
+</div>
+
+Train guards to protect the town. You must pay guards a daily wage after training them. If the town can't afford to pay them, they will not work (i.e. they won't
+defend the town).
+<br>
+<br>
 
 <table class="main" cellpadding="2">
 	<tr>
 		<th>Guard Type</th>
-		<th>Number Currently<br>Alive</th>
-		<th>Amount Previously<br>Requested</th>
-		<th>Amount To Hire<br>Tomorrow</th>
+		<th>Number Trained</th>
+		<th>Amount Working</th>
 		<th valign="bottom">Cost Per Day</th>
 	</tr>
 	
 [% total_cost = 0 %]
 [% FOREACH guard_type IN guard_types %]
 	<tr>
-		<td>[% guard_type.creature_type %] ([% guard_type.hire_cost %] gold each)</td>
-		<td align="center">[% guard_type.count || 0 %]</td>
-		<td align="center">[% guard_type.hired_previously || 0 %]</td>
-		<td align="center">
-		    <input type="text" dojoType="dijit.form.NumberTextBox" name="type_[% guard_type.creature_type_id %]" style="width: 50px"
-				value="[% guard_type.to_hire %]" constraints="{min:0,places:0}" required="true"
-				invalidMessage="Amount of guards hired must be a number 0 or greater">
-		</td>
+		<td>[% guard_type.creature_type %] ([% guard_type.maint_cost %] gold per day)</td>
+		<td align="center">[% guard_type.trained || 0 %]</td>
+		<td align="center">[% guard_type.working || 0 %]</td>		
+		
 		<td align="right">
-			[% cost = guard_type.hire_cost * guard_type.to_hire %]
+			[% cost = guard_type.maint_cost * guard_type.trained %]
 			[% total_cost = total_cost + cost %]
 			[% cost %] gold
 		</td>
@@ -43,12 +81,16 @@ If there's not enough money in the town coffers to pay for all the guards, only 
 		</td>
 		<td></td>
 		<td></td>
-		<td></td>
 		<td align="right">[% total_cost %] gold</td>
 	</tr>
 </table>
 
-<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
-	Update
+<br>
+
+<button dojoType="dijit.form.Button" onClick="dijit.byId('train-guards-diag').show()">
+	Train Guards
 </button>
-</form>
+
+<button dojoType="dijit.form.Button" onClick="dijit.byId('fire-guards-diag').show()">
+	Fire Guards
+</button>

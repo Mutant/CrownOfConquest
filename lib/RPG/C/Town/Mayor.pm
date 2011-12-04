@@ -183,22 +183,7 @@ sub guards : Local {
 			join     => 'category',
 			order_by => 'level',
 		}
-	);	
-	
-	my @guards = $c->model('DBIC::Creature')->search(
-		{
-			'dungeon_room.dungeon_id' => $castle->id,
-		},
-		{
-			join => {'creature_group' => {'dungeon_grid' => 'dungeon_room'}},
-		}
-	);		
-	
-	foreach my $guard (@guards) {
-		my $type_id = $guard->creature_type_id;
-		
-		$guard_types{$type_id}->{count}++;
-	}
+	);
 		
 	foreach my $guard_type (values %guard_types) {
 		my $hired = $c->model('DBIC::Town_Guards')->find_or_new(
@@ -211,10 +196,10 @@ sub guards : Local {
 		unless ($hired->in_storage) {
 			$hired->amount($guard_types{$guard_type->id}->{count} || 0);
 			$hired->insert;
-		}		
+		}
 		
-		$guard_types{$guard_type->id}->{to_hire} = $hired->amount;
-		$guard_types{$guard_type->id}->{hired_previously} = $hired->amount_yesterday;
+		$guard_types{$guard_type->id}->{trained} = $hired->amount;
+		$guard_types{$guard_type->id}->{working} = $hired->amount_working;
 	}
 	
 	$c->forward(
@@ -223,44 +208,96 @@ sub guards : Local {
 			{
 				template => 'town/mayor/guards_tab.html',
 				params => {
-					guard_types => [sort { $a->level <=> $b->level } values %guard_types],					
+					guard_types => [sort { $a->level <=> $b->level } values %guard_types],
+					town => $c->stash->{town},					
 				},
 			}
 		]
 	);	
 }
 
-sub update_guards : Local {
+sub train_guards : Local {
 	my ( $self, $c ) = @_;
 	
 	my $params = $c->req->params;
 	
-	foreach my $key (keys %$params) {
-		next unless $key =~ /^type_(\d+)$/;
-		
-		my $type_id = $1;
-		
-		my $creature_type = $c->model('DBIC::CreatureType')->find(
-			{
-				creature_type_id => $type_id,
-			},
-			{
-				prefetch => 'category',
-			}
-		);
-		
-		croak "Invalid creature group" unless $creature_type->category->name eq 'Guard';			
-		
-		my $hired = $c->model('DBIC::Town_Guards')->find(
-			{
-				town_id => $c->stash->{town}->id,
-				creature_type_id => $type_id,
-			}
-		);
-		
-		$hired->amount($params->{$key} || 0);
-		$hired->update;		
+	my $creature_type = $c->model('DBIC::CreatureType')->find(
+		{
+			creature_type_id => $c->req->param('guard_type_id'),
+		},
+		{
+			prefetch => 'category',
+		}
+	);
+	
+	croak "Invalid creature group" unless $creature_type && $creature_type->category->name eq 'Guard';
+	
+	croak "Invalid amount" unless $c->req->param('amount') >= 0;
+	
+	my $cost = $creature_type->hire_cost * $c->req->param('amount');
+	if ($cost > $c->stash->{town}->gold) {
+	    $c->stash->{error} = "The town does not have enough gold";
 	}
+    else {
+        $c->stash->{town}->decrease_gold($cost);
+        $c->stash->{town}->update;
+        
+        $c->stash->{town}->add_to_history(
+            {
+                day_id => $c->stash->{today}->id,
+                type => 'expense',
+                message => 'Guard Training',
+                value => $cost,
+            },                
+        );
+        
+    	my $hired = $c->model('DBIC::Town_Guards')->find(
+    		{
+    			town_id => $c->stash->{town}->id,
+    			creature_type_id => $c->req->param('guard_type_id'),
+    		}
+    	);
+    		
+    	$hired->increase_amount($c->req->param('amount'));
+    	$hired->update;
+    }
+	
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
+}
+
+sub fire_guards : Local {
+	my ( $self, $c ) = @_;
+	
+	my $params = $c->req->params;
+	
+	my $creature_type = $c->model('DBIC::CreatureType')->find(
+		{
+			creature_type_id => $c->req->param('guard_type_id'),
+		},
+		{
+			prefetch => 'category',
+		}
+	);
+	
+	croak "Invalid creature group" unless $creature_type && $creature_type->category->name eq 'Guard';
+	
+	croak "Invalid amount" unless $c->req->param('amount') >= 0;
+
+	my $hired = $c->model('DBIC::Town_Guards')->find(
+		{
+			town_id => $c->stash->{town}->id,
+			creature_type_id => $c->req->param('guard_type_id'),
+		}
+	);
+	
+	if ($hired->amount < $c->req->param('amount')) {
+	   $c->stash->{error} = "You do not have that many guards of that type";
+	}
+    else {		
+    	$hired->decrease_amount($c->req->param('amount'));
+    	$hired->amount_working($hired->amount) if $hired->amount_working > $hired->amount;
+    	$hired->update;
+    }
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
 }

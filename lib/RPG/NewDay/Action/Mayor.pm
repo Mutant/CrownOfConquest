@@ -80,6 +80,8 @@ sub process_town {
 		$self->check_for_npc_election($town);
 		
 		$self->check_for_allegiance_change($town);
+		
+		$self->train_guards($town);
 	}
 
 	my $revolt_started = $self->check_for_revolt($town);
@@ -196,7 +198,7 @@ sub calculate_approval {
 
 	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
-	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);
+	my $guards_hired_adjustment = int ($creature_level / ($town->prosperity + 30));
 	
 	my $garrison_chars_adjustment = 0;
 	
@@ -619,7 +621,7 @@ sub generate_advice {
 			
 			my $creature_level = $creature_rec->get_column('level_aggregate') || 0;
 			
-			if ($creature_level / $town->prosperity < 5) {
+			if ($creature_level / $town->prosperity + 30 < 4) {
 				$advice = "The townsfolk don't feel safe, perhaps you should hire some more guards";
 				last;	
 			}
@@ -830,6 +832,85 @@ sub pay_trap_maintenance {
 	    
         $town->update;
 	}   
+}
+
+sub train_guards {
+    my $self = shift;
+    my $town = shift;    
+    
+    my $minimum_level_aggregate = $town->prosperity * 6 + Games::Dice::Advanced->roll('1d500');
+	
+	my $creature_guard_types = $self->creature_guard_types;
+	
+	my %current_hires;
+	my $level_aggregate = 0;
+	
+	foreach my $type (@$creature_guard_types) {
+		my $guards_to_hire = $self->context->schema->resultset('Town_Guards')->find_or_create(
+			{
+				town_id => $town->id,
+				creature_type_id => $type->id,
+			}
+		);
+		
+		$current_hires{$type->id} = $guards_to_hire;
+		$level_aggregate += $type->level * ($guards_to_hire->amount // 0);
+	}
+	
+	my @sorted_types = sort { $b->hire_cost <=> $a->hire_cost } @$creature_guard_types;
+	
+	my $spent = 0;
+	 
+	while ($level_aggregate <= $minimum_level_aggregate) {
+	    my $hired = 0;
+        foreach my $type (@sorted_types) {
+            next if $town->gold < $type->hire_cost;
+            
+            $current_hires{$type->id}->increment_amount;
+            $current_hires{$type->id}->update;
+         
+            $spent += $type->hire_cost;
+            
+            $hired = 1;
+            
+            last;
+        }
+        
+        last if ! $hired;
+	}
+	
+	if ($spent) {
+        $town->decrease_gold($spent);
+        $town->update;	
+        
+        $town->add_to_history(
+            {
+                day_id => $self->context->current_day->id,
+                type => 'expense',
+                message => 'Guard Training',
+                value => $spent,
+            },
+        );
+	}                   
+	
+}
+
+sub creature_guard_types {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+	$self->{creature_guard_types} //= [ $c->schema->resultset('CreatureType')->search(
+		{
+			'category.name' => 'Guard',
+		},
+		{
+			join     => 'category',
+			order_by => 'level',
+		}
+	) ];
+	
+	return $self->{creature_guard_types};       
 }
 
 1;

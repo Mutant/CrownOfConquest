@@ -611,7 +611,7 @@ sub raid : Local {
         push @{$c->stash->{panel_messages}}, "This town doesn't have a mayor! You won't be able to conquer this town until one is appointed";
     }
     
-    elsif (! $mayor->creature_group_id || ! $mayor->creature_group->land_id) {
+    elsif (! $mayor->creature_group_id || ! $mayor->creature_group->dungeon_grid_id) {
         push @{$c->stash->{panel_messages}}, "The mayor of this town changed recently, and the mayor is not yet in the castle. You won't be able to conquer this " .
             "town until the mayor enters the castle";
     }

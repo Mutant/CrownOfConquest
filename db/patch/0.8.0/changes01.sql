@@ -54,11 +54,6 @@ UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select te
 UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'light forest');
 UPDATE `Land` set variation = 1 where tileset_id = 2 and terrain_id = (select terrain_id from Terrain where terrain_name = 'mountain') and variation = 3;
 
-UPDATE `Creature_Type` set hire_cost = 50 where creature_type = 'Seasoned Town Guard';
-UPDATE `Creature_Type` set hire_cost = 100 where creature_type = 'Veteran Town Guard';
-INSERT INTO `Creature_Type`(creature_type, level, weapon, fire, ice, poison, creature_category_id, hire_cost, image, special_damage)
-	VALUES ('Elite Town Guard', 22, 'Melee Weapon', 65, 65, 65, (select creature_category_id from Creature_Category where name = 'Guard'), 400, 'veteranguard.png', 'Fire');
-
 ALTER TABLE `Town` ADD COLUMN `trap_level` INTEGER  NOT NULL DEFAULT 0;
 
 UPDATE `Item_Type` set weight = 10, base_cost = 70 where item_type = 'Iron';
@@ -75,4 +70,11 @@ UPDATE `Creature_Type` set image = 'centaur.png' where creature_type = 'Centaur'
 UPDATE `Creature_Type` set image = 'blacksorcerer.png' where creature_type = 'Black Sorcerer';
 UPDATE `Creature_Type` set image = 'harpy.png' where creature_type = 'Harpy';
 
+ALTER TABLE `Creature_Type` ADD COLUMN `maint_cost` INTEGER  AFTER `creature_category_id`;
+ALTER TABLE `Town_Guards` CHANGE COLUMN `amount_yesterday` `amount_working` INTEGER  DEFAULT NULL;
 
+UPDATE `Creature_Type` set hire_cost = 100, maint_cost = 10 where creature_type = 'Rookie Town Guard';
+UPDATE `Creature_Type` set hire_cost = 350, maint_cost = 25 where creature_type = 'Seasoned Town Guard';
+UPDATE `Creature_Type` set hire_cost = 1000, maint_cost = 40 where creature_type = 'Veteran Town Guard';
+INSERT INTO `Creature_Type`(creature_type, level, weapon, fire, ice, poison, creature_category_id, maint_cost, hire_cost, image, special_damage)
+	VALUES ('Elite Town Guard', 22, 'Melee Weapon', 65, 65, 65, (select creature_category_id from Creature_Category where name = 'Guard'), 150, 10000, 'eliteguard.png', 'Fire');

@@ -14,6 +14,7 @@ sub build_creature_type {
     		level => $params{creature_level} || 1, 
     		creature_category_id => $category->id,
     		hire_cost => $params{hire_cost} || 0,
+    		maint_cost => $params{maint_cost} || 0,
     		creature_type => $params{type} || 'Test',
     		rare => $params{rare} || 0,
     	} 

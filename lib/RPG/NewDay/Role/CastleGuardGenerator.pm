@@ -18,10 +18,10 @@ sub generate_guards {
 	my $c = $self->context;
 
 	my $town = $castle->town;
-	
-	$self->context->logger->debug("Generating guards for town " . $town->id);
 
 	return unless $town;
+	
+	$self->context->logger->debug("Generating guards for town " . $town->id);
 
 	my @creature_types = $c->schema->resultset('CreatureType')->search(
 		{
@@ -35,11 +35,6 @@ sub generate_guards {
 	
 	my $mayor = $castle->town->mayor;
 	
-	if (! $mayor || ! $mayor->party_id) {
-		# If the mayor's an NPC, caclulate how many guards the town should hire now
-		$self->calculate_guards_to_hire($town, \@creature_types);
-	}
-
 	# Get the list of guards currently in the castle
 	my @creatures = $c->schema->resultset('Creature')->search(
 		{
@@ -57,7 +52,7 @@ sub generate_guards {
 			town_id => $town->id,
 		},
 	);
-	$self->context->logger->debug("Hiring guards: " . Dumper \%guards_to_hire);
+	$self->context->logger->debug("Generating guards: " . Dumper \%guards_to_hire);
 			
 	my %creature_types_by_id = map { $_->id => $_ } @creature_types;
 
@@ -66,18 +61,18 @@ sub generate_guards {
 	foreach my $type_id (sort keys %guards_to_hire) {
 		next if $guards_to_hire{$type_id} <= 0;
 		
-		my $cost = $guards_to_hire{$type_id} * $creature_types_by_id{$type_id}->hire_cost;
+		my $cost = $guards_to_hire{$type_id} * $creature_types_by_id{$type_id}->maint_cost;
 	
 		if ($cost < $town->gold) {
 			$self->context->logger->debug("Spending $cost gold on " . $creature_types_by_id{$type_id}->creature_type);
-			$town->decrease_gold($cost);	
+			$town->decrease_gold($cost);
 		}
 		else {
 			# Can't afford them all, just get as many as they can afford
-			my $number_to_hire = int ($town->gold / $creature_types_by_id{$type_id}->hire_cost);
-			$self->context->logger->debug("Could only afford to hire $number_to_hire " . $creature_types_by_id{$type_id}->creature_type);
+			my $number_to_hire = int ($town->gold / $creature_types_by_id{$type_id}->maint_cost);
+			$self->context->logger->debug("Could only afford to pay $number_to_hire " . $creature_types_by_id{$type_id}->creature_type);
 			$guards_to_hire{$type_id} = $number_to_hire;
-			$cost = $number_to_hire * $creature_types_by_id{$type_id}->hire_cost;
+			$cost = $number_to_hire * $creature_types_by_id{$type_id}->maint_cost;
 			$town->decrease_gold($cost);
 		}
 
@@ -182,48 +177,10 @@ sub record_guards_hired {
 			}
 		);
 		
-		$guards_to_hire->amount_yesterday($hires{$type_id});
+		$guards_to_hire->amount_working($hires{$type_id});
 		$guards_to_hire->update;
     }
    
-}
-
-sub calculate_guards_to_hire {
-	my $self = shift;
-	my $town = shift;
-	my $creature_types = shift;	
-
-	my $levels_aggregate = $town->prosperity * 7;
-	
-	$levels_aggregate += int ($town->gold / 1000) * 40;
-	
-	my $max_level = int $town->prosperity / 2.5;
-	$max_level = 6 if $max_level < 6;
-		
-	my $lowest_level = $creature_types->[0]->level;
-	
-	my %guards_to_hire;
-	while ($levels_aggregate > $lowest_level) {
-		my $type = ( shuffle @$creature_types )[0];
-		
-		next if $type->level > $max_level;
-		
-		$guards_to_hire{$type->id}++;
-		
-		$levels_aggregate -= $type->level;
-	}
-	
-	foreach my $type_id (keys %guards_to_hire) {
-		my $guards_to_hire = $self->context->schema->resultset('Town_Guards')->find_or_create(
-			{
-				town_id => $town->id,
-				creature_type_id => $type_id,
-			}
-		);
-		
-		$guards_to_hire->amount($guards_to_hire{$type_id});
-		$guards_to_hire->update;
-	}
 }
 
 sub generate_mayors_group {
@@ -287,9 +244,6 @@ sub generate_mayors_group {
                 $history_rec->update;
             }
 		}
- 
-		
-
 	}
 	
 	# Ensure mayor's group has a sector. Could be that finding a sector not near stairs didn't give them one

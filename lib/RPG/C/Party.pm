@@ -114,7 +114,7 @@ sub sector_menu : Private {
 	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {	
 		foreach my $town ($c->stash->{party_location}->get_adjacent_towns) {
             # Remove any the party is a mayor of
-		    if ($town->mayor->party_id != $c->stash->{party}->id) {
+		    if ($town->mayor && $town->mayor->party_id != $c->stash->{party}->id) {
 				push @adjacent_towns, $town;	
 			}	
 		}

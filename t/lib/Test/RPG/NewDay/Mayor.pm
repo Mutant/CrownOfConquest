@@ -19,6 +19,7 @@ use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::CreatureType;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -665,6 +666,41 @@ sub test_pay_trap_maintenance_couldnt_afford : Tests(3) {
     is($town->trap_level, 1, "Trap level decreased");
     
     is($town->history->count, 0, "No messages added to town's history");
+}
+
+sub test_train_guards : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1100, prosperty => 10 );  
+    
+    my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 100);
+    my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 200);
+    
+    $self->{roll_result} = 1;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->train_guards($town);
+    
+    # THEN
+    my @hires = $self->{schema}->resultset('Town_Guards')->search(
+        {
+            town_id => $town->id,
+        },
+    );
+    is(scalar @hires, 2, "2 hire records created");
+
+    is($hires[0]->creature_type_id, $type1->id, "First hire record is correct cret type id");
+    is($hires[0]->amount, 1, "Correct number hired for first guard type");
+
+    is($hires[1]->creature_type_id, $type2->id, "Second hire record is correct cret type id");
+    is($hires[1]->amount, 5, "Correct number hired for second guard type");
+    
+    $town->discard_changes;
+    is($town->gold, 0, "Correct amount of gold spent");
+       
 }
 
 1;

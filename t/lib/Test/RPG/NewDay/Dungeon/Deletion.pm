@@ -15,7 +15,7 @@ use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Party;
 
 
-sub startup : Tests(startup => 1) {
+sub setup : Tests(setup => 1) {
 	my $self = shift;
 	
 	use_ok('RPG::NewDay::Action::Dungeon');

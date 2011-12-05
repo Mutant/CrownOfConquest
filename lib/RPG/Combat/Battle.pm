@@ -8,6 +8,7 @@ use Storable qw(freeze thaw);
 use DateTime;
 use Data::Dumper;
 use Math::Round qw(round);
+use Try::Tiny;
 
 use RPG::Combat::ActionResult;
 use RPG::Combat::MessageDisplayer;
@@ -339,7 +340,13 @@ sub check_skills {
             
             my $defender;
             if ($char_skill->needs_defender) {
-                $defender = $self->select_opponent($character);
+                try {
+                    $defender = $self->select_opponent($character);
+                }
+                catch {
+                    $self->log->debug("Error finding opponent");
+                    return;
+                };
             }
             
             my %results = $char_skill->execute('combat', $character, $defender);            

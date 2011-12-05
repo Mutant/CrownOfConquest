@@ -134,4 +134,48 @@ sub test_execute_new_ammo_item : Tests(4) {
     is($new_item->variable('Quantity'), 10, "New item has correct quantity");
 }
 
+sub test_execute_not_a_ranged_weapon : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1);
+    my ($char) = $party->characters;
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $self->{skill}->id,
+            character_id => $char->id,
+            level => 1,
+        }
+    );
+
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema},
+        item_type => 'Arrows',
+        variables => [{
+            name => 'Quantity',
+            create_on_insert => 1,
+        }],
+        character_id => $char->id,
+    );
+    
+    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},
+        item_type_name => 'Long Bow',
+        super_category_name => 'Weapon',
+        category_name => 'Melee Weapon',
+        character_id => $char->id,
+    );
+    
+ 
+    $self->{rolls} = [1,20,20];
+    
+    # WHEN
+    $char_skill->execute('new_day');
+    
+    # THEN
+    is($party->day_logs->count, 0, "No party log created");
+    
+    is(grep({ $_->id != $item2->id } $char->items), 0, "No new items created");
+}
+
+
 1;

@@ -17,6 +17,8 @@ sub execute {
     
     return unless $item;
     
+    return unless $item->item_type->category->item_category eq 'Ranged Weapon';
+    
     my $chance = $self->level * 9;
     
     if (Games::Dice::Advanced->roll('1d100') <= $chance) {

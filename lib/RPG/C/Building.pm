@@ -216,8 +216,13 @@ sub manage : Local {
         }
     );	
     
-    my %resources_needed = $upgradable_to_type->cost_to_build(\@groups);
-    my $enough_resources = $upgradable_to_type ? $upgradable_to_type->enough_resources(\@groups, %party_resources) : 1;
+    my %resources_needed;
+    my $enough_resources = 0;
+    
+    if ($upgradable_to_type) {
+        %resources_needed = $upgradable_to_type->cost_to_build(\@groups);
+        $enough_resources = $upgradable_to_type ? $upgradable_to_type->enough_resources(\@groups, %party_resources) : 1;
+    }
 
 	$c->forward('RPG::V::TT',
         [{

@@ -1461,5 +1461,36 @@ sub test_check_skills : Tests(2) {
        
 }
 
+sub test_refresh_combat_factor_called_before_cache_initialised : Tests(3) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my ($char) = $party->characters;
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);    
+	my ($cret) = $cg->creatures;
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	# WHEN
+	$battle->refresh_factor_cache('creature', $cret->id);
+	
+	# THEN
+	my $combat_factors = $battle->combat_factors();
+	
+	is(scalar keys %$combat_factors, 2, "2 sets of factors calculated");
+	is($combat_factors->{creature}{$cret->id}{df}, 8, 'Creature DF set correctly');
+	is($combat_factors->{character}{$char->id}{df}, 0, 'Creature AF set correctly');
+		
+       
+}
+
 1;
 

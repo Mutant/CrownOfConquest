@@ -1018,8 +1018,11 @@ sub _build_combat_log {
 # Refresh a combatant's details in the factor cache
 sub refresh_factor_cache {
 	my ( $self, $combatant_type, $combatant_id_to_refresh ) = @_;
-$self->log->debug("refresh factors: $combatant_type $combatant_id_to_refresh");
-    delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
+    
+    $self->log->debug("refresh factors: $combatant_type $combatant_id_to_refresh");
+    
+    delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh}
+        if defined $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
 
 	$self->combat_factors( $self->_build_combat_factors($combatant_type, $combatant_id_to_refresh) );
 }
@@ -1032,13 +1035,22 @@ sub _build_combat_factors {
 	my %combat_factors;
 
 	%combat_factors = %{ $self->session->{combat_factors} } if defined $self->session->{combat_factors};
-
+	
+	# If we don't have any chars or creatures set, we must be 'initialising'
+	#  (i.e. not just refreshing an individual combatant) 
+	my $initialising = ($combat_factors{creature}  && %{ $combat_factors{creature}  }) ||
+	                   ($combat_factors{character} && %{ $combat_factors{character} }) ? 0 : 1;
+	
+	
+	
 	foreach my $combatant ( $self->combatants ) {
 		next if $combatant->is_dead;
 		
 		my $type = $combatant->is_character ? 'character' : 'creature';
 
-		if (defined $id) {
+        # If we've been asked to build a particular combatant's factors, and we're not initialising,
+        #  skip anyone who is not that combatant
+		if (defined $id && ! $initialising) {
             next unless $id == $combatant->id && $type eq $refresh_type; 
 		}
 
@@ -1048,7 +1060,7 @@ sub _build_combat_factors {
 		$combat_factors{$type}{ $combatant->id }{df}  = $combatant->defence_factor;
 		$combat_factors{$type}{ $combatant->id }{dam} = $combatant->damage;
 	}
-
+	
 	$self->session->{combat_factors} = \%combat_factors;
 
 	return \%combat_factors;

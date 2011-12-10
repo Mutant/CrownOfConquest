@@ -76,8 +76,38 @@ sub regular : Local {
                 },
             }
         ]
-    );      
-   
+    );
+}
+
+sub new_players : Local {
+    my ( $self, $c ) = @_;    
+    
+    my @players = $c->model('DBIC::Player_Login')->search(
+        {
+            'player.created' => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            'select' => ['player_name', {count => '*', -as => 'count'}],
+            'as' => ['player_name', 'count'],
+            join => 'player',
+            group_by => 'player_name',
+            order_by => 'count desc',
+        }   
+    );    
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/new_players.html',
+                params   => {
+                    players => \@players,
+                    count => scalar @players,
+                },
+            }
+        ]
+    );    
+    
 }
 
 # XXX: Possibly too slow to run?

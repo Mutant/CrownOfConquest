@@ -197,7 +197,16 @@ __PACKAGE__->add_columns(
         'name'              => 'screen_width',
         'is_nullable'       => 1,
         'size'              => '255'
-    },    
+    },
+    'created' => {
+        'data_type'         => 'datetime',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'created',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },        
     
 );
 __PACKAGE__->set_primary_key('player_id');

@@ -314,6 +314,7 @@ sub register : Local {
                     $code ? (promo_code_id => $code->code_id) : (),
                     send_email        => $c->req->param('allow_emails') ? 1 : 0,
                     referred_by       => $referring_player ? $referring_player->id : undef,
+                    created           => DateTime->now(),
                 }
             );
             

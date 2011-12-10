@@ -71,81 +71,82 @@ sub opponents_of {
 	}
 }
 
+# TODO: logic really needs a tidy up
 sub execute_round {
 	my $self = shift;
 	
 	# Clear any messages from the last round
 	$self->result->{messages} = undef;
+	
+    my @combat_messages;
 
 	# Check for stalemates, fleeing or no one alive in one of the groups
 	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
-	my $dead_group = $self->check_for_end_of_combat;
-	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
-
-		# One opponent has fled, end of the battle
-		$self->end_of_combat_cleanup;
-
-		$self->result->{combat_complete} = 1;
-
-		$self->combat_log->increment_rounds;
-
-		$self->record_messages;
-
-		return $self->result;
-	}
-
-	# Process magical effects
-	$self->process_effects;
-
-	if ($self->result->{combat_complete}) {	
-		$self->combat_log->increment_rounds;
-
-		$self->record_messages;
-		
-		return $self->result;
-	}
-
-	my @combatants = $self->combatants;
-
-	# Get list of combatants, modified for changes in attack frequency, and randomised in order
-	@combatants = $self->get_combatant_list(@combatants);
-
-	my @combat_messages;
-	
-	push @combat_messages, $self->check_skills;
-
-	foreach my $combatant (@combatants) {
-	    $combatant->discard_changes;
-		next if $combatant->is_dead;
-
-		my $action_result;
-		if ( $combatant->is_character ) {
-			$action_result = $self->character_action($combatant);
-
-			if ($action_result) {
-				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
-			}
-		}
-		else {
-			$action_result = $self->creature_action($combatant);
-		}
-
-		if ($action_result) {
-			push @combat_messages, $action_result;
-
-			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
-
-			if ( $action_result->defender_killed ) {
-				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
-
-				my $type = $action_result->defender->is_character ? 'character' : 'creature';
-				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
-			}
-
-			if ( my $losers = $self->check_for_end_of_combat ) {
-				last;
-			}
-		}
+	eval {
+    	my $dead_group = $self->check_for_end_of_combat;
+    	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
+    
+    		# One opponent has fled, end of the battle
+    		$self->end_of_combat_cleanup;
+    
+    		$self->result->{combat_complete} = 1;
+    
+    		return;
+    	}
+    
+    	# Process magical effects
+    	$self->process_effects;
+    
+    	return if $self->result->{combat_complete};
+    
+    	my @combatants = $self->combatants;
+    
+    	# Get list of combatants, modified for changes in attack frequency, and randomised in order
+    	@combatants = $self->get_combatant_list(@combatants);
+ 
+  	
+    	push @combat_messages, $self->check_skills;
+    	
+    	$self->check_for_end_of_combat;
+    	
+    	return if $self->result->{combat_complete};	
+    	
+    	foreach my $combatant (@combatants) {
+    	    $combatant->discard_changes;
+    		next if $combatant->is_dead;
+    
+    		my $action_result;
+    		if ( $combatant->is_character ) {
+    			$action_result = $self->character_action($combatant);
+    
+    			if ($action_result) {
+    				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
+    			}
+    		}
+    		else {
+    			$action_result = $self->creature_action($combatant);
+    		}
+    
+    		if ($action_result) {
+    			push @combat_messages, $action_result;
+    
+    			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
+    
+    			if ( $action_result->defender_killed ) {
+    				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
+    
+    				my $type = $action_result->defender->is_character ? 'character' : 'creature';
+    				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
+    			}
+    
+    			if ( my $losers = $self->check_for_end_of_combat ) {
+    				last;
+    			}
+    		}
+    	}
+	};
+	if ($@) {
+	    die $@;
 	}
 
 	$self->combat_log->increment_rounds;
@@ -308,7 +309,7 @@ sub get_combatant_list {
 		if ($type ne 'character' || $combatant->last_combat_action ne 'Cast') {   
     		$number_of_attacks = $combatant->number_of_attacks(@attack_history);
 		}
-
+		
 		push @attack_history, $number_of_attacks;
 
 		$self->session->{attack_history}{$type}{ $combatant->id } = \@attack_history;
@@ -384,7 +385,7 @@ sub select_opponent {
 	# If we don't have a target, choose one randomly
 	unless ($opponent) {
 		for my $id ( shuffle keys %opponents ) {
-			unless ( $opponents{$id}->is_dead ) {
+			if ( ! $opponents{$id}->is_dead ) {
 				$opponent = $opponents{$id};
 				last;
 			}

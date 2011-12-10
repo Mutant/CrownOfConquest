@@ -1050,6 +1050,67 @@ sub test_execute_round_skills_checked : Tests(2) {
 	$self->clear_dice_data;	
 }
 
+sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
+	my $self = shift;
+
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	
+	my ($character) = $party->characters;
+	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Shield', character_id => $character->id);  
+	$character->last_combat_action('Attack');
+	$character->update;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Shield Bash',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );	
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_hit_points_current => 3 );
+	
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+	$self->{roll_result} = 10;
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	my @messages = $self->{schema}->resultset('Combat_Log_Messages')->search;
+	is(scalar @messages, 1, "1 messages added");
+	like( $messages[0]->message, qr/test_cret #0(.+?) was killed/, "Creature was killed");
+	like( $messages[0]->message, qr/You've killed the creatures/, "Group wiped out");
+	
+    is( $result->{combat_complete}, 1, "Combat ended" );
+	
+		
+	$self->unmock_dice;
+	$self->clear_dice_data;	
+}
+
+
 sub test_characters_killed_during_round_are_skipped : Tests(1) {
 	my $self = shift;
 	

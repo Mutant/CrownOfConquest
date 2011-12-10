@@ -1,0 +1,17 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Login Counts</h2>
+
+<table>
+<tr>	
+	<th colspan=3>Date</th>
+	<th colspan=3># Of Logins</th>	
+</tr>
+[% FOREACH rec IN counts %]
+	<tr>
+		<td>[% rec.get_column('date') %]</td>
+		<td>[% rec.get_column('count') %]</td>
+	</tr>
+[% END %]
+</table>

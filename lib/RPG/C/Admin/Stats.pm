@@ -7,13 +7,73 @@ use base 'Catalyst::Controller';
 
 use Statistics::Basic qw(average);
 use RPG::Schema::Creature;
+use DateTime;
 
 sub default : Private {
     my ( $self, $c ) = @_;
 
-    $c->forward('combat_factors');
+    $c->forward('logins');
 }
 
+sub logins : Local {
+    my ( $self, $c ) = @_;
+    
+    my @counts = $c->model('DBIC::Player_Login')->search(
+        {
+            login_date => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            select => [ {date => 'login_date', -as => 'date'}, {count => '*', -as => 'count'}],
+            as => ['date','count'],
+            order_by => 'date desc',
+            group_by => 'date',
+        }
+    );
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/logins.html',
+                params   => {
+                    counts => \@counts,
+                },
+            }
+        ]
+    );    
+}
+
+sub regular : Local {
+    my ( $self, $c ) = @_;
+    
+    my @players = $c->model('DBIC::Player_Login')->search(
+        {
+            login_date => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            'select' => ['player_name', {count => '*', -as => 'count'}],
+            'as' => ['player_name', 'count'],
+            join => 'player',            
+            having => { 'count' => {'>=', $c->req->param('min_logins') // 20} },
+            group_by => 'player_name',
+        }   
+    );
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/players.html',
+                params   => {
+                    players => \@players,
+                },
+            }
+        ]
+    );      
+   
+}
+
+# XXX: Possibly too slow to run?
 sub combat_factors : Local {
     my ( $self, $c ) = @_;
 

@@ -46,9 +46,14 @@ sub logins : Local {
 sub regular : Local {
     my ( $self, $c ) = @_;
     
+    my $months_ago = $c->req->param('months_ago') // 0;
+    
     my @players = $c->model('DBIC::Player_Login')->search(
         {
-            login_date => {'>=', DateTime->now()->subtract( months => 1 )},
+            login_date => {
+                '>=', DateTime->now()->subtract( months => $months_ago + 1 ),
+                '<', DateTime->now()->subtract( months => $months_ago )
+            },
         },
         {
             'select' => ['player_name', {count => '*', -as => 'count'}],
@@ -56,6 +61,7 @@ sub regular : Local {
             join => 'player',            
             having => { 'count' => {'>=', $c->req->param('min_logins') // 20} },
             group_by => 'player_name',
+            order_by => 'count desc',
         }   
     );
     

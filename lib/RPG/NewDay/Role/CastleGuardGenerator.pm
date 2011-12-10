@@ -103,63 +103,18 @@ sub generate_guards {
 	
 	my $highest_level_type = $creature_types[$#creature_types];
 	
-	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
-
 	# Ressurect any guards that were killed
 	map { $_->hit_points_current($_->hit_points_max); $_->update } @creatures;
 	
-	my $retries = 0;
-	foreach my $type_id (sort keys %guards_to_hire) {
-		my $last_cg;
-		my $type = $creature_types_by_id{$type_id};
-		
-		# Add any guards that need to be added
-		while ($guards_to_hire{$type_id} > 0) {
-		    if ($retries >= 20) {
-                $c->logger->error("Couldn't find a random sector to generate guards in! Giving up");
-                last;
-		    }
-		    
-		    if (! $last_cg) {
-                my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id, 1 );
-			
-    			if (! $random_sector) {
-                    $retries++;
-                    next;
-    			}
-		
-    			$last_cg = $c->schema->resultset('CreatureGroup')->create(
-    				{
-    					creature_group_id => undef,
-    					dungeon_grid_id   => $random_sector->id,
-    				}
-    			);
-		    }
-
-			$last_cg->add_creature( $type );
-			
-			$guards_to_hire{$type_id}--;
-			
-			undef $last_cg if $last_cg->number_alive >= 8;
-		}
-		
-		my @creatures_of_type = grep { $_->creature_type_id == $type_id } shuffle @creatures;
-				
-		# Remove any guards
-		while ($guards_to_hire{$type_id} < 0) {
-			my $to_delete = shift @creatures_of_type;
-						
-			my $cg = $to_delete->creature_group;
-
-			$to_delete->delete;
-			
-			if ($cg->number_alive == 0) {
-				$cg->delete;	
-			}
-			
-			$guards_to_hire{$type_id}++;
-		} 
+	my @add_or_remove;
+	foreach my $type_id (keys %guards_to_hire) {
+	   push @add_or_remove, {
+	       type => $creature_types_by_id{$type_id},
+	       amount => $guards_to_hire{$type_id},
+	   };   
 	}
+		
+    $castle->add_or_remove_creatures(@add_or_remove);
 	
 	$self->generate_mayors_group($castle, $town, $mayor);
 }

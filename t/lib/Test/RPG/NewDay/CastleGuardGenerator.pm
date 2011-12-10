@@ -214,7 +214,7 @@ sub test_generate_guards_multiple_guard_types : Tests(3) {
 	
 	# THEN
 	my @cgs = $self->{schema}->resultset('CreatureGroup')->search();
-	is(scalar @cgs, 6, "Correct number of cgs generated");
+	is(scalar @cgs, 4, "Correct number of cgs generated");
 	
 	$count = 0;
 	foreach my $cg (@cgs) {

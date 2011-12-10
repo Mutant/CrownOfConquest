@@ -260,6 +260,14 @@ sub train_guards : Local {
     		
     	$hired->increase_amount($c->req->param('amount'));
     	$hired->update;
+    	
+    	# Add them to the castle
+    	$c->stash->{town}->castle->add_or_remove_creatures(
+    	   {
+    	       type => $creature_type,
+    	       amount => $c->req->param('amount'),
+    	   }
+        );
     }
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
@@ -297,6 +305,14 @@ sub fire_guards : Local {
     	$hired->decrease_amount($c->req->param('amount'));
     	$hired->amount_working($hired->amount) if $hired->amount_working > $hired->amount;
     	$hired->update;
+    	
+    	# Remove them from the castle
+    	$c->stash->{town}->castle->add_or_remove_creatures(
+    	   {
+    	       type => $creature_type,
+    	       amount => -$c->req->param('amount'),
+    	   }
+        );    	
     }
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );

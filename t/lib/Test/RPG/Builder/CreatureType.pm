@@ -17,6 +17,7 @@ sub build_creature_type {
     		maint_cost => $params{maint_cost} || 0,
     		creature_type => $params{type} || 'Test',
     		rare => $params{rare} || 0,
+    		weapon => 'weapon',
     	} 
     );
 

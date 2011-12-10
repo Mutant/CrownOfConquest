@@ -12,6 +12,8 @@ use Clone qw(clone);
 use RPG::Map;
 use RPG::Position;
 use AI::Pathfinding::AStar::Rectangle;
+use Array::Iterator::Circular;
+use List::Util qw(shuffle);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Dungeon');
@@ -692,6 +694,90 @@ sub find_sectors_not_near_stairs {
             'order_by' => \'rand()',
         }
     );    
+}
+
+# Add or remove creatures of a given type to the dungeon. Adds them to an existing CG
+#  if one can be found, or generates a new one
+sub add_or_remove_creatures {
+    my $self = shift;
+    my @crets_to_add = @_;
+    
+    my $schema = $self->result_source->schema;
+    
+    my $room_iterator = Array::Iterator::Circular->new($self->rooms);
+    
+    my @cgs = $schema->resultset('CreatureGroup')->search(
+        {
+            'dungeon_room.dungeon_id' => $self->id,
+        },
+        {
+            join => { 'dungeon_grid' => 'dungeon_room' },
+        } 
+    );
+
+	my $retries = 0;
+	foreach my $add_data (@crets_to_add) {
+		my $type = $add_data->{type};
+		my $amount = $add_data->{amount};
+				
+		# Add creatures
+		for (1..$amount) {
+		    if ($retries >= 20) {
+                #$c->logger->error("Couldn't find a random sector to generate creatures in! Giving up");
+                last;
+		    }
+		    		    
+		    @cgs = grep { $_->number_alive < 8 } @cgs;
+		    
+		    my $cg = (shuffle @cgs)[0];
+		    		    
+		    if (! $cg) {
+                my $random_sector = $schema->resultset('Dungeon_Grid')->find_random_sector( $self->id, $room_iterator->next->id, 1 );
+			
+    			if (! $random_sector) {
+                    $retries++;
+                    next;
+    			}
+		
+    			$cg = $schema->resultset('CreatureGroup')->create(
+    				{
+    					creature_group_id => undef,
+    					dungeon_grid_id   => $random_sector->id,
+    				}
+    			);
+    			
+    			push @cgs, $cg;
+		    }
+
+			$cg->add_creature( $type );
+			
+			$amount--;
+		}
+
+        my @creatures_of_type = shuffle $schema->resultset('Creature')->search(
+            {
+                creature_group_id => [ map { $_->id } @cgs ],
+                creature_type_id => $type->id,
+            }
+        );
+                		
+		# Remove creatures
+		while ($amount < 0) {            		    
+			my $to_delete = shift @creatures_of_type;
+			
+			last unless $to_delete;
+						
+			my $cg = $to_delete->creature_group;
+
+			$to_delete->delete;
+			
+			if ($cg->number_alive == 0) {
+				$cg->delete;	
+			}
+			
+			$amount++;
+		}
+	}
 }
 
 1;

@@ -15,6 +15,8 @@ use Test::RPG::Builder::Quest::Find_Dungeon_Item;
 use Test::RPG::Builder::Quest::Find_Jewel;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::CreatureType;
+use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
 
@@ -228,6 +230,192 @@ sub test_find_sectors_not_near_stairs : Tests(41) {
 	foreach my $sector ($sector_rs->all) {
 	   cmp_ok($sector->x, '>=', 12, "Sector " . $sector->x . ", " . $sector->y . " in correct range");
 	}
+}
+
+sub test_adding_creatures_basic : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 10, y => 10},		
+	);
+	my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 1},
+		bottom_right => {x => 15, y => 10},		
+	);
+	
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema});
+	
+	# WHEN
+	$dungeon->add_or_remove_creatures(
+        {
+            type => $type1,
+            amount => 3,
+        }
+    );
+    
+    # THEN
+    my @cgs = $self->{schema}->resultset('CreatureGroup')->search(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+        },
+        {
+            join => { 'dungeon_grid' => 'dungeon_room' },
+        } 
+    );
+    is(scalar @cgs, 1, "1 cg created");
+    
+    is($cgs[0]->creatures->count, 3, "CG has 3 creatures");
+    
+    is(grep ({ $_->creature_type_id == $type1->id } $cgs[0]->creatures), 3, "All CGs are of correct type");
+}
+
+sub test_adding_creatures_existing_cgs : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 10, y => 10},		
+	);
+	my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 1},
+		bottom_right => {x => 15, y => 10},		
+	);
+	
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema});
+	
+	my $sector = $dungeon_room1->sectors->first;
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector->id, creature_count => 7);
+	
+	# WHEN
+	$dungeon->add_or_remove_creatures(
+        {
+            type => $type1,
+            amount => 3,
+        }
+    );
+    
+    # THEN
+    my @cgs = $self->{schema}->resultset('CreatureGroup')->search(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+        },
+        {
+            join => { 'dungeon_grid' => 'dungeon_room' },
+        } 
+    );
+    is(scalar @cgs, 2, "1 extra cg created");
+    
+    is($cgs[0]->creatures->count, 8, "First CG has 8 creatures");
+    is($cgs[1]->creatures->count, 2, "Second CG has 2 creatures");
+    
+}
+
+sub test_removing_creatures_basic : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 10, y => 10},		
+	);
+	my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 1},
+		bottom_right => {x => 15, y => 10},		
+	);
+	
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema});
+	
+	my $sector = $dungeon_room1->sectors->first;
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector->id, creature_count => 7, type_id => $type1->id);
+	
+	# WHEN
+	$dungeon->add_or_remove_creatures(
+        {
+            type => $type1,
+            amount => -3,
+        }
+    );
+    
+    # THEN
+    my @cgs = $self->{schema}->resultset('CreatureGroup')->search(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+        },
+        {
+            join => { 'dungeon_grid' => 'dungeon_room' },
+        } 
+    );
+    is(scalar @cgs, 1, "1 cg in dungeon");
+    
+    is($cgs[0]->creatures->count, 4, "CG has 4 creatures (3 removed)");
+}
+
+sub test_removing_creatures_multiple_groups : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+	my $dungeon_room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 1, y => 1},
+		bottom_right => {x => 10, y => 10},		
+	);
+	my $dungeon_room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
+		$self->{schema}, 
+		dungeon_id => $dungeon->id,
+		top_left => {x => 11, y => 1},
+		bottom_right => {x => 15, y => 10},		
+	);
+	
+	my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema});
+	my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema});
+	
+	my $sector = $dungeon_room1->sectors->first;
+	my $cg1 = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector->id, creature_count => 2, type_id => $type1->id);
+	my $cg2 = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector->id, creature_count => 2, type_id => $type2->id);
+	my $cg3 = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, dungeon_grid_id => $sector->id, creature_count => 2, type_id => $type1->id);
+	
+	# WHEN
+	$dungeon->add_or_remove_creatures(
+        {
+            type => $type1,
+            amount => -5,
+        }
+    );
+    
+    # THEN
+    my @cgs = $self->{schema}->resultset('CreatureGroup')->search(
+        {
+            'dungeon_room.dungeon_id' => $dungeon->id,
+        },
+        {
+            join => { 'dungeon_grid' => 'dungeon_room' },
+        } 
+    );
+    is(scalar @cgs, 1, "1 cg in dungeon");
+    
+    is($cgs[0]->creatures->count, 2, "CG has 2 creatures");
+    
+    is(grep ({ $_->creature_type_id == $type2->id } $cgs[0]->creatures), 2, "All CGs are of correct type");
 }
 
 1;

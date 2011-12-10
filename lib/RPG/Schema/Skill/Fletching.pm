@@ -12,6 +12,8 @@ sub execute {
     return unless $event eq 'new_day';
     
     my $character = $self->char_with_skill;
+    
+    return if $character->town_id;
         
     my ($item) = $character->get_equipped_item('Weapon');
     

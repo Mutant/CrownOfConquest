@@ -14,6 +14,8 @@ sub execute {
     
     my $character = $self->char_with_skill;
     
+    return if $character->town_id;
+    
     my $group = $character->group;
 
     my @group_chars;
@@ -55,12 +57,14 @@ sub execute {
         
         my $today = $self->result_source->schema->resultset('Day')->find_today();
         
-        $character->party->add_to_day_logs(
-            {
-                day_id => $today->id,
-                log => $message,
-            }
-        );
+        if (! $character->is_npc) {
+            $character->party->add_to_day_logs(
+                {
+                    day_id => $today->id,
+                    log => $message,
+                }
+            );
+        }
     }
     
 }

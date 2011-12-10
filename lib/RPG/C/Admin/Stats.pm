@@ -66,6 +66,7 @@ sub regular : Local {
                 template => 'admin/stats/players.html',
                 params   => {
                     players => \@players,
+                    count => scalar @players,
                 },
             }
         ]

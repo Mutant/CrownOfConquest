@@ -22,7 +22,7 @@ sub run {
 
 	my $party_rs = $context->schema->resultset('Party')->search(
 		{
-			created                    => { '!=', undef },
+			'me.created'                    => { '!=', undef },
 			defunct                    => undef,
 			'player.deleted'           => 0,
 			'player.send_daily_report' => 1,

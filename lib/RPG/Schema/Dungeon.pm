@@ -771,7 +771,7 @@ sub add_or_remove_creatures {
 
 			$to_delete->delete;
 			
-			if ($cg->number_alive == 0) {
+			if ($cg && $cg->number_alive == 0) {
 				$cg->delete;	
 			}
 			

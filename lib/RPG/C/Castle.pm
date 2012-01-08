@@ -56,6 +56,12 @@ sub move_to : Local {
 	       }	          
 	   }   
 	}
+	
+	# If the party is pending mayor, they must have killed the mayor during this raid, so set an increase
+	#  search range when looking for creatures
+	if (defined $town->pending_mayor && $town->pending_mayor == $c->stash->{party}->id) {
+	    $c->stash->{creature_search_range} = 10;
+	}
 
 	$c->forward( '/dungeon/move_to', [ undef, $turn_cost ] );
 }

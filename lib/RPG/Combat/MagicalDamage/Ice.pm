@@ -3,8 +3,6 @@ package RPG::Combat::MagicalDamage::Ice;
 use strict;
 use warnings;
 
-use base qw(RPG::Combat::MagicalDamage);
-
 use Games::Dice::Advanced;
 
 sub apply {
@@ -15,15 +13,13 @@ sub apply {
 		type => 'Ice',
 	);
 
-	if ( $self->opponent_resisted( $params{opponent}, 'Ice' ) ) {
-		$magical_damage_result->resisted(1);
-		return $magical_damage_result;
-	}
-
 	my $roll         = 2 * $params{level};
 	my $extra_damage = Games::Dice::Advanced->roll( '1d' . $roll );
 
-	$params{opponent}->hit($extra_damage, $params{character});
+	if ($params{opponent}->hit_with_resistance('Ice', $extra_damage, $params{character})) {
+		$magical_damage_result->resisted(1);
+		return $magical_damage_result;
+	}	    
 
 	$magical_damage_result->extra_damage($extra_damage);
 

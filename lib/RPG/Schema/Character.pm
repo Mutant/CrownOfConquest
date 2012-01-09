@@ -1200,7 +1200,7 @@ sub effect_value {
     return $modifier;
 }
 
-sub resistences {
+sub resistances {
 	my $self = shift;
 	
 	my %resist = (
@@ -1210,15 +1210,6 @@ sub resistences {
 	);
 	
 	return %resist;
-}
-
-sub resistance {
-   my $self = shift;
-   my $type = shift;
-   
-   my %resist = $self->resistences;
-   
-   return $resist{$type}; 
 }
 
 sub value {

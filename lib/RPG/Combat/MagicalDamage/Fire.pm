@@ -3,8 +3,6 @@ package RPG::Combat::MagicalDamage::Fire;
 use strict;
 use warnings;
 
-use base qw(RPG::Combat::MagicalDamage);
-
 use Games::Dice::Advanced;
 use RPG::Maths;
 use List::Util qw(shuffle);
@@ -19,15 +17,15 @@ sub apply {
 		type => 'Fire',
 	);
 
-	if ( $self->opponent_resisted( $params{opponent}, 'Fire' ) ) {
-		$magical_damage_result->resisted(1);
-		return $magical_damage_result;
-	}
-
 	my $roll         = 2 * $params{level};
 	my $extra_damage = Games::Dice::Advanced->roll( '1d' . $roll ) + 2;
 
-	$params{opponent}->hit($extra_damage, $params{character});
+	my $resisted = $params{opponent}->hit_with_resistance('Fire', $extra_damage, $params{character});
+	
+	if ($resisted) {
+        $magical_damage_result->resisted(1);
+		return $magical_damage_result;
+	}
 
 	$magical_damage_result->extra_damage($extra_damage);
 
@@ -49,13 +47,13 @@ sub apply {
 				effect => 'seared',
 			);
 			
-			if ( $self->opponent_resisted( $other, 'Fire' ) ) {
+			my $other_damage = Games::Dice::Advanced->roll( '1d' . $other_roll );
+			
+			if ( $other->hit_with_resistance( 'Fire', $other_damage, $params{character} ) ) {
 				$other_damage_result->resisted(1);	
 			}
 			else {
-				my $other_damage = Games::Dice::Advanced->roll( '1d' . $other_roll );
-				$other_damage_result->extra_damage($other_damage);
-				$other->hit($other_damage, $params{character});
+				$other_damage_result->extra_damage($other_damage);				
 				$other->update;
 			}
 			

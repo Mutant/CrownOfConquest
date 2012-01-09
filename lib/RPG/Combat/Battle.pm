@@ -12,10 +12,8 @@ use Try::Tiny;
 
 use RPG::Combat::ActionResult;
 use RPG::Combat::MessageDisplayer;
-use RPG::Combat::MagicalDamage;
 use RPG::Combat::EffectResult;
 
-use RPG::Combat::MagicalDamage;
 use RPG::Combat::MagicalDamage::Fire;
 use RPG::Combat::MagicalDamage::Ice;
 use RPG::Combat::MagicalDamage::Poison;

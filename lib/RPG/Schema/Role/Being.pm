@@ -6,7 +6,7 @@ use Lingua::EN::Gender qw();
 use List::Util qw(sum);
 use Math::Round qw(round);
 
-requires qw/group_id group effect_value resistences is_spell_caster check_for_auto_cast critical_hit_chance/;
+requires qw/group_id group effect_value resistances is_spell_caster check_for_auto_cast critical_hit_chance hit/;
 
 sub health {
 	my $self = shift;
@@ -68,6 +68,47 @@ sub number_of_attacks {
     }
 
     return $number_of_attacks;
+}
+
+sub resistance {
+   my $self = shift;
+   my $type = shift;
+   
+   my %resist = $self->resistances;
+   
+   return $resist{$type}; 
+}
+
+# Hit being with chance of resistance.
+#  Returns 1 if hit was resisted, 0 if being took damage 
+sub hit_with_resistance {
+    my $self = shift;
+    my $type = shift;
+    my $damage = shift;
+    my $attacker = shift;
+    my $effect_type = shift;
+    
+    return 1 if $self->resistance_roll($type);
+
+    $self->hit($damage, $attacker, $effect_type);
+    
+    return 0;
+}
+
+sub resistance_roll {
+    my $self = shift;
+    my $type = shift;
+    
+    my $resistance_value = $self->resistance($type);
+    
+    confess "Can't find resistance value for $type" unless defined $resistance_value;
+    
+    if (Games::Dice::Advanced->roll('1d100') <= $resistance_value) {
+        return 1;
+    }
+    
+    return 0;    
+    
 }
 
 1;

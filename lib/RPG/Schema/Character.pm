@@ -27,11 +27,13 @@ __PACKAGE__->add_columns(
         last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance online_cast_chance
         creature_group_id mayor_of status status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-        movement_factor_bonus skill_points/
+        movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
+        resist_poison resist_poison_bonus/
 );
 
 __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-								movement_factor_bonus skill_points/,
+								movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
+                                resist_poison resist_poison_bonus/,
 								hit_points => {
 							 		upper_bound_col => 'max_hit_points',
 							 	},
@@ -92,6 +94,8 @@ __PACKAGE__->many_to_many( 'skills' => 'character_skills', 'skill' );
 
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
+
+my @RESISTANCES = qw/fire ice poison/;
 
 sub inflate_result {
     my $pkg = shift;
@@ -442,6 +446,13 @@ sub roll_all {
     }
     elsif ( $self->class->class_name eq 'Priest' ) {
         $rolls{faith_points} = $self->roll_spell_points;
+    }
+    
+    foreach my $resistance (@RESISTANCES) {
+        my $increase = Games::Dice::Advanced->roll('1d3');
+        my $method = "increase_resist_${resistance}";
+        $self->$method($increase);
+        $rolls{$resistance} = $increase;
     }
 
     $self->update;
@@ -1192,11 +1203,22 @@ sub effect_value {
 sub resistences {
 	my $self = shift;
 	
-	return (
-		Fire => $self->level * 5,
-		Ice => $self->level * 5,
-		Poison => $self->level * 5,
+	my %resist = (
+		Fire => $self->resist_fire + $self->resist_fire_bonus,
+		Ice => $self->resist_ice + $self->resist_ice_bonus,
+		Poison => $self->resist_poison + $self->resist_poison_bonus,
 	);
+	
+	return %resist;
+}
+
+sub resistance {
+   my $self = shift;
+   my $type = shift;
+   
+   my %resist = $self->resistences;
+   
+   return $resist{$type}; 
 }
 
 sub value {

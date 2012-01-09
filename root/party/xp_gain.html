@@ -6,4 +6,6 @@
 	[% IF level_up_details.prayer_points %]<br>[% character.character_name %] gained [% level_up_details.prayer_points %] prayer points.[% END %]
 	[% IF level_up_details.stat_points %]<br>[% character.character_name %] gained [% level_up_details.stat_points %] stat points.[% END %]
 	[% IF level_up_details.skill_points %]<br>[% character.character_name %] gained [% level_up_details.skill_points %] skill points.[% END %]
+	<br>[% character.character_name %] gained +[% level_up_details.fire %]% Fire resistance, +[% level_up_details.ice %]% Ice resistance, and
+		+[% level_up_details.poison %]% Poison resistance. 
 [% END %]

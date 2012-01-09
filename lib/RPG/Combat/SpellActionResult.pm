@@ -13,6 +13,7 @@ has 'effect'     => ( is => 'ro', isa => 'Str', required => 0 );
 has 'spell_name' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'recalled'   => ( is => 'rw', isa => 'Bool', );
 has 'blocked'    => ( is => 'ro', isa => 'Bool', );
+has 'resisted' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 __PACKAGE__->meta->make_immutable;
 

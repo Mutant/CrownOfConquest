@@ -13,13 +13,14 @@ sub _cast {
 
     my $flame = Games::Dice::Advanced->roll( $dice_count . "d6" );
 
-    $target->hit( $flame, $character );
+    my $resisted = $target->hit_with_resistance( 'Fire', $flame, $character );
     $target->update;
 
     return {
         type   => 'damage',
         damage => $flame,
         effect => 'frying',
+        resisted => $resisted,
     };
 }
 

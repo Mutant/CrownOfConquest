@@ -309,4 +309,32 @@ sub test_recalled_spell : Test(2) {
     is( $mem_spell->casts_left_today, 1, "Memorised spell count not decremented" );    
 }
 
+sub test_cast_flame_resisted : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
+    $target->resist_fire(100);
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );
+    
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+    
+    # THEN
+    is($result->resisted, 1, "Spell was resisted");
+    
+    $target->discard_changes;
+    is($target->hit_points, 5, "Target wasn't damaged");
+}
+
 1;

@@ -100,7 +100,7 @@ sub test_cast_damage_spells : Tests(27) {
 
 }
 
-sub test_cast_effect_spells : Tests(117) {
+sub test_cast_effect_spells : Tests(130) {
     my $self = shift;
 
     my @tests = (
@@ -158,13 +158,22 @@ sub test_cast_effect_spells : Tests(117) {
             target      => 'Creature',
             effect      => 'slowing it',
         },
+        {
+            spell_name  => 'Poison Blast',
+            effect_name => 'Poisoned',
+            target      => 'Creature',
+            effect      => 'poisoning it',
+        },        
     );
 
     # GIVEN
     foreach my $test (@tests) {
         my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => $test->{spell_name}, } );
 
-        isa_ok( $spell, 'RPG::Schema::Spell::' . $test->{spell_name} );
+        my $pkg_spell_name = $test->{spell_name};
+        $pkg_spell_name =~ s/ /_/g;
+
+        isa_ok( $spell, 'RPG::Schema::Spell::' . $pkg_spell_name );
         my $caster = Test::RPG::Builder::Character->build_character( $self->{schema} );
 
         my $target;
@@ -267,6 +276,53 @@ sub test_cast_party_effect_spells : Tests(14) {
     }
 
 }
+
+sub test_ice_bolt : Test(12) {
+    my $self = shift;
+    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Ice Bolt', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );
+    
+    $self->mock_dice;
+    $self->{roll_result} = 3;    
+
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+
+    # THEN
+    isa_ok( $result->attacker, 'RPG::Schema::Character' );
+    is( $result->attacker->id, $character->id, 'Caster set as character in result' );
+
+    is( $result->defender->id, $target->id, 'Target set correctly in result' );
+
+    is( $result->damage, 3,               "Damage set in result" );
+    is( $result->effect, 'freezing', "Effect set correctly" );
+    is( $result->type,   'damage',        "Type set correctly" );
+
+    $mem_spell->discard_changes;
+    is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
+
+    $target->discard_changes;
+    is( $target->hit_points, 2, "Target has sustained damage" );   
+    
+    my @effects = $target->character_effects;
+    is( scalar @effects,                    1,                    "Target has an effect" );
+    is( $effects[0]->effect->effect_name,   'Frozen', "Effect name set correctly" );
+    is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
+    is( $effects[0]->effect->combat,        1,                    "combat set correctly" );
+    
+    $self->unmock_dice;     
+} 
 
 sub test_recalled_spell : Test(2) {
     my $self = shift;

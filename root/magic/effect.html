@@ -9,4 +9,9 @@
 	[% END %]	
 
 <span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span> on 
-<span class="[% target_class %]">[% message.defender.name %]</span> [% message.effect %] for [% message.duration %] rounds.
+<span class="[% target_class %]">[% message.defender.name %]</span> 
+[% IF message.resisted %]
+	, but [% message.defender.pronoun('subjective') %] resisted!
+[% ELSE %]
+	[% message.effect %] for [% message.duration %] rounds.
+[% END %]

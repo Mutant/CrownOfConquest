@@ -305,6 +305,7 @@ sub check_for_inactive {
 
     foreach my $party ($kingdom->parties) {
         $party->change_allegiance(undef);
+        $party->last_allegiance_change(undef);
         
         if ($king->is_npc || $party->id != $king->party_id) {
             $party->add_to_messages(

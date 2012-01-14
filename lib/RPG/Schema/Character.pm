@@ -32,8 +32,7 @@ __PACKAGE__->add_columns(
 );
 
 __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-								movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
-                                resist_poison resist_poison_bonus/,
+								movement_factor_bonus skill_points resist_fire_bonus resist_ice_bonus resist_poison_bonus/,
 								hit_points => {
 							 		upper_bound_col => 'max_hit_points',
 							 	},
@@ -44,6 +43,18 @@ __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus a
 							 	offline_cast_chance => {
 							 	    min_value => 0, 
                                     max_value => 100,
+							 	},
+							 	resist_fire => {
+							 	    min_value => 0,
+							 	    max_value => 90,
+							 	},
+							 	resist_ice => {
+							 	    min_value => 0,
+							 	    max_value => 90,
+							 	},
+							 	resist_poison => {
+							 	    min_value => 0,
+							 	    max_value => 90,
 							 	},
 );
 

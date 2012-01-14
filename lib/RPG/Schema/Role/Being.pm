@@ -101,6 +101,8 @@ sub resistance_roll {
     
     my $resistance_value = $self->resistance($type);
     
+    $resistance_value = 90 if $resistance_value > 90; 
+    
     confess "Can't find resistance value for $type" unless defined $resistance_value;
     
     if (Games::Dice::Advanced->roll('1d100') <= $resistance_value) {

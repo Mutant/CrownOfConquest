@@ -302,8 +302,15 @@ sub check_for_inactive {
     $kingdom->town_loyalty->delete;
     
     my $king = $kingdom->king;
+    
+    # Make sure we include defunct parties
+    my @parties = $c->schema->resultset('Party')->search(
+        {
+            kingdom_id => $kingdom->id,
+        }
+    );
 
-    foreach my $party ($kingdom->parties) {
+    foreach my $party (@parties) {
         $party->change_allegiance(undef);
         $party->last_allegiance_change(undef);
         $party->cancel_kingdom_quests;

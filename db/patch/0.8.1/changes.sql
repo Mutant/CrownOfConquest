@@ -11,3 +11,14 @@ INSERT INTO `Spell`(spell_name, description, points, class_id, combat, non_comba
 
 INSERT INTO `Spell`(spell_name, description, points, class_id, combat, non_combat, target)
 	VALUES ('Poison Blast', 'Sends a poisonous blast to the opponent, damaging them slowly', 6, (select class_id from Class where class_name = 'Mage'), 1, 0, 'creature');
+
+INSERT INTO `Enchantments` (enchantment_name, must_be_equipped, one_per_item) values ('resistances', 1, 1);
+
+set @ench_id = (select enchantment_id from Enchantments where enchantment_name = 'resistances');
+
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Melee Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category= 'Armour'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Head Gear'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
+insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
+

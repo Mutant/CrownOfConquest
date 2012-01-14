@@ -335,6 +335,8 @@ sub equip_place_id {
     				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
     				$self->_factors_trigger($new_equip_place_id, $character, @stats_with_bonuses)
     				    unless $trigger_params->{no_factors_trigger};
+    				    
+    				$self->_resistance_bonus_trigger($new_equip_place_id, $character);    				    
     				
     				$character->update;
 				}
@@ -430,6 +432,32 @@ sub _factors_trigger {
 	elsif (grep { $_ eq 'agility' } @stats_with_bonuses) {	
 	   $character->calculate_defence_factor;
 	}
+}
+
+sub _resistance_bonus_trigger {
+	my $self = shift;
+	my $new_equip_place_id = shift;
+	my $character = shift;	
+	
+	my @enchantments = $self->search_related(
+		'item_enchantments',
+		{
+			'enchantment.enchantment_name' => 'resistances',
+		},
+		{
+			join => 'enchantment',
+		}
+	);
+	
+	foreach my $enchantment (@enchantments) {
+		my $bonus = $enchantment->variable('Resistance Bonus');
+		my $type = $enchantment->variable('Resistance Type');
+		$bonus = -$bonus unless defined $new_equip_place_id;
+		
+		my $method = "adjust_resist_${type}_bonus";
+		
+		$character->$method($bonus);
+	}    
 }
 
 sub sell_price {

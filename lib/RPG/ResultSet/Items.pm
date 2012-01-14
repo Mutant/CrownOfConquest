@@ -61,14 +61,26 @@ sub create_enchanted {
 		
 		return $item if ! defined $extra_params->{number_of_enchantments} || $extra_params->{number_of_enchantments} == 0;
 			
-		my @possible_enchantments = $self->result_source->schema->resultset('Enchantments')->search(
-			{
-				'categories.item_category_id' => $item->item_type->item_category_id,
-			},
-			{
-				join => 'categories',
-			}
-		);
+		my @possible_enchantments;
+		
+		if ($extra_params->{enchantment_to_create}) {
+		    my $enchantment = $self->result_source->schema->resultset('Enchantments')->find(
+    			{
+    				enchantment_name => $extra_params->{enchantment_to_create},
+    			},
+    		);
+    		@possible_enchantments = ($enchantment);
+		}
+		else {
+		    @possible_enchantments = $self->result_source->schema->resultset('Enchantments')->search(
+    			{
+    				'categories.item_category_id' => $item->item_type->item_category_id,
+    			},
+    			{
+    				join => 'categories',
+    			}
+    		);
+		}
 	
 		return $item unless @possible_enchantments;
 		

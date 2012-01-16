@@ -403,7 +403,7 @@ castle_capture_chance: 66
 min_character_mayoral_candidate_level: 8
 
 # Minimum days before an election a character is allowed to declare candidacy
-min_days_for_election_candidacy: 2
+min_days_for_election_candidacy: 1
 
 # Prosperity to sector range ratio (i.e. n prosperity to 1 range) 
 decay_ctr_ratio: 30

@@ -94,7 +94,7 @@ sub build_viewable_sector_grids : Private {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'dungeon_room.floor'           => $current_location->dungeon_room->floor,
-            'in_combat_with.party_id'      => undef,
+            'in_combat_with.party_id'      => [undef, $c->stash->{party}->id],
         },
         {
             prefetch => [ { 'creature_group' => { 'creatures' => 'type' } }, ],
@@ -296,7 +296,7 @@ sub move_to : Local {
 
     croak "Can't find sector: $sector_id" unless $sector;
 
-    $c->log->debug( "Attempting to move to " . $sector->x . ", " . $sector->y );
+    #$c->log->debug( "Attempting to move to " . $sector->x . ", " . $sector->y );
 
     # Check they're moving to a sector in the dungeon they're currently in
     if ( $current_location->dungeon_room->dungeon_id != $sector->dungeon_room->dungeon_id ) {

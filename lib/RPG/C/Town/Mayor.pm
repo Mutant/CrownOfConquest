@@ -468,6 +468,9 @@ sub garrison : Local {
 			status => 'mayor_garrison',
 			status_context => $town->id,
 			party_id => $c->stash->{party}->id,
+		},
+		{
+		    order_by => 'character_name',
 		}
 	);
 	

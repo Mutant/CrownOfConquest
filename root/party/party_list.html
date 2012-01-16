@@ -410,7 +410,7 @@ function createButton(menu, name, characterId) {
 	           </div>			
 			[% INCLUDE party/party_char_alerts.html %]
 			[% FOREACH effect IN effects_by_character.${char.id} ~%]
-				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | lower %]effect.png" 
+				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | replace(' ', '') | lower %]effect.png" 
 					title="[% effect.effect_name %] ([% effect.time_left %])">
 			[% END ~%]
 			<br>

@@ -100,8 +100,7 @@ sub execute_round {
     	my @combatants = $self->combatants;
     
     	# Get list of combatants, modified for changes in attack frequency, and randomised in order
-    	@combatants = $self->get_combatant_list(@combatants);
- 
+    	@combatants = $self->get_combatant_list(@combatants); 
   	
     	push @combat_messages, $self->check_skills;
     	
@@ -331,6 +330,8 @@ sub check_skills {
    
     foreach my $char_id (keys %$character_weapons) {
         my $character = $self->combatants_by_id->{character}{$char_id};
+        
+        next if $character->is_dead;
         
         foreach my $skill ( keys %{ $character_weapons->{$char_id}{skills} }) {
             $self->log->debug("Checking $skill skill for character $char_id");

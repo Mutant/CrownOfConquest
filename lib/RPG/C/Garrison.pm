@@ -22,6 +22,7 @@ sub auto : Private {
 		},
 		{
 			prefetch => ['characters', 'land'],
+			order_by => 'characters.character_name',
 		}
 	);
 		

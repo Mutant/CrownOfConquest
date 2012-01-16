@@ -252,8 +252,10 @@ sub split_item : Local {
 		},
 		{
 			prefetch => [
-                'belongs_to_character',                
-            ]
+                'belongs_to_character',
+                'item_variables',
+            ],
+            for => 'update',            
 		}
 	);
     
@@ -684,6 +686,9 @@ sub use_skill_point : Local {
             character_id => $character->id,
             skill_id => $skill->id,
         },
+        {
+            for => 'update',
+        },
     );
     
     if ($character_skill->level >= $c->config->{max_skill_level}) {
@@ -707,7 +712,16 @@ sub add_stat_point : Local {
 
 	$c->forward('check_action_allowed');
 
-	my $character = $c->stash->{character};
+    # Re-read character and lock for update
+	my $character = $c->model('DBIC::Character')->find( 
+	   { 
+	       character_id => $c->stash->{character}->id,
+	   }, 
+	   { 
+	       prefetch => [ 'race', 'class', ],
+	       for => 'update', 
+	   },
+	);
 
 	unless ( $character->stat_points != 0 ) {
 		$c->res->body( to_json( { error => 'No stat points to add' } ) );

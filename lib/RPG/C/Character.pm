@@ -670,9 +670,17 @@ sub use_skill_point : Local {
     
     $c->forward('check_action_allowed');
     
-    my $character = $c->stash->{character};
+    # Re-read character and lock for update
+	my $character = $c->model('DBIC::Character')->find( 
+	   { 
+	       character_id => $c->stash->{character}->id,
+	   }, 
+	   { 
+	       for => 'update', 
+	   },
+	);
     
-    if ($character->skill_points < 0) {
+    if ($character->skill_points <= 0) {
         $c->stash->{error} = 'No stat points to assign';
         $c->forward( '/panel/refresh' );
         return;
@@ -718,7 +726,6 @@ sub add_stat_point : Local {
 	       character_id => $c->stash->{character}->id,
 	   }, 
 	   { 
-	       prefetch => [ 'race', 'class', ],
 	       for => 'update', 
 	   },
 	);

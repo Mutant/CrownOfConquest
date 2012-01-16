@@ -116,8 +116,11 @@ sub collect_tax {
     my $c = $self->context;
     
     my $bonus = 15 + ($mayor->execute_skill('Leadership', 'town_peasant_tax') // 0);
+    my $roll = Games::Dice::Advanced->roll('2d20');
     
-	my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * $bonus) * ($town->peasant_tax / 100)) * 10;
+    $c->logger->debug("Tax collection: bonus: $bonus, prosp: " . $town->prosperity . ", roll: $roll, tax: " . $town->peasant_tax);
+    
+	my $gold = int (($roll + $town->prosperity * $bonus) * ($town->peasant_tax / 100)) * 10;
 	$self->context->logger->debug("Collecting $gold peasant tax");
 	$town->increase_gold($gold);
 	$town->update;
@@ -273,6 +276,8 @@ sub check_for_revolt {
 		$start_revolt = 1 if $roll > $rating;
 	}	
 	elsif ($town->peasant_tax >= 35) {
+	    $c->logger->debug("Starting revolt because peasant tax is " . $town->peasant_tax);
+	    
 		$start_revolt = 1;	
 	}
 	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0 && ! $town->capital_of) {

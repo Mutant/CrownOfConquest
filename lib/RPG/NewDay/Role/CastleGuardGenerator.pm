@@ -205,7 +205,7 @@ sub generate_mayors_group {
 	if (! $mayors_group->dungeon_grid_id) {
 	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
         my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
-        $mayors_group->dungeon_grid_id($random_sector->id);
+        $mayors_group->dungeon_grid_id($random_sector->id) if $random_sector;
         $mayors_group->update; 
 	}
 

@@ -20,6 +20,8 @@ use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::CreatureType;
+use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Dungeon_Room;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -746,6 +748,54 @@ sub test_train_guards_level_limited : Tests(9) {
     is($history[0]->type, 'expense', "History is an expense");
     is($history[0]->value, '6200', "Value is correct");       
        
+}
+
+sub test_no_tax_collected_when_revolt_started : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 40 );
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+	my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 4, dungeon_id => $castle->id, make_stairs => 1);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character->mayor_of($town->id);
+	$character->update;
+		
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+		
+	# WHEN
+	$action->process_town($town);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->peasant_state, 'revolt', "Town is in revolt because peasant tax was too high");
+	is($town->gold, 0, "Town's gold is 0 - no tax collected");
+}
+
+sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 73, peasant_tax => 0 );
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+	my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 4, dungeon_id => $castle->id, make_stairs => 1);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character->mayor_of($town->id);
+	$character->update;
+		
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+		
+	# WHEN
+	$action->process_town($town);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->peasant_state, '', "Town is not in revolt");
+	is($town->gold, 0, "Town's gold is 0 - no tax collected");
 }
 
 1;

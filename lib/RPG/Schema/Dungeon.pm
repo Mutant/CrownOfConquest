@@ -704,7 +704,9 @@ sub add_or_remove_creatures {
     
     my $schema = $self->result_source->schema;
     
-    my $room_iterator = Array::Iterator::Circular->new($self->rooms);
+    my @rooms = $self->rooms;
+
+    my $room_iterator = Array::Iterator::Circular->new(\@rooms);
     
     my @cgs = $schema->resultset('CreatureGroup')->search(
         {

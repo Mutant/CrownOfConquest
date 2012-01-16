@@ -142,6 +142,14 @@ sub change : Local {
     
     $c->stash->{town}->mayor_rating($new_rating);
     $c->stash->{town}->update;
+    
+    # If the party has less than the max chars, add the mayor into the party
+    # (otherwise, he'll be in the town's inn).
+    if (! $c->stash->{party}->is_full) {
+        $mayor->status(undef);
+        $mayor->status_context(undef);
+        $mayor->update;
+    }
 	
 	$c->stash->{town}->add_to_history(
    		{

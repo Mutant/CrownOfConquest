@@ -715,19 +715,35 @@ function miniMapMove(evt) {
 }
 
 function findMiniMapCoords(evt) {
-	var pixelX = evt.layerX;
-	var pixelY = evt.layerY;
-
+	var pixelCoords = getXYFromEvent(evt);
+	
 	if (evt.target.id == 'minimap-view-box') {
 		var box = dojo.byId('minimap-view-box');
 	
-		pixelX = pixelX + parseInt(box.style.left);
-		pixelY = pixelY + parseInt(box.style.top); 
+		pixelCoords.x = pixelCoords.x + parseInt(box.style.left);
+		pixelCoords.y = pixelCoords.y + parseInt(box.style.top); 
 	}
 
 	var coords = {};
-	coords.x = Math.floor(pixelX/2);
-	coords.y = Math.floor(pixelY/2);
+	coords.x = Math.floor(pixelCoords.x/2);
+	coords.y = Math.floor(pixelCoords.y/2);
+		
+	return coords;
+}
+
+function getXYFromEvent(evt) {
+	var x; var y;
+	
+	var coords = {};
+	
+	if (evt.layerX) {
+		coords.x = evt.layerX;
+		coords.y = evt.layerY;
+	}
+	else {
+		coords.x = evt.x;
+		coords.y = evt.y;
+	}
 	
 	return coords;
 }

@@ -345,8 +345,9 @@ sub check_skills {
                 }
                 catch {
                     $self->log->debug("Error finding opponent");
-                    return;
                 };
+                
+                return unless $defender;
             }
             
             my %results = $char_skill->execute('combat', $character, $defender);            

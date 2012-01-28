@@ -20,6 +20,7 @@
 			<th>Item Type</th>
 			<th>Base Cost</th>
 			<th>Prevalance</th>
+			<th>Weight</th>
 			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
 				<th>[% attribute.item_attribute_name %]</th>
 			[% END %]
@@ -36,6 +37,7 @@
 			<td><a href="[% base %]/admin/items/edit_item_type?item_type_id=[% item_type.id %]">[% item_type.item_type %]</a></td>
 			<td>[% item_type.base_cost %]</td>
 			<td>[% item_type.prevalence %]</td>
+			<td>[% item_type.weight %]</td>
 			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
 				<td>[% item_type.attribute(attribute.item_attribute_name).formatted_value %]</td>
 			[% END %]

@@ -52,6 +52,11 @@
 		<td>Prevalence:</td>
 		<td><input type="text" name="prevalence" value="[% item_type.prevalence %]"></td>
 	</tr>
+	<tr>
+		<td>Weight:</td>
+		<td><input type="text" name="weight" value="[% item_type.weight %]"></td>
+	</tr>	
+	
 	
 	[% FOREACH item_attribute_name IN item_attribute_names %]
 	[% item_attribute = item_type.attribute(item_attribute_name.item_attribute_name) %]

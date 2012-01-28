@@ -110,4 +110,15 @@ sub town_to_take_msg_to {
     return $self->result_source->schema->resultset('Town')->find( $self->param_start_value('Town To Take Msg To') );
 }
 
+sub party_can_accept_quest {
+    my $self = shift;
+    my $party = shift;
+    
+    my ($can_enter, $reason) = $self->town_to_take_msg_to->party_can_enter($party);
+    
+    $self->{_cant_accept_quest_reason} = $reason if $reason;
+    
+    return $can_enter;       
+}
+
 1;

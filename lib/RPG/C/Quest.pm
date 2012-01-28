@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use Text::Wrap;
+use JSON;
 
 use Carp;
 
@@ -64,6 +65,19 @@ sub accept : Local {
         unless ($c->stash->{party}->allowed_more_quests) {
     		croak "Not allowed any more quests";	
     	}
+    	
+    	if (! $quest->party_can_accept_quest($c->stash->{party})) {
+            my $reason = $quest->cant_accept_quest_reason;
+            
+            $c->res->body(
+                to_json {
+                    message => $reason,
+                    accepted => 0,
+                }
+            );
+             
+            return;
+    	}
         
         my $town = $c->stash->{party_location}->town;
         
@@ -100,7 +114,12 @@ sub accept : Local {
 	    );
     };
     
-    $c->res->body($message);
+    $c->res->body(
+        to_json {
+            message => $message,
+            accepted => 1,
+        }
+    );
     
     if ($quest->kingdom_id) {
         $c->forward('/quest/list');  

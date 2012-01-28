@@ -67,7 +67,6 @@ sub new {
     $self->{_params} = $params;
 
     return $self;
-
 }
 
 sub insert {
@@ -489,5 +488,22 @@ sub check_quest_action {
     return $message;
 }
 
+# Check whether the party is allowed to accept the quest
+#  Should be overridden, as default is always to allow quest to be accepted
+#  Should store the reason for failure to accept in $self->{_cant_accept_quest_reason}
+sub party_can_accept_quest {
+    my $self = shift;
+    my $party = shift;
+    
+    return 1;   
+}
+
+# Returns the reason a quest couldn't be accepted (if
+#  party_can_accept_quest() was previously called)
+sub cant_accept_quest_reason {
+    my $self = shift;
+    
+    return $self->{_cant_accept_quest_reason};
+}
 
 1;

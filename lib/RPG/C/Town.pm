@@ -454,35 +454,25 @@ sub enter : Local {
 		$c->detach( '/panel/refresh', [ 'messages', 'party_status' ] );
 	}
 
+    my ($can_enter, $reason) = $town->party_can_enter($c->stash->{party});
+
+	# Check if they have really low prestige, and need to be refused.
+	if (! $can_enter) {		    
+        $c->stash->{message_panel_size} = 'small';
+		    
+		$c->stash->{panel_messages} = $reason;
+
+		$c->detach( '/panel/refresh', ['messages'] );
+	}
+
+	my $cost = $town->tax_cost( $c->stash->{party} );
+	
 	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
 		{
 			party_id => $c->stash->{party}->id,
 			town_id  => $town->id,
 		},
-	);
-
-	# Check if they have really low prestige, and need to be refused.
-	my $mayor = $town->mayor;
-	if (! $mayor || $mayor->party_id != $c->stash->{party}->id) {
-		my $prestige_threshold = -90 + round( $town->prosperity / 25 );
-		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
-		    
-		    $c->stash->{message_panel_size} = 'small';
-		    
-			$c->stash->{panel_messages} =
-				[ "You've been refused entry to " . $town->town_name . ". You'll need to wait until your prestige improves before coming back" ];
-			$c->detach( '/panel/refresh', ['messages'] );
-		}
-	}
-	
-	# Check if the mayor's party has an IP address in common
-	if ($mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with($mayor->party)) {	    
-	    $c->stash->{message_panel_size} = 'small';
-		$c->stash->{panel_messages} = [ "You cannot enter this town as the mayor's party has IP addresses in common with yours" ];
-		$c->detach( '/panel/refresh', ['messages'] );
-	}
-
-	my $cost = $town->tax_cost( $c->stash->{party} );
+	);	
 
 	# Pay tax, if necessary
 	if ( $cost->{gold} ) {

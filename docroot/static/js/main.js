@@ -783,15 +783,17 @@ function setMinimapVisibilityCallback(data) {
 function acceptQuest(quest_id) {
 	dojo.xhrGet( {
         url: urlBase + "/quest/accept?quest_id=" + quest_id, 
-        handleAs: "text",
+        handleAs: "json",
         
         load: function(responseObject, ioArgs) {
-        	if (responseObject) {
-        		dojo.byId('accept-message-text').innerHTML = responseObject;
+        	if (responseObject.message) {
+        		dojo.byId('accept-message-text').innerHTML = responseObject.message;
         		dijit.byId('message').show();
         	}
         
-        	dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
+        	if (responseObject.accepted) {
+        		dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
+        	}
         }
     });
 }

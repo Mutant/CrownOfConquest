@@ -393,4 +393,36 @@ sub create_kingdom_town_recs {
     }   
 }
 
+# Check if a party is allowed to enter a town
+sub party_can_enter {
+    my $self = shift;
+    my $party = shift;
+    
+	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
+		{
+			party_id => $party->id,
+			town_id  => $self->id,
+		},
+	);
+	
+	my $reason;
+    
+	# Check if they have really low prestige, and need to be refused.
+	my $mayor = $self->mayor;
+	if (! $mayor || $mayor->party_id != $party->id) {
+		my $prestige_threshold = -90 + round( $self->prosperity / 25 );
+		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
+		    
+		    $reason = "You've are not allowed into " . $self->town_name . ". You'll need to wait until your prestige improves before they'll let you in";
+		}
+	}
+	
+	# Check if the mayor's party has an IP address in common
+	if ($mayor && ! $mayor->is_npc && $party->is_suspected_of_coop_with($mayor->party)) {	    
+	    $reason = "You cannot enter " . $self->town_name . " as the mayor's party has IP addresses in common with yours";
+	}
+	
+	return ($reason ? 0 : 1, $reason);
+} 
+
 1;

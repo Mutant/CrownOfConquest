@@ -1,0 +1,31 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+<table class="main" border=1 cellpadding=2 cellspacing=0>
+	<tr>
+		<th><a href="?sort=creature_type">Creature Type</a></th>
+		<th><a href="?sort=category.name">Creature Category</a></th>
+		<th><a href="?sort=level">Level</a></th>
+		<th>Fire</th>
+		<th>Ice</th>
+		<th>Poison</th>
+		<th>Rare</th>
+		<th>Hire Cost</th>
+		<th>Upkeep</th>							
+	</tr>
+	
+	[% FOREACH creature_type IN creature_types %]
+		<tr>
+			<td><a href="[% base %]/admin/creature_types/edit?creature_type_id=[% creature_type.id %]">[% creature_type.creature_type %]</a></td>
+			<td>[% creature_type.category.name %]</td>
+			<td>[% creature_type.level %]</td>
+			<td>[% creature_type.fire %]</td>
+			<td>[% creature_type.ice %]</td>
+			<td>[% creature_type.poison %]</td>
+			<td>[% IF creature_type.rare %]Yes[% ELSE %]No[% END %]</td>
+			<td>[% creature_type.hire_cost %]</td>
+			<td>[% creature_type.maint_cost %]</td>
+		</tr>
+	[% END %]
+</table>
+		
+[% INCLUDE bottom.html %]		

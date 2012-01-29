@@ -144,6 +144,17 @@ sub parties : Local {
 sub records : Local {
     my ($self, $c) = @_;
     
+    my @capitals = $c->stash->{kingdom}->search_related(
+        'capital_history',
+        {
+            end_date => {'!=', undef},
+        },
+        {
+            order_by => ['start_date', 'end_date'],
+        }
+    );
+             
+    
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -151,6 +162,7 @@ sub records : Local {
 				template => 'kingdom/records.html',
 				params => {
 				    kingdom => $c->stash->{kingdom},
+				    capitals => \@capitals,				    
 				},
 			}
 		]

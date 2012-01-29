@@ -744,4 +744,23 @@ sub info : Local {
     $c->forward('/party/kingdom/info');       
 }
 
+
+sub buildings : Local {
+    my ($self, $c) = @_;
+    
+    my @buildings = $c->stash->{kingdom}->buildings;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/buildings.html',
+				params => {
+				    buildings => \@buildings,
+				},
+			}
+		]
+	);	     
+}
+
 1;

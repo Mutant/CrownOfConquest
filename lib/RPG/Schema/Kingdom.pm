@@ -52,6 +52,8 @@ __PACKAGE__->belongs_to( 'king', 'RPG::Schema::Character',
 __PACKAGE__->belongs_to( 'capital_city', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.capital' } );
 __PACKAGE__->has_many( 'capital_history', 'RPG::Schema::Capital_History', 'kingdom_id' );
 
+__PACKAGE__->has_many( 'buildings', 'RPG::Schema::Building', { 'foreign.owner_id' => 'self.kingdom_id' }, { where => { 'owner_type' => 'kingdom' } } );
+
 my @colours = (
     'Silver',
     'Gray',

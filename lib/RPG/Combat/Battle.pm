@@ -475,6 +475,12 @@ sub character_action {
 		}
 	}
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
+	    # Cannot cast or use more than once per round
+	    if ($self->{_cast_this_round}{$character->id}) {
+	        return;
+	    }
+	    $self->{_cast_this_round}{$character->id} = 1;
+	    
 		my $obj;
 		my $target_type;
 		my $action;
@@ -586,6 +592,10 @@ sub check_for_auto_cast {
 	my $caster    = shift;
 	
 	return unless $caster->is_spell_caster;
+	
+	# Can only auto-cast once per round
+	return if $self->{_auto_cast_checked_for}{$caster->id};
+	$self->{_auto_cast_checked_for}{$caster->id} = 1;
 	
 	if ( my $spell = $caster->check_for_auto_cast ) {
         my $target;

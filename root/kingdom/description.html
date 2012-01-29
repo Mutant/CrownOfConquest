@@ -1,0 +1,9 @@
+<h4>Kingdom Description</h4>
+
+You can enter a description for your kingdom, which will be available to all players. (No HTML!)
+
+<form method="POST" action="[% base %]kingdom/update_description" onSubmit="postPanels(this); return false">
+<textarea rows="10" style="width: 80%" name="description">[% kingdom.description %]</textarea>
+<br>
+<input type="submit" value="Save">
+</form>

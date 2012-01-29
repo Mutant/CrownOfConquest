@@ -110,7 +110,7 @@ Kingdom Treasury: [% kingdom.gold %] gold
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
-[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Tax', 'Records', 'Messages' ] %]
+[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Tax', 'Description', 'Records', 'Messages', 'Info' ] %]
 	[% lower_tab = tab | lower %]
 	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]

@@ -10,6 +10,8 @@ use feature 'switch';
 
 use JSON;
 use Carp;
+use HTML::Strip;
+use List::Util qw(shuffle);
 
 sub auto : Private {
     my ( $self, $c ) = @_;
@@ -444,8 +446,29 @@ sub tribute : Local {
         }
     }
     
-    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party_status'] );
-       
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party_status'] );       
+}
+
+sub info : Local {
+    my ($self, $c) = @_;
+    
+    my @kingdoms = shuffle $c->model('DBIC::Kingdom')->search(
+        {
+            active => 1,
+        },
+    );      
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/kingdom/info.html',
+				params => {
+				    kingdoms => \@kingdoms,
+				},
+			}
+		]
+	);	    
 }
 
 1;

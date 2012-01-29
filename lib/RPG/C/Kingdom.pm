@@ -707,7 +707,41 @@ sub contribute : Local {
     }
         
     $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=towns']] );
-        
+}
+
+sub description : Local {
+    my ($self, $c) = @_;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/description.html',
+				params => {
+				    kingdom => $c->stash->{kingdom},
+				},
+			}
+		]
+	);	    
+}
+
+sub update_description : Local {
+    my ($self, $c) = @_;    
+    
+    my $hs = HTML::Strip->new();
+
+    my $clean_desc = $hs->parse( $c->req->param('description') );    
+    
+    $c->stash->{kingdom}->description($clean_desc);
+    $c->stash->{kingdom}->update;
+    
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=description']] );
+}
+
+sub info : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('/party/kingdom/info');       
 }
 
 1;

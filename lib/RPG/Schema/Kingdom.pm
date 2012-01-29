@@ -13,7 +13,7 @@ __PACKAGE__->table('Kingdom');
 
 __PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active inception_day_id fall_day_id
                             highest_land_count highest_land_count_day_id highest_town_count highest_town_count_day_id
-                            highest_party_count highest_party_count_day_id capital/);
+                            highest_party_count highest_party_count_day_id capital description/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 

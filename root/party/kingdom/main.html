@@ -2,8 +2,8 @@
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
-[% FOREACH tab IN [ 'Allegiance', 'Parties', 'Towns', 'Quests', 'Records', 'Messages' ] %]
-	[% IF ! kingdom && tab != 'Allegiance' %]
+[% FOREACH tab IN [ 'Allegiance', 'Parties', 'Towns', 'Quests', 'Records', 'Messages', 'Info' ] %]
+	[% IF ! kingdom && (tab != 'Allegiance' && tab != 'Info') %]
 		[% NEXT %]
 	[% END %]
 	[% lower_tab = tab | lower %]

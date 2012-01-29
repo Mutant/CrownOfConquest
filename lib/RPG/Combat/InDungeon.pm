@@ -11,13 +11,15 @@ sub get_sector_to_flee_to {
     my $self = shift;
     my $fleeing_group = shift;
     
-    my $exclude_creatures = $fleeing_group->group_type eq 'creature' ? 1 : 0;    
+    my $exclude_creatures = $fleeing_group->group_type eq 'creature_group' ? 1 : 0;    
     
     my $sector = $fleeing_group->dungeon_grid;
     my $flee_sector;
     
     my $range = 1;
-    OUTER: while (my $allowed_sectors = $sector->sectors_allowed_to_move_to( $range, 0 ) ) {
+    my $consider_doors = $fleeing_group->group_type eq 'creature_group' ? 0 : 1;
+    
+    OUTER: while (my $allowed_sectors = $sector->sectors_allowed_to_move_to( $range, $consider_doors ) ) {
         foreach my $sector_id (shuffle keys %$allowed_sectors) {
             next unless $allowed_sectors->{$sector_id};
             
@@ -29,7 +31,7 @@ sub get_sector_to_flee_to {
         }        
         
         $range++;
-        last if $range > 3;
+        last if $range >= 5;
     }    
 
     confess "Couldn't find land to flee to: (fleeing group: " . ref($fleeing_group) . ", id: " . $fleeing_group->id . ")"  unless $flee_sector;

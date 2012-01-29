@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use Carp;
+use HTML::Strip;
 
 use feature "switch";
 
@@ -463,6 +464,35 @@ sub trades : Local {
             }
         ],
     );
+}
+
+sub description : Local {
+    my ($self, $c) = @_;  
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/description.html',
+                params   => {
+                    party => $c->stash->{party},  
+                }    
+            }
+        ],
+    );
+}
+
+sub update_description : Local {
+    my ($self, $c) = @_;    
+    
+    my $hs = HTML::Strip->new();
+
+    my $clean_desc = $hs->parse( $c->req->param('description') );
+    
+    $c->stash->{party}->description( $clean_desc );
+    $c->stash->{party}->update;
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/details?tab=description']] );   
 }
 
 1;

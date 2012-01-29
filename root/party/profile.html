@@ -1,0 +1,26 @@
+<h2>Profile For "[% party.name %]"</h2>
+<i>[% INCLUDE party/kingdom.html %]</i>
+
+<br><br>
+[% IF party.description %]
+<div class="text-block">
+<i>[% party.description | html_break %]</i>
+</div>
+<br>
+[% END %]
+
+<b>Player</b>: [% party.player.player_name %]<br>
+<b>Player Since:</b> [% party.player.created.ymd %]<br>
+
+<br>
+
+<b>Party Created</b>: [% party.created.ymd %]<br>
+<b>Last Logged In</b>: [% party.player.time_since_last_login %] [% IF party.is_online %](Online Now!)[% END %]<br>
+<b>Turns Used</b>: [% party.turns_used %]<br>
+
+<br>
+
+<b>Total Characters</b>: [% party.characters.size %]<br>
+<b>Number of Garrisons</b>: [% party.garrisons.size || 0 %]<br>
+<b>Number of Mayors</b>: [% party.mayors.size || 0 %]<br>
+<b>Number of Buildings</b>: [% party.get_owned_buildings.size || 0 %]<br>

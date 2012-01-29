@@ -22,3 +22,5 @@ insert into Enchantment_Item_Category (enchantment_id, item_category_id) values 
 insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Ranged Weapon'));
 insert into Enchantment_Item_Category (enchantment_id, item_category_id) values (@ench_id, (select item_category_id from Item_Category where item_category = 'Shield'));
 
+ALTER TABLE `Party` ADD COLUMN `description` VARCHAR(5000)  DEFAULT NULL AFTER `warned_for_kingdom_co_op`;
+

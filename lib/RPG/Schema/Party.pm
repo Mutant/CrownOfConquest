@@ -183,8 +183,7 @@ __PACKAGE__->add_columns(
         'name'              => 'last_allegiance_change',
         'is_nullable'       => 1,
         'size'              => 0,
-    },      
-    
+    },          
     'warned_for_kingdom_co_op' => {
         'data_type'         => 'datetime',
         'is_auto_increment' => 0,
@@ -193,6 +192,15 @@ __PACKAGE__->add_columns(
         'name'              => 'warned_for_kingdom_co_op',
         'is_nullable'       => 1,
         'size'              => '11'
+    },
+    'description' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'description',
+        'is_nullable'       => 1,
+        'size'              => '5000'
     },     
 );
 __PACKAGE__->set_primary_key('party_id');
@@ -283,6 +291,19 @@ sub movement_factor {
     }
 
     return round ($base_mf / scalar @characters);
+}
+
+sub mayors {
+    my $self = shift;
+    
+    my @mayors = $self->search_related(
+        'characters',
+        {
+            'mayor_of' => {'!=', undef},
+        }
+    );
+    
+    return @mayors;
 }
 
 around 'move_to' => sub {

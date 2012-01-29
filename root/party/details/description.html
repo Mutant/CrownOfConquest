@@ -1,0 +1,12 @@
+<h4>Party Description</h4>
+
+You can enter a description for your party, which will be displayed to others when they view your profile. (No HTML!)
+
+<form method="POST" action="[% base %]party/details/update_description" onSubmit="postPanels(this); return false">
+<textarea rows="10" style="width: 80%" name="description">[% party.description %]</textarea>
+<br>
+<input type="submit" value="Save">
+</form>
+
+<br>
+<a href="javascript:loadScreen('party/profile?party_id=[% party.id %]')">View Public Profile</a>

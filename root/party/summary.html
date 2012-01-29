@@ -1,7 +1,7 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
 [% FILTER collapse %]
-<b>[% party.name %]</b> ([% INCLUDE party/kingdom.html ~%])
+<b><a href="javascript:loadScreen('party/profile?party_id=[% party.id %]')">[% party.name %]</a></b> ([% INCLUDE party/kingdom.html ~%])
  [% IF attack %]<a href="javascript:getPanels('/party/combat/attack?party_id=[% party.id %]')">Attack</a>[% END %]<br>
 	[% FOREACH summary IN party.summary %]
 		[% summary.value %] [% FILTER inflect(number => summary.value); %]PL([% summary.key %])[% END %][% IF loop.size > 1 %][% IF loop.size == loop.count + 1 %] and [% ELSE %][% IF loop.size != loop.count %], [% END %][% END %][% END %]

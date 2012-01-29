@@ -53,7 +53,6 @@
 			<td>[% base %]player/register?referred_by_email=[% party.player.email %]</td>
 		</tr>
 	</table>
-	
 
 	<div dojoType="dijit.Tooltip"
 	connectId="refer-a-friend-help,refer-a-friend-label"
@@ -84,6 +83,10 @@
 	</table>
 	[% END %]
 </div>
+
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Description" href="[% base %]/party/details/description" [% IF tab == 'description' %]selected=true[% END %]>
+</div>
+
 <div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/party/details/history" [% IF tab == 'history' %]selected=true[% END %]>
 </div>
 

@@ -982,4 +982,33 @@ sub online : Private {
 	);      
 }
 
+sub profile : Local {
+	my ( $self, $c ) = @_;
+	
+	my $party = $c->model('DBIC::Party')->find(
+	   {
+	       party_id => $c->req->param('party_id'),
+	       defunct => undef,
+	   },
+	   {
+	       prefetch => 'player',
+	   }
+	   
+	);
+	
+	croak "Party not found" unless $party;   
+	
+    $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/profile.html',
+				params   => {
+					party => $party,
+				},
+			}
+		]
+	); 	
+}
+
 1;

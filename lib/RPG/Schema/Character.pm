@@ -1235,6 +1235,8 @@ sub value {
     foreach my $item ( $self->items ) {
         $value += int $item->sell_price(0);
     }
+    
+    $value += $self->skill_points * 160;
 
     $self->{value} = $value;
 

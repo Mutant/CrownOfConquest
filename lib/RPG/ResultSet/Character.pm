@@ -228,6 +228,13 @@ sub _assign_skill_points {
     
     return if $skill_points <= 0;
     
+    my $unassigned_skill_points = 0;
+    
+    if ($skill_points >= 8) {
+        my $unassigned_skill_points = RPG::Maths->weighted_random_number(1..10);
+        $unassigned_skill_points = $skill_points-2 if $unassigned_skill_points > $skill_points-2;
+    }
+    
     my @skills = shuffle $self->result_source->schema->resultset('Skill')->search();
     
     foreach my $skill (@skills) {
@@ -248,7 +255,7 @@ sub _assign_skill_points {
         
         $skill_points -= $level;
         
-        last if $skill_points <= 0;
+        last if $skill_points <= $unassigned_skill_points;
     }
     
        

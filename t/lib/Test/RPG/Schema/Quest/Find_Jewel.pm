@@ -148,6 +148,33 @@ sub test_create_jewels_in_range_basic : Tests(2) {
 			
 }
 
+sub test_create_jewels_in_range_jewel_quests_exist_in_target_town : Tests(1) {
+	my $self = shift;
+	
+	my $schema = $self->{schema};
+	
+	# GIVEN
+	my $quest = Test::RPG::Builder::Quest::Find_Jewel->build_quest($self->{schema});
+	
+	my @land = $schema->resultset('Land')->search();
+	
+	my $origin_town = Test::RPG::Builder::Town->build_town($schema, land_id => $land[8]->id);
+	my $target_town = $quest->town;
+	my $shop = Test::RPG::Builder::Shop->build_shop($schema, town_id => $target_town->id);
+		
+    my $jewel_type1 = $quest->jewel_type_to_find;
+		
+	$self->{quest}{_config}{search_range} = 3;
+	$self->{quest}{_config}{jewels_to_create} = 1;
+	
+	# WHEN
+	RPG::Schema::Quest::Find_Jewel::_create_jewels_in_range($self->{quest}, $origin_town, $origin_town->location, $jewel_type1);
+	
+	# THEN
+	my @items_in_shop = $shop->items_in_shop;
+	is(scalar @items_in_shop, 0, "No items created in shop, as town already has quests for this jewel type");			
+}
+
 sub test_check_action_success : Tests(2) {
 	my $self = shift;
 	

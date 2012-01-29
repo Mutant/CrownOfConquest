@@ -1143,6 +1143,80 @@ sub test_characters_killed_during_round_are_skipped : Tests(1) {
 	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
 }
 
+sub test_characters_killed_during_round_are_not_healed : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_level => 20 );
+	
+	my ($creature) = $cg->creatures;
+	my ($char1, $char2) = $party->characters;
+	$char1->hit_points(1);
+	$char1->update;
+	
+	my $heal_spell = $self->{schema}->resultset('Spell')->find(
+	   {
+	       spell_name => 'Heal',
+	   }
+	);
+	$char2->last_combat_action('Cast');
+	$char2->last_combat_param1($heal_spell->id);
+	$char2->last_combat_param2($char1->id);
+	
+	$char2->add_to_memorised_spells(
+	   {
+	       number_cast_today => 0,
+	       memorise_count => 1,
+	       spell_id => $heal_spell->id,
+	   }
+	);
+	
+	$char2->update;	
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'sort_combatant_list', sub {
+	    my $mock = shift;
+	    my @combatants = @_;
+	    
+	    my @ret;
+	    for my $id ($char1->id, $creature->id, $char2->id ) {
+            push @ret, grep { $_->id == $id } @combatants;
+	    }
+	    	    
+	    return @ret; 
+	});
+	
+	$battle->mock( 'sort_creature_targets', sub {
+	    my $mock = shift;
+	    my @targets = @_;
+	    
+	    my @ret;
+	    for my $id ($char1->id, $char2->id ) {
+            push @ret, grep { $_->id == $id } @targets;
+	    }	    
+	    
+	    return @ret; 
+	});
+	
+	$battle->set_false('check_for_end_of_combat');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is(scalar @{$result->{messages}}, 2, "Only 2 combat messages");
+}
+
 sub test_finish_creatures_lost : Tests(6) {
 	my $self = shift;
 

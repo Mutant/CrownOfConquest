@@ -31,6 +31,7 @@ sub test_get_combatant_list_no_history_multiple_combatants : Tests(1) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, @combatants);
@@ -56,6 +57,7 @@ sub test_get_combatant_list_attack_history_updated : Tests(2) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character, $creature);
@@ -79,6 +81,7 @@ sub test_get_combatant_list_with_history : Tests(5) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
    
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
@@ -110,6 +113,7 @@ sub test_get_combatant_list_spell_casters_always_have_only_one_attack : Tests() 
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
@@ -561,6 +565,7 @@ sub test_check_for_auto_cast_creature_target : Tests(2) {
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
+	$battle->mock('opposing_combatants_of', sub {($cg->members)});
 	
 	# WHEN
 	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);
@@ -595,6 +600,7 @@ sub test_check_for_auto_cast_character_target : Tests(2) {
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
+	$battle->mock('combatants', sub {($cg->members, $party->members)});
 	
 	# WHEN
 	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);

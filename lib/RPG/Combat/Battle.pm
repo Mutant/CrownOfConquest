@@ -69,6 +69,18 @@ sub opponents_of {
 	}
 }
 
+# Return a list of combatants on the opposing side of the being passed
+#  Get lists from combatants(), ensuring the same references are used
+sub opposing_combatants_of {
+    my $self = shift;
+    my $being = shift;
+    
+    my @combatants = grep { $_->group_id != $being->group_id } $self->combatants;
+    
+    return @combatants;
+       
+}
+
 # TODO: logic really needs a tidy up
 sub execute_round {
 	my $self = shift;
@@ -109,6 +121,8 @@ sub execute_round {
     	return if $self->result->{combat_complete};	
     	
     	foreach my $combatant (@combatants) {
+    	    # TODO: following line can probably be removed
+    	    #  Left here just in case there are cases where other instances of combatant data are written to
     	    $combatant->discard_changes;
     		next if $combatant->is_dead;
     
@@ -316,9 +330,16 @@ sub get_combatant_list {
 		}
 	}
 
-	@sorted_combatants = shuffle @sorted_combatants;
+	@sorted_combatants = $self->sort_combatant_list(@sorted_combatants);
 
 	return @sorted_combatants;
+}
+
+sub sort_combatant_list {
+    my $self = shift;
+    my @combatants = @_;
+    
+    return shuffle @combatants;   
 }
 
 sub check_skills {
@@ -369,9 +390,7 @@ sub select_opponent {
     my $self = shift;
     my $character = shift;
     
-	my $opp_group = $self->opponents_of($character);
-
-	my %opponents = map { $_->id => $_ } $opp_group->members;   
+	my %opponents = map { $_->id => $_ } $self->opposing_combatants_of($character);   
 	
 	my $opponent; 
     
@@ -409,7 +428,7 @@ sub character_action {
 	my ( $self, $character ) = @_;
 
 	# Check if spell casters should do an auto cast
-	my $autocast = $character->last_combat_param1 eq 'autocast' ? 1 : 0;
+	my $autocast = $character->last_combat_param1 && $character->last_combat_param1 eq 'autocast' ? 1 : 0;
 	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
 	    $self->log->debug($character->name . " is autocasting " . $spell->spell_name . " on " . $target->name);
@@ -491,7 +510,7 @@ sub character_action {
 		else {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
-		
+				
 		if ($blocked) {
             $result = RPG::Combat::SpellActionResult->new(
                 defender => $target,
@@ -571,11 +590,10 @@ sub check_for_auto_cast {
 	if ( my $spell = $caster->check_for_auto_cast ) {
         my $target;
 
-		# Randomly select a target
+		# Randomly select a target		
 		given ( $spell->target ) {
 			when ('creature') {
-            	my $opp_group = $self->opponents_of($caster);
-            	my %opponents = map { $_->id => $_ } $opp_group->members;
+            	my %opponents = map { $_->id => $_ } $self->opposing_combatants_of($caster);
 
 				for my $id ( shuffle keys %opponents ) {
 					unless ( $opponents{$id}->is_dead ) {
@@ -585,7 +603,7 @@ sub check_for_auto_cast {
 				}
 			}
 			when ('character') {
-				$target = ( shuffle grep { !$_->is_dead } $caster->group->members )[0];
+				$target = ( shuffle grep { !$_->is_dead } grep { $_->group_id == $caster->group_id } $self->combatants )[0];
 			}
 			when ('party') {
 			    my $opp_num = $self->opponent_number_of_being($caster);
@@ -611,7 +629,7 @@ sub creature_action {
 	    return $spell->creature_cast($creature, $target);
 	}
 
-	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $party->members;
+	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $self->opposing_combatants_of($creature);
 	@characters = grep { !$_->is_dead } @characters;    # Get rid of corpses
 
 	# Figure out whether creature will target front or back rank
@@ -632,7 +650,7 @@ sub creature_action {
 	}
 
 	my $character;
-	foreach my $char_to_check ( shuffle @characters ) {
+	foreach my $char_to_check ( $self->sort_creature_targets(@characters) ) {
 		unless ( $char_to_check->is_dead ) {
 			$character = $char_to_check;
 			last;
@@ -662,6 +680,13 @@ sub creature_action {
 	}
 
 	return $action_result;
+}
+
+sub sort_creature_targets {
+    my $self = shift;
+    my @targets = @_;
+    
+    return shuffle @targets;   
 }
 
 sub attack {

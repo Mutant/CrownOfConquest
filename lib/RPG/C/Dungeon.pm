@@ -679,6 +679,10 @@ sub move_creatures : Private {
         return unless @sectors;
         
         my $sector_to_move_to = $sectors[0];
+        
+        # Rare monsters / mayors not allowed to move out of room
+        next if ($cg->has_rare_monster || $cg->has_mayor)
+            && $sector_to_move_to->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
 
         if ($sector_to_move_to) {
             $cg->dungeon_grid_id( $sector_to_move_to->id );

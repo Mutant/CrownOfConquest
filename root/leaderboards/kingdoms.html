@@ -34,7 +34,7 @@ Top Kingdoms By:
 		<td>[% loop.count %]</td>		
 		<td>[% kingdom.name %]</td>
 		<td>[% king = kingdom.king %]
-		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %][% king.party.name %][% END %])
+		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %]<a href="javascript:loadScreen('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% END %])
 		</td>
 		<td>[% kingdom.capital_city.town_name %]</td>
 		<td align="right">[% kingdom.get_column('total_land') %]</td>

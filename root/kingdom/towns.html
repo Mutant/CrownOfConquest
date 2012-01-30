@@ -30,7 +30,7 @@ The following towns are loyal to our Kingdom.
 			[% mayor_party = town.mayor.party %]
 			[% IF mayor_party %]
 				<br>
-				Mayor's Party: [% mayor_party.name %]<br>
+				Mayor's Party: <a href="javascript:loadScreen('party/profile?party_id=[% mayor_party.id %]')">[% mayor_party.name %]</a><br>
 				[% mayor_kingdom = mayor_party.kingdom %]
 				Loyal To: [% IF mayor_kingdom %]Kingdom Of [% mayor_kingdom.name %][% ELSE %]No one[% END %]
 			[% ELSE %]

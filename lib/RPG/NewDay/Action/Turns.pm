@@ -7,7 +7,7 @@ extends 'RPG::NewDay::Base';
 sub cron_string {
     my $self = shift;
      
-    return '0 * * * *';
+    return $self->context->config->{new_turns_cron_string};
 }
 
 sub run {

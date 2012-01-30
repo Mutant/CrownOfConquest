@@ -305,6 +305,7 @@ sub test_characters_in_garrison_not_included_in_attackers : Tests(3) {
 	is(scalar @combat_messages, 1, "One combat message");
 	is($combat_messages[0]->attacker->id, $char3->id, "Correct attacker");
 	is($combat_messages[0]->defender->id, $char2->id, "Correct defender");
+
 }
 
 sub test_end_of_combat_cleanup_creates_news : Tests(1) {

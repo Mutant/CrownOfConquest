@@ -520,8 +520,8 @@ sub add_to_garrison : Local {
 	
 	croak "Invalid character" unless $character;
 	
-	$character->status('mayor_garrison');
 	$character->status_context($town->id);
+	$character->status('mayor_garrison');
 	$character->creature_group_id($town->mayor->creature_group_id);
 	$character->update;
 	
@@ -551,8 +551,8 @@ sub remove_from_garrison : Local {
 	
 	croak "Invalid character" unless $character;
 	
-	$character->status(undef);
 	$character->status_context(undef);
+	$character->status(undef);
 	$character->creature_group_id(undef);
 	$character->update;
 	

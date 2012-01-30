@@ -21,6 +21,9 @@ use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Creature;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Garrison;
+use Test::RPG::Builder::Building;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
@@ -1108,6 +1111,113 @@ sub test_critical_hit_chance_with_eagle_eye : Tests(1) {
 	
 	# THEN
 	is($chance, 9, "Critical hit chance correct with eagle eye");
+}
+
+sub test_garrison_character_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	# WHEN
+    $character1->calculate_defence_factor;
+    
+    # THEN
+    is($character1->defence_factor, 14, "Character has correct DF");
+}
+
+sub test_garrison_character_gets_building_bonus_when_moved_into_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	# WHEN
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+    
+    # THEN
+    is($character1->defence_factor, 14, "Character has correct DF");   
+}
+
+sub test_garrison_character_loses_building_bonus_when_moved_out_of_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+		
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	# WHEN
+	$character1->garrison_id(undef);
+	$character1->update;
+    
+    # THEN
+    is($character1->defence_factor, 10, "Character has correct DF");   
+}
+
+sub test_mayor_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[4]->id );
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10, mayor_of => $town->id );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $town->id, owner_type => 'town' );
+	
+	# WHEN
+    $character->calculate_defence_factor;
+    
+    # THEN
+    is($character->defence_factor, 14, "Character has correct DF");
+}
+
+sub test_mayor_garrison_char_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[4]->id );
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10, 
+	   status => 'mayor_garrison', status_context => $town->id );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $town->id, owner_type => 'town' );
+	
+	# WHEN
+    $character->calculate_defence_factor;
+    
+    # THEN
+    is($character->defence_factor, 14, "Character has correct DF");
 }
 
 1;

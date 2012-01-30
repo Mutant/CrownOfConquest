@@ -24,8 +24,8 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
         level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender garrison_id offline_cast_chance online_cast_chance
-        creature_group_id mayor_of status status_context encumbrance back_rank_penalty
+        last_combat_param1 last_combat_param2 gender offline_cast_chance online_cast_chance
+        creature_group_id status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
         movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
         resist_poison resist_poison_bonus/
@@ -67,6 +67,9 @@ __PACKAGE__->add_columns(
 	constitution => { accessor => '_constitution'}, 
 	attack_factor => { accessor => '_attack_factor'},
 	defence_factor => { accessor => '_defence_factor'},
+	status => { accessor => '_status' },
+	garrison_id => { accessor => '_garrison_id' },
+	mayor_of => { accessor => '_mayor_of' },
 );
 
 __PACKAGE__->set_primary_key('character_id');
@@ -193,6 +196,47 @@ sub _stat_accessor {
 	my $bonus = $self->$accessor || 0;
 			
 	return $value + $bonus;
+}
+
+sub status {
+    my $self = shift;
+   
+    return $self->_move_character_trigger('status', @_);
+}
+
+sub garrison_id {
+    my $self = shift;
+  
+    return $self->_move_character_trigger('garrison_id', @_);    
+}
+
+sub mayor_of {
+    my $self = shift;
+    
+    return $self->_move_character_trigger('mayor_of', @_);        
+}
+
+# Called when a character "moves", i.e. changes status, etc.
+sub _move_character_trigger {
+    my $self = shift;
+    
+    my $col = shift;
+
+    my $accessor = '_' . $col; 
+
+    my $setting = scalar @_;
+    my $new_value = shift;
+    
+    my $old_value = $self->$accessor;
+    
+    if ($setting) {
+        $self->$accessor($new_value);
+
+        $self->calculate_attack_factor();
+        $self->calculate_defence_factor();   
+    }
+    
+    return $self->$accessor;   
 }
 
 sub long_stats {
@@ -663,7 +707,7 @@ sub calculate_attack_factor {
             $self->back_rank_penalty(0);
         }     
     }
-
+    
     $self->_attack_factor($attack_factor);
 
     return $attack_factor;
@@ -701,6 +745,45 @@ sub calculate_defence_factor {
     map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ( $_->variable('Defence Factor Upgrade') || 0 ) } @items;
 
     my $defence_factor = $self->agility + $armour_df;
+    
+    # See if they get a bonus for being in a building
+    my $building_land_id;
+    if ($self->garrison_id) {
+        my $garrison = $self->garrison;
+
+        $building_land_id = $garrison->land->id;
+    }
+    
+    # See if they get a bonus for being in a town with a building
+    if ($self->mayor_of || ($self->status && $self->status eq 'mayor_garrison')) {
+        my $town;
+        if ($self->mayor_of) {
+            $town = $self->mayor_of_town;
+        }
+        else {
+            $town = $self->result_source->schema->resultset('Town')->find(
+                {
+                    town_id => $self->status_context,
+                }
+            );
+        }
+        
+        $building_land_id = $town->location->id if $town;         
+    }
+    
+    if ($building_land_id) {
+        # Check if the garrison is in the same sector as a building. If so, add something to all their defence factors
+        my $building = $self->result_source->schema->resultset('Building')->find(
+            {
+                land_id => $building_land_id,
+            },
+            {
+                prefetch => 'building_type',
+            },
+        );
+        
+        $defence_factor += $building->building_type->defense_factor if $building;           
+    }
 
     $self->_defence_factor($defence_factor);
     
@@ -1436,3 +1519,4 @@ sub execute_skill {
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;
+

@@ -68,27 +68,6 @@ around '_build_combat_factors' => sub {
                 $combat_factors->{creature}{ $creature->id }{df} += $df_bonus;
             }   
         }
-        
-        # Add in bonus for the mayor/garrison chars if there's a building
-        if ($self->creature_group->has_mayor) {
-            my $building = $self->schema->resultset('Building')->find(
-                {
-                    land_id => $town->land_id,
-                },
-                {
-                    prefetch => 'building_type',
-                },
-            );
-            
-            if ($building) {
-                foreach my $character ($self->creature_group->characters) {
-                    next if defined $id && $id != $character->id;
-                    
-                    $combat_factors->{character}{ $character->id }{af} += $building->building_type->attack_factor;
-                    $combat_factors->{character}{ $character->id }{df} += $building->building_type->defense_factor;             
-                }
-            }            
-        }
     }
     
     return $combat_factors;

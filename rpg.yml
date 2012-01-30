@@ -82,6 +82,9 @@ mayors_group_cron_string: "15 */3 * * *"
 # Filling of dungeon treasure chests
 treasure_chest_cron_string: "45 * * * *"
 
+# Check for inactive kingdoms, and deactivate
+deactivate_kingdoms_cron_string: "55 */2 * * *"
+
 # ----- Character / Party Generation Params ----- #
 
 # Pool of points to add to stats for new character
@@ -356,7 +359,7 @@ characters_per_prosperity: 10
 blacksmith_skill_increase_chance: 40
 
 # Chance a blacksmith will retire
-blacksmith_retire_chance: 3
+blacksmith_retire_chance: 10
 
 # Max blacksmith starting skill
 blacksmith_max_start_skill: 5

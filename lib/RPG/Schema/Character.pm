@@ -708,6 +708,9 @@ sub calculate_attack_factor {
         }     
     }
     
+    # See if they get a bonus for being in a building
+    $attack_factor += $self->_get_building_bonus('attack_factor');        
+    
     $self->_attack_factor($attack_factor);
 
     return $attack_factor;
@@ -747,14 +750,27 @@ sub calculate_defence_factor {
     my $defence_factor = $self->agility + $armour_df;
     
     # See if they get a bonus for being in a building
+    $defence_factor += $self->_get_building_bonus('defence_factor');    
+
+    $self->_defence_factor($defence_factor);
+    
+    return $defence_factor;
+}
+
+# Get AF/DF,etc bonus based on the buildng the character is in (if any)
+sub _get_building_bonus {
+    my $self = shift;
+    my $bonus_type = shift;
+    
     my $building_land_id;
+    my $bonus = 0;    
+    
     if ($self->garrison_id) {
         my $garrison = $self->garrison;
 
         $building_land_id = $garrison->land->id;
     }
     
-    # See if they get a bonus for being in a town with a building
     if ($self->mayor_of || ($self->status && $self->status eq 'mayor_garrison')) {
         my $town;
         if ($self->mayor_of) {
@@ -782,12 +798,10 @@ sub calculate_defence_factor {
             },
         );
         
-        $defence_factor += $building->building_type->defense_factor if $building;           
+        $bonus += $building->get_bonus($bonus_type) if $building;           
     }
-
-    $self->_defence_factor($defence_factor);
     
-    return $defence_factor;
+    return $bonus;    
 }
 
 =head1 damage

@@ -1220,4 +1220,38 @@ sub test_mayor_garrison_char_gets_bonus_in_building : Tests(1) {
     is($character->defence_factor, 14, "Character has correct DF");
 }
 
+sub test_garrison_character_gets_upgrade_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+    my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
+        {
+            name => 'Rune of Attack',
+        }
+    );
+    $building->add_to_upgrades(
+        {
+            type_id => $upgrade_type->type_id,
+            level => 2,
+        }
+    );	
+	
+	# WHEN
+    $character1->calculate_attack_factor;
+    
+    # THEN
+    is($character1->attack_factor, 14, "Character has correct AF");
+}
+
 1;

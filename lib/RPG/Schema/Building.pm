@@ -2,12 +2,13 @@ package RPG::Schema::Building;
 
 use Moose;
 use Data::Dumper;
+use Carp;
 
 extends 'DBIx::Class';
 
-use feature 'switch';
-
 use RPG::ResultSet::RowsInSectorRange;
+
+use feature 'switch';
 
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
@@ -110,6 +111,35 @@ sub unclaim_land {
         $sector->claimed_by_type(undef);
         $sector->update;
     }     
+}
+
+sub get_bonus {
+    my $self = shift;
+    my $bonus_type = shift;
+
+    my $upgrade_type = RPG::Schema::Building_Upgrade_Type->upgrade_type_for_bonus($bonus_type);
+    
+    croak "No such bonus type: $bonus_type" unless $upgrade_type;
+    
+    my $upgrade = $self->find_related(
+        'upgrades',
+        {
+            'type.name' => $upgrade_type,
+        },
+        {
+            prefetch => 'type',
+        }
+    );
+    
+    my $bonus = 0;
+    
+    $bonus = $upgrade->level * $upgrade->type->modifier_per_level if $upgrade;
+        
+    if ($bonus_type eq 'defence_factor') {
+        $bonus += $self->building_type->defense_factor;
+    }        
+    
+    return $bonus;
 }
 
 1;

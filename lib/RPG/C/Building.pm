@@ -183,7 +183,7 @@ sub manage : Local {
     my $location = $town ? $town->location : $c->stash->{party_location};
     
 	#  Get a list of the currently built (or under construction) buildings owned by the party.
-	my @existing_buildings = $c->model('DBIC::Building')->search(
+	my $building = $c->model('DBIC::Building')->find(
     	{
     		'land_id' => $location->id,
         	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
@@ -191,9 +191,7 @@ sub manage : Local {
         },
 	);
 	
-	croak "No buildings to upgrade\n" unless @existing_buildings;
-	
-	my ($building) = @existing_buildings;
+	croak "No buildings to upgrade\n" unless $building;
 	
 	my $building_type = $building->building_type;
 	
@@ -204,6 +202,10 @@ sub manage : Local {
 	       level => $building_type->level + 1,
 	   }
 	);
+	
+	my @upgrade_types = $c->model('DBIC::Building_Upgrade_Type')->search();
+	
+	my %upgrades_by_type_id = map { $_->type_id => $_ } $building->upgrades;
 	
     my %party_resources = $self->get_party_resources($c, $town);
     
@@ -236,6 +238,8 @@ sub manage : Local {
                 resources => \%resources,
                 resources_needed => \%resources_needed,
                 town => $town,
+                upgrade_types => \@upgrade_types,
+                upgrades_by_type_id => \%upgrades_by_type_id,
             },
         }]
     );     
@@ -298,6 +302,62 @@ sub upgrade : Local {
     	
     	$c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
 	}	
+}
+
+sub build_upgrade : Local {    
+    my ($self, $c, $town) = @_;
+    
+    my $location = $town ? $town->location : $c->stash->{party_location};
+     
+	my $building = $c->model('DBIC::Building')->find(
+    	{
+    		'land_id' => $location->id,
+        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
+        	'owner_type' => $town ? 'town' : 'party',
+        },
+        {
+            prefetch => 'building_type',
+        },
+	);
+	
+	my $upgrade = $c->model('DBIC::Building_Upgrade')->find_or_create(
+	   {
+	       'building_id' => $building->id,
+	       'type_id' => $c->req->param('upgrade_type_id'),
+	   },
+	   { 
+	       for => 'update',
+	       prefetch => 'type', 
+	   },	   
+    );
+    
+    if ($building->building_type->max_upgrade_level < $upgrade->level + 1) {
+        croak "Cannot upgrade pasts max base building upgrade level";
+    }
+    
+	my %resources_needed = %{ $upgrade->type->cost_to_upgrade($upgrade->level + 1) };
+	
+	my $turns_needed = delete $resources_needed{Turns};
+	my $gold_needed = delete $resources_needed{Gold};
+	
+	if (%resources_needed && ! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
+		$c->stash->{error} = "Your party does not have the resources needed to build this upgrade";
+		$c->detach('/panel/refresh');			
+	}
+	
+	if ($turns_needed > $c->stash->{party}->turns || $gold_needed > $c->stash->{party}->gold) {
+        croak "Not enough turns or gold to build upgrade";
+	}
+	
+	$c->stash->{party}->decrement_gold($gold_needed);
+	$c->stash->{party}->turns($c->stash->{party}->turns - $turns_needed);
+	$c->stash->{party}->update;
+	
+	$upgrade->increment_level;
+	$upgrade->update;
+	
+	$c->forward( '/panel/refresh', [[screen => 'building/manage'], 'party_status'] );
+	
 }
 
 sub seize : Local {

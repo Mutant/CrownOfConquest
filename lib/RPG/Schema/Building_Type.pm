@@ -56,24 +56,6 @@ __PACKAGE__->add_columns(
       'is_nullable' => 0,
       'size' => '11'
     },
-    'attack_factor' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'attack_factor',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
-    'heal_factor' => {
-      'data_type' => 'int',
-      'is_auto_increment' => 0,
-      'default_value' => '0',
-      'is_foreign_key' => 0,
-      'name' => 'heal_factor',
-      'is_nullable' => 0,
-      'size' => '11'
-    },
     'commerce_factor' => {
       'data_type' => 'int',
       'is_auto_increment' => 0,
@@ -172,7 +154,16 @@ __PACKAGE__->add_columns(
       'name' => 'land_claim_range',
       'is_nullable' => 0,
       'size' => '11'
-    },         
+    },        
+    'max_upgrade_level' => {
+      'data_type' => 'int',
+      'is_auto_increment' => 0,
+      'default_value' => '1',
+      'is_foreign_key' => 0,
+      'name' => 'max_upgrade_level',
+      'is_nullable' => 0,
+      'size' => '11'
+    },     
 );
 __PACKAGE__->set_primary_key('building_type_id');
 

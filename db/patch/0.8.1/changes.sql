@@ -26,3 +26,37 @@ ALTER TABLE `Party` ADD COLUMN `description` VARCHAR(5000) DEFAULT NULL;
 
 ALTER TABLE `Kingdom` ADD COLUMN `description` VARCHAR(5000) DEFAULT NULL;
 
+CREATE TABLE `Building_Upgrade_Type` (
+  `type_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(40)  NOT NULL,
+  `modifier_per_level` INTEGER  NOT NULL,
+  `modifier_label` VARCHAR(20),
+  `description` VARCHAR(2000)  NOT NULL;
+  `base_gold_cost` INTEGER  NOT NULL,
+  `base_wood_cost` INTEGER  NOT NULL,
+  `base_clay_cost` INTEGER  NOT NULL,
+  `base_iron_cost` INTEGER  NOT NULL,
+  `base_stone_cost` INTEGER  NOT NULL,
+  `base_turn_cost` INTEGER  NOT NULL,
+  PRIMARY KEY (`type_id`)
+)
+ENGINE = InnoDB;
+
+CREATE TABLE `Building_Upgrade` (
+  `upgrade_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `building_id` INTEGER  NOT NULL,
+  `type_id` INTEGER  NOT NULL,
+  `level` INTEGER  NOT NULL DEFAULT 0,
+  PRIMARY KEY (`upgrade_id`),
+  INDEX `building_id_idx`(`building_id`),
+  INDEX `type_id_idx`(`type_id`)
+)
+ENGINE = InnoDB;
+
+ALTER TABLE `Building_Type` DROP COLUMN `attack_factor`,
+ DROP COLUMN `heal_factor`,
+ ADD COLUMN `max_upgrade_level` INTEGER  NOT NULL DEFAULT 0;
+
+UPDATE `Building_Type` set max_upgrade_level = 3 where name = 'Tower';
+UPDATE `Building_Type` set max_upgrade_level = 6 where name = 'Fort';
+UPDATE `Building_Type` set max_upgrade_level = 10 where name = 'Castle';

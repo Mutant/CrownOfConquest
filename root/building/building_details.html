@@ -40,11 +40,7 @@
 	<div style="float:left;margin-top:20px;[% effects_style %]">
 		<div><span>[% IF upgrade %]Upgraded [% END %]Effects:</span></div>
 		[% IF building_type.defense_factor > 0 %]<div><span>+[% building_type.defense_factor %] defence factor</span></div>[% END %]
-		[% IF building_type.attack > 0 %]<div><span>+[% building_type.attack %] attack factor</span></div>[% END %]
-		<!--  Add back in when relevant
-		[% IF building_type.heal > 0 %]<div><span>[% building_type.heal %]X healing factor</span></div>[% END %]
-		[% IF building_type.commerce > 0 %]<div><span>[% building_type.commerce %]X commerce factor</span></div>[% END %]
-		-->
+		<div>Max Upgrade Level: [% building_type.max_upgrade_level %]</div>
 	</div>
 	[% END %]
 </div>

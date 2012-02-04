@@ -60,7 +60,7 @@ sub run {
             }
             else {
                 # No capital
-                $capital_block_adjustment = -3;
+                $capital_block_adjustment = -15;
             }
             
             # Calculate adjustment based on distance from capital

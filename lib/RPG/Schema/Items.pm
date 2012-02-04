@@ -437,8 +437,10 @@ sub _factors_trigger {
 sub _resistance_bonus_trigger {
 	my $self = shift;
 	my $new_equip_place_id = shift;
-	my $character = shift;	
+	my $character = shift;
 	
+	return unless $character;
+		
 	my @enchantments = $self->search_related(
 		'item_enchantments',
 		{

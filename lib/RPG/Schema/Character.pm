@@ -233,7 +233,8 @@ sub _move_character_trigger {
         $self->$accessor($new_value);
 
         $self->calculate_attack_factor();
-        $self->calculate_defence_factor();   
+        $self->calculate_defence_factor();
+        $self->calculate_resistance_bonuses;
     }
     
     return $self->$accessor;   
@@ -755,6 +756,39 @@ sub calculate_defence_factor {
     $self->_defence_factor($defence_factor);
     
     return $defence_factor;
+}
+
+# Calculate bonuses to resistances
+sub calculate_resistance_bonuses {
+    my $self = shift;
+        
+	my %bonuses;
+    
+    # First, find items with bonuses
+	my @enchanted_items = $self->search_related(
+		'items',
+		{
+			'enchantment.enchantment_name' => 'resistances',
+		},
+		{
+			prefetch => { 'item_enchantments' => 'enchantment' },
+		}
+	);
+	
+	foreach my $item (@enchanted_items) {
+        foreach my $item_enchantment ($item->item_enchantments) {
+            $bonuses{$item_enchantment->variable('Resistance Type')} += $item_enchantment->variable('Resistance Bonus');
+        }   
+	}
+	
+	my $bonus_from_buildings = $self->_get_building_bonus('resistances');
+	
+	for my $resistance_type (@RESISTANCES) {
+        my $method = "resist_${resistance_type}_bonus";
+        
+        $self->$method(($bonuses{$resistance_type} // 0) + $bonus_from_buildings);
+	} 
+	
 }
 
 # Get AF/DF,etc bonus based on the buildng the character is in (if any)

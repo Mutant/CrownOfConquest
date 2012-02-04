@@ -24,6 +24,7 @@ use Test::RPG::Builder::Creature;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Garrison;
 use Test::RPG::Builder::Building;
+use Test::RPG::Builder::Item_Type;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
@@ -1252,6 +1253,101 @@ sub test_garrison_character_gets_upgrade_bonus_in_building : Tests(1) {
     
     # THEN
     is($character1->attack_factor, 14, "Character has correct AF");
+}
+
+sub test_calculate_resistance_bonuses_with_items : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 20);
+	
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( 
+		$self->{schema}, 
+		enchantments => [ 'resistances' ],
+	);	
+
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+			item_type_id => $item_type->id,
+			character_id => $character->id,
+		},
+		{
+			number_of_enchantments => 1,
+		},
+	);	
+	$item->variable('Resistance Bonus', 3);
+	$item->variable('Resistance Type', 'ice');
+	$item->update;
+	
+	# WHEN
+	$character->calculate_resistance_bonuses;
+	$character->update;
+	
+	# THEN
+	$character->discard_changes;
+	is($character->resist_ice_bonus, 3, "Resist ice bonus increased");
+	is($character->resistance('Ice'), 3, "Resistance to ice calculated correctly");       
+}
+
+sub test_calculate_resistance_bonuses_with_items_and_buildings : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 20);
+	
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( 
+		$self->{schema}, 
+		enchantments => [ 'resistances' ],
+	);	
+
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+			item_type_id => $item_type->id,
+			character_id => $character->id,
+		},
+		{
+			number_of_enchantments => 1,
+		},
+	);	
+	$item->variable('Resistance Bonus', 3);
+	$item->variable('Resistance Type', 'ice');
+	$item->update;
+	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character->garrison_id($garrison->id);
+	$character->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, owner_id => $party->id, owner_type => 'party', land_id => $land[4]->id, );
+    my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
+        {
+            name => 'Rune of Protection',
+        }
+    );
+    $building->add_to_upgrades(
+        {
+            type_id => $upgrade_type->type_id,
+            level => 2,
+        }
+    );		
+	
+	# WHEN
+	$character->calculate_resistance_bonuses;
+	$character->update;
+	
+	# THEN
+	$character->discard_changes;
+	is($character->resist_ice_bonus, 7, "Resist ice bonus increased");
+	is($character->resistance('Ice'), 7, "Resistance to ice calculated correctly");       
+	
+	is($character->resist_fire_bonus, 4, "Resist Fire bonus increased");
+	is($character->resistance('Fire'), 4, "Resistance to Fire calculated correctly");  
+	
+	is($character->resist_poison_bonus, 4, "Resist Poison bonus increased");
+	is($character->resistance('Poison'), 4, "Resistance to Poison calculated correctly");  	
 }
 
 1;

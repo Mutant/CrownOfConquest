@@ -710,7 +710,7 @@ sub calculate_attack_factor {
     }
     
     # See if they get a bonus for being in a building
-    $attack_factor += $self->_get_building_bonus('attack_factor');        
+    $attack_factor += $self->_get_building_bonus('attack_factor', $extra);
     
     $self->_attack_factor($attack_factor);
 
@@ -749,9 +749,9 @@ sub calculate_defence_factor {
     map { $armour_df += $_->attribute('Defence Factor')->item_attribute_value + ( $_->variable('Defence Factor Upgrade') || 0 ) } @items;
 
     my $defence_factor = $self->agility + $armour_df;
-    
+
     # See if they get a bonus for being in a building
-    $defence_factor += $self->_get_building_bonus('defence_factor');    
+    $defence_factor += $self->_get_building_bonus('defence_factor', $extra);    
 
     $self->_defence_factor($defence_factor);
     
@@ -761,6 +761,7 @@ sub calculate_defence_factor {
 # Calculate bonuses to resistances
 sub calculate_resistance_bonuses {
     my $self = shift;
+    my $extra = shift;
         
 	my %bonuses;
     
@@ -781,7 +782,7 @@ sub calculate_resistance_bonuses {
         }   
 	}
 	
-	my $bonus_from_buildings = $self->_get_building_bonus('resistances');
+	my $bonus_from_buildings = $self->_get_building_bonus('resistance_bonuses', $extra);
 	
 	for my $resistance_type (@RESISTANCES) {
         my $method = "resist_${resistance_type}_bonus";
@@ -795,9 +796,11 @@ sub calculate_resistance_bonuses {
 sub _get_building_bonus {
     my $self = shift;
     my $bonus_type = shift;
+    my $extra = shift;
+    
+    my $bonus = 0; 
     
     my $building_land_id;
-    my $bonus = 0;    
     
     if ($self->garrison_id) {
         my $garrison = $self->garrison;
@@ -832,9 +835,9 @@ sub _get_building_bonus {
             },
         );
         
-        $bonus += $building->get_bonus($bonus_type) if $building;           
+        $bonus += $building->get_bonus($bonus_type, $extra->{bonus_level}{$bonus_type}) if $building;           
     }
-    
+
     return $bonus;    
 }
 
@@ -1010,11 +1013,8 @@ sub equipped_items {
         # Should only have one item equipped in a particular place
         my ($item) = grep { $_->equip_place_id && $equip_place->id == $_->equip_place_id; } @items;
 
-        #warn $equip_place->equip_place_name . " " . $item->item_type->item_type if $item;
         $equipped_items{ $equip_place->equip_place_name } = $item;
     }
-
-    #warn Dumper \%equipped_items;
 
     return \%equipped_items;
 }

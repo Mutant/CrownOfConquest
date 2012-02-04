@@ -153,9 +153,10 @@ sub unclaim_land {
 sub get_bonus {
     my $self = shift;
     my $bonus_type = shift;
+    my $level = shift;
 
     my $upgrade_type = RPG::Schema::Building_Upgrade_Type->upgrade_type_for_bonus($bonus_type);
-    
+
     croak "No such bonus type: $bonus_type" unless $upgrade_type;
     
     my $upgrade = $self->find_related(
@@ -167,10 +168,14 @@ sub get_bonus {
             prefetch => 'type',
         }
     );
-    
+
     my $bonus = 0;
     
-    $bonus = $upgrade->level * $upgrade->type->modifier_per_level if $upgrade;
+    if ($upgrade) {
+        $level //= $upgrade->level;
+            
+        $bonus = $level * $upgrade->type->modifier_per_level;
+    }
         
     if ($bonus_type eq 'defence_factor') {
         $bonus += $self->building_type->defense_factor;

@@ -1252,7 +1252,7 @@ sub test_garrison_character_gets_upgrade_bonus_in_building : Tests(1) {
     $character1->calculate_attack_factor;
     
     # THEN
-    is($character1->attack_factor, 14, "Character has correct AF");
+    is($character1->attack_factor, 16, "Character has correct AF");
 }
 
 sub test_calculate_resistance_bonuses_with_items : Tests(2) {
@@ -1340,14 +1340,14 @@ sub test_calculate_resistance_bonuses_with_items_and_buildings : Tests(6) {
 	
 	# THEN
 	$character->discard_changes;
-	is($character->resist_ice_bonus, 7, "Resist ice bonus increased");
-	is($character->resistance('Ice'), 7, "Resistance to ice calculated correctly");       
+	is($character->resist_ice_bonus, 9, "Resist ice bonus increased");
+	is($character->resistance('Ice'), 9, "Resistance to ice calculated correctly");       
 	
-	is($character->resist_fire_bonus, 4, "Resist Fire bonus increased");
-	is($character->resistance('Fire'), 4, "Resistance to Fire calculated correctly");  
+	is($character->resist_fire_bonus, 6, "Resist Fire bonus increased");
+	is($character->resistance('Fire'), 6, "Resistance to Fire calculated correctly");  
 	
-	is($character->resist_poison_bonus, 4, "Resist Poison bonus increased");
-	is($character->resistance('Poison'), 4, "Resistance to Poison calculated correctly");  	
+	is($character->resist_poison_bonus, 6, "Resist Poison bonus increased");
+	is($character->resistance('Poison'), 6, "Resistance to Poison calculated correctly");  	
 }
 
 1;

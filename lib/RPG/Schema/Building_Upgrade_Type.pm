@@ -51,14 +51,21 @@ sub bonus_label {
 my %UPGRADE_BONUS_MAP = (
     attack_factor => 'Rune of Attack',
     defence_factor => 'Rune of Defence',
-    resistances => 'Rune of Protection',
+    resistance_bonuses => 'Rune of Protection',
 );
 sub upgrade_type_for_bonus {
     my $self = shift;
     my $bonus_type = shift;
     
-    return $UPGRADE_BONUS_MAP{$bonus_type};
+    return $UPGRADE_BONUS_MAP{$bonus_type};    
+}
+
+sub bonus {
+    my $self = shift;
     
+    my %reverse_map = reverse %UPGRADE_BONUS_MAP;
+    
+    return $reverse_map{$self->name};
 }
 
 1;

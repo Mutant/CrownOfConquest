@@ -353,7 +353,7 @@ sub build_upgrade : Local {
 	$c->stash->{party}->turns($c->stash->{party}->turns - $turns_needed);
 	$c->stash->{party}->update;
 	
-	$upgrade->increment_level;
+	$upgrade->level($upgrade->level+1);
 	$upgrade->update;
 	
 	$c->forward( '/panel/refresh', [[screen => 'building/manage'], 'party_status'] );

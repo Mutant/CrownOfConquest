@@ -34,7 +34,7 @@ sub test_get_bonus : Tests(1) {
     my $bonus = $building->get_bonus('defence_factor');
     
     # THEN
-    is($bonus, 8, "DF bonus correct");
+    is($bonus, 10, "DF bonus correct");
        
 }  
 1;

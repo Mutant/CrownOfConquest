@@ -52,14 +52,14 @@ to a garrison in the same sector.
 
 <div align="center">
 
-<h2>Available Upgrades</h2>
-<table class="main">
+<h2>Available Add-ons</h2>
+<table class="main" cellspacing="3">
 	<tr>
-		<th>Upgrade</th>
+		<th>Add-on</th>
 		<th>Current Level</th>
 		<th>Current Bonus</th>
 		<th>Bonus Next Level</th>
-		<th>Cost To Upgrade</th>
+		<th>Cost To Build</th>
 	</tr>
 [% FOREACH upgrade_type IN upgrade_types %]
 	<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
@@ -119,7 +119,7 @@ to a garrison in the same sector.
 				<form method="POST" action="[% base %][% IF town %]town/mayor/building_[% ELSE %]building/[% END %]build_upgrade" onSubmit="postPanels(this); return false">
 				<input type="hidden" name="upgrade_type_id" value="[% upgrade_type.id %]">
 				[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %] 
-				<input type="submit" value="Upgrade"></input>
+				<input type="submit" value="Build"></input>
 				</form>
 			[% END %]
 		</td>

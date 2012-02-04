@@ -119,10 +119,11 @@ sub creature_summary {
 
 sub number_alive {
 	my $self = shift;
+    my %params = @_;
 
 	# TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
 
-	my $crets_alive = $self->result_source->schema->resultset('Creature')->count(
+	my $crets_alive = $params{characters_only} ? 0 : $self->result_source->schema->resultset('Creature')->count(
 		{
 			hit_points_current => { '>', 0 },
 			creature_group_id  => $self->id,

@@ -39,6 +39,9 @@ sub bonus_label {
         when ('Market') {
             return ($level*10) . ' - ' . ($level*100) . ' gold per day';
         }
+        when ('Barracks') {
+            return ($level*5) . ' - ' . ($level*50) . ' xp per day';
+        }        
     }
     
     return '';

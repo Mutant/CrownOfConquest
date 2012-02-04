@@ -24,6 +24,8 @@ __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'garrison_id', {cascade_de
 
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', 'party_id', {cascade_delete => 0} );
 
+__PACKAGE__->has_many( 'messages', 'RPG::Schema::Garrison_Messages', 'garrison_id', );
+
 __PACKAGE__->belongs_to(
     'land',
     'RPG::Schema::Land',

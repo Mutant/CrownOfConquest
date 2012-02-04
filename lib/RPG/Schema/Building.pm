@@ -57,6 +57,43 @@ sub owner_name {
 	return $self->{owner_name};
 }
 
+sub owner {
+    my $self = shift;
+    
+    given ($self->owner_type) {
+        when ('party') {
+            # If there's a garrison in the sector, the garrison is considered owner
+            my $garrison = $self->result_source->schema->resultset('Garrison')->find(
+                {
+                    land_id => $self->land_id,
+                }
+            );
+            
+            return $garrison if $garrison;            
+            
+            return $self->result_source->schema->resultset('Party')->find(
+	           { 
+	               'party_id' => $self->owner_id, 
+	           }
+            );
+        }
+        when ('kingdom') {
+            return $self->result_source->schema->resultset('Kingdom')->find(
+                { 
+                    'kingdom_id' => $self->owner_id, 
+                }
+            );           
+        }
+        when ('town') {
+            return $self->result_source->schema->resultset('Town')->find(
+                { 
+                    'town_id' => $self->owner_id, 
+                }
+            );            
+        }
+    }
+}
+
 # Returns true if the entity passed in owns the building
 sub owned_by {
     my $self = shift;

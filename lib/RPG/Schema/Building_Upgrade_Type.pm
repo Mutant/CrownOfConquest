@@ -35,6 +35,12 @@ sub bonus_label {
         return "+" . $self->modifier_per_level * $level . " to " . $self->modifier_label; 
     }
     
+    given ($self->name) {
+        when ('Market') {
+            return ($level*10) . ' - ' . ($level*100) . ' gold per day';
+        }
+    }
+    
     return '';
 
 }

@@ -274,25 +274,8 @@ sub parties_in_sector : Private {
 	       prefetch => 'kingdom',
 	   }, 
 	);
-
-	return unless @parties;
-
-	my $attack_allowed = $dungeon_grid_id ? 0 : 1;
-	$attack_allowed = 0 if $c->stash->{party_location}->town;
-
-	return $c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'party/parties_in_sector.html',
-				params   => {
-					parties        => \@parties,
-					attack_allowed => $attack_allowed,
-				},
-				return_output => 1,
-			}
-		]
-	);
+	
+	return \@parties;
 }
 
 sub party_messages_check : Private {

@@ -105,8 +105,8 @@ a:visited {
 
 #body {
         background-color: black;
-	background: url(images/bgtexturegreydark.png);
-        color: white;
+	background-image: url(/static/images/kingdombgv2.jpg);
+        background-size: cover;
 }
 
 h2 {margin: 0; padding: 0}

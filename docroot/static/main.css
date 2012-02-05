@@ -211,6 +211,7 @@ h1 {margin: 0; padding: 1px}
 	background: black;
         font-family: verdana, kalimati, helvetica;
         font-size: 9pt;
+	color: white;
 }
 
 .dj_webkit .tundra .dijitDialog {
@@ -310,6 +311,14 @@ h1 {margin: 0; padding: 1px}
 .login-info {
 	font-size: 7pt;
 	float: right;
+}
+
+.login-info a {
+	color: black;
+}
+
+.login-info a:visited {
+	color: black;
 }
 
 .menuExpandIcon {

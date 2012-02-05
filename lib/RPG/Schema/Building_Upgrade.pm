@@ -23,6 +23,8 @@ sub insert {
 	$self->next::method(@args);
 	
 	$self->_character_benefit_trigger;	
+	
+	return $self;
 }
 
 sub level {

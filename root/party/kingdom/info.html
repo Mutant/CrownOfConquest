@@ -4,7 +4,7 @@
 <div class="text-block" style="background: black">
 [% king = kingdom.king %]
 <h4>Kingdom of <b>[% kingdom.name %]</b></h3>
-Monarch: [% king.name %] ([% IF king.party_id %]<a href="javascript:loadScreen('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% ELSE %]NPC[% END %])<br><br>
+Monarch: [% king.name %] ([% IF king.party_id %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% ELSE %]NPC[% END %])<br><br>
 [% kingdom.description | html_break %]
 </div>
 <br>

@@ -979,9 +979,11 @@ sub profile : Local {
 	   
 	);
 	
+	$c->stash->{message_panel_size} = 'large';
+	
 	croak "Party not found" unless $party;   
 	
-    $c->forward(
+    my $profile = $c->forward(
 		'RPG::V::TT',
 		[
 			{
@@ -989,9 +991,12 @@ sub profile : Local {
 				params   => {
 					party => $party,
 				},
+				return_output => 1,
 			}
 		]
 	); 	
+	
+	$c->forward( '/panel/refresh', [ [ 'messages', $profile ] ] );
 }
 
 1;

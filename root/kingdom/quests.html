@@ -42,7 +42,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 					[% quest.status %]
 				[% END %]
 			</td>
-			<td><a href="javascript:loadScreen('party/profile?party_id=[% quest.party.id %]')">[% quest.party.name %]</a></td>
+			<td><a href="javascript:getPanels('party/profile?party_id=[% quest.party.id %]')">[% quest.party.name %]</a></td>
 			<td>[% quest.day_offered_rec.day_number %] ([% quest.day_offered_rec.difference_to_today_str %])</td>
 			<td>[% quest.days_to_complete %]</td>
 			<td>[% quest.gold_value %]</td>

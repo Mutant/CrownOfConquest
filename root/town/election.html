@@ -45,7 +45,7 @@ The election is scheduled for day [% election.scheduled_day %].<br><br>
 		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png" 
     	title="[% character.race.race_name %] [% character.class.class_name %]"></td>
 		<td>[% character.name %]</td>
-		<td>[% IF character.is_npc %]NPC[% ELSE %]<a href="javascript:loadScreen('party/profile?party_id=[% character.party.id %]')">[% character.party.name %]</a>[% END %]</td>
+		<td>[% IF character.is_npc %]NPC[% ELSE %]<a href="javascript:getPanels('party/profile?party_id=[% character.party.id %]')">[% character.party.name %]</a>[% END %]</td>
 	</tr>
 [% END %] 
 </table>

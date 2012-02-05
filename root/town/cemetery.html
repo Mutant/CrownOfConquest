@@ -2,7 +2,7 @@
 	The following bodies have been interred in the morgue:
 	<ul>
 	[% FOREACH character IN morgue %]
-		<li>[% character.name %] [<a href="javascript:loadScreen('party/profile?party_id=[% character,party.id %]')">[% character.party.name %]</a>] 
+		<li>[% character.name %] [<a href="javascript:getPanels('party/profile?party_id=[% character,party.id %]')">[% character.party.name %]</a>] 
 			[% IF character.party_id == party.id %]
 				(<a href="javascript:getPanels('town/res_from_morgue?character_id=[% character.id %]')">Resurrect</a> - [% character.resurrect_cost %] gold)
 			[% END %]

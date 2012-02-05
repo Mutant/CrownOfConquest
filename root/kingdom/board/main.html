@@ -8,7 +8,7 @@
 
 [% FOREACH message IN messages %]
 <div style="margin-bottom: 2px; padding: 2px">
-	Posted On Day <i>[% message.day.day_number %] ( [% message.day.difference_to_today_str %] )</i> by <b><a href="javascript:loadScreen('party/profile?party_id=[% message.party.id %]')">[% message.party.name %]</a></b>
+	Posted On Day <i>[% message.day.day_number %] ( [% message.day.difference_to_today_str %] )</i> by <b><a href="javascript:getPanels('party/profile?party_id=[% message.party.id %]')">[% message.party.name %]</a></b>
 		[% IF message.party.has_king_of(kingdom) %][King's Party][% END %]<br>
 	<div style="background: #2F2F2F; padding: 1px">
 	[% bbc.parse(message.message) %]

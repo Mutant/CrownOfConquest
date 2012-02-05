@@ -51,7 +51,7 @@ Top Parties By:
 [% FOREACH party IN parties %]
 	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
 		<td>[% loop.count + offset %]</td>		
-		<td><a href="javascript:loadScreen('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>		
+		<td><a href="javascript:getPanels('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>		
 		<td>[% party.player.player_name %]</td>
 		<td align="right">[% party.get_column('xp_per_turn') %]</td>
 		<td align="right">[% party.get_column('average_xp') %]</td>

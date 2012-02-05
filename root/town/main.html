@@ -73,7 +73,7 @@ Your prestige here:
 
 <a href="javascript:getPanels('town/leave')">Leave Town</a>
 
-[% IF parties_in_sector %]
+[% IF parties_in_sector.0 %]
 	[% INCLUDE party/parties_in_sector.html parties=parties_in_sector %]
 	<br><br>
 [% END %]

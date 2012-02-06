@@ -63,6 +63,7 @@ sub history : Local {
         { 
         	'party_id' => $c->stash->{party}->id,
         	'day.day_number' => {'>=', $c->stash->{today}->day_number - 7}, 
+        	'type' => 'standard',
         },
         {
             order_by => 'day.date_started desc',

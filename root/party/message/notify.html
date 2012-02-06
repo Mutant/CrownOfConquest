@@ -1,0 +1,5 @@
+[% IF number_unread <= 0 %]
+	<img src="[% base %]static//images/layout/messagesiconno.png">
+[% ELSE %]
+	<img src="[% base %]static/images/layout/messagesiconyes.png" title="You have [% number_unread %] message">
+[% END %]

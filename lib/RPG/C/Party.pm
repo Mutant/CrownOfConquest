@@ -23,7 +23,7 @@ sub main : Local {
 
     my $load_panel = $c->req->param('panel');
 
-    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map', 'online_parties' ];
+    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map', 'online_parties', 'messages_notify' ];
     
     if (! $load_panel) { 
         $load_panel = 'party/init';
@@ -55,7 +55,7 @@ sub init : Local {
 
 	if (! $c->flash->{refresh_panels}) {
         # Protect against flash not getting read properly
-        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map', 'online_parties'];
+        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map', 'online_parties', 'messages_notify'];
 	}
         
 	$c->forward( '/panel/refresh' );   
@@ -286,6 +286,7 @@ sub party_messages_check : Private {
 		{
 			alert_party => 1,
 			party_id    => $c->stash->{party}->id,
+			type        => 'standard',
 		}
 	);
 

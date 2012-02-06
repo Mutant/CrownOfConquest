@@ -17,6 +17,7 @@ my %PANEL_PATHS = (
 	creatures => '/combat/display_opponents',
 	mini_map => '/map/kingdom',
 	online_parties => '/party/online',
+	messages_notify => '/party/message/notify',
 );
 
 sub refresh : Private {
@@ -323,7 +324,16 @@ sub check_for_timed_panels : Private {
     if (DateTime->compare(DateTime->now->subtract('minutes' => $c->config->{online_threshold}), $c->session->{last_online_parties_refresh}) == 1) {
         push @{$c->stash->{refresh_panels}}, 'online_parties';
         $c->session->{last_online_parties_refresh} = DateTime->now();
-    }    
+    } 
+
+    # Check for new messages
+    $c->session->{messages_check} //= DateTime->now();
+    
+    if (DateTime->compare(DateTime->now->subtract('minutes' => 5), $c->session->{messages_check}) == 1) {
+        push @{$c->stash->{refresh_panels}}, 'messages_notify';
+        $c->session->{messages_check} = DateTime->now();
+    }
+
 }
 
 1;

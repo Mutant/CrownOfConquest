@@ -31,7 +31,7 @@ CREATE TABLE `Building_Upgrade_Type` (
   `name` VARCHAR(40)  NOT NULL,
   `modifier_per_level` INTEGER  NOT NULL,
   `modifier_label` VARCHAR(20),
-  `description` VARCHAR(2000)  NOT NULL;
+  `description` VARCHAR(2000)  NOT NULL,
   `base_gold_cost` INTEGER  NOT NULL,
   `base_wood_cost` INTEGER  NOT NULL,
   `base_clay_cost` INTEGER  NOT NULL,

@@ -94,16 +94,20 @@ sub add : Local {
 		}
 	);
 	
-	$c->model('DBIC::Character')->search(
+	my @garrison_chars = $c->model('DBIC::Character')->search(
 		{
 			character_id => \@char_ids_to_garrison,
 			party_id => $c->stash->{party}->id,
 		}
-	)->update(
-		{
-			garrison_id => $garrison->id,
-		}
 	);
+	
+	foreach my $char (@garrison_chars) {
+	   $char->update(
+    		{
+    			garrison_id => $garrison->id,
+    		}
+    	);
+	}
 	
 	$c->model('DBIC::Party_Messages')->create(
 		{

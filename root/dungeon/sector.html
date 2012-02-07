@@ -24,13 +24,9 @@
 [% used_text = 0 %]
 [% IF dungeon_type == 'castle' %]
 	<a href="javascript:getPanels('/castle/toggle_move_type')">Move [% IF castle_move_type == 'stealth' %]Normally[% ELSE %]Stealthily[% END %]</a>
-	[% used_text = 1 %]
+	<br><br>
 [% END %]
-[% IF current_location.stairs_up || current_location.stairs_down %]
-	<a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs [% IF current_location.stairs_up %]Up[% ELSE %]Down[% END %]</a>
-	[% used_text = 1 %]
-[% END %]
-[% IF used_text %]<br><br>[% END %]
+
 <a href="javascript:getPanels('/dungeon/search_room')"><img src="[% c.config.static_path %]/images/actions/searchabutton.png" border="0" title="Search Room"></a>
 [% IF current_location.treasure_chest %]
 	<a href="javascript:getPanels('/dungeon/open_chest')"><img src="[% c.config.static_path %]/images/actions/openchestabutton.png" border="0" title="Open Chest"></a>
@@ -38,6 +34,11 @@
 [% IF creature_group %]
 	<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)"><img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
 [% END %]
-
+[% IF current_location.stairs_up %] 
+	<a href="javascript:getPanels('/dungeon/take_stairs')"><img src="[% c.config.static_path %]/images/actions/stairsupabutton.png" border="0" title="Take The Stairs Up"></a>	
+[% END %]
+[% IF current_location.stairs_down %]
+	<a href="javascript:getPanels('/dungeon/take_stairs')"><img src="[% c.config.static_path %]/images/actions/stairsdownabutton.png" border="0" title="Take The Stairs Down"></a>	
+[% END %]
 </div>
  

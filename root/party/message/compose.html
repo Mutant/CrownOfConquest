@@ -5,7 +5,11 @@
 <form method="POST" action="[% base %]party/message/send" onSubmit="postPanels(this); return false">
 <table class="main">
 <tr>
-	<td>To:</td>
+	<td>To: <span id="to_help">(?)</span>
+		<div dojoType="dijit.Tooltip" connectId="to_help">
+			Separate multiple parties with a semicolon
+		</div>
+	</td>
 	<td><input type="text" name="to" style="width: 300px" value="[% to_parties %]"></td>
 </tr>
 <tr>

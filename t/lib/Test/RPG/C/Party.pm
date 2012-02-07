@@ -313,10 +313,9 @@ sub test_parties_in_sector_land : Tests(1) {
     $self->{mock_forward}->{'/party/pending_mayor_check'} = sub {};
     
     # WHEN
-    RPG::C::Party->parties_in_sector($self->{c}, $land->id);
+    my $parties = RPG::C::Party->parties_in_sector($self->{c}, $land->id);
     
     # THEN
-    my $parties = $template_args->[0][0]{params}{parties};
     is(scalar @$parties, 2, "Two parties in sector");
        
 }

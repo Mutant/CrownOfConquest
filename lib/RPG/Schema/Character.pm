@@ -820,7 +820,7 @@ sub _get_building_bonus {
     if ($self->garrison_id) {
         my $garrison = $self->garrison;
         
-        return unless $garrison->land_id;
+        return if ! $garrison || ! $garrison->land_id;
 
         $building_land_id = $garrison->land_id;
     }

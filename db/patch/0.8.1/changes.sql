@@ -61,7 +61,7 @@ UPDATE `Building_Type` set max_upgrade_level = 3 where name = 'Tower';
 UPDATE `Building_Type` set max_upgrade_level = 6 where name = 'Fort';
 UPDATE `Building_Type` set max_upgrade_level = 10 where name = 'Castle';
 
-INSERT INTO `Building_Upgrade_Type` VALUES (1,'Market',0,0,NULL,'Accumulates gold on a daily basis, which goes to the owner of the building',6,4,2,2,5),(2,'Barracks',0,0,NULL,'Characters within the building can train here, and earn experience',8,3,4,4,5),(3,'Rune of Protection',1000,3,'Resistances','Protects the inhabitants of the building from magical attacks (Fire, Ice and Poison)',0,0,0,0,5),(4,'Rune of Defence',1000,3,'DF','Gives the inhabitants of the building a defensive bonus during combat',0,0,0,0,5),(5,'Rune of Attack',1000,3,'AF','Gives the inhabitants of the building a bonus to attack during combat',0,0,0,0,5);
+INSERT INTO `Building_Upgrade_Type` VALUES (1,'Market',0,0,NULL,'Accumulates gold on a daily basis, which goes to the owner of the building',6,4,2,2,5),(2,'Barracks',0,0,NULL,'Characters within the building can train here, and earn experience',8,3,4,4,5),(3,'Rune of Protection',1000,3,'Resistances','Protects the inhabitants of the building from magical attacks (Fire, Ice and Poison)',0,0,0,0,5),(4,'Rune of Defence',1000,5,'DF','Gives the inhabitants of the building a defensive bonus during combat',0,0,0,0,5),(5,'Rune of Attack',1000,5,'AF','Gives the inhabitants of the building a bonus to attack during combat',0,0,0,0,5);
 
 ALTER TABLE `Party_Messages` ADD COLUMN `sender_id` INTEGER  DEFAULT NULL;
 ALTER TABLE `Party_Messages` ADD COLUMN `type` VARCHAR(20)  NOT NULL DEFAULT 'standard';

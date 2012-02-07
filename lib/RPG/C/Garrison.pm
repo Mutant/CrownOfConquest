@@ -179,16 +179,20 @@ sub update : Local {
 		$char->update;
 	}
 	
-	$c->model('DBIC::Character')->search(
+	my @new_garrison_chars = $c->model('DBIC::Character')->search(
 		{
 			character_id => [keys %char_ids_to_garrison],
 			party_id => $c->stash->{party}->id,
 		}
-	)->update(
-		{
-			garrison_id => $c->stash->{garrison}->id,
-		}
-	);	
+	);
+	
+	foreach my $char (@new_garrison_chars) {
+    	$char->update(
+    		{
+    			garrison_id => $c->stash->{garrison}->id,
+    		}
+    	);
+	}
 	
 	$c->stash->{party}->adjust_order;
 	

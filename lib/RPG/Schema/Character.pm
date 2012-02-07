@@ -216,6 +216,19 @@ sub mayor_of {
     return $self->_move_character_trigger('mayor_of', @_);        
 }
 
+sub update {
+	my ( $self, $attr ) = @_;
+
+	for my $stat (qw/status garrison_id mayor_of/) {
+		$self->_move_character_trigger($stat, $attr->{$stat})
+		  if exists $attr->{$stat};	
+	}
+	
+    my $ret = $self->next::method($attr);
+
+    return $ret;	
+}
+
 # Called when a character "moves", i.e. changes status, etc.
 sub _move_character_trigger {
     my $self = shift;
@@ -230,6 +243,8 @@ sub _move_character_trigger {
     my $old_value = $self->$accessor;
     
     if ($setting) {
+        warn $self->id . "moved " . $accessor . " " . $new_value;
+
         $self->$accessor($new_value);
 
         $self->calculate_attack_factor();

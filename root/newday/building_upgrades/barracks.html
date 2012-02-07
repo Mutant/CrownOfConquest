@@ -1,4 +1,4 @@
-We gained [% awarded_xp %] from the barracks here.<br>
+We gained [% awarded_xp %] xp from the barracks here.<br>
 
 [% FOREACH xp_message IN xp_messages %]
 	<li> [% INCLUDE party/xp_gain.html character=xp_message.character xp_awarded=xp_message.xp_awarded level_up_details=xp_message.level_up_details %]<br>

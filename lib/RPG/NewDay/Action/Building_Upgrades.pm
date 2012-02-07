@@ -15,19 +15,19 @@ sub run {
     
     my @upgrades = $c->schema->resultset('Building_Upgrade')->search(
         {
-            name => ['Market', 'Barracks'],
+            'type.name' => ['Market', 'Barracks'],
         },
         {
-            prefetch => 'building',
+            prefetch => ['building', 'type'],
         }
     );
-    
+        
     foreach my $upgrade (@upgrades) {
-        given ($upgrade->name) {
+        given ($upgrade->type->name) {
             when ('Market') {
                 $self->process_market($upgrade);
             }
-            when ('Barrcks') {
+            when ('Barracks') {
                 $self->process_barracks($upgrade);
             }
         }
@@ -42,6 +42,8 @@ sub process_market {
     
     my $owner = $upgrade->building->owner;
     
+    $c->logger->debug("Processing market upgrade for owner type: " . $upgrade->building->owner_type . "; id: " . $owner->id);
+    
     my $gold = Games::Dice::Advanced->roll('1d10') * $upgrade->level * 10;
     
     $owner->gold($owner->gold + $gold);
@@ -55,6 +57,7 @@ sub process_market {
             {
                 message => $message,
                 day_id => $c->current_day->id,
+                type => 'mayor_news',
             }
         );        
     
@@ -85,9 +88,12 @@ sub process_barracks {
     
     my $building = $upgrade->building;
     
+    $c->logger->debug("Processing barracks upgrade for owner type: " . $building->owner_type . "; id: " . $building->owner_id);
+    
     my $group;
     my $message_entity;
     my $message_method;
+    my %message_params;
     
     if ($building->owner_type eq 'town') {
         my $town = $building->owner;
@@ -100,6 +106,7 @@ sub process_barracks {
         
         $message_entity = $town;
         $message_method = 'add_to_history';
+        %message_params = (type => 'mayor_news');
     }
     else {
         $group = $c->schema->resultset('Garrison')->find(
@@ -133,6 +140,7 @@ sub process_barracks {
         {
             message => $message,
             day_id => $c->current_day->id,
+            %message_params,
         }
     );
     

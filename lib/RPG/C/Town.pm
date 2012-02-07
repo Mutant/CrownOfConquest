@@ -327,11 +327,13 @@ sub news : Local {
 }
 
 sub generate_news : Private {
-	my ( $self, $c, $town, $day_range ) = @_;
+	my ( $self, $c, $town, $day_range, $type ) = @_;
 
 	my $current_day = $c->stash->{today}->day_number;
+	
+	$type //= 'news';
 
-	my @logs = $c->model('DBIC::Town_History')->recent_history($town->id, 'news', $current_day, $day_range);
+	my @logs = $c->model('DBIC::Town_History')->recent_history($town->id, $type, $current_day, $day_range);
 
 	my $news = $c->forward(
 		'RPG::V::TT',

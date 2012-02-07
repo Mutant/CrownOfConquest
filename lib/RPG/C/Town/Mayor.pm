@@ -391,7 +391,7 @@ sub balance_sheet : Local {
 sub news : Local {
 	my ($self, $c) = @_;
 	
-	$c->res->body($c->forward('/town/generate_news', [$c->stash->{town}, 7]));			
+	$c->res->body($c->forward('/town/generate_news', [$c->stash->{town}, 7, ['news', 'mayor_news']]));			
 }
 
 sub adjust_gold : Local {

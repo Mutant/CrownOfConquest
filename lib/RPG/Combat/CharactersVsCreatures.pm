@@ -85,6 +85,9 @@ sub creature_flee {
     # Rare cg's don't flee... this is to make sure party gets reward (i.e. item) if they kill the rare monster
     #  Might make it too easy to farm items, but we'll see I guess...
     return if $self->session->{rare_cg};
+    
+    # Mayors groups don't flee
+    return if $self->creature_group->has_mayor;
 
 	# See if the creatures want to flee... check this every 2 rounds
 	#  Only flee if cg level is lower than party

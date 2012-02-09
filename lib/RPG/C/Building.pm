@@ -349,7 +349,7 @@ sub build_upgrade : Local {
         croak "Not enough turns or gold to build upgrade";
 	}
 	
-	$c->stash->{party}->decrement_gold($gold_needed);
+	$c->stash->{party}->decrease_gold($gold_needed);
 	$c->stash->{party}->turns($c->stash->{party}->turns - $turns_needed);
 	$c->stash->{party}->update;
 	

@@ -142,7 +142,7 @@ function addCommonMenuItems(menu) {
 	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
 		[% UNLESS char_in_party.character_id == character.id %]
 			params = {
-				label: "[% char_in_party.name %]",
+				label: "[% char_in_party.name | html_entity %]",
 				onClick: function() {
 					give_item_to('[% char_in_party.id %]', currentItemId);
 				}

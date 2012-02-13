@@ -981,6 +981,7 @@ sub profile : Local {
 	);
 	
 	$c->stash->{message_panel_size} = 'large';
+	$c->stash->{bring_messages_to_front} = 1;
 	
 	croak "Party not found" unless $party;   
 	

@@ -301,9 +301,7 @@ function refreshSectorCallback(data) {
 var originalContent;
 function getPanels(url) {    
 	originalContent = dojo.byId('messages-pane').innerHTML;
-	
-	closeScreen();
-	
+		
 	dijit.byId('messages-pane').set("content", dojo.byId('loader-gif').innerHTML);
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
@@ -356,6 +354,11 @@ function panelLoadCallback(responseObject, ioArgs) {
 		executeCallbacks(responseObject.panel_callbacks);
 	}
 	
+	if (responseObject.bring_messages_to_front == 1) {
+		console.log(responseObject.bring_messages_to_front);
+		messagesToFront();
+	}
+	
 	dojo.byId('map-outer').style.visibility = 'visible';
 	dojo.byId('messages-pane').style.visibility = 'visible';
 	dojo.byId('main-loading').style.display = 'none';
@@ -366,6 +369,14 @@ function panelErrorCallback(err) {
 		"<a href=\"" + urlBase + "player/submit_bug\" target=\"_blank\">report a bug</a>.";
 	dijit.byId('messages-pane').setContent(errorMsg);
 	closeScreen();
+}
+
+function messagesToFront() {
+	dojo.byId('messages-pane').style.zIndex = '700';
+}
+
+function messagesToBack() {
+	dojo.byId('messages-pane').style.zIndex = '500';
 }
 
 function refreshPanels(panelData) {
@@ -582,6 +593,8 @@ function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
 	}
+	
+	messagesToBack();
 		
 	dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
 

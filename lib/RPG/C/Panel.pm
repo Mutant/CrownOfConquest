@@ -77,6 +77,8 @@ sub refresh : Private {
 	$response{panel_callbacks} = $c->stash->{panel_callbacks};
 		
 	$response{message_panel_size} = $c->stash->{message_panel_size} // 'small';
+	
+	$response{bring_messages_to_front} = $c->stash->{bring_messages_to_front} // 0;
 		
     my $resp = to_json \%response;
     $resp =~ s|script>|scri"+"pt>|g; # Nasty hack

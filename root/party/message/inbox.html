@@ -34,7 +34,7 @@
 					[% party.name %][% IF ! loop.last %]; [% END %]
 				[% END %]
 			[% ELSE %]		
-				[% message.sender.name %]
+				<a href="javascript:getPanels('party/profile?party_id=[% message.sender_id %]')">[% message.sender.name %]</a>				
 			[% END %]
 		</td>
 		<td>[% IF message.subject %][% message.subject %][% ELSE %]<No Subject>[% END %]</td>

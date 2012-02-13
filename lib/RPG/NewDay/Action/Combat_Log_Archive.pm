@@ -17,7 +17,7 @@ sub run {
     my @parties = $c->schema->resultset('Party')->search;
     
     foreach my $party (@parties) {
-        my $rs = $c->schema->resultset('Combat_Log')->get_old_logs_for_group($party, 100);   
+        my $rs = $c->schema->resultset('Combat_Log')->get_old_logs_for_group($party, 500);   
         
         my $count = $rs->count;
         

@@ -3,6 +3,12 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
+sub cron_string {
+    my $self = shift;
+     
+    return $self->context->config->{combat_log_archive_cron_string};   
+}
+
 sub run {
     my $self = shift;
     
@@ -18,7 +24,10 @@ sub run {
         next unless $count > 0;
         
         $c->logger->debug("Deleting $count combat logs for party " . $party->id);
-        $rs->delete;
+        my @recs = $rs->all;
+        foreach my $rec (@recs) {
+            $rec->delete;   
+        }
     }
 }
 

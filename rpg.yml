@@ -87,12 +87,14 @@ offline_combat_cron_string: "15 * * * *"
 
 # Check for inactive kingdoms, and deactivate
 deactivate_kingdoms_cron_string: "55 */2 * * *"
-
 # New turns cron string
 new_turns_cron_string: "0 * * * *"
 
 # Mini-map generation cron string
 mini_map_cron_string: "*/5 * * * *"
+
+# Archiving of combat logs
+combat_log_archive_cron_string: "5 5 * * 1" 
 
 # ----- Character / Party Generation Params ----- #
 

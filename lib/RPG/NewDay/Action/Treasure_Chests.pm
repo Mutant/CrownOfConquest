@@ -22,7 +22,7 @@ sub run {
 	       'dungeon.type' => {'!=', 'castle'},
 	   },
 	   {
-	       prefetch => {'dungeon_grid' => {'dungeon_room' => 'dungeon'}},
+	       prefetch => [{'dungeon_grid' => {'dungeon_room' => 'dungeon'}}, 'items'],
 	   },
 	);
 	

@@ -196,6 +196,24 @@ sub get_recent_logs_for_garrison {
     );
 }
 
+sub get_old_logs_for_group {
+    my $self  = shift;
+    my $group = shift;
+    my $max_to_keep = shift;
+    
+    return if $max_to_keep <= 0;
+    
+    return $self->search(
+        {
+            $self->_group_type_critiera($group),
+        },
+        {
+            order_by => 'encounter_ended desc',
+            offset => $max_to_keep,
+        }
+    );
+}
+
 sub _party_criteria {
     my $self  = shift;
     my $party = shift;

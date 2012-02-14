@@ -484,7 +484,6 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.width = "80%";
 		dojo.byId('messages-pane').style.height = "70%";
 	
-		dojo.byId('messages-pane').style.opacity = "0.9";
 		dojo.byId('messages-pane').style.overflow = 'auto';
 		current_size = 'large';
 	}
@@ -494,7 +493,6 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.right = "";
 		dojo.byId('messages-pane').style.bottom = '20px';
 		dojo.byId('messages-pane').style.left = '20px';
-		dojo.byId('messages-pane').style.opacity = "0.8";
 		dojo.byId('messages-pane').style.width = "auto";
 		dojo.byId('messages-pane').style.height = "auto";
 		current_size = 'small';		

@@ -236,8 +236,8 @@ max_party_level_leave_town_warning: 2
 creature_attack_chance: 30
 
 # Size of 'roll' for attack
-attack_dice_roll: 18
-defence_dice_roll: 18
+attack_dice_roll: 30
+defence_dice_roll: 30
 
 # Bonus a char gets for choosing to defend
 defend_bonus: 5

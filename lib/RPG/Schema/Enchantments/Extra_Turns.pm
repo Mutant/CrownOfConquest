@@ -63,6 +63,8 @@ sub new_day {
 
 	if ( my $char = $item->belongs_to_character ) {
 		return if !$item->equipped && $self->must_be_equipped;
+		
+		return if $char->is_dead || $char->status eq 'inn';
 
 		my $party = $char->party;
 

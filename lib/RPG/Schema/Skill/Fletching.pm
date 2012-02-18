@@ -26,6 +26,13 @@ sub execute {
     if (Games::Dice::Advanced->roll('1d100') <= $chance) {
         my @ammo = $character->ammunition_for_item($item);
 
+        my $current_total_quantity = 0;
+        foreach my $ammo (@ammo) {
+            $current_total_quantity += $ammo->{quantity};
+        }
+        
+        return if $current_total_quantity > 5000;
+
         my $ammo_item;
         my $current_quantity = 0;
                     

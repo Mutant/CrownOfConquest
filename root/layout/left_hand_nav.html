@@ -7,7 +7,7 @@
 		{name => 'garrisons', link => '#', on_click => "closeScreen(); getPanels('party/details/garrisons')"},	
 		{name => 'mayors', link => '#', on_click => "closeScreen(); getPanels('party/details/mayors')"},	
 		{name => 'kingdom', link => '#', on_click => "loadScreen('party/details/kingdom')"},
-		{name => 'landmarks', link => '#', on_click => "closeScreen(); getPanels('map/landmarks')"},
+		{name => 'landmarks', link => '#', on_click => "loadScreen('map/landmarks')"},
 		{name => 'stats', link => '#' on_click => "loadScreen('leaderboards')"},
 		{name => 'forums', link => c.config.forum_url, target => '_blank'},
 		{name => 'messages', link => '#' on_click => "loadScreen('party/message')", pre_template => 'layout/messages_icon.html' },

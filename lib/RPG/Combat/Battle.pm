@@ -78,7 +78,6 @@ sub opposing_combatants_of {
     my @combatants = grep { $_->group_id != $being->group_id } $self->combatants;
     
     return @combatants;
-       
 }
 
 # TODO: logic really needs a tidy up

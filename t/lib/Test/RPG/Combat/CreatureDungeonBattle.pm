@@ -230,4 +230,45 @@ sub test_mayor_strategy_bonus_applied_to_guards_df : Tests(2) {
     is($factors->{creature}{$crets[1]->id}{df}, 21, "Second guard has df bonus");
 }
 
+sub test_mayors_guards_dont_attack_him : Tests(2) {
+    my $self = shift;   
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 5, dungeon_id => $dungeon->id);
+    my @sectors = $dungeon_room->sectors;
+
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, dungeon_grid_id => $sectors[0]->id, name => 'Raider' );
+ 
+ 
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 0, );
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, name => 'Mayor', party_id => $party2->id);
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+    
+    my $type = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, type => 'Guard', category_name => 'Guard');
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, type_id => $type->id, creature_count => 1, dungeon_grid_id => $sectors[0]->id );
+    my ($cret) = $cg->members;     
+   
+    $mayor->creature_group_id($cg->id);
+    $mayor->update;
+
+    my $battle = RPG::Combat::CreatureDungeonBattle->new(
+        schema             => $self->{schema},
+        party              => $party,
+        creature_group     => $cg,
+        log                => $self->{mock_logger},
+        config             => $self->{config},
+    );
+    
+    # WHEN
+    my @opponents = $battle->opposing_combatants_of($cret);
+    
+    # THEN
+    is(scalar @opponents, 1, "Guard only has 1 opponent");
+    is($opponents[0]->party_id, $party->id, "opponent is from opposing party"); 
+}
+
 1;

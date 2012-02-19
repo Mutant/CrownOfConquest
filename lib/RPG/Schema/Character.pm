@@ -290,7 +290,7 @@ sub name {
 sub group_id {
     my $self = shift;
 
-    return $self->garrison_id || $self->party_id || $self->creature_group_id;
+    return $self->garrison_id || $self->creature_group_id || $self->party_id;
 }
 
 sub group {

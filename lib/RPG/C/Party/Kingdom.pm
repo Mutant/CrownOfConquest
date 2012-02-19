@@ -391,6 +391,7 @@ sub quest_param_list : Local {
 	       my @towns = $c->model('DBIC::Town')->search(
                 { 
                     'mapped_sector.party_id' => $c->stash->{party}->id,
+                    'location.kingdom_id' => {'!=', $c->stash->{kingdom}->id},
                 },
                 {
                     prefetch => { 'location' => 'mapped_sector' },

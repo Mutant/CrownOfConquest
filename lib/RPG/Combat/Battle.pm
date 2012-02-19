@@ -732,7 +732,7 @@ sub attack {
 	my $crit = 0;
 	
 	# Check for critical hit
-	my $chance = $attacker->critical_hit_chance;
+	my $chance = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{crit_hit};
 	my $roll = Games::Dice::Advanced->roll('1d100');
 
     $self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );	
@@ -1091,9 +1091,10 @@ sub _build_combat_factors {
 
 		next if defined $combat_factors{$type}{ $combatant->id };
 
-		$combat_factors{$type}{ $combatant->id }{af}  = $combatant->attack_factor;
-		$combat_factors{$type}{ $combatant->id }{df}  = $combatant->defence_factor;
-		$combat_factors{$type}{ $combatant->id }{dam} = $combatant->damage;
+		$combat_factors{$type}{ $combatant->id }{af}       = $combatant->attack_factor;
+		$combat_factors{$type}{ $combatant->id }{df}       = $combatant->defence_factor;
+		$combat_factors{$type}{ $combatant->id }{dam}      = $combatant->damage;
+		$combat_factors{$type}{ $combatant->id }{crit_hit} = $combatant->critical_hit_chance;
 	}
 	
 	$self->session->{combat_factors} = \%combat_factors;

@@ -203,6 +203,8 @@ sub options : Local {
                 	send_email => $c->stash->{party}->player->send_email,
                 	screen_width => $c->session->{player}->screen_width,
                 	screen_height => $c->session->{player}->screen_height,
+                	email => $c->session->{player}->email,
+                	verified => $c->session->{player}->verified,
                 },
                 fill_in_form => 1,                
             }

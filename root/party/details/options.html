@@ -14,6 +14,21 @@
 
 <h3>Notification Options</h3>
 
+[% IF ! email %]
+You have not entered an email address. You must do so before receiving notification emails.
+<br>
+<form method="POST" action="[% base %]player/account/set_email" onSubmit="postPanels(this); return false">
+Email address: <input type="textbox" style="width: 200px" name="email">
+<input type="submit" value="Save">
+</form>
+<br>
+[% ELSIF ! verified %]
+You have not verified your email address. You must do so before receiving notification emails.
+<br>
+<a href="javascript:getPanels('player/account/reverify')">Resend Verification Code</a>
+<br>
+[% END %]
+
 <form method="POST" action="[% base %]/party/details/update_email_options" onSubmit="postPanels(this); return false">
 <table class="main">
 	<tr>

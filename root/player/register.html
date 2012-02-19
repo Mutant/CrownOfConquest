@@ -1,14 +1,8 @@
-[% INCLUDE top.html, guest_screen = 1 %]
+[% INCLUDE layout/box_top.html, guest_screen = 1 %]
 
 <h1>Register For Kingdoms</h1>
 
 <p>To register to play Kingdoms, fill in the form below. It's free!</p>
-
-<p>Make sure your email address is valid, as you'll need to verify it.</p>
-
-<br>
-<hr size=1 width=70% align=center/>
-<br>
 
 <div align="center">
 <form method="POST" action="[% base %]/player/register">
@@ -18,7 +12,7 @@
 		<td><input type="text" name="player_name" style="width: 300px"></td>
 	</tr>
 	<tr>
-		<td nowrap><b>Email Address:</b></td>
+		<td nowrap><b>Email Address:</b><br>(Optional, but recommended)</td>
 		<td><input type="text" name="email" style="width: 300px"></td>
 	</tr>
 	<tr>
@@ -36,7 +30,7 @@
 		</td>
 	</tr>
 	<tr>
-		<td nowrap><b>Referred By:</b><br>(Enter the email address of<br>the friend you were referred by - if any)</td>
+		<td nowrap><b>Referred By:</b><br>(Enter the email address of<br>the friend you were referred by<br> - if any)</td>
 		<td><input type="text" name="referred_by_email" style="width: 300px"></td>
 	</tr>		
 	<tr>
@@ -58,4 +52,4 @@
 </div>
 
 
-[% INCLUDE bottom.html %]
+[% INCLUDE layout/box_bottom.html %]

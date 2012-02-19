@@ -46,6 +46,7 @@ sub create : Local {
                     party                    => $party,
                     characters               => \@characters,
                     num_characters_to_create => $c->config->{new_party_characters},
+                    message                  => $c->flash->{promo_org_message},
                 },
             }
         ]

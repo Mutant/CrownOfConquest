@@ -17,6 +17,8 @@ sub test_get_bonus : Tests(1) {
     my $self = shift;
     
     # GIVEN
+    $self->{schema}->resultset('Building_Upgrade_Type')->search()->update( { modifier_per_level => 3 });   
+    
     my $building = Test::RPG::Builder::Building->build_building($self->{schema});
     my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
         {

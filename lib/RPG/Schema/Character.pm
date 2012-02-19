@@ -243,8 +243,6 @@ sub _move_character_trigger {
     my $old_value = $self->$accessor;
     
     if ($setting) {
-        warn $self->id . "moved " . $accessor . " " . $new_value;
-
         $self->$accessor($new_value);
 
         $self->calculate_attack_factor();

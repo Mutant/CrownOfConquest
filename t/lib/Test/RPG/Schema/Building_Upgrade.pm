@@ -17,6 +17,12 @@ use Test::RPG::Builder::Building;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::CreatureGroup;
 
+sub upgrade_setup : Tests(setup) {
+    my $self = shift;
+
+    $self->{schema}->resultset('Building_Upgrade_Type')->search()->update( { modifier_per_level => 3 });    
+}
+
 sub test_bonuses_applied_to_wilderness_garrison_when_upgrade_created : Tests(1) {
     my $self = shift;
     

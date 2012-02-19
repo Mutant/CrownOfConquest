@@ -31,8 +31,14 @@ sub character_startup : Tests(startup => 1) {
 
 	$self->{dice} = Test::MockObject->new();
     $self->{dice}->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
-
+    
     use_ok('RPG::Schema::Character');
+}
+
+sub character_setup : Tests(setup) {
+    my $self = shift;
+
+    $self->{schema}->resultset('Building_Upgrade_Type')->search()->update( { modifier_per_level => 3 });    
 }
 
 sub character_shutdown : Tests(shutdown) {

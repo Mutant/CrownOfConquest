@@ -23,6 +23,7 @@ Type Of Quest:
 [% IF request %]
 	You can send one petition at a time to the King or Queen to ask for a quest.
 [% ELSE %]
+	Min Party Level: [% current_type.min_level %]<br>
 	[% current_type.long_desc %]
 [% END %]
 <br><br>

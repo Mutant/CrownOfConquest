@@ -425,4 +425,33 @@ sub party_can_enter {
 	return ($reason ? 0 : 1, $reason);
 } 
 
+sub blacksmith_skill_label {
+    my $self = shift;
+    
+	if ($self->blacksmith_skill < 3) {
+		return 'terrible';
+	}
+	elsif ($self->blacksmith_skill < 6) {
+		return 'poor';
+	}
+    elsif ($self->blacksmith_skill < 9) {
+		return 'average';
+	}
+    elsif ($self->blacksmith_skill < 12) {
+		return 'average';
+	}
+    elsif ($self->blacksmith_skill < 15) {
+		return 'good';
+	}
+    elsif ($self->blacksmith_skill < 18) {
+		return 'excellent';
+	}
+    elsif ($self->blacksmith_skill < 21) {
+		return 'amazing';
+	}
+    else {
+		return 'god-like';
+	}
+}
+
 1;

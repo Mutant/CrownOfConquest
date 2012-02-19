@@ -50,6 +50,14 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	<br><br>
 [% END %]
 
+[% IF corpses.size > 0 %]
+	You see [% IF corpses.size == 1 %]a[% ELSE %]some[% END %] corpses belonging to your party. (Click to pick up).
+	[% FOREACH corpse IN corpses %]
+		<a href="javascript:getPanels('party/pickup_corpse?character_id=[% corpse.id %]')">[% corpse.name %]</a>
+	[% END %]
+	<br><br>
+[% END %]
+
 [% IF creature_group %]
 	Creatures here: [% INCLUDE combat/creature_group_summary.html %]
 	<br><br>

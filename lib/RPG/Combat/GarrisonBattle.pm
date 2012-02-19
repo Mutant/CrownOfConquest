@@ -46,17 +46,9 @@ sub wipe_out_garrison {
 	
 	my @characters = $garrison->characters;
    	foreach my $character (@characters) {
-		$self->schema->resultset('Grave')->create(
-			{
-				character_name => $character->character_name,
-				land_id        => $self->location->id,
-				day_created    => $today->day_number,
-				epitaph        => "Killed while valiantly fighting in a garrison for " . $character->pronoun('posessive-subjective') . " party",
-			}
-		);
-   		
    		$character->garrison_id(undef);
-   		$character->party_id(undef);
+   		$character->status('corpse');
+   		$character->status_context($self->location->id);
    		$character->update;
    	}
     	

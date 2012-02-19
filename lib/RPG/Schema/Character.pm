@@ -434,6 +434,12 @@ sub status_description {
 	   my $kingdom = $self->party->kingdom;
 	   return ($self->gender eq 'male' ? 'King' : 'Queen') . " of " . $kingdom->name;   
 	}
+	elsif ($self->status eq 'corpse') {
+	   my $land = $self->result_source->schema->resultset('Land')->find(
+	       land_id => $self->status_context,
+	   );
+	   return "A corpse in the sector " . $land->x . ', ' . $land->y;
+	}
 	else {
 		return "Unknown";	
 	}		

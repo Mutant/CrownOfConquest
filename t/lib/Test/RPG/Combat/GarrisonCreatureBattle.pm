@@ -115,7 +115,7 @@ sub test_check_for_flee : Tests(8) {
 		
 }
 
-sub test_finish_garrison_lost : Test(5) {
+sub test_finish_garrison_lost : Test(7) {
 	my $self = shift;
 	
 	# GIVEN
@@ -144,8 +144,9 @@ sub test_finish_garrison_lost : Test(5) {
 	
 	foreach my $char (@characters) {
 		$char->discard_changes;
-		is($char->party_id, undef, "Character removed from party");
 		is($char->garrison_id, undef, "Character removed from garrison");
+		is($char->status, 'corpse', "Character now a corpse");
+		is($char->status_context, $land[4]->id, "Corpse location set correctly");
 	}
 }
 

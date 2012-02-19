@@ -145,6 +145,14 @@ sub sector_menu : Private {
 	my @items = $c->stash->{party_location}->items;
 	
 	my $kingdom = $c->stash->{party_location}->kingdom;
+	
+	my @corpses = $c->model('DBIC::Character')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       status => 'corpse',
+	       status_context => $c->stash->{party_location}->id,
+	   }
+    );
 
 	$c->forward(
 		'RPG::V::TT',
@@ -175,6 +183,7 @@ sub sector_menu : Private {
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 					movement_cost          => $c->stash->{movement_cost} // 0,
 					factor_comparison      => $factor_comparison,
+					corpses                => \@corpses,
 				},
 				return_output => 1,
 			}
@@ -836,6 +845,45 @@ sub pickup_item : Local {
 	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name(1);
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub pickup_corpse : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+	   {
+	       character_id => $c->req->param('character_id'),
+	       party_id => $c->stash->{party}->id,
+	   }
+    );
+    
+    croak "Character not found" unless $character;
+    
+    my $party = $c->stash->{party};
+    
+	if ( $party->turns < 1 ) {
+		$c->stash->{error} = "You do not have enough turns to pickup the corpse";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;
+	}
+	
+	if ($party->is_full) {
+		$c->stash->{error} = "You can't pick up the corpse because your party is full";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;
+	}
+	
+	$party->turns( $party->turns - 1 );
+	$party->update;
+	
+	$character->status(undef);
+	$character->status_context(undef);
+	$character->update;	
+	
+	$c->stash->{messages} = $character->character_name . " was returned to the party";
+	
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
+        
 }
 
 sub enter_dungeon : Local {

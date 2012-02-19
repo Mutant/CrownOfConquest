@@ -60,8 +60,6 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	<br><br>
 [% END %]
 
-<a href="javascript:getPanels('/party/camp')"><img src="[% c.config.static_path %]/images/actions/campabutton.png" border="0" title="Camp"></a>
-<a href="javascript:getPanels('/party/scout')"><img src="[% c.config.static_path %]/images/actions/scoutabutton.png" border="0" title="Scout"></a> 
 [% IF creature_group %] 
 <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">
 	<img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures">
@@ -80,6 +78,8 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% IF garrison &&  garrison.party_id != party.id %]
 	<a href="javascript:getPanels('/garrison/combat/attack')"><img src="[% c.config.static_path %]/images/actions/garrisonattackabutton.png" border="0" title="Attack Garrison"></a>
 [% END %] 
+<a href="javascript:getPanels('/party/camp')"><img src="[% c.config.static_path %]/images/actions/campabutton.png" border="0" title="Camp"></a>
+<a href="javascript:getPanels('/party/scout')"><img src="[% c.config.static_path %]/images/actions/scoutabutton.png" border="0" title="Scout"></a> 
 [% IF garrison && garrison.party_id == party.id %]
  	<a href="javascript:loadScreen('garrison/manage?garrison_id=[% garrison.id %]')"><img src="[% c.config.static_path %]/images/actions/managegabutton.png" border="0" title="Manage Garrison"></a>
 [% END %]

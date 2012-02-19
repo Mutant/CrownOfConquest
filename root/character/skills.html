@@ -47,5 +47,7 @@ Skill Points To Assign: [% character.skill_points %]<br>
 	[% FOREACH skill IN available_skills %]
 		[% show_skill(skill, undef, loop.count) %]
 	[% END %]
+[% ELSIF character.skill_points > 0 && ! character.party_id %]
+	<tr><td>([% character.skill_points %] skill point[% IF character.skill_points > 1 %]s[% END %] unallocated)</td></tr>
 [% END %]
 </table>

@@ -391,6 +391,7 @@ sub update_orders : Local {
 	$c->stash->{garrison}->party_attack_mode($c->req->param('party_attack_mode'));
 	$c->stash->{garrison}->flee_threshold($c->req->param('flee_threshold'));
 	$c->stash->{garrison}->attack_parties_from_kingdom($c->req->param('attack_parties_from_kingdom') ? 1 : 0);
+	$c->stash->{garrison}->attack_friendly_parties($c->req->param('attack_friendly_parties') ? 1 : 0);
 	$c->stash->{garrison}->update;
 	
 	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders']] );

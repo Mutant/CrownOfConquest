@@ -12,7 +12,7 @@ __PACKAGE__->table('Garrison');
 __PACKAGE__->resultset_class('RPG::ResultSet::Garrison');
 
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name
-                            attack_parties_from_kingdom/);
+                            attack_parties_from_kingdom attack_friendly_parties/);
 
 __PACKAGE__->numeric_columns(qw/gold/);
 
@@ -160,6 +160,12 @@ sub check_for_fight {
 	    my $party = $self->party;
 	    if ($party->kingdom_id && ! $self->attack_parties_from_kingdom && $party->kingdom_id == $opponent->kingdom_id) {
 	       return 0;   
+	    }
+	    
+	    # Don't attack parties from kingdoms at peace with garrison's kingdom, unless instructed to do so
+	    if ($party->kingdom_id && ! $self->attack_friendly_parties) {
+            my $relationship = $party->kingdom->relationship_with($opponent->kingdom_id);
+            return 0 if $relationship && $relationship->type eq 'peace';
 	    }
 	}
 

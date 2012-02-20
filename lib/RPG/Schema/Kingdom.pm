@@ -259,4 +259,19 @@ sub relationship_list {
     return @relationships;
 }
 
+sub relationship_with {
+    my $self = shift;
+    my $with_id = shift;
+    
+    my $relationship = $self->find_related('relationships',
+        {
+            with_id => $with_id,
+            ended => undef,
+        }
+    );
+    
+    return $relationship;
+}
+
+
 1;

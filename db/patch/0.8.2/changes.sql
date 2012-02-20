@@ -14,4 +14,5 @@ CREATE TABLE `Kingdom_Relationship` (
   KEY `ended_idx` (`ended`)
 ) ENGINE=InnoDB;
 
+ALTER TABLE `Garrison` ADD COLUMN `attack_friendly_parties` TINYINT(4)  NOT NULL DEFAULT 0;
 

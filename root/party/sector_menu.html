@@ -51,7 +51,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% END %]
 
 [% IF corpses.size > 0 %]
-	You see [% IF corpses.size == 1 %]a[% ELSE %]some[% END %] corpses belonging to your party. (Click to pick up).
+	You see [% IF corpses.size == 1 %]a corpse[% ELSE %]some corpses[% END %] belonging to your party. (Click to pick up).
 	[% FOREACH corpse IN corpses %]
 		<a href="javascript:getPanels('party/pickup_corpse?character_id=[% corpse.id %]')">[% corpse.name %]</a>
 	[% END %]

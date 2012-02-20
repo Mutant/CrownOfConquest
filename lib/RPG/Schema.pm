@@ -21,7 +21,7 @@ __PACKAGE__->load_classes(qw/
     Enchantment_Item_Category Creature_Category Promo_Code Promo_Org Town_Guards Election Election_Candidate
     Dungeon_Teleporter Dungeon_Special_Room Creature_Spell Building_Type Building Reward_Links Player_Reward_Links
     Kingdom Kingdom_Messages Party_Kingdom Party_Mayor_History Trade Player_Login Capital_History Kingdom_Town
-    Skill Character_Skill Building_Upgrade_Type Building_Upgrade Party_Messages_Recipients
+    Skill Character_Skill Building_Upgrade_Type Building_Upgrade Party_Messages_Recipients Kingdom_Relationship
 /);
 
 my $config;

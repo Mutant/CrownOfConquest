@@ -484,4 +484,24 @@ sub info : Local {
 	);	    
 }
 
+sub relationships : Local {
+    my ($self, $c) = @_;
+    
+    my @relationships = $c->stash->{kingdom}->relationship_list;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/relationships.html',
+				params => {
+				    relationships => \@relationships,
+				    is_king => $c->stash->{is_king},
+				},
+			}
+		]
+	);    
+               
+}
+
 1;

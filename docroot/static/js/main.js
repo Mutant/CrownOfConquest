@@ -4,6 +4,7 @@ dojo.registerModulePath("rpg", urlBase + "static/dojo_cust/rpg");
 
 dojo.require("dojo.parser");
 dojo.require("dijit.layout.TabContainer");
+dojo.require("dijit.form.Select");
 dojo.require("dijit.form.FilteringSelect");
 dojo.require("dijit.Dialog");
 dojo.require("dijit.form.DropDownButton");

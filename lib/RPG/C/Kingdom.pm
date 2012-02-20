@@ -763,4 +763,39 @@ sub buildings : Local {
 	);	     
 }
 
+sub relationships : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('/party/kingdom/relationships');       
+}
+
+sub change_relationship : Local {
+    my ($self, $c) = @_;
+    
+    my $current_relationship = $c->model('DBIC::Kingdom_Relationship')->find(
+        {
+            kingdom_id => $c->stash->{kingdom}->id,
+            with_id => $c->req->param('with_id'),
+            ended => undef,
+        }
+    );
+    
+    croak "Couldn't find relationship" unless $current_relationship;
+    
+    if ($c->req->param('type') ne $current_relationship->type) {
+        $current_relationship->ended($c->stash->{today}->id);
+        $current_relationship->update;
+        
+        $c->stash->{kingdom}->add_to_relationships(
+            {
+                with_id => $c->req->param('with_id'),
+                type => $c->req->param('type'),
+                begun => $c->stash->{today}->id,
+            }
+        );
+    }
+    
+    $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=relationships']] );        
+}
+
 1;

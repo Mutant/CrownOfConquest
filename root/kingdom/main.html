@@ -50,6 +50,13 @@ function showContributeDiag(townId, townName) {
 	dijit.byId('contribute-diag').show();
 }
 
+function showChangeRelationshipDiag(withId, currentType) {
+	dojo.byId('with-kingdom-id').value = withId;
+	dijit.byId('relationship-type-select').set('value', currentType);
+	
+	dijit.byId('change-relationship-diag').show();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="kingdom-adjust-gold" style="display: none" title="Gold">
@@ -97,6 +104,20 @@ function showContributeDiag(townId, townName) {
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="change-relationship-diag" style="display: none" title="Change Relationship">
+	<form method="POST" action="[% base %]kingdom/change_relationship" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="with_id" id="with-kingdom-id" />
+    What would you like to change the relationship to:    
+	<select dojoType="dijit.form.Select" name="type" id="relationship-type-select" autocomplete="false">
+        <option value="neutral">Neutral</option>
+        <option value="war">War</option>
+        <option value="peace">Peace</option>
+	</select>    
+    
+	[% dialog_buttons('change-relationship-diag') %]
+	</form>
+</div>
+
 <h2>Manage the Kingdom of [% kingdom.name %] - <a class="main" href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a></h2>
 
 
@@ -110,7 +131,7 @@ Kingdom Treasury: [% kingdom.gold %] gold
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
-[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Buildings', 'Tax', 'Description', 'Records', 'Messages', 'Info' ] %]
+[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Buildings', 'Tax', 'Relationships', 'Description', 'Records', 'Messages', 'Info' ] %]
 	[% lower_tab = tab | lower %]
 	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]

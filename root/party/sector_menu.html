@@ -94,7 +94,8 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% IF dungeon %] <a href="javascript:getPanels('/party/enter_dungeon')"><img src="[% c.config.static_path %]/images/actions/enterdabutton.png" border="0" title="Enter Dungeon"></a>[% END %]
 [% IF adjacent_towns %]
 	[% FOREACH town IN adjacent_towns %]
-		<a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">
+		<a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]', 
+			[% IF town.kingdom_relationship_between_party(party) == 'peace' %]true[% ELSE %]false[% END %])">
 			<img src="[% c.config.static_path %]/images/actions/raidabutton.png" border="0" title="Raid [% town.town_name %]"></a>
 	[% END %]
 [% END %]

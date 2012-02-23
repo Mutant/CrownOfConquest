@@ -594,6 +594,36 @@ sub raid : Local {
 	$party_town->increment_raids_today;
 	$party_town->update;
 	
+	if ($c->stash->{party}->kingdom_id) {
+	
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $c->stash->{party}->kingdom_id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );	
+    		
+        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
+            when ('peace') {
+                # Add a kingdom message saying they raided a town the kingdom was at peace with
+                $c->stash->{party}->kingdom->add_to_messages(
+                    {
+                        day_id => $c->stash->{today}->id,
+                        message => "The party " . $c->stash->{party}->name . " raided the town of " . $town->town_name . ", even though the town is loyal to" .
+                            " the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
+                    }                    
+                );
+                
+                $party_kingdom->decrease_loyalty(15);
+            }
+            when ('war') {
+                $party_kingdom->increase_loyalty(15);
+            }
+    	}
+    	
+    	$party_kingdom->update;
+	}
+	
     push @{$c->stash->{panel_callbacks}}, {
         name => 'setMinimapVisibility',
         data => 0,
@@ -699,6 +729,36 @@ sub become_mayor : Local {
 			day_id => $c->stash->{today}->id,
 		}
 	);
+	
+	if ($c->stash->{party}->kingdom_id) {
+	
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $c->stash->{party}->kingdom_id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );	
+    		
+        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
+            when ('peace') {
+                # Add a kingdom message saying they raided a town the kingdom was at peace with
+                $c->stash->{party}->kingdom->add_to_messages(
+                    {
+                        day_id => $c->stash->{today}->id,
+                        message => "The party " . $c->stash->{party}->name . " installed a mayor in the town of " . $town->town_name . 
+                            ", even though the town is loyal to the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
+                    }                    
+                );
+                
+                $party_kingdom->decrease_loyalty(20);
+            }
+            when ('war') {
+                $party_kingdom->increase_loyalty(20);
+            }
+    	}
+    	
+    	$party_kingdom->update;
+	}	
 
     $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
 

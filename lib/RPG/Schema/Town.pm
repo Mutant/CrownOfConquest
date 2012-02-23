@@ -454,4 +454,19 @@ sub blacksmith_skill_label {
 	}
 }
 
+# Return the relationship state between the kingdoms of this town and the passed in party
+sub kingdom_relationship_between_party {
+    my $self = shift;
+    my $party = shift;
+    
+    return if ! $party->kingdom_id || ! $self->location->kingdom_id;
+    
+    my $relationship = $party->kingdom->relationship_with($self->location->kingdom_id);
+    
+    return unless $relationship;
+    
+    return $relationship->type;
+    
+}
+
 1;

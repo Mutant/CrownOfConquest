@@ -121,8 +121,14 @@ function enterTownSubmit(land_id, paymentMethod){
 	hideDiag('town-tax');
 }
 
-function confirmRaidTown(town_name, town_id) {
-	dojo.byId('raid-town-text').innerHTML = "Are you sure you want to raid " + town_name + "?";
+function confirmRaidTown(town_name, town_id, atPeace) {
+	var msg = "Are you sure you want to raid " + town_name + "?";
+	
+	if (atPeace) {
+		msg += "<br>(You kingdom is at peace with this town's kingdom)";
+	}
+	
+	dojo.byId('raid-town-text').innerHTML = msg;
 	dojo.byId('town-id').value = town_id;
 	dijit.byId('town-raid').show();	
 }

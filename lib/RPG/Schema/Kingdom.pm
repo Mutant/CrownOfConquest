@@ -263,6 +263,8 @@ sub relationship_with {
     my $self = shift;
     my $with_id = shift;
     
+    return if $with_id == $self->id;
+    
     my $relationship = $self->find_related('relationships',
         {
             with_id => $with_id,

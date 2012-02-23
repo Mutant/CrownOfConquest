@@ -17,6 +17,7 @@ use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Election;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::Kingdom;
 
 use Test::More;
 use Test::Exception;
@@ -304,6 +305,79 @@ sub test_raid_successful : Tests(3) {
     
 }
 
+sub test_raid_successful_but_against_peaceful_kingdom : Tests(6) {
+    my $self = shift;
+
+    # GIVEN
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, kingdom_id => $kingdom2->id  );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2);
+    
+    my $town  = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $party1->land_id );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    $party1->land_id($land[0]->id);
+    $party1->update;
+    
+    $town->land_id($land[1]->id);
+    $town->update;    
+    $land[1]->kingdom_id($kingdom1->id);
+    $land[1]->update;
+    
+	$self->{schema}->resultset('Kingdom_Relationship')->create(
+	   {
+	       kingdom_id => $kingdom2->id,
+	       with_id => $kingdom1->id,
+	       type => 'peace',
+	   }
+	);
+    
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, land_id => $town->land_id, type => 'castle');
+    my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        top_left => {x=>1,y=>1}, 
+        bottom_right=>{x=>5,y=>5}, 
+        dungeon_id => $castle->id,
+        make_stairs => 1,
+    );
+
+    my ($mayor) = $party2->characters;
+    $mayor->update( { mayor_of => $town->id } );
+    
+    $self->{config}{minimum_raid_level} = 1;
+    
+    $self->{stash}{party} = $party1;
+    $self->{stash}{party_location} = $party1->location;
+    $self->{params}{town_id} = $town->id;
+    
+    $self->{mock_forward}{'/panel/refresh'} = sub {};
+    
+    # WHEN
+    RPG::C::Town->raid( $self->{c} );
+    
+    # THEN
+    $party1->discard_changes;
+    is(defined $party1->dungeon_grid_id, 1, "Party put into castle");
+    
+	my $party_town = $self->{schema}->resultset('Party_Town')->find(
+		{
+			town_id  => $town->id,
+			party_id => $party1->id,
+		}
+	);
+	is($party_town->raids_today, 1, "Raid count increased");
+	isa_ok($party_town->last_raid_start, 'DateTime', "last raid start"); 
+	
+	is($party1->loyalty_for_kingdom($kingdom2->id), -15, "Party's kingdom loyalty reduced");
+	
+	is($kingdom2->messages->count, 1, "Message added to kingdom");
+	is($kingdom2->messages->first->message, 
+	   "The party test raided the town of Test Town, even though the town is loyal to the Kingdom of Test Kingdom, which we are at peace with.", 
+	   "Correct message text");
+    
+}
+
 sub test_calculate_heal_cost_simple : Tests(1) {
     my $self = shift;
     
@@ -411,6 +485,79 @@ sub test_become_mayor : Tests(7) {
     is($history_rec->character_id, $character->id, "Character id recorded in history");
     is($history_rec->mayor_name, $character->character_name, "Mayor name recorded in history");
     is($history_rec->creature_group_id, $cg->id, "Creature group recorded in history");
+	
+}
+
+sub test_become_mayor_but_against_peaceful_kingdom : Tests(10) {
+	my $self = shift;
+	
+	# GIVEN
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );	
+
+	$self->{schema}->resultset('Kingdom_Relationship')->create(
+	   {
+	       kingdom_id => $kingdom2->id,
+	       with_id => $kingdom1->id,
+	       type => 'peace',
+	   }
+	);
+	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, kingdom_id => $kingdom1->id);
+	$town->mayor_rating(10);
+	$town->update;
+		
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_level => 1, character_count => 3, kingdom_id => $kingdom2->id );
+	my @characters = $party->characters;
+	my $character = $characters[0];
+	
+	my $party_town = $self->{schema}->resultset('Party_Town')->create(
+		{
+			party_id => $party->id,
+			town_id  => $town->id,
+			prestige => -10,
+		},
+	);	
+
+	$self->{params}{character_id} = $character->id;
+	$self->{params}{town_id} = $town->id;
+	
+	$self->{stash}{party} = $party;
+	
+	$self->{mock_forward}{'/panel/refresh'} = sub {};
+	$self->{mock_forward}{'/quest/check_action'} = sub {};
+	
+	# WHEN
+	RPG::C::Town->become_mayor($self->{c});	
+	
+	# THEN
+	$character->discard_changes;
+	is($character->mayor_of, $town->id, "Character now mayor of town");	
+	
+	my $cg = $character->creature_group;
+	is(defined $cg, 1, "Mayor added to CG");
+	
+	$party_town->discard_changes;
+	is($party_town->prestige, 0, "Prestige reset");	
+	
+	my $history_rec = $self->{schema}->resultset('Party_Mayor_History')->find(
+        {
+            party_id => $party->id,
+            town_id => $town->id,
+            lost_mayoralty_day => undef,
+        }
+    );
+    is($history_rec->got_mayoralty_day, $self->{stash}{today}->id, "Got mayoralty day recorded");
+    is($history_rec->character_id, $character->id, "Character id recorded in history");
+    is($history_rec->mayor_name, $character->character_name, "Mayor name recorded in history");
+    is($history_rec->creature_group_id, $cg->id, "Creature group recorded in history");
+    
+	is($party->loyalty_for_kingdom($kingdom2->id), -20, "Party's kingdom loyalty reduced");
+	
+	is($kingdom2->messages->count, 1, "Message added to kingdom");
+	is($kingdom2->messages->first->message, 
+	   "The party test installed a mayor in the town of Test Town, even though the town is loyal to the Kingdom of Test Kingdom, which we are at peace with.", 
+	   "Correct message text");    
 	
 }
 

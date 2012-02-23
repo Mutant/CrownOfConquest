@@ -113,6 +113,9 @@ sub build_viewable_sector_grids : Private {
         next unless $cg;
         
         my $group_size = $cg->number_alive;
+        
+        next if $group_size <= 0;
+        
         if ($group_size <= 3) {
             $cg->{group_size} = '1';
         }

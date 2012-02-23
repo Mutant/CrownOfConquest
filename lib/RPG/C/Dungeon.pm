@@ -55,6 +55,11 @@ sub view : Local {
 			push @mapped_sectors, $sector;
 		}	
 	}
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };	
 
     $c->stats->profile("Finshed /dungeon/view");
 

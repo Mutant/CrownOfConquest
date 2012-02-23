@@ -80,7 +80,8 @@ function show_message(message) {
 
 <div style="width: 100%">
 
-	<div class="login-info" style="text-align: center; color: black">
+	<div class="login-info" style="text-align: center; color: white; padding-left: 30px">
+		<br>
 	[% IF main_screen %]
 		User: <b>[% c.session.player.player_name %]</b> /
 		Party: <b>[% party.name %]</b> /
@@ -99,8 +100,8 @@ function show_message(message) {
 	<a href="[% base %]player/contact" target="_blank">Contact Us</a>
 	</div>
 
-	<div style="float: left">
-		<br><br>
+	<div style="float: right">
+		<br>
 		<a href="[% IF main_screen %]javascript:loadScreen('donate')[% ELSE %][% base %]donate[% END %]">
 			<img src="/static/images/donate.gif" border="0">
 		</a>

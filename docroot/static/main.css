@@ -310,15 +310,7 @@ h1 {margin: 0; padding: 1px}
 
 .login-info {
 	font-size: 7pt;
-	float: right;
-}
-
-.login-info a {
-	color: black;
-}
-
-.login-info a:visited {
-	color: black;
+	float: left;
 }
 
 .menuExpandIcon {

@@ -49,6 +49,7 @@ sub get_party_resources {
 	my @groups = $self->get_valid_groups($c, $town);
 	
 	foreach my $group (@groups) {
+	    next unless $group;
 	    push @equipment, $group->get_equipment('Resource');
 	}
 	

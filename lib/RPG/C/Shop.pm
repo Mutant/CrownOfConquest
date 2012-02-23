@@ -469,7 +469,7 @@ sub sell_single_item : Private {
     	$item->equip_place_id(undef);
 
 		# If it's not a quantity item, give it back to the shop, except for item categories with "delete_when_sold_to_shop"
-		if ( $item->item_type->category->delete_when_sold_to_shop ) {
+		if ( ! $item->item_type->category->delete_when_sold_to_shop ) {
 			if ($item->has_variable('Durability')) {
 				# Reset the item's durability
 				$item->variable('Durability', $item->variable_max('Durability'));

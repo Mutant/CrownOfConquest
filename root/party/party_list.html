@@ -8,6 +8,8 @@ function loadFightMenu(charId) {
 	if (! loaded.fightMenu) loaded.fightMenu = {};
 	
 	if (loaded.fightMenu[charId]) return;
+	
+	loaded.fightMenu[charId] = true;
 
 	var menu = dijit.byId('fightMenu_' + charId);
 
@@ -15,7 +17,8 @@ function loadFightMenu(charId) {
         url: "[% base %]combat/target_list",
         handleAs: "json",
         
-        load: function(responseObject, ioArgs){		
+        load: function(responseObject, ioArgs){     	
+        		
         	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: none;');
         
 			for (var i in responseObject.opponents) {
@@ -27,9 +30,8 @@ function loadFightMenu(charId) {
 			        id: itemId
 			    });
 			    menu.addChild(menuItem);
-			}
+			}		
 			
-			loaded.fightMenu[charId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -54,6 +56,8 @@ function loadTargetBasedMenu(charId, type) {
 	if (! loaded[type + "Menu"]) loaded[type + "Menu"] = {};
 	
 	if (loaded[type + "Menu"][charId]) return;
+	
+	loaded[type + "Menu"][charId] = true;
 
 	var menu = dijit.byId(type + 'Menu_' + charId);
 
@@ -106,9 +110,7 @@ function loadTargetBasedMenu(charId, type) {
 				    menu.addChild(popupItem);
 				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
 				}
-			}
-			
-			loaded[type + "Menu"][charId] = true;
+			}			
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -124,6 +126,8 @@ function loadCastSubMenu(subMenuId) {
 	if (! loaded.castSubMenu[charId]) loaded.castSubMenu[charId] = {};
 	
 	if (loaded.castSubMenu[charId][spellId]) return;
+	
+	loaded.castSubMenu[charId][spellId] = true;
 
     menu = this;	
 	
@@ -153,9 +157,8 @@ function loadCastSubMenu(subMenuId) {
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);			    
-			}
+			}		
 			
-			loaded.castSubMenu[charId][spellId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -173,6 +176,8 @@ function loadUseSubMenu(subMenuId) {
 	if (! loaded.useSubMenu[charId]) loaded.useSubMenu[charId] = {};
 	
 	if (loaded.useSubMenu[charId][actionId]) return;    
+	
+	loaded.useSubMenu[charId][actionId] = true;
     
 	dojo.xhrGet( {
         url: "[% base %]combat/use_target_list?character_id=" + charId + "&action_id=" + actionId,
@@ -193,9 +198,7 @@ function loadUseSubMenu(subMenuId) {
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);
-			}
-			
-			loaded.useSubMenu[charId][actionId] = true;
+			}			
 		},
         
 	    timeout: 15000 // Time in milliseconds	

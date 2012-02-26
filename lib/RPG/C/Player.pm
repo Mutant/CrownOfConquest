@@ -232,8 +232,15 @@ sub register : Local {
             }
             
             my $referring_player;
-            if ($c->req->param('referred_by')) {
-                $referring_player = $c->model('DBIC::Player')->find( { player_name => $c->req->param('referred_by') }, );
+            if ($c->req->param('referred_by') || $c->req->param('referred_by_email')) {
+                $referring_player = $c->model('DBIC::Player')->search( 
+                    { 
+                        '-or' => {
+                            player_name => $c->req->param('referred_by'),
+                            email => $c->req->param('rerferred_by_email'),
+                        },                            
+                    },
+                )->first;
                 unless ($referring_player) {
                     return "Can't find the player that referred you. Are you sure you used the correct link?";
                 }   

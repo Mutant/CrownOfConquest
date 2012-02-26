@@ -1,16 +1,22 @@
 <h3>Currently Memorised Spells</h3>
 
-<table class="main">
+[% USE wrap %]
+
+<table class="main" cellspacing="5">
 [% FOREACH spell IN memorised_spells %]
 	[% IF spell.memorised_today %]
+	[% IF loop.count % 4 == 1 %]
 	<tr>
-		<td id="spell_[% spell.spell.id %]">[% spell.spell.spell_name %]
+	[% END %]
+		<td id="spell_[% spell.spell.id %]"><b>[% spell.spell.spell_name %]</b>
 			<div dojoType="dijit.Tooltip"
                    connectId="spell_[% spell.spell.id %]"
                    label="[% spell.spell.description %]"></div>		
 		</td><td>x[% spell.memorise_count %]</td><td>(Cast [% spell.number_cast_today %] times today)</td>
 
+	[% IF loop.count % 4 == 0 %]
 	</tr>
+	[% END %]
 	[% END %]
 [% END %]
 </table>
@@ -20,25 +26,19 @@
 
 <form method="post" id="spells-form" action="[% base %]/character/update_spells" onSubmit="postPanels(this); return false">
 <input type="hidden" name="character_id" value="[% character.id %]">
-<table class="main" cellpadding="2" cellspacing="0">
-	<tr>
-		<td></td>
-		<td></td>
-		<td></td>
-		<th># to<br>Memorise</th>
-		<th>Auto<br>Cast <span id="cast_offline_help">(?)</span></th>
-	</tr>
-<div dojoType="dijit.Tooltip"
-	connectId="cast_offline_help"
-    label="Check any combat spells that you would like this character to auto-cast based on the percentages below"></div>	
-	
+
+
+<table class="main" cellpadding="2" cellspacing="4" border="0">
+
 [% FOREACH spell IN available_spells %]	
 	[% spell_id = spell.id %]
-	<tr [% IF loop.count % 2 == 0 %]style="background: #5F5F5F"[% END %]>
-		<td>[% spell.spell_name %]</td>
+	[% IF loop.count % 4 == 1 %]
+	<tr>
+	[% END %]
+		<td><b>[% spell.spell_name %]</b></td>
 		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
 		<td>
-		 <span dojoType="dijit.form.Button" id="mem_spell_[% spell.id %]">?</span>
+		 <span id="mem_spell_[% spell.id %]">(?)</span>
 		 	[% desc = spell.description _ "<br>(" %]
 		 	[% IF spell.combat && spell.non_combat %]
 		 		[% desc = desc _ "Combat & Non-Combat" %]
@@ -54,18 +54,30 @@
                    label="[% desc | html_entity %]"></div>
 		</td>
 		<td>			
-			<input type="text" size="3" name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"
-				onkeyup="calculateSpellPoints()" autocomplete="off">
+			<input type="text" style="height: 10px; width: 25px"  name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"
+				onkeyup="calculateSpellPoints()" autocomplete="off" id="memorise_count_[% spell.id %]">
 		</td>
 		<td align="center">
 			[% IF spell.combat %]
-				<input type="checkbox" name="cast_offline_[% spell.id %]" [% IF memorised_spells_by_id.$spell_id.cast_offline %]checked[% END %] value="1">
+				<input type="checkbox" name="cast_offline_[% spell.id %]" [% IF memorised_spells_by_id.$spell_id.cast_offline %]checked[% END %] value="1"
+					id="auto_cast_[% spell.id %]">
 			[% END %]
-		</td>
-	</tr>
+		</td>		
+		<td style="width: 5px; height: 1px"></td>
+	[% IF loop.count % 4 == 0 %]
+	</tr>	
+	[% END %]
 [% END %]
 </table>
 <br>
+
+<div dojoType="dijit.Tooltip"
+	connectId="[% FOREACH spell IN available_spells %]memorise_count_[% spell.id %],[% END %]"
+    label="Number of this spell to memorise for tomorrow"></div>
+    
+<div dojoType="dijit.Tooltip"
+	connectId="[% FOREACH spell IN available_spells %]auto_cast_[% spell.id %],[% END %]"
+    label="Check if you want to auto-cast this spell<br>based on the percentages below"></div>	    
 
 Online Auto Cast % Chance <span id="online_cast_chance_help">(?)</span>: 
 <input type="text" dojoType="dijit.form.NumberTextBox" name="online_cast_chance" value="[% character.online_cast_chance %]" 
@@ -77,8 +89,9 @@ Offline Auto Cast % Chance <span id="offline_cast_chance_help">(?)</span>:
 
 <div dojoType="dijit.Tooltip"
 	connectId="online_cast_chance_help,offline_cast_chance_help"
-    label="The percentage chance each round this character will auto cast a spell in combat. Set to 0 to disable auto casting.<br>Online auto cast triggers when
-    you set the character's action to auto-cast during combat. Offline cast triggers when your party is attacked offline, or the character is in a garrison."></div>	
+    label="[% FILTER  wrap(70, '', '<br>') %]The percentage chance each round this character will auto cast a spell in combat. Set to 0 to disable auto casting. 
+    Online auto cast triggers when  you set the character's action to auto-cast during combat. Offline cast triggers when your party is attacked offline, or the
+    character is in a garrison.[% END %]"></div>	
 
 <br>
 

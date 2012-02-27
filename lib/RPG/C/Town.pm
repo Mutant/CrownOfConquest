@@ -420,7 +420,11 @@ sub cemetery : Local {
 		{
 			'status' => 'morgue',
 			'status_context' => $town->id,
-		}
+			'party.defunct' => undef,
+		},
+		{
+		    prefetch => 'party',
+		},
 	);
 
 	my $panel = $c->forward(

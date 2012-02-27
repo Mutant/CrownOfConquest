@@ -18,6 +18,7 @@ sub character_list : Private {
 		{
 			status => $hold,
 			status_context => $town->id,
+			'party.defunct' => undef,
 		},
 		{
 			prefetch => 'party',

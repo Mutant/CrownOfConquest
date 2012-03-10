@@ -40,18 +40,15 @@ sub view : Local {
     my @characters;
     my $group;
  	if ( $character->party_id ) {
-        %chars_by_type = $self->gen_character_list($c);
-    	$group = 'party';
-    	$group = 'mayors' if $character->mayor_of;
-    	$group = 'garrisons' if $character->garrison_id;
-    	$group = 'others' if $character->status;
+        ($group, %chars_by_type) = $self->gen_character_list($c, $character);
+    	
  	}
  	else {
 		@characters = $c->stash->{party_location}->town->characters;
  	}
 	my $can_buy = 0;
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
-	   $can_buy = 1; 	          
+        $can_buy = 1; 	          
 	}
 	
 	$c->forward(
@@ -75,33 +72,55 @@ sub view : Local {
 
 # Generate a data structure with the party's characters for the 'jump to' menu 
 sub gen_character_list {
-    my ( $self, $c ) = @_;
+    my ( $self, $c, $character ) = @_;
     
     my %chars_by_type;
+    my $group = 'others';
     
- 	$chars_by_type{party} = [map { {name => $_->character_name, id => $_->id} } $c->stash->{party}->characters];
-	$chars_by_type{garrisons} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			garrison_id => { '!=', undef },
-		}
-	)];
-	
-	$chars_by_type{mayors} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			mayor_of => { '!=', undef },
-		}
-	)];
-	
-	$chars_by_type{others} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			status => { '!=', undef },
-		}
-	)];
-	
-	return %chars_by_type;    
+    my @characters = $c->model('DBIC::Character')->search(
+        {
+            party_id => $c->stash->{party}->id,
+        }
+    );
+    
+    foreach my $other_char (@characters) {
+        if ($other_char->garrison_id && $character->garrison_id == $other_char->garrison_id) {
+            push @{ $chars_by_type{group} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+            $group = 'group';
+        }
+        elsif ($other_char->mayor_of && $other_char->mayor_of == $character->mayor_of || 
+            $other_char->mayor_of && $character->status eq 'mayor_garrison' && $character->status_context == $other_char->mayor_of ||
+            $character->mayor_of && $other_char->status eq 'mayor_garrison' && $other_char->status_context == $character->mayor_of ||
+            $character->status && $character->status eq 'mayor_garrison' && $other_char->status eq 'mayor_garrison' && $other_char->status_context == $character->status_context) {
+                
+            push @{ $chars_by_type{group} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+            $group = 'group';
+        }
+        elsif (grep { $_->id == $other_char->id } $c->stash->{party}->characters) {
+            push @{ $chars_by_type{party} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };            
+        }
+        else {
+            push @{ $chars_by_type{others} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+        }
+    }
+    
+ 	if (! $character->status && $group ne 'group') {
+        $group = 'party';
+	}
+		
+	return ($group, %chars_by_type);    
 }
 
 sub stats : Local {

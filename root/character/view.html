@@ -311,7 +311,7 @@ function calculateSpellPoints() {
 	[% character_links(type, character_list, 1) %]
 [% ELSE %]
 	[%# Two passes due to order... could be fixed.. %]
-	[% types = ['party', 'garrisons', 'mayors', 'others'] %]
+	[% types = ['party', 'group', 'mayors', 'others'] %]
 	<span id="other-char-links" 
 		style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
 			background: #5F5F5F;">

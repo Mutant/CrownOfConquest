@@ -7,7 +7,6 @@
            [% IF char.stat_points %][% char.stat_points %] [% FILTER inflect(number => char.stat_points) ~%] stat PL(point) [% END ~%] to be assigned<br>[% END %]
            [% IF char.skill_points %][% char.skill_points %] [% FILTER inflect(number => char.skill_points) ~%] skill PL(point) [% END ~%] to be assigned[% END %]
     </div>
-	</span>
 [% END %]
 [% char_out_of_ammo = char.run_out_of_ammo %]
 [% char_overencumbered = char.is_overencumbered %]
@@ -38,5 +37,4 @@
            connectId="brokenItems-[% char.character_id %]"
            label="[% label %]">
     </div>
-	</span>
 [% END %]

@@ -136,7 +136,7 @@ sub sector_menu : Private {
 	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
 		$can_build_building = ! @buildings && $c->stash->{party_location}->building_allowed($c->stash->{party}->id) ? 1 : 0;
 		
-		if (! $garrison) {
+		if (! $garrison || $garrison->party_id == $c->stash->{party}->id) {
 		    $can_seize_building = 1;
 		    $can_raze_building = 1;
 		}

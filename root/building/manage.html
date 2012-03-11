@@ -10,7 +10,16 @@ Resources are taken from the mayor, town garrison characters, and your party, if
 to a garrison in the same sector.
 [% END %]
 
-<form method="POST" id="create" action="[% base %]/[% IF town %]town/mayor/building_[% ELSE %]building/[% END %]upgrade"  onSubmit="postPanels(this); return false">
+[% url_prefix = '' %]
+[% IF town %]
+	[% url_prefix = 'town/mayor/building_' %]
+[% ELSIF building_url_prefix %]
+	[% url_prefix = building_url_prefix %]
+[% ELSE %]
+	[% url_prefix = 'building/' %]
+[% END %]
+
+<form method="POST" id="create" action="[% base %]/[% url_prefix %]upgrade"  onSubmit="postPanels(this); return false">
 [% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %] 
 <div style=" padding:10px; height:125px;">
 	<div id="building_types" style="float:left;width:300px;">
@@ -116,7 +125,7 @@ to a garrison in the same sector.
 			[% ELSIF level >= building_type.max_upgrade_level %]
 				<input type="button" disabled="disabled" value="Upgrade Base Building"></input>
 			[% ELSE %]
-				<form method="POST" action="[% base %][% IF town %]town/mayor/building_[% ELSE %]building/[% END %]build_upgrade" onSubmit="postPanels(this); return false">
+				<form method="POST" action="[% base %][% url_prefix %]build_upgrade" onSubmit="postPanels(this); return false">
 				<input type="hidden" name="upgrade_type_id" value="[% upgrade_type.id %]">
 				[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %] 
 				<input type="submit" value="Build"></input>
@@ -135,10 +144,10 @@ to a garrison in the same sector.
 [% IF ! town %]
 	<div align="center">
 		[% IF ! garrison_in_sector %]
-			<button id="raze-building" onClick="getPanels('building/raze'); return false;">Raze Building</button>
+			<button id="raze-building" onClick="getPanels('[% url_prefix %]raze'); return false;">Raze Building</button>
 		[% END %]
 		[% IF party.kingdom_id %]
-			<button id="cede-building" onClick="getPanels('building/cede'); return false;">Cede Building</button>
+			<button id="cede-building" onClick="getPanels('[% url_prefix %]cede'); return false;">Cede Building</button>
 		[% END %]
 		<div dojoType="dijit.Tooltip"
 	       		connectId="raze-building"

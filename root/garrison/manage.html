@@ -164,6 +164,13 @@ Garrison Gold: [% garrison.gold %]
     	href="[% base %]garrison/equipment_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'equipment' %]selected="true"[% END %]>    
     </div>
+    
+    [% IF has_building %]
+	    <div dojoType="dojox.layout.ContentPane" title="Building" 
+	    	href="[% base %]garrison/building_tab?garrison_id=[% garrison.id %]"
+	    	[% IF selected == 'building' %]selected="true"[% END %]>    
+	    </div>
+	[% END %]    
 
     <div dojoType="dojox.layout.ContentPane" title="Messages" 
     	href="[% base %]garrison/messages_tab?garrison_id=[% garrison.id %]"

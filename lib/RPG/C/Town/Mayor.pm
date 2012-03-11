@@ -800,6 +800,8 @@ sub build : Local {
 sub building_upgrade : Local {
     my ($self, $c) = @_;
     
+    $c->stash->{no_refresh} = 1;
+    
     $c->forward('/building/upgrade', [$c->stash->{town}]);    
     
     $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
@@ -808,6 +810,8 @@ sub building_upgrade : Local {
 
 sub building_build_upgrade : Local {
     my ($self, $c) = @_;
+    
+    $c->stash->{no_refresh} = 1;
     
     $c->forward('/building/build_upgrade', [$c->stash->{town}]);    
     

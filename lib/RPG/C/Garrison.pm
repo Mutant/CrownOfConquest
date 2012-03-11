@@ -317,6 +317,8 @@ sub manage : Local {
 	
 	my @party_garrisons = $c->stash->{party}->garrisons;
 	
+	my $building = $c->stash->{party_location}->building->first;
+	
     $c->forward(
         'RPG::V::TT',
         [
@@ -328,6 +330,7 @@ sub manage : Local {
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
                     editable => $self->is_editable($c),
+                    has_building => $building && $building->owner_type eq 'party' && $building->owner_id == $c->stash->{party}->id ? 1 : 0,
                 },
             }
         ]
@@ -591,6 +594,80 @@ sub update_garrison_name : Local {
 			}
 		)
 	);
+}
+
+sub building_tab : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{building_url_prefix} = 'garrison/building_';
+	
+	$c->forward('/building/manage');   
+}
+
+sub building_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/upgrade');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'party_status', 'messages'] );
+    
+}
+
+sub building_build_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/build_upgrade');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'party_status', 'messages'] );
+    
+}
+
+sub building_cede : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/cede');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'messages', 'party_status'] );    
+}
+
+sub building_raze : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/raze');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'messages', 'party_status'] );    
 }
 
 1;

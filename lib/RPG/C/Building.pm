@@ -241,6 +241,7 @@ sub manage : Local {
                 town => $town,
                 upgrade_types => \@upgrade_types,
                 upgrades_by_type_id => \%upgrades_by_type_id,
+                building_url_prefix => $c->stash->{building_url_prefix},
             },
         }]
     );     
@@ -291,7 +292,7 @@ sub upgrade : Local {
 	$building->building_type_id($upgradable_to_type->id);
 	$building->update;
 	
-	if (! $town) {	
+	if (! $c->stash->{no_refresh}) {	
     	$c->forward('change_building_ownership', [$building]);    
     
     	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
@@ -357,7 +358,9 @@ sub build_upgrade : Local {
 	$upgrade->level($upgrade->level+1);
 	$upgrade->update;
 	
-	$c->forward( '/panel/refresh', [[screen => 'building/manage'], 'party_status'] );
+	if (! $c->stash->{no_refresh}) {	
+	   $c->forward( '/panel/refresh', [[screen => 'building/manage'], 'party_status'] );
+	}
 	
 }
 
@@ -369,7 +372,7 @@ sub seize : Local {
 		croak "You can't seize building - your party level is too low";
 	}
 	
-	if ( $c->stash->{party_location}->garrison ) {
+	if ( $c->stash->{party_location}->garrison && $c->stash->{party_location}->garrison->party_id != $c->stash->{party}->id ) {
 	   croak "Can't seize a building with a garrison";   
 	}	
 
@@ -452,7 +455,7 @@ sub seize : Local {
 	
 	$c->stash->{panel_messages} = ['Building Seized'];
 	
-	$c->forward( '/panel/refresh', ['messages', 'party_status'] );
+	$c->forward( '/panel/refresh', ['messages', 'party_status'] ) unless $c->stash->{no_refresh};
 }
 
 sub raze : Local {
@@ -479,7 +482,7 @@ sub raze : Local {
 	    $c->detach('/panel/refresh');
 	}
 	
-	if ( $c->stash->{party_location}->garrison ) {
+	if ( $c->stash->{party_location}->garrison && $c->stash->{party_location}->garrison->party_id != $c->stash->{party}->id  ) {
 	   croak "Can't raze a building with a garrison";   
 	}
 
@@ -541,7 +544,7 @@ sub raze : Local {
 	
 	$c->forward('/map/refresh_current_loc');
 
-    $c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] );
+    $c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] ) unless $c->stash->{no_refresh};;
 }
 
 sub cede : Local {

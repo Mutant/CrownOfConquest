@@ -14,7 +14,9 @@
 	[% ELSIF message.type == 'summon' %]
 		[% INCLUDE magic/summon.html, message=message %]
 	[% ELSIF message.type == 'potion' %]
-		[% INCLUDE magic/potion.html, message=message %]	
+		[% INCLUDE magic/potion.html, message=message %]
+	[% ELSIF message.type == 'detonate' %]
+		[% INCLUDE magic/detonate.html, message=message %]
 	[% END %]
 	
 	[% IF message.recalled %]The spell was recalled! A cast for the day was not used up.[% END %]

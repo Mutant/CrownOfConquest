@@ -39,7 +39,7 @@
 		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
 		<td>
 		 <span id="mem_spell_[% spell.id %]">(?)</span>
-		 	[% desc = spell.description _ "<br>(" %]
+		 	[% desc = spell.description _ "\n<br>(" %]
 		 	[% IF spell.combat && spell.non_combat %]
 		 		[% desc = desc _ "Combat & Non-Combat" %]
 		 	[% ELSIF spell.combat %]
@@ -50,8 +50,7 @@
 		 	[% desc = desc _ ")" %]
 		 	
 			<div dojoType="dijit.Tooltip"
-                   connectId="mem_spell_[% spell.id %]"
-                   label="[% desc | html_entity %]"></div>
+                   connectId="mem_spell_[% spell.id %]">[% desc | wrap(80, '', '<br>') %]</div>
 		</td>
 		<td>			
 			<input type="text" style="height: 10px; width: 25px"  name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"

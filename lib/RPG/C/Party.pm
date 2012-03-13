@@ -184,6 +184,7 @@ sub sector_menu : Private {
 					movement_cost          => $c->stash->{movement_cost} // 0,
 					factor_comparison      => $factor_comparison,
 					corpses                => \@corpses,
+					bomb                   => $c->stash->{party_location}->bomb,
 				},
 				return_output => 1,
 			}
@@ -593,61 +594,59 @@ sub select_action : Local {
 
 	my $target;
 	my $result;
+	my $action;
+	my $target_id;
+	my $execute;
+	my $spell;
 	
 	given ( $c->req->param('action') ) {
 		when ('Cast') {
-			my ( $spell_id, $target_id ) = $c->req->param('action_param');
-			my $spell = $c->model('DBIC::Spell')->find($spell_id);
+		    my $spell_id;
+			( $spell_id, $target_id ) = $c->req->param('action_param');
+			$action = $c->model('DBIC::Spell')->find($spell_id);
+			$spell = $action;
 			
-			if ( $spell->target eq 'character' ) {
-				$target = $c->model('DBIC::Character')->find(
-					{
-						character_id => $target_id,
-						party_id     => $c->stash->{party}->id,
-					}
-				);
-			}
-			else {
-				$target = $c->stash->{party};
-			}
-			
-			$result = $spell->cast( $character, $target );
-			
-			# HACK: refresh map screen if casting portal 
-			if ($spell->spell_name eq 'Portal') {
-                push @{ $c->stash->{refresh_panels} }, 'map';
-                push @{$c->stash->{panel_callbacks}}, {
-                    name => 'setMinimapVisibility',
-                    data => 1,
-                };                
+			$execute = sub {
+			    my $target = shift;			    
+			    return $action->cast( $character, $target );
 			}
 		}
-
 		when ('Use') {
-			my ( $action_id, $target_id ) = $c->req->param('action_param');
-			my $action = $character->get_item_action($action_id);
-		
-			my $target_type = $action->target;
-			if ( $target_type eq 'character' ) {
-				$target = $c->model('DBIC::Character')->find(
-					{
-						character_id => $target_id,
-						party_id     => $c->stash->{party}->id,
-					}
-				);
-			}
-			elsif ( $target_type eq 'party') {
-				$target = $c->stash->{party};
-			}
+		    my $action_id;
+			( $action_id, $target_id ) = $c->req->param('action_param');
+			$action = $character->get_item_action($action_id);
+			$spell = $action->spell;
 			
-			$result = $action->use($target);
-			
-			# HACK: refresh map screen if casting portal 
-			if ($action->can('spell') && $action->spell->spell_name eq 'Portal') {
-                push @{ $c->stash->{refresh_panels} }, 'map';
-			}
+            $execute = sub {
+			    my $target = shift;			    
+			    return $action->use($target);
+			}			
 		}
+	}		
+			
+	if ( $action->target eq 'character' ) {
+		$target = $c->model('DBIC::Character')->find(
+			{
+				character_id => $target_id,
+				party_id     => $c->stash->{party}->id,
+			}
+		);
 	}
+	else {
+		$target = $c->stash->{party};
+	}
+	
+	$result = $execute->($target);
+
+	# HACK: refresh map screen if casting portal
+	if ($spell->spell_name eq 'Portal') {
+        push @{ $c->stash->{refresh_panels} }, 'map';
+        push @{$c->stash->{panel_callbacks}}, {
+            name => 'setMinimapVisibility',
+            data => 1,
+        };                
+	}
+
 
 	my $message = $c->forward(
 		'RPG::V::TT',

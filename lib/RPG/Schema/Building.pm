@@ -172,7 +172,7 @@ sub get_bonus {
     my $bonus = 0;
     
     if ($upgrade) {
-        $level //= $upgrade->level;
+        $level //= $upgrade->level - $upgrade->damage;
             
         $bonus = $level * $upgrade->type->modifier_per_level;
     }

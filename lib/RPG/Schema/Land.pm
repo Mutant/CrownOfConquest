@@ -50,6 +50,8 @@ __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'sel
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join_type => 'LEFT' } );
 
+__PACKAGE__->might_have( 'bomb', 'RPG::Schema::Bomb', 'land_id', { where => {detonated => undef} });
+
 with qw/RPG::Schema::Role::Sector/;
 
 sub label {

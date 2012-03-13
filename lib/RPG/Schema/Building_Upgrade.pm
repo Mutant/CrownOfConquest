@@ -10,6 +10,8 @@ __PACKAGE__->add_columns(qw/upgrade_id building_id type_id/);
 
 __PACKAGE__->add_columns( 
 	level => { accessor => '_level' },
+	damage => { accessor => '_damage' },
+	damage_last_done => { data_type => 'datetime' },
 );
 
 __PACKAGE__->set_primary_key(qw/upgrade_id/);
@@ -37,6 +39,24 @@ sub level {
     }
     
     return $self->_level;
+}
+
+sub damage {
+    my $self = shift;
+    my $new_damage = shift;
+    
+    if (defined $new_damage) {
+        $self->_damage($new_damage);
+        $self->_character_benefit_trigger;
+    }
+    
+    return $self->_damage;   
+}
+
+sub effective_level {
+    my $self = shift;
+    
+    return $self->level - $self->damage;   
 }
 
 # If the level of the upgrade has changed, make sure all characters in the 
@@ -80,7 +100,7 @@ sub _character_benefit_trigger {
             {
                 # Have to pass this in, since it may not have been written to the DB yet
                 bonus_level => {
-                    $bonus => $self->_level,
+                    $bonus => $self->_level - $self->_damage,
                 }
             }
         );

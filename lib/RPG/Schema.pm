@@ -22,6 +22,7 @@ __PACKAGE__->load_classes(qw/
     Dungeon_Teleporter Dungeon_Special_Room Creature_Spell Building_Type Building Reward_Links Player_Reward_Links
     Kingdom Kingdom_Messages Party_Kingdom Party_Mayor_History Trade Player_Login Capital_History Kingdom_Town
     Skill Character_Skill Building_Upgrade_Type Building_Upgrade Party_Messages_Recipients Kingdom_Relationship
+    Bomb
 /);
 
 my $config;

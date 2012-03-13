@@ -65,8 +65,8 @@ sub cast {
     
     if ($character->execute_skill('Recall', 'cast')) {
         $result->recalled(1);
-    }
-    else {    
+    }    
+    elsif ( ! $result->didnt_cast ) {    
         $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
         $memorised_spell->update;
     }

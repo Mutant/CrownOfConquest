@@ -66,6 +66,8 @@
 					[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
 				</div>
 				[% END %]
+			[% ELSIF bombs.$x.$y %]
+				<span id="b_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/bombrune.png" border=0 width=[% size %] height=[% size %]></span>
 			[% ELSIF parties.$x.$y.0 %]
 				[%# TODO: handle multiple parties in a sector %]
 			    [% other_party = parties.$x.$y.0 %]

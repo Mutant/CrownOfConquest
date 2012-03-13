@@ -38,6 +38,10 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% END %]
 	<br><br>
 [% END %]
+[% IF bomb %]
+	<img src="[% c.config.static_path %]/images/dungeon/bombrune.png" title="There is a magical bomb here.">	
+	<br><br>
+[% END %]
 
 [% IF graves.size > 0 %]
 	[% IF graves.size == 1 %]

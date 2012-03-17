@@ -46,6 +46,10 @@ sub damage {
     my $new_damage = shift;
     
     if (defined $new_damage) {
+        if ($new_damage > $self->_level) {
+            $new_damage = $self->_level;
+        }
+        
         $self->_damage($new_damage);
         $self->_character_benefit_trigger;
     }
@@ -100,7 +104,7 @@ sub _character_benefit_trigger {
             {
                 # Have to pass this in, since it may not have been written to the DB yet
                 bonus_level => {
-                    $bonus => $self->_level - $self->_damage,
+                    $bonus => $self->_level - ($self->_damage // 0),
                 }
             }
         );

@@ -13,6 +13,7 @@ use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Building;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::Garrison;
 
 sub test_startup : Tests(startup) {
     my $self = shift;
@@ -75,7 +76,7 @@ sub test_detonate_on_land_multiple_buildings : Tests(12) {
         land_id => $land[2]->id
     );
     
-    $self->{rolls} = [2, 10, 10, 10]; 
+    $self->{rolls} = [2, 50, 10, 10, 1]; 
     
     # WHEN
     my @damaged_upgrades = $bomb->detonate;
@@ -127,7 +128,7 @@ sub test_detonate_in_castle : Tests(7) {
         land_id => $dungeon->land_id,
     );
     
-    $self->{rolls} = [10, 10]; 
+    $self->{rolls} = [10, 10, 1]; 
     
     # WHEN
     my @damaged_upgrades = $bomb->detonate;
@@ -143,6 +144,60 @@ sub test_detonate_in_castle : Tests(7) {
     is($damaged_upgrades[0]->{upgrade}->level, 2, "Upgrade level not reduced");
     is($damaged_upgrades[0]->{upgrade}->damage, 1, "Damage done to upgrade");
     isnt($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done set");
+}
+
+sub test_detonate_reduces_residents_bonuses : Tests(16) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 3, 'y_size' => 3);
+    my $bomb = $self->{schema}->resultset('Bomb')->create(
+        {
+            land_id => $land[4]->id,
+            level => 20,
+        }
+    );
+    
+    my $building1 = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        upgrades => { 
+            'Rune Of Defence' => 2,
+            'Rune of Attack' => 3,
+        },
+        land_id => $land[1]->id
+    );
+
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[1]->id, character_count => 0 );
+    my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, agility => 10, strength => 10, garrison_id => $garrison->id );
+    is($character1->defence_factor, 24, "Character in garrison has correct DF before detonation");
+    is($character1->attack_factor, 25, "Character in garrison has correct AF before detonation");
+    
+    $self->{rolls} = [2, 100, 10, 10, 1]; 
+    
+    # WHEN
+    my @damaged_upgrades = $bomb->detonate;
+    
+    # THEN
+    $bomb->discard_changes;
+    isa_ok($bomb->detonated, 'DateTime', "Bomb marked as detonated");
+    
+    is(scalar @damaged_upgrades, 2, "2 upgrades damaged");
+    
+    is($damaged_upgrades[0]->{damage_type}, 'perm', "First upgrade damaged permanently");
+    is($damaged_upgrades[0]->{upgrade}->type->name, 'Rune of Defence', "Correct first upgrade");
+    is($damaged_upgrades[0]->{upgrade}->level, 1, "Upgrade level reduced");
+    is($damaged_upgrades[0]->{upgrade}->damage, 0, "No damage done to upgrade");
+    is($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done not set");
+    
+    is($damaged_upgrades[1]->{damage_type}, 'temp', "Second upgrade damaged temporarily");
+    is($damaged_upgrades[1]->{upgrade}->type->name, 'Rune of Attack', "Correct first upgrade");
+    is($damaged_upgrades[1]->{upgrade}->level, 3, "Upgrade level not reduced");
+    is($damaged_upgrades[1]->{upgrade}->damage, 1, "Damage done to upgrade");
+    isnt($damaged_upgrades[1]->{upgrade}->damage_last_done, undef, "Damage last done set");    
+    
+    $character1->discard_changes;
+    is($character1->defence_factor, 19, "Character in garrison has correct DF after detonation");
+    is($character1->attack_factor, 20, "Character in garrison has correct AF after detonation");
 
 }
 

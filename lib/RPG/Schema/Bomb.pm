@@ -50,29 +50,32 @@ sub detonate {
         
         next unless @upgrades;
         
-        my $upgrade = (shuffle @upgrades)[0];
-        
-        my $damage_type;
-        
-        my $perm_roll = Games::Dice::Advanced->roll('1d100');
-        my $temp_roll = Games::Dice::Advanced->roll('1d100');
-
-        if ($perm_roll <= $perm_damage_chance) {
-            $upgrade->level($upgrade->level-1);
-            $damage_type = 'perm';
-        }
-        elsif ($temp_roll <= $temp_damage_chance) {
-            $upgrade->damage($upgrade->damage+1);
-            $upgrade->damage_last_done(DateTime->now());
-            $damage_type = 'temp';   
-        }
-        $upgrade->update;
-
-        if ($damage_type) {
-            push @damaged_upgrades, {
-                upgrade => $upgrade,
-                damage_type => $damage_type,
-            }   
+        foreach my $upgrade (@upgrades) {        
+            my $damage_type;
+            
+            my $perm_roll = Games::Dice::Advanced->roll('1d100');
+            my $temp_roll = Games::Dice::Advanced->roll('1d100');
+    
+            if ($perm_roll <= $perm_damage_chance) {
+                $upgrade->level($upgrade->level-1);
+                $damage_type = 'perm';
+            }
+            
+            if ($temp_roll <= $temp_damage_chance) {
+                my $damage_amount = Games::Dice::Advanced->roll('1d3');
+                $upgrade->damage($upgrade->damage+$damage_amount);
+                $upgrade->damage_last_done(DateTime->now());
+                $damage_type = 'temp';   
+            }
+            
+            $upgrade->update;
+    
+            if ($damage_type) {
+                push @damaged_upgrades, {
+                    upgrade => $upgrade,
+                    damage_type => $damage_type,
+                }   
+            }
         }
     }
     

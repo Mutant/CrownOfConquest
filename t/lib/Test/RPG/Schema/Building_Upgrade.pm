@@ -160,4 +160,23 @@ sub test_bonuses_applied_to_town_garrison_when_upgrade_level_increased : Tests(2
     is($garrison_char->resistance('Fire'), 6, "Resistance bonus applied correctly to garrison_char when upgrade level increased");
 }
     
+sub test_cant_take_level_to_negative_with_temp_damage : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        upgrades => { 
+            'Rune of Defence' => 2,
+        },
+    );
+    my ($upgrade) = $building->upgrades;
+    
+    # WHEN
+    $upgrade->damage(4);
+    
+    # THEN
+    is($upgrade->effective_level, 0, "Effective level does not go below 0");
+    
+}
+    
 1;

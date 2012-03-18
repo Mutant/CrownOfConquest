@@ -122,10 +122,8 @@ sub process_barracks {
     return if ! $group || $group->number_alive <= 0;
     
     my $xp_gain = Games::Dice::Advanced->roll('1d10') * $upgrade->level * 5;
-    
-    my $xp_each = int $xp_gain / $group->number_alive(characters_only => 1);
-    
-    my @details = $group->xp_gain($xp_each);
+        
+    my @details = $group->xp_gain($xp_gain);
     
     my $message = RPG::Template->process(
         $c->config,

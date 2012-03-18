@@ -619,6 +619,25 @@ sub get_coord_range_of_floor {
     ];      
 }
 
+sub stairs_sector {
+    my $self = shift;
+    my $floor = shift // 1;
+    
+    my $stairs_sector = $self->result_source->schema->resultset('Dungeon_Grid')->find(
+        {
+            'dungeon_room.dungeon_id' => $self->id,
+            'dungeon_room.floor' => $floor,
+            'stairs_up' => 1,
+            
+        },
+        {
+            'join' => 'dungeon_room',
+        }        
+    );
+    
+    return $stairs_sector;
+}
+
 # Calculate a value that is a good distance from the stairs of a given floor, 
 #  based on the size of the floor
 sub find_min_distance_to_stairs {
@@ -630,7 +649,7 @@ sub find_min_distance_to_stairs {
         
     my $stairs_coord = {
         x => $stairs_sector->x,
-        y => $stairs_sector->y,        
+        y => $stairs_sector->y,
     };
     
     # Find floor dimensions
@@ -658,17 +677,7 @@ sub find_sectors_not_near_stairs {
     my $self = shift;
     my $floor = shift;
   
-    my $stairs_sector = $self->result_source->schema->resultset('Dungeon_Grid')->find(
-        {
-            'dungeon_room.dungeon_id' => $self->id,
-            'dungeon_room.floor' => $floor,
-            'stairs_up' => 1,
-            
-        },
-        {
-            'join' => 'dungeon_room',
-        }        
-    );    
+    my $stairs_sector = $self->stairs_sector($floor);
 
     my $min_dist_from_stairs = $self->find_min_distance_to_stairs($floor, $stairs_sector);
     

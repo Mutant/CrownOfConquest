@@ -113,13 +113,14 @@ sub test_detonate_in_castle : Tests(8) {
 		$self->{schema}, 
 		dungeon_id => $dungeon->id,
 		top_left => {x => 1, y => 1},
-		bottom_right => {x => 5, y => 5},		
+		bottom_right => {x => 5, y => 5},
+		make_stairs => 1,
 	);
 	my @sectors = $dungeon_room->sectors;
 	
     my $bomb = $self->{schema}->resultset('Bomb')->create(
         {
-            dungeon_grid_id => $sectors[4]->id,
+            dungeon_grid_id => $sectors[24]->id,
             level => 20,
         }
     );

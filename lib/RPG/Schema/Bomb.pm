@@ -6,6 +6,8 @@ use warnings;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use DateTime;
+use RPG::Map;
+use Math::Round qw(round);
 
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Core/);
 __PACKAGE__->table('Bomb');
@@ -26,6 +28,7 @@ sub detonate {
     my $self = shift;
     
     my @buildings;
+    my $detonation_bonus = 0;
     if ($self->dungeon_grid_id) {
         my $dungeon = $self->dungeon_grid->dungeon_room->dungeon;
         if ($dungeon->type eq 'castle') {
@@ -35,14 +38,29 @@ sub detonate {
                 }
             );
             push @buildings, $building;
+            
+            my $stairs_sector = $dungeon->stairs_sector;
+            
+            my $distance_to_stairs = RPG::Map->get_distance_between_points(
+                {
+                    x => $stairs_sector->x,
+                    y => $stairs_sector->y,
+                },
+                {
+                    x => $self->dungeon_grid->x,
+                    y => $self->dungeon_grid->y,
+                }
+            );
+
+            $detonation_bonus = round ($distance_to_stairs / 3) - 3;
         }
     }
     else {
         @buildings = $self->land->get_adjacent_buildings(1);
     }
     
-    my $perm_damage_chance = $self->level / 5;
-    my $temp_damage_chance = $self->level * 2;
+    my $perm_damage_chance = $self->level / 5 + $detonation_bonus;
+    my $temp_damage_chance = $self->level * 2 + $detonation_bonus;
     
     my @damaged_upgrades;
     foreach my $building (@buildings) {

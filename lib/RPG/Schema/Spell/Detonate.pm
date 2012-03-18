@@ -9,6 +9,32 @@ use DateTime;
 
 sub _cast {
     my ( $self, $character, $target, $level ) = @_;
+
+    if ($target->location->town) {
+        return {
+            type => 'detonate',
+            custom => { in_town => 1 },   
+            didnt_cast => 1,
+        }        
+    }
+    
+    # Look for an existing bomb
+    my $existing_bomb_count = $self->result_source->schema->resultset('Bomb')->search(
+        {
+            ($target->dungeon_grid_id ?
+                ( dungeon_grid_id => $target->dungeon_grid_id ) :
+                ( land_id => $target->land_id )),
+            detonated => undef,
+        }    
+    );
+    
+    if ($existing_bomb_count > 0) {
+        return {
+            type => 'detonate',
+            custom => { existing_bomb => 1 },   
+            didnt_cast => 1,
+        }        
+    }
     
     my @vials = $character->search_related(
         'items',
@@ -21,6 +47,8 @@ sub _cast {
         },
     );
     
+    @vials = grep { $_->variable('Quantity') > 0 } @vials;
+    
     if (! @vials) {
         return {
             type => 'detonate',
@@ -28,15 +56,15 @@ sub _cast {
             didnt_cast => 1,
         }
     }
-    
-    if ($target->location->town) {
-        return {
-            type => 'detonate',
-            custom => { in_town => 1 },   
-            didnt_cast => 1,
-        }        
+
+    my $vial = shift @vials;
+    if ($vial->variable('Quantity') == 1) {
+        $vial->delete;
     }
-        
+    else {
+        $vial->variable('Quantity', $vial->variable('Quantity') - 1);
+    }
+       
     $self->result_source->schema->resultset('Bomb')->create(
         {
             party_id => $target->id,

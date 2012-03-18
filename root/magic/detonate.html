@@ -4,6 +4,9 @@
 
 [% ELSIF message.custom.in_town %]
 	<span class="combat-party-attacker">[% message.attacker.name %]</span> can't cast Detonate, because it cannot be cast in a town.
+	
+[% ELSIF message.custom.existing_bomb %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> can't cast Detonate, because there is already a bomb in this sector.
 
 [% ELSIF message.custom.planted %]
 	<span class="combat-party-attacker">[% message.attacker.name %]</span> planted a bomb.

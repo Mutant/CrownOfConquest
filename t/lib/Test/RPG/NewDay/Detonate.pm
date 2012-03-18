@@ -96,6 +96,7 @@ sub test_detonate_multiple_bombs_town_building : Tests(6) {
 		dungeon_id => $dungeon->id,
 		top_left => {x => 1, y => 1},
 		bottom_right => {x => 5, y => 5},		
+		make_stairs => 1,
 	);
 	my @sectors = $dungeon_room->sectors;
 	

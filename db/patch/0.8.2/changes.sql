@@ -19,7 +19,11 @@ ALTER TABLE `Garrison` ADD COLUMN `attack_friendly_parties` TINYINT(4)  NOT NULL
 INSERT INTO Spell (spell_name, description, points, class_id, combat, non_combat, target, hidden)
 	VALUES ('Detonate', 'Creates a magical bomb that will detonate after a few minutes. If detonated in a town\'s castle during a raid, or adjacent to a building in the wilderness, the building\'s upgrade runes may be damaged, temprorarily or permanently. In castles, more damage is likely to be done if bombs are planted away from the stairs. Requires 1 Vial of Dragons Blood that will be used up during casting', 10, 4, 0, 1, 'party', 0);
 
-INSERT INTO Item_Type (item_type, item_category_id, base_cost, prevalence, weight, image, usable) VALUES ('Vial of Dragons Blood',12,50000,0,'3.00','dbloodvial.png',0);
+INSERT INTO Item_Type (item_type, item_category_id, base_cost, prevalence, weight, image, usable) VALUES ('Vial of Dragons Blood',12,50000,1,'3.00','dbloodvial.png',0);
+
+INSERT INTO Item_Variable_Params (keep_max, min_value, max_value, item_type_id, item_variable_name_id)
+	values (0,1,1,(select item_type_id from Item_Type where item_type = 'Vial of Dragons Blood'), 
+	(select item_variable_name_id from Item_Variable_Name where item_variable_name = 'Quantity' and item_category_id = 12));
 
 CREATE TABLE `Bomb` (
   `bomb_id` INTEGER  NOT NULL AUTO_INCREMENT,

@@ -49,6 +49,12 @@ sub main : Local {
     }
 
     my $costs = $c->forward( 'calculate_costs', [ $c->stash->{party_location}->town ] );
+    
+    my $vial = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Vial of Dragons Blood',
+        }
+    );
 
     my $panel = $c->forward(
         'RPG::V::TT',
@@ -61,6 +67,7 @@ sub main : Local {
                     item_types                      => \@item_types,
                     dungeon_levels_allowed_to_enter => \@dungeon_levels_allowed_to_enter,
                     town                            => $c->stash->{party_location}->town,
+                    vial                            => $vial,
                 },
                 return_output => 1,
             }
@@ -428,6 +435,42 @@ sub find_orb : Local {
 
     $c->forward('/town/sage/main');    
     
+}
+
+sub buy_vial : Local {
+    my ( $self, $c ) = @_;
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters_in_party;
+    
+    croak "Invalid character" unless $character;
+    
+    my $vial = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Vial of Dragons Blood',
+        }
+    );    
+    
+    my $cost = $c->req->param('quantity') * $vial->base_cost;
+    
+    if ($c->stash->{party}->gold < $cost) {
+        $c->stash->{messages} = "You do not have enough gold to buy the vials";
+    }
+    else {
+        $c->stash->{party}->decrease_gold($cost);
+        $c->stash->{party}->update;
+        
+        my $vial_item = $c->model('DBIC::Items')->create(
+            {
+                item_type_id => $vial->id,
+            }
+        );
+        $vial_item->variable('Quantity', $c->req->param('quantity'));
+        $vial_item->add_to_characters_inventory($character);
+    }
+    
+    push @{ $c->stash->{refresh_panels} }, ('party_status');
+
+    $c->forward('/town/sage/main');    
 }
 
 1;

@@ -116,7 +116,7 @@ sub collect_tax {
     my $c = $self->context;
     
     my $bonus = 15 + ($mayor->execute_skill('Leadership', 'town_peasant_tax') // 0);
-    my $roll = Games::Dice::Advanced->roll('2d20');
+    my $roll = Games::Dice::Advanced->roll('2d30');
     
     $c->logger->debug("Tax collection: bonus: $bonus, prosp: " . $town->prosperity . ", roll: $roll, tax: " . $town->peasant_tax);
     

@@ -615,7 +615,7 @@ sub select_action : Local {
 		    my $action_id;
 			( $action_id, $target_id ) = $c->req->param('action_param');
 			$action = $character->get_item_action($action_id);
-			$spell = $action->spell;
+			$spell = $action->spell if $action->can('spell');
 			
             $execute = sub {
 			    my $target = shift;			    
@@ -639,7 +639,7 @@ sub select_action : Local {
 	$result = $execute->($target);
 
 	# HACK: refresh map screen if casting portal
-	if ($spell->spell_name eq 'Portal') {
+	if ($spell && $spell->spell_name eq 'Portal') {
         push @{ $c->stash->{refresh_panels} }, 'map';
         push @{$c->stash->{panel_callbacks}}, {
             name => 'setMinimapVisibility',

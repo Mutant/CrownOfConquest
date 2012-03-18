@@ -55,25 +55,27 @@ sub detonate {
             
             my $perm_roll = Games::Dice::Advanced->roll('1d100');
             my $temp_roll = Games::Dice::Advanced->roll('1d100');
+            
+            my %damage_done;
     
             if ($perm_roll <= $perm_damage_chance) {
                 $upgrade->level($upgrade->level-1);
-                $damage_type = 'perm';
+                $damage_done{perm} = 1;
             }
             
             if ($temp_roll <= $temp_damage_chance) {
                 my $damage_amount = Games::Dice::Advanced->roll('1d3');
                 $upgrade->damage($upgrade->damage+$damage_amount);
                 $upgrade->damage_last_done(DateTime->now());
-                $damage_type = 'temp';   
+                $damage_done{temp} = $damage_amount;  
             }
             
             $upgrade->update;
     
-            if ($damage_type) {
+            if (%damage_done) {
                 push @damaged_upgrades, {
                     upgrade => $upgrade,
-                    damage_type => $damage_type,
+                    damage_done => \%damage_done,
                 }   
             }
         }

@@ -49,7 +49,7 @@ sub test_detonate_on_land_no_buildings : Tests(2) {
     is(scalar @damaged_upgrades, 0, "No upgrades damaged");      
 }
 
-sub test_detonate_on_land_multiple_buildings : Tests(12) {
+sub test_detonate_on_land_multiple_buildings : Tests(14) {
     my $self = shift;
     
     # GIVEN
@@ -87,13 +87,16 @@ sub test_detonate_on_land_multiple_buildings : Tests(12) {
     
     is(scalar @damaged_upgrades, 2, "2 upgrades damaged");
     
-    is($damaged_upgrades[0]->{damage_type}, 'perm', "First upgrade damaged permanently");
+    
+    is($damaged_upgrades[0]->{damage_done}{temp}, undef, "Upgrade not damaged temporarily");
+    is($damaged_upgrades[0]->{damage_done}{perm}, 1, "Upgrade damaged permanently");    
     is($damaged_upgrades[0]->{upgrade}->type->name, 'Rune of Protection', "Correct first upgrade");
     is($damaged_upgrades[0]->{upgrade}->level, 1, "Upgrade level reduced");
     is($damaged_upgrades[0]->{upgrade}->damage, 0, "No damage done to upgrade");
     is($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done not set");
 
-    is($damaged_upgrades[1]->{damage_type}, 'temp', "Second upgrade damaged temporarily");
+    is($damaged_upgrades[1]->{damage_done}{temp}, 1, "Upgrade damaged temporarily");
+    is($damaged_upgrades[1]->{damage_done}{perm}, undef, "Upgrade not damaged permanently");    
     is($damaged_upgrades[1]->{upgrade}->type->name, 'Rune of Defence', "Correct first upgrade");
     is($damaged_upgrades[1]->{upgrade}->level, 2, "Upgrade level not reduced");
     is($damaged_upgrades[1]->{upgrade}->damage, 1, "Damage done to upgrade");
@@ -101,7 +104,7 @@ sub test_detonate_on_land_multiple_buildings : Tests(12) {
 
 }
 
-sub test_detonate_in_castle : Tests(7) {
+sub test_detonate_in_castle : Tests(8) {
     my $self = shift;
     
     # GIVEN
@@ -139,14 +142,15 @@ sub test_detonate_in_castle : Tests(7) {
     
     is(scalar @damaged_upgrades, 1, "1 upgrade damaged");    
 
-    is($damaged_upgrades[0]->{damage_type}, 'temp', "Second upgrade damaged temporarily");
+    is($damaged_upgrades[0]->{damage_done}{temp}, 1, "Second upgrade damaged temporarily");
+    is($damaged_upgrades[0]->{damage_done}{perm}, undef, "Second upgrade not damaged permanently");
     is($damaged_upgrades[0]->{upgrade}->type->name, 'Rune of Protection', "Correct first upgrade");
     is($damaged_upgrades[0]->{upgrade}->level, 2, "Upgrade level not reduced");
     is($damaged_upgrades[0]->{upgrade}->damage, 1, "Damage done to upgrade");
     isnt($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done set");
 }
 
-sub test_detonate_reduces_residents_bonuses : Tests(16) {
+sub test_detonate_reduces_residents_bonuses : Tests(18) {
     my $self = shift;
     
     # GIVEN
@@ -183,13 +187,16 @@ sub test_detonate_reduces_residents_bonuses : Tests(16) {
     
     is(scalar @damaged_upgrades, 2, "2 upgrades damaged");
     
-    is($damaged_upgrades[0]->{damage_type}, 'perm', "First upgrade damaged permanently");
+    
+    is($damaged_upgrades[0]->{damage_done}{temp}, undef, "Upgrade not damaged temporarily");
+    is($damaged_upgrades[0]->{damage_done}{perm}, 1, "Upgrade damaged permanently");    
     is($damaged_upgrades[0]->{upgrade}->type->name, 'Rune of Defence', "Correct first upgrade");
     is($damaged_upgrades[0]->{upgrade}->level, 1, "Upgrade level reduced");
     is($damaged_upgrades[0]->{upgrade}->damage, 0, "No damage done to upgrade");
     is($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done not set");
     
-    is($damaged_upgrades[1]->{damage_type}, 'temp', "Second upgrade damaged temporarily");
+    is($damaged_upgrades[1]->{damage_done}{temp}, 1, "Upgrade damaged temporarily");
+    is($damaged_upgrades[1]->{damage_done}{perm}, undef, "Upgrade not damaged permanently");    
     is($damaged_upgrades[1]->{upgrade}->type->name, 'Rune of Attack', "Correct first upgrade");
     is($damaged_upgrades[1]->{upgrade}->level, 3, "Upgrade level not reduced");
     is($damaged_upgrades[1]->{upgrade}->damage, 1, "Damage done to upgrade");

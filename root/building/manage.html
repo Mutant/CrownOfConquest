@@ -62,10 +62,15 @@ to a garrison in the same sector.
 <div align="center">
 
 <h2>Available Add-ons</h2>
+<div dojoType="dijit.Tooltip"
+   		connectId="upgrade-current-level"
+		style="display: none">
+		The current level of the upgrade, minus any temporary damage done by magical bombs.		 
+</div>
 <table class="main" cellspacing="3">
 	<tr>
 		<th>Add-on</th>
-		<th>Current Level</th>
+		<th>Current Level <span id="upgrade-current-level">(?)</span></th>
 		<th>Current Bonus</th>
 		<th>Bonus Next Level</th>
 		<th>Cost To Build</th>
@@ -77,8 +82,10 @@ to a garrison in the same sector.
 				[% upgrade_type.description | wrap(50, '', '<br>') %]
 			</div>
 		</td>
-		[% level = upgrades_by_type_id.${upgrade_type.type_id}.level || 0 %]
-		<td align="center">[% level %]</td>
+		[% level = upgrades_by_type_id.${upgrade_type.type_id}.effective_level || 0 %]
+		<td align="center">[% level %] 
+			[% IF upgrades_by_type_id.${upgrade_type.type_id}.damage %](Dmg: [% upgrades_by_type_id.${upgrade_type.type_id}.damage %])[% END %]
+		</td>
 		
 		<td align="center">
 			[% IF level %]

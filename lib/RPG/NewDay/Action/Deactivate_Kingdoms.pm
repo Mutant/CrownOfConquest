@@ -25,8 +25,7 @@ sub run {
     );    
     
     foreach my $kingdom (@kingdoms) {
-        
-
+        $self->check_for_inactive($kingdom);
     }
 }
 

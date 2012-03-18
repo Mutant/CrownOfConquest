@@ -230,11 +230,11 @@ sub test_process_barracks_town_owner : Tests(4) {
     # THEN
     my @messages = $town->history;
     is(scalar @messages, 1, "One message created");
-    like($messages[0]->message, qr{test gained 50 xp}, "Level up information in message");
+    like($messages[0]->message, qr{test gained 100 xp}, "Level up information in message");
     
     my @characters = $cg->characters;
-    is($characters[0]->xp, 50, "Character 1 given xp");
-    is($characters[1]->xp, 50, "Character 2 given xp");        
+    is($characters[0]->xp, 100, "Character 1 given xp");
+    is($characters[1]->xp, 100, "Character 2 given xp");        
 }
 
 1;

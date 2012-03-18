@@ -741,9 +741,9 @@ sub defence_factor {
     
     # Apply effects
     my $effect_df = 0;
-    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;    
-    
-    return $self->_defence_factor || 0 + $effect_df;
+    map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
+        
+    return ($self->_defence_factor // 0) + $effect_df; 
 }
 
 sub calculate_defence_factor {

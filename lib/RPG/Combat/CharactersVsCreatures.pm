@@ -129,7 +129,7 @@ sub creatures_lost {
 
 	my $avg_creature_level = $self->creature_group->level;
 
-	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d4');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
 	$self->result->{gold} = $gold;
 
 	$self->combat_log->gold_found($gold);

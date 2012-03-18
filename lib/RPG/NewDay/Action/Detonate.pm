@@ -7,6 +7,12 @@ extends 'RPG::NewDay::Base';
 
 use DateTime;
 
+sub cron_string {
+    my $self = shift;
+     
+    return $self->context->config->{detonate_cron_string};
+}
+
 sub run {
     my $self = shift;
     
@@ -15,6 +21,7 @@ sub run {
     my @bombs = $c->schema->resultset('Bomb')->search(
         {
             planted => {'<=', DateTime->now->subtract( minutes => 5 )},
+            detonated => undef,
         }
     );
     

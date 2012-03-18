@@ -43,3 +43,5 @@ ENGINE = InnoDB;
 ALTER TABLE `Building_Upgrade` ADD COLUMN `damage` INTEGER  NOT NULL DEFAULT 0 AFTER `level`,
  ADD COLUMN `damage_last_done` DATETIME AFTER `damage`;
 
+ALTER TABLE `Bomb` ADD INDEX `planted_idx`(`planted`);
+

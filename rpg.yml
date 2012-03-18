@@ -87,6 +87,7 @@ offline_combat_cron_string: "15 * * * *"
 
 # Check for inactive kingdoms, and deactivate
 deactivate_kingdoms_cron_string: "55 */2 * * *"
+
 # New turns cron string
 new_turns_cron_string: "0 * * * *"
 
@@ -95,6 +96,12 @@ mini_map_cron_string: "*/5 * * * *"
 
 # Archiving of combat logs
 combat_log_archive_cron_string: "5 5 * * 1" 
+
+# Remove damage to buildings
+repair_building_damage_cron_string: "30 * * * *"
+
+# Check whether bombs should be detonated
+detonate_cron_string: "*/5 * * * *"
 
 # ----- Character / Party Generation Params ----- #
 

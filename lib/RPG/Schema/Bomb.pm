@@ -37,22 +37,26 @@ sub detonate {
                     land_id => $dungeon->land_id,    
                 }
             );
-            push @buildings, $building;
             
-            my $stairs_sector = $dungeon->stairs_sector;
-            
-            my $distance_to_stairs = RPG::Map->get_distance_between_points(
-                {
-                    x => $stairs_sector->x,
-                    y => $stairs_sector->y,
-                },
-                {
-                    x => $self->dungeon_grid->x,
-                    y => $self->dungeon_grid->y,
-                }
-            );
-
-            $detonation_bonus = round ($distance_to_stairs / 3) - 3;
+            if ($building) {
+                
+                push @buildings, $building;
+                
+                my $stairs_sector = $dungeon->stairs_sector;
+                
+                my $distance_to_stairs = RPG::Map->get_distance_between_points(
+                    {
+                        x => $stairs_sector->x,
+                        y => $stairs_sector->y,
+                    },
+                    {
+                        x => $self->dungeon_grid->x,
+                        y => $self->dungeon_grid->y,
+                    }
+                );
+    
+                $detonation_bonus = round ($distance_to_stairs / 3) - 3;
+            }
         }
     }
     else {

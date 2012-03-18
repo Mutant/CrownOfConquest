@@ -2,7 +2,8 @@
 	[% IF ! position.town_id %]
 		[% position.x %], [% position.y %] - 
 		[% position.terrain_name | ucfirst %]
-		[% IF click_to_move %] (Move Cost: [% position.party_movement_factor %])[% END %]
+		[% IF click_to_move %]- Move Cost: [% position.party_movement_factor %][% END %]
+		- [% IF position.kingdom_name %]Kingdom of [% position.kingdom_name %][% ELSE %]Neutral[% END %]
 		[% IF position.known_dungeon %]
 			- Level [% position.known_dungeon %] Dungeon Entrance
 		[% END %]

@@ -9,10 +9,12 @@ use List::Util qw(shuffle);
 
 sub random {
     my $self = shift;
+    my %params = @_;
     
     my @spells = shuffle ($self->search(
     	{
     		hidden => 0,
+    		spell_name => {'!=', $params{exclude}},
     	},
     ));
     

@@ -40,7 +40,7 @@ sub run {
             next unless $shop->status eq 'Open';
 
             # Calculate items in shop
-            my $ideal_items_value = $shop->shop_size * 250 + ( Games::Dice::Advanced->roll('2d40') - 20 );
+            my $ideal_items_value = $shop->shop_size * 500 + ( Games::Dice::Advanced->roll('2d40') - 20 );
             my $actual_items_value = 0;
             my @items_in_shop =
                 $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );

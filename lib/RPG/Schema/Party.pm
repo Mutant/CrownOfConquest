@@ -1134,6 +1134,19 @@ sub has_king_of {
     
 }
 
+# Return the % of the world the party has explored
+sub world_explored {
+    my $self = shift;
+    
+    my $world_size = $self->result_source->schema->resultset('Land')->search->count;
+    my $explored = $self->search_related('mapped_sectors')->count;
+    
+    warn $world_size;
+    warn $explored;
+    
+    return ($explored / $world_size) * 100;   
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

@@ -48,6 +48,11 @@
 			<td>[% party.turns_used %]</td>
 		</tr>
 		<tr>
+			<td></td>
+			<td>World Explored:</td>
+			<td>[% party.world_explored | format('%.2f') %]%</td>
+		</tr>
+		<tr>
 			<td id="refer-a-friend-help">(?)</td>
 			<td id="refer-a-friend-label">Refer a friend URL</td>
 			<td>[% base %]player/register?referred_by=[% party.player.player_name %]</td>

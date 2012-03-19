@@ -164,6 +164,8 @@ sub execute_round {
 	push @{ $self->result->{messages} }, @combat_messages;
 
 	$self->record_messages;
+	
+	undef $self->{_auto_cast_checked_for};
 
 	return $self->result;
 }

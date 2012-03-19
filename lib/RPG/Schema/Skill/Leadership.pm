@@ -20,6 +20,10 @@ sub execute {
         when ('kingdom_quests_allowed') {
             return $self->level;   
         }
+        
+        when ('mayor_xp_gain') {
+            return $self->level;   
+        }        
     }
     
 }

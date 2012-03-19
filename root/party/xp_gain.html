@@ -1,4 +1,4 @@
-[% character.character_name %] gained [% xp_awarded %] xp.
+[% character.character_name %] gained [% xp_awarded %] xp[% IF reason %] [% reason %][% END %].
 [% IF level_up_details.hit_points %]
 	<br>[% character.character_name %] went up a level! (Now level [% character.level %])
 	<br>[% character.character_name %] gained [% level_up_details.hit_points %] hit points.

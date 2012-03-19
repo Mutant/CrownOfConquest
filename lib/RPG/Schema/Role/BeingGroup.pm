@@ -153,7 +153,7 @@ sub xp_gain {
         my $level_up_details = $character->xp( $character->xp + ($xp_gained || 0) );
 
         push @details, {
-        	character         => $character,	
+        	character        => $character,	
 			xp_awarded       => $xp_gained,
             level_up_details => $level_up_details,
         };

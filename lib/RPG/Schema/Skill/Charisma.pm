@@ -24,6 +24,10 @@ sub execute {
         when ('kingdom_loyalty') {
             return round ($self->level / 2);
         }
+        
+        when ('mayor_xp_gain') {
+            return $self->level;   
+        }
     }
     
 }

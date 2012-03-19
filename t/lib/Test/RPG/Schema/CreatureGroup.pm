@@ -460,5 +460,13 @@ sub test_flee_chance_with_strategy : Tests(1) {
     is($flee_chance, 16, "Flee chance is correct with Strategy skill");   
 }
 
+sub test_characters_in_cg_awarded_xp {
+    my $self = shift;   
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, creature_group_id => $cg->id, level => 3);    
+}
+
 1;
 

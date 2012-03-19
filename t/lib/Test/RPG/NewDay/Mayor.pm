@@ -798,4 +798,42 @@ sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
 	is($town->gold, 0, "Town's gold is 0 - no tax collected");
 }
 
+sub test_gain_xp : Tests() {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id, party_id => $party->id );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 10;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Charisma',
+        }
+    ); 
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 10,
+        }
+    );    
+    
+    # WHEN
+    $action->gain_xp($town, $mayor);
+    
+    # THEN
+    is($mayor->xp, 47, "Mayor has gained xp");
+    
+    my @messages = $town->history;
+    is(scalar @messages, 1, "Town has 1 message");
+    like($messages[0]->message, qr{test gained 47 xp from being mayor}, "Town message has correct text");
+    
+}
+
 1;

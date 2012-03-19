@@ -104,6 +104,8 @@ sub process_town {
 	if (! $revolt_started && $town->peasant_state) {
 		$self->process_revolt($town);
 	}
+	
+	$self->gain_xp($town, $mayor);
 
 	$self->generate_advice($town);
 }
@@ -917,6 +919,45 @@ sub creature_guard_types {
 	) ];
 	
 	return $self->{creature_guard_types};       
+}
+
+sub gain_xp {
+    my $self = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    return if $mayor->is_npc;
+    
+    my $c = $self->context;
+    
+    my $xp = round ($town->prosperity / 3) + round ($town->mayor_rating / 5) 
+        + ($mayor->execute_skill('Charisma', 'mayor_xp_gain') // 0) + ($mayor->execute_skill('Leadership', 'mayor_xp_gain') // 0)
+        + Games::Dice::Advanced->roll('2d10');
+
+    return if $xp <= 0;        
+        
+    my $details = $mayor->xp( $mayor->xp + $xp );
+    $mayor->update;          
+        
+    my $message = RPG::Template->process(
+    	$c->config,
+    	'party/xp_gain.html',
+    	 {
+        	character        => $mayor,	
+			xp_awarded       => $xp,
+            level_up_details => $details,
+            reason           => 'from being mayor',
+        },
+	);
+	
+	$town->add_to_history(
+		{
+			type => 'mayor_news',
+			message => $message,
+			day_id => $c->current_day->id,
+		}
+	);	    
+    
 }
 
 1;

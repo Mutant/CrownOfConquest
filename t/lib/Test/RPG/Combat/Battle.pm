@@ -597,6 +597,7 @@ sub test_check_for_auto_cast_character_target : Tests(2) {
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
 	$character->set_always('check_for_auto_cast', $spell);
+	$character->set_always('last_combat_action', 'Attack');
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
@@ -607,7 +608,7 @@ sub test_check_for_auto_cast_character_target : Tests(2) {
 	
 	# THEN
 	is($spell_cast->id, $spell->id, "Spell id set correctly");
-	is($target->id, $character->id, "Spell target set correctly");	
+	is($target->id, $character->id, "Spell target set correctly");
 
 }
 
@@ -633,7 +634,6 @@ sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	$character->update;
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
-	$character->set_always('check_for_auto_cast', $spell);
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
@@ -646,4 +646,5 @@ sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	is($character->last_combat_param1, undef, "No spell id");
 	is($character->last_combat_param2, undef, "No spell target");
 }
+
 1;

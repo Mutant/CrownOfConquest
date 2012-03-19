@@ -432,6 +432,7 @@ sub character_action {
 	my $autocast = $character->last_combat_param1 && $character->last_combat_param1 eq 'autocast' ? 1 : 0;
 	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
+	    return unless $target;
 	    $self->log->debug($character->name . " is autocasting " . $spell->spell_name . " on " . $target->name);
         $character->last_combat_action('Cast');
 		$character->last_combat_param1( $spell->id );
@@ -604,17 +605,15 @@ sub check_for_auto_cast {
 		# Randomly select a target		
 		given ( $spell->target ) {
 			when ('creature') {
-            	my %opponents = map { $_->id => $_ } $self->opposing_combatants_of($caster);
-
-				for my $id ( shuffle keys %opponents ) {
-					unless ( $opponents{$id}->is_dead ) {
-						$target = $opponents{$id};
-						last;
-					}
-				}
+            	my @opponents = grep { !$_->is_dead } $self->opposing_combatants_of($caster);
+            	
+            	$target = $spell->select_target(@opponents);
 			}
 			when ('character') {
-				$target = ( shuffle grep { !$_->is_dead } grep { $_->group_id == $caster->group_id } $self->combatants )[0];
+			    my $group = $caster->group;
+				my @chars = grep { !$_->is_dead && $group->has_being($_) } $self->combatants;
+				
+				$target = $spell->select_target(@chars);
 			}
 			when ('party') {
 			    my $opp_num = $self->opponent_number_of_being($caster);

@@ -6,6 +6,7 @@ use warnings;
 use Carp;
 
 use RPG::Combat::SpellActionResult;
+use List::Util qw(shuffle);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Spell');
@@ -142,6 +143,35 @@ sub can_be_cast_on {
 	my $target = shift;
 	
 	return 1;	
+}
+
+# Select target for spell for auto-cast purposes
+sub select_target {
+    my $self = shift;
+    my @targets = shift;
+    
+    @targets = grep { $self->can_be_cast_on($_) } @targets;
+    
+    return unless @targets;
+    
+    return (shuffle @targets)[0];
+}
+
+# Select a target for buffs - one that is alive, and is either
+#  not a character or is set to attack
+sub _select_buff_target {
+    my $self = shift;
+    my @targets = shift;
+    
+    my @possible_targets;
+    foreach my $target (@targets) {
+        push @possible_targets, $target
+            if ! $target->is_dead && (! $target->is_character || $target->last_combat_action eq 'Attack');   
+    }
+    
+    return unless @possible_targets;
+    
+    return (shuffle @possible_targets)[0];
 }
 
 1;

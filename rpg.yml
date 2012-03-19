@@ -492,6 +492,9 @@ dungeon_special_room_percentage: 2
 # Movement cost
 cost_of_moving_through_dungeons: 2
 
+# Cost in turns to dismantle a dungeon door
+dismantle_door_cost: 15
+
 # ----- Creature Params ----- #
 
 # Ratio of number of creature groups to parties

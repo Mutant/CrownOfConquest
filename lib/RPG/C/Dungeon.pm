@@ -744,6 +744,7 @@ sub open_door : Local {
     				params   => {
     					party => $c->stash->{party},
     					door => $door,
+    					dismantle_cost => $c->config->{dismantle_door_cost},
     				},
     				return_output => 1,
     			}
@@ -863,6 +864,30 @@ sub unblock_door : Local {
     my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
     
     croak "Character is dead" if $character->is_dead;
+
+    if ( $c->req->param('action') eq 'dismantle' ) {
+        if ( $c->stash->{party}->turns < $c->config->{dismantle_door_cost} ) {
+            $c->stash->{error} = "You don't have enough turns to dismantle the door";
+            $c->detach( '/panel/refresh', ['messages'] );
+        }
+        
+        $c->stash->{messages} = "The party spends " . $c->config->{dismantle_door_cost} . " dismantling the door. It is now unblocked";
+        
+        $door->state('open');
+        $door->update;
+        
+        my $opposite_door = $door->opposite_door;
+        $opposite_door->state('open');
+        $opposite_door->update;
+
+        $c->stash->{refresh_panels} = ['map'];        
+    
+        $c->stash->{party}->turns( $c->stash->{party}->turns - $c->config->{dismantle_door_cost} );
+        $c->stash->{party}->update;
+    
+        $c->detach( '/panel/refresh', [ 'messages', 'party_status' ] );        
+        
+    }
 
     # Only attempt to unblock door if action matches door's type
     if ( $action_for_door{ $c->req->param('action') } eq $door->type ) {

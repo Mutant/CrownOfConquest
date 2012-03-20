@@ -599,33 +599,42 @@ sub check_for_auto_cast {
 	return if $self->{_auto_cast_checked_for}{$caster->id};
 	$self->{_auto_cast_checked_for}{$caster->id} = 1;
 	
-	if ( my $spell = $caster->check_for_auto_cast ) {
-        my $target;
-
-		# Randomly select a target		
-		given ( $spell->target ) {
-			when ('creature') {
-            	my @opponents = grep { !$_->is_dead } $self->opposing_combatants_of($caster);
-            	
-            	$target = $spell->select_target(@opponents);
-			}
-			when ('character') {
-			    my $group = $caster->group;
-				my @chars = grep { !$_->is_dead && $group->has_being($_) } $self->combatants;
-				
-				$target = $spell->select_target(@chars);
-			}
-			when ('party') {
-			    my $opp_num = $self->opponent_number_of_being($caster);
-                $target = ( $self->opponents )[$opp_num-1];			
-			}
-			default {
-				# Currently only combat spells with creature/character target are implemented
-				confess "Auto-cast can't handle spell target: $_";
-			}
-		}
-		
-		return ($spell, $target);
+	my $redo_count = 0;
+	{
+    	if ( my $spell = $caster->check_for_auto_cast ) {
+            my $target;
+    
+    		# Randomly select a target		
+    		given ( $spell->target ) {
+    			when ('creature') {
+                	my @opponents = grep { !$_->is_dead } $self->opposing_combatants_of($caster);
+                	
+                	$target = $spell->select_target(@opponents);
+    			}
+    			when ('character') {
+    			    my $group = $caster->group;
+    				my @chars = grep { !$_->is_dead && $group->has_being($_) } $self->combatants;
+    				
+    				$target = $spell->select_target(@chars);
+    			}
+    			when ('party') {
+    			    my $opp_num = $self->opponent_number_of_being($caster);
+                    $target = ( $self->opponents )[$opp_num-1];			
+    			}
+    			default {
+    				# Currently only combat spells with creature/character target are implemented
+    				confess "Auto-cast can't handle spell target: $_";
+    			}
+    		}
+    		
+    		if (! $target) {
+                $redo_count++;
+                return if $redo_count > 3;
+                redo;   
+    		}
+    		
+    		return ($spell, $target);
+    	}
 	}
 }
 

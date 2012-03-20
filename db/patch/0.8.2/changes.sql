@@ -45,3 +45,5 @@ ALTER TABLE `Building_Upgrade` ADD COLUMN `damage` INTEGER  NOT NULL DEFAULT 0 A
 
 ALTER TABLE `Bomb` ADD INDEX `planted_idx`(`planted`);
 
+ALTER TABLE `Dungeon_Room` ADD COLUMN `tileset` VARCHAR(100)  NOT NULL;
+

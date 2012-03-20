@@ -77,14 +77,11 @@ sub run {
 
         $dungeons_created->[ $sector_to_use->x ][ $sector_to_use->y ] = 1;
         
-        my $tileset = (shuffle RPG::Schema::Dungeon::tilesets())[0];
-
         my $dungeon = $c->schema->resultset('Dungeon')->create(
             {
                 land_id => $sector_to_use->id,
                 level   => RPG::Maths->weighted_random_number( 1 .. $c->config->{dungeon_max_level} ),
                 type => 'dungeon',
-                tileset => $tileset,
             }
         );
         

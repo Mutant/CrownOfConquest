@@ -57,7 +57,7 @@ sub run {
         
         my $size = 5 + (int $town->prosperity / 10);
         
-        $self->generate_dungeon_grid($dungeon, $size, 0);
+        $self->generate_dungeon_grid($dungeon, $size, 0, 1);
         $self->populate_sector_paths($dungeon);
         my @chests = $self->generate_chests($dungeon);
         $self->fill_chests($dungeon, @chests);

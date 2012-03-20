@@ -23,6 +23,7 @@
 				style="text-decoration: none;">
 		[% END %]
 		
+		[% IF sector.dungeon_room.tileset %][% tileset = sector.dungeon_room.tileset %][% END %]
 		[% IF sector.stairs_up %]
 			[% background_image = "d" _ tileset _ "us.png" %]
 		[% ELSIF sector.stairs_down %]

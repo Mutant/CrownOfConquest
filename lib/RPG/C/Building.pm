@@ -120,7 +120,7 @@ sub build : Local {
     
     my @groups = $self->get_valid_groups($c, $town);
 
-    if (! $town && ! $building_type->enough_turns($c->stash->{party})) {
+    if (! $building_type->enough_turns($c->stash->{party})) {
         $c->stash->{error} = "You don't have enough turns to construct the building";
         $c->detach('/panel/refresh');
     }
@@ -149,6 +149,9 @@ sub build : Local {
 			'labor_needed' => 0,
 		}
 	);   
+
+	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
+	$c->stash->{party}->update;
 	
 	if (! $town) {	
     	$c->forward('change_building_ownership', [$building]);
@@ -162,10 +165,7 @@ sub build : Local {
     			day_id => $c->stash->{today}->id,
     		}
     	);
-    
-    	$c->stash->{party}->turns($c->stash->{party}->turns - $building_type->turns_needed($c->stash->{party}));
-    	$c->stash->{party}->update;
-    	
+   	
     	my $message = $c->forward( '/quest/check_action', [ 'constructed_building', $building ] );
     	
     	push @$message, "Building created";
@@ -174,7 +174,7 @@ sub build : Local {
     		
     	$c->forward('/map/refresh_current_loc');
 	
-	   $c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
+ 	   $c->forward( '/panel/refresh', [[screen => 'close'], 'party_status', 'messages'] );
 	}
 }
 

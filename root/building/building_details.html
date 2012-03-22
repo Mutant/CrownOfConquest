@@ -18,7 +18,7 @@
 	[% END %]
 	[% IF building_type %]  
 	<div id="building_types" style="float:left; padding:10px;">
-		[% IF drawn_title == 0 AND ! town %]		
+		[% IF drawn_title == 0 %]		
 			<div style="position:absolute; margin-top:-20px">				
 				<span style="[% title_span_style %]">[% upgrade ? 'Upgrade' : 'Construction' %] Requires [% building_type.turns_needed(party) %] turns to complete</span>
 			</div>

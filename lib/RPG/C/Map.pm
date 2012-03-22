@@ -95,11 +95,11 @@ sub view : Private {
 sub grid_sizes {
     my ($self, $c) = @_;
     
-    my $zoom_level = $c->session->{zoom_level};
+    my $zoom_level = $c->session->{zoom_level} // 2;
     
-    my $x_grid_size = $c->config->{map_width}{$c->session->{screen_width}} + (($zoom_level-2) * 3) + 1;
+    my $x_grid_size = $c->config->{map_width}{$c->session->{screen_width} // 'small'} + (($zoom_level-2) * 3) + 1;
     $x_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
-    my $y_grid_size = $c->config->{map_height}{$c->session->{screen_height}} + (($zoom_level-2) * 3) + 1;
+    my $y_grid_size = $c->config->{map_height}{$c->session->{screen_height} // 'small'} + (($zoom_level-2) * 3) + 1;
     $y_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
     
     return ($x_grid_size, $y_grid_size);       

@@ -166,6 +166,7 @@ sub execute_round {
 	$self->record_messages;
 	
 	undef $self->{_auto_cast_checked_for};
+	undef $self->{_cast_this_round};
 
 	return $self->result;
 }

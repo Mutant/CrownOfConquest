@@ -8,6 +8,7 @@ use base 'Catalyst::Controller';
 use Statistics::Basic qw(average);
 use RPG::Schema::Creature;
 use DateTime;
+use DateTime::Format::MySQL;
 
 sub default : Private {
     my ( $self, $c ) = @_;
@@ -103,6 +104,44 @@ sub new_players : Local {
                 params   => {
                     players => \@players,
                     count => scalar @players,
+                },
+            }
+        ]
+    );
+}
+
+sub recent_stickiness : Local {
+    my ( $self, $c ) = @_;
+    
+    my $dbh = $c->model('DBIC')->storage->dbh;
+    
+    my $sql = "select player_name, created from Player where "
+        . "(select count(*) from Player_Login pl where pl.player_id = Player.player_id and login_date > ?) > 0";
+        
+    my $dt = DateTime->now->subtract( days => 7 );
+    my $sth = $dbh->prepare($sql);
+    $sth->execute($dt->strftime('%F %T'));
+    
+    my %results;
+    my $max_months = 0;
+    while (my $data = $sth->fetchrow_hashref) {
+        my $created_dt = DateTime::Format::MySQL->parse_datetime( $data->{created} );
+        my $dur = DateTime->now()->subtract_datetime($created_dt);
+        
+        my $months_ago = $dur->in_units('months');
+        $max_months = $months_ago if $months_ago > $max_months;
+        
+        push @{ $results{$months_ago} }, $data->{player_name};   
+    }
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/recent_stickiness.html',
+                params   => {
+                    results => \%results,
+                    months_range => [0..$max_months],
                 },
             }
         ]

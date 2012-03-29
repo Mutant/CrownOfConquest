@@ -118,13 +118,17 @@ sub recent_stickiness : Local {
     my $sql = "select player_name, created from Player where "
         . "(select count(*) from Player_Login pl where pl.player_id = Player.player_id and login_date > ?) > 0";
         
-    my $dt = DateTime->now->subtract( days => 7 );
+    my $days_ago = $c->req->param('days_ago') // 7;
+        
+    my $dt = DateTime->now->subtract( days => $days_ago );
     my $sth = $dbh->prepare($sql);
     $sth->execute($dt->strftime('%F %T'));
     
     my %results;
     my $max_months = 0;
     while (my $data = $sth->fetchrow_hashref) {
+        next if $data->{created} eq '0000-00-00 00:00:00';
+        
         my $created_dt = DateTime::Format::MySQL->parse_datetime( $data->{created} );
         my $dur = DateTime->now()->subtract_datetime($created_dt);
         
@@ -142,6 +146,7 @@ sub recent_stickiness : Local {
                 params   => {
                     results => \%results,
                     months_range => [0..$max_months],
+                    days_ago => $days_ago,
                 },
             }
         ]

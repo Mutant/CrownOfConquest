@@ -377,7 +377,8 @@ sub list : Private {
 					next unless $target;
 						
 					my $spell = $action->spell;
-					my $spell_name = $spell->spell_name . ' [' . $action->item->display_name . ']';
+					my $spell_name = $spell->spell_name;
+					$spell_name .= ' [' . $action->item->display_name . ']' if $action->can('item');
 												
 					$combat_params{$character->id} = [$target->name, $spell_name];					
 				}

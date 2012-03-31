@@ -82,6 +82,7 @@ sub build_item_type {
 					keep_max => $variable->{keep_max} || 0,
 					min_value => $variable->{min_value} || 0,
 					max_value => $variable->{max_value} || 100,
+					special => $variable->{special} // 0,
 				}
 			);
     	}

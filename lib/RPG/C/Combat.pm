@@ -434,16 +434,9 @@ sub use_target_list : Local {
 	
 	return unless $character;
 	
-	my $action = $c->model('DBIC::Item_Enchantment')->find(
-		{ 
-			item_enchantment_id => $c->req->param('action_id'),			
-		},
-		{
-			prefetch => 'item',
-		},
-	);
+	my $action = $character->get_item_action($c->req->param('action_id'));
 	
-	$c->forward('build_target_list', [$action->spell, $action->item]);
+	$c->forward('build_target_list', [$action->spell, $action->can('item') ? $action->item : undef]);
 
 }
 

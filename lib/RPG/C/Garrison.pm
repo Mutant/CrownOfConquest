@@ -138,6 +138,8 @@ sub add : Local {
 	my $messages = $c->forward( '/quest/check_action', [ 'garrison_created', $garrison ] );
 	$c->flash->{message} = $messages->[0] if $messages && @$messages;
 	
+	$c->forward('/map/refresh_current_loc');
+	
 	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id], 'messages', 'party'] );
 }
 
@@ -266,6 +268,8 @@ sub remove : Local {
 		$c->stash->{garrison}->update;
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];
+		
+		$c->forward('/map/refresh_current_loc');
 		
 		$c->forward( '/panel/refresh', [[screen => 'close'], 'messages', 'party'] );		
 	}

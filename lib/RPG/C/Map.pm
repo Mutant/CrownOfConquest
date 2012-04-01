@@ -322,6 +322,26 @@ sub generate_grid : Private {
     }
    
     $c->stats->profile("Queried db for buildings");
+    
+	#  Add garrisons owned by party
+    my @garrisons = $c->model('DBIC::Garrison')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        {
+            x => $x_size,
+            y => $y_size,
+        },
+        $c->stash->{party}->id,
+    );    
+    
+    my $garrison_grid;
+    foreach my $garrison (@garrisons) {
+        push @{$garrison_grid->[ $garrison->{land}->{x} ][ $garrison->{land}->{y} ]}, $garrison;
+    }
+   
+    $c->stats->profile("Queried db for garrisons");    
 
     my @grid;
     my %town_costs;
@@ -331,6 +351,7 @@ sub generate_grid : Private {
     foreach my $location (@$locations) {
         $location->{roads} = $road_grid->[ $location->{x} ][ $location->{y} ];
         $location->{buildings} = $building_grid->[ $location->{x} ][ $location->{y} ];
+        $location->{garrison} = $garrison_grid->[ $location->{x} ][ $location->{y} ];
         
         $grid[ $location->{x} ][ $location->{y} ] = $location;
         

@@ -1141,9 +1141,6 @@ sub world_explored {
     my $world_size = $self->result_source->schema->resultset('Land')->search->count;
     my $explored = $self->search_related('mapped_sectors')->count;
     
-    warn $world_size;
-    warn $explored;
-    
     return ($explored / $world_size) * 100;   
 }
 

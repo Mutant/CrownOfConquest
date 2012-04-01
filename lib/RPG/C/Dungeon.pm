@@ -815,7 +815,8 @@ sub sector_menu : Local {
         undef $c->session->{temp_dungeon_messages};
     }
     
-    my ($factor_comparison, $confirm_attack) = $c->forward('/party/get_watcher_factor_comparison', [$creature_group]);    
+    my $comparison_details = $c->forward('/party/get_watcher_factor_comparison', [$creature_group]);    
+    my ($factor_comparison, $confirm_attack) = @$comparison_details;
 
     return $c->forward(
         'RPG::V::TT',

@@ -240,8 +240,6 @@ sub claim_land {
     
     my $kingdom_id = $self->location->kingdom_id;
     
-    return unless $kingdom_id;
-    
     my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset    => $self->result_source->schema->resultset('Land'),
         relationship => 'me',

@@ -44,7 +44,7 @@ function init() {
 		else if (purchaseType == 'quantity') {
 			dojo.byId('quantity-selection-message').innerHTML = "Select how many " + purchasedItem + " you'd like to buy for " + purchasingChar;
 			dojo.byId('quantity-char-id').value = char_id;
-			dojo.byId('quantity-item-type-id').value = item_type_id;
+			dojo.byId('quantity-item-id').value = item_type_id;
 			
 			dijit.byId('quantity-selection').show();
 		}
@@ -73,7 +73,7 @@ function savePurchase(dialogFields) {
 
 function saveQuantityPurchase(dialogFields) {	
 	var url = "shop/buy_quantity_item?character_id=" + dialogFields.purchasing_char_id 
-        	+ "&item_type_id=" + dialogFields.purchasing_item_type_id + "&shop_id=[% shop.id %]"
+        	+ "&item_id=" + dialogFields.purchasing_item_id + "&shop_id=[% shop.id %]"
         	+ "&quantity=" + dialogFields.quantity;
 
 	getPanels(url);
@@ -81,6 +81,15 @@ function saveQuantityPurchase(dialogFields) {
 
 function purchaseCallback(data) {
 	dijit.byId(data.tab).refresh();
+}
+
+function quantityPurchaseCallback(data) {
+	if (data.quantity <= 0) {
+		dojo.byId('item_outer_' + data.item_id).style.display = 'none';
+	}
+	else {
+		dojo.byId('item-quantity-' + data.item_id).innerHTML = data.quantity;
+	}
 }
 
 dojo.addOnLoad( init );
@@ -108,7 +117,7 @@ dojo.addOnLoad( init );
 		style="width: 80px"
         />
     <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-    <input id="quantity-item-type-id" name="purchasing_item_type_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="quantity-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	[% dialog_buttons('quantity-selection') %]
 </div>
 

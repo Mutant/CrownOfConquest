@@ -65,12 +65,6 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key('shop_id');
 
-__PACKAGE__->has_many(
-    'items_made',
-    'RPG::Schema::Items_Made',
-    { 'foreign.shop_id' => 'self.shop_id' }
-);
-
 __PACKAGE__->many_to_many(
     'item_types',
     'RPG::Schema::Items_Type',
@@ -88,19 +82,6 @@ __PACKAGE__->belongs_to(
     'RPG::Schema::Town',
     { 'foreign.town_id' => 'self.town_id' }
 );
-
-sub item_types_made {
-	my $self = shift;
-	
-	my @records = $self->search_related('items_made',
-		{},
-		{
-			prefetch => {'item_type' => 'category'},			
-		}
-	);
-	
-	return map { $_->item_type } @records;
-}
 
 sub grouped_items_in_shop {
 	my $self = shift;

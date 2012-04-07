@@ -1,7 +1,9 @@
 [% IF item && item.name %]
 	<b>[% item.name %]</b><br>
-[% ELSE %]
+[% ELSIF item %]
 	<b>[% item.display_name %][% IF item %] (ID: [% item.id %])[% END %]</b><br>
+[% ELSE %]
+	<b>[% item_type.item_type %]</b><br>
 [% END %]
 
 Weight: [% IF item %][% item.weight %][% ELSE %][% item_type.weight %][% END %]<br>

@@ -9,5 +9,7 @@ set @ivn2 = (select item_variable_name_id from Item_Variable_Name where item_var
 
 INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id, item_variable_name_id, special) values (0, 1, 1, (select item_type_id from Item_Type where item_type = 'Scroll'), @ivn2, 1);
 
+DROP TABLE Items_Made;
 
-
+@ivn_id = (select item_variable_name_id from Item_Variable_Name where item_category_id = (select item_category_id FROM Item_Category where item_category = 'Resource'));
+update Item_Variable_Params set max_value = 200 where item_variable_name_id = @ivn_id;

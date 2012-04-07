@@ -148,7 +148,7 @@ sub can_be_cast_on {
 # Select target for spell for auto-cast purposes
 sub select_target {
     my $self = shift;
-    my @targets = shift;
+    my @targets = @_;
     
     @targets = grep { $self->can_be_cast_on($_) } @targets;
     

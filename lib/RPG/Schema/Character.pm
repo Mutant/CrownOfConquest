@@ -1429,24 +1429,29 @@ sub set_starting_equipment {
 # Returns the spell to cast if there is one, undef otherwise
 sub check_for_auto_cast {
 	my $self = shift;
+	my @exclude_spells = @_;
 	
 	my $online = 0;	
 	$online = 1 if ! $self->is_npc && $self->group->is_online;
-	
+			
 	# Only do auto cast if they're offline, or explictly set to autocast
-	return unless ! $online || ($self->last_combat_action eq 'Cast' && $self->last_combat_param1 eq 'autocast');     
+	return unless ! $online || ($self->last_combat_action eq 'Cast' && $self->last_combat_param1 eq 'autocast');   
 	
 	my $chance = $online ? $self->online_cast_chance : $self->offline_cast_chance;
 	$chance //= 0;
-	
+		
 	my $cast_roll = Games::Dice::Advanced->roll('1d100');
-
+	
 	if ($cast_roll <= $chance) {
 		my %params;
 		unless ($self->is_npc) {
 			# pc chars restricted to spells they've marked to cast offline
 			$params{cast_offline} = 1;
 		}
+		
+		if (@exclude_spells) {
+            $params{'spell.spell_id'} = {'-not_in', \@exclude_spells};
+		} 
 		
 		my @spells = $self->search_related(
 			'memorised_spells',
@@ -1456,7 +1461,7 @@ sub check_for_auto_cast {
 			}
 		);
 		
-		@spells = grep { $_->casts_left_today > 0 } @spells;
+		@spells = grep { $_->casts_left_today > 0 } @spells;				
 		
 		return unless @spells;
 		

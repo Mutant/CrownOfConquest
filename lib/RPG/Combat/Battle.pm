@@ -550,16 +550,16 @@ sub character_action {
 		}
 		else {
 		     $self->log->debug($character->name . " skips '$action' as target is dead");
-		}		  
+		}
 
         $character->last_combat_action('Attack');
 	}
 	
 	# If they were auto-casting, set them back to auto-cast for next round
 	if ($autocast) {
-        $character->last_combat_action('Cast');   
+        $character->last_combat_action('Cast');
 	    $character->last_combat_param1('autocast');
-	    $character->last_combat_param2(undef);	   
+	    $character->last_combat_param2(undef);
 	}
     $character->update;
     
@@ -601,8 +601,9 @@ sub check_for_auto_cast {
 	$self->{_auto_cast_checked_for}{$caster->id} = 1;
 	
 	my $redo_count = 0;
+	my @spell_ids_tried;
 	{
-    	if ( my $spell = $caster->check_for_auto_cast ) {
+    	if ( my $spell = $caster->check_for_auto_cast(@spell_ids_tried) ) {
             my $target;
     
     		# Randomly select a target		
@@ -630,7 +631,8 @@ sub check_for_auto_cast {
     		
     		if (! $target) {
                 $redo_count++;
-                return if $redo_count > 3;
+                return if $redo_count > 5;
+                push @spell_ids_tried, $spell->id;
                 redo;   
     		}
     		

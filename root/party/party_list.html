@@ -431,7 +431,7 @@ function createButton(menu, name, characterId) {
 	    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
 	    		[% END %]
 	    	
-	    		<span id="castSpan_[% char.id %]"></span>
+	    		<span id="castSpan_[% char.id %]" [% IF in_combat %]onDblClick="selectActionCombat('Cast', '[% char.id %]', 'autocast')"[% END %]></span>
 	    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
 	    	
 	    		<span id="useSpan_[% char.id %]"></span>

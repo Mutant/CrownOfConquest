@@ -1,11 +1,19 @@
-<h3>Kingdom Info</h3>
-
-[% FOREACH kingdom IN kingdoms %]
-<div class="text-block" style="background: black">
 [% king = kingdom.king %]
-<h4>Kingdom of <b>[% kingdom.name %]</b></h3>
+<h3>Kingdom of <b>[% kingdom.name %]</b></h3>
 Monarch: [% king.name %] ([% IF king.party_id %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% ELSE %]NPC[% END %])<br><br>
-[% kingdom.description | html_break %]
+
+<div style="float: left; margin-right: 10px">
+[% INCLUDE kingdom/relationships.html %]
 </div>
-<br>
+
+<div style="float: left">
+[% INCLUDE kingdom/records.html %]
+</div>
+
+<br style="clear: both"/>
+
+[% IF kingdom.description %]
+<h4>Description</h4>
+
+[% kingdom.description | html_break %]
 [% END %]

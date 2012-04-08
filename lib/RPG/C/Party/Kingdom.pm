@@ -465,11 +465,40 @@ sub tribute : Local {
 sub info : Local {
     my ($self, $c) = @_;
     
-    my @kingdoms = shuffle $c->model('DBIC::Kingdom')->search(
+    if (! $c->session->{kingdoms_list}) {    
+        my @kingdoms = shuffle $c->model('DBIC::Kingdom')->search(
+            {
+                active => 1,
+            },
+        );
+        
+        $c->session->{kingdoms_list} = \@kingdoms;
+    }
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/kingdom/info_tab.html',
+				params => {
+				    kingdoms => $c->session->{kingdoms_list},
+				},
+			}
+		]
+	);	    
+}
+
+sub individual_info : Local {
+    my ($self, $c) = @_;
+    
+    my $kingdom = $c->model('DBIC::Kingdom')->find(
         {
             active => 1,
+            kingdom_id => $c->req->param('kingdom_id'),
         },
-    );      
+    );
+    
+    my @relationships = $kingdom->relationship_list;
     
 	$c->forward(
 		'RPG::V::TT',
@@ -477,11 +506,14 @@ sub info : Local {
 			{
 				template => 'party/kingdom/info.html',
 				params => {
-				    kingdoms => \@kingdoms,
+				    kingdom => $kingdom,
+				    relationships => \@relationships,
 				},
 			}
 		]
-	);	    
+	);    
+    
+       
 }
 
 sub relationships : Local {

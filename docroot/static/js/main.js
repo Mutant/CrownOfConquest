@@ -829,3 +829,24 @@ function postRoundCallback() {
     });
 }
 	
+/* Kingdoms */
+var selectedKingdom;
+function viewKingdomInfo(kingdomId) {
+	if (selectedKingdom) {
+		dojo.byId('kingdom-link-' + selectedKingdom).style.backgroundColor = '';
+	}
+
+	dojo.byId('kingdom-link-' + kingdomId).style.backgroundColor = '#5F5F5F';
+	selectedKingdom = kingdomId;
+
+	dojo.xhrGet( {
+        url: urlBase + "party/kingdom/individual_info?kingdom_id=" + kingdomId,
+        handleAs: "text",
+        
+        load: function(responseObject){
+			dojo.byId('kingdom-info').innerHTML = responseObject;
+		},
+
+	    timeout: 45000
+    });	
+}

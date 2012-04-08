@@ -798,4 +798,10 @@ sub change_relationship : Local {
     $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=relationships']] );        
 }
 
+sub history : Local {
+    my ($self, $c) = @_;
+    
+    $c->forward('/party/kingdom/history');       
+}
+
 1;

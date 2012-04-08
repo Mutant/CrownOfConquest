@@ -532,8 +532,30 @@ sub relationships : Local {
 				},
 			}
 		]
-	);    
-               
+	);         
+}
+
+sub history : Local {
+    my ($self, $c) = @_;    
+    
+    my @kingdoms = $c->model('DBIC::Kingdom')->search(
+        {},
+        {
+            order_by => 'inception_day_id',
+        },
+    );   
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'kingdom/history.html',
+				params => {
+				    kingdoms => \@kingdoms,
+				},
+			}
+		]
+	);         
 }
 
 1;

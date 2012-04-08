@@ -37,6 +37,7 @@ __PACKAGE__->has_many( 'town_loyalty', 'RPG::Schema::Kingdom_Town', 'kingdom_id'
 __PACKAGE__->has_many( 'relationships', 'RPG::Schema::Kingdom_Relationship', 'kingdom_id' );
 
 __PACKAGE__->belongs_to( 'inception_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.inception_day_id' } );
+__PACKAGE__->belongs_to( 'fall_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.fall_day_id' } );
 __PACKAGE__->belongs_to( 'highest_land_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_land_count_day_id' } );
 __PACKAGE__->belongs_to( 'highest_town_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_town_count_day_id' } );
 __PACKAGE__->belongs_to( 'highest_party_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_party_count_day_id' } );
@@ -101,6 +102,16 @@ sub towns {
             join => 'location',
         }   
     );   
+}
+
+sub duration {
+    my $self = shift;
+    
+    return if ! $self->inception_day_id;
+    
+    my $fall_day = $self->fall_day_id ? $self->fall_day : $self->result_source->schema->resultset('Day')->find_today;
+    
+    return $fall_day->day_number - $self->inception_day->day_number;   
 }
 
 # Find the sectors that are part of a kingdom's border.

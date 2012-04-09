@@ -82,6 +82,21 @@ sub allegiance : Local {
 	
 	my $can_declare_kingdom = $c->stash->{party}->level >= $c->config->{minimum_kingdom_level} 
 	   && $mayor_count >= $c->config->{town_count_for_kingdom_declaration};
+	   
+	my $can_claim_throne = $kingdom && $kingdom->party_can_claim_throne($c->stash->{party});
+	
+	my $current_claim;
+	my $claim_response;
+	my %claim_summary;
+	
+	if ($kingdom) {
+        $current_claim = $kingdom->current_claim;
+        
+        if ($current_claim) {
+            $claim_response = $current_claim->response_from_party($c->stash->{party});
+            %claim_summary= $current_claim->response_summary;
+        }
+	}
 	
     $c->forward(
         'RPG::V::TT',
@@ -99,6 +114,11 @@ sub allegiance : Local {
                     can_declare_kingdom => $can_declare_kingdom,
                     banned => \@banned,
                     in_combat => $c->stash->{party}->in_combat,
+                    can_claim_throne => $can_claim_throne,
+                    claim_wait_period => $c->config->{claim_wait_period},
+                    claim_to_throne => $current_claim,
+                    claim_response => $claim_response,
+                    claim_summary => \%claim_summary,
                 },
             }
         ]
@@ -459,7 +479,7 @@ sub tribute : Local {
         }
     }
     
-    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party_status'] );       
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party_status'] );
 }
 
 sub info : Local {
@@ -555,7 +575,69 @@ sub history : Local {
 				},
 			}
 		]
-	);         
+	);
+}
+
+sub claim : Local {
+    my ($self, $c) = @_;
+    
+    croak "Can't claim throne" if ! $c->stash->{kingdom}->party_can_claim_throne($c->stash->{party});
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->members;
+    
+    croak "Invalid character" if ! $character || $character->is_dead;
+    
+    $c->model('DBIC::Kingdom_Claim')->create(
+        {
+            character_id => $character->id,
+            kingdom_id => $c->stash->{kingdom}->id,
+            claim_made => DateTime->now(),
+        }
+    );
+    
+    $character->status_context($c->stash->{kingdom}->id);
+    $character->status('claiming_throne');
+    $character->update;
+    
+    # Send a message to everyone in the kingdom who can respond
+    foreach my $kingdom_party ($c->stash->{kingdom}->parties) {
+        next if $kingdom_party->id == $c->stash->{party}->id;
+        
+        next if $kingdom_party->level < $c->config->{minimum_claim_response_level};
+        
+        $kingdom_party->add_to_messages(
+            {
+                day_id => $c->stash->{today}->id,
+                message => $character->character_name . ", of the party known as " . $c->stash->{party}->name . " has made a claim for the throne of "
+                    . $c->stash->{kingdom}->name . ". You may support or oppose this claim by going to the Allegiance tab of the Kingdom panel.",
+                alert_party => 1, 
+            }, 
+        );   
+    }
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main'], 'party'] );
+}
+
+sub respond_to_claim : Local {
+    my ($self, $c) = @_;
+    
+    my $claim = $c->stash->{kingdom}->current_claim;
+    
+    croak "Can't respond to own claim" if $claim->claimant->party_id == $c->stash->{party_id};
+    
+    croak "Too low level to respond" if $c->stash->{party}->level < $c->config->{minimum_claim_response_level};
+    
+    my $response = $c->model('DBIC::Kingdom_Claim_Response')->find_or_create(
+        {
+            claim_id => $claim->id,
+            party_id => $c->stash->{party}->id,
+        }
+    );
+    
+    $response->response($c->req->param('response'));
+    $response->update;
+    
+    $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main']] );
 }
 
 1;

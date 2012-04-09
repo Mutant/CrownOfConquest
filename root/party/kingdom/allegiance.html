@@ -9,7 +9,7 @@
 		</tr>
 		<tr>
 			<td>King / Queen:</td>
-			<td><select name="king" dojoType="dijit.form.FilteringSelect">
+			<td><select name="king" dojoType="dijit.form.Select">
 				[% FOREACH character IN party.characters_in_party %]
 					[% UNLESS character.is_dead %]
 						<option value="[% character.id %]">[% character.name %]</option>
@@ -32,6 +32,26 @@
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="claim-diag" style="display: none" title="Claim The Throne Of [% kingdom.name %]" execute="return true;">
+	<form method="post" action="[% base %]party/kingdom/claim" onSubmit="postPanels(this); return false">
+	You can make a claim for the throne by nominating a character as the claimant. The claim will take [% claim_wait_period %] days, during<br>
+	which time parties in the kingdom can support or oppose your claim. If your claim is successful, the character will<br>
+	take the throne, if it fails, you will not be able to make another claim for some time.
+	<br><br>
+	The nominated character will leave the party and will await the result of the claim.
+	<br><br>
+	Nominated Character: <select name="character_id" dojoType="dijit.form.Select">
+	[% FOREACH character IN party.characters_in_party %]
+		[% UNLESS character.is_dead %]
+			<option value="[% character.id %]">[% character.name %]</option>
+		[% END %]
+	[% END %]
+	</select>
+	
+	[% dialog_buttons('claim-diag') %]
+	</form>
+</div>
+
 <h4>Allegiance</h4>
 
 [% PROCESS kingdom/loyalty_rating.html %]
@@ -45,7 +65,31 @@
 	<br><br>
 	<button dojoType="dijit.form.Button" onClick="dijit.byId('tribute-diag').show()">
 		Pay Tribute
-	</button>	
+	</button>
+	[% IF can_claim_throne %]
+	<button dojoType="dijit.form.Button" onClick="dijit.byId('claim-diag').show()">
+		Claim Throne
+	</button>
+	[% END %]
+	
+	[% IF claim_to_throne %]
+		<br><br>
+		<b>Claim To Throne</b><br>
+		[% claimant = claim_to_throne.claimant %]
+		[% IF claimant.party_id != party.id %]
+			[% claimant.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% claimant.party_id %]')">[% claimant.party.name %]</a>) 
+			has made a claim to the throne of [% kingdom.name %], which we [% IF claim_response %][% claim_response %][% ELSE %]have not responded to yet[% END %].
+			<br>
+			Respond to Claim: <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=support')">Support</a>
+							  <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=oppose')">Oppose</a>							  
+		[% ELSE %]
+			We have made a claim to the throne.
+		[% END %]
+		<br>
+		Responses: [% claim_summary.support %] support, [% claim_summary.oppose %] oppose.<br>
+		Claim will be resolved in [% claim_to_throne.days_left %] days. 
+	[% END %]
+	
 [% ELSE %]
 	We are Free Citizens, loyal to no one.
 [% END %]

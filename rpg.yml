@@ -676,6 +676,15 @@ capital_move_cost_per_sector: 6
 # Chance sectors not connected to capital go neutral
 chance_unconnected_sector_becomes_neutral: 20
 
+# Number of days a claim for the throne takes
+claim_wait_period: 7
+
+# Number of days before being allowed to claim again after a failed claim
+failed_claim_ban_period: 28
+
+# Minimum level for parties allowed to respond to a claim
+minimum_claim_response_level: 3
+
 # ----- Skills Params ----- #
 
 # Maximum level allowed for a particular skill

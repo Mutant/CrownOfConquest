@@ -16,3 +16,23 @@ update Item_Variable_Params set max_value = 200 where item_variable_name_id = @i
 
 update Kingdom set inception_day_id = 950 where kingdom_id = 22;
 update Kingdom set inception_day_id = 955 where kingdom_id = 23;
+
+CREATE TABLE `Kingdom_Claim` (
+  `claim_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `kingdom_id` INTEGER  NOT NULL,
+  `character_id` INTEGER  NOT NULL,
+  `claim_made` DATETIME  NOT NULL,
+  `outcome` VARCHAR(50) ,
+  PRIMARY KEY (`claim_id`),
+  INDEX `kingdom_idx`(`kingdom_id`),
+  INDEX `char_idx`(`character_id`)
+)
+ENGINE = InnoDB;
+
+CREATE TABLE `Kingdom_Claim_Response` (
+  `claim_id` INTEGER  NOT NULL,
+  `party_id` INTEGER  NOT NULL,
+  `response` VARCHAR(50)  NOT NULL,
+  PRIMARY KEY (`claim_id`, `party_id`)
+)
+ENGINE = InnoDB;

@@ -35,6 +35,7 @@ __PACKAGE__->has_many( 'messages', 'RPG::Schema::Kingdom_Messages', 'kingdom_id'
 __PACKAGE__->has_many( 'party_kingdoms', 'RPG::Schema::Party_Kingdom', 'kingdom_id', { join_type => 'LEFT OUTER' } );
 __PACKAGE__->has_many( 'town_loyalty', 'RPG::Schema::Kingdom_Town', 'kingdom_id' );
 __PACKAGE__->has_many( 'relationships', 'RPG::Schema::Kingdom_Relationship', 'kingdom_id' );
+__PACKAGE__->has_many( 'claims', 'RPG::Schema::Kingdom_Claim', 'kingdom_id' );
 
 __PACKAGE__->belongs_to( 'inception_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.inception_day_id' } );
 __PACKAGE__->belongs_to( 'fall_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.fall_day_id' } );
@@ -137,7 +138,7 @@ sub border_sectors {
     my @border_sectors;
     my %world_range;
     foreach my $sector (@sectors) {
-        unless ($edge_of_world_is_border) {
+        if (! $edge_of_world_is_border) {
             %world_range = $self->result_source->schema->resultset('Land')->get_x_y_range()
                 unless %world_range;
             
@@ -286,5 +287,53 @@ sub relationship_with {
     return $relationship;
 }
 
+sub current_claim {
+    my $self = shift;
+    
+    return $self->find_related(
+        'claims',
+        {
+            outcome => undef,
+        }
+    );
+}
+
+# Return true if the party passed in has made a recent claim
+#  for the throne
+sub party_made_recent_claim {
+    my $self = shift;
+    my $party = shift;
+    
+    my $claim_count = $self->search_related(
+        'claims',
+        {
+            'claimant.party_id' => $party->id,
+            claim_made => {'>=', DateTime->now->subtract( days => RPG::Schema->config->{failed_claim_ban_period} ) },
+        },
+        {
+            join => 'claimant',
+        }
+    )->count;
+    
+    return $claim_count > 0 ? 1 : 0; 
+}
+
+# Return true if the party can make a claim to the throne
+sub party_can_claim_throne {
+    my $self = shift;
+    my $party = shift;
+    
+    return 0 if $party->level < RPG::Schema->config->{minimum_kingdom_level};
+    
+    my $king = $self->king;
+    
+    return 0 if ! $king || ! $king->is_npc;
+    
+    return 0 if $self->current_claim;
+    
+    return 0 if $self->party_made_recent_claim($party);
+    
+    return 1;
+}
 
 1;

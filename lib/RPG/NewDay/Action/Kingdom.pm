@@ -87,7 +87,8 @@ sub execute_npc_kingdom_actions {
     @parties = grep { $_->kingdom_id == $kingdom->id } @parties; 
     
     $self->generate_kingdom_quests($kingdom, @parties);
-
+    
+    $self->resolve_claims($kingdom);
 }
 
 sub generate_kingdom_quests {
@@ -368,6 +369,8 @@ sub check_for_coop {
     foreach my $party (@parties) {
         next if $party->id == $kings_party->id;
         
+        next if $party->warned_for_kingdom_co_op;
+        
         if ($party->is_suspected_of_coop_with($kings_party)) {
             
             $party->warned_for_kingdom_co_op(DateTime->now());
@@ -450,7 +453,77 @@ sub select_capital {
             die $_->message;
         }
         die $_;
-    }       
+    };       
+}
+
+sub resolve_claims {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my $c = $self->context;
+    
+    my $claim = $kingdom->current_claim;
+    
+    return unless $claim;
+    
+    return if $claim->days_left > 0;
+    
+    my %summary = $claim->response_summary;
+    my $summary_string = $summary{support} . " supported, " . $summary{oppose} . " opposed";
+    
+    if ($summary{support} > $summary{oppose} || ($summary{support} == 0 && $summary{oppose} == 0)) {
+        # Claim successful
+        $claim->outcome('successful');
+        $claim->update;
+        
+        my $old_monarch = $kingdom->king;
+        $old_monarch->status(undef);
+        $old_monarch->status_context(undef);
+        $old_monarch->update;
+        
+        my $new_monarch = $claim->claimant;
+        $new_monarch->status_context($kingdom->id);
+        $new_monarch->status('king');
+        $new_monarch->update;
+        
+        $new_monarch->party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                alert_party => 1,
+                message => "Our claim to the throne has been successful! ($summary_string) " . $new_monarch->character_name . " is now " 
+                    . ($new_monarch->gender eq 'male' ? 'King' : 'Queen') . " of " . $kingdom->name,
+            }
+        );
+    }
+    else {
+        # Claim failed
+        $claim->outcome('failed');
+        $claim->update;
+        
+        my $claimant = $claim->claimant;
+        my $capital = $kingdom->capital_city;
+        if (! $capital) {
+            my @towns = $kingdom->towns;
+            if (! @towns) {
+                # Kingdom has no towns, just pick a random one
+                @towns = $c->schema->resultset('Towns')->search();
+            }
+            $capital = (shuffle @towns)[0];
+        }
+        
+        $claimant->status_context($capital->id);
+        $claimant->status('inn');
+        $claimant->update;
+        
+        $claimant->party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                alert_party => 1,
+                message => "Our claim to the throne has failed! ($summary_string) " . $claimant->character_name . " is now in the inn of " .
+                    $capital->town_name,
+            }
+        );
+    }   
 }
 
 1;

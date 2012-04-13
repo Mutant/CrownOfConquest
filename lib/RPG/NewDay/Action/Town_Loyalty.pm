@@ -77,14 +77,39 @@ sub run {
                         y => $capital->location->y,
                     }
                 );
-                $distance_to_capital_adjustment = round(10 - ($distance_to_capital / 10));
+                $c->logger->debug("Town is $distance_to_capital sectors from capital");
+                $distance_to_capital_adjustment = round(10 - ($distance_to_capital / 5));
             }
             
             # Charisma bonus
             my $king = $kingdom->king;
             my $charisma_bonus = $king->execute_skill('Charisma', 'kingdom_loyalty') // 0;
             
-            my $loyalty_adjustment = $capital_block_adjustment + $distance_to_capital_adjustment + $charisma_bonus;
+            # Penalty for being a log way from other towns in kingdom
+            my @nearby_towns_in_kingdom = RPG::ResultSet::RowsInSectorRange->find_in_range(
+                resultset           => $c->schema->resultset('Town'),
+                relationship        => 'location',
+                base_point          => {
+                    x => $town_sector->x,
+                    y => $town_sector->y,
+                },
+                search_range => 21,
+                increment_search_by => 0,
+                rows_as_hashrefs => 1,
+                criteria => {
+                    'location.kingdom_id' => $kingdom->id,
+                }
+            );
+            $c->logger->debug("Town has " . scalar @nearby_towns_in_kingdom . " nearby towns in kingdom");
+            
+            my $town_proximity_adjustment;
+            $town_proximity_adjustment = scalar @nearby_towns_in_kingdom;
+            $town_proximity_adjustment = 5 if $town_proximity_adjustment > 5;
+            $town_proximity_adjustment = -15 if scalar @nearby_towns_in_kingdom <= 0;
+            
+            my $random = 5 - Games::Dice::Advanced->roll('1d9');
+            
+            my $loyalty_adjustment = $capital_block_adjustment + $distance_to_capital_adjustment + $charisma_bonus + $town_proximity_adjustment + $random;
            
             my $kingdom_town = $schema->resultset('Kingdom_Town')->find_or_create(
                 {
@@ -96,9 +121,12 @@ sub run {
             $kingdom_town->update;
 
             $c->logger->debug("Adjusting town loyalty for town " . $town->id . " to " . $kingdom_town->loyalty . "; " . 
+                "adjustment: $loyalty_adjustment. [" .
                 "capital_block_adjustment: $capital_block_adjustment; " .
-                "distance_to_capital_adjustment: $distance_to_capital_adjustment" .
-                "charisma_bonus: $charisma_bonus"
+                "distance_to_capital_adjustment: $distance_to_capital_adjustment; " .
+                "charisma_bonus: $charisma_bonus; " .
+                "town_proximity_adjustment: $town_proximity_adjustment; " .
+                "random: $random;]"
             );
         }
         

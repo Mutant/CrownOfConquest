@@ -96,7 +96,7 @@ rm -f $PIDFILE 2>/dev/null
 }
 
 _stop() {
-    start-stop-daemon --stop --user $USER --quiet --oknodo --pidfile $PIDFILE \
+    start-stop-daemon --stop ${USER:+"--user"} $USER --quiet --oknodo --pidfile $PIDFILE \
     --retry TERM/5/TERM/30/KILL/30 \
     || log_failure_message "It won't die!"
 }

@@ -11,7 +11,7 @@ INSERT INTO `Item_Variable_Params` (keep_max, min_value, max_value, item_type_id
 
 DROP TABLE Items_Made;
 
-@ivn_id = (select item_variable_name_id from Item_Variable_Name where item_category_id = (select item_category_id FROM Item_Category where item_category = 'Resource'));
+set @ivn_id = (select item_variable_name_id from Item_Variable_Name where item_category_id = (select item_category_id FROM Item_Category where item_category = 'Resource'));
 update Item_Variable_Params set max_value = 200 where item_variable_name_id = @ivn_id;
 
 update Kingdom set inception_day_id = 950 where kingdom_id = 22;

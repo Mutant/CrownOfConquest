@@ -587,7 +587,7 @@ function hideDiag(diagName) {
 }
 
 /* Screen */
-
+var screenHistory = []; 
 function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
@@ -598,6 +598,8 @@ function loadScreen(url) {
 	dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
 
 	_gaq.push(['_trackPageview', url]);
+	
+	screenHistory.push(url);
 	
 	dojo.xhrGet( {
         url: urlBase + url,
@@ -612,6 +614,16 @@ function loadScreen(url) {
 function closeScreen() {
 	dojo.byId('screen-outer').style.display = 'none';
 	dijit.byId('screen-pane').set("content", '');
+	screenHistory = [];
+}
+
+function backScreen() {
+	screenHistory.pop();
+	var url = screenHistory.pop();
+	if (! url) {
+		return;
+	}
+	loadScreen(url);
 }
 
 /* Options */

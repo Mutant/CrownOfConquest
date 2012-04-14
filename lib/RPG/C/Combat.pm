@@ -236,7 +236,7 @@ sub process_round_result : Private {
 	my @panels_to_refesh = ( 'messages', 'party_status' );
 	if ( $result->{combat_complete} ) {
 
-		if ( !$c->stash->{party}->is($result->{losers}) && ! $result->{creatures_fled} ) {
+		if ( ($result->{losers} && !$c->stash->{party}->is($result->{losers})) && ! $result->{creatures_fled} ) {
 
 			# Check for state of quests
 			# TODO: should do this in offline combat too
@@ -244,7 +244,7 @@ sub process_round_result : Private {
 			push @{ $c->stash->{combat_messages} }, @$messages;
 		}
 		
-		if ($c->stash->{party}->is($result->{losers})) {
+		if ($result->{losers} && $c->stash->{party}->is($result->{losers})) {
 		    # Party lost, refresh whole map
 		    $c->stash->{party}->discard_changes;
 		    $c->stash->{party_location} = $c->stash->{party}->location;

@@ -587,7 +587,8 @@ function hideDiag(diagName) {
 }
 
 /* Screen */
-var screenHistory = []; 
+var screenHistory = [];
+var currentUrl;
 function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
@@ -600,6 +601,7 @@ function loadScreen(url) {
 	_gaq.push(['_trackPageview', url]);
 	
 	screenHistory.push(url);
+	currentUrl = url;
 	
 	dojo.xhrGet( {
         url: urlBase + url,
@@ -618,8 +620,23 @@ function closeScreen() {
 }
 
 function backScreen() {
-	screenHistory.pop();
+	if (screenHistory.length == 0) {
+		return;
+	}
+	
 	var url = screenHistory.pop();
+	if (currentUrl !== undefined) {
+		while (url == currentUrl) {
+			if (screenHistory.length == 0) {
+				
+				screenHistory.push(url);
+				return;
+			}
+		
+			url = screenHistory.pop();
+		}
+	}
+	
 	if (! url) {
 		return;
 	}

@@ -147,6 +147,18 @@ h1 {margin: 0; padding: 1px}
 	background-image: url(/static/images/layout/closebuttonpressed.png);
 }
 
+.back-icon {
+	background-image: url(/static/images/layout/backbuttondefault.png);
+	height: 13px;
+	width: 21px;
+	float: right;
+	margin-top: 2px;
+}
+
+.back-icon:hover {
+	background-image: url(/static/images/layout/backbuttonmouseover.png);
+}
+
 /* DnD */
 
 .main-highlighted-col {

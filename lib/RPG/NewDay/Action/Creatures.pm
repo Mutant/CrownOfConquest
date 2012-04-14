@@ -35,7 +35,7 @@ sub run {
     $self->spawn_sewer_monsters();
     
     # Move dungeon monsters
-    $self->move_dungeon_monsters();
+    #$self->move_dungeon_monsters();
     
     # Refresh rare monsters
     $self->refresh_rare_monsters();

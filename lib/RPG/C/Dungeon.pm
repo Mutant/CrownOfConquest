@@ -41,7 +41,7 @@ sub view : Local {
     $c->stats->profile("Queried map sectors");
 
 	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
-	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $bombs) = @$grids;
+	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 
     my $mapped_sectors_by_coord;
     foreach my $sector (@mapped_sectors) {
@@ -63,7 +63,7 @@ sub view : Local {
 
     $c->stats->profile("Finshed /dungeon/view");
 
-    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $bombs ] );
+    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ] );
 }
 
 sub build_viewable_sector_grids : Private {
@@ -179,27 +179,27 @@ sub build_viewable_sector_grids : Private {
  
     $c->stats->profile("Got Parties");
     
-    my $bombs;
-    my @bombs = $c->model('DBIC::Bomb')->search(
+    my $objects;
+    my $objects_rs = $c->model('DBIC::Dungeon_Grid')->search(
         {
-            'dungeon_grid.x'               => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
-            'dungeon_grid.y'               => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
+            'x'               => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
+            'y'               => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'dungeon_room.floor'           => $current_location->dungeon_room->floor,
-            'detonated'                    => undef,
         },
         {
-            prefetch => {'dungeon_grid' => 'dungeon_room'},
+            prefetch => ['dungeon_room', 'teleporter', 'treasure_chest', 'bomb'],
         },
     );
     
-    foreach my $bomb (@bombs) {
-        warn $bomb->dungeon_grid->x;
-        warn $bomb->dungeon_grid->y;
-        $bombs->[ $bomb->dungeon_grid->x ][ $bomb->dungeon_grid->y ] = $bomb;
+    $objects_rs->result_class('DBIx::Class::ResultClass::HashRefInflator'); 
+    
+    while (my $object = $objects_rs->next) {
+        next unless $object->{bomb} || $object->{teleporter} || $object->{treasure_chest};        
+        $objects->[ $object->{x} ][ $object->{y} ] = $object;
     }
     
-    $c->stats->profile("Got Bombs");
+    $c->stats->profile("Got Objects");
 	
     # Find viewable sectors, add newly discovered sectors to party's map
     my @viewable_sectors;
@@ -230,11 +230,11 @@ sub build_viewable_sector_grids : Private {
     
     $c->stats->profile("Got viewable sectors");	
 
-    return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties, $bombs];		
+    return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties, $objects];		
 }
 
 sub render_dungeon_grid : Private {
-    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $bombs ) = @_;
+    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ) = @_;
 
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 
@@ -283,7 +283,7 @@ sub render_dungeon_grid : Private {
                     allowed_to_move_to  => $allowed_to_move_to,
                     cgs                 => $cgs,
                     parties             => $parties,
-                    bombs               => $bombs,
+                    objects             => $objects,
                     allowed_move_hashes => $c->flash->{allowed_move_hashes},
                     in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
                     zoom_level => $c->session->{zoom_level} || 2,
@@ -424,7 +424,7 @@ sub build_updated_sectors_data : Private {
 	my $new_location = $c->model('DBIC::Dungeon_Grid')->find($sector_id);
 	
 	my $grids = $c->forward('build_viewable_sector_grids', [$new_location]);
-	my ($sectors_to_update, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $bombs) = @$grids;
+	my ($sectors_to_update, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 	
 	my $sectors_to_update_grid;
 	foreach my $sector (@$sectors_to_update) {
@@ -501,7 +501,7 @@ sub build_updated_sectors_data : Private {
 		                	sector => $current_sector,
 		                	cgs => $cgs,
 		                	parties => $parties,
-		                	bombs => $bombs,
+		                	objects => $objects,
 		                	allowed_to_move_to => $allowed_to_move_to,
 		                	viewable_sectors => $viewable_sector_grid,
 		                	x => $x,
@@ -568,7 +568,6 @@ sub build_updated_sectors_data : Private {
         },
         {
             join     => [ 'dungeon_room', 'mapped_dungeon_grid' ],
-            prefetch => ['treasure_chest', 'teleporter'],
         },
     );
 	my $old_sectors_grid;

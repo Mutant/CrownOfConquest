@@ -41,6 +41,8 @@ __PACKAGE__->might_have( 'treasure_chest', 'RPG::Schema::Treasure_Chest', { 'for
 
 __PACKAGE__->might_have( 'teleporter', 'RPG::Schema::Dungeon_Teleporter', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
+__PACKAGE__->might_have( 'bomb', 'RPG::Schema::Bomb', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' }, { where => {'detoned' => undef } } );
+
 with qw/RPG::Schema::Role::Sector/;
 
 sub new {

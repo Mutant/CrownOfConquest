@@ -210,7 +210,7 @@ sub check_for_end_of_combat {
 
 			# TODO: should be in a role?
 			if ( $opponents->group_type eq 'party' ) {
-				$opponents->disband;
+				$opponents->wiped_out;
 			}
 			
 			$self->result->{losers} = $opponents;

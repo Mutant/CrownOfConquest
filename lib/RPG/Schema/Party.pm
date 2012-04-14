@@ -786,6 +786,67 @@ sub deactivate {
     $self->update;           
 }
 
+# Party was wiped out during combat
+sub wiped_out {
+    my $self = shift;
+    
+    # Some characters get deleted, depending on party level
+    my $del_char_count = round $self->level / 8;
+    $del_char_count = 1 if $del_char_count < 1;
+    
+    my @chars = shuffle $self->members;
+    
+    $del_char_count = scalar @chars-1 if $del_char_count >= scalar @chars;
+   
+    for (1..$del_char_count) {
+        my $char = shift @chars;
+        $char->status('wiped_out');
+        $char->status_context($self->id);
+        $char->party_id(undef);
+        $char->update;
+    }
+
+    # If we couldn't delete any chars (due to party size of 1), they lose some equipment
+    if ($del_char_count <= 0) {
+        my $char = $chars[0];
+        
+        my @items = shuffle $char->search_related('items',
+            {
+                equip_place_id => {'!=', undef},
+            }
+        );
+        
+        $items[0]->delete if @items;
+    }
+    
+    # One char gets auto-ressed
+    $chars[0]->hit_points(1);
+    $chars[0]->update;
+    
+    # Find a nearby town to respawn in
+    my $party_loc = $self->location;
+    
+    my $town = $party_loc->town;
+    
+    if (! $town) {
+        my @towns = shuffle $self->result_source->schema->resultset('Town')->find_in_range(
+            {
+                x => $party_loc->x,
+                y => $party_loc->y,
+            },
+            9,
+            3,
+            1,
+            31,
+        );
+        $town = $towns[0]; 
+    }
+    
+    $self->land_id($town->land_id);
+    $self->dungeon_grid_id(undef);
+    $self->update;
+}
+
 #  This function consumes items that are possessed by the party.  Note that this sub will accept items that are
 #    both individual items and those with 'Quantity'.
 sub consume_items {
@@ -1148,3 +1209,4 @@ __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 
 1;
+

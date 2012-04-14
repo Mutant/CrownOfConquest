@@ -236,12 +236,23 @@ sub process_round_result : Private {
 	my @panels_to_refesh = ( 'messages', 'party_status' );
 	if ( $result->{combat_complete} ) {
 
-		if ( !$c->stash->{party}->defunct && ! $result->{creatures_fled} ) {
+		if ( !$c->stash->{party}->is($result->{losers}) && ! $result->{creatures_fled} ) {
 
 			# Check for state of quests
 			# TODO: should do this in offline combat too
 			my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
 			push @{ $c->stash->{combat_messages} }, @$messages;
+		}
+		
+		if ($c->stash->{party}->is($result->{losers})) {
+		    # Party lost, refresh whole map
+		    $c->stash->{party}->discard_changes;
+		    $c->stash->{party_location} = $c->stash->{party}->location;
+            push @panels_to_refesh, 'map';
+            
+            $c->stash->{panel_messages} = "The party was wiped out! We awake in a town, clearly brought here by a sympathetic healer. ".
+                "<br>However, we may have lost some of our characters and equipment." .
+                "<br>Note, the party can be restarted by clicking on Tools, and clicking 'Disband Party'."; 
 		}
 					
 		# Force combat main to display final time

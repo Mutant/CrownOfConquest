@@ -57,7 +57,11 @@ sub run {
         $town->blacksmith_age( $town->blacksmith_age + 1 );
 
         my $skill_increase_roll = Games::Dice::Advanced->roll('1d100');
-        if ( $skill_increase_roll < $c->config->{blacksmith_skill_increase_chance} ) {
+        
+        my $chance = $c->config->{blacksmith_skill_increase_chance};
+        $chance += int($town->mayor_rating / 10);
+        
+        if ( $skill_increase_roll < $chance ) {
             my $old_label = $town->blacksmith_skill_label;
             $town->blacksmith_skill( $town->blacksmith_skill + 1 );
             my $new_label = $town->blacksmith_skill_label;

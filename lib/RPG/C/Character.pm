@@ -154,8 +154,14 @@ sub equipment_tab : Local {
 		map { $equipped_items->{$_} ? ( $equipped_items->{$_}->id => $equipped_items->{$_} ) : () } keys %$equipped_items;
 
 	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
-
-	my @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+	
+	my @allowed_to_give_to_characters;
+	if (! $character->garrison_id || $c->stash->{party_location}->land_id == $character->garrison->land_id) {
+	   @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+	}
+	else {
+	    @allowed_to_give_to_characters = $character->garrison->members;
+	}
 
 	$c->forward(
 		'RPG::V::TT',
@@ -385,19 +391,24 @@ sub give_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-	my @characters = $c->stash->{party}->characters_in_sector;
-	my ($original_character) = grep { $_->id eq $item->character_id } @characters;
+	my $original_character = $item->belongs_to_character;
 
-	# Make sure this item belongs to a character in the party
-	unless ($original_character) {
-		$c->log->warn( "Attempted to give item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
+	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
+	
+	if ($original_character->garrison_id) {
+	    my $garrison = $original_character->garrison;
+	    my $invalid_char = 0;
+	    if ($c->stash->{party_location}->land_id == $garrison->land_id) {
+	        # Party is in sector, so can give to chars in same garrison or in party
+	        $invalid_char = 1 if $original_character->garrison_id != $character->garrison_id &&
+	           ! $character->is_in_party;
+	    }
+	    else {	    
+            # If party is not in sector, can only give to character in same garrison
+             $invalid_char = 1 unless $original_character->garrison_id == $character->garrison_id;
+	    }
+	    
+	    croak "Cannot give item to this character" if $invalid_char;
 	}
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
@@ -410,7 +421,7 @@ sub give_item : Local {
 		to_json(
 			{
 				clear_equip_place => $slot_to_clear,
-				encumbrance       => $original_character->encumbrance,
+				encumbrance       => $character->encumbrance,
 			}
 		)
 	);
@@ -425,21 +436,18 @@ sub drop_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters_in_sector;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
-		$c->log->warn( "Attempted to drop item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
-	}
+	my $original_character = $item->belongs_to_character;
+
+	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
-
+	
+	if ( $character->garrison_id ) {
+		$item->land_id( $character->garrison->land_id );
+		$item->character_id(undef);
+		$item->equip_place_id(undef);
+		$item->update;        
+	}
 	if ( $c->stash->{party_location}->town ) {
 
 		# If we're in a town, just delete the item...

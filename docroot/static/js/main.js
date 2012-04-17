@@ -617,6 +617,7 @@ function closeScreen() {
 	dojo.byId('screen-outer').style.display = 'none';
 	dijit.byId('screen-pane').set("content", '');
 	screenHistory = [];
+	displayed = false;
 }
 
 function backScreen() {

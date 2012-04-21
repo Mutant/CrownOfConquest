@@ -42,7 +42,7 @@ sub check_for_attack : Local {
         	$c->stash->{party}->initiate_combat($creature_group);
             $c->stash->{creatures_initiated} = 1;
             
-            $c->stash->{factor_comparison} = $creature_group->compare_to_party( $c->stash->{party} );
+            #$c->stash->{factor_comparison} = $creature_group->compare_to_party( $c->stash->{party} );
 
             return $creature_group;
         }

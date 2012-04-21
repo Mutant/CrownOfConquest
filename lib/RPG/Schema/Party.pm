@@ -1071,7 +1071,7 @@ sub cancel_kingdom_quests {
         'quests',
         {
             kingdom_id => $kingdom->id,
-            status => ['Not Started', 'In Progress'],
+            status => ['Not Started', 'In Progress', 'Requested'],
         }
     );
     

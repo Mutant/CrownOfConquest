@@ -335,7 +335,9 @@ sub terminate {
         
         my $kingdom_message = $params{kingdom_message};
         
-        if ($kingdom_message && ! $kingdom->king->is_npc) {        
+        my $king = $kingdom->king;
+        
+        if ($kingdom_message && $king && ! $king->is_npc) {        
             $kingdom->add_to_messages(
                 {
                     day_id => $day->id,

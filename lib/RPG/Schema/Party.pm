@@ -1189,7 +1189,7 @@ sub has_king_of {
     
     return 0 unless $kingdom;
     
-    return 1 if $kingdom->king->party_id == $self->id;
+    return 1 if $kingdom->king && $kingdom->king->party_id == $self->id;
     
     return 0;
     

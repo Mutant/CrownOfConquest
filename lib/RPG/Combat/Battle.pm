@@ -367,7 +367,7 @@ sub check_skills {
                     $defender = $self->select_opponent($character);
                 }
                 catch {
-                    $self->log->debug("Error finding opponent");
+                    $self->log->debug("Error finding opponent: $_");
                 };
                 
                 return unless $defender;

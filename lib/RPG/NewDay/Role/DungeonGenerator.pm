@@ -102,11 +102,17 @@ sub generate_dungeon_grid {
 			# Create the room or corridor
 			my @new_sectors;
 			my $corridor_roll = Games::Dice::Advanced->roll('1d100');
+			
+        	my $tileset;
+        	if (! $no_room_tileset) {
+        	   $tileset = (shuffle RPG::Schema::Dungeon::tilesets())[0];
+        	}			
+			
 			if ( $corridor_roll <= $corridor_chance ) {
-				@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions );
+				@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions, $tileset );
 			}
 			else {
-				@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions, $no_room_tileset );
+				@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions, $tileset );
 			}
 	
 			croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
@@ -176,7 +182,7 @@ sub _create_room {
 	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
-	my $no_room_tileset = shift;
+	my $tileset         = shift;
 
 	my $c = $self->context;
 
@@ -187,11 +193,6 @@ sub _create_room {
 	#warn "$top_x, $top_y, $bottom_x, $bottom_y\n";
 	#warn Dumper $sectors_created;
 	
-	my $tileset;
-	if (! $no_room_tileset) {
-	   $tileset = (shuffle RPG::Schema::Dungeon::tilesets())[0];
-	}
-
 	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, tileset => $tileset } );
 
 	my $coords_created;
@@ -265,10 +266,11 @@ sub _create_corridor {
 	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
+	my $tileset         = shift;
 
 	my $c = $self->context;
 
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor,} );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor, tileset => $tileset} );
 
 	my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
 

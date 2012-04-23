@@ -166,6 +166,18 @@ sub character_move : Local {
         
         croak "Invalid swap char" unless $swap_char; 
     }
+    else {
+        # We're not swapping, so make sure the garrison/party isn't already full
+        if ($c->req->param('to') eq 'party') {
+            croak "Party full" if scalar($c->stash->{party}->members) >= $c->config->{max_party_characters};   
+        }
+        elsif ($c->stash->{garrison}) {
+            croak "Garrison full" if scalar($c->stash->{garrison}->members) >= 8;                 
+        }
+        elsif ($c->session->{new_garrison}) {
+            croak "Garrison full" if scalar @{ $c->session->{new_garrison} } >= 8;
+        }
+    }
     
     if (! $c->stash->{garrison}) {
         # Garrison not created yet...

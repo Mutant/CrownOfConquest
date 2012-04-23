@@ -16,5 +16,5 @@
 [% ELSE %]
 	[% message.effect %] [% message.defender.pronoun('objective') %] for <span class="combat-party-attacker">[% message.damage %]</span> hit points.
 	
-	[% IF message.defender_killed %]<span class="combat-creature-attacker">[% message.defender.name %]</span> was killed![% END %]
+	[% IF message.defender_killed %]<span class="combat-creature-attacker">[% message.defender_killed %]</span> was killed![% END %]
 [% END %]

@@ -475,6 +475,8 @@ sub character_action {
 				$character, $opponent, $result, $type,
 				$self->character_weapons->{ $character->id }{magical_damage_level}
 			);
+			# Force refresh of value
+			$result->defender_killed($opponent->is_dead);
 		}
 	}
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {

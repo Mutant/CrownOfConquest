@@ -92,13 +92,19 @@ sub calculate_prosperity {
     
     $items_value = $items_value / 50000;
     $items_value = 2 if $items_value > 2;
+    
+    my $capital_bonus = 0;
+    if ($town->capital_of) {
+        $capital_bonus = 3;
+    }
 
     my $prosp_change =
         ( ( $tax_collected || 0 ) / 100 ) +
         ( $ctr_diff / 20 ) -
         ( $raids_today || 0 ) +
         $approval_change +
-        $items_value;
+        $items_value +
+        $capital_bonus;
 
     $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};
     $prosp_change = -$context->config->{max_prosp_change} if $prosp_change < -$context->config->{max_prosp_change};
@@ -112,7 +118,7 @@ sub calculate_prosperity {
     $prosp_change = round $prosp_change;
 
     $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')'. 
-    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value]");
+    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value, capital_bonus: $capital_bonus]");
 
     $town->adjust_prosperity( $prosp_change );
     $town->update;

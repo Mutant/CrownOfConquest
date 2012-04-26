@@ -270,7 +270,7 @@ sub check_for_revolt {
 	my $start_revolt = 0;
 	my $revolt_reason = 'mayor';
 	
-	if ($town->mayor_rating < 0) {
+	if ($town->mayor_rating < -30) {
 		my $rating = $town->mayor_rating + 100;
 	
 		my $roll = Games::Dice::Advanced->roll('1d100');

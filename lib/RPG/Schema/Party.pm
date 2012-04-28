@@ -558,7 +558,7 @@ sub adjust_order {
     
     # Reset rank bar if it's gone off edge of party
     if ($self->rank_separator_position >= $count) {    	
-    	my $new_pos = $count-1;
+    	my $new_pos = $count;
     	$new_pos = 1 if $new_pos <= 0;
     	$self->rank_separator_position($new_pos);
     	$self->update;

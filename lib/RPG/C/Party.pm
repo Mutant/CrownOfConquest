@@ -316,6 +316,7 @@ sub list : Private {
 	$c->stats->profile("Entered /party/list");
 
 	my $party = $c->stash->{party};
+	$party->discard_changes;
 
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
 	#  to be re-read.

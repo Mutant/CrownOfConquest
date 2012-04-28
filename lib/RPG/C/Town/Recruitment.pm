@@ -58,9 +58,6 @@ sub buy : Local {
     $character->party_order( scalar $c->stash->{party}->characters + 1 );
     $character->update;
     
-    # Rejig party order
-    $c->stash->{party}->adjust_order;
-
     $c->model('DBIC::Character_History')->create(
         {
             character_id => $character->id,
@@ -104,10 +101,10 @@ sub sell : Local {
         $character->delete;   
     }
     else {
-        $character->party_id(undef);
-        $character->party_order(undef);
         $character->status('recruitment_hold');
         $character->status_context($c->stash->{party_location}->town->id);
+        $character->party_id(undef);
+        $character->party_order(undef);
         $character->update;
 
         $c->model('DBIC::Character_History')->create(
@@ -122,10 +119,7 @@ sub sell : Local {
             },
         );
     }
-    
-    # Rejig party order
-    $c->stash->{party}->adjust_order;
-    
+        
     $c->forward( '/panel/refresh', [[screen => '/town/recruitment'], 'party_status', 'party'] );
 }
 

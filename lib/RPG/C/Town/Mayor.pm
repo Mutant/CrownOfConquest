@@ -524,8 +524,6 @@ sub add_to_garrison : Local {
 	$character->status('mayor_garrison');
 	$character->creature_group_id($town->mayor->creature_group_id);
 	$character->update;
-	
-	$c->stash->{party}->adjust_order;
 		
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }
@@ -555,8 +553,6 @@ sub remove_from_garrison : Local {
 	$character->status(undef);
 	$character->creature_group_id(undef);
 	$character->update;
-	
-	$c->stash->{party}->adjust_order;
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }

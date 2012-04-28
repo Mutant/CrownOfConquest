@@ -109,8 +109,6 @@ sub gain_mayoralty {
 	if (! $self->is_npc) {        
         my $party = $self->party;
         
-    	$party->adjust_order;
-
        	# If they have negative prestige, reset it to 0
     	my $party_town = $schema->resultset('Party_Town')->find_or_create(
     		{

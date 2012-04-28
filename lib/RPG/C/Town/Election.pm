@@ -118,7 +118,6 @@ sub create_candidate : Local {
 	$character->status('inn');
 	$character->status_context($c->stash->{town}->id);
 	$character->update;
-	$c->stash->{party}->adjust_order;
 	
 	$c->model('DBIC::Town_History')->create(
 		{

@@ -129,7 +129,6 @@ sub add : Local {
 		}
 	);
 	
-	$c->stash->{party}->adjust_order;
 	$c->stash->{party}->turns($c->stash->{party}->turns - $c->config->{garrison_creation_turn_cost});
 	$c->stash->{party}->update;
 	
@@ -250,8 +249,6 @@ sub remove : Local {
 			$character->garrison_id(undef);
 			$character->update;	
 		}
-		
-		$c->stash->{party}->adjust_order;
 
 		$c->model('DBIC::Party_Messages')->create(
 			{

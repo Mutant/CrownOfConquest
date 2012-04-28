@@ -250,8 +250,7 @@ sub res_from_morgue : Local {
 		if ($c->forward('res_impl', [$character])) {
 			$character->status(undef);
 			$character->status_context(undef);
-			$character->update;	
-			$c->stash->{party}->adjust_order;
+			$character->update;
 		}		
 	}
 	

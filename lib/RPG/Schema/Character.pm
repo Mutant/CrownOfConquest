@@ -225,6 +225,13 @@ sub update {
 	}
 	
     my $ret = $self->next::method($attr);
+    
+    if ($self->{adjust_order_needed}) {
+        my $party = $self->{adjust_order_needed};
+        confess "No party!" unless $party;
+        $party->adjust_order;
+        undef $self->{adjust_order_needed};
+    }    
 
     return $ret;	
 }
@@ -248,6 +255,9 @@ sub _move_character_trigger {
         $self->calculate_attack_factor();
         $self->calculate_defence_factor();
         $self->calculate_resistance_bonuses;
+        
+        $self->{adjust_order_needed} = $self->party
+            if $self->party_id;            
     }
     
     return $self->$accessor;   

@@ -13,6 +13,8 @@ use Test::More;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 use Data::Dumper;
 use DateTime;
@@ -505,7 +507,9 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     my $self = shift;
     
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0 );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[0]->id );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0, land_id => $land[8]->id );
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, hit_points => 2 );
     my $combatant = Test::MockObject->new();
     
@@ -538,7 +542,7 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
 	is($result->{combat_complete}, 1, "Combat complete set");
 	
 	$party->discard_changes;
-	is(defined $party->defunct, 1, "Party now marked as defunct"); 
+	is($party->land_id, $land[0]->id, "Party sent to nearby town"); 
 }
 
 sub test_check_for_auto_cast_creature_target : Tests(2) {

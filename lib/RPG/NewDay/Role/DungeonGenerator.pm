@@ -193,7 +193,7 @@ sub _create_room {
 	#warn "$top_x, $top_y, $bottom_x, $bottom_y\n";
 	#warn Dumper $sectors_created;
 	
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, tileset => $tileset } );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, ($tileset ? (tileset => $tileset) : ()) } );
 
 	my $coords_created;
 	my @sectors;
@@ -270,7 +270,7 @@ sub _create_corridor {
 
 	my $c = $self->context;
 
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor, tileset => $tileset} );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor, ($tileset ? (tileset => $tileset) : ())} );
 
 	my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
 

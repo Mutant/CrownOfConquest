@@ -37,20 +37,22 @@ sub run {
         }
 
         # Check if blacksmith retires
-        my $retirement_roll = Games::Dice::Advanced->roll('1d100');
-        if ( $retirement_roll < $c->config->{blacksmith_retire_chance} ) {
-             $town->add_to_history(
-                {
-                    message => "The town's blacksmith retires after a long " . $town->blacksmith_age . " days of service",
-                    day_id => $c->current_day->day_id,
-                }
-             );
- 
-            $town->blacksmith_skill(0);
-            $town->blacksmith_age(0);
-            $town->update;
-            
-            next;
+        if ($town->blacksmith_age < 5) {
+            my $retirement_roll = Games::Dice::Advanced->roll('1d100');
+            if ( $retirement_roll < $c->config->{blacksmith_retire_chance} ) {
+                 $town->add_to_history(
+                    {
+                        message => "The town's blacksmith retires after a long " . $town->blacksmith_age . " days of service",
+                        day_id => $c->current_day->day_id,
+                    }
+                 );
+     
+                $town->blacksmith_skill(0);
+                $town->blacksmith_age(0);
+                $town->update;
+                
+                next;
+            }
         }
 
         # Blacksmith exists, and hasn't retired. Update age and check for skill increase

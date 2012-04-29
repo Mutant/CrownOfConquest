@@ -50,19 +50,11 @@ function confirmedMove(arguments) {
 }
 
 
-
-window.onbeforeunload = function() {
-	if (changes) {
-		return "You've changed the character's assigned to this garrison, but haven't saved the changes yet";
-	}
-}
-
 function confirmRemoveGarrison() {
 	dijit.byId('confirm-remove').show();
 }
 
 function removeGarrison() {
-	changes=false;
 	getPanels('garrison/remove?garrison_id=[% garrison.id %]');
 }
 

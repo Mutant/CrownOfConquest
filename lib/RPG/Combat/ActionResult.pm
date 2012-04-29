@@ -17,7 +17,7 @@ has 'special_weapon'  => ( is => 'ro', isa => 'Str' );
 sub _build_defender_killed {
     my $self = shift;
 
-    return $self->defender->can('is_dead') && $self->defender->is_dead;
+    return $self->defender && $self->defender->can('is_dead') && $self->defender->is_dead;
 }
 
 __PACKAGE__->meta->make_immutable;

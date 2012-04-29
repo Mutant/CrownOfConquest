@@ -788,4 +788,14 @@ sub check_email : Private {
     
 }
 
+sub changelog : Local {
+	my ($self, $c) = @_;
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'help/ext_changelog.html',
+        }]
+    );	    
+}
+
 1;

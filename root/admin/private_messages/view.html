@@ -1,0 +1,26 @@
+[% INCLUDE top.html admin_screen=1  %]
+
+[% MACRO page_links BLOCK %]
+	[% page = 1 %]
+	[% IF total_pages > 1 %]
+		[% WHILE page <= total_pages %]
+			[% IF current_page == page %]
+				[% page %]
+			[% ELSE %]
+				<a href="?page=[% page %]">[% page %]</a>
+			[% END %]
+			[% page = page + 1 %]
+		[% END %]
+	[% END %]
+[% END %]
+
+<div align="center">[% page_links() %]</div>
+
+[% FOREACH message IN messages %]
+	[% INCLUDE party/message/message.html %]
+	<hr size=1>
+[% END %]
+
+<div align="center">[% page_links() %]</div>
+
+[% INCLUDE bottom.html %]

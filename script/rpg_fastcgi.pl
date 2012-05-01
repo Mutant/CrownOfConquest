@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use lib '/home/sam/kingdoms/lib';
 use Catalyst::ScriptRunner;
 Catalyst::ScriptRunner->run('RPG', 'FastCGI');
 

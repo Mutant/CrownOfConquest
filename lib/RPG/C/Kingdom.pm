@@ -603,12 +603,8 @@ sub create : Local {
     );
     
     foreach my $town (@towns) {
-        my $location = $town->location;
-        $location->kingdom_id($kingdom->id);
-        $location->update;
-        
-        $town->unclaim_land;
-        $town->claim_land;
+        $town->change_allegiance($kingdom);
+        $town->update;
     }
     
     $c->stash->{party}->change_allegiance($kingdom);

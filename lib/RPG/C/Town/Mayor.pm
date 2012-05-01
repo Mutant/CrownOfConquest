@@ -653,6 +653,8 @@ sub change_allegiance : Local {
     }
     
     $town->change_allegiance($kingdom);
+    $town->decrease_mayor_rating(10);
+    $town->update;
     
     # Adjust parties loyalty if they have a kingdom
     if (my $partys_kingdom = $c->stash->{party}->kingdom) {

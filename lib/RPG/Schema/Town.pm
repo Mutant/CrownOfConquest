@@ -299,7 +299,6 @@ sub change_allegiance {
     $location->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
     $location->update;
     
-    $self->decrease_mayor_rating(10);
     $self->unclaim_land;
     $self->claim_land;
     $self->update;

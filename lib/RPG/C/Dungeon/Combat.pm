@@ -29,7 +29,7 @@ sub check_for_attack : Local {
     }    
 
     # If there are creatures here, check to see if we go straight into combat
-    if ( $creature_group && $creature_group->number_alive > 0 ) {
+    if ( $creature_group && $creature_group->number_alive > 0 && ! $creature_group->has_rare_monster && ! $creature_group->has_mayor ) {
         $c->stash->{creature_group} = $creature_group;
         
         my $type = $current_location->dungeon_room->dungeon->type;

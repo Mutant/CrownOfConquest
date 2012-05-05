@@ -480,8 +480,7 @@ sub unequip_item : Local {
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
 	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters_in_sector;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
+	if ( $item->character_id != $character->id ) {
 		$c->log->warn( "Attempted to unequip item  "
 				. $item->id
 				. " within party "

@@ -1568,6 +1568,10 @@ sub item_change_allowed {
 	   $item_change_allowed = 0;   
 	}
 	
+	if ($self->garrison_id && ! $self->garrison->in_combat) {
+	    $item_change_allowed = 1;
+	}
+	
 	$item_change_allowed = 1 if $self->garrison_id;
 	
 	return $item_change_allowed;

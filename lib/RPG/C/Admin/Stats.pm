@@ -16,7 +16,7 @@ sub default : Private {
     $c->forward('logins');
 }
 
-sub logins : Local {
+sub daily_stats : Local {
     my ( $self, $c ) = @_;
     
     my @counts = $c->model('DBIC::Player_Login')->search(
@@ -31,6 +31,15 @@ sub logins : Local {
         }
     );
     
+    my @turns_used = $c->model('DBIC::Day')->search(
+        {
+            date_started => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            order_by => 'date_started desc',
+        },
+    );
+    
     return $c->forward(
         'RPG::V::TT',
         [
@@ -38,6 +47,7 @@ sub logins : Local {
                 template => 'admin/stats/logins.html',
                 params   => {
                     counts => \@counts,
+                    turns_used => \@turns_used,
                 },
             }
         ]

@@ -62,7 +62,7 @@ sub add : Local {
 		$c->detach( '/panel/refresh' );
 	}
 	
-	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
+	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed($c->stash->{party});
 
     if (! $c->session->{new_garrison} || ref $c->session->{new_garrison} ne 'ARRAY') {
 	   $c->stash->{error} = "You must add at least one character to the garrison";

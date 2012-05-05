@@ -123,7 +123,7 @@ sub sector_menu : Private {
 	my $can_build_garrison = 0;
 	my $garrison           = $c->stash->{party_location}->garrison;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_garrison_level} ) {
-		$can_build_garrison = $c->stash->{party_location}->garrison_allowed;
+		$can_build_garrison = $c->stash->{party_location}->garrison_allowed($c->stash->{party});
 	}
 
 	#  Determine if building can be built or is already built.  Also can seize or raze - for now, they all

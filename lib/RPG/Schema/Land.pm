@@ -148,10 +148,16 @@ sub get_adjacent_towns {
 
 sub get_adjacent_garrisons {
     my $self = shift;
-    my $range = shift || RPG->config->{garrison_min_spacing};
+    my $range = shift || RPG::Schema->config->{garrison_min_spacing};
+    my $for_party = shift;
+
     my %criteria = ( 'garrison.garrison_id' => { '!=', undef }, );
 
     my %attrs = ( 'prefetch' => 'garrison', );
+    
+    if ($for_party) {
+        $criteria{'garrison.party_id'} = $for_party;
+    }
 
     my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset           => $self->result_source->resultset,
@@ -267,6 +273,7 @@ sub _road_connects_sectors {
 # Returns true if this sector is allowed to have a garrison
 sub garrison_allowed {
 	my $self = shift;
+	my $party = shift;
 	
 	# Not allowed if an orb is here
 	return 0 if $self->orb;
@@ -280,8 +287,8 @@ sub garrison_allowed {
 	# Not allowed if adjacent to a town
 	return 0 if $self->get_adjacent_towns;
 	
-	# Not allowed if too close to a garrison
-	return 0 if $self->get_adjacent_garrisons();
+	# Not allowed if too close to another garrison owned by this party
+	return 0 if $self->get_adjacent_garrisons(undef, $party->id);
 	
 	# Ok, it's allowed
 	return 1;

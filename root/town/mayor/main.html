@@ -49,6 +49,14 @@ function adjustMayorGold(action) {
 	dojo.byId('gold-action').value = action;
 	dijit.byId('mayor-adjust-gold').show();
 }
+
+function saveCharacterOrder(select, char_id) {
+	dojo.xhrGet( {
+        url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
+        handleAs: "text",        
+    });
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-reliquish-mayorlty" style="display: none" title="Relinquish Mayoralty?">

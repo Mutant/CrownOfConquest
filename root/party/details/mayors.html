@@ -7,17 +7,17 @@
 <div style="min-height: 350px" dojoType="dijit.layout.TabContainer">
     <div dojoType="dijit.layout.ContentPane" title="Current" style="display: none">
     
-	<table class="main" cellpadding="2" cellspacing="0">
-		<tr>
-			<th>Mayor</th>
-			<th>Town</th>
-			<th>Approval Rating</th>
-			<th>Manage</th>
-		</tr>
-
 	[% UNLESS mayors.0 %]
 	None of your characters are mayors of a town
 	[% ELSE %]
+		<table class="main" cellpadding="2" cellspacing="0">
+			<tr>
+				<th>Mayor</th>
+				<th>Town</th>
+				<th>Approval Rating</th>
+				<th>Manage</th>
+			</tr>
+
 		[% FOREACH mayor IN mayors %]
 			[% town = mayor.mayor_of_town %]
 			<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
@@ -27,8 +27,9 @@
 				<td><a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of_town.id %]')">Manage</a></td>
 			</tr>
 		[% END %]
+		
+	    </table>
 	[% END %]
-	</table>
 	</div>
 	
 	<div dojoType="dijit.layout.ContentPane" title="Historical" style="display: none" href="[% base %]party/details/mayors_historical"></div>

@@ -829,6 +829,8 @@ sub bury : Local {
 	$c->forward('check_action_allowed');
 
 	my $character = $c->stash->{character};
+	
+	croak "Cannot bury while in combat" if $c->stash->{party}->in_combat;
 
 	$c->model('DBIC::Grave')->create(
 		{

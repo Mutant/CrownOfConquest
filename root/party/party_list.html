@@ -417,7 +417,9 @@ function createButton(menu, name, characterId) {
 			<br>
 			
 			[% IF char.is_dead %]
-				<div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
+				[% IF ! in_combat %] 
+					<div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
+				[% END %]
 			[% ELSE %]
 			
 	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>

@@ -549,7 +549,9 @@ sub equip_item {
             equip_place_name                          => $equipment_slot_name,
             'equip_place_categories.item_category_id' => $self->item_type->item_category_id,
         },
-        { join => 'equip_place_categories', },
+        { 
+            join => 'equip_place_categories', 
+        },
     );
 
     my @slots_changed;

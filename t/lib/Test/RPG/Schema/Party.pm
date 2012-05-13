@@ -512,7 +512,9 @@ sub test_consume_items : Tests() {
                 item_variable_name => 'Quantity',
                 item_variable_value => 100,
             }
-        ]        
+        ],
+        no_equip_place => 1,
+        
     );
     
     my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},  
@@ -522,7 +524,8 @@ sub test_consume_items : Tests() {
                 item_variable_name => 'Quantity',
                 item_variable_value => 100,
             }
-        ]
+        ],
+        no_equip_place => 1,
     );
         
     my $item3 = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Resource',
@@ -531,7 +534,7 @@ sub test_consume_items : Tests() {
                 item_variable_name => 'Quantity',
                 item_variable_value => 200,
             }
-        ], character_id => $characters[1]->id, item_type_name => 'Type2');
+        ], character_id => $characters[1]->id, item_type_name => 'Type2', no_equip_place => 1,);
     
     # WHEN
     $party->consume_items(

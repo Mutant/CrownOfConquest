@@ -108,6 +108,8 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 1,
+        
     );
 
     my $item2 = Test::RPG::Builder::Item->build_item(
@@ -126,6 +128,7 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 2,
     );
 
     my $item3 = Test::RPG::Builder::Item->build_item(
@@ -138,6 +141,7 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 3,
     );
 
     # WHEN
@@ -455,7 +459,8 @@ sub test_ammunition_for_item : Tests(1) {
                 item_variable_value => 5,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $ammo2 = Test::RPG::Builder::Item->build_item(
@@ -468,7 +473,8 @@ sub test_ammunition_for_item : Tests(1) {
                 item_variable_name => 'Quantity',
                 item_variable_value => 20,
             },
-        ],        
+        ],
+        no_equip_place => 1,
     );
     
     $ammo2->update({item_type_id => $ammo1->item_type_id});
@@ -521,7 +527,8 @@ sub test_run_out_of_ammo_has_run_out : Tests(1) {
                 item_variable_value => 0,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $weapon = Test::RPG::Builder::Item->build_item(
@@ -562,7 +569,8 @@ sub test_run_out_of_ammo_hasnt_run_out : Tests(1) {
                 item_variable_value => 1,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $weapon = Test::RPG::Builder::Item->build_item(
@@ -1050,17 +1058,18 @@ sub test_get_item_actions : Tests(3) {
             }
         ],
         character_id => $character->id,
+        no_equip_place => 1,
     );    
     
-	my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id );
+	my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id, equip_place_id => 1, );
 	my ($enchantment) = $item2->item_enchantments;
 	$enchantment->variable('Spell', 'Heal');
 	$enchantment->variable_max('Casts Per Day', 2);
 	$enchantment->variable('Spell Level', 3);    
 	
-	my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'] );
+	my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], equip_place_id => 2, );
 	
-	my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['daily_heal'], character_id => $character->id );
+	my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['daily_heal'], character_id => $character->id, equip_place_id => 3, );
 	
 	# WHEN
 	my @actions = $character->get_item_actions(1);

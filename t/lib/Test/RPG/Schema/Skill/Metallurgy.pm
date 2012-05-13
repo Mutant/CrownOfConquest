@@ -53,6 +53,7 @@ sub test_execute : Tests(5) {
             max_value => 10,
         },
         character_id => $char->id,
+        equip_place_id => 1,
     );
     
     my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},
@@ -63,6 +64,7 @@ sub test_execute : Tests(5) {
             max_value => 10,
         },
         character_id => $char->id,
+        equip_place_id => 2,
     );
     
     my $item3 = Test::RPG::Builder::Item->build_item($self->{schema},
@@ -73,11 +75,13 @@ sub test_execute : Tests(5) {
             max_value => 10,
         },
         character_id => $char->id,
+        equip_place_id => 3,
     );
     
     my $item4 = Test::RPG::Builder::Item->build_item($self->{schema},
         item_type_name => 'Non-durability Item 1',
         character_id => $char->id,
+        equip_place_id => 4,
     );
     
     $self->{rolls} = [1,1,1,1];

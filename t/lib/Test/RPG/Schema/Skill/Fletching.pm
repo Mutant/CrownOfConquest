@@ -53,6 +53,7 @@ sub test_execute_existing_ammo : Tests(3) {
             item_variable_value => 5,
         },
         character_id => $char->id,
+        no_equip_place => 1,
     );
     
     my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},

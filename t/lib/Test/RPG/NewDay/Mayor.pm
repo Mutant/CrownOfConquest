@@ -169,10 +169,12 @@ sub test_refresh_mayor : Tests(5) {
 		item_type_id => $ranged->id, 
 		char_id => $character->id,
 		variables => [{item_variable_name=>'Durability', item_variable_value => 10, max_value => 100}],		
+		equip_place_id => 2,
 	);	
 	my $ammo = Test::RPG::Builder::Item->build_item($self->{schema}, 
 		item_type_id => $ammo_type->id, 
 		char_id => $character->id,
+		no_equip_place => 1,
 	);		
 	$ammo->variable('Quantity', 10);
 	

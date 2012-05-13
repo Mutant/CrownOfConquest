@@ -324,9 +324,15 @@ sub item_list : Local {
 sub equip_item : Local {
 	my ( $self, $c ) = @_;
 
-	my $item =
-		$c->model('DBIC::Items')
-		->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } }, }, );
+	my $item = $c->model('DBIC::Items')->find( 
+	   { 
+	       item_id => $c->req->param('item_id'), 
+	   }, 
+	   { 
+	       prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } },
+	       #for => 'update', 
+	   }, 
+    );
 
     my $character = $item->belongs_to_character;
     

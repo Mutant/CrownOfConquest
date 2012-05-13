@@ -354,11 +354,21 @@ sub castable_spells {
 	my $self = shift;
 	my $in_combat = shift;
 	
+	my %args;
+	if (defined $in_combat) {
+	    if ($in_combat) {
+	        $args{'spell.combat'} = 1;
+	    }
+	    else {
+	       $args{'spell.non_combat'} = 1;
+	    }
+	}
+	
 	return $self->search_related('memorised_spells',
 		{
 			memorised_today   => 1,
 			number_cast_today => \'< memorise_count',
-			$in_combat ? 'spell.combat' : 'spell.non_combat' => 1,
+			%args,
 		},
 		{
 			prefetch => 'spell',

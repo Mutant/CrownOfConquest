@@ -17,6 +17,8 @@
 		[% INCLUDE magic/potion.html, message=message %]
 	[% ELSIF message.type == 'detonate' %]
 		[% INCLUDE magic/detonate.html, message=message %]
+	[% ELSIF message.type == 'inscribe' %]
+		[% INCLUDE magic/enscribe.html, message=message %]
 	[% END %]
 	
 	[% IF message.recalled %]The spell was recalled! A cast for the day was not used up.[% END %]

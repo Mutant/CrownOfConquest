@@ -634,6 +634,9 @@ sub select_action : Local {
 			}
 		);
 	}
+	elsif ( $action->target eq 'special' ) {
+        $target = $target_id;   
+	}
 	else {
 		$target = $c->stash->{party};
 	}

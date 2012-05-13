@@ -381,6 +381,7 @@ sub build_target_list : Private {
 	my ( $self, $c, $spell, $item ) = @_;
 	
 	my @targets;
+    my @target_data;
 	given ($spell->target) {
 		when ('creature') {
 			@targets = $c->stash->{party}->opponents->members;
@@ -388,21 +389,28 @@ sub build_target_list : Private {
 		when ('character') {
 			@targets = $c->stash->{party}->members;
 		}
+		when ('special') {
+            @target_data = $item->target_list;   
+		}
 	}
 	
-	my @target_data;
-	foreach my $target (@targets) {
-	    next if $target->is_dead;
-		next unless $spell->can_be_cast_on($target);
-		push @target_data, {
-			name => $target->name,
-			id => $target->id,
-		};	
+	if (! @target_data) {
+    	foreach my $target (@targets) {
+    	    next if $target->is_dead;
+    		next unless $spell->can_be_cast_on($target);
+    		push @target_data, {
+    			name => $target->name,
+    			id => $target->id,
+    		};	
+    	}
 	}
 	
-	my $spell_name = $spell->spell_name;
+	my $spell_name;
 	if ($item) {
 		$spell_name .= ' [' . $item->display_name . ']';	
+	}
+	else {
+        $spell_name = $spell->spell_name;
 	}
 	
 	$c->res->body(to_json {spell_targets => \@target_data, spell_name => $spell_name});	
@@ -447,7 +455,7 @@ sub use_target_list : Local {
 	
 	my $action = $character->get_item_action($c->req->param('action_id'));
 	
-	$c->forward('build_target_list', [$action->spell, $action->can('item') ? $action->item : undef]);
+	$c->forward('build_target_list', [$action->can('spell') ? $action->spell : $action, $action->can('item') ? $action->item : $action]);
 
 }
 

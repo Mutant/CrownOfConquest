@@ -86,6 +86,8 @@ __PACKAGE__->has_many( 'elections', 'RPG::Schema::Election', 'town_id', );
 
 __PACKAGE__->might_have( 'current_election', 'RPG::Schema::Election', 'town_id', { where => {'status' => 'Open'}} );
 
+__PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+
 __PACKAGE__->might_have( 'capital_of', 'RPG::Schema::Kingdom', { 'foreign.capital' => 'self.town_id' }, );
 
 sub label {

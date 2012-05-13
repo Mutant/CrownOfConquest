@@ -365,7 +365,7 @@ sub process_revolt {
     my $mayor = $town->mayor;
     my $negotiation_bonus = 0;
     if ($mayor) {
-        $negotiation_bonus = $mayor->execute_skill('Negotiation', 'mayor_overthrow_check');
+        $negotiation_bonus = $mayor->execute_skill('Negotiation', 'mayor_overthrow_check') // 0;
     }
 
 	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus;" .
@@ -410,6 +410,41 @@ sub process_revolt {
     	
     	# Check for allegiance change now there's a new mayor
     	$self->check_for_allegiance_change($town);
+    	
+    	return;
+    }
+    elsif ($roll < 35) {
+        # Peasants destroy some upgrades if some exist
+        my $building = $town->building;
+        
+        if ($building && $building->upgrades->count > 0) {
+            my @upgrades = $building->upgrades;
+            
+            if (@upgrades) {
+                my ($upgrade) = (shuffle @upgrades)[0];
+                my $damage = Games::Dice::Advanced->roll('1d3');
+                $damage = $upgrade->level if $damage > $upgrade->level;
+                $upgrade->level($upgrade->level-$damage);
+                $upgrade->update;
+                
+                $town->add_to_history(
+                	{
+                		day_id  => $c->current_day->id,
+                    	message => "The peasants storm the town hall, damaging some of the town's defences!",
+                	}
+                );                
+                
+                $town->add_to_history(
+                	{
+                		day_id  => $c->current_day->id,
+                    	message => "The revolting peasants have removed $damage levels from our " . $upgrade->type->name . " add-on",
+                    	type => 'mayor_news',
+                	}
+                );                 
+                
+                return;
+            }
+        }
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);
@@ -434,16 +469,18 @@ sub process_revolt {
 					day_id => $c->current_day->id,
 				}
 			);
-    	}    	
+    	}    
+    	
+    	return;	
     }
-    else {
-    	$town->add_to_history(
-    		{
-				day_id  => $c->current_day->id,
-            	message => "The peasants are still in revolt!",
-    		}
-    	);
-    }    
+    
+    
+	$town->add_to_history(
+		{
+			day_id  => $c->current_day->id,
+        	message => "The peasants are still in revolt!",
+		}
+	);
 }
 
 sub check_for_pending_mayor_expiry {

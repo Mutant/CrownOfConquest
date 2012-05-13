@@ -22,6 +22,7 @@ use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::CreatureType;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::Building;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -130,6 +131,50 @@ sub test_process_revolt_with_negotiation : Tests(1) {
 	# THEN
 	$character->discard_changes;
 	is(defined $character->mayor_of, 1, "Character still mayor of town due to negotaition bonus");	
+}
+
+sub test_process_revolt_peasants_do_damage : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->{rolls} = [30, 3];
+	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+	$town->peasant_state('revolt');
+	$town->update;	
+	
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        upgrades => { 
+            'Rune Of Protection' => 2,
+        },
+        land_id => $town->land_id,
+        owner_id => $town->id,
+        owner_type => 'town',
+    );  	
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->mayor_of($town->id);
+	$character->update;
+
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	$self->{config}{level_hit_points_max}{test_class} = 6;
+	
+	# WHEN
+	$action->process_revolt($town);
+	
+	# THEN
+	$character->discard_changes;
+	is($character->mayor_of, $town->id, "Character still mayor of town");
+	
+	$town->discard_changes;
+	is($town->peasant_state, 'revolt', "Peasants still in revolt");
+	
+	my @upgrade = $building->upgrades;
+	is(@upgrade, 1, "One building upgrade");
+	is($upgrade[0]->level, 0, "Building's upgrade level reduced");    
+	
+	undef $self->{rolls};
 }
 
 sub test_check_for_pending_mayor_expiry : Tests(2) {

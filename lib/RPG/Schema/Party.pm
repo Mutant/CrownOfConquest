@@ -847,59 +847,6 @@ sub wiped_out {
     $self->update;
 }
 
-#  This function consumes items that are possessed by the party.  Note that this sub will accept items that are
-#    both individual items and those with 'Quantity'.
-sub consume_items {
-	my $self = shift;
-	my $category = shift;
-	my $secondary_group = shift;
-    my %items_to_consume = @_;
-
-	#  Get the party's equipment.	
-	my @party_equipment = $self->get_equipment($category);
-	push @party_equipment, $secondary_group->get_equipment($category)
-	   if $secondary_group;
-
-	#  Go through the items, decreasing the needed counts.
-	my @items_to_consume;
-	foreach my $item (@party_equipment) {
-		if (defined $items_to_consume{$item->item_type->item_type} and $items_to_consume{$item->item_type->item_type} > 0) {
-			my $quantity = $item->variable('Quantity') // 1;
-
-			if ($quantity <= $items_to_consume{$item->item_type->item_type}) {
-				$items_to_consume{$item->item_type->item_type} -= $quantity;
-				$quantity = 0;
-			} else {
-				$quantity -= $items_to_consume{$item->item_type->item_type};
-				$items_to_consume{$item->item_type->item_type} = 0;
-			}
-			push @items_to_consume, {
-			    item => $item, 
-			    quantity => $quantity
-			};
-		}
-	}
-	
-	#  If any of the counts are non-zero, we didn't have enough of the item.
-	foreach my $next_key (keys %items_to_consume) {
-		if ($items_to_consume{$next_key} > 0) {
-			return 0;
-		}
-	}
-	
-	#  We had enough resources, so decrement quantities and possibly delete the items.
-	foreach my $to_consume (@items_to_consume) {
-		if ($to_consume->{quantity} == 0) {
-			$to_consume->{item}->delete;
-		} else {
-			my $var = $to_consume->{item}->variable_row('Quantity');
-			$var->item_variable_value($to_consume->{quantity});
-			$var->update;
-		}
-	}
-	return 1;
-}
-
 #  Get an array of the buildings owned by this party.
 sub get_owned_buildings {
 	my $self = shift;

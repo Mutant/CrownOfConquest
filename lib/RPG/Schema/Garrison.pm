@@ -185,6 +185,26 @@ sub check_for_fight {
 
 	return 0;
 }
+
+around 'get_equipment' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $category = shift;
+    
+    my @equipment = $self->$orig($category);
+    
+	my @garrison_equipment = $self->search_related(
+        'items',
+    	{
+    	    'category.item_category' => $category,
+    	},
+        {
+            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+        },
+	);
+	
+	return (@equipment, @garrison_equipment);   
+};
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 	

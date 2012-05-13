@@ -1,7 +1,9 @@
 package RPG::Schema::Building_Type;
 use base 'DBIx::Class';
-use strict;
-use warnings;
+
+use Moose;
+
+with 'RPG::Schema::Role::ResourceConsumer';
 
 use Carp;
 use Math::Round qw(round);

@@ -33,6 +33,11 @@ sub get_valid_groups {
 	}
 	else {
 	    @groups = ($c->stash->{party});
+	    
+	    my $garrison;
+	    if ($garrison = $c->stash->{party}->location->garrison and $garrison->party_id == $c->stash->{party}->id) {
+	        push @groups, $garrison;
+	    }
 	}
 	
 	return @groups;
@@ -127,7 +132,7 @@ sub build : Local {
    
 	my %resources_needed = $building_type->cost_to_build(\@groups);
 	
-	if (! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
+	if (! $building_type->consume_items(\@groups, %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to create this building";
 		$c->detach('/panel/refresh');			
 	}    
@@ -284,7 +289,7 @@ sub upgrade : Local {
 	
 	my %resources_needed = $upgradable_to_type->cost_to_build(\@groups);
 	
-	if (! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
+	if (! $building_type->consume_items(\@groups, %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to upgrade this building";
 		$c->detach('/panel/refresh');			
 	}
@@ -342,7 +347,9 @@ sub build_upgrade : Local {
 	my $turns_needed = delete $resources_needed{Turns};
 	my $gold_needed = delete $resources_needed{Gold};
 	
-	if (%resources_needed && ! $c->stash->{party}->consume_items('Resource', $town ? $town->mayor->creature_group : undef, %resources_needed) ) {
+	my @groups = $self->get_valid_groups($c, $town);
+	
+	if (! $upgrade->type->consume_items(\@groups, %resources_needed) ) {
 		$c->stash->{error} = "Your party does not have the resources needed to build this upgrade";
 		$c->detach('/panel/refresh');			
 	}

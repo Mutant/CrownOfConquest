@@ -73,7 +73,7 @@ sub test_run_election_mayor_retains_office : Tests(7) {
     is($party2->messages->count, 1, "Char's party gets a message");
 }
 
-sub test_run_election_mayor_loses_office : Tests(9) {
+sub test_run_election_mayor_loses_office : Tests(11) {
     my $self = shift;
     
     # GIVEN
@@ -125,6 +125,12 @@ sub test_run_election_mayor_loses_office : Tests(9) {
     
     is($party1->messages->count, 1, "Mayor's party gets a message");
     is($party2->messages->count, 1, "Char's party gets a message");
+    
+    $party1->discard_changes;
+    $party2->discard_changes;
+    is($party1->gold, 100, "Party 1's gold still the same (campaign not refunded)");
+    is($party2->gold, 100, "Party 2's gold still the same (campaign not refunded)");
+    
 }
 
 1;

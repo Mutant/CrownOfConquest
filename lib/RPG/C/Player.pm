@@ -63,13 +63,25 @@ sub login : Local {
         	$c->session->{login_url} = $c->req->uri->path;
     	}	
     }
+    
+    my $last_announcement = $c->model('DBIC::Announcement')->search(
+        {},
+        {
+            rows => 1,
+            order_by => { -desc => 'date' },
+        },
+    )->first;
+            
 
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'player/login.html',
-                params   => { message => $message, },
+                params   => { 
+                    message => $message,
+                    last_announcement => $last_announcement, 
+                },
             }
         ]
     );
@@ -581,8 +593,10 @@ sub survey : Local {
 	
 }
 
-sub announcements : Local {
-	my ( $self, $c ) = @_;
+sub announcements : Local : Args(1) {
+	my ( $self, $c, $is_public ) = @_;
+	
+	warn $is_public;
 	
 	my @announcements = $c->model('DBIC::Announcement')->search(
 		{},
@@ -596,6 +610,7 @@ sub announcements : Local {
 			template => 'player/announcement/list.html',
 			params => {
 				announcements => \@announcements,
+				is_public => $is_public eq 'public' ? 1 : 0,
 			} 
 		} 
 	] );	

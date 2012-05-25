@@ -82,7 +82,7 @@ function closeShotScreen() {
 	</div>
 </div>
 
-<div id="login-content" style="position: relative; background: black">
+<div id="login-content" style="position: relative; background: black; min-height: 550px">
 
 <div style="float: right;">
 	<div class="login-box">
@@ -124,6 +124,13 @@ function closeShotScreen() {
 		<br>
 		<a href="#" onClick="showShot(2)">More Screenshots</a>
 		</div>
+	</div>
+	
+	<div class="login-box">
+		<h2>Latest News - [% last_announcement.title %]</h2>
+		<i>[% last_announcement.date %]</i><br>
+		[% last_announcement.announcement | truncate(250) %]<br>
+		<a href="[% base %]player/announcements/public">More</a>
 	</div>
 
 </div>

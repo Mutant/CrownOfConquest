@@ -21,7 +21,6 @@ sub reciprocal_type {
         {
             kingdom_id => $self->with_id,
             with_id    => $self->kingdom_id,
-            type       => $self->type,
             ended      => undef,
         }
     );

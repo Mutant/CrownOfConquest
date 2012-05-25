@@ -161,7 +161,7 @@ sub select_target {
 #  not a character or is set to attack
 sub _select_buff_target {
     my $self = shift;
-    my @targets = shift;
+    my @targets = @_;
     
     my @possible_targets;
     foreach my $target (@targets) {

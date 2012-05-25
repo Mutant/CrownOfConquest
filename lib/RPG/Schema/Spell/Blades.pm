@@ -33,7 +33,7 @@ sub _cast {
 
 sub select_target {
     my $self = shift;
-    my @targets = shift;
+    my @targets = @_;
     
     return $self->_select_buff_target(@targets);
 }

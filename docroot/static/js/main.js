@@ -12,7 +12,6 @@ dojo.require("dijit.Menu");
 dojo.require("dijit.form.NumberTextBox");
 dojo.require("dijit.form.Button");
 dojo.require("dijit.layout.ContentPane");
-dojo.require("dijit.Dialog");
 dojo.require("dijit.form.TextBox");
 dojo.require("dojox.layout.ContentPane");
 dojo.require('dijit.Tooltip');

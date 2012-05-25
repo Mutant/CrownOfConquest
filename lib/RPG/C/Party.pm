@@ -625,20 +625,63 @@ sub select_action : Local {
 			}			
 		}
 	}		
-			
-	if ( $action->target eq 'character' ) {
-		$target = $c->model('DBIC::Character')->find(
-			{
-				character_id => $target_id,
-				party_id     => $c->stash->{party}->id,
-			}
-		);
-	}
-	elsif ( $action->target eq 'special' ) {
-        $target = $target_id;   
-	}
-	else {
-		$target = $c->stash->{party};
+
+    given ( $action->target ) {
+        when ('character') {
+            $target = $c->model('DBIC::Character')->find(
+    			{
+    				character_id => $target_id,
+    				party_id     => $c->stash->{party}->id,
+    			}
+    		);
+        }
+     
+        when ('special') {
+            $target = $target_id;    
+        }
+        
+        when ('sector') {
+            if ($c->req->param('x') && $c->req->param('y')) {                
+                $target = $c->model('DBIC::Land')->find(
+                    {
+                        x => $c->req->param('x'),
+                        y => $c->req->param('y'),
+                    }
+                );
+            }
+            else {                
+            	my $message = $c->forward(
+            		'RPG::V::TT',
+            		[
+            			{
+            				template => 'magic/select/sector.html',
+            				params   => {
+            					action => $c->req->param('action') // '',
+            					character_id => $c->req->param('character_id') // '',
+            					action_param => $c->req->param('action_param') // '',
+            				},
+            				return_output => 1,
+            			}
+            		]
+            	);
+                
+            	$c->forward('/panel/create_submit_dialog', 
+            		[
+            			{
+            				content => $message,
+            				submit_url => 'party/select_action',
+            				dialog_title => 'Select Sector',
+            			}
+            		],
+            	);
+            	
+            	$c->detach( '/panel/refresh', [ 'messages' ] );
+            }
+        }
+     
+        default {
+            $target = $c->stash->{party};    
+        }
 	}
 	
 	$result = $execute->($target);

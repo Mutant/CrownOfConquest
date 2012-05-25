@@ -101,8 +101,8 @@ sub _cast_impl {
     my $result = RPG::Combat::SpellActionResult->new(
         spell_name => $self->spell_name,
         attacker   => $caster,
-        defender   => $target,
-        $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
+        defender   => $result_params->{defender} // $target,
+        ref $target && $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
         %$result_params,
     );
     

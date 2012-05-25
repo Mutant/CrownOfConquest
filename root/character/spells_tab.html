@@ -69,10 +69,6 @@
 [% END %]
 </table>
 <br>
-
-<div dojoType="dijit.Tooltip"
-	connectId="[% FOREACH spell IN available_spells %]memorise_count_[% spell.id %],[% END %]"
-    label="Number of this spell to memorise for tomorrow"></div>
     
 <div dojoType="dijit.Tooltip"
 	connectId="[% FOREACH spell IN available_spells %]auto_cast_[% spell.id %],[% END %]"

@@ -691,6 +691,9 @@ failed_claim_ban_period: 28
 # Minimum level for parties allowed to respond to a claim
 minimum_claim_response_level: 3
 
+# Minimum level parties can delcare allegiance
+min_level_for_allegiance_declaration: 3
+
 # ----- Skills Params ----- #
 
 # Maximum level allowed for a particular skill

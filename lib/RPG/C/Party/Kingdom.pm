@@ -116,6 +116,7 @@ sub allegiance : Local {
                     in_combat => $c->stash->{party}->in_combat,
                     can_claim_throne => $can_claim_throne,
                     claim_wait_period => $c->config->{claim_wait_period},
+                    min_level_for_allegiance_declaration => $c->config->{min_level_for_allegiance_declaration},
                     claim_to_throne => $current_claim,
                     claim_response => $claim_response,
                     claim_summary => \%claim_summary,

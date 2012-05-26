@@ -145,7 +145,6 @@ sub save_party : Local {
 
     my $town = shift @towns;
     $c->stash->{party}->land_id( $town->land_id );
-    $c->stash->{party}->kingdom_id( $town->location->kingdom_id );
 
     $c->stash->{party}->update;
 

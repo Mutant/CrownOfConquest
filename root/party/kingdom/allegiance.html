@@ -95,27 +95,32 @@
 [% END %]
 
 <br><br>
-We can change our allegiance once every [% allegiance_change_frequency %] days. 
 
-[% IF party.last_allegiance_change %]
-	We last changed it [% party.days_since_last_allegiance_change %].
+[% IF party.level < min_level_for_allegiance_declaration %]
+	We cannot declare allegiance for a kingdom until party level [% min_level_for_allegiance_declaration %].
 [% ELSE %]
-	So far, we have not changed our allegiance.
-[% END %]
-
-[% IF ! in_combat %]
-<form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
-Change our allegiance to: 
-	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
-		[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
-		[% FOREACH kingdom IN kingdoms %]
-        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
-		[% END %]
-	</select>
-	<input type="submit" value="Change">
-</form>
-[% ELSE %]
-<br><br>You cannot change your allegiance while you're in combat.
+	We can change our allegiance once every [% allegiance_change_frequency %] days. 
+	
+	[% IF party.last_allegiance_change %]
+		We last changed it [% party.days_since_last_allegiance_change %].
+	[% ELSE %]
+		So far, we have not changed our allegiance.
+	[% END %]
+	
+	[% IF ! in_combat %]
+	<form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
+	Change our allegiance to: 
+		<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
+			[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
+			[% FOREACH kingdom IN kingdoms %]
+	        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
+			[% END %]
+		</select>
+		<input type="submit" value="Change">
+	</form>
+	[% ELSE %]
+	<br><br>You cannot change your allegiance while you're in combat.
+	[% END %]
 [% END %]
 
 [% IF banned.size > 0 %]

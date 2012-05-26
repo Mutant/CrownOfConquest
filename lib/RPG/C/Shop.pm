@@ -449,6 +449,8 @@ sub sell_single_item : Private {
 	my $sell_price = $item->sell_price($shop);
 
 	if ( $item->variable('Quantity') ) {
+	    my $quantity_for_shop = 0;
+	    
 	    if ($c->req->param('quantity') && $c->req->param('quantity') != $item->variable('Quantity')) {
             if ($c->req->param('quantity') > $item->variable('Quantity')) {
                 $c->res->body( to_json( { error => "You can't sell more than you have!" } ) );
@@ -462,11 +464,27 @@ sub sell_single_item : Private {
 
             $sell_price = $item->individual_sell_price($shop) * $c->req->param('quantity');            
             $item->variable('Quantity', $item->variable('Quantity') - $c->req->param('quantity'));
+            $quantity_for_shop = $c->req->param('quantity');
 	    }
 	    else {
     		# Selling the whole thing, just delete it.
+    		$quantity_for_shop = $item->variable('Quantity');
             $item->delete;
 	    }
+	    
+	    # Add it to the shop
+	    if ($quantity_for_shop) {
+            my $shop_item = $c->model('DBIC::Items')->find_or_create(
+                {
+                    shop_id => $shop->id,
+                    item_type_id => $item->item_type_id,
+                },
+            );
+            
+            $shop_item->variable('Quantity', $shop_item->variable('Quantity') + $quantity_for_shop);
+            $shop_item->update;
+	    } 
+	    
 	}
 
 	else {

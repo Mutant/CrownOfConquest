@@ -12,6 +12,8 @@ use HTML::Strip;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
+    
+    return 1 if $c->req->action eq 'party/create/calculate_values';
 
     unless ( $c->stash->{party} ) {
         $c->stash->{party} = $c->model('DBIC::Party')->find_or_create(
@@ -226,6 +228,7 @@ sub new_character_form : Private {
                     classes    => [ $c->model('DBIC::Class')->all ],
                     stats_pool => $c->config->{stats_pool},
                     stat_max   => $c->config->{stat_max},
+                    action     => '/party/create/create_character',
                     %$params,
                 },
                 fill_in_form => 1,
@@ -234,7 +237,7 @@ sub new_character_form : Private {
     );
 }
 
-sub create_character : Local {
+sub create_new_character : Private {
     my ( $self, $c ) = @_;
 
     my $hs = HTML::Strip->new();
@@ -243,18 +246,12 @@ sub create_character : Local {
 
     unless ( $name && $c->req->param('race') && $c->req->param('class') ) {
         $c->stash->{error} = 'Please choose a name, race and class';
-        $c->detach('new_character');
+        return;
     }
 
     unless ( $c->req->param('gender') eq 'male' || $c->req->param('gender') eq 'female' ) {
         $c->stash->{error} = 'Please choose a gender';
-        $c->detach('new_character');
-    }
-
-    my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
-    if ( !$c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
-        $c->stash->{error} = 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
-        $c->detach('create');
+        return;
     }
 
     my $total_mod_points = 0;
@@ -263,7 +260,7 @@ sub create_character : Local {
 
         if ( $mod_points < 0 ) {
             $c->stash->{error} = "You've set a modifier to a negative value! Modifiers must be positive or zero";
-            $c->detach('/party/create/new_character');
+            return;
         }
 
         $total_mod_points += $mod_points;
@@ -271,14 +268,12 @@ sub create_character : Local {
 
     if ( $total_mod_points > $c->config->{stats_pool} ) {
         $c->stash->{error} = "You've used more than the total stats pool!";
-        $c->detach('/party/create/new_character');
+        return;
     }
 
     my $race = $c->model('DBIC::Race')->find( $c->req->param('race') );
 
     my $class = $c->model('DBIC::Class')->find( { class_name => $c->req->param('class') } );
-
-
 
     my %char_params = (
         character_name => $name,
@@ -294,8 +289,10 @@ sub create_character : Local {
         level          => 1,
     );
 
+    my $character;
+
     if ( $c->req->param('character_id') ) {
-        my $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), } );
+        $character = $c->model('DBIC::Character')->find( { character_id => $c->req->param('character_id'), } );
 
         croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
 
@@ -305,7 +302,36 @@ sub create_character : Local {
         $character->update;
     }
     else {
-        my $character = $c->model('DBIC::Character')->create( { %char_params, party_order => $char_count + 1, }, );
+        my $max_order_rec = $c->model('DBIC::Character')->find(
+            {
+                party_id => $c->stash->{party}->id,
+            },
+            {
+                select => {max => 'party_order'},
+                as => 'order',
+            }
+        );
+        my $max_order = $max_order_rec->get_column('order') // 0;
+        
+        $character = $c->model('DBIC::Character')->create( { %char_params, party_order => $max_order + 1, }, );  
+         
+    }
+    
+    return $character;
+}
+
+sub create_character : Local {
+    my ($self, $c) = @_;
+    
+    my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
+    if ( !$c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
+        croak 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
+    }    
+    
+    $c->forward('create_new_character');
+    
+    if ($c->stash->{error}) {
+        $c->detach('new_character_form');
     }
 
     $c->res->redirect( $c->config->{url_root} . '/party/create' );

@@ -27,6 +27,7 @@ sub default : Path {
                     party                => $c->stash->{party},
                     party_full           => $c->stash->{party}->is_full,
                     max_party_characters => $c->config->{max_party_characters},
+                    train_min_party_level => $c->config->{train_min_party_level},
                 },
             }
         ]
@@ -121,6 +122,88 @@ sub sell : Local {
     }
         
     $c->forward( '/panel/refresh', [[screen => '/town/recruitment'], 'party_status', 'party'] );
+}
+
+sub train : Local {
+    my ($self, $c) = @_;
+    
+    my $message = "Training a new character costs " . $c->config->{train_turn_cost} . " turns and " . $c->config->{train_gold_cost} . " gold";
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/new_character.html',
+                params => {
+                    in_screen => 1,
+                    title => 'Train Character',
+                    races      => [ $c->model('DBIC::Race')->all ],
+                    classes    => [ $c->model('DBIC::Class')->all ],
+                    stats_pool => $c->config->{stats_pool},
+                    stat_max   => $c->config->{stat_max},
+                    action     => '/town/recruitment/create_trained',
+                    new_char_message => $message,                     
+                },
+                fill_in_form => 1,
+            }
+        ],
+    );
+}
+
+sub create_trained : Local {
+    my ($self, $c) = @_;
+    
+    croak "Party not in a town" unless $c->stash->{party_location}->town;
+
+    croak "Party not high enough level to train" if $c->stash->{party} < $c->config->{train_min_party_level};
+    
+    croak "Party is full and cannot train a new character" if $c->stash->{party}->is_full;
+    
+    croak "Can't train existing character" if $c->req->param('character_id');
+    
+    if ($c->stash->{party}->turns < $c->config->{train_turn_cost}) {
+        $c->stash->{error} = "You do not have enough turns to train a new character";
+        $c->forward( '/panel/refresh', [[screen => '/town/recruitment']] );
+        return;
+    }
+    
+    if ($c->stash->{party}->gold < $c->config->{train_gold_cost}) {
+        $c->stash->{error} = "You do not have enough gold to train a new character";
+        $c->forward( '/panel/refresh', [[screen => '/town/recruitment']] );
+        return;
+    }
+    
+    my $character = $c->forward('/party/create/create_new_character');
+    
+    if ($c->stash->{error}) {
+        $c->forward( '/panel/refresh', [[screen => '/town/recruitment/train']] );
+        return;
+    }
+
+    $character->roll_all;
+    $character->set_default_spells;
+    $character->set_starting_equipment;
+
+    $c->model('DBIC::Character_History')->create(
+        {
+            character_id => $character->id,
+            day_id       => $c->stash->{today}->id,
+            event        => $character->character_name
+                . " was trained as a level 1 " . $character->class->class_name 
+                . " in the town of " . $c->stash->{party_location}->town->town_name 
+                . " by the party "
+                . $c->stash->{party}->name,
+        },
+    );
+    
+    $c->stash->{party}->turns($c->stash->{party}->turns - $c->config->{train_turn_cost});
+    $c->stash->{party}->gold($c->stash->{party}->gold - $c->config->{train_gold_cost});
+    $c->stash->{party}->update;
+    
+    $c->stash->{panel_messages} = "New character trained";
+       
+    $c->forward( '/panel/refresh', [[screen => '/town/recruitment'], 'party_status', 'party'] );
+
 }
 
 1;

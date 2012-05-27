@@ -1,8 +1,11 @@
-[% INCLUDE layout/box_top.html %]
+[% UNLESS in_screen %]
+	[% INCLUDE layout/box_top.html %]
+[% END %]
 [% PROCESS layout/diag_buttons.html %]
 
 
-<h1>New Character</h1>
+<h2>[% title || 'New Character' %]</h2>
+[% IF new_char_message %][% new_char_message %]<br>[% END %]
 
 <div style="visibility: hidden; position: absolute; top: 0px; z-index: -100" id="points-div"></div>
 
@@ -119,17 +122,21 @@ function checkStats() {
 }
 
 function submitForm() {
-	document.getElementById("form").submit();
+	[% IF in_screen %]
+		postPanels(document.getElementById("form"));
+	[% ELSE %]
+		document.getElementById("form").submit();
+	[% END %]
 }
 </script>
 
-<div dojoType="dijit.Dialog" id="stats-alert" title="Alert" execute="submitForm();">
+<div dojoType="dijit.Dialog" id="stats-alert" title="Alert" execute="submitForm();" style="display: none">
 You haven't used all your stat points for this character.<br>
 You won't be able to regain these stat points if you continue!<br>
 [% dialog_buttons('stats-alert') %]
 </div>
 
-<form name="form" method="post" id="form" action="[% base %]/party/create/create_character" onsubmit="return checkStats()">
+<form name="form" method="post" id="form" action="[% base %][% action %]" onsubmit="if (checkStats()) { submitForm() }; return false;">
 <input type="hidden" name="character_id">
 <style>
 #stats-set input { width: 65px }
@@ -220,4 +227,7 @@ Stats can be no higher than [% stat_max %] (for a new character).</p>
 <br>
 <input type="submit" value="[% IF character_id %]Update[% ELSE %]Create[% END %] Character">
 </form>
-[% INCLUDE layout/box_bottom.html %]
+
+[% UNLESS in_screen %]
+	[% INCLUDE layout/box_bottom.html %]
+[% END %]

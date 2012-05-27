@@ -100,3 +100,10 @@ Or you can sell one of your characters:<br><br></td></tr>
 [% END %]
 
 </table>
+[% IF party.level >= train_min_party_level && ! party_full %]
+<br>
+Or Train a new character: 
+<button dojoType="dijit.form.Button" onClick="loadScreen('town/recruitment/train')">
+	Train
+</button>
+[% END %]

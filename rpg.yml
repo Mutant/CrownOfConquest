@@ -240,6 +240,15 @@ max_party_level_leave_town_warning: 2
 # Minimum level a character has to be before they can enscribe spells onto scrolls
 min_scroll_enscribe_level: 8
 
+# Gold cost to train a new character
+train_gold_cost: 15000
+
+# Turn cost to train a new character
+train_turn_cost: 50
+
+# Minumum level for training new characters
+train_min_party_level: 12
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack

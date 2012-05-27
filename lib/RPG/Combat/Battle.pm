@@ -440,7 +440,13 @@ sub character_action {
 		$character->last_combat_param2( $target->id );
 	}
 	elsif ($autocast) {
-	    # They have auto-cast set, but didn't cast a spell. Set them to attack instead
+	    # They have auto-cast set, but didn't cast a spell. 
+	    # If they can attack, they should. Otherwise they do nothing.
+	    # XXX: we don't pass in attack history, but this should usually be OK
+	    my $number_of_attacks = $character->number_of_attacks();
+	        
+	    return if $number_of_attacks < 1;
+	    
 	    $character->last_combat_action('Attack');
 	    $character->last_combat_param1(undef);
 	    $character->last_combat_param2(undef);

@@ -381,6 +381,43 @@ sub test_character_action_use_item : Tests(5) {
 	$self->unmock_dice;
 }
 
+sub test_character_action_autocast_cast_but_has_no_attack : Tests(1) {
+	my $self = shift;
+
+	# GIVEN	
+	$self->{config}{online_threshold} = 5;
+	
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+    my $cret = ($cg->creatures)[0];
+    
+    $party->last_action(DateTime->now()->subtract( minutes => 10 ));	
+    $party->update;
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character = Test::MockObject::Extends->new($character);
+	$character->set_true('is_spell_caster');
+	$character->set_always('check_for_auto_cast', undef);
+	$character->set_always('last_combat_action', 'Attack');
+	$character->set_always('last_combat_param1', 'autocast');
+	$character->set_always('effect_value', -1);
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		log            => $self->{mock_logger},
+		config         => $self->{config},
+	);	
+	
+	# WHEN
+	my $result = $battle->character_action($character);
+	
+	# THEN
+	is($result, undef, "Character didn't do anything, as no cast selected, and has no attack");
+
+}
+
 sub test_creature_action_basic : Tests(9) {
 	my $self = shift;
 

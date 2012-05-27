@@ -16,6 +16,7 @@ sub build_item_type {
         {
             item_category     => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
+            always_enchanted   => $params{always_enchanted} // 0,
         }
     );
     

@@ -124,7 +124,7 @@ sub run {
                 }
                 else {
                     my $number_of_enchantments = 0;
-                	if (Games::Dice::Advanced->roll('1d100') <= $c->config->{shop_enchanted_item_chance}) {
+                	if ($item_type->category->always_enchanted || Games::Dice::Advanced->roll('1d100') <= $c->config->{shop_enchanted_item_chance}) {
                 		$number_of_enchantments = RPG::Maths->weighted_random_number(1..3);	
                 	}
                 	

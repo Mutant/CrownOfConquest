@@ -205,7 +205,7 @@ sub check_for_item_found {
                 $enchantment_chance+=$bonus;
 			}
 			
-			if ($self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
+			if ($item_type->category->always_enchanted || $self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
 			    # Make sure item type selected is capable of being enchanted. If not, choose another one
 			    while ($item_type->category->enchantments_allowed->count <= 0) {
 			        $item_type = shift @item_types;

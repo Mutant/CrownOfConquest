@@ -61,7 +61,7 @@ sub fill {
 	    my $enchantment_chance = 7 * ($dungeon->level - 1);
 	    
 	    my $enchantments = 0;
-	    if (Games::Dice::Advanced->roll('1d100') <= $enchantment_chance) {
+	    if ($item_type->category->always_enchanted || Games::Dice::Advanced->roll('1d100') <= $enchantment_chance) {
 	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
 	    }
 

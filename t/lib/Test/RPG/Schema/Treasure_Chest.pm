@@ -47,6 +47,13 @@ sub shutdown : Tests(shutdown) {
     $self->unmock_dice;
 }
 
+sub setup : Tests(setup) {
+    my $self = shift;
+    
+    undef $self->{rolls};
+    undef $self->{roll_result};   
+}
+
 sub test_fill : Tests(2) {
     my $self = shift;
     
@@ -85,8 +92,47 @@ sub test_fill : Tests(2) {
     # THEN
     my @items = $chest->items;
     is(scalar @items, 1, "1 item added to the chest");
-    is($items[0]->item_type->item_type_id, $it1->id, "Item type is correct");
+    is($items[0]->item_type->item_type_id, $it1->id, "Item type is correct");    
+}
+
+sub test_fill_honours_always_enchanted : Tests(3) {
+    my $self = shift;
     
+    # GIVEN
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, level => 2);
+    my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
+        dungeon_id => $dungeon->id,
+        top_left => {
+            x => 1,
+            y => 1,
+        },
+        bottom_right => {
+            x => 3,
+            y => 3,
+        }
+    );
+    my @sectors = $dungeon_room->sectors;
+    
+    my $chest = Test::RPG::Builder::Treasure_Chest->build_chest($self->{schema}, dungeon_grid_id => $sectors[0]->id);
+    
+    $self->{weighted_random_number} = [1,1];
+    
+    my $it1 = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, prevalence => 50, always_enchanted => 0, enchantments => [qw/indestructible/]);
+    
+    my %item_types_by_prevalence = (
+        50 => [$it1],
+    );        
+    
+    $self->{roll_result} = 1;
+    
+    # WHEN
+    $chest->fill(%item_types_by_prevalence);
+    
+    # THEN
+    my @items = $chest->items;
+    is(scalar @items, 1, "1 item added to the chest");
+    is($items[0]->item_type->item_type_id, $it1->id, "Item type is correct");
+    is($items[0]->enchantments_count, 1, "Item is enchanted");
 }
 
 sub test_delete_removed_related_quests : Tests(3) {

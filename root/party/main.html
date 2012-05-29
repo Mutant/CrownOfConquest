@@ -235,15 +235,15 @@ function showMessages() {
 	</div>
 </div>
 
-<div style="position: relative; width: 100%">
+<div style="position: relative; width: 100%; background-color: black">
 [% INCLUDE layout/left_hand_nav.html called_from_panel=called_from_panel %]
 </div>
 
-<div class="line-sep"></div>
+<div class="line-sep" style="background-color: black"></div>
 
-<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="margin: 0 2px; clear: left; font-size: 8pt; overflow: hidden; min-height: 15px"></div>
+<div id="party_status-pane" dojoType="dijit.layout.ContentPane" style="background-color: black; margin-left: 2px; clear: left; font-size: 8pt; overflow: hidden; min-height: 15px"></div>
 
-<div class="line-sep"></div>
+<div class="line-sep" style="background-color: black"></div>
 
 <div id="loader-gif" style="display: none">
 	<img src="[% c.config.static_path %]/images/layout/loader.gif">

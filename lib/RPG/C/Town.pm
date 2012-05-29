@@ -678,6 +678,61 @@ sub enter_sewer : Local {
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );	
 }
 
+sub work : Local {
+    my ($self, $c) = @_;
+    
+    my $town = $c->model('DBIC::Town')->find( { land_id => $c->stash->{party_location}->id } );
+    
+    croak "Not in a town\n" unless $town;
+       
+    my $gold_per_turn = round (($town->prosperity / 35) * ($c->stash->{party}->level / 8));
+    $gold_per_turn = 1 if $gold_per_turn < 1;
+    
+    if (! $c->req->param('turns')) {    
+    	my $dialog = $c->forward(
+    		'RPG::V::TT',
+    		[
+    			{
+    				template => 'town/work.html',
+    				params   => {
+    					town => $town,
+    					gold_per_turn => $gold_per_turn,
+    				},
+    				return_output => 1,
+    			}
+    		]
+    	);
+    	
+    	$c->forward('/panel/create_submit_dialog', 
+    		[
+    			{
+    				content => $dialog,
+    				submit_url => 'town/work',
+    				dialog_title => 'Work for the Town?',				
+    			}
+    		],
+    	);
+    }
+    else {
+        if ($c->stash->{party}->turns < $c->req->param('turns')) {
+            $c->stash->{error} = "You do not have enough turns!";   
+        }
+        else {        
+            $c->stash->{party}->increase_gold($gold_per_turn*$c->req->param('turns'));
+            $c->stash->{party}->turns($c->stash->{party}->turns - $c->req->param('turns'));
+            $c->stash->{party}->update;
+            
+            $c->stash->{panel_messages} = "You earn " . ($gold_per_turn*$c->req->param('turns')) . " gold for working " . $c->req->param('turns') . " turns";
+            
+            push @{$c->stash->{refresh_panels}}, 'messages', 'party_status';
+        }
+    }
+            
+	
+	$c->forward( '/panel/refresh' );
+       
+}
+
 sub become_mayor : Local {
 	my ( $self, $c ) = @_;
 

@@ -83,4 +83,24 @@ sub reference : Local : Args(1) {
     );
 }
 
+sub skills_list : Local {
+    my ($self, $c) = @_;
+    
+    my @skills = $c->model('DBIC::Skill')->search(
+        {},
+        {
+            order_by => 'skill_name',
+        },
+    );
+    
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'help/reference/skills_list.html',
+            params => {
+                skills => \@skills,
+            },
+        }]
+    );
+}
+
 1;

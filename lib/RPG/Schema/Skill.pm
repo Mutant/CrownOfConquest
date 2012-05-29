@@ -8,7 +8,7 @@ use Carp;
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Skill');
 
-__PACKAGE__->add_columns(qw/skill_id skill_name description type/);
+__PACKAGE__->add_columns(qw/skill_id skill_name description type base_stats/);
 
 __PACKAGE__->set_primary_key('skill_id');
 

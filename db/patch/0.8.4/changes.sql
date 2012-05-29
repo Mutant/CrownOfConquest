@@ -42,3 +42,20 @@ INSERT INTO `Enchantment_Item_Category`
 INSERT INTO `Enchantment_Item_Category`
 	SELECT enchantment_id, @ring_cat_id FROM `Enchantments`
 		WHERE enchantment_name IN ('daily_heal', 'extra_turns', 'stat_bonus', 'movement_bonus', 'critical_hit_bonus', 'resistances');
+
+ALTER TABLE `Skill` ADD COLUMN `base_stats` VARCHAR(100)  NOT NULL;
+
+UPDATE `Skill` set base_stats = 'Intelligence, Divinity' where skill_name = 'Awareness';
+UPDATE `Skill` set base_stats = 'Constitution' where skill_name = 'Berserker Rage';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Charisma';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Fletching';
+UPDATE `Skill` set base_stats = 'Divinity' where skill_name = 'Medicine';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Metallurgy';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Negotiation';
+UPDATE `Skill` set base_stats = 'Constitution' where skill_name = 'Recall';
+UPDATE `Skill` set base_stats = 'Strength' where skill_name = 'Shield Bash';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Strategy';
+UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Tactics';
+UPDATE `Skill` set base_stats = 'Divinity' where skill_name = 'War Cry';
+
+

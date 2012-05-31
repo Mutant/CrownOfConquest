@@ -168,6 +168,8 @@ sub check_for_fight {
             return 0 if $relationship && $relationship->type eq 'peace';
 	    }
 	}
+	
+	return 1 if $attack_mode eq 'Attack All Opponents';
 
 	my $factor = $opponent->compare_to_party($self);
 

@@ -307,23 +307,50 @@ sub calculate_heal_cost : Private {
 }
 
 sub news : Local {
-	my ( $self, $c, $town, $day_range ) = @_;
+	my ( $self, $c ) = @_;
 
-	my $panel = $c->forward('generate_news', [$c->stash->{party_location}->town, $c->config->{news_day_range}]);
+	my $news = $c->forward('generate_news', [$c->stash->{party_location}->town, $c->config->{news_day_range}]);
 	
-	$panel .= $c->forward(
+	$c->forward(
 		'RPG::V::TT',
 		[
 			{
-				template => 'town/town_footer.html',
-				return_output => 1,
+				template => 'town/news_screen.html',	
+				params => {
+				    news => $news,
+				},	
 			}
 		]
 	);
-	
-	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+}
 
-	$c->forward('/panel/refresh');
+sub global_news : Local {
+    my ( $self, $c ) = @_;
+    
+    my $day_range = 7;
+    my $current_day = $c->stash->{today}->day_number;
+    
+    my @news = $c->model('DBIC::Global_News')->search(
+        {
+            'day.day_number' => { '<=', $current_day, '>=', $current_day - $day_range },
+        },
+		{
+			prefetch => 'day',
+			order_by => 'day_number desc',
+		}
+	);             
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/global_news.html',	
+				params => {
+				    news => \@news,
+				},	
+			}
+		]
+	);	  
 }
 
 sub generate_news : Private {

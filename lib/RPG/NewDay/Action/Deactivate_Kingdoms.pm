@@ -95,6 +95,13 @@ sub check_for_inactive {
         );
     }
     
+    $c->schema->resultset('Global_News')->create(
+        {
+            day_id => $c->current_day->id,
+            message => "The Kingdom of " . $kingdom->name . " has fallen, as it no longer has any towns.",
+        },
+    );    
+    
     return 1;
 }
 

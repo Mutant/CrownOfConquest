@@ -531,7 +531,7 @@ sub create : Local {
     my ($self, $c) = @_;
     
     if ($c->stash->{party}->in_combat) {
-        croak "Can't declar kingdom while in combat";   
+        croak "Can't declare kingdom while in combat";   
     }    
     
     my $mayor_count = $c->stash->{party}->search_related(
@@ -614,9 +614,17 @@ sub create : Local {
         {
 	       day_id => $c->stash->{today}->id,
 	       alert_party => 0,
-	       message => "We declared the Kingdom of $kingdom_name, and appoint " . $king->character_name . " as the " . 
+	       message => "We declared the Kingdom of $kingdom_name, and appointed " . $king->character_name . " as the " . 
 	           ($king->gender eq 'male' ? 'King' : 'Queen') . ". What an historic day!",
         }
+    );
+    
+    $c->model('DBIC::Global_News')->create(
+        {
+            day_id => $c->stash->{today}->id,
+            message => "The party known as " . $c->stash->{party}->name . " formed a new kingdom \"$kingdom_name\". They appointed " .
+                $king->character_name . " as their " . ($king->gender eq 'male' ? 'King' : 'Queen'),
+        },
     );
     
     $c->forward( '/panel/refresh', [[screen => 'kingdom'], 'party'] );

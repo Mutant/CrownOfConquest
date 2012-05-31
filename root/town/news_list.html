@@ -1,0 +1,12 @@
+[% IF logs.0 %]
+	[% current_day = '' %]
+	[% FOREACH log IN logs %]
+		[% IF log.day.day_number != current_day %]
+			[% current_day = log.day.day_number %]
+			<b>Day [% current_day %]</b><br>
+		[% END %]
+		[% log.message %]<br><br>
+	[% END %]
+[% ELSE %]
+	Nothing of interest has occurred in days!<br><br>
+[% END %]

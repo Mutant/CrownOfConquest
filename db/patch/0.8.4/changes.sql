@@ -58,4 +58,13 @@ UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Strategy';
 UPDATE `Skill` set base_stats = 'Intelligence' where skill_name = 'Tactics';
 UPDATE `Skill` set base_stats = 'Divinity' where skill_name = 'War Cry';
 
+CREATE TABLE `Global_News` (
+  `news_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `day_id` INTEGER  NOT NULL,
+  `message` VARCHAR(5000)  NOT NULL,
+  PRIMARY KEY (`news_id`),
+  INDEX `day_id_idx`(`day_id`)
+)
+ENGINE = InnoDB;
+
 

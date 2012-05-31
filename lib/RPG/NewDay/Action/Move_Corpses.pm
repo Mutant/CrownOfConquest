@@ -46,7 +46,7 @@ sub run {
         }
         catch {
             if (ref $_ && $_->type eq 'find_in_range_error') {
-                return;
+                next;
             }
             die $_;
         };

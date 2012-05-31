@@ -82,7 +82,7 @@ sub generate_special {
     }    
 }
 
-sub remove_special {
+sub _chests {
     my $self = shift;
     
     my $schema = $self->result_source->schema;
@@ -96,9 +96,32 @@ sub remove_special {
         }
     );
     
+    return @chests;    
+}
+
+sub remove_special {
+    my $self = shift;
+    
+    my @chests = $self->_chests;
+    
     foreach my $chest (@chests) {
         $chest->delete;
     }
 } 
+
+sub is_active {
+    my $self = shift;
+    
+    my @chests = $self->_chests;
+    
+    my $active = 0;
+    foreach my $chest (@chests) {
+        if (! $chest->is_empty || $chest->gold > 0) {
+            $active = 1;
+        }   
+    }
+    
+    return $active;
+}
 
 1;

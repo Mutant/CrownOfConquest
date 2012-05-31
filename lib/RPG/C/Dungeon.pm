@@ -346,9 +346,11 @@ sub move_to : Local {
     	$c->stash->{error} = "One or more characters are carrying two much equipment. Your party cannot move"; 
 	}   
     
-    else {    	
-    	if ($sector->dungeon_room->special_room_id && 
-    	   ! $c->session->{special_room_alerts}{$sector->dungeon_room_id} && $sector->dungeon_room_id != $current_location->dungeon_room_id) {
+    else {
+    	if ($sector->dungeon_room->special_room_id 
+    	   && ! $c->session->{special_room_alerts}{$sector->dungeon_room_id}
+    	   && $sector->dungeon_room_id != $current_location->dungeon_room_id
+    	   && $sector->dungeon_room->is_active) {
             # They're moving into a special room for the first time in this session, so send an alert.            
             my $message = $c->forward(
                 'RPG::V::TT',

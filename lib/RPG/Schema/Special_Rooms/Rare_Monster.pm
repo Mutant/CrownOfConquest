@@ -102,4 +102,8 @@ sub rare_creature {
      
 }
 
+sub is_active {
+    return 1;   
+}
+
 1;

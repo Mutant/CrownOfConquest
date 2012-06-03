@@ -12,6 +12,7 @@ use JSON;
 use Carp;
 use HTML::Strip;
 use List::Util qw(shuffle);
+use Lingua::EN::Numbers::Ordinate;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
@@ -639,6 +640,25 @@ sub respond_to_claim : Local {
     $response->update;
     
     $c->forward( '/panel/refresh', [[screen => 'party/kingdom/main']] );
+}
+
+sub majesty : Local {
+    my ($self, $c) = @_;
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/kingdom/majesty.html',
+				params => {
+				    kingdom => $c->stash->{kingdom},
+				    ord_ranking => Lingua::EN::Numbers::Ordinate::th($c->stash->{kingdom}->majesty_rank),
+				    wait_period => $c->config->{crown_majesty_wait_period},
+				    minimum_majesty => $c->config->{crown_minimum_majesty},
+				},
+			}
+		]
+	);   
 }
 
 1;

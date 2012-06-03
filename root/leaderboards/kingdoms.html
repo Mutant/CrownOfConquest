@@ -5,6 +5,7 @@
 Top Kingdoms By:
 
 [% sort_params = [
+	{ param => 'majesty'  label => 'Majesty' },
 	{ param => 'total_land'  label => 'Total Land' },
 	{ param => 'town_count'  label => '# Of Towns' },
 	{ param => 'party_count'  label => '# Of Parties' },
@@ -24,6 +25,7 @@ Top Kingdoms By:
 		<th>Kingdom</th>
 		<th>King/Queen</th>
 		<th>Capital</th>
+		<th>Majesty</th>
 		<th>Total Land</th>
 		<th># Of Towns</th>
 		<th># Of Parties</th>
@@ -37,6 +39,7 @@ Top Kingdoms By:
 		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% END %])
 		</td>
 		<td>[% kingdom.capital_city.town_name %]</td>
+		<td align="right">[% kingdom.majesty %]</td>
 		<td align="right">[% kingdom.get_column('total_land') %]</td>
 		<td align="right">[% kingdom.get_column('town_count') %]</td>
 		<td align="right">[% kingdom.get_column('party_count') %]</td>

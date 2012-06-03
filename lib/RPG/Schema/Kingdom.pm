@@ -8,12 +8,12 @@ use DBIx::Class::ResultClass::HashRefInflator;
 use RPG::Exception;
 use Math::Round qw(round);
 
-__PACKAGE__->load_components(qw/Numeric Core/);
+__PACKAGE__->load_components(qw/Numeric InflateColumn::DateTime Core/);
 __PACKAGE__->table('Kingdom');
 
 __PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active inception_day_id fall_day_id
                             highest_land_count highest_land_count_day_id highest_town_count highest_town_count_day_id
-                            highest_party_count highest_party_count_day_id capital description/);
+                            highest_party_count highest_party_count_day_id capital description majesty has_crown majesty_rank/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 
@@ -26,6 +26,10 @@ __PACKAGE__->numeric_columns(
 		min_value => 0,
 	},
 	qw/highest_land_count highest_town_count highest_party_count/,
+);
+
+__PACKAGE__->add_columns(
+    majesty_leader_since   => { data_type => 'datetime' },
 );
 
 __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'kingdom_id', { where => { defunct => undef } } );
@@ -334,6 +338,35 @@ sub party_can_claim_throne {
     return 0 if $self->party_made_recent_claim($party);
     
     return 1;
+}
+
+sub calculate_majesty_score {
+    my $self = shift;
+    
+    my $party_count = $self->parties->count;
+    my $land_count = $self->sectors->count;
+    my $building_count = $self->buildings->count;
+    my $town_count = $self->result_source->schema->resultset('Town')->search(
+	   {
+	       'location.kingdom_id' => $self->id,
+	   },
+	   {
+	       'join' => 'location',
+	   }
+    )->count;
+    
+    #warn "Party: $party_count, Land: $land_count, Building: $building_count, Town: $town_count\n";
+    
+    return round ($party_count + ($land_count/100) + ($building_count*2) + $town_count);  
+}
+
+
+sub majesty_leader_since_string {
+    my $self = shift;
+    
+    return unless $self->majesty_leader_since;
+    
+    return RPG::DateTime->time_since_datetime_detailed($self->majesty_leader_since, 0);
 }
 
 1;

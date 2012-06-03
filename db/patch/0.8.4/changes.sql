@@ -67,4 +67,13 @@ CREATE TABLE `Global_News` (
 )
 ENGINE = InnoDB;
 
+ALTER TABLE `Kingdom` ADD COLUMN `majesty` INTEGER  NOT NULL DEFAULT 0 AFTER `capital`,
+ ADD COLUMN `majesty_leader_since` DATETIME DEFAULT NULL AFTER `majesty`;
+
+ALTER TABLE `Kingdom` ADD COLUMN `has_crown` INTEGER  NOT NULL DEFAULT 0 AFTER `majesty_leader_since`;
+
+ALTER TABLE `Kingdom` ADD COLUMN `majesty_rank` INTEGER  DEFAULT NULL AFTER `majesty`;
+
+
+
 

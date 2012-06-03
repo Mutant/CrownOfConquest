@@ -703,6 +703,12 @@ minimum_claim_response_level: 3
 # Minimum level parties can delcare allegiance
 min_level_for_allegiance_declaration: 3
 
+# Minimum majesty score before a kingdom can be awarded the crown
+crown_minimum_majesty: 80
+
+# Number of days a kingdom must lead before being awarded the crown
+crown_majesty_wait_period: 8
+
 # ----- Skills Params ----- #
 
 # Maximum level allowed for a particular skill

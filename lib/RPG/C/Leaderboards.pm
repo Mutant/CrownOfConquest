@@ -67,9 +67,9 @@ sub default : Path {
 sub kingdoms : Local {
     my ( $self, $c ) = @_;
     
-    my @sort_options = qw/total_land town_count party_count/;
+    my @sort_options = qw/majesty total_land town_count party_count/;
     
-    my $sort = $c->req->param('sort') || 'total_land';
+    my $sort = $c->req->param('sort') || 'majesty';
     
     return unless grep {$_ eq $sort} @sort_options;
     

@@ -89,6 +89,11 @@ sub get_scores {
 		
 		if ($character->id == $mayor->id) {
 			$rating_bonus = $town->mayor_rating;
+			
+			my $building = $town->building;
+			if ($building) {
+                $rating_bonus += $building->building_type->level * 20;
+			}
 		}
 		elsif (! $character->is_npc) {			
 			my $party_town = $character->party->find_related(

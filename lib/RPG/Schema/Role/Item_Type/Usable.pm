@@ -20,4 +20,14 @@ after 'use' => sub {
     }      
 };
 
+around 'is_usable' => sub {
+    my $orig = shift;
+    my $self = shift;
+    
+    my $combat = shift;
+    my $character = shift // $self->belongs_to_character;
+    
+    return $self->$orig($combat, $character);
+};
+
 1;

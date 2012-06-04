@@ -317,7 +317,8 @@ function createMenus() {
 	
     [% END %]
     
-    [% IF character.get_item_actions(in_combat) %]
+    [% IF character.has_usable_actions(in_combat) %]
+    
        	if (dijit.byId("useMenu_[% character.id %]")) {
 			dijit.byId("useMenu_[% character.id %]").destroyRecursive();
 		}

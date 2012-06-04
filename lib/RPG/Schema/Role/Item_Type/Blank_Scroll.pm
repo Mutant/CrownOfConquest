@@ -22,11 +22,10 @@ sub label {
 sub is_usable {
     my $self = shift;
     my $combat = shift // 0;
+    my $character = shift;
     
     return 0 if $combat;
-    
-    my $character = $self->belongs_to_character;
-    
+        
     return 0 unless $character;
     
     return 0 if $character->level < RPG::Schema->config->{min_scroll_enscribe_level};

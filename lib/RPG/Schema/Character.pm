@@ -28,7 +28,7 @@ __PACKAGE__->add_columns(
         creature_group_id status_context encumbrance back_rank_penalty
         strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
         movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
-        resist_poison resist_poison_bonus/
+        resist_poison resist_poison_bonus has_usable_actions_combat has_usable_actions_non_combat/
 );
 
 __PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
@@ -506,7 +506,6 @@ sub calculate_encumbrance {
 	$weight += $weight_change;
 		
 	$self->encumbrance($weight);
-	$self->update;
 	
 	return $weight;
 }
@@ -1511,7 +1510,7 @@ sub get_item_actions {
 
 	my @actions;
 	foreach my $item (@items) {
-		push @actions, $item->usable_actions($combat);		
+		push @actions, $item->usable_actions(combat => $combat);		
 	}
 	
 	return @actions;
@@ -1614,6 +1613,14 @@ sub execute_skill {
     return unless $character_skill;
     
     return $character_skill->execute($event);   
+}
+
+sub has_usable_actions {
+    my $self = shift;
+    my $combat = shift // 0;
+    
+    my $col = 'has_usable_actions_' . ($combat ? 'combat' : 'non_combat');
+    return $self->$col;
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

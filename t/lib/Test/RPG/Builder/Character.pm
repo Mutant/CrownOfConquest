@@ -42,6 +42,8 @@ sub build_character {
 			resist_fire_bonus    => 0,
 			resist_ice_bonus    => 0,
 			resist_poison_bonus    => 0,
+			has_usable_actions_combat => 0,
+			has_usable_actions_non_combat => 0,
 		}
 	);
 

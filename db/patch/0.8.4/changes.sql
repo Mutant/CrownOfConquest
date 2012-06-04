@@ -74,6 +74,9 @@ ALTER TABLE `Kingdom` ADD COLUMN `has_crown` INTEGER  NOT NULL DEFAULT 0 AFTER `
 
 ALTER TABLE `Kingdom` ADD COLUMN `majesty_rank` INTEGER  DEFAULT NULL AFTER `majesty`;
 
+ALTER TABLE `Character` ADD COLUMN `has_usable_actions_combat` INTEGER  NOT NULL DEFAULT 0 AFTER `resist_poison_bonus`,
+ ADD COLUMN `has_usable_actions_non_combat` INTEGER  NOT NULL DEFAULT 0 AFTER `has_usable_actions_combat`;
+
 
 
 

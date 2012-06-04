@@ -1006,4 +1006,259 @@ sub test_created_if_no_role : Tests(1) {
     is($item->can('use') ? 1 : 0, 0, "No role applied");
 }
 
+sub test_equipping_usable_items_updates_usable_flags : Tests(6) {
+	my $self = shift;
+	
+	# GIVEN
+	my @tests = (
+        {
+            spell => 'Heal',
+            combat_actions => 1,
+            non_combat_actions => 1,
+        },
+        {
+            spell => 'Flame',
+            combat_actions => 1,
+            non_combat_actions => 0,
+        },  
+        {
+            spell => 'Farsight',
+            combat_actions => 0,
+            non_combat_actions => 1,
+        },              
+	);
+	
+	foreach my $test (@tests) {
+    	
+        my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+        
+        my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'], no_equip_place => 1);
+        $item->variable('Casts Per Day', '2');
+        $item->variable('Spell', $test->{spell});
+        $item->update;
+        
+        # WHEN
+        $item->equip_place_id(1);
+        $item->update;
+        
+        # THEN
+        $character->discard_changes;
+        is($character->has_usable_actions_combat,     $test->{combat_actions},     $test->{spell} . " - Character has correct flag for usable items in combat");
+        is($character->has_usable_actions_non_combat, $test->{non_combat_actions}, $test->{spell} . " - Character has correct flag for usable items outside combat");
+	}
+}
+
+sub test_unequipping_usable_items_updates_usable_flags : Tests(2) {
+	my $self = shift;    
+	
+	# GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+
+    my $item1 = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'], no_equip_place => 1);
+    $item1->variable('Casts Per Day', '2');
+    $item1->variable('Spell', 'Heal');
+    $item1->equip_place_id(1);
+    $item1->update;
+    
+    # WHEN
+    $item1->equip_place_id(undef);
+    $item1->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->has_usable_actions_combat,     0, "Character has correct flag for usable items in combat");
+    is($character->has_usable_actions_non_combat, 0, "Character has correct flag for usable items outside combat");
+    
+}
+
+sub test_unequipping_usable_items_updates_usable_flags_with_existing_items : Tests(2) {
+	my $self = shift;    
+	
+	# GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+
+    my $item1 = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'], no_equip_place => 1);
+    $item1->variable('Casts Per Day', '2');
+    $item1->variable('Spell', 'Heal');
+    $item1->equip_place_id(1);
+    $item1->update;
+    
+    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'], no_equip_place => 1);
+    $item2->variable('Casts Per Day', '2');
+    $item2->variable('Spell', 'Flame');
+    $item2->equip_place_id(2);
+    $item2->update;    
+    
+    # WHEN
+    $item1->equip_place_id(undef);
+    $item1->update;
+    
+    # THEN
+    $character->discard_changes;
+    is($character->has_usable_actions_combat,     1, "Character has correct flag for usable items in combat");
+    is($character->has_usable_actions_non_combat, 0, "Character has correct flag for usable items outside combat");    
+}
+
+
+sub test_adding_item_updates_usable_flags : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Divinity',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 5);
+    
+    # WHEN
+    $item->character_id($character->id);
+    $item->update;
+    
+    # THEN
+    is($character->has_usable_actions_non_combat, 0, "Correct usable flag before update");
+    $character->discard_changes;
+    is($character->has_usable_actions_non_combat, 1, "Flag updated to when item added to character's inventory");
+}
+
+sub test_adding_item_updates_usable_flags_with_existing_items : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Divinity',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 5);
+    
+    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['spell_casts_per_day'], no_equip_place => 1);
+    $item2->variable('Casts Per Day', '2');
+    $item2->variable('Spell', 'Flame');
+    $item2->equip_place_id(2);
+    $item2->update;
+    $character->discard_changes;
+    
+    # WHEN
+    $item->character_id($character->id);
+    $item->update;
+    
+    # THEN
+    is($character->has_usable_actions_combat, 1, "Correct combat usable flag before update");
+    is($character->has_usable_actions_non_combat, 0, "Correct usable flag before update");
+    $character->discard_changes;
+    is($character->has_usable_actions_non_combat, 1, "Flag updated to when item added to character's inventory");
+    is($character->has_usable_actions_combat, 1, "Correct combat usable flag after update");
+}
+
+
+sub test_removing_item_updates_usable_flags : Tests(2) {
+	my $self = shift;
+		
+	# GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 5);
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Divinity',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+    $item->character_id($character->id);
+    $item->update;
+
+    $character->discard_changes;
+    
+    # WHEN
+    $item->character_id(undef);
+    $item->update;
+    
+    # THEN
+    is($character->has_usable_actions_non_combat, 1, "Correct usable flag before update");
+    $character->discard_changes;
+    is($character->has_usable_actions_non_combat, 0, "Flag updated to when item added to character's inventory");
+}
+
+sub test_swapping_item_updates_usable_flags : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+    my $character1 = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Divinity',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+    $item->character_id($character1->id);
+    $item->update;
+    $character1->discard_changes;    
+    my $character2 = Test::RPG::Builder::Character->build_character($self->{schema});
+    
+    # WHEN
+    $item->character_id($character2->id);
+    $item->update;
+    
+    # THEN
+    is($character1->has_usable_actions_non_combat, 1, "Correct usable flag before update");
+    $character1->discard_changes;
+    is($character1->has_usable_actions_non_combat, 0, "Flag updated to when item added to character's inventory");
+    
+    is($character2->has_usable_actions_non_combat, 0, "Correct usable flag before update");
+    $character2->discard_changes;
+    is($character2->has_usable_actions_non_combat, 1, "Flag updated to when item added to character's inventory");
+
+}
+
+sub test_adding_item_with_reference_to_character_updates_usable_flags : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN
+	# Potion of Healing has references to the character in it's is_usable method.
+	#  Because the trigger runs before this is updated in the DB, it has to be
+	#  passed in manually. Check this is dealt with
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_name => 'Potion of Healing',
+        usable => 1,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value  => 1,
+            }
+        ],
+    );
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 5);
+    
+    # WHEN
+    $item->character_id($character->id);
+    $item->update;
+    
+    # THEN
+    is($character->has_usable_actions_non_combat, 0, "Correct usable flag before update");
+    $character->discard_changes;
+    is($character->has_usable_actions_non_combat, 1, "Flag updated to when item added to character's inventory");
+}
+
 1;

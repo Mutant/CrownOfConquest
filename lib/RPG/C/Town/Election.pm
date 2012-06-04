@@ -41,8 +41,7 @@ sub default : Local {
 }
 
 sub campaign : Local {
-	my ($self, $c) = @_;
-	
+	my ($self, $c) = @_;	
 	
 	my $new_candidates_allowed = 1;
 	if ($c->stash->{election}->scheduled_day - $c->stash->{today}->day_number <= $c->config->{min_days_for_election_candidacy}) {
@@ -140,11 +139,11 @@ sub add_to_spend : Local {
 	$c->flash->{tab} = 'campaign';
 	
 	if ($c->req->param('campaign_spend') > $c->stash->{party}->gold) {
-		$c->flash->{error} = "You don't have enough gold to spend that much on the campaign";
+		$c->stash->{panel_messages} = "You don't have enough gold to spend that much on the campaign";
 		
 		$c->forward( '/panel/refresh' );	
 		
-		return;			
+		return;
 	}
 	
 	my $candidate = $c->model('DBIC::Character')->find(
@@ -166,6 +165,15 @@ sub add_to_spend : Local {
 			'character_id' => $candidate->character_id,
 		}		
 	);
+	
+	if ($candidacy->max_spend < $candidacy->campaign_spend + $c->req->param('campaign_spend')) {
+		$c->stash->{panel_messages} = "Spending this much would exceed your maximum allowed spend for this campaign";
+		
+		$c->forward( '/panel/refresh' );	
+		
+		return;
+	}
+	
 	$candidacy->increase_campaign_spend($c->req->param('campaign_spend'));
 	$candidacy->update;
 	

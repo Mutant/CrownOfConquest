@@ -5,10 +5,12 @@
 	<br><br>
 	Amount spent on campaign so far: [% candidacy.campaign_spend || 0 %] gold
 	<br><br>
+	The maximum you can spend on this election is: [% candidacy.max_spend %] gold
+	<br><br>
 	<form action="[% base %]/town/election/add_to_spend" method="POST" onSubmit="postPanels(this); return false">
 	<input type="hidden" name="town_id" value="[% town.id %]">
 	Spend more on campaign: 
-		<input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 50px"
+		<input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 100px"
 				constraints="{min:0,places:0}" required="true"
 				invalidMessage="Enter a positive number of gold to spend on the campaign">
 	<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">

@@ -11,23 +11,28 @@ use List::Util qw(shuffle);
 
 sub auto : Private {
     my ($self, $c) = @_;
-    
+        
     if ($c->stash->{party}->in_combat) {
         croak "Can't manage buildings while in combat";   
     }
+        
+    $c->stash->{location} = $c->stash->{town} ? $c->stash->{town}->location : $c->stash->{party_location};
+    
+	$c->stash->{building} = $c->stash->{location}->building;
     
     return 1;
 }
 
 sub get_valid_groups {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
     my @groups;
     
-	if ($town) {
-	    push @groups, $town->mayor->creature_group;
+	if ($c->stash->{town}) {
+	    my $mayor_cg = $c->stash->{town}->mayor->creature_group;
+	    push @groups, $mayor_cg if $mayor_cg;
         
-        if ($c->stash->{party}->land_id == $town->land_id) {
+        if ($c->stash->{party}->land_id == $c->stash->{town}->land_id) {
             push @groups, $c->stash->{party};
         }
 	}
@@ -45,13 +50,13 @@ sub get_valid_groups {
 }
 
 sub get_party_resources {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
 	#  Get the list of resources owned by the current party.
 	my %resources;
 	
 	my @equipment;
-	my @groups = $self->get_valid_groups($c, $town);
+	my @groups = $self->get_valid_groups($c, $c->stash->{town});
 	
 	foreach my $group (@groups) {
 	    next unless $group;
@@ -66,7 +71,7 @@ sub get_party_resources {
 }
 
 sub construct : Local {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
    
     my $building_type = $c->model('DBIC::Building_Type')->find(
         {
@@ -74,7 +79,7 @@ sub construct : Local {
         }
     );
     
-    my %party_resources = $self->get_party_resources($c, $town);
+    my %party_resources = $self->get_party_resources($c, $c->stash->{town});
     
     my %resources = map { $_->item_type => $_ } $c->model('DBIC::Item_Type')->search(
         {
@@ -85,7 +90,7 @@ sub construct : Local {
         }
     );
     
-    my @groups = $self->get_valid_groups($c, $town);
+    my @groups = $self->get_valid_groups($c, $c->stash->{town});
     
     my %resources_needed = $building_type->cost_to_build(\@groups);
     my $enough_resources = $building_type->enough_resources(\@groups, %party_resources);
@@ -100,22 +105,21 @@ sub construct : Local {
                 enough_resources => $enough_resources,
                 resources => \%resources,
                 resources_needed => \%resources_needed,
-                town => $town,
+                town => $c->stash->{town},
             },
         }]
     );    
 }
 
 sub build : Local {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
-    my $location = $town ? $town->location : $c->stash->{party_location};
-    
-	my @current_building = $location->building;
-    if (@current_building) {
+    if ($c->stash->{building}) {
         $c->stash->{error} = "There's already a building in this sector!";
         $c->detach('/panel/refresh');
     }   
+    
+    my $town = $c->stash->{town};
     
     my $building_type = $c->model('DBIC::Building_Type')->find(
         {
@@ -140,7 +144,7 @@ sub build : Local {
 	#  Create the building.
 	my $building = $c->model('DBIC::Building')->create(
 		{
-			land_id => $location->land_id,
+			land_id => $c->stash->{location}->land_id,
 			building_type_id => $building_type->id,
 			owner_id => $town ? $town->id : $c->stash->{party}->id,
 			owner_type => $town ? 'town' : 'party',
@@ -184,20 +188,13 @@ sub build : Local {
 }
 
 sub manage : Local {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
-    my $location = $town ? $town->location : $c->stash->{party_location};
+    my $building = $c->stash->{building};
     
-	#  Get a list of the currently built (or under construction) buildings owned by the party.
-	my $building = $c->model('DBIC::Building')->find(
-    	{
-    		'land_id' => $location->id,
-        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
-        	'owner_type' => $town ? 'town' : 'party',
-        },
-	);
-	
 	croak "No buildings to upgrade\n" unless $building;
+	
+    my $town = $c->stash->{town};
 	
 	my $building_type = $building->building_type;
 	
@@ -253,23 +250,14 @@ sub manage : Local {
 }
 
 sub upgrade : Local {
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
-    my $location = $town ? $town->location : $c->stash->{party_location};
-    
-	#  Get a list of the currently built (or under construction) buildings owned by the party.
-	my @existing_buildings = $c->model('DBIC::Building')->search(
-    	{
-    		'land_id' => $location->id,
-        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
-        	'owner_type' => $town ? 'town' : 'party',
-        },
-	);
+    my $building = $c->stash->{building};
 	
-	croak "No buildings to upgrade\n" unless @existing_buildings;
+	croak "No buildings to upgrade\n" unless $building;
 	
-	my ($building) = @existing_buildings;
-	
+    my $town = $c->stash->{town};
+		
 	my $building_type = $building->building_type;
 	
 	my $upgradable_to_type = $c->model('DBIC::Building_Type')->find(
@@ -312,20 +300,11 @@ sub upgrade : Local {
 }
 
 sub build_upgrade : Local {    
-    my ($self, $c, $town) = @_;
+    my ($self, $c) = @_;
     
-    my $location = $town ? $town->location : $c->stash->{party_location};
-     
-	my $building = $c->model('DBIC::Building')->find(
-    	{
-    		'land_id' => $location->id,
-        	'owner_id' => $town ? $town->id : $c->stash->{party}->id,
-        	'owner_type' => $town ? 'town' : 'party',
-        },
-        {
-            prefetch => 'building_type',
-        },
-	);
+    my $building = $c->stash->{building};
+    
+    my $town = $c->stash->{town};
 	
 	my $upgrade = $c->model('DBIC::Building_Upgrade')->find_or_create(
 	   {
@@ -388,9 +367,7 @@ sub seize : Local {
         $c->detach('/panel/refresh');
     }
 
-	#   Grab the building list, report on each on seized.
-	my @existing_buildings = $c->stash->{party_location}->building;	
-	my ($building) = @existing_buildings;
+	my $building = $c->stash->{building};
 	
 	croak "Cannot raze a town's building" if $building->owner_type eq 'town';
 	
@@ -473,9 +450,7 @@ sub raze : Local {
 		croak "You can't raze building - your party level is too low";
 	}
 	
-	#   Grab the building list, report on each on seized.
-	my @existing_buildings = $c->stash->{party_location}->building;	
-	my ($building) = @existing_buildings;
+	my $building = $c->stash->{building};
 	
 	croak "No building to raze\n" unless $building;
 	
@@ -559,9 +534,7 @@ sub cede : Local {
     
     croak "You don't have a Kingdom" unless $c->stash->{party}->kingdom_id;
     
-	# Grab the building list
-	my @existing_buildings = $c->stash->{party_location}->building;	
-	my ($building) = @existing_buildings;
+	my $building = $c->stash->{building};
 	
 	croak "No building to cede\n" unless $building;
 	

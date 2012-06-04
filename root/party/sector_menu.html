@@ -8,12 +8,12 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% IF movement_cost %]
 <br>You used <b>[% movement_cost %]</b> turns moving here.
 [% END %]
-[% FOREACH next_building IN buildings %]
-	<br><br>There is a [% next_building.building_type.name %] here that is controlled by 
-	[% IF next_building.owner_id == party.id && next_building.owner_type == 'party' %]
+[% IF building %]
+	<br><br>There is a [% building.building_type.name %] here that is controlled by 
+	[% IF building.owner_id == party.id && building.owner_type == 'party' %]
 		you (<a href="javascript:loadScreen('building/manage')">Manage</a>)
 	[% ELSE %]
-		[% next_building.owner_name %] 
+		[% building.owner_name %] 
 		[% IF can_seize_building %]
 			(<a href="javascript:getPanels('building/raze')">Raze</a> / <a href="javascript:getPanels('building/seize')">Seize</a>)
 		[% END %]

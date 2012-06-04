@@ -779,20 +779,20 @@ sub downgrade_traps : Local {
 sub buildings : Local {
     my ($self, $c) = @_;
     
-    if ($c->stash->{town}->location->building->count > 0) {
-        $c->forward('/building/manage', [$c->stash->{town}]);
+    if ($c->stash->{town}->location->building) {
+        $c->visit('/building/manage');
     }
     else {    
-        $c->forward('/building/construct', [$c->stash->{town}]);
+        $c->visit('/building/construct');
     }
 }
 
 sub build : Local {
     my ($self, $c) = @_;
     
-    $c->forward('/building/build', [$c->stash->{town}]);    
+    $c->visit('/building/build');    
     
-    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
 }
 
 sub building_upgrade : Local {
@@ -800,9 +800,9 @@ sub building_upgrade : Local {
     
     $c->stash->{no_refresh} = 1;
     
-    $c->forward('/building/upgrade', [$c->stash->{town}]);    
+    $c->visit('/building/upgrade');    
     
-    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
     
 }
 
@@ -811,9 +811,9 @@ sub building_build_upgrade : Local {
     
     $c->stash->{no_refresh} = 1;
     
-    $c->forward('/building/build_upgrade', [$c->stash->{town}]);    
+    $c->visit('/building/build_upgrade');    
     
-    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
     
 }
 

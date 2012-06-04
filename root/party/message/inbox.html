@@ -38,7 +38,7 @@
 			[% END %]
 		</td>
 		<td>[% IF message.subject %][% message.subject %][% ELSE %]<No Subject>[% END %]</td>
-		<td style="width: 100px">[% message.day.day_number %] ([% message.day.difference_to_today_str %])</td>
+		<td style="width: 100px" nowrap>[% message.day.day_number %] ([% message.day.difference_to_today_str %])</td>
 	</tr>		
 
 [% END %]

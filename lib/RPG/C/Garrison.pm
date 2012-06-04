@@ -330,7 +330,7 @@ sub manage : Local {
 	
 	my @party_garrisons = $c->stash->{party}->garrisons;
 	
-	my $building = $c->stash->{party_location}->building->first;
+	my $building = $c->stash->{party_location}->building;
 	
     $c->forward(
         'RPG::V::TT',

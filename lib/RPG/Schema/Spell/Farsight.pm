@@ -37,7 +37,7 @@ sub _cast {
     my $building_roll = Games::Dice::Advanced->roll('1d100');
     if ($building_roll <= $chance) {
         # Building discovered
-        my $building = $sector->building->first;
+        my $building = $sector->building;
         
         $discoveries{building} = $building && $building->building_type->name // 'none';
         

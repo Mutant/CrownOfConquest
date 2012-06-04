@@ -7,7 +7,7 @@
 <script type="text/javascript">
     function init() {
 		[% IF group %]displayCharList('[% group %]');[% END %]
-		
+				
 		/* Inventory DND */
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
@@ -22,10 +22,17 @@
 			if (target_type == 'equip_place') {
 				equip_item(target_id, item_id);
 			}
-		});			
+		});
 	}
 	
+	var inProgress = {};
 	function equip_item(equip_place, item_id) {
+		[%# Hack to get around the fact that the equip slots are defined each time the char screen loads %]
+		if (inProgress[equip_place + ' ' + item_id]) {
+			return;
+		}
+		inProgress[equip_place + ' ' + item_id] = true;
+	
 		dojo.xhrGet( {
 	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
 	        handleAs: "json",
@@ -61,9 +68,13 @@
 	        			[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
 	        		}
 				}
+				
+				inProgress[equip_place + ' ' + item_id] = false;
 	        },
 	        error: function(err) {
 	        	console.debug(err);
+	        	
+	        	inProgress[equip_place + ' ' + item_id] = false;
 	        }
 	    });
 	}

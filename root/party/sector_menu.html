@@ -11,13 +11,15 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% IF building %]
 	<br><br>There is a [% building.building_type.name %] here that is controlled by 
 	[% IF building.owner_id == party.id && building.owner_type == 'party' %]
-		you (<a href="javascript:loadScreen('building/manage')">Manage</a>)
+		you
 	[% ELSE %]
-		[% building.owner_name %] 
-		[% IF can_seize_building %]
-			(<a href="javascript:getPanels('building/raze')">Raze</a> / <a href="javascript:getPanels('building/seize')">Seize</a>)
-		[% END %]
+		[% building.owner_name %]
 	[% END %]
+	[% IF building.allowed_to_manage(party) %]
+		(<a href="javascript:loadScreen('building/manage')">Manage</a>) 
+	[% ELSIF can_seize_building %]
+		(<a href="javascript:getPanels('building/raze')">Raze</a> / <a href="javascript:getPanels('building/seize')">Seize</a>)
+	[% END %]	
 [% END %]
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]

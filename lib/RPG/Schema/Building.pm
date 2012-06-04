@@ -184,4 +184,48 @@ sub get_bonus {
     return $bonus;
 }
 
+sub allowed_to_manage {
+    my $self = shift;
+    my $party = shift;
+    
+    if ($self->owner_type eq 'party') {
+        if ($self->owner_id == $party->id && $party->land_id == $self->land_id) {
+            return 1;
+        }
+    }
+    
+    if ($self->owner_type eq 'town') {
+        my $mayor = $self->owner->mayor;
+        if ($mayor && $mayor->party_id == $party->id) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+    
+    if ($self->owner_type eq 'kingdom') {
+        return 0 if $party->land_id != $self->land_id;
+        
+        # Can manage building owned by the kingdom if they are the king, or have
+        #  a garrison there
+        my $garrison = $self->result_source->schema->resultset('Garrison')->find(
+            {
+                land_id => $self->land_id,
+                party_id => $party->id,
+            }
+        );
+        
+        return 1 if $garrison;
+        
+        my $king = $self->owner->king;
+        if ($king && $king->party_id == $party->id) {
+            return 1;
+        }       
+ 
+    }
+    
+    return 0;
+}
+
 1;

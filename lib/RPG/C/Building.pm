@@ -194,6 +194,8 @@ sub manage : Local {
     
 	croak "No buildings to upgrade\n" unless $building;
 	
+	croak "Not allowed to manage building" unless $building->allowed_to_manage($c->stash->{party});
+	
     my $town = $c->stash->{town};
 	
 	my $building_type = $building->building_type;
@@ -256,6 +258,8 @@ sub upgrade : Local {
 	
 	croak "No buildings to upgrade\n" unless $building;
 	
+	croak "Not allowed to manage building" unless $building->allowed_to_manage($c->stash->{party});
+	
     my $town = $c->stash->{town};
 		
 	my $building_type = $building->building_type;
@@ -303,6 +307,8 @@ sub build_upgrade : Local {
     my ($self, $c) = @_;
     
     my $building = $c->stash->{building};
+    
+    croak "Not allowed to manage building" unless $building->allowed_to_manage($c->stash->{party});
     
     my $town = $c->stash->{town};
 	

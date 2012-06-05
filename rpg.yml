@@ -103,6 +103,9 @@ repair_building_damage_cron_string: "30 * * * *"
 # Check whether bombs should be detonated
 detonate_cron_string: "*/5 * * * *"
 
+# Do majesty calculations
+majesty_cron_string: "1 * * * *"
+
 # ----- Character / Party Generation Params ----- #
 
 # Pool of points to add to stats for new character

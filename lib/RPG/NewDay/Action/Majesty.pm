@@ -6,6 +6,12 @@ extends 'RPG::NewDay::Base';
 
 use DateTime;
 
+sub cron_string {
+    my $self = shift;
+     
+    return $self->context->config->{majesty_cron_string};
+}
+
 sub run {
     my $self = shift;
     

@@ -197,11 +197,11 @@ sub calculate_approval {
 		{
 			join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
 			select => 'sum(type.maint_cost)',
-			as => 'level_aggregate',			
+			as => 'cost_aggregate',			
 		}
 	);
 
-	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
+	my $creature_level = $creature_rec->get_column('cost_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
 	my $guards_hired_adjustment = int ($creature_level / ($town->prosperity * 5));
 	

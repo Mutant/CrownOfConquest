@@ -37,7 +37,7 @@ sub run {
         }
 
         # Check if blacksmith retires
-        if ($town->blacksmith_age < 5) {
+        if ($town->blacksmith_age > 5) {
             my $retirement_roll = Games::Dice::Advanced->roll('1d100');
             if ( $retirement_roll < $c->config->{blacksmith_retire_chance} ) {
                  $town->add_to_history(

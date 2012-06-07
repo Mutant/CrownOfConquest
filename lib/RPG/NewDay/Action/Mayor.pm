@@ -175,16 +175,14 @@ sub calculate_approval {
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }, {sum => 'guards_killed'} ],
+            select => [ { sum => 'tax_amount_paid_today' }, {sum => 'guards_killed'} ],
             as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
         }
     );
 
-    my $raids_today = $party_town_rec->get_column('raids_today') // 0;
     my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;
     my $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
 
-	my $raids_adjustment = - $raids_today * 3;
 	my $guards_killed_adjustment = - $guards_killed;
 		
 	my $party_tax_adjustment = int $tax_collected / 100;
@@ -233,7 +231,7 @@ sub calculate_approval {
 	# A random component to approval
 	my $random_adjustment += Games::Dice::Advanced->roll('1d5') - 3;
 	
-	my $adjustment = $raids_adjustment + $guards_killed_adjustment + $party_tax_adjustment + 
+	my $adjustment = $guards_killed_adjustment + $party_tax_adjustment + 
 		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $charisma_adjustment 
 		+ $random_adjustment;
 
@@ -241,7 +239,7 @@ sub calculate_approval {
 	$adjustment =  10 if $adjustment >  10;
 	
 	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
-		"[Raid: $raids_adjustment; Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
+		"[Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
 		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Garrison Chars: $garrison_chars_adjustment; " .
 		"Charisma: $charisma_adjustment; Random: $random_adjustment]");
 	

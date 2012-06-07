@@ -228,13 +228,27 @@ sub calculate_approval {
 	}
 	
 	my $charisma_adjustment = $mayor->execute_skill('Charisma', 'mayor_approval') // 0;
+	
+	# Runes adjustment
+	my $expected_rune_level = $town->prosperity < 45 ? 0 : round $town->prosperity / 8;
+	my $building = $town->building;
+	my $rune_level = 0;
+	if ($building) {
+	    my @upgrades = $building->upgrades;
+	    foreach my $upgrade (@upgrades) {
+            next unless $upgrade->type =~ /^Rune/;
+            $rune_level += $upgrade->level;
+	    }
+	}
+	
+	my $rune_adjustment = $rune_level - $expected_rune_level;
 		
 	# A random component to approval
 	my $random_adjustment += Games::Dice::Advanced->roll('1d5') - 3;
 	
 	my $adjustment = $guards_killed_adjustment + $party_tax_adjustment + 
 		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $charisma_adjustment 
-		+ $random_adjustment;
+		+ $rune_adjustment + $random_adjustment;
 
 	$adjustment = -10 if $adjustment < -10;
 	$adjustment =  10 if $adjustment >  10;
@@ -242,7 +256,7 @@ sub calculate_approval {
 	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
 		"[Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
 		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Garrison Chars: $garrison_chars_adjustment; " .
-		"Charisma: $charisma_adjustment; Random: $random_adjustment]");
+		"Charisma: $charisma_adjustment; Rune Adjustment: $rune_adjustment; Random: $random_adjustment]");
 	
 	$town->adjust_mayor_rating($adjustment);
 	$town->update;

@@ -543,7 +543,7 @@ sub test_caclulate_approval_basic : Tests(1) {
     
     # THEN
     $town->discard_changes;
-    is($town->mayor_rating, -4, "Mayor rating reduced");
+    is($town->mayor_rating, -10, "Mayor rating reduced");
            
 }
 
@@ -605,7 +605,7 @@ sub test_caclulate_approval_with_charisma : Tests(1) {
     
     # THEN
     $town->discard_changes;
-    is($town->mayor_rating, -2, "Mayor rating reduced");
+    is($town->mayor_rating, -8, "Mayor rating reduced");
            
 }
 

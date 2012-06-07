@@ -191,6 +191,7 @@ sub calculate_approval {
  	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 		{
 			'dungeon_room.dungeon_id' => $town->castle->id,
+			'hit_points_current' => {'>', 0},
 		},
 		{
 			join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],

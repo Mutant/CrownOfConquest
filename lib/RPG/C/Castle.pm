@@ -253,15 +253,14 @@ sub end_raid : Private {
 	}
 
 	my $killed_count;
-	foreach my $battle (@battles) {
-		$party_town->decrease_prestige(7);
-		
+	foreach my $battle (@battles) {		
 		my $enemy_num = $battle->enemy_num_of( $c->stash->{party} );
 		my $stats     = $battle->opponent_stats;
 
-		$killed_count += $stats->{$enemy_num}{deaths};
-		$c->log->debug( $stats->{$enemy_num}{deaths} . " guards killed in battle, reducing prosperity" );
+		$killed_count += $stats->{$enemy_num}{deaths};		
 	}
+	
+	$c->log->debug( "$killed_count guards killed in battle, reducing prestige" );
 
 	if ( ! $mayor_killed && ($c->session->{spotted} || @battles) ) {
 		my $news = $c->forward(

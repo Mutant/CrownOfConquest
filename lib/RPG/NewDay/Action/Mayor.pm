@@ -176,10 +176,10 @@ sub calculate_approval {
         { town_id => $town->id, },
         {
             select => [ { sum => 'tax_amount_paid_today' }, {sum => 'guards_killed'} ],
-            as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
+            as     => [ 'tax_collected', 'guards_killed' ],
         }
     );
-
+    
     my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;
     my $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
 

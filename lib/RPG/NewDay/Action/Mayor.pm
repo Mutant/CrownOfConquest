@@ -656,7 +656,7 @@ sub generate_advice {
 		return;	
 	}
 	
-	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty/;
+	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty runes/;
 
 	my $advice;	
 	for (shuffle @checks) {
@@ -750,6 +750,26 @@ sub generate_advice {
                 $advice = "The towns people are not very loyal to the town's kingdom. Make sure the town is joined to the kingdom's capital by claimed land";
                 last;
             }   
+		}
+		
+		when ('runes') {
+		    last if $town->prosperity < 35;
+            my $building = $town->building;
+            if (! $building) {
+                $advice = "The town does not have a building. Construct one to help defend it";
+                last;
+            }
+            my @upgrades = $town->upgrades;
+            my $rune_level;
+    	    foreach my $upgrade (@upgrades) {
+                next unless $upgrade->type =~ /^Rune/;
+                $rune_level += $upgrade->level;
+    	    }
+    	    if ($rune_level < round ($town->prosperity / 8)) {
+    	       $advice = "The town does not have enough Rune add-ons to its building. Building more of these will greating improve the town's defences.";
+    	       last;
+    	    }
+            
 		}
 	}
 	

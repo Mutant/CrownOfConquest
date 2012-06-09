@@ -1,5 +1,9 @@
 <h4>Majesty</h4>
 
+[% IF kingdom.has_crown %]
+	<img src="[% base %]static/images/kingdom/bigcrown.png" alt="The Crown of Majesty" style="float: right; margin-right: 15px">
+[% END %]
+
 <p>The kingdom's Majesty rating is based on the number of Towns, Parties, Land and Buildings owned by the kingdom.</p>
 
 <p>Our Majesty Rating is: <b>[% kingdom.majesty %]</b>. [% IF kingdom.majesty_rank %]This places us [% ord_ranking %] in the realm.[% END %]</p>

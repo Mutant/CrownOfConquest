@@ -8,6 +8,8 @@ use RPG::Template;
 
 use feature 'switch';
 
+sub depends { qw/RPG::NewDay::Action::CreateDay/ }
+
 sub run {
     my $self = shift;
 

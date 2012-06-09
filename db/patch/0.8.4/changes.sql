@@ -77,6 +77,14 @@ ALTER TABLE `Kingdom` ADD COLUMN `majesty_rank` INTEGER  DEFAULT NULL AFTER `maj
 ALTER TABLE `Character` ADD COLUMN `has_usable_actions_combat` INTEGER  NOT NULL DEFAULT 0 AFTER `resist_poison_bonus`,
  ADD COLUMN `has_usable_actions_non_combat` INTEGER  NOT NULL DEFAULT 0 AFTER `has_usable_actions_combat`;
 
+CREATE TABLE `Crown_History` (
+  `history_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `day_id` INTEGER  NOT NULL,
+  `message` VARCHAR(5000)  NOT NULL,
+  PRIMARY KEY (`history_id`),
+  INDEX `day_id_idx`(`day_id`)
+)
+ENGINE = InnoDB;
 
 
 

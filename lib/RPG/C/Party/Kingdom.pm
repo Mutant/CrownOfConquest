@@ -661,4 +661,25 @@ sub majesty : Local {
 	);   
 }
 
+sub view_crown_history : Local {
+    my ($self, $c) = @_;
+    
+    croak "Kingdom does not have crown" if ! $c->stash->{kingdom}->has_crown;
+    
+    my @history = $c->model("DBIC::Crown_History")->search();
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/kingdom/crown_history.html',
+				params => {
+				    history => \@history,
+				},
+			},
+	    ],
+	);    
+       
+}
+
 1;

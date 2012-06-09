@@ -88,6 +88,14 @@ sub run {
                             . "majestic kingdom of the realm",
                     }
                 );
+                
+                $c->schema->resultset('Crown_History')->create(
+                     {
+                        day_id => $c->current_day->id,
+                        message => "The Kingdom of " . $leader->name . " was awarded the Crown of Majesty",
+                     },      
+                );                
+                
         }            
         
         $leader->update;
@@ -112,6 +120,13 @@ sub run {
                 message => "The Kingdom of " . $has_crown->name . " is no longer the greatest in the realm. The Venerable High Priest asks that they hand" .
                     " back the Crown of Majesty so that it may be placed upon a worthier head",
             }
-        );        
+        );
+        
+        $c->schema->resultset('Crown_History')->create(
+             {
+                day_id => $c->current_day->id,
+                message => "The Kingdom of " . $has_crown->name . " no longer possesses the Crown of Majesty",
+             },      
+        );
     }
 }

@@ -1087,6 +1087,8 @@ sub profile : Local {
 				template => 'party/profile.html',
 				params   => {
 					party => $party,
+					mayors_count => scalar $party->mayors // 0,
+					buildings_count => scalar $party->get_owned_buildings // 0,
 				},
 				return_output => 1,
 			}

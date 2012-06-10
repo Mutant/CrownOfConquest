@@ -324,6 +324,28 @@ sub test_check_for_mayor_replacement_dead_mayor : Tests(2) {
     isa_ok($new_mayor, 'RPG::Schema::Character', "New mayor appointed");
 }
 
+sub test_check_for_mayor_replacement_dead_mayor_in_combat : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, in_combat_with => $cg->id);
+    
+    my $mayor = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 0, class => 'Warrior', creature_group_id => $cg->id);
+    $mayor->mayor_of($town->id);
+    $mayor->update;
+        
+    my $action = RPG::NewDay::Action::Castles->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->check_for_mayor_replacement($town, $town->mayor);
+    
+    # THEN
+    $mayor->discard_changes;
+    is($mayor->mayor_of, $town->id, "Mayor is still mayor");    
+}
+
 sub test_generate_mayors_group : Tests() {
     my $self = shift; 
     

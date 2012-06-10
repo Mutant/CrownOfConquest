@@ -247,6 +247,10 @@ sub check_for_mayor_replacement {
     my $c = $self->context;
     
 	if ($mayor && $mayor->is_dead) {
+	    my $cg = $mayor->creature_group;
+	    
+	    return if $cg && $cg->in_combat;
+	    
         # Hmm, the mayor is dead. This can happen if the mayor is killed, but a party flees,
         #  or they party doesn't take over the mayoralty.
         $self->context->logger->debug("Mayor found dead - forcing generation of new one");

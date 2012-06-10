@@ -28,7 +28,7 @@ __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' =>
 
 __PACKAGE__->might_have( 'town', 'RPG::Schema::Town', { 'foreign.land_id' => 'self.land_id' } );
 
-my @TILESETS = qw/rocky burrow/;
+my @TILESETS = qw/rocky burrow wood/;
 sub tilesets {
     return @TILESETS;
 }

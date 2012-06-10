@@ -520,8 +520,8 @@ sub refresh_mayor {
 	# They miss out if they happen to be in combat
 	return if $cg && $cg->in_combat;
 	
-	# Heal mayor to max hps if they're not dead, or they were killed, but no one took over
-	if (! $mayor->is_dead || ! $town->pending_mayor) {
+	# Heal NPC mayor to max hps if they're not dead, or they were killed, but no one took over
+	if ($mayor->is_npc && (! $mayor->is_dead || ! $town->pending_mayor)) {
         $mayor->hit_points($mayor->max_hit_points);
         $mayor->update;
 	}
@@ -594,6 +594,9 @@ sub refresh_mayor {
     	$hist_rec->increase_value($spent);
     	$hist_rec->update;
 	}
+	
+	# Auto-heal garrison & mayor if necessary
+	$cg->auto_heal if $cg;
 }
 
 sub check_for_npc_election {

@@ -151,7 +151,7 @@ max_number_of_players: 600
 minimum_password_length: 4
 
 # Number of turns a new party starts with
-starting_turns: 750
+starting_turns: 1000
 
 # Number of days to give the watcher effect for new parties
 new_party_watcher_days: 20
@@ -201,7 +201,7 @@ party_viewing_range: 3
 turns_per_hour: 25
 
 # Maximum number of turns a party is allowed to have
-maximum_turns: 750
+maximum_turns: 1500
 
 # Min / Max percentage amount to heal characters each day (based on rest)
 min_heal_percentage: 2

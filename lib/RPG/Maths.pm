@@ -80,4 +80,12 @@ sub precentage_difference {
     return ($first_number-$second_number)/(($first_number+$second_number)/2)*100;   
 }
 
+sub percentage_change {
+    my $package = shift;
+    my $first_number = shift;
+    my $second_number = shift;
+    
+    return (($first_number-$second_number)/$first_number)*100;
+}
+
 1;

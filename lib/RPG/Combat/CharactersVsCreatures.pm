@@ -8,6 +8,7 @@ use Games::Dice::Advanced;
 use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
+use Maths::Round qw(round);
 
 use RPG::Maths;
 
@@ -195,7 +196,7 @@ sub check_for_item_found {
 		my $item;
 		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
-			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
+			my $enchantment_chance = round($self->config->{enchantment_creature_level_step} * $avg_creature_level);
 						
 			my $avg_divinity = $self->character_group->average_stat('divinity');
 			if($avg_divinity >= $self->config->{min_avg_divinity_for_enchantment_chance_increase}) {

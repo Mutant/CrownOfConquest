@@ -353,7 +353,7 @@ max_cost_modifier_change: 5
 shop_sell_modifier: -20
 
 # Percentage chance an item in a shop will be enchanted
-shop_enchanted_item_chance: 5
+shop_enchanted_item_chance: 3
 
 # Percentage sales tax for towns with NPC mayors
 default_sales_tax: 10
@@ -642,10 +642,10 @@ min_party_level_for_garrison_attack: 6
 # ----- Enchantment Params ----- #
 
 # Minimum creature level that has enchanted items
-minimum_enchantment_creature_level: 6
+minimum_enchantment_creature_level: 8
 
 # Step in chance for creature levels for finding enchanted items
-enchantment_creature_level_step: 1.5
+enchantment_creature_level_step: 1.8
 
 # ----- Building Params ----- #
 

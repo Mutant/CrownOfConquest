@@ -515,6 +515,11 @@ sub refresh_mayor {
 	
 	return unless $mayor;
 	
+	my $cg = $mayor->creature_group;
+	
+	# They miss out if they happen to be in combat
+	return if $cg && $cg->in_combat;
+	
 	# Heal mayor to max hps if they're not dead, or they were killed, but no one took over
 	if (! $mayor->is_dead || ! $town->pending_mayor) {
         $mayor->hit_points($mayor->max_hit_points);

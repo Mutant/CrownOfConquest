@@ -147,11 +147,11 @@ sub get_party_logs_since_date {
     return $self->search(
         {
             $self->_party_criteria($party),
-            encounter_ended => {'>=', $date},
+            encounter_started => {'>=', $date},
         },
         {
             prefetch => 'day',
-            order_by => 'encounter_ended desc',
+            order_by => 'encounter_started desc',
         }
     );
 }

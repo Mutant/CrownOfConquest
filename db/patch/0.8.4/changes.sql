@@ -92,6 +92,29 @@ CREATE TABLE `Conf` (
 )
 ENGINE = InnoDB;
 
+CREATE TABLE `Town_Raid` (
+  `raid_id` INTEGER  NOT NULL AUTO_INCREMENT,
+  `town_id` INTEGER  NOT NULL,
+  `party_id` INTEGER  NOT NULL,
+  `day_id` INTEGER  NOT NULL,
+  `date_started` DATETIME  NOT NULL,
+  `date_ended` DATETIME  NOT NULL,
+  `defeated_mayor` TINYINT  NOT NULL DEFAULT 0,
+  `detected` TINYINT  NOT NULL DEFAULT 0,
+  `guards_killed` INTEGER  NOT NULL DEFAULT 0,
+  `defences` VARCHAR(5000),
+  `defending_party` INTEGER,
+  `battle_count` INTEGER NOT NULL DEFAULT 0,ALTER TABLE `game`.`Combat_Log` ADD INDEX `encounter_started`(`encounter_started`);
+
+  PRIMARY KEY (`raid_id`)
+)
+ENGINE = InnoDB;
+
+ALTER TABLE `Party_Town` DROP COLUMN `raids_today`,
+ DROP COLUMN `last_raid_start`,
+ DROP COLUMN `last_raid_end`,
+ DROP COLUMN `guards_killed`;
+
 
 
 

@@ -15,7 +15,7 @@ has 'recalled'   => ( is => 'rw', isa => 'Bool', );
 has 'blocked'    => ( is => 'ro', isa => 'Bool', );
 has 'resisted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'didnt_cast'  => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'custom' => ( is => 'ro', isa => 'HashRef' );
+has 'custom' => ( is => 'ro', isa => 'HashRef', default => sub { {} } );
 
 __PACKAGE__->meta->make_immutable;
 

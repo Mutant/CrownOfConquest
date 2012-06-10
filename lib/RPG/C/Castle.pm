@@ -238,10 +238,18 @@ sub end_raid : Private {
 			party_id => $c->stash->{party}->id,
 		}
 	);
+	
+	my $raid = $c->model('DBIC::Town_Raid')->find(
+		{
+			town_id  => $town->id,
+			party_id => $c->stash->{party}->id,
+			date_ended => undef,
+		},	
+	);
 
 	my @battles = $c->model('DBIC::Combat_Log')->get_party_logs_since_date(
 		$c->stash->{party},
-		$party_town->last_raid_start,
+		$raid->date_started,
 	);
 	
 	# Check to see if party is now pending mayor of the town. i.e. the mayor was killed
@@ -290,9 +298,16 @@ sub end_raid : Private {
 	}
 
 	$party_town->decrease_prestige( $killed_count * 10 );
-	$party_town->increase_guards_killed($killed_count);
-	$party_town->last_raid_end( DateTime->now() );
 	$party_town->update;
+	
+	$raid->date_ended(DateTime->now());
+	$raid->guards_killed($killed_count);
+	$raid->defeated_mayor($mayor_killed);
+	$raid->detected(($c->session->{spotted} || scalar @battles) ? 1 : 0);
+	$raid->battle_count(scalar @battles);
+	$raid->update;
+	
+	undef $c->session->{spotted};
 }
 
 1;

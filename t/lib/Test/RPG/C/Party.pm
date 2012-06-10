@@ -257,8 +257,11 @@ sub test_select_action : Tests(7) {
     $self->{stash}{party} = $party;
     $self->{params}{'action'} = 'Cast';
     
+    my $mock_spell_action = Test::MockObject->new();
+    $mock_spell_action->set_always('custom', {});
+    
     my $spell = Test::MockObject->new();
-    $spell->set_always('cast', 'mock_cast_result');
+    $spell->set_always('cast', $mock_spell_action);
     $spell->set_always('target', 'character');
     
     my $spell_rs = Test::MockObject->new();
@@ -286,7 +289,7 @@ sub test_select_action : Tests(7) {
     isa_ok($args->[2], 'RPG::Schema::Character', "Character passed as second arg to cast");
     is($args->[2]->id, $char2->id, "Correct char is target of spell");
     
-    is($template_args->[0][0]{params}{message}, "mock_cast_result", "Cast result passed to template");
+    is($template_args->[0][0]{params}{message}, $mock_spell_action, "Cast result passed to template");
     
     is($self->{stash}{messages}, 'spell message', "Messages set correctly");
 }

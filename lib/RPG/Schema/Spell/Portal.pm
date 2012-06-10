@@ -27,6 +27,10 @@ sub _cast {
     
     return {
         type   => 'portal',
+        custom => {
+            raid_ended => $dungeon->type eq 'castle' ? 1 : 0,
+            castle => $dungeon,
+        },
     };
 }
 

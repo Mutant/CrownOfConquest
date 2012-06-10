@@ -36,10 +36,7 @@ sub run {
 	    }
 	}
 	
-	die join "\n", @errors if @errors;
-	
-	# Clear all tax paid / raids today
-    $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0, guards_killed => 0 } );	
+	die join "\n", @errors if @errors;	
 }
 
 sub process_town {
@@ -175,12 +172,24 @@ sub calculate_approval {
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, {sum => 'guards_killed'} ],
-            as     => [ 'tax_collected', 'guards_killed' ],
+            select => [ { sum => 'tax_amount_paid_today' }, ],
+            as     => [ 'tax_collected' ],
         }
     );
     
-    my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;
+    my $town_raid_rec = $self->context->schema->resultset('Town_Raid')->find(
+        {
+            town_id => $town->id,
+            day_id => $self->context->yesterday->id, 
+        },
+        {
+            select => [ {sum => 'guards_killed'} ],
+            as     => [ 'guards_killed' ],
+        }
+    );    
+    
+    
+    my $guards_killed = $town_raid_rec->get_column('guards_killed') // 0;
     my $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
 
 	my $guards_killed_adjustment = - $guards_killed;

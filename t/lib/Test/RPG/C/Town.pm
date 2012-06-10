@@ -255,7 +255,7 @@ sub test_raid_party_ip_address_common_with_previous_mayor : Tests(1) {
     is($self->{stash}->{error}, "Can't raid this town, as you have IP addresses in common with a recent mayor's party", "Correct error");
 }
 
-sub test_raid_successful : Tests(3) {
+sub test_raid_successful : Tests(4) {
     my $self = shift;
 
     # GIVEN
@@ -294,18 +294,14 @@ sub test_raid_successful : Tests(3) {
     $party1->discard_changes;
     is(defined $party1->dungeon_grid_id, 1, "Party put into castle");
     
-	my $party_town = $self->{schema}->resultset('Party_Town')->find(
-		{
-			town_id  => $town->id,
-			party_id => $party1->id,
-		}
-	);
-	is($party_town->raids_today, 1, "Raid count increased");
-	isa_ok($party_town->last_raid_start, 'DateTime', "last raid start"); 
+    my @raids = $town->raids;
+    is(scalar @raids, 1, "Raid record created");
+    is($raids[0]->party_id, $party1->id, "Correct party id on raid record");
+    isa_ok($raids[0]->date_started, 'DateTime', "Date of raid started recorded");     
     
 }
 
-sub test_raid_successful_but_against_peaceful_kingdom : Tests(6) {
+sub test_raid_successful_but_against_peaceful_kingdom : Tests(7) {
     my $self = shift;
 
     # GIVEN
@@ -360,14 +356,10 @@ sub test_raid_successful_but_against_peaceful_kingdom : Tests(6) {
     $party1->discard_changes;
     is(defined $party1->dungeon_grid_id, 1, "Party put into castle");
     
-	my $party_town = $self->{schema}->resultset('Party_Town')->find(
-		{
-			town_id  => $town->id,
-			party_id => $party1->id,
-		}
-	);
-	is($party_town->raids_today, 1, "Raid count increased");
-	isa_ok($party_town->last_raid_start, 'DateTime', "last raid start"); 
+    my @raids = $town->raids;
+    is(scalar @raids, 1, "Raid record created");
+    is($raids[0]->party_id, $party1->id, "Correct party id on raid record");
+    isa_ok($raids[0]->date_started, 'DateTime', "Date of raid started recorded");  
 	
 	is($party1->loyalty_for_kingdom($kingdom2->id), -15, "Party's kingdom loyalty reduced");
 	

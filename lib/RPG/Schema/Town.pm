@@ -90,6 +90,10 @@ __PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id
 
 __PACKAGE__->might_have( 'capital_of', 'RPG::Schema::Kingdom', { 'foreign.capital' => 'self.town_id' }, );
 
+__PACKAGE__->has_many( 'guards', 'RPG::Schema::Town_Guards', 'town_id', );
+
+__PACKAGE__->has_many( 'raids', 'RPG::Schema::Town_Raid', 'town_id', );
+
 sub label {
     my $self = shift;
     
@@ -467,6 +471,30 @@ sub kingdom_relationship_between_party {
     
     return $relationship->type;
     
+}
+
+# Return a hash with the defences of this town
+sub defences {
+    my $self = shift;
+    
+    my $mayor = $self->mayor;
+    my @garrison = $self->result_source->schema->resultset('Character')->search(
+        {
+            status => 'mayor_garrison',
+            status_context => $self->id,
+        },
+    );
+    my $building = $self->building; 
+    
+    my @guards = $self->guards;
+    
+    return (
+        mayor => $mayor,
+        garrison => \@garrison,
+        building => $building,
+        trap_level => $self->trap_level,
+        guards => \@guards,
+    );
 }
 
 1;

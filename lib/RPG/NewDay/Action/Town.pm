@@ -11,7 +11,7 @@ use Data::Dumper;
 use Carp;
 
 # Run after Inn, so calculations of inn costs are applied before prosperity changes
-sub depends { qw/RPG::NewDay::Action::Inn/ }
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Inn/ }
 
 sub run {
     my $self    = shift;
@@ -57,21 +57,26 @@ sub calculate_prosperity {
     my $party_town_rec = $context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' } ],
-            as     => [ 'tax_collected', 'raids_today' ],
+            select => [ { sum => 'tax_amount_paid_today' }, ],
+            as     => [ 'tax_collected', ],
         }
     );
+    
+    my $raids_today = $context->schema->resultset('Town_Raid')->search(
+        { 
+            town_id => $town->id,
+            day_id =>  $context->yesterday->id,            
+        },
+    )->count;
 
     my $ctr_avg = $town->location->get_surrounding_ctr_average( $context->config->{prosperity_calc_ctr_range} );
 
     my $ctr_diff = $global_avg_ctr - $ctr_avg;
     
     my $tax_collected = 0;
-    my $raids_today = 0;
     
     if ($party_town_rec) {
     	$tax_collected = $party_town_rec->get_column('tax_collected') // 0;
-    	$raids_today = $party_town_rec->get_column('raids_today') // 0;
     }
     
     my $approval_change = round (($town->mayor_rating // 0) / 20);

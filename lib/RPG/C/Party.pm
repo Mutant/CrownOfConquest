@@ -694,7 +694,10 @@ sub select_action : Local {
             data => 1,
         };                
 	}
-
+	
+	if ($result->custom->{raid_ended}) {
+	    $c->forward('/castle/end_raid', [$result->custom->{castle}]);
+	}
 
 	my $message = $c->forward(
 		'RPG::V::TT',

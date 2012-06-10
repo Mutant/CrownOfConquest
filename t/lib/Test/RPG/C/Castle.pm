@@ -121,6 +121,13 @@ sub test_end_raid : Tests(1) {
 	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $castle->land_id);
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $mayor = Test::RPG::Builder::Character->build_character($self->{schema});
+	my $raid = $self->{schema}->resultset('Town_Raid')->create(
+	   {
+	       town_id => $town->id,
+	       party_id => $party->id,
+	       date_started => DateTime->now(),
+	   }
+    );     
 	
 	$mayor->mayor_of($town->id);
 	$mayor->update;

@@ -572,14 +572,15 @@ sub raid : Local {
 
 	confess "Castle not found for town " . $town->id unless $start_sector;
 
-	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
+	my $raids_today = $c->model('DBIC::Town_Raid')->search(
 		{
 			town_id  => $town->id,
 			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->day_id,
 		}
-	);
+	)->count;
 	
-	if (($party_town->raids_today // 0) > $c->config->{max_raids_per_day}) {
+	if ($raids_today > $c->config->{max_raids_per_day}) {
 	   $c->stash->{error} = "You've raided this town too many times today";
 	   $c->forward( '/panel/refresh', [ 'messages' ]);
 	   return;
@@ -619,11 +620,30 @@ sub raid : Local {
 
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
+	
+	my $defences = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/defences.html',
+				params   => {
+					$town->defences,
+				},
+				return_output => 1,
+			}
+		]
+	);
 
-	$party_town->last_raid_start( DateTime->now() );
-	$party_town->last_raid_end(undef);
-	$party_town->increment_raids_today;
-	$party_town->update;
+    $c->model('DBIC::Town_Raid')->create(
+        {
+			town_id  => $town->id,
+			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->day_id,
+			date_started => DateTime->now(),
+			defences => $defences,
+			defending_party => $mayor->party_id,
+        },            
+    );
 	
 	if ($c->stash->{party}->kingdom_id) {
 	

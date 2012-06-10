@@ -8,7 +8,7 @@ use Games::Dice::Advanced;
 use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
-use Maths::Round qw(round);
+use Math::Round qw(round);
 
 use RPG::Maths;
 

@@ -457,7 +457,7 @@ castle_treasury_movement_chance: 5
 character_sell_deletion_chance: 15
 
 # Max % difference to base price allowed when trading items
-trade_max_percentage_difference_in_base_price: 175
+trade_max_percentage_difference_in_base_price: 100
 
 # Maintenance cost of town traps per day per level
 town_trap_maint_cost: 5

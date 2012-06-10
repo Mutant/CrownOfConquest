@@ -86,5 +86,12 @@ CREATE TABLE `Crown_History` (
 )
 ENGINE = InnoDB;
 
+CREATE TABLE `Conf` (
+  `conf_name` VARCHAR(1000)  NOT NULL,
+  `conf_value` VARCHAR(1000) 
+)
+ENGINE = InnoDB;
+
+
 
 

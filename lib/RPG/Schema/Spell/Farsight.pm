@@ -30,7 +30,7 @@ sub _cast {
     
     my $schema = $self->result_source->schema;
     
-    my $chance = ($level*2)-$distance_to_sector;
+    my $chance = ($level*3)-$distance_to_sector;
     
     my %discoveries;
           

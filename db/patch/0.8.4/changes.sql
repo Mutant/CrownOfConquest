@@ -104,7 +104,7 @@ CREATE TABLE `Town_Raid` (
   `guards_killed` INTEGER  NOT NULL DEFAULT 0,
   `defences` VARCHAR(5000),
   `defending_party` INTEGER,
-  `battle_count` INTEGER NOT NULL DEFAULT 0,ALTER TABLE `game`.`Combat_Log` ADD INDEX `encounter_started`(`encounter_started`);
+  `battle_count` INTEGER NOT NULL DEFAULT 0,
 
   PRIMARY KEY (`raid_id`)
 )

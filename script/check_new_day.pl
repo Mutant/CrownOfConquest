@@ -29,7 +29,7 @@ my $dt = $strp->parse_datetime($conf_val->conf_value);
 
 my $elapsed = $dt->delta_ms( DateTime->now() );
 
-if ($elapsed->in_units('minutes') > 6) {
+if ($elapsed->in_units('minutes') > 60) {
 	my $msg = MIME::Lite->new(
 		From    => $config->{send_email_from},
 		To      => $config->{send_email_from},

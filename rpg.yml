@@ -104,7 +104,7 @@ repair_building_damage_cron_string: "30 * * * *"
 detonate_cron_string: "*/5 * * * *"
 
 # Do majesty calculations
-majesty_cron_string: "1 * * * *"
+majesty_cron_string: "0 * * * *"
 
 # ----- Character / Party Generation Params ----- #
 

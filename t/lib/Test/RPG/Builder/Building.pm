@@ -30,7 +30,7 @@ sub build_building {
         $params{owner_type} = 'party';
     }
 
-    return $schema->resultset('Building')->create(
+    my $building = $schema->resultset('Building')->create(
         {
             building_type_id => $params{building_type_id},
             land_id => $params{land_id},
@@ -38,6 +38,27 @@ sub build_building {
             owner_type => $params{owner_type}
         }
     );
+    
+    if ($params{upgrades}) {
+        foreach my $upgrade_type (keys %{ $params{upgrades} }) {
+            my $type = $schema->resultset('Building_Upgrade_Type')->find(
+                {
+                    name => $upgrade_type,
+                }
+            );
+            
+            die "No such upgrade type: $upgrade_type" unless $type;
+            
+            $building->add_to_upgrades(
+                {
+                    type_id => $type->id,
+                    level => $params{upgrades}->{$upgrade_type},
+                }
+            );   
+        }    
+    }
+    
+    return $building;
 	
 }
 

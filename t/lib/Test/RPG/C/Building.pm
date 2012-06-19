@@ -29,12 +29,12 @@ sub test_get_party_resources : Tests(2) {
     my $item_type2 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, category_name => 'Resource', item_type => 'Wood' );
     
     my $item1 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $characters[0]->id, item_type_id => $item_type1->id,
-        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }] );
+        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }], no_equip_place => 1 );
     my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $characters[0]->id, item_type_id => $item_type2->id, 
-        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }]);
+        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }], no_equip_place => 1);
     my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $characters[1]->id, item_type_id => $item_type1->id,
-        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }] );
-    my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $characters[0]->id,  );
+        variables => [{ item_variable_name => 'Quantity', item_variable_value => 100, }], no_equip_place => 1 );
+    my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, char_id => $characters[0]->id, , no_equip_place => 1 );
         
     $self->{stash}{party} = $party;
     

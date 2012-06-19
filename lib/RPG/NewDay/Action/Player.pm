@@ -86,6 +86,7 @@ sub verification_reminder {
             warned_for_deletion => 0,
             deleted             => 0,
             verified            => 0,
+            email               => { '!=', undef },
         },
     );
 

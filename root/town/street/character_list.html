@@ -2,7 +2,7 @@
 	The following characters are sleeping rough on the streets:
 	<ul>
 	[% FOREACH character IN characters %]
-		<li>[% character.character_name %] ([% character.party.name %]) 
+		<li>[% character.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% character.party.id %]')">[% character.party.name %]</a>) 
 			[% IF ! party.is_full && character.party.id == party.id %] 
 				- <a href="javascript:getPanels('town/street/remove_character?character_id=[% character.id %]')">Remove from Street</a>
 			[% END %]

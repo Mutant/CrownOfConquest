@@ -11,6 +11,7 @@
 				<option>Attack Weaker Opponents</option>
 				<option>Attack Similar Opponents</option>
 				<option>Attack Stronger Opponents</option>
+				<option>Attack All Opponents</option>
 			</select>
 		</td>
 	</tr>
@@ -22,12 +23,16 @@
 				<option>Attack Weaker Opponents</option>
 				<option>Attack Similar Opponents</option>
 				<option>Attack Stronger Opponents</option>
+				<option>Attack All Opponents</option>
 			</select>
 		</td>
 	</tr>
 	<tr>
 		<td colspan="2"><input type="checkbox" name="attack_parties_from_kingdom" value="1">Attack parties, even if they're from the same Kingdom</td>
 	</tr>
+	<tr>
+		<td colspan="2"><input type="checkbox" name="attack_friendly_parties" value="1">Attack parties, even if they're from Kingdoms we're at peace with</td>
+	</tr>	
 	<tr id="flee-threshold">
 		<td>Flee Threshold:</td>
 		<td><input type="text" name="flee_threshold" size="3">
@@ -49,7 +54,9 @@
 	Whether to attack creatures or parties that enter the sector.<br>
 	Select the maximum strength of the opponent the garrison should attack.<br>
 	If you select 'Attack Stronger Opponents', the garrison will still ignore<br>
-	some opponents, where the battle would be suicidal.	 
+	some opponents, where the battle would be suicidal.	Even if you select<br>
+	'Attack All Opponents' some extremely weak opponents will still be left alone<br>
+	out of pity.
 </div>	
 
 <input type="submit" value="Update Orders">

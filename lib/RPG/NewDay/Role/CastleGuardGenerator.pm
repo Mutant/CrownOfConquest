@@ -18,14 +18,14 @@ sub generate_guards {
 	my $c = $self->context;
 
 	my $town = $castle->town;
+
+	return unless $town;
 	
 	$self->context->logger->debug("Generating guards for town " . $town->id);
 
-	return unless $town;
-
 	my @creature_types = $c->schema->resultset('CreatureType')->search(
 		{
-			'category.name' => 'Guards',
+			'category.name' => 'Guard',
 		},
 		{
 			join     => 'category',
@@ -35,11 +35,6 @@ sub generate_guards {
 	
 	my $mayor = $castle->town->mayor;
 	
-	if (! $mayor || ! $mayor->party_id) {
-		# If the mayor's an NPC, caclulate how many guards the town should hire now
-		$self->calculate_guards_to_hire($town, \@creature_types);
-	}
-
 	# Get the list of guards currently in the castle
 	my @creatures = $c->schema->resultset('Creature')->search(
 		{
@@ -57,7 +52,7 @@ sub generate_guards {
 			town_id => $town->id,
 		},
 	);
-	$self->context->logger->debug("Hiring guards: " . Dumper \%guards_to_hire);
+	$self->context->logger->debug("Generating guards: " . Dumper \%guards_to_hire);
 			
 	my %creature_types_by_id = map { $_->id => $_ } @creature_types;
 
@@ -66,18 +61,18 @@ sub generate_guards {
 	foreach my $type_id (sort keys %guards_to_hire) {
 		next if $guards_to_hire{$type_id} <= 0;
 		
-		my $cost = $guards_to_hire{$type_id} * $creature_types_by_id{$type_id}->hire_cost;
+		my $cost = $guards_to_hire{$type_id} * $creature_types_by_id{$type_id}->maint_cost;
 	
 		if ($cost < $town->gold) {
 			$self->context->logger->debug("Spending $cost gold on " . $creature_types_by_id{$type_id}->creature_type);
-			$town->decrease_gold($cost);	
+			$town->decrease_gold($cost);
 		}
 		else {
 			# Can't afford them all, just get as many as they can afford
-			my $number_to_hire = int ($town->gold / $creature_types_by_id{$type_id}->hire_cost);
-			$self->context->logger->debug("Could only afford to hire $number_to_hire " . $creature_types_by_id{$type_id}->creature_type);
+			my $number_to_hire = int ($town->gold / $creature_types_by_id{$type_id}->maint_cost);
+			$self->context->logger->debug("Could only afford to pay $number_to_hire " . $creature_types_by_id{$type_id}->creature_type);
 			$guards_to_hire{$type_id} = $number_to_hire;
-			$cost = $number_to_hire * $creature_types_by_id{$type_id}->hire_cost;
+			$cost = $number_to_hire * $creature_types_by_id{$type_id}->maint_cost;
 			$town->decrease_gold($cost);
 		}
 
@@ -108,63 +103,18 @@ sub generate_guards {
 	
 	my $highest_level_type = $creature_types[$#creature_types];
 	
-	my $room_iterator = Array::Iterator::Circular->new($castle->rooms);	
-
 	# Ressurect any guards that were killed
 	map { $_->hit_points_current($_->hit_points_max); $_->update } @creatures;
 	
-	my $retries = 0;
-	foreach my $type_id (sort keys %guards_to_hire) {
-		my $last_cg;
-		my $type = $creature_types_by_id{$type_id};
-		
-		# Add any guards that need to be added
-		while ($guards_to_hire{$type_id} > 0) {
-		    if ($retries >= 20) {
-                $c->logger->error("Couldn't find a random sector to generate guards in! Giving up");
-                last;
-		    }
-		    
-		    if (! $last_cg) {
-                my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, $room_iterator->next->id, 1 );
-			
-    			if (! $random_sector) {
-                    $retries++;
-                    next;
-    			}
-		
-    			$last_cg = $c->schema->resultset('CreatureGroup')->create(
-    				{
-    					creature_group_id => undef,
-    					dungeon_grid_id   => $random_sector->id,
-    				}
-    			);
-		    }
-
-			$last_cg->add_creature( $type );
-			
-			$guards_to_hire{$type_id}--;
-			
-			undef $last_cg if $last_cg->number_alive >= 8;
-		}
-		
-		my @creatures_of_type = grep { $_->creature_type_id == $type_id } shuffle @creatures;
-				
-		# Remove any guards
-		while ($guards_to_hire{$type_id} < 0) {
-			my $to_delete = shift @creatures_of_type;
-						
-			my $cg = $to_delete->creature_group;
-
-			$to_delete->delete;
-			
-			if ($cg->number_alive == 0) {
-				$cg->delete;	
-			}
-			
-			$guards_to_hire{$type_id}++;
-		} 
+	my @add_or_remove;
+	foreach my $type_id (keys %guards_to_hire) {
+	   push @add_or_remove, {
+	       type => $creature_types_by_id{$type_id},
+	       amount => $guards_to_hire{$type_id},
+	   };   
 	}
+		
+    $castle->add_or_remove_creatures(@add_or_remove);
 	
 	$self->generate_mayors_group($castle, $town, $mayor);
 }
@@ -182,48 +132,10 @@ sub record_guards_hired {
 			}
 		);
 		
-		$guards_to_hire->amount_yesterday($hires{$type_id});
+		$guards_to_hire->amount_working($hires{$type_id});
 		$guards_to_hire->update;
     }
    
-}
-
-sub calculate_guards_to_hire {
-	my $self = shift;
-	my $town = shift;
-	my $creature_types = shift;	
-
-	my $levels_aggregate = $town->prosperity * 7;
-	
-	$levels_aggregate += int ($town->gold / 1000) * 40;
-	
-	my $max_level = int $town->prosperity / 2.5;
-	$max_level = 6 if $max_level < 6;
-		
-	my $lowest_level = $creature_types->[0]->level;
-	
-	my %guards_to_hire;
-	while ($levels_aggregate > $lowest_level) {
-		my $type = ( shuffle @$creature_types )[0];
-		
-		next if $type->level > $max_level;
-		
-		$guards_to_hire{$type->id}++;
-		
-		$levels_aggregate -= $type->level;
-	}
-	
-	foreach my $type_id (keys %guards_to_hire) {
-		my $guards_to_hire = $self->context->schema->resultset('Town_Guards')->find_or_create(
-			{
-				town_id => $town->id,
-				creature_type_id => $type_id,
-			}
-		);
-		
-		$guards_to_hire->amount($guards_to_hire{$type_id});
-		$guards_to_hire->update;
-	}
 }
 
 sub generate_mayors_group {
@@ -287,32 +199,31 @@ sub generate_mayors_group {
                 $history_rec->update;
             }
 		}
-    		      
-		
-        # Move the group into a sector away from the stairs
-        unless ($mayors_group->in_combat) {
-    		my $sector;
-    		my $sector_rs = $castle->find_sectors_not_near_stairs(1);
-    		
-    		while ($sector = $sector_rs->next) {
-                next if $sector->creature_group;
-                last;
-    		}
-    		
-    		if ($sector) {
-                $mayors_group->dungeon_grid_id($sector->id);
-                $mayors_group->update;
-    		}
-        }
 	}
 	
 	# Ensure mayor's group has a sector. Could be that finding a sector not near stairs didn't give them one
 	if (! $mayors_group->dungeon_grid_id) {
 	    $self->context->logger->debug("Mayors CG does not have a sector in the castle - giving them one");
         my $random_sector = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $castle->id, undef, 1 );
-        $mayors_group->dungeon_grid_id($random_sector->id);
+        $mayors_group->dungeon_grid_id($random_sector->id) if $random_sector;
         $mayors_group->update; 
 	}
+
+    # Move the group into a sector away from the stairs
+    unless ($mayors_group->in_combat) {
+		my $sector;
+		my $sector_rs = $castle->find_sectors_not_near_stairs(1);
+		
+		while ($sector = $sector_rs->next) {
+            next if $sector->creature_group;
+            last;
+		}
+		
+		if ($sector) {
+            $mayors_group->dungeon_grid_id($sector->id);
+            $mayors_group->update;
+		}
+    }
 	
 	# Add any garrisoned chars into the group
 	my @garrison_chars = $c->schema->resultset('Character')->search(
@@ -336,6 +247,10 @@ sub check_for_mayor_replacement {
     my $c = $self->context;
     
 	if ($mayor && $mayor->is_dead) {
+	    my $cg = $mayor->creature_group;
+	    
+	    return if $cg && $cg->in_combat;
+	    
         # Hmm, the mayor is dead. This can happen if the mayor is killed, but a party flees,
         #  or they party doesn't take over the mayoralty.
         $self->context->logger->debug("Mayor found dead - forcing generation of new one");

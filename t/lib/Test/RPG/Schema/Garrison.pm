@@ -192,4 +192,66 @@ sub test_check_for_fight_vs_party_from_own_kingdom : Tests(2) {
 	is($garrison->check_for_fight($party), 1, "Attacks party from own kingdom, when requested to");       
 }
 
+sub test_check_for_fight_vs_party_from_kingdom_at_peace_with : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		kingdom_id => $kingdom1->id,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom2->id);	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 2);
+	
+	$self->{config}{min_party_level_for_garrison_attack} = 1;
+	
+	$self->{schema}->resultset('Kingdom_Relationship')->create(
+	   {
+	       kingdom_id => $kingdom2->id,
+	       with_id => $kingdom1->id,
+	       type => 'peace',
+	   }
+	);
+	
+	# WHEN / THEN
+	is($garrison->check_for_fight($party), 0, "Doesn't attack party from kingdom at peace with, by default");
+	
+	$garrison->attack_friendly_parties(1);
+	is($garrison->check_for_fight($party), 1, "Attacks party from kingdom at peace with, when requested to");       
+}
+
+sub test_check_for_fight_vs_party_from_kingdom_at_war_with : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom1 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $kingdom2 = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party(
+		$self->{schema},
+		character_count => 2,
+		kingdom_id => $kingdom1->id,
+	);
+	my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, kingdom_id => $kingdom2->id);	
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party2->id, character_count => 2);
+	
+	$self->{config}{min_party_level_for_garrison_attack} = 1;
+	
+	$self->{schema}->resultset('Kingdom_Relationship')->create(
+	   {
+	       kingdom_id => $kingdom2->id,
+	       with_id => $kingdom1->id,
+	       type => 'war',
+	   }
+	);
+	
+	# WHEN / THEN
+	is($garrison->check_for_fight($party), 1, "Attacks party from kingdom at war with, by default");
+	
+	$garrison->attack_friendly_parties(1);
+	is($garrison->check_for_fight($party), 1, "Attacks party from kingdom at war with, regardless of 'friendly' flag");       
+}
+
 1;

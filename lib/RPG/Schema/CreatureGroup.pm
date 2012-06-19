@@ -119,10 +119,11 @@ sub creature_summary {
 
 sub number_alive {
 	my $self = shift;
+    my %params = @_;
 
 	# TODO: possibly check if creatures are already loaded, and use those rather than going to the DB
 
-	my $crets_alive = $self->result_source->schema->resultset('Creature')->count(
+	my $crets_alive = $params{characters_only} ? 0 : $self->result_source->schema->resultset('Creature')->count(
 		{
 			hit_points_current => { '>', 0 },
 			creature_group_id  => $self->id,
@@ -289,6 +290,30 @@ sub in_combat {
     my $self = shift;
     
     return $self->in_combat_with ? 1 : 0;
+}
+
+sub flee_chance {
+    my $self = shift;
+    my $opponents = shift;
+    
+    my $level_diff = $opponents->level - $self->level;
+    
+	my $chance_of_fleeing = ( $level_diff - 2 ) * RPG::Schema->config->{chance_creatures_flee_per_level_diff};
+	
+	$chance_of_fleeing += $level_diff if $level_diff > 7;
+
+    my $opp_skill_penalty = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
+    $chance_of_fleeing -= $opp_skill_penalty;
+
+    my $skill_bonus = $self->skill_aggregate('Strategy', 'flee_bonus') // 0;
+    $chance_of_fleeing += $skill_bonus;
+		
+    $chance_of_fleeing = 75 if $chance_of_fleeing > 75; 
+    
+    $chance_of_fleeing = 0 if $chance_of_fleeing < 0;
+    
+    return $chance_of_fleeing;   
+       
 }
 
 __PACKAGE__->meta->make_immutable( inline_constructor => 0 );

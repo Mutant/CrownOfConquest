@@ -1,0 +1,17 @@
+[% USE infl = Lingua.EN.Inflect; ~%]
+[% FILTER collapse %]
+The [% building_damage.building.building_type.name %]
+[% IF building_damage.building.owner_type == 'town' %]
+	in the town of [% building_damage.building.owner.town_name %]
+[% ELSE %]
+	at [% building_damage.building.location.x %], [% building_damage.building.location.y %]
+[% END %]
+suffered damage to its upgrades as the result of a magical bomb.
+
+[% FOREACH damaged_upgrade IN building_damage.damage %]
+	The [% damaged_upgrade.upgrade.type.name %] upgrade lost 
+	[% IF damaged_upgrade.damage_done.perm %][% perm = 1 %][% FILTER inflect %]NO(level, [% damaged_upgrade.damage_done.perm %])[% END %] permanently[% END ~%]
+	[% IF damaged_upgrade.damage_done.temp %][% IF perm %], and [% END %][% FILTER inflect %]NO(level, [% damaged_upgrade.damage_done.temp %])[% END %] temporarily[% END ~%].
+	[% perm = 0 %]
+[% END ~%]
+[% END ~%]

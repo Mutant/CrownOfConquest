@@ -1,0 +1,11 @@
+[% PROCESS layout/diag_buttons.html %]
+
+Select the coordinates of the sector to target:
+
+<input type="hidden" dojoType=dijit.form.TextBox name="character_id" value="[% character_id %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="action" value="[% action %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="action_param" value="[% action_param %]">
+
+<input type="text" dojoType=dijit.form.TextBox name="x" style="width: 25px">, <input type="text" dojoType=dijit.form.TextBox name="y" style="width: 25px"> 
+
+[% dialog_buttons('dialog') %]

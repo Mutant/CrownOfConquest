@@ -1,5 +1,25 @@
 [% INCLUDE layout/close_button.html %]
 [% PROCESS quest/description.html %]
+[% PROCESS layout/diag_buttons.html %]
+
+<script>
+function showQuestNegotiateDiag(questId, goldValue) {
+	dojo.byId('negotiate-quest-gold-value').value = goldValue;
+	dojo.byId('negotiate-quest-id').value = questId;
+	
+	dijit.byId('negotiate-quest-diag').show();
+}
+</script>
+
+<div dojoType="dijit.Dialog" id="negotiate-quest-diag" style="display: none" title="Negotiate Quest Reward">
+	<form method="POST" action="[% base %]quest/negotiate" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="quest_id" id="negotiate-quest-id" />
+    Enter the amount of gold you would like to be paid to complete this quest:<br>
+    Gold Reward: <input type="text" name="gold_value" id="negotiate-quest-gold-value" style="width: 50px"/>
+	[% dialog_buttons('negotiate-quest-diag') %]
+	</form>
+</div>
+
 
 [% IF quests.0 %]    
 	[% FOREACH quest IN quests %]
@@ -12,26 +32,8 @@
 	    	[% kingdom_header_displayed = 1 %]
 	    [% END %]
 	    
-		<p>
-			<b>[% short_description(quest) %]</b><br>
-			Offered by: [% IF quest.town_id %]
-				[% quest.town.town_name %] ([% quest.town.location.x %], [% quest.town.location.y %])
-			[% ELSE %]
-				The Kingdom Of [% quest.kingdom.name %]<br>
-				Status: 
-				[% IF quest.status == 'Not Started' %]
-					Offered <a href="javascript:getPanels('quest/accept?quest_id=[% quest.id %]')">Accept</a> 
-						<a href="javascript:getPanels('quest/decline?quest_id=[% quest.id %]')">Decline</a>
-				[% ELSIF quest.status == 'Awaiting Reward' %]
-					Awaiting Reward
-				[% ELSE %]
-					Accepted
-				[% END %]	 
-			[% END %]<br>
-			Reward: [% quest.gold_value %] gold<br>
-			Days [% IF quest.status == 'Not Started' %]to complete[% ELSE %]left[% END %]: [% quest.days_to_complete %]<br>
-			[% list_quest(quest) %]
-		</p>
+	    [% INCLUDE quest/list_item.html %]
+
 	[% END %]
 [% ELSE %]
 You don't have any quests at the moment.

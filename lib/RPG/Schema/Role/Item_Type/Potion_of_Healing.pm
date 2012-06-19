@@ -44,8 +44,8 @@ sub label {
 
 sub is_usable {
     my $self = shift;
-    
-    my $character = $self->belongs_to_character;
+    my $combat = shift;
+    my $character = shift;
     
     return 0 unless $character;
     

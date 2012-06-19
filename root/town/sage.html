@@ -4,6 +4,8 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	<li><a href="#" onClick="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
+	<li><a href="#" onClick="javascript:dijit.byId('sage-orb-diag').show()">Find an orb</a></li>
+	<li><a href="#" onClick="javascript:dijit.byId('sage-buy-vial-diag').show()">Buy a Vial of Dragons Blood</a></li>
 </ul>
 
 <div dojoType="dijit.Dialog" id="sage-town-diag" style="display: none" title="Find A Town" execute="findTown(arguments[0]);">
@@ -19,7 +21,7 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	                <option value="direction">Direction ([% direction_cost %] gold)</option>
 	                <option value="distance">Distance ([% distance_cost %] gold)</option>
 	                <option value="location">Location ([% location_cost %] gold)</option>
-			</select>
+				</select>
 		    </td>
 		</tr>
 	</table>
@@ -48,15 +50,64 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	    <tr>
 		    <td>What dungeon level would you like to find?</td>
 		    <td>
-		    	<select dojoType="dijit.form.FilteringSelect" name="find_level" autocomplete="false">
+		    	<select dojoType="dijit.form.Select" name="find_level" autocomplete="false">
 		    		[% FOREACH level IN dungeon_levels_allowed_to_enter %]
 	                	<option value="[% level %]">Level [% level %] ([% level * find_dungeon_cost_per_level %] gold)</option>
 					[% END %]
-			</select>
+				</select>
 		    </td>
 		</tr>
 	</table>
 	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-orb-diag" style="display: none" title="Find An Orb">
+	<form method="post" action="[% base %]town/sage/find_orb" onSubmit="postPanels(this); return false">
+	<table>
+	    <tr>
+		    <td>What orb would you like to find?</td>
+		    <td><input type="text" size="50" name="orb_name" dojoType="dijit.form.TextBox"></td>
+		</tr>
+		<tr>
+			<td>How much would you like to spend on finding the orb?<br>(The more you pay me, the more likely I am to be accurate with its location).</td>
+			<td><input type="text" style="width: 40px" size="5" name="amount_to_spend" dojoType="dijit.form.TextBox"></td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-buy-vial-diag" style="display: none" title="Buy A Vial of Dragons Blood">
+	<form method="post" action="[% base %]town/sage/buy_vial" onSubmit="postPanels(this); return false">
+	Dragons Blood is an extremely rare item, but is useful for spell-casting. Each vial costs [% vial.base_cost %] gold.
+	<table>
+	    <tr>
+		    <td>Which character would you like to purchase a vial of Dragons Blood for?</td>
+		    <td>		    	
+		    	<select dojoType="dijit.form.Select" style="width: 150px" name="character_id" autocomplete="false">
+		    		[% FOREACH character IN party.characters_in_party %]
+	                	<option value="[% character.id %]">[% character.name %]</option>
+					[% END %]
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td>How many vials would you like to buy?</td>
+			<td><input id="quantity-spinner" type="text"
+		        dojoType="dijit.form.NumberTextBox"
+		        name= "quantity"
+		        value="1"
+		        constraints="{min:1,max:1000,places:0}"
+		        promptMessage= "Enter a value between 1 and 1000"
+		        required= "true"
+		        invalidMessage= "Invalid quantity."
+				style="width: 80px"
+		        />
+		     </td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
+	</form>
 </div>
 
 [% INCLUDE town/discount_message.html shop_type='sage' %] 

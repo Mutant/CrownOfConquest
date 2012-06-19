@@ -35,7 +35,7 @@ sub run {
     $self->spawn_sewer_monsters();
     
     # Move dungeon monsters
-    $self->move_dungeon_monsters();
+    #$self->move_dungeon_monsters();
     
     # Refresh rare monsters
     $self->refresh_rare_monsters();
@@ -142,7 +142,7 @@ sub spawn_dungeon_monsters {
     	}
     );
     while ( my $dungeon = $dungeon_rs->next ) {
-		$self->_spawn_in_dungeon($c, $dungeon);
+		$self->_spawn_in_dungeon($c, $dungeon, $c->config->{dungeon_sectors_per_creature});
     }
 }
 
@@ -157,7 +157,7 @@ sub spawn_sewer_monsters {
     );
     
     while ( my $dungeon = $dungeon_rs->next ) {
-		$self->_spawn_in_dungeon($c, $dungeon, ['Rodent']);
+		$self->_spawn_in_dungeon($c, $dungeon, $c->config->{sewer_sectors_per_creature}, ['Rodent']);
     }   
 }
 
@@ -165,6 +165,7 @@ sub _spawn_in_dungeon {
 	my $self = shift;
 	my $c = shift;
 	my $dungeon = shift;
+	my $sectors_per_creature = shift;
 	my $categories = shift;
 	
     $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->dungeon_id );
@@ -179,7 +180,7 @@ sub _spawn_in_dungeon {
 
     $c->logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
 
-    my $number_of_groups_to_spawn = ( int $sector_count / $c->config->{dungeon_sectors_per_creature} ) - $creature_count;
+    my $number_of_groups_to_spawn = ( int $sector_count / $sectors_per_creature ) - $creature_count;
 
     $c->logger->info( "Spawning $number_of_groups_to_spawn monsters in dungeon id: " . $dungeon->dungeon_id );
 
@@ -352,6 +353,9 @@ sub move_dungeon_monsters {
         next if $cg->in_combat_with;
 
         next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
+        
+        # Don't move the mayor's group
+        next if $cg->has_mayor;
 
         # Find sector to move to (if we can)
         my $allowed_sectors = $cg->dungeon_grid->sectors_allowed_to_move_to( 3, 0 );

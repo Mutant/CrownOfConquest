@@ -16,6 +16,7 @@ sub build_item_type {
         {
             item_category     => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
+            always_enchanted   => $params{always_enchanted} // 0,
         }
     );
     
@@ -82,6 +83,7 @@ sub build_item_type {
 					keep_max => $variable->{keep_max} || 0,
 					min_value => $variable->{min_value} || 0,
 					max_value => $variable->{max_value} || 100,
+					special => $variable->{special} // 0,
 				}
 			);
     	}

@@ -9,13 +9,14 @@ use Lingua::EN::Inflect qw(PL_N);
 sub time_since_datetime {
     my $self = shift;
     my $date_time = shift;
+    my $prefix = shift // 1;
     
     return 'Never' unless $date_time;
     
     my $now = DateTime->now;
     my $dur = $date_time->subtract_datetime($now);
 
-    my $str = "About ";
+    my $str = $prefix ? "About " : '';
     if ($dur->years) {
         $str .= $dur->years . PL_N(" year", $dur->years);   
     }
@@ -40,9 +41,37 @@ sub time_since_datetime {
     else {
         return;   
     }
-    $str .= " ago";
+    $str .= " ago" if $prefix;
 
     return $str;
+}
+
+sub time_since_datetime_detailed {
+    my $self = shift;
+    my $date_time = shift;
+    my $prefix = shift // 1;
+    
+    return 'Never' unless $date_time;    
+    
+    my $now = DateTime->now;
+    my $dur = $date_time->subtract_datetime($now);
+    
+    my $size = 0;
+    my $str;
+    
+    for my $type (qw/years months weeks days hours minutes seconds/) {
+        if ($dur->$type) {
+            my $text = $type;
+            chop $text;
+            $str .= $dur->$type . PL_N(" $text", $dur->$type) . ' ';
+            $size++;
+        }
+        last if $size >= 2;   
+    }
+    
+    $str .= " ago" if $prefix;    
+    
+    return $str;        
 }
 
 1;

@@ -95,11 +95,11 @@ sub view : Private {
 sub grid_sizes {
     my ($self, $c) = @_;
     
-    my $zoom_level = $c->session->{zoom_level};
+    my $zoom_level = $c->session->{zoom_level} // 2;
     
-    my $x_grid_size = $c->config->{map_x_size} + (($zoom_level-2) * 3) + 1;
+    my $x_grid_size = $c->config->{map_width}{$c->session->{screen_width} // 'small'} + (($zoom_level-2) * 3) + 1;
     $x_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
-    my $y_grid_size = $c->config->{map_y_size} + (($zoom_level-2) * 3) + 1;
+    my $y_grid_size = $c->config->{map_height}{$c->session->{screen_height} // 'small'} + (($zoom_level-2) * 3) + 1;
     $y_grid_size-- if $zoom_level % 2 == 0;    # Odd numbers cause us problems
     
     return ($x_grid_size, $y_grid_size);       
@@ -108,8 +108,6 @@ sub grid_sizes {
 sub landmarks : Local {
     my ( $self, $c ) = @_;
     
-    $c->stash->{message_panel_size} = 'large';
-
     my @known_towns = $c->model('DBIC::Town')->search(
         { 'mapped_sector.party_id' => $c->stash->{party}->id, },
         {
@@ -119,14 +117,13 @@ sub landmarks : Local {
     );
 
     $c->forward(
-        '/panel/refresh_with_template',
+        'RPG::V::TT',
         [
             {
                 template => 'map/landmarks.html',
                 params   => {
                     known_towns => \@known_towns,
                 },
-                return_output => 1,
             }
         ]
     );
@@ -325,6 +322,26 @@ sub generate_grid : Private {
     }
    
     $c->stats->profile("Queried db for buildings");
+    
+	#  Add garrisons owned by party
+    my @garrisons = $c->model('DBIC::Garrison')->find_in_range(
+        {
+            x => $x_centre,
+            y => $y_centre,
+        },
+        {
+            x => $x_size,
+            y => $y_size,
+        },
+        $c->stash->{party}->id,
+    );    
+    
+    my $garrison_grid;
+    foreach my $garrison (@garrisons) {
+        push @{$garrison_grid->[ $garrison->{land}->{x} ][ $garrison->{land}->{y} ]}, $garrison;
+    }
+   
+    $c->stats->profile("Queried db for garrisons");    
 
     my @grid;
     my %town_costs;
@@ -334,6 +351,7 @@ sub generate_grid : Private {
     foreach my $location (@$locations) {
         $location->{roads} = $road_grid->[ $location->{x} ][ $location->{y} ];
         $location->{buildings} = $building_grid->[ $location->{x} ][ $location->{y} ];
+        $location->{garrison} = $garrison_grid->[ $location->{x} ][ $location->{y} ];
         
         $grid[ $location->{x} ][ $location->{y} ] = $location;
         

@@ -14,7 +14,7 @@ use List::Util qw(shuffle);
 sub cron_string {
     my $self = shift;
 
-    return "15 * * * *";
+    return $self->context->config->{offline_combat_cron_string};
 }
 
 sub run {

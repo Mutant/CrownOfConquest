@@ -15,7 +15,7 @@ use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Party;
 
 
-sub startup : Tests(startup => 1) {
+sub setup : Tests(setup => 1) {
 	my $self = shift;
 	
 	use_ok('RPG::NewDay::Action::Dungeon');
@@ -43,7 +43,7 @@ sub test_check_for_dungeon_deletion : Tests(3) {
 	$self->{roll_result} = 1;
 	
 	# WHEN
-	$action->check_for_dungeon_deletion();	
+	$action->check_for_dungeon_deletion($dungeon);	
 	
 	# THEN
 	$dungeon->discard_changes;

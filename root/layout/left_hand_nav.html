@@ -6,11 +6,12 @@
 		{name => 'quests', link => '#', on_click => "closeScreen(); getPanels('quest/list')"},
 		{name => 'garrisons', link => '#', on_click => "closeScreen(); getPanels('party/details/garrisons')"},	
 		{name => 'mayors', link => '#', on_click => "closeScreen(); getPanels('party/details/mayors')"},	
-		{name => 'kingdom', link => '#', on_click => "closeScreen(); getPanels('party/details/kingdom')"},
-		{name => 'landmarks', link => '#', on_click => "closeScreen(); getPanels('map/landmarks')"},
+		{name => 'kingdom', link => '#', on_click => "loadScreen('party/details/kingdom')"},
+		{name => 'landmarks', link => '#', on_click => "loadScreen('map/landmarks')"},
 		{name => 'stats', link => '#' on_click => "loadScreen('leaderboards')"},
 		{name => 'forums', link => c.config.forum_url, target => '_blank'},
-		{name => 'tools', on_click => "getPanels('party/details/options')" link => "#"},
+		{name => 'messages', link => '#' on_click => "loadScreen('party/message')", pre_template => 'layout/messages_icon.html' },
+		{name => 'tools', on_click => "closeScreen(); getPanels('party/details/options')" link => "#"},
 		{name => 'help', link => '#' on_click => "loadScreen('help')"},			
 	];
 %]
@@ -27,7 +28,12 @@
 [% END %]
 </script>
 
-[% FILTER collapse %][% FOREACH image IN menu_images %]<a href="[% image.link %]" 
+[% FILTER collapse %][% FOREACH image IN menu_images ~%]
+	[% IF image.pre_template ~%]
+		[% tmpl = image.pre_template %]
+		[% INCLUDE $tmpl ~%]
+	[% END ~%]
+	<a href="[% image.link ~%]" 
 			[% IF image.target %]target="[% image.target %]"[% END %]
 			[% IF image.on_click %]onClick="[% image.on_click %]"[% END %]
 			style="border: none; margin: none; padding: none"
@@ -37,5 +43,6 @@
 			border=0
 			onMouseOver="selectImage('[% image.name %]')"
 			onMouseOut="unselectImage('[% image.name %]')"
-			style="border: none; margin: none; padding: none"
-		></a>[% END %][% END %]
+			style="border: none; margin: none; padding: none; float: left"
+		></a>[% END ~%][% END ~%]
+<br style="clear: left"/>

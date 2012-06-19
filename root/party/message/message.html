@@ -1,0 +1,40 @@
+<style>
+.bbcode_quote_body {
+	background: #2F2F2F;
+	width: 100%;
+}
+
+.bbcode_quote_header {
+	font-style:italic;
+}
+</style>
+
+
+<table class="main" width="70%">
+	<tr>
+		<td style="background: #2F2F2F; width: 100px">From:</td>
+		<td><a href="javascript:getPanels('party/profile?party_id=[% message.sender_id %]')">[% message.sender.name %]</a></td>
+	</tr>
+	<tr>
+		<td style="background: #2F2F2F; width: 100px">To:</td>
+		<td>[% IF recip_string %]
+				[% recip_string %]
+			[% ELSE %]
+				[% FOREACH recip IN message.recipient_parties %]
+					[% recip.name %]; 
+				[% END %]
+			[% END %] 
+		</td>
+	</tr>
+	<tr>
+		<td style="background: #2F2F2F; width: 100px">Sent:</td>
+		<td>[% message.day.day_number %] ([% message.day.difference_to_today_str %])</td>
+	</tr>
+	<tr>
+		<td style="background: #2F2F2F; width: 100px">Subject:</td>
+		<td>[% message.subject %]</td>
+	</tr>
+	<tr>
+		<td colspan="2">[% bbc.parse(message.message) %]</td>
+	</tr>
+</table>

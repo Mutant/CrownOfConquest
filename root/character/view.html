@@ -6,8 +6,8 @@
 
 <script type="text/javascript">
     function init() {
-		displayCharList('[% group %]');
-		
+		[% IF group %]displayCharList('[% group %]');[% END %]
+				
 		/* Inventory DND */
 		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
 			var t = dojo.dnd.manager().target;
@@ -22,10 +22,17 @@
 			if (target_type == 'equip_place') {
 				equip_item(target_id, item_id);
 			}
-		});			
+		});
 	}
 	
+	var inProgress = {};
 	function equip_item(equip_place, item_id) {
+		[%# Hack to get around the fact that the equip slots are defined each time the char screen loads %]
+		if (inProgress[equip_place + ' ' + item_id]) {
+			return;
+		}
+		inProgress[equip_place + ' ' + item_id] = true;
+	
 		dojo.xhrGet( {
 	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
 	        handleAs: "json",
@@ -61,9 +68,13 @@
 	        			[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
 	        		}
 				}
+				
+				inProgress[equip_place + ' ' + item_id] = false;
 	        },
 	        error: function(err) {
 	        	console.debug(err);
+	        	
+	        	inProgress[equip_place + ' ' + item_id] = false;
 	        }
 	    });
 	}
@@ -84,8 +95,17 @@
 	        }
 	    });	       
 	}
+	
+	function drop_item_diag(item_id, char_id) {
+		dojo.byId('drop-item-id').value = item_id;
+		dojo.byId('drop-char-id').value = char_id;
+		dijit.byId('drop-item-diag').show();
+	}
 
-	function drop_item(item_id, char_id) {
+	function drop_item(args) {
+		var item_id = args.item_id;
+		var char_id = args.char_id;
+	
 		dojo.xhrGet( {
 	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
 	        handleAs: "json",	
@@ -137,7 +157,7 @@ function clearEquipSlot(slot_name) {
 	dojo.byId(slot_name + '-slot-label').style.display = 'block';
 	dojo.byId(slot_name + '-equip-place-image').src = '';
 	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	
-	dijit.byId(changed_slot + '-tooltip').label = ''; 
+	dijit.byId(slot_name + '-tooltip').label = ''; 
 }	
 
 function reloadInventory() {
@@ -247,13 +267,22 @@ function calculateSpellPoints() {
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="drop-item-diag" style="display: none" title="Drop Item Confirmation" execute="drop_item(arguments[0])">
+	<input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
+	<input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
+    Are you sure you want to drop the item?<br>
+    (Note, items dropped in town will disappear forever!)
+	[% dialog_buttons('drop-item-diag') %]
+	</form>
+</div>
+
 <div class="characterStats">
 
 <img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %].png" style="float: left">
 
 <h1>
 <span id="name-header">[% character.character_name %]</span>
-[% IF ! window %]
+[% IF ! window && ! character.town_id %]
 	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]
 	<a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank" class="main">Open in New Window</a>
 [% END %]
@@ -262,22 +291,20 @@ function calculateSpellPoints() {
 
 [% IF character.town_id %]
 	[% IF can_buy %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | [% END %]
-	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a><br><br>
+	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a>
 [% END %]
 
 <div id="other-chars" style="margin-bottom: 3px">
 
-[% IF ! character.party_id %]<b>Other Characters Available to Recruit</b>[% END %]
-
-[% MACRO character_links(type, characters) BLOCK %]
-	<span id="character-list-[% type %]" style="display: none;">
+[% MACRO character_links(type, characters, display) BLOCK %]
+	<span id="character-list-[% type %]" [% UNLESS display %]style="display: none;"[% END %]>
 	[% FOREACH other_character IN characters %]
 		[% IF other_character.id == character.id %]
 			[% other_character.name %]
 		[% ELSE %]
 			[% FILTER collapse %]
 				[% IF window %]
-				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]" target="_blank">
+				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]">
 					[% other_character.name %]</a>				
 				[% ELSE %]
 				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
@@ -290,21 +317,26 @@ function calculateSpellPoints() {
 	</span>
 [% END %]
 
-[%# Two passes due to order... could be fixed.. %]
-[% types = ['party', 'garrisons', 'mayors', 'others'] %]
-<span id="other-char-links" 
-	style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
-		background: #5F5F5F;">
-[% FOREACH type IN types %]
-	[% IF character_list.$type.size > 0 %]
-		<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+[% IF ! character.party_id %]
+	<b>Other Characters Available to Recruit</b>:
+	[% character_links(type, character_list, 1) %]
+[% ELSE %]
+	[%# Two passes due to order... could be fixed.. %]
+	[% types = ['party', 'group', 'mayors', 'others'] %]
+	<span id="other-char-links" 
+		style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
+			background: #5F5F5F;">
+	[% FOREACH type IN types %]
+		[% IF character_list.$type.size > 0 %]
+			<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+		[% END %]
 	[% END %]
-[% END %]
-</span>
-
-[% FOREACH type IN types %]
-	[% IF character_list.$type.size > 0 %]
-		[% character_links(type, character_list.$type) %]
+	</span>
+	
+	[% FOREACH type IN types %]
+		[% IF character_list.$type.size > 0 %]
+			[% character_links(type, character_list.$type) %]
+		[% END %]
 	[% END %]
 [% END %]
 
@@ -314,7 +346,6 @@ function calculateSpellPoints() {
 	id="stats-panel" loadingMessage="" [% IF ! window %]class="characterStats"[% END %]></div>
 
 </div>
-
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
     <div dojoType="dojox.layout.ContentPane" title="Equipment" 
     	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
@@ -328,8 +359,14 @@ function calculateSpellPoints() {
     </div>
     [% END %]
     
-    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]
-    	[% IF selected == 'history' %]selected="true"[% END %]">    
+    [% IF ! window %]
+    <div dojoType="dijit.layout.ContentPane" title="Skills" href="[% base %]/character/skills?character_id=[% character.id %]"
+    	[% IF selected == 'skills' %]selected="true"[% END %]>
+    </div>    
+    [% END %]
+    
+    <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]"
+    	[% IF selected == 'history' %]selected="true"[% END %]>    
     </div>
 
 </div>

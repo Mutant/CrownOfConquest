@@ -138,7 +138,7 @@ sub mock_dice {
             if ( $self->{rolls} ) {
                 my $ret = $self->{rolls}[ $self->{counter} ];
                 $self->{counter}++;
-                return $ret;
+                return $ret // $self->{roll_result};
             }
             else {
                 return $self->{roll_result} || 0;

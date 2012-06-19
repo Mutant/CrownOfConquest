@@ -142,7 +142,7 @@ function addCommonMenuItems(menu) {
 	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
 		[% UNLESS char_in_party.character_id == character.id %]
 			params = {
-				label: "[% char_in_party.name %]",
+				label: "[% char_in_party.name | html_entity %]",
 				onClick: function() {
 					give_item_to('[% char_in_party.id %]', currentItemId);
 				}
@@ -164,7 +164,7 @@ function addCommonMenuItems(menu) {
 	params = {
 		label: "Drop Item",
 		onClick: function() {
-			drop_item(currentItemId, '[% character.id %]');
+			drop_item_diag(currentItemId, '[% character.id %]');
 		}
 	};			
 	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
@@ -184,6 +184,10 @@ function addCommonMenuItems(menu) {
 			[% display_equipped_item(equipped_items, 'Head') %]
 			<td></td>
 		</tr>
+		<tr>
+			[% display_equipped_item(equipped_items, 'Left Ring Finger') %]
+			[% display_equipped_item(equipped_items, 'Neck') %]
+			[% display_equipped_item(equipped_items, 'Right Ring Finger') %]			
 		<tr>
 			[% display_equipped_item(equipped_items, 'Left Hand') %]
 			[% display_equipped_item(equipped_items, 'Torso and Legs') %]

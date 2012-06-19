@@ -18,7 +18,7 @@ __PACKAGE__->table('Land');
 
 __PACKAGE__->resultset_class('RPG::ResultSet::Land');
 
-__PACKAGE__->add_columns(qw/land_id x y terrain_id creature_threat variation kingdom_id claimed_by_id claimed_by_type/);
+__PACKAGE__->add_columns(qw/land_id x y terrain_id creature_threat variation kingdom_id claimed_by_id claimed_by_type tileset_id/);
 
 __PACKAGE__->set_primary_key('land_id');
 
@@ -42,13 +42,15 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', { 'foreign.land_id' => '
 
 __PACKAGE__->might_have( 'garrison', 'RPG::Schema::Garrison', { 'foreign.land_id' => 'self.land_id' } );
 
-__PACKAGE__->has_many( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+__PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->has_many( 'roads', 'RPG::Schema::Road', { 'foreign.land_id' => 'self.land_id' } );
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join_type => 'LEFT' } );
+
+__PACKAGE__->might_have( 'bomb', 'RPG::Schema::Bomb', 'land_id', { where => {detonated => undef} });
 
 with qw/RPG::Schema::Role::Sector/;
 
@@ -146,10 +148,16 @@ sub get_adjacent_towns {
 
 sub get_adjacent_garrisons {
     my $self = shift;
-    my $range = shift || RPG->config->{garrison_min_spacing};
+    my $range = shift || RPG::Schema->config->{garrison_min_spacing};
+    my $for_party = shift;
+
     my %criteria = ( 'garrison.garrison_id' => { '!=', undef }, );
 
     my %attrs = ( 'prefetch' => 'garrison', );
+    
+    if ($for_party) {
+        $criteria{'garrison.party_id'} = $for_party;
+    }
 
     my @land_rec = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset           => $self->result_source->resultset,
@@ -265,6 +273,7 @@ sub _road_connects_sectors {
 # Returns true if this sector is allowed to have a garrison
 sub garrison_allowed {
 	my $self = shift;
+	my $party = shift;
 	
 	# Not allowed if an orb is here
 	return 0 if $self->orb;
@@ -278,8 +287,8 @@ sub garrison_allowed {
 	# Not allowed if adjacent to a town
 	return 0 if $self->get_adjacent_towns;
 	
-	# Not allowed if too close to a garrison
-	return 0 if $self->get_adjacent_garrisons();
+	# Not allowed if too close to another garrison owned by this party
+	return 0 if $self->get_adjacent_garrisons(undef, $party->id);
 	
 	# Ok, it's allowed
 	return 1;
@@ -297,10 +306,9 @@ sub building_allowed {
 	return 0 if $self->get_adjacent_buildings();
 	
 	# Not allowed if another building is here that is not owned by us
-	foreach my $next_building ($self->building) {
-		if ($next_building->owner_id != $party) {
-			return 0;
-		}
+	my $building = $self->building;
+    if ($building && $building->owner_id != $party) {
+        return 0;
 	}
 
 	return 1;

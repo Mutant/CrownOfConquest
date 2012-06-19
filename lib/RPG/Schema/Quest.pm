@@ -67,7 +67,6 @@ sub new {
     $self->{_params} = $params;
 
     return $self;
-
 }
 
 sub insert {
@@ -336,7 +335,9 @@ sub terminate {
         
         my $kingdom_message = $params{kingdom_message};
         
-        if ($kingdom_message && ! $kingdom->king->is_npc) {        
+        my $king = $kingdom->king;
+        
+        if ($kingdom_message && $king && ! $king->is_npc) {        
             $kingdom->add_to_messages(
                 {
                     day_id => $day->id,
@@ -388,7 +389,9 @@ sub set_complete {
     
     my $group = $self->xp_awarded_to;
     
-    my $awarded_xp = int $self->xp_value / $group->number_alive;    
+    my $awarded_xp = 0;    
+    $awarded_xp = int $self->xp_value / $group->number_alive if $group->number_alive > 0;
+        
     my @details = $group->xp_gain($awarded_xp);
     
     if ($self->town_id) {
@@ -483,16 +486,26 @@ sub check_quest_action {
             },
         );   
     }
-    
-    # Check if this action affects any other quests    
-    my @quests = $self->result_source->schema->resultset('Quest')->find_quests_by_interested_action($action);
-    
-    foreach my $quest (@quests) {
-        $quest->check_action_from_another_party( $actioning_party, $action, @params );
-    }
-    
+   
     return $message;
 }
 
+# Check whether the party is allowed to accept the quest
+#  Should be overridden, as default is always to allow quest to be accepted
+#  Should store the reason for failure to accept in $self->{_cant_accept_quest_reason}
+sub party_can_accept_quest {
+    my $self = shift;
+    my $party = shift;
+    
+    return 1;   
+}
+
+# Returns the reason a quest couldn't be accepted (if
+#  party_can_accept_quest() was previously called)
+sub cant_accept_quest_reason {
+    my $self = shift;
+    
+    return $self->{_cant_accept_quest_reason};
+}
 
 1;

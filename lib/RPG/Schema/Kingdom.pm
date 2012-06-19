@@ -8,12 +8,12 @@ use DBIx::Class::ResultClass::HashRefInflator;
 use RPG::Exception;
 use Math::Round qw(round);
 
-__PACKAGE__->load_components(qw/Numeric Core/);
+__PACKAGE__->load_components(qw/Numeric InflateColumn::DateTime Core/);
 __PACKAGE__->table('Kingdom');
 
 __PACKAGE__->add_columns(qw/kingdom_id name colour mayor_tax gold active inception_day_id fall_day_id
                             highest_land_count highest_land_count_day_id highest_town_count highest_town_count_day_id
-                            highest_party_count highest_party_count_day_id capital/);
+                            highest_party_count highest_party_count_day_id capital description majesty has_crown majesty_rank/);
 
 __PACKAGE__->set_primary_key('kingdom_id');
 
@@ -28,14 +28,21 @@ __PACKAGE__->numeric_columns(
 	qw/highest_land_count highest_town_count highest_party_count/,
 );
 
+__PACKAGE__->add_columns(
+    majesty_leader_since   => { data_type => 'datetime' },
+);
+
 __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'kingdom_id', { where => { defunct => undef } } );
 __PACKAGE__->has_many( 'quests', 'RPG::Schema::Quest', 'kingdom_id' );
 __PACKAGE__->has_many( 'sectors', 'RPG::Schema::Land', 'kingdom_id' );
 __PACKAGE__->has_many( 'messages', 'RPG::Schema::Kingdom_Messages', 'kingdom_id' );
 __PACKAGE__->has_many( 'party_kingdoms', 'RPG::Schema::Party_Kingdom', 'kingdom_id', { join_type => 'LEFT OUTER' } );
 __PACKAGE__->has_many( 'town_loyalty', 'RPG::Schema::Kingdom_Town', 'kingdom_id' );
+__PACKAGE__->has_many( 'relationships', 'RPG::Schema::Kingdom_Relationship', 'kingdom_id' );
+__PACKAGE__->has_many( 'claims', 'RPG::Schema::Kingdom_Claim', 'kingdom_id' );
 
 __PACKAGE__->belongs_to( 'inception_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.inception_day_id' } );
+__PACKAGE__->belongs_to( 'fall_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.fall_day_id' } );
 __PACKAGE__->belongs_to( 'highest_land_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_land_count_day_id' } );
 __PACKAGE__->belongs_to( 'highest_town_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_town_count_day_id' } );
 __PACKAGE__->belongs_to( 'highest_party_count_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.highest_party_count_day_id' } );
@@ -51,6 +58,8 @@ __PACKAGE__->belongs_to( 'king', 'RPG::Schema::Character',
 
 __PACKAGE__->belongs_to( 'capital_city', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.capital' } );
 __PACKAGE__->has_many( 'capital_history', 'RPG::Schema::Capital_History', 'kingdom_id' );
+
+__PACKAGE__->has_many( 'buildings', 'RPG::Schema::Building', { 'foreign.owner_id' => 'self.kingdom_id' }, { where => { 'owner_type' => 'kingdom' } } );
 
 my @colours = (
     'Silver',
@@ -76,6 +85,12 @@ sub quests_allowed {
     my $land_count = $self->sectors->count;
     
     my $quest_count = round $land_count / RPG::Schema->config->{land_per_kingdom_quests};
+        
+    my $king = $self->king;
+    my $leadership_bonus = $king->execute_skill('Leadership', 'kingdom_quests_allowed') // 0;
+    
+    $quest_count += $leadership_bonus;
+    
     $quest_count = RPG::Schema->config->{minimum_kingdom_quests} if $quest_count < RPG::Schema->config->{minimum_kingdom_quests};
     
     return $quest_count;   
@@ -92,6 +107,16 @@ sub towns {
             join => 'location',
         }   
     );   
+}
+
+sub duration {
+    my $self = shift;
+    
+    return if ! $self->inception_day_id;
+    
+    my $fall_day = $self->fall_day_id ? $self->fall_day : $self->result_source->schema->resultset('Day')->find_today;
+    
+    return $fall_day->day_number - $self->inception_day->day_number;   
 }
 
 # Find the sectors that are part of a kingdom's border.
@@ -117,7 +142,7 @@ sub border_sectors {
     my @border_sectors;
     my %world_range;
     foreach my $sector (@sectors) {
-        unless ($edge_of_world_is_border) {
+        if (! $edge_of_world_is_border) {
             %world_range = $self->result_source->schema->resultset('Land')->get_x_y_range()
                 unless %world_range;
             
@@ -209,6 +234,139 @@ sub change_capital {
         );        
         
     } 
+}
+
+sub relationship_list {
+    my $self = shift;
+    
+    my @kingdoms = $self->result_source->schema->resultset('Kingdom')->search(
+        {
+            kingdom_id => {'!=', $self->id},
+            active => 1,
+        }
+    );
+    
+    my %relationships_by_kingdom = map { $_->with_id => $_ } $self->search_related(
+        'relationships',
+        {            
+            ended => undef,
+        },
+        {
+            prefetch => 'with_kingdom',
+        }
+    );
+    
+    my @relationships;
+    foreach my $kingdom (@kingdoms) {
+        my $relationship = $relationships_by_kingdom{$kingdom->id};
+        
+        if (! $relationship) {
+            $relationship = $self->add_to_relationships(
+                {
+                    with_id => $kingdom->id,
+                    type => 'neutral',
+                }
+            );
+        }
+        
+        push @relationships, $relationship;        
+    }
+    
+    return @relationships;
+}
+
+sub relationship_with {
+    my $self = shift;
+    my $with_id = shift;
+    
+    return if $with_id == $self->id;
+    
+    my $relationship = $self->find_related('relationships',
+        {
+            with_id => $with_id,
+            ended => undef,
+        }
+    );
+    
+    return $relationship;
+}
+
+sub current_claim {
+    my $self = shift;
+    
+    return $self->find_related(
+        'claims',
+        {
+            outcome => undef,
+        }
+    );
+}
+
+# Return true if the party passed in has made a recent claim
+#  for the throne
+sub party_made_recent_claim {
+    my $self = shift;
+    my $party = shift;
+    
+    my $claim_count = $self->search_related(
+        'claims',
+        {
+            'claimant.party_id' => $party->id,
+            claim_made => {'>=', DateTime->now->subtract( days => RPG::Schema->config->{failed_claim_ban_period} ) },
+        },
+        {
+            join => 'claimant',
+        }
+    )->count;
+    
+    return $claim_count > 0 ? 1 : 0; 
+}
+
+# Return true if the party can make a claim to the throne
+sub party_can_claim_throne {
+    my $self = shift;
+    my $party = shift;
+    
+    return 0 if $party->level < RPG::Schema->config->{minimum_kingdom_level};
+    
+    my $king = $self->king;
+    
+    return 0 if ! $king || ! $king->is_npc;
+    
+    return 0 if $self->current_claim;
+    
+    return 0 if $self->party_made_recent_claim($party);
+    
+    return 1;
+}
+
+sub calculate_majesty_score {
+    my $self = shift;
+    
+    my $party_count = $self->parties->count;
+    my $land_count = $self->sectors->count;
+    my $building_count = $self->buildings->count;
+    my $town_count = $self->result_source->schema->resultset('Town')->search(
+	   {
+	       'location.kingdom_id' => $self->id,
+	   },
+	   {
+	       'join' => 'location',
+	   }
+    )->count;
+    
+    #warn "Party: $party_count, Land: $land_count, Building: $building_count, Town: $town_count\n";
+    
+    return round ($party_count + ($land_count/100) + ($building_count*2) + $town_count);  
+}
+
+
+sub majesty_leader_since_string {
+    my $self = shift;
+    
+    return unless $self->majesty_leader_since;
+    
+    return RPG::DateTime->time_since_datetime_detailed($self->majesty_leader_since, 0);
 }
 
 1;

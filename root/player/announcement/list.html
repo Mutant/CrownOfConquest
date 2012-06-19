@@ -1,9 +1,5 @@
-[% UNLESS c.session.player %]
-	[% guest = 1 %]
-[% END %]
-
-[% UNLESS guest %]
-	[% INCLUDE help/subnav.html %]
+[% IF is_public %]
+	[% INCLUDE top.html, guest_screen = 1 %]
 [% END %]
 
 <h2>Announcements</h2>
@@ -13,4 +9,8 @@
 	[% INCLUDE player/announcement/announcement.html title=announcement.title, announcement=announcement.announcement, date=announcement.date %]
 	</div>
 	<br>
+[% END %]
+
+[% IF is_public %]
+	[% INCLUDE bottom.html %]
 [% END %]

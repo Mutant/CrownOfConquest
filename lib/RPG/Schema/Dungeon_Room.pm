@@ -10,7 +10,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Dungeon_Room');
 
-__PACKAGE__->add_columns(qw/dungeon_room_id dungeon_id floor special_room_id/);
+__PACKAGE__->add_columns(qw/dungeon_room_id dungeon_id floor special_room_id tileset/);
 
 __PACKAGE__->set_primary_key('dungeon_room_id');
 

@@ -13,6 +13,7 @@ use Test::MockObject;
 use Test::RPG::Builder::Creature;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Item;
 
 sub startup : Tests(startup=>1) {
     use_ok('RPG::Schema::Spell');
@@ -100,7 +101,7 @@ sub test_cast_damage_spells : Tests(27) {
 
 }
 
-sub test_cast_effect_spells : Tests(117) {
+sub test_cast_effect_spells : Tests(130) {
     my $self = shift;
 
     my @tests = (
@@ -158,13 +159,22 @@ sub test_cast_effect_spells : Tests(117) {
             target      => 'Creature',
             effect      => 'slowing it',
         },
+        {
+            spell_name  => 'Poison Blast',
+            effect_name => 'Poisoned',
+            target      => 'Creature',
+            effect      => 'poisoning it',
+        },        
     );
 
     # GIVEN
     foreach my $test (@tests) {
         my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => $test->{spell_name}, } );
 
-        isa_ok( $spell, 'RPG::Schema::Spell::' . $test->{spell_name} );
+        my $pkg_spell_name = $test->{spell_name};
+        $pkg_spell_name =~ s/ /_/g;
+
+        isa_ok( $spell, 'RPG::Schema::Spell::' . $pkg_spell_name );
         my $caster = Test::RPG::Builder::Character->build_character( $self->{schema} );
 
         my $target;
@@ -266,6 +276,243 @@ sub test_cast_party_effect_spells : Tests(14) {
         is( $effects[0]->effect->time_type,     $test->{time_type},   "time type set correctly" );
     }
 
+}
+
+sub test_ice_bolt : Test(12) {
+    my $self = shift;
+    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Ice Bolt', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );
+    
+    $self->mock_dice;
+    $self->{roll_result} = 3;    
+
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+
+    # THEN
+    isa_ok( $result->attacker, 'RPG::Schema::Character' );
+    is( $result->attacker->id, $character->id, 'Caster set as character in result' );
+
+    is( $result->defender->id, $target->id, 'Target set correctly in result' );
+
+    is( $result->damage, 3,               "Damage set in result" );
+    is( $result->effect, 'freezing', "Effect set correctly" );
+    is( $result->type,   'damage',        "Type set correctly" );
+
+    $mem_spell->discard_changes;
+    is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
+
+    $target->discard_changes;
+    is( $target->hit_points, 2, "Target has sustained damage" );   
+    
+    my @effects = $target->character_effects;
+    is( scalar @effects,                    1,                    "Target has an effect" );
+    is( $effects[0]->effect->effect_name,   'Frozen', "Effect name set correctly" );
+    is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
+    is( $effects[0]->effect->combat,        1,                    "combat set correctly" );
+    
+    $self->unmock_dice;     
+} 
+
+sub test_recalled_spell : Test(2) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );    
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Recall',
+        }
+    );        
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 100,
+        }
+    );    
+
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );   
+    
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+    
+    # THEN
+    is($result->recalled, 1, "Spell was recalled");
+    
+    $mem_spell->discard_changes;
+    is( $mem_spell->casts_left_today, 1, "Memorised spell count not decremented" );    
+}
+
+sub test_cast_flame_resisted : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
+    $target->resist_fire(100);
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );
+    
+    # WHEN
+    my $result = $spell->cast( $character, $target );
+    
+    # THEN
+    is($result->resisted, 1, "Spell was resisted");
+    
+    $target->discard_changes;
+    is($target->hit_points, 5, "Target wasn't damaged");
+}
+
+sub test_cast_detonate_no_vial : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );    
+    
+    # WHEN
+    my $result = $spell->cast( $character, $party );
+    
+    # THEN
+    is($result->didnt_cast, 1, "Spell wasn't cast");
+    is($result->custom->{no_vial}, 1, "Not cast as caster had no vial");
+}
+
+sub test_cast_detonate_with_single_vial : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );    
+    
+    my $vial = Test::RPG::Builder::Item->build_item($self->{schema}, 
+        item_type_name => 'Vial of Dragons Blood', 
+        character_id => $character->id,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 1,
+            },
+        ],
+    );
+    
+    # WHEN
+    my $result = $spell->cast( $character, $party );
+    
+    # THEN
+    is($result->didnt_cast, 0, "Spell was cast");
+    is($result->custom->{planted}, 1, "Bomb was planted");
+    
+    my $bomb = $self->{schema}->resultset('Bomb')->find(
+        {
+            party_id => $party->id,
+        }
+    );
+    
+    is($bomb->level, $character->level, "Bomb created with caster's level");
+    is($bomb->land_id, $party->land_id, "Bomb created in correct location");
+    
+    $vial->discard_changes;
+    is($vial->in_storage, 0, "Vial was deleted");
+}
+
+sub test_cast_detonate_with_stacked_vial : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
+    my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $character->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    );    
+    
+    my $vial = Test::RPG::Builder::Item->build_item($self->{schema}, 
+        item_type_name => 'Vial of Dragons Blood', 
+        character_id => $character->id,
+        variables => [
+            {
+                item_variable_name => 'Quantity',
+                item_variable_value => 3,
+            },
+        ],
+    );
+    
+    # WHEN
+    my $result = $spell->cast( $character, $party );
+    
+    # THEN
+    is($result->didnt_cast, 0, "Spell was cast");
+    is($result->custom->{planted}, 1, "Bomb was planted");
+    
+    my $bomb = $self->{schema}->resultset('Bomb')->find(
+        {
+            party_id => $party->id,
+        }
+    );
+    
+    is($bomb->level, $character->level, "Bomb created with caster's level");
+    is($bomb->land_id, $party->land_id, "Bomb created in correct location");
+    
+    $vial->discard_changes;
+    is($vial->variable('Quantity'), 2, "Vial was used");
 }
 
 1;

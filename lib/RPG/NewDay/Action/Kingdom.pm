@@ -27,9 +27,7 @@ sub run {
         }
     );
 
-    foreach my $kingdom (@kingdoms) {
-        next if $self->check_for_inactive($kingdom);
-        
+    foreach my $kingdom (@kingdoms) {        
         my $king = $kingdom->king;
         
         next unless $king;
@@ -89,7 +87,8 @@ sub execute_npc_kingdom_actions {
     @parties = grep { $_->kingdom_id == $kingdom->id } @parties; 
     
     $self->generate_kingdom_quests($kingdom, @parties);
-
+    
+    $self->resolve_claims($kingdom);
 }
 
 sub generate_kingdom_quests {
@@ -275,68 +274,6 @@ sub cancel_quests_awaiting_acceptance {
     }       
 }
 
-# Mark any kingdoms with 0 towns as inactive.
-#  All land becomes neutral, King removed, and party become free citizens
-sub check_for_inactive {
-    my $self = shift;
-    my $kingdom = shift;
-    
-    my $c = $self->context;
-    
-    my $town_count = $c->schema->resultset('Town')->search(
-        {
-            'location.kingdom_id' => $kingdom->id
-        },
-        {
-            'join' => 'location',
-        }
-    )->count;
-    
-    return 0 if $town_count > 0;
-  
-    $kingdom->active(0);
-    $kingdom->fall_day_id($c->current_day->day_id);
-    $kingdom->update;
-    
-    $kingdom->search_related('sectors')->update( { kingdom_id => undef } );
-    $kingdom->town_loyalty->delete;
-    
-    my $king = $kingdom->king;
-
-    foreach my $party ($kingdom->parties) {
-        $party->change_allegiance(undef);
-        
-        if ($king->is_npc || $party->id != $king->party_id) {
-            $party->add_to_messages(
-                {
-                    day_id => $c->current_day->id,
-                    alert_party => 1,
-                    message => "The Kingdom of " . $kingdom->name . " has fallen. We are now free citizens",
-                }
-            );
-        }
-        
-        $party->update;
-    }
-
-    $king->status(undef);
-    $king->status_context(undef);
-    $king->update;
-    
-    if (! $king->is_npc) {
-        my $party = $king->party;
-        $party->add_to_messages(
-            {
-                day_id => $c->current_day->id,
-                alert_party => 1,
-                message => "Our mighty Kingdom of " . $kingdom->name . " has fallen, as we no longer own any towns. A sad day indeed.",
-            },
-        );
-    }
-   
-    return 1;
-}
-
 # Adjust loyalty of parties
 sub adjust_party_loyalty {
     my $self = shift;
@@ -432,6 +369,8 @@ sub check_for_coop {
     foreach my $party (@parties) {
         next if $party->id == $kings_party->id;
         
+        next if $party->warned_for_kingdom_co_op;
+        
         if ($party->is_suspected_of_coop_with($kings_party)) {
             
             $party->warned_for_kingdom_co_op(DateTime->now());
@@ -514,7 +453,77 @@ sub select_capital {
             die $_->message;
         }
         die $_;
-    }       
+    };       
+}
+
+sub resolve_claims {
+    my $self = shift;
+    my $kingdom = shift;
+    
+    my $c = $self->context;
+    
+    my $claim = $kingdom->current_claim;
+    
+    return unless $claim;
+    
+    return if $claim->days_left > 0;
+    
+    my %summary = $claim->response_summary;
+    my $summary_string = $summary{support} . " supported, " . $summary{oppose} . " opposed";
+    
+    if ($summary{support} > $summary{oppose} || ($summary{support} == 0 && $summary{oppose} == 0)) {
+        # Claim successful
+        $claim->outcome('successful');
+        $claim->update;
+        
+        my $old_monarch = $kingdom->king;
+        $old_monarch->status(undef);
+        $old_monarch->status_context(undef);
+        $old_monarch->update;
+        
+        my $new_monarch = $claim->claimant;
+        $new_monarch->status_context($kingdom->id);
+        $new_monarch->status('king');
+        $new_monarch->update;
+        
+        $new_monarch->party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                alert_party => 1,
+                message => "Our claim to the throne has been successful! ($summary_string) " . $new_monarch->character_name . " is now " 
+                    . ($new_monarch->gender eq 'male' ? 'King' : 'Queen') . " of " . $kingdom->name,
+            }
+        );
+    }
+    else {
+        # Claim failed
+        $claim->outcome('failed');
+        $claim->update;
+        
+        my $claimant = $claim->claimant;
+        my $capital = $kingdom->capital_city;
+        if (! $capital) {
+            my @towns = $kingdom->towns;
+            if (! @towns) {
+                # Kingdom has no towns, just pick a random one
+                @towns = $c->schema->resultset('Towns')->search();
+            }
+            $capital = (shuffle @towns)[0];
+        }
+        
+        $claimant->status_context($capital->id);
+        $claimant->status('inn');
+        $claimant->update;
+        
+        $claimant->party->add_to_messages(
+            {
+                day_id => $c->current_day->id,
+                alert_party => 1,
+                message => "Our claim to the throne has failed! ($summary_string) " . $claimant->character_name . " is now in the inn of " .
+                    $capital->town_name,
+            }
+        );
+    }   
 }
 
 1;

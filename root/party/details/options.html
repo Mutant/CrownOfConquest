@@ -14,6 +14,21 @@
 
 <h3>Notification Options</h3>
 
+[% IF ! email %]
+You have not entered an email address. You must do so before receiving notification emails.
+<br>
+<form method="POST" action="[% base %]player/account/set_email" onSubmit="postPanels(this); return false">
+Email address: <input type="textbox" style="width: 200px" name="email">
+<input type="submit" value="Save">
+</form>
+<br>
+[% ELSIF ! verified %]
+You have not verified your email address. You must do so before receiving notification emails.
+<br>
+<a href="javascript:getPanels('player/account/reverify')">Resend Verification Code</a>
+<br>
+[% END %]
+
 <form method="POST" action="[% base %]/party/details/update_email_options" onSubmit="postPanels(this); return false">
 <table class="main">
 	<tr>
@@ -43,6 +58,38 @@
 <br>
 
 <h3>Account Options</h3>
+
+Select your screen sizes. It's usually safe to leave it on 'auto' - it will be detected each time you log in to Kingdoms. 
+
+<form method="POST" action="[% base %]/player/update_screen_sizes" onSubmit="setBrowserSize(); postPanels(this); return false">
+<input type="hidden" id="login-width"  name="width"/>
+<input type="hidden" id="login-height" name="height"/>
+<table class="main">
+	<tr>
+		<td>Screen Height:</td>
+		<td>
+			<select name="screen_height">
+			<option value="auto">Auto</option>
+			<option value="small">Small</option>
+			<option value="medium">Medium</option>
+			<option value="large">Large</option>
+		</td>
+	</tr>
+	<tr>
+		<td>Screen Width:</td>
+		<td>
+			<select name="screen_width">
+			<option value="auto">Auto</option>
+			<option value="small">Small</option>
+			<option value="medium">Medium</option>
+			<option value="large">Large</option>
+		</td>
+	</tr>	
+</table>
+<input type="submit" value="Save Settings">
+</form>
+
+<br><br>
 
 <button dojoType="dijit.form.Button" onclick="getPanels('player/account/change_password')">Change Password</button>
 <button dojoType="dijit.form.Button" onclick="loadScreen('player/account/delete_account')">Delete Account</button>

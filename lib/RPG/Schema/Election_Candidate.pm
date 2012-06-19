@@ -29,4 +29,17 @@ __PACKAGE__->belongs_to(
     'character_id',
 );
 
+sub max_spend {
+    my $self = shift;
+    
+    my $character = $self->character;
+    
+    return if $character->is_npc;
+    
+    my $party_level = $character->party->level;
+    my $prosp = $self->election->town->prosperity;
+    
+    return (($party_level*5) + ($prosp/4)) * 1000;
+}
+
 1;

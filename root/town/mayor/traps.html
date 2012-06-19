@@ -1,0 +1,29 @@
+<h3>Traps</h3>
+
+You can purchase traps for the town. These will trigger against raiders, with more severe effects, depending on the level. Traps incur a mainteance fee each day.
+If the town is unable to pay the cost, the traps will automatically be downgraded a level.
+
+<br><br>
+
+[% IF town.trap_level <= 0 %]
+Your town has no traps.
+[% ELSE %]
+Your town has level [% town.trap_level %] traps. The maintenance cost is [% trap_maint_cost %] gold per day.<br>
+[% END %]
+
+[% IF town.trap_level < trap_max_level %]
+	Cost to upgrade to the next level is [% trap_upgrade_cost %] gold.
+[% ELSE %]
+	The town's traps are at the maximum level.
+[% END %]
+
+(Downgrading is free).
+
+<br><br>
+
+<button dojoType="dijit.form.Button" name="submitButton" onClick="getPanels('/town/mayor/upgrade_traps?town_id=[% town.id %]')">
+	Upgrade
+</button>
+<button dojoType="dijit.form.Button" name="submitButton" onClick="getPanels('/town/mayor/downgrade_traps?town_id=[% town.id %]')">
+	Downgrade
+</button>

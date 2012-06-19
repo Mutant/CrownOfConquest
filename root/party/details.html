@@ -48,12 +48,16 @@
 			<td>[% party.turns_used %]</td>
 		</tr>
 		<tr>
+			<td></td>
+			<td>World Explored:</td>
+			<td>[% party.world_explored | format('%.2f') %]%</td>
+		</tr>
+		<tr>
 			<td id="refer-a-friend-help">(?)</td>
 			<td id="refer-a-friend-label">Refer a friend URL</td>
-			<td>[% base %]player/register?referred_by_email=[% party.player.email %]</td>
+			<td>[% base %]player/register?referred_by=[% party.player.player_name %]</td>
 		</tr>
 	</table>
-	
 
 	<div dojoType="dijit.Tooltip"
 	connectId="refer-a-friend-help,refer-a-friend-label"
@@ -84,6 +88,10 @@
 	</table>
 	[% END %]
 </div>
+
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Description" href="[% base %]/party/details/description" [% IF tab == 'description' %]selected=true[% END %]>
+</div>
+
 <div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/party/details/history" [% IF tab == 'history' %]selected=true[% END %]>
 </div>
 

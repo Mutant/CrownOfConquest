@@ -30,7 +30,7 @@ The following towns are loyal to our Kingdom.
 			[% mayor_party = town.mayor.party %]
 			[% IF mayor_party %]
 				<br>
-				Mayor's Party: [% mayor_party.name %]<br>
+				Mayor's Party: <a href="javascript:getPanels('party/profile?party_id=[% mayor_party.id %]')">[% mayor_party.name %]</a><br>
 				[% mayor_kingdom = mayor_party.kingdom %]
 				Loyal To: [% IF mayor_kingdom %]Kingdom Of [% mayor_kingdom.name %][% ELSE %]No one[% END %]
 			[% ELSE %]
@@ -38,11 +38,18 @@ The following towns are loyal to our Kingdom.
 			[% END %]			
 		</td>
 		<td>[% IF town.id == capital.id %]N/A[% ELSE %][% display_kingdom_loyalty(town.kingdom_loyalty) %][% END %]</td>
+		<td>
+			<button dojoType="dijit.form.Button" onClick="showContributeDiag('[% town.id %]', '[% town.town_name %]')">
+				Contribute
+			</button>
+		</td>
+		<td>
 		[% IF town.id != capital.id %]
 		<button dojoType="dijit.form.Button" onClick="showCapitalDiag('[% town.id %]', '[% town.town_name %]', '[% capital_move_cost %]')">
 			Make Capital
-		</button>
+		</button>		
 		[% END %]
+		</td>
 	</tr>
 [% END %]
 </table>

@@ -19,6 +19,7 @@ use Test::RPG::Builder::Quest;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Land;
+use Test::RPG::Builder::CreatureGroup;
 
 use Data::Dumper;
 use DateTime;
@@ -493,66 +494,6 @@ sub test_change_allegiance : Tests() {
     is($quests[1]->status, 'Complete', "second quest is still complete");        
 }
 
-sub test_consume_items : Tests() {
-    my $self = shift;
-    
-    # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
-    my @characters = $party->characters;
-    
-    my $item_type1 = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, category_name => 'Resource', item_type => 'Type1',
-
-    );
-    
-    my $item1 = Test::RPG::Builder::Item->build_item($self->{schema},  
-        character_id => $characters[0]->id, item_type_id => $item_type1->id,
-        variables => [
-            {
-                item_variable_name => 'Quantity',
-                item_variable_value => 100,
-            }
-        ]        
-    );
-    
-    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},  
-        character_id => $characters[0]->id, item_type_id => $item_type1->id,
-        variables => [
-            {
-                item_variable_name => 'Quantity',
-                item_variable_value => 100,
-            }
-        ]
-    );
-        
-    my $item3 = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Resource',
-        variables => [
-            {
-                item_variable_name => 'Quantity',
-                item_variable_value => 200,
-            }
-        ], character_id => $characters[1]->id, item_type_name => 'Type2');
-    
-    # WHEN
-    $party->consume_items(
-        'Resource',
-        (
-            'Type1' => 150,
-            'Type2' => 150,
-        )
-    );
-    
-    # THEN
-    $item1->discard_changes;
-    is($item1->variable('Quantity'), undef, "Item1 used up");
-
-    $item2->discard_changes;
-    is($item2->variable('Quantity'), 50, "Item2 used up");
-
-    $item3->discard_changes;
-    is($item3->variable('Quantity'), 50, "Item3 used up");
-       
-}
-
 sub test_get_least_encumbered_character : Tests(1) {
     my $self = shift;
     
@@ -595,9 +536,96 @@ sub test_move_to : Tests(1) {
     
     # THEN
     my @mapped_sectors = $party->mapped_sectors;
-    is(scalar @mapped_sectors, 9, "All sectors added to mapped sectors");
+    is(scalar @mapped_sectors, 9, "All sectors added to mapped sectors");   
+}
+
+sub test_flee_chance : Tests(1) {
+    my $self = shift;
     
-       
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 50, "Correct flee chance");    
+}
+
+sub test_flee_chance_with_tactics : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+    my $char = Test::RPG::Builder::Character->build_character($self->{schema}, level => 3, creature_group_id => $cg->id);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Tactics',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    );    
+
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 44, "Correct flee chance");
+}
+
+sub test_flee_chance_with_strategy : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg($self->{schema}, creature_level => 3);
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, level => 7);
+    
+    my ($char) = $party->characters;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Strategy',
+        }
+    );
+ 
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    ); 
+
+	$self->{config}{base_flee_chance}             = 50;
+	$self->{config}{flee_chance_level_modifier}   = 5;
+	$self->{config}{flee_chance_attempt_modifier} = 5;
+	$self->{config}{flee_chance_low_level_bonus}  = 10;
+	
+	# WHEN
+	my $chance = $party->flee_chance($cg);
+	
+	# THEN
+	is($chance, 56, "Correct flee chance");
 }
 
 1;

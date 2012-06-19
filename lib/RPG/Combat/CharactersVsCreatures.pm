@@ -8,6 +8,7 @@ use Games::Dice::Advanced;
 use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
+use Math::Round qw(round);
 
 use RPG::Maths;
 
@@ -85,18 +86,15 @@ sub creature_flee {
     # Rare cg's don't flee... this is to make sure party gets reward (i.e. item) if they kill the rare monster
     #  Might make it too easy to farm items, but we'll see I guess...
     return if $self->session->{rare_cg};
+    
+    # Mayors groups don't flee
+    return if $self->creature_group->has_mayor;
 
 	# See if the creatures want to flee... check this every 2 rounds
 	#  Only flee if cg level is lower than party
 	if ( $self->combat_log->rounds != 0 && $self->combat_log->rounds % 2 == 0 ) {
 		if ( $self->creature_group->level < $self->character_group->level ) {
-		    my $level_diff = $self->character_group->level - $self->creature_group->level;		    
-		    
-			my $chance_of_fleeing = ( $level_diff - 2 ) * $self->config->{chance_creatures_flee_per_level_diff};
-			
-			$chance_of_fleeing += $level_diff if $level_diff > 5;
-				
-		    $chance_of_fleeing = 75 if $chance_of_fleeing > 75;
+		    my $chance_of_fleeing = $self->creature_group->flee_chance($self->character_group);
 
 			$self->log->debug("Chance of creatures fleeing: $chance_of_fleeing");
 
@@ -132,7 +130,7 @@ sub creatures_lost {
 
 	my $avg_creature_level = $self->creature_group->level;
 
-	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d4');
+	my $gold = scalar(@creatures) * $avg_creature_level * Games::Dice::Advanced->roll('2d6');
 	$self->result->{gold} = $gold;
 
 	$self->combat_log->gold_found($gold);
@@ -198,7 +196,7 @@ sub check_for_item_found {
 		my $item;
 		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
 			my $enchantment_roll = Games::Dice::Advanced->roll('1d100');
-			my $enchantment_chance = $self->config->{enchantment_creature_level_step} * $avg_creature_level;
+			my $enchantment_chance = round($self->config->{enchantment_creature_level_step} * $avg_creature_level);
 						
 			my $avg_divinity = $self->character_group->average_stat('divinity');
 			if($avg_divinity >= $self->config->{min_avg_divinity_for_enchantment_chance_increase}) {
@@ -208,7 +206,7 @@ sub check_for_item_found {
                 $enchantment_chance+=$bonus;
 			}
 			
-			if ($self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
+			if ($item_type->category->always_enchanted || $self->session->{rare_cg} || $enchantment_roll <= $enchantment_chance) {
 			    # Make sure item type selected is capable of being enchanted. If not, choose another one
 			    while ($item_type->category->enchantments_allowed->count <= 0) {
 			        $item_type = shift @item_types;

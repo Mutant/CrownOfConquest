@@ -15,56 +15,43 @@ use Digest::SHA1 qw(sha1_hex);
 use MIME::Lite;
 use Data::Dumper;
 use HTML::Strip;
+use Email::Valid;
+
+use feature 'switch';
 
 sub login : Local {
     my ( $self, $c ) = @_;
 
     my $message;
     
-    if ( $c->req->param('email') ) {
-        my $user = $c->model('DBIC::Player')->find( { 
-        	email => $c->req->param('email'), 
-        	password => sha1_hex $c->req->param('password') 
+    if ( $c->req->param('login') ) {
+        my @users = $c->model('DBIC::Player')->search( { 
+         	'-or' => {
+                email => $c->req->param('login'),
+            	player_name => $c->req->param('login'),
+         	},
+            password => sha1_hex $c->req->param('password'),             
         });
-
+        
+        my $user = $users[0];
+        
         if ($user) {
-            $user->last_login( DateTime->now() );
-            # Only clear warned for deletion if they're not deleted. Deleted users will get that cleared later
-            #  when they reactivate (in Root.pm).
-            $user->warned_for_deletion(0) unless $user->deleted;
-            $user->update;
-
-            if ( $user->verified ) {
-                $c->session->{player} = $user;
-                $c->session->{partial_login} = 0;
-                
-                $c->model('DBIC::Player_Login')->create(
-                    {
-                        ip => $c->req->address,
-                        login_date => DateTime->now(),
-                        player_id => $user->id,
-                    }
-                );
-                                
-                # Various post login checks
-                $c->forward('post_login_checks');
-                
-                my $url_to_redirect_to = $c->session->{login_url} || '';
-                undef $c->session->{login_url};
-                
-                $c->log->info("Post login redirect to: $url_to_redirect_to");
-                
-                if ($url_to_redirect_to =~ m|player/login|) {
-                	$url_to_redirect_to = ''; # Don't redirect back to the login page	
-                }
-                              
-                $c->res->redirect( $c->config->{url_root} . $url_to_redirect_to );
-                return;
+            $c->forward('login_user', [$user]);
+            
+            # Various post login checks
+            $c->forward('post_login_checks');            
+                       
+            my $url_to_redirect_to = $c->session->{login_url} || '';
+            undef $c->session->{login_url};
+            
+            $c->log->info("Post login redirect to: $url_to_redirect_to");
+            
+            if ($url_to_redirect_to =~ m|player/login|) {
+            	$url_to_redirect_to = ''; # Don't redirect back to the login page	
             }
-            else {
-                $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
-                return;
-            }
+                          
+            $c->res->redirect( $c->config->{url_root} . $url_to_redirect_to );
+            return;
         }
         else {
             $message = "Email address and/or password incorrect";
@@ -76,13 +63,25 @@ sub login : Local {
         	$c->session->{login_url} = $c->req->uri->path;
     	}	
     }
+    
+    my $last_announcement = $c->model('DBIC::Announcement')->search(
+        {},
+        {
+            rows => 1,
+            order_by => { -desc => 'date' },
+        },
+    )->first;
+            
 
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'player/login.html',
-                params   => { message => $message, },
+                params   => { 
+                    message => $message,
+                    last_announcement => $last_announcement, 
+                },
             }
         ]
     );
@@ -138,6 +137,65 @@ sub post_login_checks : Private {
     	
     	$c->flash->{tip} = $tip if $tip;
     }
+ 
+}
+
+sub set_screen_size : Private {
+    my ( $self, $c ) = @_;    
+    
+    my $player = $c->session->{player};
+    
+    # Set screen size in session
+    $c->session->{screen_width} = $player->screen_width;
+    if ($player->screen_width eq 'auto') {
+        given ($c->req->param('width')) {
+            when ($_ >= 1200) {
+                $c->session->{screen_width} = 'large';
+            }
+            when ($_ >= 1100) {
+                $c->session->{screen_width} = 'medium';
+            }
+            default {                
+                $c->session->{screen_width} = 'small';
+            }
+        }    
+    }
+    
+    $c->session->{screen_height} = $player->screen_height;
+    if ($player->screen_height eq 'auto') {
+        given ($c->req->param('height')) {
+            when ($_ >= 750) {
+                $c->session->{screen_height} = 'large';
+            }
+            when ($_ >= 650) {
+                $c->session->{screen_height} = 'medium';
+            }
+            default {                
+                $c->session->{screen_height} = 'small';
+            }
+        }    
+    }    
+    
+    $c->log->info("Screen height: " . $c->session->{screen_height} . "; Screen width: " . $c->session->{screen_width});
+}
+
+sub update_screen_sizes : Local {
+    my ( $self, $c ) = @_;    
+    
+    my $player = $c->model('DBIC::Player')->find($c->session->{player}->id);
+    
+    $player->screen_width($c->req->param('screen_width'));
+    $player->screen_height($c->req->param('screen_height'));
+    $player->update;
+    
+    $c->session->{player} = $player;
+    
+    $c->forward('set_screen_size');
+    
+    $c->stash->{panel_messages} = 'Changes Saved';
+
+    $c->forward('/party/details/options');    
+    
 }
 
 sub logout : Local {
@@ -162,51 +220,46 @@ sub register : Local {
         my $name = $hs->parse($c->req->param('player_name'));
         
         $message = eval {
-            unless ( $c->req->param('email')
-                && $name
+            unless ( $name
                 && $c->req->param('password1')
                 && $c->req->param('password1') eq $c->req->param('password2')
                 && $c->validate_captcha( $c->req->param('captcha') ) )
             {
-
-                return "Please enter your email address, name, password and the CAPTCHA code";
-
+                return "Please enter your name, password and the CAPTCHA code";
             }
 
             if ( length $c->req->param('password1') < $c->config->{minimum_password_length} ) {
                 return "Password must be at least " . $c->config->{minimum_password_length} . " characters";
             }
-
-            my $existing_player = $c->model('DBIC::Player')->find( { email => $c->req->param('email') }, );
-
-            if ($existing_player) {
-                return $c->forward(
-                    'RPG::V::TT',
-                    [
-                        {
-                            template      => 'player/already_exists.html',
-                            params        => { email => $c->req->param('email'), },
-                            return_output => 1,
-                        }
-                    ]
-                );
-            }
             
-            $existing_player = $c->model('DBIC::Player')->find( { player_name => $c->req->param('player_name') }, );
+            my $email_error = $c->forward('check_email', [$c->req->param('email')]);
+            
+            return $email_error if $email_error;
+            
+            
+            my $existing_player = $c->model('DBIC::Player')->find( { player_name => $c->req->param('player_name') }, );
             
             if ($existing_player) {
             	return "A player with the name '" . $c->req->param('player_name') . "' is already registered";	
             }
             
             my $referring_player;
-            if ($c->req->param('referred_by_email')) {
-                $referring_player = $c->model('DBIC::Player')->find( { email => $c->req->param('referred_by_email') }, );
+            if ($c->req->param('referred_by') || $c->req->param('referred_by_email')) {
+                $referring_player = $c->model('DBIC::Player')->search( 
+                    { 
+                        '-or' => {
+                            player_name => $c->req->param('referred_by'),
+                            email => $c->req->param('rerferred_by_email'),
+                        },                            
+                    },
+                )->first;
                 unless ($referring_player) {
-                    return "Can't find the email address of the player that referred you. Are you sure it's correct?";
+                    return "Can't find the player that referred you. Are you sure you used the correct link?";
                 }   
             }
             
-            my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
+            my $verification_code = $c->forward('generate_and_send_verification_code', [$c->req->param('email')] )
+                if $c->req->param('email');
             
             my $code;
             if ($c->req->param('promo_code')) {
@@ -244,6 +297,8 @@ sub register : Local {
                     $code ? (promo_code_id => $code->code_id) : (),
                     send_email        => $c->req->param('allow_emails') ? 1 : 0,
                     referred_by       => $referring_player ? $referring_player->id : undef,
+                    created           => DateTime->now(),
+                    last_login        => DateTime->now(),
                 }
             );
             
@@ -267,8 +322,10 @@ sub register : Local {
                     ); 
                 }
             }
- 
-            $c->res->redirect( $c->config->{url_root} . "/player/verify?email=" . $c->req->param('email') );
+            
+            $c->forward('login_user', [$player]);
+            
+            $c->res->redirect( $c->config->{url_root} );
 
             return;
         };
@@ -293,10 +350,11 @@ sub register : Local {
     );
 }
 
-sub _generate_and_send_verification_code {
+sub generate_and_send_verification_code : Private {
+    my $self       = shift;
     my $c          = shift;
     my $to_address = shift;
-
+    
     my $verification_code = ( int rand 100000000 + int rand 100000000 );
 
     my $email_message = $c->forward(
@@ -306,7 +364,7 @@ sub _generate_and_send_verification_code {
                 template      => 'player/email/verfication.txt',
                 params        => { 
                     verification_code => $verification_code,
-                    email => $c->req->param('email'), 
+                    email => $to_address, 
                 },
                 return_output => 1,
             }
@@ -323,48 +381,6 @@ sub _generate_and_send_verification_code {
     );
 
     return $verification_code;
-}
-
-sub reverify : Local {
-    my ( $self, $c ) = @_;
-
-    my $message;
-
-    if ( $c->req->param('email') ) {
-        $message = eval {
-            my $player = $c->model('DBIC::Player')->find( { email => $c->req->param('email'), } );
-
-            return "Your email address is not registered. Please register first" unless defined $player;
-
-            if ($player) {
-                if ( $player->verified == 1 ) {
-                    return "You're already verified! Please login to play.";
-                }
-
-                my $verification_code = _generate_and_send_verification_code( $c, $c->req->param('email') );
-
-                $player->verification_code($verification_code);
-                $player->update;
-
-                return "A new verification code has been sent to you. If you continue to have problems, please post about it in the Forum";
-            }
-        };
-        if ($@) {
-            croak $@;
-        }
-    }
-
-    $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template     => 'player/reverify.html',
-                params       => { message => $message, },
-                fill_in_form => 1,
-            }
-        ]
-    );
-
 }
 
 sub reactivate : Local {
@@ -498,6 +514,18 @@ sub verify : Local {
                 $player->warned_for_deletion(0);
                 $player->update;
                 $c->session->{player} = $player;
+                
+                $c->model('DBIC::Player_Login')->create(
+                    {
+                        ip => $c->req->address,
+                        login_date => DateTime->now(),
+                        player_id => $player->id,
+                        screen_width => $c->req->param('width'),
+                        screen_height => $c->req->param('height'),
+                    }
+                );   
+                
+                $c->forward('set_screen_size');             
 
                 $c->res->redirect( $c->config->{url_root} );
 
@@ -510,9 +538,6 @@ sub verify : Local {
         else {
             $message = "Can't find that email address... make sure you've already registered";
         }
-    }    
-    elsif (my $org_message = $c->flash->{promo_org_message}) {
-    	$message = $org_message;
     }
 
     $c->forward(
@@ -568,8 +593,10 @@ sub survey : Local {
 	
 }
 
-sub announcements : Local {
-	my ( $self, $c ) = @_;
+sub announcements : Local : Args(1) {
+	my ( $self, $c, $is_public ) = @_;
+	
+	warn $is_public;
 	
 	my @announcements = $c->model('DBIC::Announcement')->search(
 		{},
@@ -583,6 +610,7 @@ sub announcements : Local {
 			template => 'player/announcement/list.html',
 			params => {
 				announcements => \@announcements,
+				is_public => $is_public eq 'public' ? 1 : 0,
 			} 
 		} 
 	] );	
@@ -719,6 +747,70 @@ sub submit_email : Private {
     		},
     	] ); 
     }       
+}
+
+sub login_user : Private {
+    my ($self, $c, $user) = @_;   
+    
+    $user->last_login( DateTime->now() );
+    
+    # Only clear warned for deletion if they're not deleted. Deleted users will get that cleared later
+    #  when they reactivate (in Root.pm).
+    $user->warned_for_deletion(0) unless $user->deleted;
+    $user->update;
+
+    $c->session->{player} = $user;
+    $c->session->{partial_login} = 0;
+    
+    $c->model('DBIC::Player_Login')->create(
+        {
+            ip => $c->req->address,
+            login_date => DateTime->now(),
+            player_id => $user->id,
+            screen_width => $c->req->param('width'),
+            screen_height => $c->req->param('height'),
+        }
+    );
+    
+    $c->forward('set_screen_size');
+}
+
+sub check_email : Private {
+    my ($self, $c, $email) = @_;
+    
+    return unless $email;
+    
+    if ( ! Email::Valid->address($email) ) {
+        return "The email address '" . $c->req->param('email') . "' does not appear to be valid";  
+    }
+
+    my $existing_player = $c->model('DBIC::Player')->find( { email => $email }, );
+
+    if ($existing_player) {
+        return $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => 'player/already_exists.html',
+                    params        => { email => $email, },
+                    return_output => 1,
+                }
+            ]
+        );
+    }
+    
+    return undef;
+    
+}
+
+sub changelog : Local {
+	my ($self, $c) = @_;
+	
+	$c->forward('RPG::V::TT',
+        [{
+            template => 'help/ext_changelog.html',
+        }]
+    );	    
 }
 
 1;

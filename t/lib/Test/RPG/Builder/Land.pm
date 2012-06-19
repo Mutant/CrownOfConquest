@@ -20,6 +20,7 @@ sub build_land {
                     terrain_id      => $terrain->id,
                     creature_threat => 10,
                     kingdom_id      => $params{kingdom_id},
+                    tileset_id      => 1,
                 }
             );
         }

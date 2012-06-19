@@ -9,6 +9,12 @@
 	[% END %]	
 
 <span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span> on 
-<span class="[% target_class %]">[% message.defender.name %]</span> [% message.effect %] [% message.defender.pronoun('objective') %] for <span class="combat-party-attacker">[% message.damage %]</span> hit points.
+<span class="[% target_class %]">[% message.defender.name %]</span>
+
+[% IF message.resisted %]
+	, but [% message.defender.pronoun('subjective') %] resisted!
+[% ELSE %]
+	[% message.effect %] [% message.defender.pronoun('objective') %] for <span class="combat-party-attacker">[% message.damage %]</span> hit points.
 	
-[% IF message.defender_killed %]<span class="combat-creature-attacker">[% message.defender.name %]</span> was killed![% END %]
+	[% IF message.defender_killed %]<span class="combat-creature-attacker">[% message.defender_killed %]</span> was killed![% END %]
+[% END %]

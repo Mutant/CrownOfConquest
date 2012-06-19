@@ -32,7 +32,7 @@ __PACKAGE__->belongs_to( 'land', 'RPG::Schema::Land', { 'foreign.land_id' => 'se
 
 __PACKAGE__->belongs_to( 'day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.game_day' } );
 
-__PACKAGE__->has_many( 'messages', 'RPG::Schema::Combat_Log_Messages', 'combat_log_id' );
+__PACKAGE__->has_many( 'messages', 'RPG::Schema::Combat_Log_Messages', 'combat_log_id', { cascade_delete => 1 } );
 
 # Note, party and creature_group relationships defined manually, as DBIx::Class doesn't support complex
 #  join conditions

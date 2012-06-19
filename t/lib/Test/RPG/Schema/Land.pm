@@ -15,6 +15,8 @@ use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Kingdom;
+use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Garrison;
 
 use RPG::Schema::Land;
 
@@ -175,7 +177,7 @@ sub test_movement_cost_with_roads_objects : Tests(1) {
     my $movement_cost = $land[0]->movement_cost(5, undef, $land[4]);
     
     # THEN
-    is($movement_cost, 3, "Movement cost calculated correctly");
+    is($movement_cost, 1, "Movement cost calculated correctly");
        
 }
 
@@ -343,6 +345,38 @@ sub test_can_be_claimed_near_town : Tests(3) {
 	is($first_land, 0, "First land can't be claimed as it's too close to a town");
 	is($second_land, 0, "Second land can't be claimed, as it's already claimed by kingdom");
 	is($third_land, 1, "Second land can be claimed");
+       
+}
+
+sub test_garrison_allowed : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, land_id => $land[0]->id );
+    
+    # WHEN
+    my $result = $land[4]->garrison_allowed($party);
+    
+    # THEN
+    is($result, 1, "Garrison allowed here");
+       
+}
+
+sub test_garrison_allowed_too_close_to_garrison_owned_by_party : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id, land_id => $land[0]->id );
+    
+    # WHEN
+    my $result = $land[4]->garrison_allowed($party);
+    
+    # THEN
+    is($result, 0, "Garrison not allowed as too close to garrison owned by party");
        
 }
 

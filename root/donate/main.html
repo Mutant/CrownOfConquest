@@ -1,5 +1,5 @@
-[% IF ! player %]
-	[% INCLUDE top.html guest_screen = 1 %]
+[% IF ! screen %]
+	[% INCLUDE top.html guest_screen = (player ? 0 : 1) %]
 [% END %]
 
 <h1>Donate To Kingdoms</h1>
@@ -44,6 +44,6 @@ want to log in first.</p>
 <img alt="" border="0" src="https://www.paypalobjects.com/WEBSCR-640-20110429-1/en_US/i/scr/pixel.gif" width="1" height="1">
 </form>
 
-[% IF ! player %]
+[% IF ! screen %]
 	[% INCLUDE bottom.html %]
 [% END %]

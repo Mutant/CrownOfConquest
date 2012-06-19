@@ -183,12 +183,14 @@ sub _spawn_orb {
     $c->logger->debug("Spawning Orb at $land->{x}, $land->{y}");
 
     my $name;
-    my $existing_orb;
-    # TODO: need more orb names, and then check for existing ones (altho don't use do/while!)
-    #do {
-        $name = ( shuffle @names )[0];
-    #    $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name, land_id => { '!=', undef } } );
-    #} while ($existing_orb);
+    # Choose an Orb name (so long as they don't already exist)
+    foreach my $name_to_check (shuffle @names) {
+        my $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name_to_check, land_id => { '!=', undef } } );
+        
+        next if $existing_orb;
+        
+        $name = $name_to_check;
+    }
 
     my $land_record = $c->schema->resultset('Land')->find(
         {

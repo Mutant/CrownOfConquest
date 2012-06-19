@@ -15,15 +15,18 @@ use HTML::Strip;
 sub auto : Private {
 	my ($self, $c) = @_;
 	
-	$c->stash->{garrison} = $c->model('DBIC::Garrison')->find(
-		{
-			garrison_id => $c->req->param('garrison_id'),
-			party_id => $c->stash->{party}->id,
-		},
-		{
-			prefetch => ['characters', 'land'],
-		}
-	);
+	if ($c->req->param('garrison_id')) {
+    	$c->stash->{garrison} = $c->model('DBIC::Garrison')->find(
+    		{
+    			garrison_id => $c->req->param('garrison_id'),
+    			party_id => $c->stash->{party}->id,
+    		},
+    		{
+    			prefetch => ['characters', 'land'],
+    			order_by => 'characters.character_name',
+    		}
+    	);
+	}
 		
 	return 1;	
 }
@@ -31,12 +34,15 @@ sub auto : Private {
 sub create : Local {
 	my ($self, $c) = @_;
 	
+	undef $c->session->{new_garrison};
+	
 	$c->forward('RPG::V::TT',
         [{
             template => 'garrison/create.html',
             params => {
             	flee_threshold => 70, # default
             	party => $c->stash->{party},
+            	party_chars => [ $c->stash->{party}->members ],
             	turn_cost => $c->config->{garrison_creation_turn_cost},
             },
         }]
@@ -56,16 +62,20 @@ sub add : Local {
 		$c->detach( '/panel/refresh' );
 	}
 	
-	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed;
+	croak "Illegal garrison creation - garrison not allowed here" unless $c->stash->{party_location}->garrison_allowed($c->stash->{party});
 
-	my @char_ids_to_garrison = $c->req->param('chars_in_garrison');
-		
-	croak "Must have at least one char in the garrison" unless @char_ids_to_garrison;
+    if (! $c->session->{new_garrison} || ref $c->session->{new_garrison} ne 'ARRAY') {
+	   $c->stash->{error} = "You must add at least one character to the garrison";
+	   $c->detach( '/panel/refresh' );
+    }
+
+	my @char_ids_to_garrison = @{ $c->session->{new_garrison} };	
 	
 	my @characters = $c->stash->{party}->characters_in_party;
 	
 	if (scalar @char_ids_to_garrison == scalar @characters) {
-		croak "Must keep at least one character in the party";
+	   $c->stash->{error} = "You must keep at least one character in the party";
+	   $c->detach( '/panel/refresh' );
 	}
 	
 	my %chars_by_id = map { $_->id => $_ } @characters;
@@ -79,6 +89,8 @@ sub add : Local {
 		$c->stash->{error} = "You must have at least one living character in your party";
 		$c->detach( '/panel/refresh' );		
 	}
+
+	undef $c->session->{new_garrison};
 	
 	my $hs = HTML::Strip->new();
 	my $name = $hs->parse($c->req->param('name'));
@@ -93,16 +105,20 @@ sub add : Local {
 		}
 	);
 	
-	$c->model('DBIC::Character')->search(
+	my @garrison_chars = $c->model('DBIC::Character')->search(
 		{
 			character_id => \@char_ids_to_garrison,
 			party_id => $c->stash->{party}->id,
 		}
-	)->update(
-		{
-			garrison_id => $garrison->id,
-		}
 	);
+	
+	foreach my $char (@garrison_chars) {
+	   $char->update(
+    		{
+    			garrison_id => $garrison->id,
+    		}
+    	);
+	}
 	
 	$c->model('DBIC::Party_Messages')->create(
 		{
@@ -113,7 +129,6 @@ sub add : Local {
 		}
 	);
 	
-	$c->stash->{party}->adjust_order;
 	$c->stash->{party}->turns($c->stash->{party}->turns - $c->config->{garrison_creation_turn_cost});
 	$c->stash->{party}->update;
 	
@@ -122,77 +137,98 @@ sub add : Local {
 	my $messages = $c->forward( '/quest/check_action', [ 'garrison_created', $garrison ] );
 	$c->flash->{message} = $messages->[0] if $messages && @$messages;
 	
+	$c->forward('/map/refresh_current_loc');
+	
 	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id], 'messages', 'party'] );
 }
 
-sub update : Local {
-	my ($self, $c) = @_;
-	
-	croak "Can't find garrison" unless $c->stash->{garrison};
-	
-	croak "Must be in correct sector to update garrison" unless $c->stash->{party_location}->id == $c->stash->{garrison}->land->id;
-	
-    if ($c->stash->{party}->in_combat) {
-        croak "Can't update garrison while in combat";
-    }	
-	
-	my @current_garrison_chars = $c->stash->{garrison}->characters;
-		
-	my %char_ids_to_garrison = map { $_ => 1 } $c->req->param('chars_in_garrison');
-	
-	croak "Must have at least one char in the garrison" unless %char_ids_to_garrison;
-	
-	my @chars_in_party = $c->stash->{party}->characters_in_party;
-	if (scalar keys(%char_ids_to_garrison) - scalar @current_garrison_chars == scalar @chars_in_party) {
-		croak "Must keep at least one character in the party";
-	}
-	
-	my %chars_by_id = map { $_->id => $_ } (@chars_in_party, @current_garrison_chars);
-	if ((grep { ! $chars_by_id{$_}->is_dead } keys %char_ids_to_garrison ) <= 0 ) {
-		$c->stash->{error} = "You must have at least one living character in the garrison";
-		$c->detach( '/panel/refresh' );
-	}
-	
-	my @chars_left_in_party = @{ set(keys %chars_by_id) - set(keys %char_ids_to_garrison) };
-	if ((grep { ! $chars_by_id{$_}->is_dead } @chars_left_in_party) <= 0 ) {
-		$c->stash->{error} = "You must have at least one living character in your party";
-		$c->detach( '/panel/refresh' );
-	}	
+sub character_move : Local {
+    my ($self, $c) = @_;
+    
+    my $character = $c->model('DBIC::Character')->find(
+        {
+            'character_id' => $c->req->param('character_id'),
+            'party_id' => $c->stash->{party}->id,
+        },
+    );
+  
+    croak "Invalid character" unless $character;
 
-	if (scalar @chars_left_in_party > $c->config->{max_party_characters}) {
-		$c->stash->{error} = "You can't have more than " . $c->config->{max_party_characters} . " characters in your party";
-		$c->detach( '/panel/refresh' );
-		return;		
-	}
-	
-	my @chars_to_remove;
-	foreach my $current_char (@current_garrison_chars) {
-		if (! $char_ids_to_garrison{$current_char->id}) {
-			# Char removed
-			push @chars_to_remove, $current_char;
-		}
-	}
-	
-	foreach my $char (@current_garrison_chars) {
-		$char->garrison_id(undef);
-		$char->update;
-	}
-	
-	$c->model('DBIC::Character')->search(
-		{
-			character_id => [keys %char_ids_to_garrison],
-			party_id => $c->stash->{party}->id,
-		}
-	)->update(
-		{
-			garrison_id => $c->stash->{garrison}->id,
-		}
-	);	
-	
-	$c->stash->{party}->adjust_order;
-	
-	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id], 'party'] );
-	
+    my $swap_char;
+    if ($c->req->param('swapped_char_id')) {
+        $swap_char = $c->model('DBIC::Character')->find(
+            {
+                'character_id' => $c->req->param('swapped_char_id'),
+                'party_id' => $c->stash->{party}->id,
+            },
+        );
+        
+        croak "Invalid swap char" unless $swap_char; 
+    }
+    else {
+        # We're not swapping, so make sure the garrison/party isn't already full
+        if ($c->req->param('to') eq 'party') {
+            croak "Party full" if scalar($c->stash->{party}->members) >= $c->config->{max_party_characters};   
+        }
+        elsif ($c->stash->{garrison}) {
+            croak "Garrison full" if scalar($c->stash->{garrison}->members) >= 8;                 
+        }
+        elsif ($c->session->{new_garrison}) {
+            croak "Garrison full" if scalar @{ $c->session->{new_garrison} } >= 8;
+        }
+    }
+    
+    if (! $c->stash->{garrison}) {
+        # Garrison not created yet...
+        if ($c->req->param('to') eq 'garrison') {
+            push @{$c->session->{new_garrison}}, $character->id;
+            
+            if ($swap_char) {
+                $c->session->{new_garrison} = [ grep { $_ != $swap_char->id } @{$c->session->{new_garrison}} ];    
+            }
+        } 
+        elsif ($c->session->{new_garrison}) {
+            $c->session->{new_garrison} = [ grep { $_ != $character->id } @{$c->session->{new_garrison}} ];
+            
+            if ($swap_char) {
+                push @{$c->session->{new_garrison}}, $swap_char->id;
+            }
+        }
+    }
+    
+    elsif ($c->req->param('to') eq 'garrison') {
+        croak "Invalid character" unless $character->is_in_party;
+        $character->garrison_id($c->stash->{garrison}->garrison_id);
+        
+        if ($swap_char) {
+            croak "Invalid character" unless $swap_char->garrison_id == $c->stash->{garrison}->garrison_id;
+            $swap_char->garrison_id(undef);   
+        }
+    }
+    else {
+        croak "Invalid character" unless $character->garrison_id == $c->stash->{garrison}->garrison_id;
+        $character->garrison_id(undef);
+        
+        if ($swap_char) {
+            croak "Invalid character" unless $swap_char->is_in_party;
+            $swap_char->garrison_id($c->stash->{garrison}->garrison_id);            
+        }
+    }
+    
+    $character->update;
+    $swap_char->update if $swap_char;
+    
+    # See if we've got the min number of chars in the party/garrison
+    my %ret;
+    if ($c->stash->{party}->number_alive <= 1) {
+        $ret{no_party_move} = 1;
+    }
+    
+    if ($c->stash->{garrison} && $c->stash->{garrison}->number_alive <= 1) {
+        $ret{no_garrison_move} = 1;   
+    }
+        
+    $c->res->body(to_json \%ret);    
 }
 
 sub remove : Local {
@@ -213,8 +249,6 @@ sub remove : Local {
 			$character->garrison_id(undef);
 			$character->update;	
 		}
-		
-		$c->stash->{party}->adjust_order;
 
 		$c->model('DBIC::Party_Messages')->create(
 			{
@@ -243,6 +277,8 @@ sub remove : Local {
 		$c->stash->{garrison}->update;
 		
 		$c->stash->{panel_messages} = ['Garrison Removed'];
+		
+		$c->forward('/map/refresh_current_loc');
 		
 		$c->forward( '/panel/refresh', [[screen => 'close'], 'messages', 'party'] );		
 	}
@@ -294,6 +330,8 @@ sub manage : Local {
 	
 	my @party_garrisons = $c->stash->{party}->garrisons;
 	
+	my $building = $c->stash->{party_location}->building;
+	
     $c->forward(
         'RPG::V::TT',
         [
@@ -305,6 +343,7 @@ sub manage : Local {
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
                     editable => $self->is_editable($c),
+                    has_building => $building && $building->owner_type eq 'party' && $building->owner_id == $c->stash->{party}->id ? 1 : 0,
                 },
             }
         ]
@@ -330,6 +369,8 @@ sub character_tab : Local {
                 template => 'garrison/characters.html',
                 params   => {
                     garrison => $c->stash->{garrison},
+                    garrison_chars => [ $c->stash->{garrison}->characters ],
+                    party_chars => [ $c->stash->{party}->members ],
                     editable => $editable,
                     party => $c->stash->{party},
                 },
@@ -382,6 +423,7 @@ sub update_orders : Local {
 	$c->stash->{garrison}->party_attack_mode($c->req->param('party_attack_mode'));
 	$c->stash->{garrison}->flee_threshold($c->req->param('flee_threshold'));
 	$c->stash->{garrison}->attack_parties_from_kingdom($c->req->param('attack_parties_from_kingdom') ? 1 : 0);
+	$c->stash->{garrison}->attack_friendly_parties($c->req->param('attack_friendly_parties') ? 1 : 0);
 	$c->stash->{garrison}->update;
 	
 	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders']] );
@@ -565,6 +607,80 @@ sub update_garrison_name : Local {
 			}
 		)
 	);
+}
+
+sub building_tab : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{building_url_prefix} = 'garrison/building_';
+	
+	$c->forward('/building/manage');   
+}
+
+sub building_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/upgrade');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'party_status', 'messages'] );
+    
+}
+
+sub building_build_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/build_upgrade');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'party_status', 'messages'] );
+    
+}
+
+sub building_cede : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/cede');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'messages', 'party_status'] );    
+}
+
+sub building_raze : Local {
+    my ($self, $c) = @_;
+    
+    my $garrison = $c->model('DBIC::Garrison')->find(
+		{
+			party_id => $c->stash->{party}->id,
+			land_id => $c->stash->{party_location}->id,
+		},
+	);
+    $c->stash->{no_refresh} = 1;
+    
+    $c->forward('/building/raze');    
+    
+    $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'messages', 'party_status'] );    
 }
 
 1;

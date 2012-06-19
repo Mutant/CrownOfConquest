@@ -31,7 +31,7 @@ Your prestige here:
 [% END %]
 
 [% IF mayor %]
-	Mayor: [% mayor.character_name %] ([% IF mayor.party %][% mayor.party.name %][% ELSE %]NPC[% END %])<br>
+	Mayor: [% mayor.character_name %] ([% IF mayor.party %]<a href="javascript:getPanels('party/profile?party_id=[% mayor.party.id %]')">[% mayor.party.name %]</a>[% ELSE %]NPC[% END %])<br>
 	[% IF current_election %]
 	    The town will hold an election on day [% current_election.scheduled_day %] ([% current_election.days_until_election %])
 	    	(<a href="javascript:loadScreen('town/election')">Details</a>)
@@ -43,7 +43,7 @@ Your prestige here:
 <br>
 
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
-<div style="float: left; width: 25%">
+<div style="float: left;">
 <b>Shops & Services</b>
 <ul>
 <li><a href="javascript:getPanels('town/shop_list')">Equipment Shops</a></li>
@@ -55,12 +55,13 @@ Your prestige here:
 </ul>
 </div>
 
-<div style="float: left; width: 25%">
+<div style="float: left;">
 <b>Town Hall</b>
 <ul>
 <li><a href="javascript:getPanels('town/quests')">Quests</a></li>
 <li><a href="javascript:loadScreen('town/trade')">Trade Hall</a></li>
-<li><a href="javascript:getPanels('town/news')">News</a></li>
+<li><a href="javascript:getPanels('town/work')">Work</a></li>
+<li><a href="javascript:loadScreen('town/news')">News</a></li>
 <li><a href="javascript:getPanels('town/cemetery')">Cemetery</a></li>
 <li><a href="javascript:getPanels('town/street')">Street</a></li>
 [% IF mayor && mayor.party_id == party.id %]<li><a href="javascript:loadScreen('town/mayor?town_id=[% town.id %]')">Mayor's Office</a></li>[% END %]
@@ -71,6 +72,9 @@ Your prestige here:
 
 [% IF sewer %]<a href="javascript:getPanels('town/enter_sewer')">Enter The Town Sewer</a><br><br>[% END %]
 
-[% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
+[% IF parties_in_sector.0 %]
+	[% INCLUDE party/parties_in_sector.html parties=parties_in_sector %]
+	<br><br>
+[% END %]
 
 <a href="javascript:getPanels('town/leave')">Leave Town</a>

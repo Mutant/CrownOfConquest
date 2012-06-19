@@ -42,7 +42,7 @@ sub run {
 			push @number_of_rooms, Games::Dice::Advanced->roll( '1d10' ) + 10;
         }
         
-        $self->generate_dungeon_grid($dungeon, \@number_of_rooms, 35);
+        $self->generate_dungeon_grid($dungeon, \@number_of_rooms, 35, 1);
         $self->generate_treasure_chests($dungeon, 10);
         $self->populate_sector_paths($dungeon);         
     }	

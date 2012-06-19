@@ -113,9 +113,10 @@ sub leave : Local {
 		]
 	);
 	
-	if ($c->stash->{party}->level <= $c->config->{max_party_level_leave_town_warning}) {
+	if (! $c->session->{leave_town_warning_given} && $c->stash->{party}->level <= $c->config->{max_party_level_leave_town_warning}) {
         $c->stash->{panel_messages} = "The wilderness is full of dangerous monsters.\n\n" . 
             "You may want to level up your party in the sewers before leaving the safety of town!";
+        $c->session->{leave_town_warning_given} = 1;            
 	}
     
     push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
@@ -250,8 +251,7 @@ sub res_from_morgue : Local {
 		if ($c->forward('res_impl', [$character])) {
 			$character->status(undef);
 			$character->status_context(undef);
-			$character->update;	
-			$c->stash->{party}->adjust_order;
+			$character->update;
 		}		
 	}
 	
@@ -307,31 +307,60 @@ sub calculate_heal_cost : Private {
 }
 
 sub news : Local {
-	my ( $self, $c, $town, $day_range ) = @_;
+	my ( $self, $c ) = @_;
 
-	my $panel = $c->forward('generate_news', [$c->stash->{party_location}->town, $c->config->{news_day_range}]);
+	my $news = $c->forward('generate_news', [$c->stash->{party_location}->town, $c->config->{news_day_range}]);
 	
-	$panel .= $c->forward(
+	$c->forward(
 		'RPG::V::TT',
 		[
 			{
-				template => 'town/town_footer.html',
-				return_output => 1,
+				template => 'town/news_screen.html',	
+				params => {
+				    news => $news,
+				},	
 			}
 		]
 	);
-	
-	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+}
 
-	$c->forward('/panel/refresh');
+sub global_news : Local {
+    my ( $self, $c ) = @_;
+    
+    my $day_range = 7;
+    my $current_day = $c->stash->{today}->day_number;
+    
+    my @news = $c->model('DBIC::Global_News')->search(
+        {
+            'day.day_number' => { '<=', $current_day, '>=', $current_day - $day_range },
+        },
+		{
+			prefetch => 'day',
+			order_by => 'day_number desc',
+		}
+	);             
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/global_news.html',	
+				params => {
+				    news => \@news,
+				},	
+			}
+		]
+	);	  
 }
 
 sub generate_news : Private {
-	my ( $self, $c, $town, $day_range ) = @_;
+	my ( $self, $c, $town, $day_range, $type ) = @_;
 
 	my $current_day = $c->stash->{today}->day_number;
+	
+	$type //= 'news';
 
-	my @logs = $c->model('DBIC::Town_History')->recent_history($town->id, 'news', $current_day, $day_range);
+	my @logs = $c->model('DBIC::Town_History')->recent_history($town->id, $type, $current_day, $day_range);
 
 	my $news = $c->forward(
 		'RPG::V::TT',
@@ -418,7 +447,11 @@ sub cemetery : Local {
 		{
 			'status' => 'morgue',
 			'status_context' => $town->id,
-		}
+			'party.defunct' => undef,
+		},
+		{
+		    prefetch => 'party',
+		},
 	);
 
 	my $panel = $c->forward(
@@ -454,35 +487,25 @@ sub enter : Local {
 		$c->detach( '/panel/refresh', [ 'messages', 'party_status' ] );
 	}
 
+    my ($can_enter, $reason) = $town->party_can_enter($c->stash->{party});
+
+	# Check if they have really low prestige, and need to be refused.
+	if (! $can_enter) {		    
+        $c->stash->{message_panel_size} = 'small';
+		    
+		$c->stash->{panel_messages} = $reason;
+
+		$c->detach( '/panel/refresh', ['messages'] );
+	}
+
+	my $cost = $town->tax_cost( $c->stash->{party} );
+	
 	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
 		{
 			party_id => $c->stash->{party}->id,
 			town_id  => $town->id,
 		},
-	);
-
-	# Check if they have really low prestige, and need to be refused.
-	my $mayor = $town->mayor;
-	if (! $mayor || $mayor->party_id != $c->stash->{party}->id) {
-		my $prestige_threshold = -90 + round( $town->prosperity / 25 );
-		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
-		    
-		    $c->stash->{message_panel_size} = 'small';
-		    
-			$c->stash->{panel_messages} =
-				[ "You've been refused entry to " . $town->town_name . ". You'll need to wait until your prestige improves before coming back" ];
-			$c->detach( '/panel/refresh', ['messages'] );
-		}
-	}
-	
-	# Check if the mayor's party has an IP address in common
-	if ($mayor && ! $mayor->is_npc && $c->stash->{party}->is_suspected_of_coop_with($mayor->party)) {	    
-	    $c->stash->{message_panel_size} = 'small';
-		$c->stash->{panel_messages} = [ "You cannot enter this town as the mayor's party has IP addresses in common with yours" ];
-		$c->detach( '/panel/refresh', ['messages'] );
-	}
-
-	my $cost = $town->tax_cost( $c->stash->{party} );
+	);	
 
 	# Pay tax, if necessary
 	if ( $cost->{gold} ) {
@@ -534,8 +557,7 @@ sub raid : Local {
 
 	croak "Not next to that town" unless $c->stash->{party_location}->next_to( $town->location );
 	
-	my @party_mayoralties = map { $_->mayor_of ? $_->mayor_of : () } $c->stash->{party}->characters;
-	croak "Can't raid a town you're mayor of" if grep { $_ == $town->id } @party_mayoralties;
+	croak "Can't raid a town you're mayor of" if $town->mayor && $town->mayor->party_id == $c->stash->{party}->id;
 
 	my $start_sector = $c->model('DBIC::Dungeon_Grid')->find(
 		{
@@ -550,14 +572,15 @@ sub raid : Local {
 
 	confess "Castle not found for town " . $town->id unless $start_sector;
 
-	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
+	my $raids_today = $c->model('DBIC::Town_Raid')->search(
 		{
 			town_id  => $town->id,
 			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->day_id,
 		}
-	);
+	)->count;
 	
-	if (($party_town->raids_today // 0) > $c->config->{max_raids_per_day}) {
+	if ($raids_today > $c->config->{max_raids_per_day}) {
 	   $c->stash->{error} = "You've raided this town too many times today";
 	   $c->forward( '/panel/refresh', [ 'messages' ]);
 	   return;
@@ -597,13 +620,76 @@ sub raid : Local {
 
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
-
-	$party_town->last_raid_start( DateTime->now() );
-	$party_town->last_raid_end(undef);
-	$party_town->increment_raids_today;
-	$party_town->update;
 	
-	$c->stash->{message_panel_size} = 'small';   
+	my $defences = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'town/defences.html',
+				params   => {
+					$town->defences,
+				},
+				return_output => 1,
+			}
+		]
+	);
+
+    $c->model('DBIC::Town_Raid')->create(
+        {
+			town_id  => $town->id,
+			party_id => $c->stash->{party}->id,
+			day_id => $c->stash->{today}->day_id,
+			date_started => DateTime->now(),
+			defences => $defences,
+			defending_party => $mayor->party_id,
+        },            
+    );
+	
+	if ($c->stash->{party}->kingdom_id) {
+	
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $c->stash->{party}->kingdom_id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );	
+    		
+        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
+            when ('peace') {
+                # Add a kingdom message saying they raided a town the kingdom was at peace with
+                $c->stash->{party}->kingdom->add_to_messages(
+                    {
+                        day_id => $c->stash->{today}->id,
+                        message => "The party " . $c->stash->{party}->name . " raided the town of " . $town->town_name . ", even though the town is loyal to" .
+                            " the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
+                    }                    
+                );
+                
+                $party_kingdom->decrease_loyalty(15);
+            }
+            when ('war') {
+                $party_kingdom->increase_loyalty(15);
+            }
+    	}
+    	
+    	$party_kingdom->update;
+	}
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };
+    
+    if (! $mayor) {
+        push @{$c->stash->{panel_messages}}, "This town doesn't have a mayor! You won't be able to conquer this town until one is appointed";
+    }
+    
+    elsif (! $mayor->creature_group_id || ! $mayor->creature_group->dungeon_grid_id) {
+        push @{$c->stash->{panel_messages}}, "The mayor of this town changed recently, and the mayor is not yet in the castle. You won't be able to conquer this " .
+            "town until the mayor enters the castle";
+    }
+	
+	$c->stash->{message_panel_size} = 'small'; 
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );
 }
@@ -630,8 +716,68 @@ sub enter_sewer : Local {
 	$c->stash->{party}->update;
 
 	$c->stash->{message_panel_size} = 'small';
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'map', 'creatures' ] );	
+}
+
+sub work : Local {
+    my ($self, $c) = @_;
+    
+    my $town = $c->model('DBIC::Town')->find( { land_id => $c->stash->{party_location}->id } );
+    
+    croak "Not in a town\n" unless $town;
+       
+    my $gold_per_turn = round (($town->prosperity / 35) * ($c->stash->{party}->level / 8));
+    $gold_per_turn = 1 if $gold_per_turn < 1;
+    
+    if (! $c->req->param('turns')) {    
+    	my $dialog = $c->forward(
+    		'RPG::V::TT',
+    		[
+    			{
+    				template => 'town/work.html',
+    				params   => {
+    					town => $town,
+    					gold_per_turn => $gold_per_turn,
+    				},
+    				return_output => 1,
+    			}
+    		]
+    	);
+    	
+    	$c->forward('/panel/create_submit_dialog', 
+    		[
+    			{
+    				content => $dialog,
+    				submit_url => 'town/work',
+    				dialog_title => 'Work for the Town?',				
+    			}
+    		],
+    	);
+    }
+    else {
+        if ($c->stash->{party}->turns < $c->req->param('turns')) {
+            $c->stash->{error} = "You do not have enough turns!";   
+        }
+        else {        
+            $c->stash->{party}->increase_gold($gold_per_turn*$c->req->param('turns'));
+            $c->stash->{party}->turns($c->stash->{party}->turns - $c->req->param('turns'));
+            $c->stash->{party}->update;
+            
+            $c->stash->{panel_messages} = "You earn " . ($gold_per_turn*$c->req->param('turns')) . " gold for working " . $c->req->param('turns') . " turns";
+            
+            push @{$c->stash->{refresh_panels}}, 'messages', 'party_status';
+        }
+    }
+            
+	
+	$c->forward( '/panel/refresh' );
+       
 }
 
 sub become_mayor : Local {
@@ -665,28 +811,17 @@ sub become_mayor : Local {
 
 	$character->mayor_of( $town->id );	
 	$character->update;
-
-	$c->stash->{party}->adjust_order;
 	
-	# If they have negative prestige, reset it to 0
-	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
-		{
-			party_id => $c->stash->{party}->id,
-			town_id  => $town->id,
-		},
-	);
-	if ($party_town->prestige < 0) {
-		$party_town->prestige(0);
-		$party_town->update;	
-	}
-
+	$character->apply_roles;
+	$character->gain_mayoralty($town);
+	
 	$town->pending_mayor(undef);
 	$town->pending_mayor_date(undef);
 	$town->update;
 	
 	$town->add_to_history(
    		{
-			day_id  => $c->stash->{today}->id,,
+			day_id  => $c->stash->{today}->id,
            	message => "The towns people allow the triumphant party " . $c->stash->{party}->name . " to appoint a new mayor. They select "
            	    . $character->character_name . " for the job",
    		}
@@ -701,16 +836,36 @@ sub become_mayor : Local {
 		}
 	);
 	
-	$c->model('DBIC::Party_Mayor_History')->create(
-	   {
-	       mayor_name => $character->character_name,
-	       character_id => $character->id,
-	       town_id => $town->id,
-	       got_mayoralty_day => $c->stash->{today}->id,
-	       party_id => $c->stash->{party}->id,
-	   }
-	);
+	if ($c->stash->{party}->kingdom_id) {
 	
+        my $party_kingdom = $c->model('DBIC::Party_Kingdom')->find_or_create(
+            {
+                kingdom_id => $c->stash->{party}->kingdom_id,
+                party_id => $c->stash->{party}->id,
+            }           
+        );	
+    		
+        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
+            when ('peace') {
+                # Add a kingdom message saying they raided a town the kingdom was at peace with
+                $c->stash->{party}->kingdom->add_to_messages(
+                    {
+                        day_id => $c->stash->{today}->id,
+                        message => "The party " . $c->stash->{party}->name . " installed a mayor in the town of " . $town->town_name . 
+                            ", even though the town is loyal to the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
+                    }                    
+                );
+                
+                $party_kingdom->decrease_loyalty(20);
+            }
+            when ('war') {
+                $party_kingdom->increase_loyalty(20);
+            }
+    	}
+    	
+    	$party_kingdom->update;
+	}	
+
     $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];
 
 	my $messages = $c->forward( '/quest/check_action', [ 'taken_over_town', $town ] );

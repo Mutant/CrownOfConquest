@@ -1,6 +1,8 @@
 package RPG::NewDay::Action::CreateDay;
 use Moose;
 
+use File::Copy;
+
 extends 'RPG::NewDay::Base';
 
 sub continue_on_error {
@@ -37,6 +39,8 @@ sub run {
 
     $c->yesterday($yesterday);
     $c->current_day($new_day);
+    
+    copy($c->config->{home} . '/docroot/static/minimap/kingdoms.png', $c->config->{home} . '/docroot/static/minimap/' . $new_day->day_number . '.png');
 
     $c->logger->info( "Beginning new day script for day: " . $new_day->day_number );
 }

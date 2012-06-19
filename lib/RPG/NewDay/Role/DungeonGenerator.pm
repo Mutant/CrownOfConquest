@@ -39,6 +39,7 @@ sub generate_dungeon_grid {
 	my $dungeon   = shift;
 	my $number_of_rooms = shift;
 	my $corridor_chance = shift // 15;
+	my $no_room_tileset = shift // 0;
 
 	# Number of rooms is an array ref, with each element the number of rooms on that floor
 	if (! ref $number_of_rooms) {
@@ -101,11 +102,17 @@ sub generate_dungeon_grid {
 			# Create the room or corridor
 			my @new_sectors;
 			my $corridor_roll = Games::Dice::Advanced->roll('1d100');
+			
+        	my $tileset;
+        	if (! $no_room_tileset) {
+        	   $tileset = (shuffle RPG::Schema::Dungeon::tilesets())[0];
+        	}			
+			
 			if ( $corridor_roll <= $corridor_chance ) {
-				@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions );
+				@new_sectors = $self->_create_corridor( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions, $tileset );
 			}
 			else {
-				@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions );
+				@new_sectors = $self->_create_room( $dungeon, $start_x, $start_y, $floor, $sectors_created, $positions, $tileset );
 			}
 	
 			croak "No new sectors returned when creating room at $start_x, $start_y" unless @new_sectors;
@@ -175,6 +182,7 @@ sub _create_room {
 	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
+	my $tileset         = shift;
 
 	my $c = $self->context;
 
@@ -184,8 +192,8 @@ sub _create_room {
 
 	#warn "$top_x, $top_y, $bottom_x, $bottom_y\n";
 	#warn Dumper $sectors_created;
-
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, } );
+	
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id, floor => $floor, ($tileset ? (tileset => $tileset) : ()) } );
 
 	my $coords_created;
 	my @sectors;
@@ -258,10 +266,11 @@ sub _create_corridor {
 	my $floor           = shift;
 	my $sectors_created = shift;
 	my $positions       = shift;
+	my $tileset         = shift;
 
 	my $c = $self->context;
 
-	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor,} );
+	my $room = $c->schema->resultset('Dungeon_Room')->create( { dungeon_id => $dungeon->id,	floor => $floor, ($tileset ? (tileset => $tileset) : ())} );
 
 	my $corridor_size = Games::Dice::Advanced->roll('1d12') + 8;
 

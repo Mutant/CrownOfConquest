@@ -11,7 +11,9 @@ use RPG::Maths;
 sub init_enchantment {
 	my $self = shift;
 	
-	my $spell = $self->result_source->schema->resultset('Spell')->random();
+	my $spell = $self->result_source->schema->resultset('Spell')->random(
+	   exclude => 'Detonate',
+	);
 	$self->add_to_variables(
 		{
 			name => 'Spell',

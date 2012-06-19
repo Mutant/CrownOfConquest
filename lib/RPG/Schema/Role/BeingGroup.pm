@@ -87,7 +87,81 @@ sub display_group_type {
 	$type =~ s/\s*$//;
 	
 	return $type;
-;
+}
+
+sub skill_aggregate {
+    my $self = shift;
+    my $skill = shift;
+    my $event = shift;
+    
+    my @characters = $self->members;
+    
+    my @character_skills = $self->result_source->schema->resultset('Character_Skill')->search(
+        {
+            'character_id' => [map { $_->is_character && $_->id } @characters],
+            'skill.skill_name' => $skill,
+        },
+        {
+            join => 'skill',
+        }
+    );
+    
+    my $aggregate = 0;
+    foreach my $char_skill (@character_skills) {
+        $aggregate += $char_skill->execute($event);   
+    }
+    
+    return $aggregate;
+}
+
+#  Get all equipment the group has for a given category
+sub get_equipment {
+	my $self = shift;
+	my $category = shift;	
+
+	my @equipment = $self->result_source->schema->resultset('Items')->search(
+    	{
+    	    'category.item_category' => $category,
+    	    'character_id' => [map { $_->is_character && $_->id } $self->members],
+    	},
+        {
+            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+        },
+	);
+	return @equipment;
+}
+
+# Award XP to all characters. Takes the amount of xp to award if it's the same for everyone, or a hash of
+#  character id to amount awarded
+# Returns an array with the details of the changes
+sub xp_gain {
+    my ( $self, $awarded_xp ) = @_;
+
+    my @characters = $self->members;
+
+    my @details;
+
+    foreach my $character (@characters) {
+        next unless $character->is_character;
+        
+        next if $character->is_dead;
+
+        my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
+        
+        next if ! $xp_gained || $xp_gained <= 0;
+
+        my $level_up_details = $character->xp( $character->xp + ($xp_gained || 0) );
+
+        push @details, {
+        	character        => $character,	
+			xp_awarded       => $xp_gained,
+            level_up_details => $level_up_details,
+        };
+
+        $character->update;
+    }
+
+    return @details;
 }
 
 1;

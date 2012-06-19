@@ -31,6 +31,20 @@ sub setup_player : Tests(startup => 1) {
     );
     
     $self->{config}{email_log_file} = 0;
+    
+    $self->{mock_forward}{login_user} = sub {
+        RPG::C::Player->login_user($self->{c}, $_[0]->[0]);
+    };
+
+    $self->{mock_forward}{check_email} = sub {
+        RPG::C::Player->check_email($self->{c}, $_[0]->[0]);
+    };
+
+    $self->{mock_forward}{generate_and_send_verification_code} = sub {
+        RPG::C::Player->generate_and_send_verification_code($self->{c}, $_[0]->[0]);
+    };
+     
+    $self->{mock_forward}{set_screen_size} = sub {};     
      
     use_ok 'RPG::C::Player';
 }
@@ -215,25 +229,15 @@ sub test_register_form : Tests(2) {
     is( $template_args->[0][0]{params}{message}, undef, "No message" );
 }
 
-sub test_register_missing_params : Tests(10) {
+sub test_register_missing_params : Tests(8) {
     my $self = shift;
 
     # GIVEN
     $self->{config}->{max_number_of_players} = 1;
 
-    my $expected_message = "Please enter your email address, name, password and the CAPTCHA code";
+    my $expected_message = "Please enter your name, password and the CAPTCHA code";
 
     my @tests = (
-        {
-            params => {
-                email            => '',
-                player_name      => 'name',
-                password1        => 'pass',
-                password2        => 'pass',
-                validate_captcha => 1,
-            },
-            desc => 'Email missing',
-        },
         {
             params => {
                 email            => 'foo@bar.com',
@@ -415,7 +419,7 @@ sub test_register_referring_player_does_not_exist : Tests(3) {
         password1   => 'pass',
         password2   => 'pass',
         submit => 1,
-        referred_by_email => 'bob@bob.com',
+        referred_by => 'bob@bob.com',
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
@@ -430,7 +434,7 @@ sub test_register_referring_player_does_not_exist : Tests(3) {
     is( $template_args->[0][0]{template}, 'player/register.html', "Forward to register form" );
     is(
         $template_args->[0][0]{params}{message},
-        "Can't find the email address of the player that referred you. Are you sure it's correct?",
+        "Can't find the player that referred you. Are you sure you used the correct link?",
         "Correct message"
     );
     is( $self->{schema}->resultset('Player')->count, 0, "No players created" );
@@ -464,7 +468,7 @@ sub test_register_successful : Tests(6) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is($args->[1], "url_root", "Correct redirect url");
     is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
@@ -472,6 +476,43 @@ sub test_register_successful : Tests(6) {
     is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
 }
+
+sub test_register_successful_no_email : Tests(6) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name' } );
+    $self->{config}->{max_number_of_players}   = 2;
+    $self->{config}->{minimum_password_length} = 4;
+
+    $self->{params} = {
+        player_name => 'name1',
+        password1   => 'pass',
+        password2   => 'pass',
+        submit => 1,
+    };
+
+    $self->{c}->set_always( 'validate_captcha', 1 );
+    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
+    
+    $self->{config}->{url_root} = 'url_root';
+
+    # WHEN
+    RPG::C::Player->register( $self->{c} );
+
+    # THEN
+    my ($method, $args) = $self->{mock_response}->next_call();
+    is($method, 'redirect', "Redirected");
+    is($args->[1], "url_root", "Correct redirect url");
+    is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
+    
+    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
+    is($new_player->email, undef, "Email set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
+    is($new_player->verification_code, undef, "Verification code not set");
+}
+
 
 sub test_register_successful_with_promo_code : Tests(7) {
     my $self = shift;
@@ -503,7 +544,7 @@ sub test_register_successful_with_promo_code : Tests(7) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is($args->[1], "url_root", "Correct redirect url");
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
@@ -543,7 +584,7 @@ sub test_register_successful_with_promo_code_non_exist : Tests(7) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is($args->[1], "url_root", "Correct redirect url");
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
@@ -583,7 +624,7 @@ sub test_register_successful_with_promo_code_used : Tests(7) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is($args->[1], "url_root", "Correct redirect url");
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
@@ -609,7 +650,7 @@ sub test_register_successful_with_referred_player : Tests(8) {
         password2   => 'pass',
         promo_code => 1234,
         submit => 1,
-        referred_by_email => 'bob@bob.com',
+        referred_by => 'name',
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
@@ -624,7 +665,7 @@ sub test_register_successful_with_referred_player : Tests(8) {
     # THEN
     my ($method, $args) = $self->{mock_response}->next_call();
     is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Correct redirect url");
+    is($args->[1], "url_root", "Correct redirect url");
     is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
     
     my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
@@ -658,7 +699,7 @@ sub test_login_user_doesnt_exist : Tests(2) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
-    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{login} = 'foo@bar.com';
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -676,7 +717,7 @@ sub test_login_password_not_given : Tests(2) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
-    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{login} = 'foo@bar.com';
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -694,7 +735,7 @@ sub test_login_password_incorrect : Tests(2) {
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
-    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{login} = 'foo@bar.com';
     $self->{params}{password} = 'pas'; 
 
     # WHEN
@@ -703,27 +744,6 @@ sub test_login_password_incorrect : Tests(2) {
     # THEN
     is( $template_args->[0][0]{template}, 'player/login.html', "Forward to correct template" );
     is( $template_args->[0][0]{params}{message}, "Email address and/or password incorrect", "Error message set" );
-}
-
-sub test_login_not_verified : Tests(3) {
-    my $self = shift;
-
-    # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass'), verified => 0 } );
-    
-    $self->{params}{email} = 'foo@bar.com';
-    $self->{params}{password} = 'pass'; 
-
-    $self->{config}->{url_root} = 'url_root';
-
-    # WHEN
-    RPG::C::Player->login( $self->{c} );
-
-    # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root/player/verify?email=foo\@bar.com", "Redirected to verify page");
-    is($self->{session}{player}, undef, "User not stored in session");
 }
 
 sub test_login_successful : Tests(4) {
@@ -741,7 +761,41 @@ sub test_login_successful : Tests(4) {
         } 
     );
     
-    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{login} = 'foo@bar.com';
+    $self->{params}{password} = 'pass'; 
+
+    $self->{config}->{url_root} = 'url_root';
+    
+    $self->{mock_forward}{post_login_checks} = sub {};
+
+    # WHEN
+    RPG::C::Player->login( $self->{c} );
+
+    # THEN
+    my ($method, $args) = $self->{mock_response}->next_call();
+    is($method, 'redirect', "Redirected");
+    is($args->[1], "url_root", "Redirected to main page");
+    is($self->{session}{player}->id, $player->id, "User now stored in session");
+    $player->discard_changes;
+    is($player->warned_for_deletion, 0, "Warned for deletion flag cleared");
+}
+
+sub test_login_successful_with_name : Tests(4) {
+    my $self = shift;
+
+    # GIVEN
+    my $player = $self->{schema}->resultset('Player')->create( 
+        { 
+            player_name => 'name', 
+            email => 'foo@bar.com', 
+            password => sha1_hex('pass'), 
+            verified => 1,
+            warned_for_deletion => 1,
+            deleted => 0, 
+        } 
+    );
+    
+    $self->{params}{login} = 'name';
     $self->{params}{password} = 'pass'; 
 
     $self->{config}->{url_root} = 'url_root';
@@ -775,7 +829,7 @@ sub test_login_was_deleted : Tests(5) {
         } 
     );
     
-    $self->{params}{email} = 'foo@bar.com';
+    $self->{params}{login} = 'foo@bar.com';
     $self->{params}{password} = 'pass'; 
 
     $self->{config}->{url_root} = 'url_root';

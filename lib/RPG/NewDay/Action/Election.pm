@@ -84,11 +84,14 @@ sub run_election {
 	
 	my %scores = $election->get_scores();
 	
+    $election->status('Closed');
+	$election->update;
+	
 	foreach my $char_id (keys %scores) {
 	    my $char_score = $scores{$char_id};
 	
 		$c->logger->debug("Character $char_id scores: " . $char_score->{total} . " [spend: " . $char_score->{spend} . 
-		  ", rating: " . $char_score->{rating} . ", random: " . $char_score->{random} . "]"); 
+		  ", rating: " . $char_score->{rating} . ", charisma: " . $char_score->{charisma} . ", random: " . $char_score->{random} . "]"); 
 		
 		if (! defined $highest_score || $highest_score < $char_score->{total}) {
 			$winner	= $char_score->{character};
@@ -117,18 +120,10 @@ sub run_election {
 		$winner->mayor_of($town->id);
 		$winner->update;
 		
-		if (! $winner->is_npc) {
-        	$c->schema->resultset('Party_Mayor_History')->create(
-        	   {
-        	       mayor_name => $winner->character_name,
-        	       character_id => $winner->id,
-        	       town_id => $town->id,
-        	       got_mayoralty_day => $c->current_day->id,
-        	       party_id => $winner->party_id,
-        	   }
-        	);
-		}		
-				
+		$winner->apply_roles;
+		
+		$winner->gain_mayoralty($town);
+						
 		$c->schema->resultset('Town_History')->create(
         	{
 				town_id => $election->town_id,
@@ -174,9 +169,6 @@ sub run_election {
             }
         ); 
 	}
-
-	$election->status('Closed');
-	$election->update;
 
 	$town->last_election($election->scheduled_day);
 	$town->update;	

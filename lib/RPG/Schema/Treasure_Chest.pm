@@ -13,11 +13,11 @@ __PACKAGE__->add_columns(qw/treasure_chest_id dungeon_grid_id trap gold/);
 
 __PACKAGE__->set_primary_key(qw/treasure_chest_id/);
 
-__PACKAGE__->has_many( 'items', 'RPG::Schema::Items', { 'foreign.treasure_chest_id' => 'self.treasure_chest_id' } );
+__PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'treasure_chest_id' );
 
 __PACKAGE__->belongs_to( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
-my @TRAPS = qw/Curse Hypnotise Detonate/;
+my @TRAPS = qw/Curse Hypnotise Detonate Mute/;
 sub add_trap {
 	my $self = shift;
 
@@ -41,31 +41,27 @@ sub fill {
 	return unless $self->dungeon_grid->dungeon_room;
 	
 	my $dungeon = $self->dungeon_grid->dungeon_room->dungeon;
-	
+		
 	return unless $dungeon;
 		
 	my $number_of_items = RPG::Maths->weighted_random_number(1..3);
 
 	for (1..$number_of_items) {
-		my $max_prevalence = Games::Dice::Advanced->roll('1d100') + (15 * $dungeon->level);
-		$max_prevalence = 100 if $max_prevalence > 100;		
+		my $min_prevalence = 15 * (5 - $dungeon->level);
+		$min_prevalence -= Games::Dice::Advanced->roll('1d20');
+		$min_prevalence = 1 if $min_prevalence < 1;
 
-        my $item_type;
-        while ( !defined $item_type ) {
-            last if $max_prevalence > 100;
-        	
-    	    my @items = map { $_ <= $max_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
+        my @items = map { $_ >= $min_prevalence ? @{$item_types_by_prevalence{$_}} : () } keys %item_types_by_prevalence;
 
-			$item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
-			
-			$max_prevalence++;
-		}
-		
+	    my $item_type = $items[ Games::Dice::Advanced->roll( '1d' . scalar @items ) - 1 ];
+	    
 	    # We couldn't find a suitable item. Try again
 	    next unless $item_type;
 	    
+	    my $enchantment_chance = 9 * ($dungeon->level - 1);
+	    
 	    my $enchantments = 0;
-	    if (Games::Dice::Advanced->roll('1d100') <= 15) {
+	    if ($item_type->category->always_enchanted || Games::Dice::Advanced->roll('1d100') <= $enchantment_chance) {
 	    	$enchantments = RPG::Maths->weighted_random_number(1..3);
 	    }
 
@@ -90,6 +86,30 @@ sub fill {
 	}
 	
     $self->update;	
+}
+
+sub delete {
+    my ( $self, @args ) = @_;
+
+	# Check if any items in the chest are for a quest. If so, delete the quest
+	my @item_ids = map { $_->id } $self->items;
+	
+	my @quests = $self->result_source->schema->resultset('Quest')->search(
+		{
+			'type.quest_type' => 'find_dungeon_item',
+			'quest_param_name.quest_param_name' => 'Item',
+			'start_value' => \@item_ids,
+		},
+		{
+			join => ['type', {'quest_params' => 'quest_param_name'}],
+		}
+	);
+	
+	map { $_->delete } @quests;
+	
+    my $ret = $self->next::method(@args);
+
+    return $ret;
 }
 
 1;

@@ -147,11 +147,11 @@ sub get_party_logs_since_date {
     return $self->search(
         {
             $self->_party_criteria($party),
-            encounter_ended => {'>=', $date},
+            encounter_started => {'>=', $date},
         },
         {
             prefetch => 'day',
-            order_by => 'encounter_ended desc',
+            order_by => 'encounter_started desc',
         }
     );
 }
@@ -192,6 +192,24 @@ sub get_recent_logs_for_garrison {
             prefetch => 'day',
             order_by => 'encounter_ended desc',
             rows => $logs_count,
+        }
+    );
+}
+
+sub get_old_logs_for_group {
+    my $self  = shift;
+    my $group = shift;
+    my $max_to_keep = shift;
+    
+    return if $max_to_keep <= 0;
+    
+    return $self->search(
+        {
+            $self->_group_type_critiera($group),
+        },
+        {
+            order_by => 'encounter_ended desc',
+            offset => $max_to_keep,
         }
     );
 }

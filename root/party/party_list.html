@@ -8,6 +8,8 @@ function loadFightMenu(charId) {
 	if (! loaded.fightMenu) loaded.fightMenu = {};
 	
 	if (loaded.fightMenu[charId]) return;
+	
+	loaded.fightMenu[charId] = true;
 
 	var menu = dijit.byId('fightMenu_' + charId);
 
@@ -15,7 +17,8 @@ function loadFightMenu(charId) {
         url: "[% base %]combat/target_list",
         handleAs: "json",
         
-        load: function(responseObject, ioArgs){		
+        load: function(responseObject, ioArgs){     	
+        		
         	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: none;');
         
 			for (var i in responseObject.opponents) {
@@ -27,9 +30,8 @@ function loadFightMenu(charId) {
 			        id: itemId
 			    });
 			    menu.addChild(menuItem);
-			}
+			}		
 			
-			loaded.fightMenu[charId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -54,6 +56,8 @@ function loadTargetBasedMenu(charId, type) {
 	if (! loaded[type + "Menu"]) loaded[type + "Menu"] = {};
 	
 	if (loaded[type + "Menu"][charId]) return;
+	
+	loaded[type + "Menu"][charId] = true;
 
 	var menu = dijit.byId(type + 'Menu_' + charId);
 
@@ -76,7 +80,7 @@ function loadTargetBasedMenu(charId, type) {
 				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
 				menuItem = dijit.byId(listId);
 
-				if (responseObject.list[i].target == 'party' || responseObject.list[i].target == 'self') {		
+				if (responseObject.list[i].target != 'creature' && responseObject.list[i].target != 'character' && responseObject.list[i].target != 'special') {		
 					menuItem = new dijit.MenuItem({
 				        label: responseObject.list[i].label,
 				        onClick: function() { selectAction(this, ucFirst(type)) },
@@ -106,9 +110,7 @@ function loadTargetBasedMenu(charId, type) {
 				    menu.addChild(popupItem);
 				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
 				}
-			}
-			
-			loaded[type + "Menu"][charId] = true;
+			}			
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -124,6 +126,8 @@ function loadCastSubMenu(subMenuId) {
 	if (! loaded.castSubMenu[charId]) loaded.castSubMenu[charId] = {};
 	
 	if (loaded.castSubMenu[charId][spellId]) return;
+	
+	loaded.castSubMenu[charId][spellId] = true;
 
     menu = this;	
 	
@@ -153,9 +157,8 @@ function loadCastSubMenu(subMenuId) {
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);			    
-			}
+			}		
 			
-			loaded.castSubMenu[charId][spellId] = true;
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -173,6 +176,8 @@ function loadUseSubMenu(subMenuId) {
 	if (! loaded.useSubMenu[charId]) loaded.useSubMenu[charId] = {};
 	
 	if (loaded.useSubMenu[charId][actionId]) return;    
+	
+	loaded.useSubMenu[charId][actionId] = true;
     
 	dojo.xhrGet( {
         url: "[% base %]combat/use_target_list?character_id=" + charId + "&action_id=" + actionId,
@@ -193,9 +198,7 @@ function loadUseSubMenu(subMenuId) {
 			        id: targetId
 			    });
 			    menu.addChild(menuItem);
-			}
-			
-			loaded.useSubMenu[charId][actionId] = true;
+			}			
 		},
         
 	    timeout: 15000 // Time in milliseconds	
@@ -314,7 +317,8 @@ function createMenus() {
 	
     [% END %]
     
-    [% IF character.get_item_actions(in_combat) %]
+    [% IF character.has_usable_actions(in_combat) %]
+    
        	if (dijit.byId("useMenu_[% character.id %]")) {
 			dijit.byId("useMenu_[% character.id %]").destroyRecursive();
 		}
@@ -336,9 +340,9 @@ function createMenus() {
 
     [% END %]
     
-    highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 %]', '[% combat_params.${character.id}.1 %]');
+    highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 | html_entity %]', '[% combat_params.${character.id}.1 | html_entity %]');
     
-    [% END %]    
+    [% END %]
 }
 
 function createButton(menu, name, characterId) {
@@ -385,14 +389,12 @@ function createButton(menu, name, characterId) {
 	[% IF ! in_combat %]class="dojoDndItem"[% END %] 
 	id="char-[% char.id %]" 
 	jsId="char-[% char.id %]"
-	style="margin-bottom: 3px; height: 56px; width: 90%;"
+	style="height: 56px; width: 90%;"
 >
 	<div id="char-inner-[% char.id %]" style="height: 90%">	
 
 		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
-			<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">
-				<img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0">
-			</a>
+			<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')"><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0"></a>
 		</span>
 		
 		<div style="width: 3px; height: 100%; float: left; margin-right: 1px; position: relative" 
@@ -410,13 +412,15 @@ function createButton(menu, name, characterId) {
 	           </div>			
 			[% INCLUDE party/party_char_alerts.html %]
 			[% FOREACH effect IN effects_by_character.${char.id} ~%]
-				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | lower %]effect.png" 
-					title="[% effect.effect_name %] ([% effect.time_left %])">
+				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | replace(' ', '') | lower %]effect.png" 
+					title="[% effect.effect_name %] ([% effect.time_left - 1 %])">
 			[% END ~%]
 			<br>
 			
 			[% IF char.is_dead %]
-				<div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
+				[% IF ! in_combat %] 
+					<div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
+				[% END %]
 			[% ELSE %]
 			
 	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
@@ -430,7 +434,7 @@ function createButton(menu, name, characterId) {
 	    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
 	    		[% END %]
 	    	
-	    		<span id="castSpan_[% char.id %]"></span>
+	    		<span id="castSpan_[% char.id %]" [% IF in_combat %]onDblClick="selectActionCombat('Cast', '[% char.id %]', 'autocast')"[% END %]></span>
 	    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
 	    	
 	    		<span id="useSpan_[% char.id %]"></span>

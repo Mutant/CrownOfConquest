@@ -12,6 +12,7 @@ sub lose_mayoralty {
 	confess "Not a mayor" unless $self->mayor_of;
 
 	my $town = $self->mayor_of_town;
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
 	
 	$self->mayor_of(undef);
 	$self->creature_group_id(undef);
@@ -30,6 +31,12 @@ sub lose_mayoralty {
 	
 	$self->update;
 	
+	$self->add_to_history(
+        {
+            event => $self->character_name . " is no longer the mayor of " . $town->town_name,
+            day_id => $today->id,
+        }
+	);
     
     # Cancel election, if there's one in progress
     my $election = $town->current_election;
@@ -78,13 +85,60 @@ sub lose_mayoralty {
             }
         );
         
-        if ($history_rec) {
-            my $today = $self->result_source->schema->resultset('Day')->find_today;
-                    
+        if ($history_rec) {                  
             $history_rec->lost_mayoralty_day($today->id);
             $history_rec->update;
         }
    	}	
+}
+
+sub gain_mayoralty {
+    my $self = shift;
+    my $town = shift;
+        
+    $self->status(undef);
+    $self->status_context(undef);
+    $self->update;
+        
+    my $cg = $self->create_creature_group();
+
+	my $schema = $self->result_source->schema;
+
+	my $today = $self->result_source->schema->resultset('Day')->find_today;
+	
+	if (! $self->is_npc) {        
+        my $party = $self->party;
+        
+       	# If they have negative prestige, reset it to 0
+    	my $party_town = $schema->resultset('Party_Town')->find_or_create(
+    		{
+    			party_id => $party->id,
+    			town_id  => $town->id,
+    		},
+    	);
+    	if ($party_town->prestige < 0) {
+    		$party_town->prestige(0);
+    		$party_town->update;	
+    	}
+	    
+    	$schema->resultset('Party_Mayor_History')->create(
+    	   {
+    	       mayor_name => $self->character_name,
+    	       character_id => $self->id,
+    	       town_id => $town->id,
+    	       got_mayoralty_day => $today->id,
+    	       party_id => $party->id,
+    	       creature_group_id => $cg->id,
+    	   }
+    	);
+	}
+	
+	$self->add_to_history(
+	   {
+	       day_id => $today->id,
+	       event => $self->character_name . ' is now the mayor of ' . $town->town_name,
+	   }
+	);
 }
 
 # Called when the mayor was defeated in battle, and they should be removed from office
@@ -140,5 +194,36 @@ around 'defence_factor' => sub {
     
     return $df;      
 };
+
+sub create_creature_group {
+    my $self = shift;
+    
+    my $schema = $self->result_source->schema;
+    
+    my $cg = $schema->resultset('CreatureGroup')->create(
+		{
+			creature_group_id => undef,
+		}
+	);       
+	
+	$self->creature_group_id($cg->id);
+	$self->update;
+	
+	# Add any garrisoned chars into the group
+	my @garrison_chars = $schema->resultset('Character')->search(
+		{
+			status => 'mayor_garrison',
+			status_context => $self->mayor_of,
+			party_id => $self->party_id,
+		}
+	);
+	
+	foreach my $character (@garrison_chars) {
+		$character->creature_group_id($cg->id);
+		$character->update;
+	}
+	
+	return $cg;
+}
 
 1;

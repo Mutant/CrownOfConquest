@@ -17,6 +17,7 @@ my %PANEL_PATHS = (
 	creatures => '/combat/display_opponents',
 	mini_map => '/map/kingdom',
 	online_parties => '/party/online',
+	messages_notify => '/party/message/notify',
 );
 
 sub refresh : Private {
@@ -76,6 +77,8 @@ sub refresh : Private {
 	$response{panel_callbacks} = $c->stash->{panel_callbacks};
 		
 	$response{message_panel_size} = $c->stash->{message_panel_size} // 'small';
+	
+	$response{bring_messages_to_front} = $c->stash->{bring_messages_to_front} // 0;
 		
     my $resp = to_json \%response;
     $resp =~ s|script>|scri"+"pt>|g; # Nasty hack
@@ -177,8 +180,8 @@ sub day_logs_check : Private {
 sub messages : Private {
 	my ($self, $c) = @_;
 	
-    # Get recent combat count if party has been offline
     if ( $c->stash->{party}->last_action <= DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) ) {
+        # Get recent combat count if party has been offline
         my $offline_combat_count = $c->model('DBIC::Combat_Log')->get_offline_log_count( $c->stash->{party} );
         if ( $offline_combat_count > 0 ) {
             push @{ $c->stash->{messages} }, $c->forward(
@@ -205,6 +208,57 @@ sub messages : Private {
                     }
                 ]
             );
+        }
+        
+        # If they have a king, check if there's any quest petitions awaiting confirmation
+        if ($c->stash->{party}->has_king_of()) {
+            my $quest_count = $c->model('DBIC::Quest')->search(
+        	   {
+        	       kingdom_id => $c->stash->{party}->kingdom_id,
+        	       status => ['Requested', 'Negotiating'],
+        	   },            
+            )->count;
+            
+            if ($quest_count > 0) {
+                push @{ $c->stash->{messages} }, $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'party/messages/kingdom_quests_awaiting_confirmation.html',
+                            params => {
+                                quest_count   => $quest_count,
+                            },
+                            return_output => 1,
+                        }
+                    ]
+                );                
+            }
+        }
+        
+        # See if there are any Kingdom discussion board messages posted recently
+        if ($c->stash->{party}->kingdom_id) {
+            my $msg_count = $c->stash->{party}->kingdom->search_related(
+                'messages',
+                {
+                    type => 'board',
+                    day_id => $c->stash->{today}->id,
+                }   
+            )->count;
+            
+            if ($msg_count > 0) {
+                push @{ $c->stash->{messages} }, $c->forward(
+                    'RPG::V::TT',
+                    [
+                        {
+                            template      => 'party/messages/kingdom_board_messages.html',
+                            params => {
+                                msg_count   => $msg_count,
+                            },
+                            return_output => 1,
+                        }
+                    ]
+                );
+            }
         }
     }
 }
@@ -272,7 +326,16 @@ sub check_for_timed_panels : Private {
     if (DateTime->compare(DateTime->now->subtract('minutes' => $c->config->{online_threshold}), $c->session->{last_online_parties_refresh}) == 1) {
         push @{$c->stash->{refresh_panels}}, 'online_parties';
         $c->session->{last_online_parties_refresh} = DateTime->now();
-    }    
+    } 
+
+    # Check for new messages
+    $c->session->{messages_check} //= DateTime->now();
+    
+    if (DateTime->compare(DateTime->now->subtract('minutes' => 5), $c->session->{messages_check}) == 1) {
+        push @{$c->stash->{refresh_panels}}, 'messages_notify';
+        $c->session->{messages_check} = DateTime->now();
+    }
+
 }
 
 1;

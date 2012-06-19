@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::Maths;
+package Test::RPG::Map;
 
 use base qw(Test::RPG);
 

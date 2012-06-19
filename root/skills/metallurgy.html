@@ -1,0 +1,6 @@
+[% character.character_name %] used [% character.pronoun('posessive-subjective') %] Metallurgy skills, and made minor repairs to [% character.pronoun('posessive-subjective') ~%]
+[% FOREACH item IN repaired ~%]
+	[% IF loop.last && loop.count > 1 ~%] and [% END ~%]
+	[% IF loop.first %] [% END %][% item ~%]
+	[% IF loop.last ~%].[% ELSE ~%], [% END ~%]
+[% END ~%]

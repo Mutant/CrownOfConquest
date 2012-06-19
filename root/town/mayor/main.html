@@ -49,6 +49,14 @@ function adjustMayorGold(action) {
 	dojo.byId('gold-action').value = action;
 	dijit.byId('mayor-adjust-gold').show();
 }
+
+function saveCharacterOrder(select, char_id) {
+	dojo.xhrGet( {
+        url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
+        handleAs: "text",        
+    });
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-reliquish-mayorlty" style="display: none" title="Relinquish Mayoralty?">
@@ -123,7 +131,11 @@ Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 	
 <div dojoType="dijit.layout.ContentPane" title="Garrison" href="[% base %]/town/mayor/garrison?town_id=[% town.id %]" [% IF tab == 'garrison' %]selected=true[% END %]></div>
 	
+<div dojoType="dijit.layout.ContentPane" title="Traps" href="[% base %]/town/mayor/traps?town_id=[% town.id %]" [% IF tab == 'traps' %]selected=true[% END %]></div>
+	
 <div dojoType="dijit.layout.ContentPane" title="Guards" href="[% base %]/town/mayor/guards?town_id=[% town.id %]" [% IF tab == 'guards' %]selected=true[% END %]></div>
+
+<div dojoType="dijit.layout.ContentPane" title="Buildings" href="[% base %]/town/mayor/buildings?town_id=[% town.id %]" [% IF tab == 'buildings' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Balance Sheet" href="[% base %]/town/mayor/balance_sheet?town_id=[% town.id %]&day_id=[% day_id %]" [% IF tab == 'balance_sheet' %]selected=true[% END %]></div>
 

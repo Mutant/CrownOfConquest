@@ -183,8 +183,7 @@ __PACKAGE__->add_columns(
         'name'              => 'last_allegiance_change',
         'is_nullable'       => 1,
         'size'              => 0,
-    },      
-    
+    },          
     'warned_for_kingdom_co_op' => {
         'data_type'         => 'datetime',
         'is_auto_increment' => 0,
@@ -193,6 +192,15 @@ __PACKAGE__->add_columns(
         'name'              => 'warned_for_kingdom_co_op',
         'is_nullable'       => 1,
         'size'              => '11'
+    },
+    'description' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'description',
+        'is_nullable'       => 1,
+        'size'              => '5000'
     },     
 );
 __PACKAGE__->set_primary_key('party_id');
@@ -283,6 +291,19 @@ sub movement_factor {
     }
 
     return round ($base_mf / scalar @characters);
+}
+
+sub mayors {
+    my $self = shift;
+    
+    my @mayors = $self->search_related(
+        'characters',
+        {
+            'mayor_of' => {'!=', undef},
+        }
+    );
+    
+    return @mayors;
 }
 
 around 'move_to' => sub {
@@ -537,7 +558,7 @@ sub adjust_order {
     
     # Reset rank bar if it's gone off edge of party
     if ($self->rank_separator_position >= $count) {    	
-    	my $new_pos = $count-1;
+    	my $new_pos = $count;
     	$new_pos = 1 if $new_pos <= 0;
     	$self->rank_separator_position($new_pos);
     	$self->update;
@@ -765,90 +786,65 @@ sub deactivate {
     $self->update;           
 }
 
-#  Return an array of equipment in this party.  Optional item category name(s) can be passed.
-sub get_equipment {
-	my $self = shift;
-	my @categories = @_;
-	
-	my %search_criteria = (
-			'belongs_to_character.party_id' => $self->id, 
-			'belongs_to_character.garrison_id' => { '=', undef},
-			'belongs_to_character.mayor_of' => { '=', undef},
-			'belongs_to_character.status' => { '=', undef},
-	);
-	my $count = @categories;
-	if ($count) {
-		my %item_types;
-		foreach my $next_category (@categories) {
-			push @{$item_types{item_category}}, $next_category;
-		}
-		if ($count > 1) {
-			$search_criteria{'-or'} = \%item_types;
-		} else {
-			%search_criteria = (%search_criteria, %item_types);
-		}
-	}
+# Party was wiped out during combat
+sub wiped_out {
+    my $self = shift;
+    
+    # Some characters get deleted, depending on party level
+    my $del_char_count = round $self->level / 8;
+    $del_char_count = 1 if $del_char_count < 1;
+    
+    my @chars = shuffle $self->members;
+    
+    $del_char_count = scalar @chars-1 if $del_char_count >= scalar @chars;
+   
+    for (1..$del_char_count) {
+        my $char = shift @chars;
+        $char->status('wiped_out');
+        $char->status_context($self->id);
+        $char->party_id(undef);
+        $char->update;
+    }
 
-	my @party_equipment = $self->result_source->schema->resultset('Items')->search(
-        	\%search_criteria,
-	        {
-	        	join => ['belongs_to_character', 'item_type'],
-	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-	            order_by => 'item_category',
-	        },
-	);
-	return @party_equipment;
-}
-
-#  This function consumes items that are possessed by the party.  Note that this sub will accept items that are
-#    both individual items and those with 'Quantity'.
-sub consume_items{
-	my $self = shift;
-	my $categories = shift;
-	$categories = [$categories] unless ref $categories;
-    my %items_to_consume = @_;
-
-	#  Get the party's equipment.
-	my @party_equipment = $self->get_equipment(@$categories);
-
-	#  Go through the items, decreasing the needed counts.
-	my @items_to_consume;
-	foreach my $item (@party_equipment) {
-		if (defined $items_to_consume{$item->item_type->item_type} and $items_to_consume{$item->item_type->item_type} > 0) {
-			my $quantity = $item->variable('Quantity') // 1;
-
-			if ($quantity <= $items_to_consume{$item->item_type->item_type}) {
-				$items_to_consume{$item->item_type->item_type} -= $quantity;
-				$quantity = 0;
-			} else {
-				$quantity -= $items_to_consume{$item->item_type->item_type};
-				$items_to_consume{$item->item_type->item_type} = 0;
-			}
-			push @items_to_consume, {
-			    item => $item, 
-			    quantity => $quantity
-			};
-		}
-	}
-	
-	#  If any of the counts are non-zero, we didn't have enough of the item.
-	foreach my $next_key (keys %items_to_consume) {
-		if ($items_to_consume{$next_key} > 0) {
-			return 0;
-		}
-	}
-	
-	#  We had enough resources, so decrement quantities and possibly delete the items.
-	foreach my $to_consume (@items_to_consume) {
-		if ($to_consume->{quantity} == 0) {
-			$to_consume->{item}->delete;
-		} else {
-			my $var = $to_consume->{item}->variable_row('Quantity');
-			$var->item_variable_value($to_consume->{quantity});
-			$var->update;
-		}
-	}
-	return 1;
+    # If we couldn't delete any chars (due to party size of 1), they lose some equipment
+    if ($del_char_count <= 0) {
+        my $char = $chars[0];
+        
+        my @items = shuffle $char->search_related('items',
+            {
+                equip_place_id => {'!=', undef},
+            }
+        );
+        
+        $items[0]->delete if @items;
+    }
+    
+    # One char gets auto-ressed
+    $chars[0]->hit_points(1);
+    $chars[0]->update;
+    
+    # Find a nearby town to respawn in
+    my $party_loc = $self->location;
+    
+    my $town = $party_loc->town;
+    
+    if (! $town) {
+        my @towns = shuffle $self->result_source->schema->resultset('Town')->find_in_range(
+            {
+                x => $party_loc->x,
+                y => $party_loc->y,
+            },
+            9,
+            3,
+            1,
+            31,
+        );
+        $town = $towns[0]; 
+    }
+    
+    $self->land_id($town->land_id);
+    $self->dungeon_grid_id(undef);
+    $self->update;
 }
 
 #  Get an array of the buildings owned by this party.
@@ -902,6 +898,8 @@ sub can_claim_land {
     my $self = shift;
     my $land = shift;
     
+    return 0 unless $self->kingdom_id;
+    
     return 0 unless $self->level >= RPG::Schema->config->{minimum_land_claim_level};
         
     return $land->can_be_claimed($self->kingdom_id);
@@ -925,7 +923,7 @@ sub change_allegiance {
     
     my $old_kingdom = $self->kingdom;
     
-    if ($old_kingdom && defined $old_kingdom->king->party_id && $old_kingdom->king->party_id == $self->id) {
+    if ($old_kingdom && $old_kingdom->active && defined $old_kingdom->king->party_id && $old_kingdom->king->party_id == $self->id) {
         croak "Cannot change allegiance if you already have your own kingdom\n";   
     }
     
@@ -973,6 +971,7 @@ sub change_allegiance {
             {
                 day_id => $today->id,
                 message => "The party known as " . $self->name . " renounced their loyalty to the kingdom",
+                type => 'public_message',
             }
         );
         
@@ -997,6 +996,7 @@ sub change_allegiance {
                 {
                     day_id => $today->id,
                     message => "The party known as " . $self->name . " swore allegiance, and are now loyal to the kingdom",
+                    type => 'public_message',
                 }
             );
         }
@@ -1018,7 +1018,7 @@ sub cancel_kingdom_quests {
         'quests',
         {
             kingdom_id => $kingdom->id,
-            status => ['Not Started', 'In Progress'],
+            status => ['Not Started', 'In Progress', 'Requested'],
         }
     );
     
@@ -1106,7 +1106,7 @@ sub active_quests_of_type {
         'quests', 
         { 
             'type.quest_type' => $quest_type_name,
-            'status' => ['In Progress','Not Started'],
+            'status' => ['In Progress','Not Started','Requested'],
         },
         {
             join => 'type',
@@ -1128,18 +1128,32 @@ sub is_suspected_of_coop_with {
     return $player1->has_ips_in_common_with($player2) ? 1 : 0;  
 }
 
-# Returns true if party has the king of the specified kingdom
+# Returns true if party has the king of the specified kingdom,
+#  or their own kingdom, if it's not passed 
 sub has_king_of {
     my $self = shift;
-    my $kingdom = shift // croak "Kingdom not supplied";
+    my $kingdom = shift // $self->kingdom;
     
-    return 1 if $kingdom->king->party_id == $self->id;
+    return 0 unless $kingdom;
+    
+    return 1 if $kingdom->king && $kingdom->king->party_id == $self->id;
     
     return 0;
     
+}
+
+# Return the % of the world the party has explored
+sub world_explored {
+    my $self = shift;
+    
+    my $world_size = $self->result_source->schema->resultset('Land')->search->count;
+    my $explored = $self->search_related('mapped_sectors')->count;
+    
+    return ($explored / $world_size) * 100;   
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 
 1;
+

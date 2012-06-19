@@ -81,6 +81,7 @@ sub update_item_type : Local {
 	$item_type->item_type($c->req->param('item_type'));
 	$item_type->base_cost($c->req->param('base_cost'));
 	$item_type->prevalence($c->req->param('prevalence'));
+	$item_type->weight($c->req->param('weight'));
 	$item_type->update;
 	
 	my $params = $c->req->params;

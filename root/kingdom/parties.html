@@ -28,16 +28,22 @@ The following parties have sworn allegiance to our Kingdom.
 
 [% FOREACH party IN parties %]
 	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
-		<td>[% party.name %]</td>
+		<td><a href="javascript:getPanels('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>
 		<td>[% party.player.player_name %]</td>
 		<td>[% party.level %]</td>
 		<td>[% party.get_column('character_count') %]</td>
-		<td>[% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]</td>
 		<td>
 			[% IF party.id != kingdom.king.party_id %]
-			<button dojoType="dijit.form.Button" onclick="showBanishPartyDiag('[% party.id %]', '[% party.name | replace("'", "\\'") %]')">Banish Party</button>
+				[% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]
+			[% ELSE %]
+				Monarch
 			[% END %]
 		</td>
+		[% IF is_king && party.id != kingdom.king.party_id %]
+		<td>			
+			<button dojoType="dijit.form.Button" onclick="showBanishPartyDiag('[% party.id %]', '[% party.name | replace("'", "\\'") %]')">Banish Party</button>			
+		</td>
+		[% END %]
 	</tr>
 [% END %]
 

@@ -115,7 +115,7 @@ sub test_check_for_flee : Tests(8) {
 		
 }
 
-sub test_finish_garrison_lost : Test(5) {
+sub test_finish_garrison_lost : Test(7) {
 	my $self = shift;
 	
 	# GIVEN
@@ -144,8 +144,9 @@ sub test_finish_garrison_lost : Test(5) {
 	
 	foreach my $char (@characters) {
 		$char->discard_changes;
-		is($char->party_id, undef, "Character removed from party");
 		is($char->garrison_id, undef, "Character removed from garrison");
+		is($char->status, 'corpse', "Character now a corpse");
+		is($char->status_context, $land[4]->id, "Corpse location set correctly");
 	}
 }
 
@@ -206,44 +207,6 @@ sub test_execute_round : Tests(1) {
 
     # THEN
     is( $result->{combat_complete}, undef, "Combat hasn't ended" );
-}
-
-sub test_garrison_gets_bonus_in_building : Tests(2) {
-    my $self = shift;
-    
-    # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
-    
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-	
-	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
-	my $character2 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 15, agility => 15 );
-	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
-	
-	$character1->garrison_id($garrison->id);
-	$character1->update;	
-	$character2->garrison_id($garrison->id);
-	$character2->update;
-	
-	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
-	
-	my $battle = RPG::Combat::GarrisonCreatureBattle->new(
-        schema         => $self->{schema},
-        garrison       => $garrison,
-        creature_group => $cg,
-        config         => $self->{config},
-        log            => $self->{mock_logger},
-    );
-    
-    # WHEN
-    my $combat_factors = $battle->combat_factors;
-    
-    # THEN
-    is($combat_factors->{ character }{ $character1->id }{ df }, 12, "Character 1 df bonus added");
-    is($combat_factors->{ character }{ $character2->id }{ df }, 17, "Character 2 df bonus added");
-	
-	
 }
 
 1;

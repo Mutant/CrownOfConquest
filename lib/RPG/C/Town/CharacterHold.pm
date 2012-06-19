@@ -18,6 +18,7 @@ sub character_list : Private {
 		{
 			status => $hold,
 			status_context => $town->id,
+			'party.defunct' => undef,
 		},
 		{
 			prefetch => 'party',
@@ -68,8 +69,6 @@ sub add_character : Local {
 		$character->status($hold);
 		$character->status_context($c->stash->{party_location}->town->id);
 		$character->update;
-		
-		$c->stash->{party}->adjust_order;
 	}
 	
 	push @{$c->stash->{refresh_panels}}, 'party', 'party_status';
@@ -111,8 +110,6 @@ sub remove_character : Local {
 	$character->status(undef);
 	$character->status_context(undef);
 	$character->update;
-	
-	$c->stash->{party}->adjust_order;
 	
 	push @{$c->stash->{refresh_panels}}, 'party', 'party_status';
 	

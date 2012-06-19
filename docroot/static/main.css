@@ -62,7 +62,7 @@ br {
 .main, .dijitMenuItemLabel {
 	font-size: 9pt;
 	font-family: verdana, kalimati, helvetica;
-        color: #EECAA2;
+        color: #B5AFA9;
 }
 
 .tabLabel {
@@ -90,7 +90,8 @@ br {
 #content-outer {
 	height: auto;
 	min-height: 250px;
-	width: 1156px;
+	width: 100%;
+	max-width: 1250px;
 	margin: auto;
 }
 
@@ -104,8 +105,8 @@ a:visited {
 
 #body {
         background-color: black;
-	background: url(images/bgtexturegreydark.png);
-        color: white;
+	background-image: url(/static/images/kingdombgv3.jpg);
+        background-size: cover;
 }
 
 h2 {margin: 0; padding: 0}
@@ -144,6 +145,18 @@ h1 {margin: 0; padding: 1px}
 
 .close-icon:hover {
 	background-image: url(/static/images/layout/closebuttonpressed.png);
+}
+
+.back-icon {
+	background-image: url(/static/images/layout/backbuttondefault.png);
+	height: 13px;
+	width: 21px;
+	float: right;
+	margin-top: 2px;
+}
+
+.back-icon:hover {
+	background-image: url(/static/images/layout/backbuttonmouseover.png);
 }
 
 /* DnD */
@@ -210,6 +223,7 @@ h1 {margin: 0; padding: 1px}
 	background: black;
         font-family: verdana, kalimati, helvetica;
         font-size: 9pt;
+	color: white;
 }
 
 .dj_webkit .tundra .dijitDialog {
@@ -308,7 +322,7 @@ h1 {margin: 0; padding: 1px}
 
 .login-info {
 	font-size: 7pt;
-	float: right;
+	float: left;
 }
 
 .menuExpandIcon {
@@ -335,9 +349,13 @@ div.enlargedTitle {
 }
 
 .kingdomsTabContainer {
-	height:500px;
-	width: 1050px;
+	height:400px;
 	margin: auto;
+}
+
+.smallTabContainer {
+	height: 390px;
+	min-height: 390px;
 }
 
 .tundra .dijitContentPaneLoading {
@@ -350,6 +368,7 @@ div.enlargedTitle {
 	background: black; 
 	border: 2px solid #4d4d4d; 
 	margin: 2px;
+        width: 450px;
         -moz-border-radius: 10px;
         -webkit-border-radius: 10px;
         -khtml-border-radius: 10px;

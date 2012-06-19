@@ -4,6 +4,7 @@ dojo.registerModulePath("rpg", urlBase + "static/dojo_cust/rpg");
 
 dojo.require("dojo.parser");
 dojo.require("dijit.layout.TabContainer");
+dojo.require("dijit.form.Select");
 dojo.require("dijit.form.FilteringSelect");
 dojo.require("dijit.Dialog");
 dojo.require("dijit.form.DropDownButton");
@@ -11,7 +12,6 @@ dojo.require("dijit.Menu");
 dojo.require("dijit.form.NumberTextBox");
 dojo.require("dijit.form.Button");
 dojo.require("dijit.layout.ContentPane");
-dojo.require("dijit.Dialog");
 dojo.require("dijit.form.TextBox");
 dojo.require("dojox.layout.ContentPane");
 dojo.require('dijit.Tooltip');
@@ -301,7 +301,7 @@ function refreshSectorCallback(data) {
 var originalContent;
 function getPanels(url) {    
 	originalContent = dojo.byId('messages-pane').innerHTML;
-	
+		
 	dijit.byId('messages-pane').set("content", dojo.byId('loader-gif').innerHTML);
     
     var no_cache = "&no_cache=" + Math.random() *100000000000;
@@ -354,6 +354,11 @@ function panelLoadCallback(responseObject, ioArgs) {
 		executeCallbacks(responseObject.panel_callbacks);
 	}
 	
+	if (responseObject.bring_messages_to_front == 1) {
+		console.log(responseObject.bring_messages_to_front);
+		messagesToFront();
+	}
+	
 	dojo.byId('map-outer').style.visibility = 'visible';
 	dojo.byId('messages-pane').style.visibility = 'visible';
 	dojo.byId('main-loading').style.display = 'none';
@@ -364,6 +369,14 @@ function panelErrorCallback(err) {
 		"<a href=\"" + urlBase + "player/submit_bug\" target=\"_blank\">report a bug</a>.";
 	dijit.byId('messages-pane').setContent(errorMsg);
 	closeScreen();
+}
+
+function messagesToFront() {
+	dojo.byId('messages-pane').style.zIndex = '700';
+}
+
+function messagesToBack() {
+	dojo.byId('messages-pane').style.zIndex = '500';
 }
 
 function refreshPanels(panelData) {
@@ -469,8 +482,8 @@ function setMessagePanelSize(size) {
 		}).play();
 	
 		dojo.byId('messages-pane').style.width = "80%";
+		dojo.byId('messages-pane').style.height = "70%";
 	
-		dojo.byId('messages-pane').style.opacity = "0.9";
 		dojo.byId('messages-pane').style.overflow = 'auto';
 		current_size = 'large';
 	}
@@ -480,8 +493,8 @@ function setMessagePanelSize(size) {
 		dojo.byId('messages-pane').style.right = "";
 		dojo.byId('messages-pane').style.bottom = '20px';
 		dojo.byId('messages-pane').style.left = '20px';
-		dojo.byId('messages-pane').style.opacity = "0.8";
 		dojo.byId('messages-pane').style.width = "auto";
+		dojo.byId('messages-pane').style.height = "auto";
 		current_size = 'small';		
 	}
 	
@@ -573,15 +586,21 @@ function hideDiag(diagName) {
 }
 
 /* Screen */
-
+var screenHistory = [];
+var currentUrl;
 function loadScreen(url) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
 	}
+	
+	messagesToBack();
 		
 	dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
 
 	_gaq.push(['_trackPageview', url]);
+	
+	screenHistory.push(url);
+	currentUrl = url;
 	
 	dojo.xhrGet( {
         url: urlBase + url,
@@ -596,6 +615,32 @@ function loadScreen(url) {
 function closeScreen() {
 	dojo.byId('screen-outer').style.display = 'none';
 	dijit.byId('screen-pane').set("content", '');
+	screenHistory = [];
+	displayed = false;
+}
+
+function backScreen() {
+	if (screenHistory.length == 0) {
+		return;
+	}
+	
+	var url = screenHistory.pop();
+	if (currentUrl !== undefined) {
+		while (url == currentUrl) {
+			if (screenHistory.length == 0) {
+				
+				screenHistory.push(url);
+				return;
+			}
+		
+			url = screenHistory.pop();
+		}
+	}
+	
+	if (! url) {
+		return;
+	}
+	loadScreen(url);
 }
 
 /* Options */
@@ -611,9 +656,17 @@ function unselectImage(name){
     document[name].src = images[name + "-unsel"].src;
     return true;
 }
+
 function selectImage(name){
     document[name].src = images[name + "-sel"].src;
     return true;
+}
+
+function setBrowserSize() {
+	var vs = dojo.window.getBox();
+	
+	dojo.byId('login-height').value = vs.h;
+	dojo.byId('login-width').value = vs.w;
 }
 
 /* Character */
@@ -705,19 +758,35 @@ function miniMapMove(evt) {
 }
 
 function findMiniMapCoords(evt) {
-	var pixelX = evt.layerX;
-	var pixelY = evt.layerY;
-
+	var pixelCoords = getXYFromEvent(evt);
+	
 	if (evt.target.id == 'minimap-view-box') {
 		var box = dojo.byId('minimap-view-box');
 	
-		pixelX = pixelX + parseInt(box.style.left);
-		pixelY = pixelY + parseInt(box.style.top); 
+		pixelCoords.x = pixelCoords.x + parseInt(box.style.left);
+		pixelCoords.y = pixelCoords.y + parseInt(box.style.top); 
 	}
 
 	var coords = {};
-	coords.x = Math.floor(pixelX/2);
-	coords.y = Math.floor(pixelY/2);
+	coords.x = Math.floor(pixelCoords.x/2);
+	coords.y = Math.floor(pixelCoords.y/2);
+		
+	return coords;
+}
+
+function getXYFromEvent(evt) {
+	var x; var y;
+	
+	var coords = {};
+	
+	if (evt.layerX) {
+		coords.x = evt.layerX;
+		coords.y = evt.layerY;
+	}
+	else {
+		coords.x = evt.x;
+		coords.y = evt.y;
+	}
 	
 	return coords;
 }
@@ -743,20 +812,31 @@ function miniMapInitCallback() {
     });
 }
 
+function setMinimapVisibilityCallback(data) {
+	if (data == 1) {
+		dojo.byId('mini_map-pane').style.display = 'block';
+	}
+	else { 
+		dojo.byId('mini_map-pane').style.display = 'none';
+	}
+}
+
 /* Quests */
 
 function acceptQuest(quest_id) {
 	dojo.xhrGet( {
         url: urlBase + "/quest/accept?quest_id=" + quest_id, 
-        handleAs: "text",
+        handleAs: "json",
         
         load: function(responseObject, ioArgs) {
-        	if (responseObject) {
-        		dojo.byId('accept-message-text').innerHTML = responseObject;
+        	if (responseObject.message) {
+        		dojo.byId('accept-message-text').innerHTML = responseObject.message;
         		dijit.byId('message').show();
         	}
         
-        	dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
+        	if (responseObject.accepted) {
+        		dojo.byId('offer').innerHTML = dojo.byId('accepted').innerHTML;
+        	}
         }
     });
 }
@@ -778,3 +858,24 @@ function postRoundCallback() {
     });
 }
 	
+/* Kingdoms */
+var selectedKingdom;
+function viewKingdomInfo(kingdomId) {
+	if (selectedKingdom) {
+		dojo.byId('kingdom-link-' + selectedKingdom).style.backgroundColor = '';
+	}
+
+	dojo.byId('kingdom-link-' + kingdomId).style.backgroundColor = '#5F5F5F';
+	selectedKingdom = kingdomId;
+
+	dojo.xhrGet( {
+        url: urlBase + "party/kingdom/individual_info?kingdom_id=" + kingdomId,
+        handleAs: "text",
+        
+        load: function(responseObject){
+			dojo.byId('kingdom-info').innerHTML = responseObject;
+		},
+
+	    timeout: 45000
+    });	
+}

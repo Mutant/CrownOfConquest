@@ -45,7 +45,7 @@ sub test_cancel : Tests(3) {
     
 }
 
-sub test_get_scores : Tests(5) {
+sub test_get_scores : Tests(9) {
     my $self = shift;
     
     # GIVEN
@@ -56,6 +56,20 @@ sub test_get_scores : Tests(5) {
     my ($mayor) = $party1->characters;
     $mayor->mayor_of($town->id);
     $mayor->update;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Charisma',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 4,
+        }
+    );    
     
     my $candidate1 = $self->{schema}->resultset('Election_Candidate')->create(
         {
@@ -81,12 +95,16 @@ sub test_get_scores : Tests(5) {
     
     # THEN
     is(scalar keys %scores, 4, "Scores returned for all characters");
-    
+        
     is($scores{$mayor->id}->{spend}, 0.5, "Mayor's spend returned in scores");
     is($scores{$mayor->id}->{rating}, 10, "Mayor's rating returned in scores");
+    is($scores{$mayor->id}->{charisma}, 13, "Mayor's charisma returned in scores");
+    is($scores{$mayor->id}->{total}, 23.5 + $scores{$mayor->id}->{random}, "Mayor's total score is correct"); 
 
     is($scores{$char->id}->{spend}, 50, "Char's spend returned in scores");
     is($scores{$char->id}->{rating}, 0, "Char's rating returned in scores");
+    is($scores{$char->id}->{charisma}, 0, "Char's charisma returned in scores");
+    is($scores{$char->id}->{total}, 50 + $scores{$char->id}->{random}, "Chars's total score is correct");
     
 }
 

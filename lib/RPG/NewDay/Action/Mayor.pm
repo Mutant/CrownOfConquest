@@ -36,10 +36,7 @@ sub run {
 	    }
 	}
 	
-	die join "\n", @errors if @errors;
-	
-	# Clear all tax paid / raids today
-    $c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0, raids_today => 0, guards_killed => 0 } );	
+	die join "\n", @errors if @errors;	
 }
 
 sub process_town {
@@ -80,38 +77,22 @@ sub process_town {
 		$self->check_for_npc_election($town);
 		
 		$self->check_for_allegiance_change($town);
+		
+		$self->train_guards($town);
 	}
 
 	my $revolt_started = $self->check_for_revolt($town);
 	
 	if ($town->peasant_tax && ! $town->peasant_state) {
-		my $gold = int ((Games::Dice::Advanced->roll('2d20') + $town->prosperity * 25) * ($town->peasant_tax / 100)) * 10;
-		$self->context->logger->debug("Collecting $gold peasant tax");
-		$town->increase_gold($gold);
-		$town->update;
-		
-		$c->schema->resultset('Town_History')->create(
-            {
-                town_id => $town->id,
-                day_id  => $c->current_day->id,
-                message => "The mayor collected $gold gold tax from the peasants",
-            }
-        );
-        
-		$town->add_to_history(
-			{
-				type => 'income',
-				value => $gold,
-				message => 'Peasant Tax',
-				day_id => $c->current_day->id,
-			}
-		); 
+	    $self->collect_tax($town, $mayor);
 	}
 	
 	$self->calculate_kingdom_tax($town);
 
 	$self->generate_guards($town->castle);
 	$town->discard_changes;
+	
+    $self->pay_trap_maintenance($town);
 	
 	$self->calculate_approval($town);
 
@@ -120,8 +101,46 @@ sub process_town {
 	if (! $revolt_started && $town->peasant_state) {
 		$self->process_revolt($town);
 	}
+	
+	$self->gain_xp($town, $mayor);
 
-	$self->generate_advice($town);      
+	$self->generate_advice($town);
+}
+
+sub collect_tax {
+    my $self = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    my $c = $self->context;
+    
+    my $bonus = 15 + ($mayor->execute_skill('Leadership', 'town_peasant_tax') // 0);
+    my $roll = Games::Dice::Advanced->roll('2d30');
+    
+    $c->logger->debug("Tax collection: bonus: $bonus, prosp: " . $town->prosperity . ", roll: $roll, tax: " . $town->peasant_tax);
+    
+	my $gold = int (($roll + $town->prosperity * $bonus) * ($town->peasant_tax / 100)) * 10;
+	$self->context->logger->debug("Collecting $gold peasant tax");
+	$town->increase_gold($gold);
+	$town->update;
+	
+	$c->schema->resultset('Town_History')->create(
+        {
+            town_id => $town->id,
+            day_id  => $c->current_day->id,
+            message => "The mayor collected $gold gold tax from the peasants",
+        }
+    );
+    
+	$town->add_to_history(
+		{
+			type => 'income',
+			value => $gold,
+			message => 'Peasant Tax',
+			day_id => $c->current_day->id,
+		}
+	);     
+       
 }
 
 sub calculate_approval {
@@ -153,16 +172,26 @@ sub calculate_approval {
     my $party_town_rec = $self->context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' }, {sum => 'guards_killed'} ],
-            as     => [ 'tax_collected', 'raids_today', 'guards_killed' ],
+            select => [ { sum => 'tax_amount_paid_today' }, ],
+            as     => [ 'tax_collected' ],
         }
     );
-
-    my $raids_today = $party_town_rec->get_column('raids_today') // 0;
-    my $guards_killed = $party_town_rec->get_column('guards_killed') // 0;
+    
+    my $town_raid_rec = $self->context->schema->resultset('Town_Raid')->find(
+        {
+            town_id => $town->id,
+            day_id => $self->context->yesterday->id, 
+        },
+        {
+            select => [ {sum => 'guards_killed'} ],
+            as     => [ 'guards_killed' ],
+        }
+    );    
+    
+    
+    my $guards_killed = $town_raid_rec->get_column('guards_killed') // 0;
     my $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
 
-	my $raids_adjustment = - $raids_today * 3;
 	my $guards_killed_adjustment = - $guards_killed;
 		
 	my $party_tax_adjustment = int $tax_collected / 100;
@@ -171,18 +200,18 @@ sub calculate_approval {
  	my $creature_rec = $self->context->schema->resultset('Creature')->find(
 		{
 			'dungeon_room.dungeon_id' => $town->castle->id,
+			'hit_points_current' => {'>', 0},
 		},
 		{
 			join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
-			select => 'sum(type.level)',
-			as => 'level_aggregate',			
+			select => 'sum(type.maint_cost)',
+			as => 'cost_aggregate',			
 		}
 	);
 
-	my $creature_level = $creature_rec->get_column('level_aggregate') || 0;	
+	my $creature_level = $creature_rec->get_column('cost_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
-	my $guards_hired_adjustment = int ($creature_level / $town->prosperity);
-	$guards_hired_adjustment++ unless $mayor->is_npc; # Make a few less guards required
+	my $guards_hired_adjustment = int ($creature_level / ($town->prosperity * 5));
 	
 	my $garrison_chars_adjustment = 0;
 	
@@ -206,20 +235,37 @@ sub calculate_approval {
 		
 		$garrison_chars_adjustment = round(($actual_garrison_chars_level - $expected_garrison_chars_level) / 10);
 	}
+	
+	my $charisma_adjustment = $mayor->execute_skill('Charisma', 'mayor_approval') // 0;
+	
+	# Runes adjustment
+	my $expected_rune_level = $town->prosperity < 45 ? 0 : round $town->prosperity / 8;
+	my $building = $town->building;
+	my $rune_level = 0;
+	if ($building) {
+	    my @upgrades = $building->upgrades;
+	    foreach my $upgrade (@upgrades) {
+            next unless $upgrade->type =~ /^Rune/;
+            $rune_level += $upgrade->level;
+	    }
+	}
+	
+	my $rune_adjustment = $rune_level - $expected_rune_level;
 		
 	# A random component to approval
 	my $random_adjustment += Games::Dice::Advanced->roll('1d5') - 3;
 	
-	my $adjustment = $raids_adjustment + $guards_killed_adjustment + $party_tax_adjustment + 
-		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $random_adjustment;
+	my $adjustment = $guards_killed_adjustment + $party_tax_adjustment + 
+		$peasant_tax_adjustment + $guards_hired_adjustment + $garrison_chars_adjustment + $charisma_adjustment 
+		+ $rune_adjustment + $random_adjustment;
 
 	$adjustment = -10 if $adjustment < -10;
 	$adjustment =  10 if $adjustment >  10;
 	
 	$self->context->logger->debug("Approval rating adjustment: $adjustment " .
-		"[Raid: $raids_adjustment; Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
+		"[Guards Killed: $guards_killed_adjustment; Guards Hired: $guards_hired_adjustment; " . 
 		"Party Tax: $party_tax_adjustment; Peasant Tax: $peasant_tax_adjustment; Garrison Chars: $garrison_chars_adjustment; " .
-		"Random: $random_adjustment]");
+		"Charisma: $charisma_adjustment; Rune Adjustment: $rune_adjustment; Random: $random_adjustment]");
 	
 	$town->adjust_mayor_rating($adjustment);
 	$town->update;
@@ -246,7 +292,7 @@ sub check_for_revolt {
 	my $start_revolt = 0;
 	my $revolt_reason = 'mayor';
 	
-	if ($town->mayor_rating < 0) {
+	if ($town->mayor_rating < -30) {
 		my $rating = $town->mayor_rating + 100;
 	
 		my $roll = Games::Dice::Advanced->roll('1d100');
@@ -254,9 +300,11 @@ sub check_for_revolt {
 		$start_revolt = 1 if $roll > $rating;
 	}	
 	elsif ($town->peasant_tax >= 35) {
+	    $c->logger->debug("Starting revolt because peasant tax is " . $town->peasant_tax);
+	    
 		$start_revolt = 1;	
 	}
-	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
+	elsif ($town->location->kingdom_id && $town->kingdom_loyalty < 0 && ! $town->capital_of) {
 		my $rating = $town->kingdom_loyalty + 80;
 	
 		my $roll = Games::Dice::Advanced->roll('1d100');
@@ -281,7 +329,8 @@ sub check_for_revolt {
 		unless ($mayor->is_npc) {
 			$c->schema->resultset('Party_Messages')->create(
 				{
-					message => $mayor->character_name . " sends word that the peasants of " . $town->town_name . " have risen up in open rebellion",
+					message => $mayor->character_name . " sends word that the peasants of " . $town->town_name . " have risen up in open rebellion"
+					   . " against the $revolt_reason",
 					alert_party => 1,
 					party_id => $mayor->party_id,
 					day_id => $c->current_day->id,
@@ -334,15 +383,19 @@ sub process_revolt {
     if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
         $kingdom_loyalty_penalty = abs int $town->kingdom_loyalty / 5;
     }
+    
+    my $mayor = $town->mayor;
+    my $negotiation_bonus = 0;
+    if ($mayor) {
+        $negotiation_bonus = $mayor->execute_skill('Negotiation', 'mayor_overthrow_check') // 0;
+    }
 
 	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus;" .
-	   " kingdom loyalty penalty: $kingdom_loyalty_penalty");
+	   " kingdom loyalty penalty: $kingdom_loyalty_penalty; negotiation bonus: $negotiation_bonus");
 
-    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty;
-    
+    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty + $negotiation_bonus;
+        
     $c->logger->debug("Overthrow roll: $roll");
-
-    my $mayor = $town->mayor;
         
     if ($roll < 20) {
     	$mayor->lose_mayoralty;
@@ -379,6 +432,41 @@ sub process_revolt {
     	
     	# Check for allegiance change now there's a new mayor
     	$self->check_for_allegiance_change($town);
+    	
+    	return;
+    }
+    elsif ($roll < 35) {
+        # Peasants destroy some upgrades if some exist
+        my $building = $town->building;
+        
+        if ($building && $building->upgrades->count > 0) {
+            my @upgrades = $building->upgrades;
+            
+            if (@upgrades) {
+                my ($upgrade) = (shuffle @upgrades)[0];
+                my $damage = Games::Dice::Advanced->roll('1d3');
+                $damage = $upgrade->level if $damage > $upgrade->level;
+                $upgrade->level($upgrade->level-$damage);
+                $upgrade->update;
+                
+                $town->add_to_history(
+                	{
+                		day_id  => $c->current_day->id,
+                    	message => "The peasants storm the town hall, damaging some of the town's defences!",
+                	}
+                );                
+                
+                $town->add_to_history(
+                	{
+                		day_id  => $c->current_day->id,
+                    	message => "The revolting peasants have removed $damage levels from our " . $upgrade->type->name . " add-on",
+                    	type => 'mayor_news',
+                	}
+                );                 
+                
+                return;
+            }
+        }
     }
     elsif ($roll > 80) {
     	$town->increase_mayor_rating(19);
@@ -403,16 +491,18 @@ sub process_revolt {
 					day_id => $c->current_day->id,
 				}
 			);
-    	}    	
+    	}    
+    	
+    	return;	
     }
-    else {
-    	$town->add_to_history(
-    		{
-				day_id  => $c->current_day->id,
-            	message => "The peasants are still in revolt!",
-    		}
-    	);
-    }    
+    
+    
+	$town->add_to_history(
+		{
+			day_id  => $c->current_day->id,
+        	message => "The peasants are still in revolt!",
+		}
+	);
 }
 
 sub check_for_pending_mayor_expiry {
@@ -434,8 +524,13 @@ sub refresh_mayor {
 	
 	return unless $mayor;
 	
-	# Heal mayor to max hps if they're not dead, or they were killed, but no one took over
-	if (! $mayor->is_dead || ! $town->pending_mayor) {
+	my $cg = $mayor->creature_group;
+	
+	# They miss out if they happen to be in combat
+	return if $cg && $cg->in_combat;
+	
+	# Heal NPC mayor to max hps if they're not dead, or they were killed, but no one took over
+	if ($mayor->is_npc && (! $mayor->is_dead || ! $town->pending_mayor)) {
         $mayor->hit_points($mayor->max_hit_points);
         $mayor->update;
 	}
@@ -508,6 +603,9 @@ sub refresh_mayor {
     	$hist_rec->increase_value($spent);
     	$hist_rec->update;
 	}
+	
+	# Auto-heal garrison & mayor if necessary
+	$cg->auto_heal if $cg;
 }
 
 sub check_for_npc_election {
@@ -575,7 +673,7 @@ sub generate_advice {
 		return;	
 	}
 	
-	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt/;
+	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty runes/;
 
 	my $advice;	
 	for (shuffle @checks) {
@@ -597,7 +695,7 @@ sub generate_advice {
 			
 			my $creature_level = $creature_rec->get_column('level_aggregate') || 0;
 			
-			if ($creature_level / $town->prosperity < 5) {
+			if ($creature_level / $town->prosperity + 30 < 4) {
 				$advice = "The townsfolk don't feel safe, perhaps you should hire some more guards";
 				last;	
 			}
@@ -662,6 +760,33 @@ sub generate_advice {
 				$advice = "The peasants are in revolt - it must be crushed! Garrison more characters and hire more guards";
 				last; 
 			}					
+		}
+		
+		when ('kingdom_loyalty') {
+            if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
+                $advice = "The towns people are not very loyal to the town's kingdom. Make sure the town is joined to the kingdom's capital by claimed land";
+                last;
+            }   
+		}
+		
+		when ('runes') {
+		    last if $town->prosperity < 35;
+            my $building = $town->building;
+            if (! $building) {
+                $advice = "The town does not have a building. Construct one to help defend it";
+                last;
+            }
+            my @upgrades = $building->upgrades;
+            my $rune_level;
+    	    foreach my $upgrade (@upgrades) {
+                next unless $upgrade->type =~ /^Rune/;
+                $rune_level += $upgrade->level;
+    	    }
+    	    if ($rune_level < round ($town->prosperity / 8)) {
+    	       $advice = "The town does not have enough Rune add-ons to its building. Building more of these will greating improve the town's defences.";
+    	       last;
+    	    }
+            
 		}
 	}
 	
@@ -772,6 +897,154 @@ sub check_for_allegiance_change {
     return unless Games::Dice::Advanced->roll('1d100') <= $change_chance;
             
     $town->change_allegiance($highest_loyalty_kingdom->kingdom);
+}
+
+sub pay_trap_maintenance {
+    my $self = shift;
+    my $town = shift;
+    
+    my $c = $self->context;
+    
+	if ($town->trap_level > 0) {
+	    my $maint_cost = $town->trap_level * $c->config->{town_trap_maint_cost};
+	    
+	    if ($town->gold >= $maint_cost) {
+            $town->decrease_gold($maint_cost);   
+	       
+            $town->add_to_history(
+            	{
+            		type => 'expense',
+            		value => $maint_cost,
+            		message => 'Trap Maintenance',
+            		day_id => $c->current_day->id,
+            	}
+            );            
+	    }
+	    else {
+	        $town->decrement_trap_level;
+	    }
+	    
+        $town->update;
+	}   
+}
+
+sub train_guards {
+    my $self = shift;
+    my $town = shift;    
+    
+    my $minimum_level_aggregate = $town->prosperity * 6 + Games::Dice::Advanced->roll('1d500');
+	
+	my $creature_guard_types = $self->creature_guard_types;
+	
+	my %current_hires;
+	my $level_aggregate = 0;
+	
+	foreach my $type (@$creature_guard_types) {
+		my $guards_to_hire = $self->context->schema->resultset('Town_Guards')->find_or_create(
+			{
+				town_id => $town->id,
+				creature_type_id => $type->id,
+			}
+		);
+		
+		$current_hires{$type->id} = $guards_to_hire;
+		$level_aggregate += $type->level * ($guards_to_hire->amount // 0);
+	}
+	
+	my @sorted_types = sort { $b->hire_cost <=> $a->hire_cost } @$creature_guard_types;
+	
+	my $spent = 0;
+	while ($level_aggregate <= $minimum_level_aggregate) {
+	    my $hired = 0;
+        foreach my $type (@sorted_types) {
+            next if $town->gold < $type->hire_cost;
+            
+            $current_hires{$type->id}->increment_amount;
+            $current_hires{$type->id}->update;
+         
+            $spent += $type->hire_cost;
+            
+            $town->decrease_gold($type->hire_cost);
+            $town->update;
+            
+            $level_aggregate += $type->level;
+            
+            $hired = 1;
+            
+            last;
+        }
+        
+        last if ! $hired;
+	}
+	
+	if ($spent) {      
+        $town->add_to_history(
+            {
+                day_id => $self->context->current_day->id,
+                type => 'expense',
+                message => 'Guard Training',
+                value => $spent,
+            },
+        );
+	}                   
+	
+}
+
+sub creature_guard_types {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+	$self->{creature_guard_types} //= [ $c->schema->resultset('CreatureType')->search(
+		{
+			'category.name' => 'Guard',
+		},
+		{
+			join     => 'category',
+			order_by => 'level',
+		}
+	) ];
+	
+	return $self->{creature_guard_types};       
+}
+
+sub gain_xp {
+    my $self = shift;
+    my $town = shift;
+    my $mayor = shift;
+    
+    return if $mayor->is_npc;
+    
+    my $c = $self->context;
+    
+    my $xp = round ($town->prosperity / 3) + round ($town->mayor_rating / 5) 
+        + ($mayor->execute_skill('Charisma', 'mayor_xp_gain') // 0) + ($mayor->execute_skill('Leadership', 'mayor_xp_gain') // 0)
+        + Games::Dice::Advanced->roll('2d10');
+
+    return if $xp <= 0;        
+        
+    my $details = $mayor->xp( $mayor->xp + $xp );
+    $mayor->update;          
+        
+    my $message = RPG::Template->process(
+    	$c->config,
+    	'party/xp_gain.html',
+    	 {
+        	character        => $mayor,	
+			xp_awarded       => $xp,
+            level_up_details => $details,
+            reason           => 'from being mayor',
+        },
+	);
+	
+	$town->add_to_history(
+		{
+			type => 'mayor_news',
+			message => $message,
+			day_id => $c->current_day->id,
+		}
+	);	    
+    
 }
 
 1;

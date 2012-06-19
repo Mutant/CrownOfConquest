@@ -77,10 +77,34 @@ creatures_cron_string: 20,50 * * * *
 dungeon_doors_cron_string: "*/30 * * * *"
 
 # Generation of mayor's group
-mayors_group_cron_string: "15 */6 * * *"
+mayors_group_cron_string: "15 */3 * * *"
 
 # Filling of dungeon treasure chests
 treasure_chest_cron_string: "45 * * * *"
+
+# Offline combat cron string
+offline_combat_cron_string: "15 * * * *"
+
+# Check for inactive kingdoms, and deactivate
+deactivate_kingdoms_cron_string: "55 */2 * * *"
+
+# New turns cron string
+new_turns_cron_string: "0 * * * *"
+
+# Mini-map generation cron string
+mini_map_cron_string: "*/5 * * * *"
+
+# Archiving of combat logs
+combat_log_archive_cron_string: "5 5 * * 1" 
+
+# Remove damage to buildings
+repair_building_damage_cron_string: "30 * * * *"
+
+# Check whether bombs should be detonated
+detonate_cron_string: "*/5 * * * *"
+
+# Do majesty calculations
+majesty_cron_string: "0 * * * *"
 
 # ----- Character / Party Generation Params ----- #
 
@@ -122,12 +146,12 @@ min_starting_prosperity: 20
 max_starting_prosperity: 40
 
 # Max number of players allowed to register
-max_number_of_players: 300
+max_number_of_players: 600
 
 minimum_password_length: 4
 
 # Number of turns a new party starts with
-starting_turns: 400
+starting_turns: 1000
 
 # Number of days to give the watcher effect for new parties
 new_party_watcher_days: 20
@@ -161,17 +185,23 @@ check_for_coop: 1
 # ----- Party Params ----- #
 
 # Size of map to display
-map_x_size: 21
-map_y_size: 15
+map_height:
+  small: 11
+  medium: 13
+  large: 15
+map_width:
+  small: 17
+  medium: 19
+  large: 21
 
 # Area party can "view" (i.e. how far they can see on main map)
 party_viewing_range: 3
 
 # Number of turns a party gets each hour
-turns_per_hour: 12
+turns_per_hour: 25
 
 # Maximum number of turns a party is allowed to have
-maximum_turns: 750
+maximum_turns: 1500
 
 # Min / Max percentage amount to heal characters each day (based on rest)
 min_heal_percentage: 2
@@ -210,14 +240,26 @@ max_raids_per_day: 3
 # Max party level to give a warning to a party about leaving town
 max_party_level_leave_town_warning: 2 
 
+# Minimum level a character has to be before they can enscribe spells onto scrolls
+min_scroll_enscribe_level: 8
+
+# Gold cost to train a new character
+train_gold_cost: 15000
+
+# Turn cost to train a new character
+train_turn_cost: 50
+
+# Minumum level for training new characters
+train_min_party_level: 12
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack
 creature_attack_chance: 30
 
 # Size of 'roll' for attack
-attack_dice_roll: 18
-defence_dice_roll: 18
+attack_dice_roll: 30
+defence_dice_roll: 30
 
 # Bonus a char gets for choosing to defend
 defend_bonus: 5
@@ -250,9 +292,6 @@ flee_chance_attempt_modifier: 5
 
 # Bonus modifier on flee chance for level 1 parties
 flee_chance_low_level_bonus: 10
-
-# Chance creatures will attack the front rank
-front_rank_attack_chance: 70
 
 # Chance per level of finding an item on defeated creatures
 chance_to_find_item: 10
@@ -314,7 +353,7 @@ max_cost_modifier_change: 5
 shop_sell_modifier: -20
 
 # Percentage chance an item in a shop will be enchanted
-shop_enchanted_item_chance: 5
+shop_enchanted_item_chance: 3
 
 # Percentage sales tax for towns with NPC mayors
 default_sales_tax: 10
@@ -340,6 +379,8 @@ sage_distance_cost: 100
 sage_location_cost: 600
 sage_item_find_cost: 100
 sage_find_dungeon_cost_per_level: 300
+sage_find_orb_base_cost: 100
+sage_find_orb_level_step: 200
 
 # Range from the town where a dungeon can be found
 sage_dungeon_find_range: 40
@@ -348,10 +389,10 @@ sage_dungeon_find_range: 40
 characters_per_prosperity: 10
 
 # Chance a blacksmith's skill will go up on a given day
-blacksmith_skill_increase_chance: 33
+blacksmith_skill_increase_chance: 40
 
 # Chance a blacksmith will retire
-blacksmith_retire_chance: 15
+blacksmith_retire_chance: 10
 
 # Max blacksmith starting skill
 blacksmith_max_start_skill: 5
@@ -398,7 +439,7 @@ castle_capture_chance: 66
 min_character_mayoral_candidate_level: 8
 
 # Minimum days before an election a character is allowed to declare candidacy
-min_days_for_election_candidacy: 2
+min_days_for_election_candidacy: 1
 
 # Prosperity to sector range ratio (i.e. n prosperity to 1 range) 
 decay_ctr_ratio: 30
@@ -416,7 +457,16 @@ castle_treasury_movement_chance: 5
 character_sell_deletion_chance: 15
 
 # Max % difference to base price allowed when trading items
-trade_max_percentage_difference_in_base_price: 175
+trade_max_percentage_difference_in_base_price: 100
+
+# Maintenance cost of town traps per day per level
+town_trap_maint_cost: 5
+
+# Cost to upgrade to a trap level (per level)
+town_trap_upgrade_cost: 500
+
+# Max level of town traps
+town_trap_max_level: 10
 
 # ----- Dungeon Params ----- #
 
@@ -436,8 +486,11 @@ max_y_dungeon_room_size: 6
 # Maximum amount of sector's a party can move in one turn
 dungeon_move_maximum: 3
 
-# Ratios of sectors per creature
+# Ratio of sectors per creature in dungeons
 dungeon_sectors_per_creature: 12
+
+# Ratio of sectors per creature in sewers
+sewer_sectors_per_creature: 8
 
 # Number of party levels required to enter a dungeon per level (with level 1 dungeons = 0, level 2 = step * 1, level 3 = step * 2, etc) 
 dungeon_entrance_level_step: 5
@@ -456,6 +509,9 @@ dungeon_special_room_percentage: 2
 
 # Movement cost
 cost_of_moving_through_dungeons: 2
+
+# Cost in turns to dismantle a dungeon door
+dismantle_door_cost: 15
 
 # ----- Creature Params ----- #
 
@@ -586,10 +642,10 @@ min_party_level_for_garrison_attack: 6
 # ----- Enchantment Params ----- #
 
 # Minimum creature level that has enchanted items
-minimum_enchantment_creature_level: 6
+minimum_enchantment_creature_level: 8
 
 # Step in chance for creature levels for finding enchanted items
-enchantment_creature_level_step: 1.5
+enchantment_creature_level_step: 1.8
 
 # ----- Building Params ----- #
 
@@ -636,7 +692,30 @@ kingdom_co_op_grace: 7
 capital_move_cost_per_sector: 6
 
 # Chance sectors not connected to capital go neutral
-chance_unconnected_sector_becomes_neutral: 15
+chance_unconnected_sector_becomes_neutral: 20
+
+# Number of days a claim for the throne takes
+claim_wait_period: 7
+
+# Number of days before being allowed to claim again after a failed claim
+failed_claim_ban_period: 28
+
+# Minimum level for parties allowed to respond to a claim
+minimum_claim_response_level: 3
+
+# Minimum level parties can delcare allegiance
+min_level_for_allegiance_declaration: 3
+
+# Minimum majesty score before a kingdom can be awarded the crown
+crown_minimum_majesty: 80
+
+# Number of days a kingdom must lead before being awarded the crown
+crown_majesty_wait_period: 8
+
+# ----- Skills Params ----- #
+
+# Maximum level allowed for a particular skill
+max_skill_level: 10
 
 # ----- Debug ----- #
 

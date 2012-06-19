@@ -12,7 +12,7 @@ __PACKAGE__->table('Garrison');
 __PACKAGE__->resultset_class('RPG::ResultSet::Garrison');
 
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name
-                            attack_parties_from_kingdom/);
+                            attack_parties_from_kingdom attack_friendly_parties/);
 
 __PACKAGE__->numeric_columns(qw/gold/);
 
@@ -23,6 +23,8 @@ __PACKAGE__->has_many( 'characters', 'RPG::Schema::Character', 'garrison_id', {c
 __PACKAGE__->has_many( 'items', 'RPG::Schema::Items', 'garrison_id', {cascade_delete => 0});
 
 __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', 'party_id', {cascade_delete => 0} );
+
+__PACKAGE__->has_many( 'messages', 'RPG::Schema::Garrison_Messages', 'garrison_id', );
 
 __PACKAGE__->belongs_to(
     'land',
@@ -159,7 +161,15 @@ sub check_for_fight {
 	    if ($party->kingdom_id && ! $self->attack_parties_from_kingdom && $party->kingdom_id == $opponent->kingdom_id) {
 	       return 0;   
 	    }
+	    
+	    # Don't attack parties from kingdoms at peace with garrison's kingdom, unless instructed to do so
+	    if ($party->kingdom_id && ! $self->attack_friendly_parties) {
+            my $relationship = $party->kingdom->relationship_with($opponent->kingdom_id);
+            return 0 if $relationship && $relationship->type eq 'peace';
+	    }
 	}
+	
+	return 1 if $attack_mode eq 'Attack All Opponents';
 
 	my $factor = $opponent->compare_to_party($self);
 
@@ -177,6 +187,26 @@ sub check_for_fight {
 
 	return 0;
 }
+
+around 'get_equipment' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $category = shift;
+    
+    my @equipment = $self->$orig($category);
+    
+	my @garrison_equipment = $self->search_related(
+        'items',
+    	{
+    	    'category.item_category' => $category,
+    	},
+        {
+            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
+        },
+	);
+	
+	return (@equipment, @garrison_equipment);   
+};
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 	

@@ -122,4 +122,53 @@ sub disable_emails : Local {
 	$c->res->redirect( $c->config->{url_root} . '/player/account/email_unsubscribe' );
 }
 
+sub set_email : Local {
+    my ($self, $c) = @_;
+    
+    my $error = $c->forward('/player/check_email', [$c->req->param('email')]);
+    
+    if ($error) {
+        $c->stash->{panel_messages} = $error;
+    }
+    else {
+        my $verification_code = $c->forward('/player/generate_and_send_verification_code', [$c->req->param('email')] );
+        
+        my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id, } );
+        
+        $player->email($c->req->param('email'));
+        $player->verification_code($verification_code);
+        $player->update;
+        
+        $c->session->{player} = $player;
+        
+        $c->stash->{panel_messages} = "Email address saved. You will receive an email to allow you to verify your email address. If you "
+            . "don't receive it shortly, please check your spam filter";
+    }
+    
+    $c->forward('/party/details/options');   
+}
+
+sub reverify : Local {
+    my ( $self, $c ) = @_;
+
+    my $message;
+
+    if (! $c->session->{player}->verified ) {
+        my $verification_code = $c->forward('/player/generate_and_send_verification_code', [$c->session->{player}->email] );
+        
+        my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id, } );
+        
+        $player->email($c->req->param('email'));
+        $player->verification_code($verification_code);
+        $player->update;
+        
+        $c->session->{player} = $player;
+        
+        $c->stash->{panel_messages} = "Verification email re-sent. Make sure you check your spam filter!";        
+    }
+    
+    $c->forward('/party/details/options');
+
+}
+
 1;

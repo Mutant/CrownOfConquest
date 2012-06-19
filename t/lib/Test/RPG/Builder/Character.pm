@@ -35,6 +35,15 @@ sub build_character {
 			status         => $params{status} || undef,
 			status_context => $params{status_context} || undef,
 			mayor_of       => $params{mayor_of} || undef,
+			creature_group_id => $params{creature_group_id} // undef,
+			resist_fire    => 0,
+			resist_ice    => 0,
+			resist_poison    => 0,
+			resist_fire_bonus    => 0,
+			resist_ice_bonus    => 0,
+			resist_poison_bonus    => 0,
+			has_usable_actions_combat => 0,
+			has_usable_actions_non_combat => 0,
 		}
 	);
 

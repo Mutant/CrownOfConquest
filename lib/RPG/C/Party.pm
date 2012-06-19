@@ -23,7 +23,7 @@ sub main : Local {
 
     my $load_panel = $c->req->param('panel');
 
-    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map', 'online_parties' ];
+    $c->flash->{refresh_panels} = [ 'map', 'party', 'party_status', 'zoom', 'creatures', 'mini_map', 'online_parties', 'messages_notify' ];
     
     if (! $load_panel) { 
         $load_panel = 'party/init';
@@ -55,7 +55,7 @@ sub init : Local {
 
 	if (! $c->flash->{refresh_panels}) {
         # Protect against flash not getting read properly
-        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map', 'online_parties'];
+        $c->stash->{refresh_panels} = ['map', 'party', 'party_status', 'zoom', 'creatures', 'messages', 'mini_map', 'online_parties', 'messages_notify'];
 	}
         
 	$c->forward( '/panel/refresh' );   
@@ -82,34 +82,8 @@ sub sector_menu : Private {
 
 	$creature_group ||= $c->stash->{party_location}->available_creature_group;
 
-	my $confirm_attack = 0;
-
-    my $factor_comparison;
-	if ($creature_group) {
-		$confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
-  	
-    	$c->stats->profile('Beginning factor comaprison');
-		    
-		# Check for a watcher effect
-		my $has_watcher = $c->model('DBIC::Effect')->search(
-            {
-                'party_effect.party_id' => $c->stash->{party}->id,
-                'effect_name' => 'Watcher',
-                'time_left' => {'>', 0},
-            },
-            {
-                join => 'party_effect',
-            }
-		)->count >= 1 ? 1 : 0;		
-		
-		$c->stats->profile('Got watcher boolean');
-
-		if ($has_watcher) {
-			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
-		}
-		    	
-    	$c->stats->profile('Completed factor comaprison');		
-	}
+    my $comparison_details = $c->forward('get_watcher_factor_comparison', [$creature_group]);
+    my ($factor_comparison, $confirm_attack) = @$comparison_details;
 
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
@@ -137,12 +111,10 @@ sub sector_menu : Private {
 	$c->forward('/party/pending_mayor_check');
 
 	my @adjacent_towns;
-	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {
-		# Remove any the party is a mayor of
-		my @party_mayoralties = map { $_->mayor_of ? $_->mayor_of : () } $c->stash->{party}->characters;
-		
+	if ( $c->stash->{party}->level >= $c->config->{minimum_raid_level} ) {	
 		foreach my $town ($c->stash->{party_location}->get_adjacent_towns) {
-			unless (grep { $_ == $town->id} @party_mayoralties) {
+            # Remove any the party is a mayor of
+		    if ($town->mayor && $town->mayor->party_id != $c->stash->{party}->id) {
 				push @adjacent_towns, $town;	
 			}	
 		}
@@ -151,20 +123,20 @@ sub sector_menu : Private {
 	my $can_build_garrison = 0;
 	my $garrison           = $c->stash->{party_location}->garrison;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_garrison_level} ) {
-		$can_build_garrison = $c->stash->{party_location}->garrison_allowed;
+		$can_build_garrison = $c->stash->{party_location}->garrison_allowed($c->stash->{party});
 	}
 
 	#  Determine if building can be built or is already built.  Also can seize or raze - for now, they all
 	#    check the same level.
-	my @buildings = $c->stash->{party_location}->building;
+	my $building = $c->stash->{party_location}->building;
 
 	my $can_build_building = 0;
 	my $can_seize_building = 0;
 	my $can_raze_building = 0;
 	if ( $c->stash->{party}->level >= $c->config->{minimum_building_level} ) {
-		$can_build_building = ! @buildings && $c->stash->{party_location}->building_allowed($c->stash->{party}->id) ? 1 : 0;
+		$can_build_building = ! $building && $c->stash->{party_location}->building_allowed($c->stash->{party}->id) ? 1 : 0;
 		
-		if (! $garrison) {
+		if (! $garrison || $garrison->party_id == $c->stash->{party}->id) {
 		    $can_seize_building = 1;
 		    $can_raze_building = 1;
 		}
@@ -173,6 +145,14 @@ sub sector_menu : Private {
 	my @items = $c->stash->{party_location}->items;
 	
 	my $kingdom = $c->stash->{party_location}->kingdom;
+	
+	my @corpses = $c->model('DBIC::Character')->search(
+	   {
+	       party_id => $c->stash->{party}->id,
+	       status => 'corpse',
+	       status_context => $c->stash->{party_location}->id,
+	   }
+    );
 
 	$c->forward(
 		'RPG::V::TT',
@@ -197,17 +177,54 @@ sub sector_menu : Private {
 					can_build_building     => $can_build_building,
 					can_seize_building     => $can_seize_building,
 					can_raze_building      => $can_raze_building,
-					buildings              => \@buildings,
+					building               => $building,
 					items                  => \@items,
 					kingdom                => $kingdom || undef,
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 					movement_cost          => $c->stash->{movement_cost} // 0,
 					factor_comparison      => $factor_comparison,
+					corpses                => \@corpses,
+					bomb                   => $c->stash->{party_location}->bomb,
 				},
 				return_output => 1,
 			}
 		]
 	);	
+}
+
+sub get_watcher_factor_comparison : Private {
+ 	my ( $self, $c, $creature_group ) = @_;  
+ 	
+ 	my $confirm_attack = 0;
+ 	my $factor_comparison; 
+ 	
+	if ($creature_group) {
+		$confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
+  	
+    	$c->stats->profile('Beginning factor comaprison');
+		    
+		# Check for a watcher effect
+		my $has_watcher = $c->model('DBIC::Effect')->search(
+            {
+                'party_effect.party_id' => $c->stash->{party}->id,
+                'effect_name' => 'Watcher',
+                'time_left' => {'>', 0},
+            },
+            {
+                join => 'party_effect',
+            }
+		)->count >= 1 ? 1 : 0;		
+		
+		$c->stats->profile('Got watcher boolean');
+		
+		if ($has_watcher) {
+			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
+		}
+		    	
+    	$c->stats->profile('Completed factor comaprison');		
+	}
+	
+	return [$factor_comparison, $confirm_attack];
 }
 
 sub pending_mayor_check : Private {
@@ -267,25 +284,8 @@ sub parties_in_sector : Private {
 	       prefetch => 'kingdom',
 	   }, 
 	);
-
-	return unless @parties;
-
-	my $attack_allowed = $dungeon_grid_id ? 0 : 1;
-	$attack_allowed = 0 if $c->stash->{party_location}->town;
-
-	return $c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'party/parties_in_sector.html',
-				params   => {
-					parties        => \@parties,
-					attack_allowed => $attack_allowed,
-				},
-				return_output => 1,
-			}
-		]
-	);
+	
+	return \@parties;
 }
 
 sub party_messages_check : Private {
@@ -296,6 +296,7 @@ sub party_messages_check : Private {
 		{
 			alert_party => 1,
 			party_id    => $c->stash->{party}->id,
+			type        => 'standard',
 		}
 	);
 
@@ -315,6 +316,7 @@ sub list : Private {
 	$c->stats->profile("Entered /party/list");
 
 	my $party = $c->stash->{party};
+	$party->discard_changes;
 
 	# Because the party might have been updated by the time we get here, the chars are marked as dirty, and so have
 	#  to be re-read.
@@ -376,7 +378,8 @@ sub list : Private {
 					next unless $target;
 						
 					my $spell = $action->spell;
-					my $spell_name = $spell->spell_name . ' [' . $action->item->display_name . ']';
+					my $spell_name = $spell->spell_name;
+					$spell_name .= ' [' . $action->item->display_name . ']' if $action->can('item');
 												
 					$combat_params{$character->id} = [$target->name, $spell_name];					
 				}
@@ -393,7 +396,6 @@ sub list : Private {
 	my @effects = $c->model('DBIC::Effect')->search(
 	   {
 	       'character_effect.character_id' => [map { $_->id } @characters],
-	       'combat' => 1,
 	   },
 	   {
 	       prefetch => 'character_effect',
@@ -486,8 +488,10 @@ sub _generate_date_string_from_quartz {
 sub swap_chars : Local {
 	my ( $self, $c ) = @_;
 
-	return if $c->req->param('target') == $c->req->param('moved');
+	return unless $c->req->param('target') && $c->req->param('moved');
 
+	return if $c->req->param('target') == $c->req->param('moved');
+	
 	my %characters = map { $_->id => $_ } $c->stash->{party}->characters_in_party;
 
 	# Moved char moves to the position of the target char
@@ -592,56 +596,107 @@ sub select_action : Local {
 
 	my $target;
 	my $result;
+	my $action;
+	my $target_id;
+	my $execute;
+	my $spell;
 	
 	given ( $c->req->param('action') ) {
 		when ('Cast') {
-			my ( $spell_id, $target_id ) = $c->req->param('action_param');
-			my $spell = $c->model('DBIC::Spell')->find($spell_id);
+		    my $spell_id;
+			( $spell_id, $target_id ) = $c->req->param('action_param');
+			$action = $c->model('DBIC::Spell')->find($spell_id);
+			$spell = $action;
 			
-			if ( $spell->target eq 'character' ) {
-				$target = $c->model('DBIC::Character')->find(
-					{
-						character_id => $target_id,
-						party_id     => $c->stash->{party}->id,
-					}
-				);
-			}
-			else {
-				$target = $c->stash->{party};
-			}
-			
-			$result = $spell->cast( $character, $target );
-			
-			# HACK: refresh map screen if casting portal 
-			if ($spell->spell_name eq 'Portal') {
-                push @{ $c->stash->{refresh_panels} }, 'map';
+			$execute = sub {
+			    my $target = shift;			    
+			    return $action->cast( $character, $target );
 			}
 		}
-
 		when ('Use') {
-			my ( $action_id, $target_id ) = $c->req->param('action_param');
-			my $action = $character->get_item_action($action_id);
-		
-			my $target_type = $action->target;
-			if ( $target_type eq 'character' ) {
-				$target = $c->model('DBIC::Character')->find(
-					{
-						character_id => $target_id,
-						party_id     => $c->stash->{party}->id,
-					}
-				);
-			}
-			elsif ( $target_type eq 'party') {
-				$target = $c->stash->{party};
-			}
+		    my $action_id;
+			( $action_id, $target_id ) = $c->req->param('action_param');
+			$action = $character->get_item_action($action_id);
+			$spell = $action->spell if $action->can('spell');
 			
-			$result = $action->use($target);
-			
-			# HACK: refresh map screen if casting portal 
-			if ($action->can('spell') && $action->spell->spell_name eq 'Portal') {
-                push @{ $c->stash->{refresh_panels} }, 'map';
-			}
+            $execute = sub {
+			    my $target = shift;			    
+			    return $action->use($target);
+			}			
 		}
+	}		
+
+    given ( $action->target ) {
+        when ('character') {
+            $target = $c->model('DBIC::Character')->find(
+    			{
+    				character_id => $target_id,
+    				party_id     => $c->stash->{party}->id,
+    			}
+    		);
+        }
+     
+        when ('special') {
+            $target = $target_id;    
+        }
+        
+        when ('sector') {
+            if ($c->req->param('x') && $c->req->param('y')) {                
+                $target = $c->model('DBIC::Land')->find(
+                    {
+                        x => $c->req->param('x'),
+                        y => $c->req->param('y'),
+                    }
+                );
+            }
+            else {                
+            	my $message = $c->forward(
+            		'RPG::V::TT',
+            		[
+            			{
+            				template => 'magic/select/sector.html',
+            				params   => {
+            					action => $c->req->param('action') // '',
+            					character_id => $c->req->param('character_id') // '',
+            					action_param => $c->req->param('action_param') // '',
+            				},
+            				return_output => 1,
+            			}
+            		]
+            	);
+                
+            	$c->forward('/panel/create_submit_dialog', 
+            		[
+            			{
+            				content => $message,
+            				submit_url => 'party/select_action',
+            				dialog_title => 'Select Sector',
+            			}
+            		],
+            	);
+            	
+            	$c->detach( '/panel/refresh', [ 'messages' ] );
+            }
+        }
+     
+        default {
+            $target = $c->stash->{party};    
+        }
+	}
+	
+	$result = $execute->($target);
+
+	# HACK: refresh map screen if casting portal
+	if ($spell && $spell->spell_name eq 'Portal') {
+        push @{ $c->stash->{refresh_panels} }, 'map';
+        push @{$c->stash->{panel_callbacks}}, {
+            name => 'setMinimapVisibility',
+            data => 1,
+        };                
+	}
+	
+	if ($result->custom->{raid_ended}) {
+	    $c->forward('/castle/end_raid', [$result->custom->{castle}]);
 	}
 
 	my $message = $c->forward(
@@ -842,6 +897,45 @@ sub pickup_item : Local {
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
 }
 
+sub pickup_corpse : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->model('DBIC::Character')->find(
+	   {
+	       character_id => $c->req->param('character_id'),
+	       party_id => $c->stash->{party}->id,
+	   }
+    );
+    
+    croak "Character not found" unless $character;
+    
+    my $party = $c->stash->{party};
+    
+	if ( $party->turns < 1 ) {
+		$c->stash->{error} = "You do not have enough turns to pickup the corpse";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;
+	}
+	
+	if ($party->is_full) {
+		$c->stash->{error} = "You can't pick up the corpse because your party is full";
+		$c->forward( '/panel/refresh', ['messages'] );
+		return;
+	}
+	
+	$party->turns( $party->turns - 1 );
+	$party->update;
+	
+	$character->status(undef);
+	$character->status_context(undef);
+	$character->update;	
+	
+	$c->stash->{messages} = $character->character_name . " was returned to the party";
+	
+	$c->forward( '/panel/refresh', [ 'messages', 'party_status', 'party' ] );
+        
+}
+
 sub enter_dungeon : Local {
 	my ( $self, $c ) = @_;
 
@@ -867,6 +961,11 @@ sub enter_dungeon : Local {
 
 	$c->stash->{party}->dungeon_grid_id( $start_sector->id );
 	$c->stash->{party}->update;
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };
 
 	$c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }
@@ -963,6 +1062,43 @@ sub online : Private {
 			}
 		]
 	);      
+}
+
+sub profile : Local {
+	my ( $self, $c ) = @_;
+	
+	my $party = $c->model('DBIC::Party')->find(
+	   {
+	       party_id => $c->req->param('party_id'),
+	       defunct => undef,
+	   },
+	   {
+	       prefetch => 'player',
+	   }
+	   
+	);
+	
+	$c->stash->{message_panel_size} = 'large';
+	$c->stash->{bring_messages_to_front} = 1;
+	
+	croak "Party not found" unless $party;   
+	
+    my $profile = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'party/profile.html',
+				params   => {
+					party => $party,
+					mayors_count => scalar $party->mayors // 0,
+					buildings_count => scalar $party->get_owned_buildings // 0,
+				},
+				return_output => 1,
+			}
+		]
+	); 	
+	
+	$c->forward( '/panel/refresh', [ [ 'messages', $profile ] ] );
 }
 
 1;

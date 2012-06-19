@@ -27,7 +27,7 @@ sub send {
     }
     else {
         foreach my $player (@{$params->{players}}) {
-            next unless $player->send_email && $player->verified;
+            next unless $player->email && $player->send_email && $player->verified;
            
             $player->email_hash(sha1_hex rand);
             $player->update;

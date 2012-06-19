@@ -8,13 +8,12 @@ use Storable qw(freeze thaw);
 use DateTime;
 use Data::Dumper;
 use Math::Round qw(round);
+use Try::Tiny;
 
 use RPG::Combat::ActionResult;
 use RPG::Combat::MessageDisplayer;
-use RPG::Combat::MagicalDamage;
 use RPG::Combat::EffectResult;
 
-use RPG::Combat::MagicalDamage;
 use RPG::Combat::MagicalDamage::Fire;
 use RPG::Combat::MagicalDamage::Ice;
 use RPG::Combat::MagicalDamage::Poison;
@@ -70,79 +69,94 @@ sub opponents_of {
 	}
 }
 
+# Return a list of combatants on the opposing side of the being passed
+#  Get lists from combatants(), ensuring the same references are used
+sub opposing_combatants_of {
+    my $self = shift;
+    my $being = shift;
+    
+    my @combatants = grep { $_->group_id != $being->group_id } $self->combatants;
+    
+    return @combatants;
+}
+
+# TODO: logic really needs a tidy up
 sub execute_round {
 	my $self = shift;
 	
 	# Clear any messages from the last round
 	$self->result->{messages} = undef;
+	
+    my @combat_messages;
 
 	# Check for stalemates, fleeing or no one alive in one of the groups
 	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
-	my $dead_group = $self->check_for_end_of_combat;
-	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
-
-		# One opponent has fled, end of the battle
-		$self->end_of_combat_cleanup;
-
-		$self->result->{combat_complete} = 1;
-
-		$self->combat_log->increment_rounds;
-
-		$self->record_messages;
-
-		return $self->result;
-	}
-
-	# Process magical effects
-	$self->process_effects;
-
-	if ($self->result->{combat_complete}) {	
-		$self->combat_log->increment_rounds;
-
-		$self->record_messages;
-		
-		return $self->result;
-	}
-
-	my @combatants = $self->combatants;
-
-	# Get list of combatants, modified for changes in attack frequency, and randomised in order
-	@combatants = $self->get_combatant_list(@combatants);
-
-	my @combat_messages;
-
-	foreach my $combatant (@combatants) {
-	    $combatant->discard_changes;
-		next if $combatant->is_dead;
-
-		my $action_result;
-		if ( $combatant->is_character ) {
-			$action_result = $self->character_action($combatant);
-
-			if ($action_result) {
-				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
-			}
-		}
-		else {
-			$action_result = $self->creature_action($combatant);
-		}
-
-		if ($action_result) {
-			push @combat_messages, $action_result;
-
-			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
-
-			if ( $action_result->defender_killed ) {
-				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
-
-				my $type = $action_result->defender->is_character ? 'character' : 'creature';
-				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
-			}
-
-			if ( my $losers = $self->check_for_end_of_combat ) {
-				last;
-			}
-		}
+	eval {
+    	my $dead_group = $self->check_for_end_of_combat;
+    	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
+    
+    		# One opponent has fled, end of the battle
+    		$self->end_of_combat_cleanup;
+    
+    		$self->result->{combat_complete} = 1;
+    
+    		return;
+    	}
+    
+    	# Process magical effects
+    	$self->process_effects;
+    
+    	return if $self->result->{combat_complete};
+    
+    	my @combatants = $self->combatants;
+    
+    	# Get list of combatants, modified for changes in attack frequency, and randomised in order
+    	@combatants = $self->get_combatant_list(@combatants); 
+  	
+    	push @combat_messages, $self->check_skills;
+    	
+    	$self->check_for_end_of_combat;
+    	
+    	return if $self->result->{combat_complete};	
+    	
+    	foreach my $combatant (@combatants) {
+    	    # TODO: following line can probably be removed
+    	    #  Left here just in case there are cases where other instances of combatant data are written to
+    	    $combatant->discard_changes;
+    		next if $combatant->is_dead;
+    
+    		my $action_result;
+    		if ( $combatant->is_character ) {
+    			$action_result = $self->character_action($combatant);
+    
+    			if ($action_result) {
+    				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
+    			}
+    		}
+    		else {
+    			$action_result = $self->creature_action($combatant);
+    		}
+    
+    		if ($action_result) {
+    			push @combat_messages, $action_result;
+    
+    			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
+    
+    			if ( $action_result->defender_killed ) {
+    				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
+    
+    				my $type = $action_result->defender->is_character ? 'character' : 'creature';
+    				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
+    			}
+    
+    			if ( my $losers = $self->check_for_end_of_combat ) {
+    				last;
+    			}
+    		}
+    	}
+	};
+	if ($@) {
+	    die $@;
 	}
 
 	$self->combat_log->increment_rounds;
@@ -150,6 +164,9 @@ sub execute_round {
 	push @{ $self->result->{messages} }, @combat_messages;
 
 	$self->record_messages;
+	
+	undef $self->{_auto_cast_checked_for};
+	undef $self->{_cast_this_round};
 
 	return $self->result;
 }
@@ -193,7 +210,7 @@ sub check_for_end_of_combat {
 
 			# TODO: should be in a role?
 			if ( $opponents->group_type eq 'party' ) {
-				$opponents->disband;
+				$opponents->wiped_out;
 			}
 			
 			$self->result->{losers} = $opponents;
@@ -305,7 +322,7 @@ sub get_combatant_list {
 		if ($type ne 'character' || $combatant->last_combat_action ne 'Cast') {   
     		$number_of_attacks = $combatant->number_of_attacks(@attack_history);
 		}
-
+		
 		push @attack_history, $number_of_attacks;
 
 		$self->session->{attack_history}{$type}{ $combatant->id } = \@attack_history;
@@ -315,29 +332,121 @@ sub get_combatant_list {
 		}
 	}
 
-	@sorted_combatants = shuffle @sorted_combatants;
+	@sorted_combatants = $self->sort_combatant_list(@sorted_combatants);
 
 	return @sorted_combatants;
+}
+
+sub sort_combatant_list {
+    my $self = shift;
+    my @combatants = @_;
+    
+    return shuffle @combatants;   
+}
+
+sub check_skills {
+    my $self = shift;
+    
+    my @messages;
+    
+    my $character_weapons = $self->character_weapons;
+   
+    foreach my $char_id (keys %$character_weapons) {
+        my $character = $self->combatants_by_id->{character}{$char_id};
+        
+        next if $character->is_dead;
+        
+        foreach my $skill ( keys %{ $character_weapons->{$char_id}{skills} }) {
+            $self->log->debug("Checking $skill skill for character $char_id");
+            
+            my $char_skill = $character->get_skill($skill);
+            
+            my $defender;
+            if ($char_skill->needs_defender) {
+                try {
+                    $defender = $self->select_opponent($character);
+                }
+                catch {
+                    $self->log->debug("Error finding opponent: $_");
+                };
+                
+                return unless $defender;
+            }
+            
+            my %results = $char_skill->execute('combat', $character, $defender);            
+            
+            if ($results{fired}) {
+                push @messages, $results{message};
+                
+                if ($results{factor_changed}) {
+                    $self->refresh_factor_cache('character', $char_id);   
+                }   
+            }
+        }
+    }
+    
+    return @messages;
+}
+
+sub select_opponent {
+    my $self = shift;
+    my $character = shift;
+    
+	my %opponents = map { $_->id => $_ } $self->opposing_combatants_of($character);   
+	
+	my $opponent; 
+    
+	# If they've selected a target, or have one saved from last round make sure it's still alive
+	my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
+
+	if ( $targetted_opponent_id && $opponents{$targetted_opponent_id} && !$opponents{$targetted_opponent_id}->is_dead ) {
+		$opponent = $opponents{$targetted_opponent_id};
+	}
+
+	# If we don't have a target, choose one randomly
+	unless ($opponent) {
+		for my $id ( shuffle keys %opponents ) {
+			if ( ! $opponents{$id}->is_dead ) {
+				$opponent = $opponents{$id};
+				last;
+			}
+		}
+
+		unless ($opponent) {
+
+			# No living opponent found, something weird has happened
+			confess "Couldn't find an opponent to attack!\n";
+		}
+	}
+	
+	# Save opponent in session for next round so they keep attacking the same guy
+	#  (Unless they die, or they target someone else)
+	$self->session->{previous_opponents}{$character->id} = $opponent->id;    
+	
+	return $opponent;
 }
 
 sub character_action {
 	my ( $self, $character ) = @_;
 
-	my $opp_group = $self->opponents_of($character);
-
-	my %opponents = map { $_->id => $_ } $opp_group->members;
-
 	# Check if spell casters should do an auto cast
-	my $autocast = $character->last_combat_param1 eq 'autocast' ? 1 : 0;
+	my $autocast = $character->last_combat_param1 && $character->last_combat_param1 eq 'autocast' ? 1 : 0;
 	my ($spell, $target) = $self->check_for_auto_cast($character);
 	if ($spell) {
+	    return unless $target;
 	    $self->log->debug($character->name . " is autocasting " . $spell->spell_name . " on " . $target->name);
         $character->last_combat_action('Cast');
 		$character->last_combat_param1( $spell->id );
 		$character->last_combat_param2( $target->id );
 	}
 	elsif ($autocast) {
-	    # They have auto-cast set, but didn't cast a spell. Set them to attack instead
+	    # They have auto-cast set, but didn't cast a spell. 
+	    # If they can attack, they should. Otherwise they do nothing.
+	    # XXX: we don't pass in attack history, but this should usually be OK
+	    my $number_of_attacks = $character->number_of_attacks();
+	        
+	    return if $number_of_attacks < 1;
+	    
 	    $character->last_combat_action('Attack');
 	    $character->last_combat_param1(undef);
 	    $character->last_combat_param2(undef);
@@ -346,37 +455,10 @@ sub character_action {
 	my $result;	    
 
 	if ( $character->last_combat_action eq 'Attack' ) {
-
-		my ( $opponent, $damage, $crit );
-
-		# If they've selected a target, or have one saved from last round make sure it's still alive
-		my $targetted_opponent_id = $character->last_combat_param1 || $self->session->{previous_opponents}{$character->id};
-
-		if ( $targetted_opponent_id && $opponents{$targetted_opponent_id} && !$opponents{$targetted_opponent_id}->is_dead ) {
-			$opponent = $opponents{$targetted_opponent_id};
-		}
-
-		# If we don't have a target, choose one randomly
-		unless ($opponent) {
-			for my $id ( shuffle keys %opponents ) {
-				unless ( $opponents{$id}->is_dead ) {
-					$opponent = $opponents{$id};
-					last;
-				}
-			}
-
-			unless ($opponent) {
-
-				# No living opponent found, something weird has happened
-				confess "Couldn't find an opponent to attack!\n";
-			}
-		}
 		
-		# Save opponent in session for next round so they keep attacking the same guy
-		#  (Unless they die, or they target someone else)
-		$self->session->{previous_opponents}{$character->id} = $opponent->id;
+		my $opponent = $self->select_opponent($character);
 
-		($damage, $crit) = $self->attack( $character, $opponent );
+		my ($damage, $crit) = $self->attack( $character, $opponent );
 
 		# Store damage done for XP purposes
 		my %action_params;
@@ -399,13 +481,27 @@ sub character_action {
 				$character, $opponent, $result, $type,
 				$self->character_weapons->{ $character->id }{magical_damage_level}
 			);
+			# Force refresh of value
+			$result->defender_killed($opponent->is_dead);
 		}
 	}
 	elsif ( $character->last_combat_action eq 'Cast' || $character->last_combat_action eq 'Use' ) {
+	    # Cannot cast or use more than once per round
+	    if ($self->{_cast_this_round}{$character->id}) {
+	        return;
+	    }
+	    $self->{_cast_this_round}{$character->id} = 1;
+	    
 		my $obj;
 		my $target_type;
 		my $action;
+		my $blocked = 0;
 		if ( $character->last_combat_action eq 'Cast' ) {
+		    if (grep { $_->effect->modified_stat eq 'block_spell_casting' } $character->character_effects) {
+                # Spell casting blocked...
+                $blocked = 1;
+		    }
+		    
 			$obj = $self->schema->resultset('Spell')->find( $character->last_combat_param1 );
 
 			$target_type = $obj->target;
@@ -431,8 +527,17 @@ sub character_action {
 		else {
 			$target = $self->opponent_of_by_id( $character, $character->last_combat_param2 );
 		}
-		
-		if (! $target->is_dead) {
+				
+		if ($blocked) {
+            $result = RPG::Combat::SpellActionResult->new(
+                defender => $target,
+                attacker => $character,
+                spell_name => $obj->spell_name,
+                blocked => 1,
+                type => 'blocked',
+            );   
+		}		
+		elsif (! $target->is_dead) {
     		if ( $character->last_combat_action eq 'Cast' ) {
     			$result = $obj->cast( $character, $target );
     		}
@@ -453,18 +558,16 @@ sub character_action {
 		}
 		else {
 		     $self->log->debug($character->name . " skips '$action' as target is dead");
-		}		  
+		}
 
         $character->last_combat_action('Attack');
-
-
 	}
 	
 	# If they were auto-casting, set them back to auto-cast for next round
 	if ($autocast) {
-        $character->last_combat_action('Cast');   
+        $character->last_combat_action('Cast');
 	    $character->last_combat_param1('autocast');
-	    $character->last_combat_param2(undef);	   
+	    $character->last_combat_param2(undef);
 	}
     $character->update;
     
@@ -501,36 +604,48 @@ sub check_for_auto_cast {
 	
 	return unless $caster->is_spell_caster;
 	
-	if ( my $spell = $caster->check_for_auto_cast ) {
-        my $target;
-
-		# Randomly select a target
-		given ( $spell->target ) {
-			when ('creature') {
-            	my $opp_group = $self->opponents_of($caster);
-            	my %opponents = map { $_->id => $_ } $opp_group->members;
-
-				for my $id ( shuffle keys %opponents ) {
-					unless ( $opponents{$id}->is_dead ) {
-						$target = $opponents{$id};
-						last;
-					}
-				}
-			}
-			when ('character') {
-				$target = ( shuffle grep { !$_->is_dead } $caster->group->members )[0];
-			}
-			when ('party') {
-			    my $opp_num = $self->opponent_number_of_being($caster);
-                $target = ( $self->opponents )[$opp_num-1];			
-			}
-			default {
-				# Currently only combat spells with creature/character target are implemented
-				confess "Auto-cast can't handle spell target: $_";
-			}
-		}
-		
-		return ($spell, $target);
+	# Can only auto-cast once per round
+	return if $self->{_auto_cast_checked_for}{$caster->id};
+	$self->{_auto_cast_checked_for}{$caster->id} = 1;
+	
+	my $redo_count = 0;
+	my @spell_ids_tried;
+	{
+    	if ( my $spell = $caster->check_for_auto_cast(@spell_ids_tried) ) {
+            my $target;
+    
+    		# Randomly select a target		
+    		given ( $spell->target ) {
+    			when ('creature') {
+                	my @opponents = grep { !$_->is_dead } $self->opposing_combatants_of($caster);
+                	
+                	$target = $spell->select_target(@opponents);
+    			}
+    			when ('character') {
+    			    my $group = $caster->group;
+    				my @chars = grep { !$_->is_dead && $group->has_being($_) } $self->combatants;
+    				
+    				$target = $spell->select_target(@chars);
+    			}
+    			when ('party') {
+    			    my $opp_num = $self->opponent_number_of_being($caster);
+                    $target = ( $self->opponents )[$opp_num-1];			
+    			}
+    			default {
+    				# Currently only combat spells with creature/character target are implemented
+    				confess "Auto-cast can't handle spell target: $_";
+    			}
+    		}
+    		
+    		if (! $target) {
+                $redo_count++;
+                return if $redo_count > 5;
+                push @spell_ids_tried, $spell->id;
+                redo;   
+    		}
+    		
+    		return ($spell, $target);
+    	}
 	}
 }
 
@@ -544,33 +659,28 @@ sub creature_action {
 	    return $spell->creature_cast($creature, $target);
 	}
 
-	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $party->members;
+	my @characters = sort { ($a->party_order || 0) <=> ($b->party_order || 0) } $self->opposing_combatants_of($creature);
 	@characters = grep { !$_->is_dead } @characters;    # Get rid of corpses
 
 	# Figure out whether creature will target front or back rank
 	my $rank_pos = $party->rank_separator_position;
 
 	$rank_pos = scalar @characters if $rank_pos > scalar @characters;
-
-	unless ( $rank_pos == scalar @characters ) {
-		my $rank_roll = Games::Dice::Advanced->roll('1d100');
-		if ( $rank_roll <= $self->config->{front_rank_attack_chance} ) {
-
-			# Remove everything but front rank
-			splice @characters, $rank_pos;
-		}
-		else {
-
-			# Remove everything but back rank
-			splice @characters, 0, $rank_pos;
-		}
+	
+	# Any character in the front-rank gets put in the char list twice
+	if (scalar @characters > 1) {
+    	my @front_rank_chars;
+    	foreach my $char (@characters) {
+            if ($char->in_front_rank($rank_pos)) {
+                push @front_rank_chars, $char;
+            }
+    	}
+    	
+    	@characters = (@front_rank_chars, @characters);
 	}
 
-	# Go back to original list if there's nothing in characters (i.e. there are only dead (or no) chars in this rank)
-	@characters = $party->members unless scalar @characters > 0;
-
 	my $character;
-	foreach my $char_to_check ( shuffle @characters ) {
+	foreach my $char_to_check ( $self->sort_creature_targets(@characters) ) {
 		unless ( $char_to_check->is_dead ) {
 			$character = $char_to_check;
 			last;
@@ -600,6 +710,13 @@ sub creature_action {
 	}
 
 	return $action_result;
+}
+
+sub sort_creature_targets {
+    my $self = shift;
+    my @targets = @_;
+    
+    return shuffle @targets;   
 }
 
 sub attack {
@@ -636,7 +753,7 @@ sub attack {
 	my $crit = 0;
 	
 	# Check for critical hit
-	my $chance = $attacker->critical_hit_chance;
+	my $chance = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{crit_hit};
 	my $roll = Games::Dice::Advanced->roll('1d100');
 
     $self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );	
@@ -809,18 +926,8 @@ sub roll_flee_attempt {
 	my $opponents        = shift;
 	my $fleer_opp_number = shift;
 
-	my $level_difference = $opponents->level - $fleers->level;
-	my $flee_chance =
-		$self->config->{base_flee_chance} + ( $self->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
-
-	if ( $fleers->level == 1 ) {
-
-		# Bonus chance for being low level
-		$flee_chance += $self->config->{flee_chance_low_level_bonus};
-	}
-
-	my $flee_attempts_column = 'opponent_' . $fleer_opp_number . '_flee_attempts';
-	$flee_chance += ( $self->config->{flee_chance_attempt_modifier} * ( $self->combat_log->get_column($flee_attempts_column) || 0 ) );
+    my $flee_attempts_column = 'opponent_' . $fleer_opp_number . '_flee_attempts';
+    my $flee_chance = $fleers->flee_chance($opponents, $self->combat_log->get_column($flee_attempts_column));
 
 	my $rand = Games::Dice::Advanced->roll("1d100");
 
@@ -967,8 +1074,11 @@ sub _build_combat_log {
 # Refresh a combatant's details in the factor cache
 sub refresh_factor_cache {
 	my ( $self, $combatant_type, $combatant_id_to_refresh ) = @_;
-
-    delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
+    
+    $self->log->debug("refresh factors: $combatant_type $combatant_id_to_refresh");
+    
+    delete $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh}
+        if defined $self->session->{combat_factors}{$combatant_type}{$combatant_id_to_refresh};
 
 	$self->combat_factors( $self->_build_combat_factors($combatant_type, $combatant_id_to_refresh) );
 }
@@ -981,23 +1091,33 @@ sub _build_combat_factors {
 	my %combat_factors;
 
 	%combat_factors = %{ $self->session->{combat_factors} } if defined $self->session->{combat_factors};
-
+	
+	# If we don't have any chars or creatures set, we must be 'initialising'
+	#  (i.e. not just refreshing an individual combatant) 
+	my $initialising = ($combat_factors{creature}  && %{ $combat_factors{creature}  }) ||
+	                   ($combat_factors{character} && %{ $combat_factors{character} }) ? 0 : 1;
+	
+	
+	
 	foreach my $combatant ( $self->combatants ) {
 		next if $combatant->is_dead;
 		
 		my $type = $combatant->is_character ? 'character' : 'creature';
 
-		if (defined $id) {
+        # If we've been asked to build a particular combatant's factors, and we're not initialising,
+        #  skip anyone who is not that combatant
+		if (defined $id && ! $initialising) {
             next unless $id == $combatant->id && $type eq $refresh_type; 
 		}
 
 		next if defined $combat_factors{$type}{ $combatant->id };
 
-		$combat_factors{$type}{ $combatant->id }{af}  = $combatant->attack_factor;
-		$combat_factors{$type}{ $combatant->id }{df}  = $combatant->defence_factor;
-		$combat_factors{$type}{ $combatant->id }{dam} = $combatant->damage;
+		$combat_factors{$type}{ $combatant->id }{af}       = $combatant->attack_factor;
+		$combat_factors{$type}{ $combatant->id }{df}       = $combatant->defence_factor;
+		$combat_factors{$type}{ $combatant->id }{dam}      = $combatant->damage;
+		$combat_factors{$type}{ $combatant->id }{crit_hit} = $combatant->critical_hit_chance;
 	}
-
+	
 	$self->session->{combat_factors} = \%combat_factors;
 
 	return \%combat_factors;
@@ -1009,6 +1129,12 @@ sub _build_character_weapons {
 	my %character_weapons;
 
 	return $self->session->{character_weapons} if defined $self->session->{character_weapons};
+	
+	my @combat_skills = $self->schema->resultset('Skill')->search(
+	   {
+	       type => 'combat',
+	   }
+    );
 
 	foreach my $combatant ( $self->combatants ) {
 		next unless $combatant->is_character;
@@ -1037,6 +1163,15 @@ sub _build_character_weapons {
 		else {
 			$character_weapons{ $combatant->id }{durability} = 1;
 		}
+		
+		# Also cache any combat skills
+		foreach my $skill (@combat_skills) {
+		    my $skill_name = $skill->skill_name;		    
+		    my $char_skill = $combatant->get_skill($skill_name);
+
+            $character_weapons{ $combatant->id }{skills}{$skill_name} = 1
+                if $char_skill;   
+		}		
 	}
 
 	$self->session->{character_weapons} = \%character_weapons;

@@ -53,9 +53,12 @@ sub run {
 		$logger->warning($message);
 		exit 0;
 	}
+	
+	my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
+	$schema->log($logger);	
 
 	while (1) {
-		my @errors = $self->do_new_day( $config, $logger, $dt, @plugins );;
+		my @errors = $self->do_new_day( $schema, $config, $logger, $dt, @plugins );;
 		if (@errors) {
 			my $error_str;
 			foreach my $error (@errors) {
@@ -89,16 +92,23 @@ sub run {
 
 		last;
 	}
+	
+	# Record the we finished successfully
+	my $conf_val = $schema->resultset('Conf')->find_or_create(
+	   {
+	       'conf_name' => 'Last Successful Ticker Run',
+	   },
+	);
+	$conf_val->update( { 'conf_value' => DateTime->now() } );
+	
+	return undef;
 }
 
 sub do_new_day {
 	my $self = shift;
-	my ( $config, $logger, $dt, @plugins ) = @_;
+	my ( $schema, $config, $logger, $dt, @plugins ) = @_;
 
 	$logger->info( "Running ticker script as at: " . $dt->datetime() );
-
-	my $schema = RPG::Schema->connect( $config, @{ $config->{'Model::DBIC'}{connect_info} }, );
-	$schema->log($logger);
 
 	my $context = RPG::NewDay::Context->new(
 		config   => $config,

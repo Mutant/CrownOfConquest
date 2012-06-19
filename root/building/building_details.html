@@ -1,8 +1,10 @@
 <div>
 [% drawn_title = 0 %]
 [% FOREACH resource IN ['wood','iron','stone','clay'] %]
-	[% res_required = building_type.amount_of_res_required(resource) %]
 	[% party_res = resource | ucfirst %] 
+	
+	[% res_required = resources_needed.$party_res %]
+
 	[% res_got = party_resources.$party_res || 0 %]
 		
 	[% title_span_style = "" %]
@@ -14,10 +16,11 @@
 	[% ELSE %]
 		[% span_style = "" res_word = "Uses" %]
 	[% END %]
+	[% IF building_type %]  
 	<div id="building_types" style="float:left; padding:10px;">
-		[% IF drawn_title == 0 %]
-			<div style="position:absolute; margin-top:-20px">
-				<span style="[% title_span_style %]">[% upgrade ? 'Construction' : 'Upgrade' %] Requires [% building_type.turns_needed(party) %] turns to complete</span>
+		[% IF drawn_title == 0 %]		
+			<div style="position:absolute; margin-top:-20px">				
+				<span style="[% title_span_style %]">[% upgrade ? 'Upgrade' : 'Construction' %] Requires [% building_type.turns_needed(party) %] turns to complete</span>
 			</div>
 			[% drawn_title = 1 %]
 		[% END %]
@@ -31,14 +34,13 @@
 			<span style="[% span_style %]">[% res_got %] [% resource %] available</span>
 		</div>
 	</div>
+	[% END %]
 [% END %]
+	[% IF building_type %]
 	<div style="float:left;margin-top:20px;[% effects_style %]">
 		<div><span>[% IF upgrade %]Upgraded [% END %]Effects:</span></div>
 		[% IF building_type.defense_factor > 0 %]<div><span>+[% building_type.defense_factor %] defence factor</span></div>[% END %]
-		[% IF building_type.attack > 0 %]<div><span>+[% building_type.attack %] attack factor</span></div>[% END %]
-		<!--  Add back in when relevant
-		[% IF building_type.heal > 0 %]<div><span>[% building_type.heal %]X healing factor</span></div>[% END %]
-		[% IF building_type.commerce > 0 %]<div><span>[% building_type.commerce %]X commerce factor</span></div>[% END %]
-		-->
+		<div>Max Upgrade Level: [% building_type.max_upgrade_level %]</div>
 	</div>
+	[% END %]
 </div>

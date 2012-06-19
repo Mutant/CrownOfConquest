@@ -1,3 +1,9 @@
+<div style="position: absolute; right: 1px; top: 0px;">
+	<a href="javascript:hideMessages()" style="text-decoration: none; font-size: 9px" title="Hide">&#9660</a>
+</div>
+
+<div style="padding-right: 4px">
+
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 
 [% IF creature_group %]Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br><br>[% END %]
@@ -5,35 +11,34 @@
 [% IF doors.0 %]
 	Open Doors: 
 	[% FOREACH door IN doors %]
-		[% IF door.can_be_passed %]		
-			[% link = "javascript:getPanels('/dungeon/open_door?door_id=" _  door.id  _ "')" %]
-		[% ELSE %]
-			[% link = "javascript:unblockDoorDiag('" _ door.display_position _ "', '" _ door.id _ "')" %]
-		[% END %]
-			
-		<a href="[% link %]">[% door.display_position %]</a>&nbsp;		
+		<a href="javascript:getPanels('/dungeon/open_door?door_id=[% door.id %]')">[% door.display_position %]</a>&nbsp;		
 	[% END %]
 	<br><br>
 [% END %]
 
-
-<a href="javascript:getPanels('/dungeon/search_room')">Search Room</a>
-[% IF dungeon_type == 'castle' %]
-	| <a href="javascript:getPanels('/castle/toggle_move_type')">Move [% IF castle_move_type == 'stealth' %]Normally[% ELSE %]Stealthily[% END %]</a>
-[% END %]
-[% IF current_location.stairs_up || current_location.stairs_down %]
-	| <a href="javascript:getPanels('/dungeon/take_stairs')">Take The Stairs [% IF current_location.stairs_up %]Up[% ELSE %]Down[% END %]</a>
-[% END %]
-[% IF current_location.treasure_chest %]
-	| <a href="javascript:getPanels('/dungeon/open_chest')">Open Treasure Chest</a>
-[% END %]
-[% IF creature_group %]
-	| <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)">Attack Creatures</a>
-[% END %]
-
-[% IF parties_in_sector %]
+[% IF parties_in_sector.0 %]
+	[% INCLUDE party/parties_in_sector.html parties=parties_in_sector %]
 	<br><br>
-	[% parties_in_sector %]
 [% END %]
 
+[% used_text = 0 %]
+[% IF dungeon_type == 'castle' %]
+	<a href="javascript:getPanels('/castle/toggle_move_type')">Move [% IF castle_move_type == 'stealth' %]Normally[% ELSE %]Stealthily[% END %]</a>
+	<br><br>
+[% END %]
+
+[% IF creature_group %]
+	<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)"><img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
+[% END %]
+<a href="javascript:getPanels('/dungeon/search_room')"><img src="[% c.config.static_path %]/images/actions/searchabutton.png" border="0" title="Search Room"></a>
+[% IF current_location.treasure_chest %]
+	<a href="javascript:getPanels('/dungeon/open_chest')"><img src="[% c.config.static_path %]/images/actions/openchestabutton.png" border="0" title="Open Chest"></a>
+[% END %]
+[% IF current_location.stairs_up %] 
+	<a href="javascript:getPanels('/dungeon/take_stairs')"><img src="[% c.config.static_path %]/images/actions/stairsupabutton.png" border="0" title="Take The Stairs Up"></a>	
+[% END %]
+[% IF current_location.stairs_down %]
+	<a href="javascript:getPanels('/dungeon/take_stairs')"><img src="[% c.config.static_path %]/images/actions/stairsdownabutton.png" border="0" title="Take The Stairs Down"></a>	
+[% END %]
+</div>
  

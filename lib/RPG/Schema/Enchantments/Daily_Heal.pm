@@ -10,7 +10,7 @@ with 'RPG::Schema::Enchantments::Interface';
 sub init_enchantment {
 	my $self = shift;
 
-	my $heal = RPG::Maths->weighted_random_number( 1 .. 15 );
+	my $heal = RPG::Maths->weighted_random_number( 1 .. 20 );
 
 	$self->add_to_variables(
 		{
@@ -53,7 +53,7 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 
-	return 45 * ($self->variable('Daily Heal') // 1) + ( $self->must_be_equipped ? 0 : 125 );
+	return 35 * ($self->variable('Daily Heal') // 1) + ( $self->must_be_equipped ? 0 : 250 );
 }
 
 sub new_day {

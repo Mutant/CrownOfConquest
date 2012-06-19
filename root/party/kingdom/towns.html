@@ -1,0 +1,15 @@
+<h4>Towns</h4>
+
+The following towns are loyal to our Kingdom.
+
+<table cellpadding="4" cellspacing="0">
+	
+[% FOREACH town IN towns %]
+	<tr>
+		<td>[% town.town_name %]</td>
+		[% IF kingdom.capital == town.id %]
+		<td>(Capital)</td>
+		[% END %]
+	</tr>
+[% END %]
+</table>

@@ -140,12 +140,13 @@ sub _create_jewels_in_range {
    	#warn scalar @towns_in_range . " towns in range";
     	
    	my $town_to_create_in;
-   	TOWN_LOOP: foreach my $town_to_check (@towns_in_range) {
+   	TOWN_LOOP: foreach my $town_to_check (shuffle @towns_in_range) {
    		# Check town doesn't have quests in progress for this jewel type
    		my @quests = $self->result_source->schema->resultset('Quest')->search(
    			{
    				town_id => $town_to_check->id,
    				party_id => undef,
+   				'type.quest_type' => 'find_jewel',
    			},
    			{
    				prefetch => [
@@ -154,9 +155,9 @@ sub _create_jewels_in_range {
    				],
    			},
    		);
-    		    		
+   		    		    		
    		foreach my $quest (@quests) {
-   			if ($quest->isa(__PACKAGE__) && $quest->param_start_value('Jewel To Find') == $jewel_type_to_use->id) {
+   			if ($quest->param_start_value('Jewel To Find') == $jewel_type_to_use->id) {
    				# Can't use this town
    				next TOWN_LOOP;
    			}

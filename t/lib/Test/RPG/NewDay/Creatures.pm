@@ -616,11 +616,9 @@ sub test_spawn_in_dungeon : Tests(1) {
         },
         create_walls => 1,
     );
-    
-    $self->{config}{dungeon_sectors_per_creature} = 5;
-    
+        
     # WHEN
-    $self->{creature_action}->_spawn_in_dungeon($self->{context}, $dungeon);
+    $self->{creature_action}->_spawn_in_dungeon($self->{context}, $dungeon, 5);
     
     # THEN
     my $cg_count = $self->{schema}->resultset('CreatureGroup')->search( 

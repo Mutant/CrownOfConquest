@@ -9,7 +9,7 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 </button>	
 [% END %]
 
-[% IF quests.size > 0 %]
+[% IF quests.size > 0 || requested.size > 0 %]
 <br><br>
 <b>Current Quests</b>
 
@@ -26,35 +26,50 @@ We've offered [% quests.size %] of [% quests_allowed %] quests.
 		<th>Parameters</th>
 	</tr>
 
-[% FOREACH quest IN quests %]
-	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
-		<td>[% quest.type.description %]</td>
-		<td>
-			[% IF quest.status == 'Not Started' %]
-				Awaiting Party Acceptance
-			[% ELSE %]
-				[% quest.status %]
-			[% END %]
-		</td>
-		<td>[% quest.party.name %]</td>
-		<td>[% quest.day_offered_rec.day_number %] ([% quest.day_offered_rec.difference_to_today_str %])</td>
-		<td>[% quest.days_to_complete %]</td>
-		<td>[% quest.gold_value %]</td>
-		<td>
-			[% FOREACH param IN quest.quest_params %]
-				[% IF param.quest_param_name.user_settable %]
-					[% param_name = param.quest_param_name.quest_param_name %]
-					[% param_name %]: [% quest.param_display_value(param_name) %]<br>
+
+[% FOREACH quest_list IN [quests, requested] %]
+	[% FOREACH quest IN quest_list %]
+		<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
+			<td>[% quest.type.description %]</td>
+			<td>
+				[% IF quest.status == 'Not Started' %]
+					Awaiting Party Acceptance
+				[% ELSIF quest.status == 'Requested' %]
+					Requested By Party
+				[% ELSIF quest.status == 'Negotiating' %]
+					New Gold Amount Requested By Party
+				[% ELSE %]
+					[% quest.status %]
 				[% END %]
-			[% END %]
-		</td> 
-		<td>
-			<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
-				onClick="getPanels('kingdom/cancel_quest?quest_id=[% quest.id %]')">
-				Cancel Quest
-			</button>		
-		</td>	
-	</tr>
+			</td>
+			<td><a href="javascript:getPanels('party/profile?party_id=[% quest.party.id %]')">[% quest.party.name %]</a></td>
+			<td>[% quest.day_offered_rec.day_number %] ([% quest.day_offered_rec.difference_to_today_str %])</td>
+			<td>[% quest.days_to_complete %]</td>
+			<td>[% quest.gold_value %]</td>
+			<td nowrap>
+				[% FOREACH param IN quest.quest_params %]
+					[% IF param.quest_param_name.user_settable %]
+						[% param_name = param.quest_param_name.quest_param_name %]
+						[% param_name %]: [% quest.param_display_value(param_name) %]<br>
+					[% END %]
+				[% END %]
+			</td>
+			<td>
+				[% IF (quest.status == 'Requested' || quest.status == 'Negotiating') && quests.size < quests_allowed %]
+				<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
+					onClick="confirmQuest('[% quest.id %]', '[% quest.gold_value %]')">
+					Confirm Quest
+				</button>
+				[% END %]
+			</td> 
+			<td>
+				<button dojoType="dijit.form.Button" type="submit" name="submitButton" 
+					onClick="getPanels('kingdom/cancel_quest?quest_id=[% quest.id %]')">
+					Cancel Quest
+				</button>		
+			</td>	
+		</tr>
+	[% END %]
 [% END %]
 
 </table>

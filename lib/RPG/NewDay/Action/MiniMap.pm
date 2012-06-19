@@ -13,7 +13,7 @@ use Carp;
 sub cron_string {
     my $self = shift;
      
-    return '*/5 * * * *';
+    return $self->context->config->{mini_map_cron_string};
 }
 
 sub run {

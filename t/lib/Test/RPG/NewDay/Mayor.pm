@@ -19,6 +19,10 @@ use Test::RPG::Builder::Item;
 use Test::RPG::Builder::Item_Type;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::CreatureType;
+use Test::RPG::Builder::Party;
+use Test::RPG::Builder::Dungeon_Room;
+use Test::RPG::Builder::Building;
 
 sub setup : Test(setup) {
     my $self = shift;
@@ -89,6 +93,90 @@ sub test_process_revolt_overthrow : Tests(7) {
 	is($garrison_character->hit_points, 0, "Garrison character has 0 hps");
 }
 
+sub test_process_revolt_with_negotiation : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->{roll_result} = 20;
+	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+	$town->peasant_state('revolt');
+	$town->update;	
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->mayor_of($town->id);
+	$character->update;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Negotiation',
+        }
+    ); 
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 10,
+        }
+    );
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	$self->{config}{level_hit_points_max}{test_class} = 6;
+	
+	# WHEN
+	$action->process_revolt($town);
+	
+	# THEN
+	$character->discard_changes;
+	is(defined $character->mayor_of, 1, "Character still mayor of town due to negotaition bonus");	
+}
+
+sub test_process_revolt_peasants_do_damage : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->{rolls} = [30, 3];
+	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, );
+	$town->peasant_state('revolt');
+	$town->update;	
+	
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, 
+        upgrades => { 
+            'Rune Of Protection' => 2,
+        },
+        land_id => $town->land_id,
+        owner_id => $town->id,
+        owner_type => 'town',
+    );  	
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+	$character->mayor_of($town->id);
+	$character->update;
+
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	$self->{config}{level_hit_points_max}{test_class} = 6;
+	
+	# WHEN
+	$action->process_revolt($town);
+	
+	# THEN
+	$character->discard_changes;
+	is($character->mayor_of, $town->id, "Character still mayor of town");
+	
+	$town->discard_changes;
+	is($town->peasant_state, 'revolt', "Peasants still in revolt");
+	
+	my @upgrade = $building->upgrades;
+	is(@upgrade, 1, "One building upgrade");
+	is($upgrade[0]->level, 0, "Building's upgrade level reduced");    
+	
+	undef $self->{rolls};
+}
+
 sub test_check_for_pending_mayor_expiry : Tests(2) {
 	my $self = shift;
 	
@@ -126,10 +214,12 @@ sub test_refresh_mayor : Tests(5) {
 		item_type_id => $ranged->id, 
 		char_id => $character->id,
 		variables => [{item_variable_name=>'Durability', item_variable_value => 10, max_value => 100}],		
+		equip_place_id => 2,
 	);	
 	my $ammo = Test::RPG::Builder::Item->build_item($self->{schema}, 
 		item_type_id => $ammo_type->id, 
 		char_id => $character->id,
+		no_equip_place => 1,
 	);		
 	$ammo->variable('Quantity', 10);
 	
@@ -263,6 +353,8 @@ sub test_generate_advice : Tests(2) {
 	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, advisor_fee => 50, gold => 20 );
 	
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	undef $self->{roll_result};
 	
 	# WHEN
 	$action->generate_advice($town);
@@ -451,7 +543,7 @@ sub test_caclulate_approval_basic : Tests(1) {
     
     # THEN
     $town->discard_changes;
-    is($town->mayor_rating, -4, "Mayor rating reduced");
+    is($town->mayor_rating, -10, "Mayor rating reduced");
            
 }
 
@@ -482,6 +574,313 @@ sub test_caclulate_approval_mayoralty_changed : Tests(1) {
     $town->discard_changes;
     is($town->mayor_rating, 0, "Mayor rating unchanged");
            
+}
+
+sub test_caclulate_approval_with_charisma : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Charisma',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 4,
+        }
+    );    
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_approval($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->mayor_rating, -8, "Mayor rating reduced");
+           
+}
+
+sub test_collect_tax : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 10, gold => 0 );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    
+    $self->{roll_result} = 20;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->collect_tax($town, $mayor);  
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 770, "Tax collected");
+    
+    is($town->history->count, 2, "Messages added to town's history");
+    my @history = $town->history;
+    is($history[0]->message, "The mayor collected 770 gold tax from the peasants", "Correct town message");
+
+    
+    is($history[1]->type, "income", "Second history line records income");
+    is($history[1]->value, "770", "Second history line records income value");
+    is($history[1]->message, "Peasant Tax", "Second history line records income label");        
+}
+
+sub test_collect_tax_with_leadership : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 10, gold => 0 );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    
+    $self->{roll_result} = 20;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Leadership',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 5,
+        }
+    );      
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->collect_tax($town, $mayor);  
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 1270, "Tax collected"); 
+}
+
+sub test_pay_trap_maintenance : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 100 );
+    $town->trap_level(2);
+    $town->update;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->pay_trap_maintenance($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 90, "Trap maintenance paid");
+    
+    is($town->history->count, 1, "Message added to town's history");
+    my @history = $town->history;
+    
+    is($history[0]->type, "expense", "Second history line records expense");
+    is($history[0]->value, "10", "Second history line records expense value");
+    is($history[0]->message, "Trap Maintenance", "Second history line records expense label");
+   
+}
+
+sub test_pay_trap_maintenance_couldnt_afford : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 5 );
+    $town->trap_level(2);
+    $town->update;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->pay_trap_maintenance($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->gold, 5, "No trap maintenance paid");
+    is($town->trap_level, 1, "Trap level decreased");
+    
+    is($town->history->count, 0, "No messages added to town's history");
+}
+
+sub test_train_guards_gold_limited : Tests(9) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 1100, prosperty => 30 );  
+    
+    my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 100);
+    my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 200);
+    
+    $self->{roll_result} = 1;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->train_guards($town);
+    
+    # THEN
+    my @hires = $self->{schema}->resultset('Town_Guards')->search(
+        {
+            town_id => $town->id,
+        },
+    );
+    is(scalar @hires, 2, "2 hire records created");
+
+    is($hires[0]->creature_type_id, $type1->id, "First hire record is correct cret type id");
+    is($hires[0]->amount, 1, "Correct number hired for first guard type");
+
+    is($hires[1]->creature_type_id, $type2->id, "Second hire record is correct cret type id");
+    is($hires[1]->amount, 5, "Correct number hired for second guard type");
+    
+    $town->discard_changes;
+    is($town->gold, 0, "Correct amount of gold spent");
+    
+    my @history = $town->history;
+    is(scalar @history, 1, "1 item in history");
+    is($history[0]->type, 'expense', "History is an expense");
+    is($history[0]->value, '1100', "Value is correct");
+       
+}
+
+sub test_train_guards_level_limited : Tests(9) {
+    my $self = shift;
+    
+    # GIVEN
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, gold => 10000, prosperty => 1 );  
+    
+    my $type1 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 5, category_name => 'Guard', hire_cost => 100);
+    my $type2 = Test::RPG::Builder::CreatureType->build_creature_type($self->{schema}, creature_level => 10, category_name => 'Guard', hire_cost => 200);
+    
+    $self->{roll_result} = 1;
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->train_guards($town);
+    
+    # THEN
+    my @hires = $self->{schema}->resultset('Town_Guards')->search(
+        {
+            town_id => $town->id,
+        },
+    );
+    is(scalar @hires, 2, "2 hire records created");
+
+    is($hires[0]->creature_type_id, $type1->id, "First hire record is correct cret type id");
+    is($hires[0]->amount, 0, "Correct number hired for first guard type");
+
+    is($hires[1]->creature_type_id, $type2->id, "Second hire record is correct cret type id");
+    is($hires[1]->amount, 31, "Correct number hired for second guard type");
+    
+    $town->discard_changes;
+    is($town->gold, 3800, "Correct amount of gold spent");
+       
+    my @history = $town->history;
+    is(scalar @history, 1, "1 item in history");
+    is($history[0]->type, 'expense', "History is an expense");
+    is($history[0]->value, '6200', "Value is correct");       
+       
+}
+
+sub test_no_tax_collected_when_revolt_started : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_tax => 40 );
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+	my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 4, dungeon_id => $castle->id, make_stairs => 1);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character->mayor_of($town->id);
+	$character->update;
+		
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+		
+	# WHEN
+	$action->process_town($town);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->peasant_state, 'revolt', "Town is in revolt because peasant tax was too high");
+	is($town->gold, 0, "Town's gold is 0 - no tax collected");
+}
+
+sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
+	my $self = shift;
+	
+	# GIVEN	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 73, peasant_tax => 0 );
+	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+	my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 4, dungeon_id => $castle->id, make_stairs => 1);
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character->mayor_of($town->id);
+	$character->update;
+		
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+		
+	# WHEN
+	$action->process_town($town);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->peasant_state, '', "Town is not in revolt");
+	is($town->gold, 0, "Town's gold is 0 - no tax collected");
+}
+
+sub test_gain_xp : Tests() {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id, party_id => $party->id );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    $self->{roll_result} = 10;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Charisma',
+        }
+    ); 
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $mayor->id,
+            level => 10,
+        }
+    );    
+    
+    # WHEN
+    $action->gain_xp($town, $mayor);
+    
+    # THEN
+    is($mayor->xp, 47, "Mayor has gained xp");
+    
+    my @messages = $town->history;
+    is(scalar @messages, 1, "Town has 1 message");
+    like($messages[0]->message, qr{test gained 47 xp from being mayor}, "Town message has correct text");
+    
 }
 
 1;

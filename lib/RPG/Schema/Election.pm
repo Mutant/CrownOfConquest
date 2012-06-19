@@ -89,6 +89,11 @@ sub get_scores {
 		
 		if ($character->id == $mayor->id) {
 			$rating_bonus = $town->mayor_rating;
+			
+			my $building = $town->building;
+			if ($building) {
+                $rating_bonus += $building->building_type->level * 20;
+			}
 		}
 		elsif (! $character->is_npc) {			
 			my $party_town = $character->party->find_related(
@@ -111,9 +116,11 @@ sub get_scores {
 			}
 		}
 		
+		my $charisma_adjustment = $character->execute_skill('Charisma', 'election') // 0;
+		
 		my $random = Games::Dice::Advanced->roll('1d20') - 10;
 		
-		my $score = $campaign_spend + $rating_bonus + $random;
+		my $score = $campaign_spend + $rating_bonus + $charisma_adjustment + $random;
 		
 		# If character is in the morgue, they get a score of 0.
 		#  This can happen if they were at the inn, couldn't pay, then went to the street and got killed.
@@ -123,6 +130,7 @@ sub get_scores {
 		    character => $character,
             spend => $campaign_spend,
             rating => $rating_bonus,
+            charisma => $charisma_adjustment,
             random => $random,
             total => $score,
 		};

@@ -31,7 +31,7 @@
 				</div>
 			</td>
 			<td>[% trade.amount %] gold</td>
-			<td>[% trade.party.name %]</td>
+			<td><a href="javascript:getPanels('party/profile?party_id=[% trade.party.id %]')">[% trade.party.name %]</a></td>
 			<td>
 				<a href="#" onClick="purchaseConfirmation('[% trade.id %]','[% item.display_name %]', '[% trade.amount %]')">Purchase</a>
 			</tr>

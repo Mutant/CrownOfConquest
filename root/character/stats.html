@@ -88,4 +88,18 @@
 	    <td nowrap>[% character.movement_factor %] ([% character.natural_movement_factor %])</td>
 	</tr>		
 </table>
-	
+
+<table class="characterStats" style="float:left">
+	<tr>
+	    <td class="stat-label">Resist Fire:</td>
+	    <td nowrap>[% character.resistance('Fire') %]%</td>
+	</tr>
+	<tr>
+	    <td class="stat-label">Resist Ice:</td>
+	    <td nowrap>[% character.resistance('Ice') %]%</td>
+	</tr>
+	<tr>
+	    <td class="stat-label">Resist Poison:</td>
+	    <td nowrap>[% character.resistance('Poison') %]%</td>
+	</tr>		
+</table>

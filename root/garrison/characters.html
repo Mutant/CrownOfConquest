@@ -1,4 +1,144 @@
 [% PROCESS layout/diag_buttons.html %]
+[% USE wrap %]
+
+[% IF editable %]
+<style>
+.ui-state-active { background: #B5AFA9 }
+</style>
+
+<script>
+	$( ".char-slot" ).droppable({
+		accept: ".garrison-char, .party-char",
+		drop: function( event, ui ) {
+			var dropped = ui.draggable;
+	        var droppedOn = $(this);
+	        
+	        var origSlot = dropped.parent();
+	                	        
+	        var inNewSlot = droppedOn.children('.garrison-char, .party-char');
+			var inNewSlotSize = inNewSlot.size();
+			
+			var toData = droppedOn.attr('destType');
+	        
+	        if ($(dropped).attr('isDead') == 'true' && inNewSlotSize == 1 && $( '.' + toData + '-char' ).draggable("option", "disabled") == true) {
+	       		$(dropped).detach().css({top: 0,left: 0}).appendTo(origSlot);
+	       		return;
+	        }
+	        	        
+	        $(dropped).detach().css({top: 0,left: 0}).appendTo(droppedOn);
+	        
+	        if (origSlot.attr('id') == droppedOn.attr('id')) {
+	       		return;
+	        }
+	        
+	        droppedData = dropped.attr('id').split('-');
+	        
+			var changed = false;
+			if (origSlot.attr('destType') != toData) {
+	        	changed = true;
+	        }     
+       
+	        var reqUrl = urlBase + "garrison/character_move?character_id=" + droppedData[1] + '&to=' + toData + '&garrison_id=[% garrison.id %]';
+	        dropped.attr('class', toData + '-char ui-droppable');
+       
+	        if (inNewSlotSize == 1) {
+	        	$(inNewSlot).detach().css({top: 0,left: 0}).appendTo(origSlot);
+	        	
+	        	swappedData = inNewSlot.attr('id').split('-');
+	        	
+	        	reqUrl += '&swapped_char_id=' + swappedData[1];
+	        	
+	        	inNewSlot.attr('class', origSlot.attr('destType') + '-char ui-droppable');
+	        }
+	        	        
+	        $.get(reqUrl, null, function(data) {
+	        	if (data.no_party_move) {
+	        		$('.party-char').draggable( "option", "disabled", true );
+	        	}
+	        	else {
+	        		$('.party-char').draggable( "option", "disabled", false );
+	        	}
+
+	        	if (data.no_garrison_move) {
+	        		$('.garrison-char').draggable( "option", "disabled", true );
+	        	}
+	        	else {
+	        		$('.garrison-char').draggable( "option", "disabled", false );
+	        	}
+	        }, 'json');
+	        
+	        if (changed) {
+	       		getPanels('party/refresh_party_list');
+	        }
+		},		
+		hoverClass: "ui-state-active",
+	});
+
+    $( ".garrison-char, .party-char" ).draggable({revert: "invalid"});
+    
+    [% IF garrison.number_alive <= 1 %]
+    	$('.garrison-char').draggable( "option", "disabled", true );
+    [% END %]
+    [% IF party.number_alive <= 1 %]
+    	$('.party-char').draggable( "option", "disabled", true );
+    [% END %]
+
+	
+</script>
+[% END %]
+
+[% MACRO display_table(type, chars) BLOCK %]
+
+	
+	[% count = 0 %]
+	[% FOREACH row IN [1,2] %]
+		[% FOREACH cell IN [1,2,3,4] %]
+			<div class="char-slot" id="char-slot-[% type %]-[% row %]-[% cell %]" destType="[% type %]"
+				style="text-align: center; vertical-align: middle; border: 1px dashed #B5AFA9; width: 150px; height: 50px; float: left; margin: 1px">
+				[% IF chars.$count %]
+					[% display_character(type, chars.$count) %]					
+				[% END %]
+			</div>
+			[% count=count+1 %]
+		[% END %]
+		<br style="clear: left">
+	[% END %]
+	</table>
+[% END %]
+
+[% MACRO display_character(type, char) BLOCK %]
+	<div class="[% type %]-char" id="char-[% char.id %]" isDead="[% IF char.is_dead %]true[% ELSE %]false[% END %]">
+	    <span style="float: left; margin-top: 18px; width: 20px">
+			[% INCLUDE party/party_char_alerts.html %]
+		</span>
+		<img style="float: left;" id="char_info_[% char.id %]" src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png">
+		<div style="width: 3px; height: 50px; float: left; margin-right: 1px; position: relative" 
+			title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
+			[% INCLUDE combat/hp_bar.html being=char %]
+		</div>
+        
+        <div style="float: left;">
+        
+        <span style="font-size: 7pt">
+        	<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">[% char.character_name | truncate(14) %]</a>
+        </span>
+        
+        <br>
+
+		<select onChange="saveCharacterOrder(this, '[% char.id %]')">
+			[% options = ['Attack','Defend'] %]
+			[% FOREACH option IN options %]
+				<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
+			[% END %]
+		</select>
+
+		<div dojoType="dijit.Tooltip"
+           connectId="char_info_[% char.id %]" style="display: none">
+				[% INCLUDE character/list_details.html character=char %]   	
+        </div>
+		</div>
+	</div>
+[% END %]
 
 [% IF ! garrison %]
 <b>Garrison Name (optional)</b>: <input type="text" id="garrison-name" value="[% garrison.name %]" size="50">
@@ -11,78 +151,40 @@
 	[% dialog_buttons('garrison-change-name-diag') %]
 </div>
 
-<h1><span id="name-header">[% garrison.display_name(1) %]</span> <a href="#" onClick="javascript:dijit.byId('garrison-change-name-diag').show()" class="main">Change</a></h1>
+<h3><span id="name-header">[% garrison.display_name(1) %]</span> <a href="#" onClick="javascript:dijit.byId('garrison-change-name-diag').show()" class="main">Change</a></h3>
 [% END %]
 
-<div [% UNLESS garrison.characters %]style="display: none"[% END %] id="garrison-list-outer">
-	<h3>Characters in the Garrison</h3>
-	
-	<table class="main" id="garrison-list">
-	<tr>
-	    [% INCLUDE party/party_list_header.html %]
-	    [% IF garrison %]<th>Orders</th>[% END %]
-	</tr>
-	
-	[% FOREACH char IN garrison.characters %]
-		<tr id="char_row_[% char.id %]">
-		[% INCLUDE party/party_list_char_line.html %]
-		<td>
-			<select onChange="saveCharacterOrder(this, '[% char.id %]')">
-				[% options = ['Attack','Defend'] %]
-				[% FOREACH option IN options %]
-					<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
-				[% END %]
-			</select>
-		</td>
-		[% IF editable %]
-		<td>
-			<div id="char_link_[% char.id %]"><a href="javascript:removeFromGarrison('[% char.id %]')">Remove from Garrison</a></div>
-		</td>
-		[% END %]
-		</tr>
-	[% END %]
-	</table>
+<div id="garrison-list-outer">
+	<b>Characters in the Garrison</b> [% IF editable %]<span id="garrison-help">(?)</span>[% END %]</br>
+	[% display_table('garrison', garrison_chars) %]
 </div>
 
 [% IF editable %]
 	<hr size=1>
 
-	<h3>Characters in your Party</h3>
-	
-	<table class="main" id="party-list">
-	<tr>
-        [% INCLUDE party/party_list_header.html %]
-		[% IF garrison %]<th></th>[% END %]
-	    <th>XP</th>
-	</tr>
-	
-	[% FOREACH char IN party.characters %]
-		<tr id="char_row_[% char.id %]">
-		[% INCLUDE party/party_list_char_line.html %]
-		[% IF garrison %]
-		<td>
-			<select onChange="saveCharacterOrder(this, '[% char.id %]')">
-				[% options = ['Attack','Defend'] %]
-				[% options.push('Cast') IF char.is_spell_caster %]
-				[% FOREACH option IN options %]
-					<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
-				[% END %]
-			</select>
-		</td>
-		[% END %]
-		<td>
-			<div id="char_link_[% char.id %]"><a href="javascript:addToGarrison('[% char.id %]')">Add To Garrison</a></div>
-		</td>
-		</tr>
-	[% END %]
-	</table>
+	<b>Characters in your Party</b> <span id="party-help">(?)</span><br>
+	[% display_table('party', party_chars) %]
 	
 	<br>
 	<div align="center">
-		<button onClick="changes=false; postGarrisonForm()">[% IF garrison %]Update[% ELSE %]Create[% END %] Garrison</button>
-		[% IF garrison %]<button onClick="confirmRemoveGarrison()">Remove Garrison</button>[% END %]
+		[% IF ! garrison %]
+			<button onClick="getPanels('garrison/add')">Create Garrison</button>
+		[% ELSE %]
+			<button onClick="confirmRemoveGarrison()">Remove Garrison</button>
+		[% END %]
 	</div>
 	
 [% END %]
+
+<div dojoType="dijit.Tooltip"
+   connectId="garrison-help, party-help" style="display: none">
+   		[% FILTER wrap(50, '', '<br>') ~%]
+		Drag characters from the party to allocate them to the garrison, or drag them back from the garrison to bring them into the party.
+		
+		Note, you must have at least one living character in both the garrison and party.
+		
+		You can also set the action for each garrison character during combat.
+		[% END ~%]
+</div>
 
 	

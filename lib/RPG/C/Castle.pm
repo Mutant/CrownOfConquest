@@ -8,11 +8,60 @@ use Games::Dice::Advanced;
 use Math::Round qw(round);
 use Data::Dumper;
 use DateTime;
+use List::Util qw(shuffle);
 
 sub move_to : Local {
 	my ( $self, $c ) = @_;
 
-	my $turn_cost = $c->session->{castle_move_type} eq 'stealth' ? 4 : $c->config->{cost_of_moving_through_dungeons};
+	my $turn_cost = ($c->session->{castle_move_type} // '') eq 'stealth' ? 4 : $c->config->{cost_of_moving_through_dungeons};
+	
+	my $sector = $c->model('DBIC::Dungeon_Grid')->find( 
+	   { 
+	       'dungeon_grid_id' => $c->stash->{party}->dungeon_grid_id, 
+	   }, 
+	   { 
+	       prefetch => {'dungeon_room' => 'dungeon'}, 
+	   } 
+    );
+	
+	my $town = $sector->dungeon_room->dungeon->town;
+
+	if ($town->trap_level > 0) {
+	   # Check to see if a trap is triggered
+	   my $prosp_adjustment = 20 - (round $town->prosperity / 5);
+	   
+	   my $chance = $town->trap_level * 3 + $prosp_adjustment;
+	   $chance = 30 if $chance > 30;
+	   
+	   if (Games::Dice::Advanced->roll('1d100') <= $chance) {
+	       # Check if party sees trap
+	       my $avg_div = $c->stash->{party}->average_stat('divinity') // 0;
+	       my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'chest_trap') // 0;
+	       
+	       my $trap_quot = $chance + Games::Dice::Advanced->roll('1d50');
+	       my $party_quot = $avg_div + $bonus + Games::Dice::Advanced->roll('1d50');
+
+	       if ($trap_quot > $party_quot) {
+	           # Trap triggered
+	           my @types = qw/Curse Hypnotise Mute Detonate/;
+	           
+	           my $trap = ( shuffle @types )[0];
+	           my $level = round $town->trap_level / 2; 
+	           
+	           $c->forward('/dungeon/execute_trap', [ $trap, $level ]);
+	       }
+	       else {
+	           # Party avoid trap
+	           push @{$c->stash->{messages}}, "There was trap here, but we found and disarmed it!";
+	       }	          
+	   }   
+	}
+	
+	# If the party is pending mayor, they must have killed the mayor during this raid, so set an increase
+	#  search range when looking for creatures
+	if (defined $town->pending_mayor && $town->pending_mayor == $c->stash->{party}->id) {
+	    $c->stash->{creature_search_range} = 10;
+	}
 
 	$c->forward( '/dungeon/move_to', [ undef, $turn_cost ] );
 }
@@ -189,10 +238,18 @@ sub end_raid : Private {
 			party_id => $c->stash->{party}->id,
 		}
 	);
+	
+	my $raid = $c->model('DBIC::Town_Raid')->find(
+		{
+			town_id  => $town->id,
+			party_id => $c->stash->{party}->id,
+			date_ended => undef,
+		},	
+	);
 
 	my @battles = $c->model('DBIC::Combat_Log')->get_party_logs_since_date(
 		$c->stash->{party},
-		$party_town->last_raid_start,
+		$raid->date_started,
 	);
 	
 	# Check to see if party is now pending mayor of the town. i.e. the mayor was killed
@@ -204,15 +261,14 @@ sub end_raid : Private {
 	}
 
 	my $killed_count;
-	foreach my $battle (@battles) {
-		$party_town->decrease_prestige(7);
-		
+	foreach my $battle (@battles) {		
 		my $enemy_num = $battle->enemy_num_of( $c->stash->{party} );
 		my $stats     = $battle->opponent_stats;
 
-		$killed_count += $stats->{$enemy_num}{deaths};
-		$c->log->debug( $stats->{$enemy_num}{deaths} . " guards killed in battle, reducing prosperity" );
+		$killed_count += $stats->{$enemy_num}{deaths};		
 	}
+	
+	$c->log->debug( "$killed_count guards killed in battle, reducing prestige" );
 
 	if ( ! $mayor_killed && ($c->session->{spotted} || @battles) ) {
 		my $news = $c->forward(
@@ -242,9 +298,16 @@ sub end_raid : Private {
 	}
 
 	$party_town->decrease_prestige( $killed_count * 10 );
-	$party_town->increase_guards_killed($killed_count);
-	$party_town->last_raid_end( DateTime->now() );
 	$party_town->update;
+	
+	$raid->date_ended(DateTime->now());
+	$raid->guards_killed($killed_count);
+	$raid->defeated_mayor($mayor_killed);
+	$raid->detected(($c->session->{spotted} || scalar @battles) ? 1 : 0);
+	$raid->battle_count(scalar @battles);
+	$raid->update;
+	
+	undef $c->session->{spotted};
 }
 
 1;

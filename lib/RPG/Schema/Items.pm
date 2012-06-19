@@ -205,7 +205,7 @@ sub insert {
     my @item_variable_params = $item_type->search_related( 'item_variable_params', {}, { prefetch => 'item_variable_name', }, );
 
     foreach my $item_variable_param (@item_variable_params) {
-        next unless $item_variable_param->item_variable_name->create_on_insert;
+        next if ! $item_variable_param->item_variable_name->create_on_insert || $item_variable_param->special;
 
         my $range      = $item_variable_param->max_value - $item_variable_param->min_value + 1;
         my $init_value = Games::Dice::Advanced->roll("1d$range") + $item_variable_param->min_value - 1;
@@ -219,6 +219,10 @@ sub insert {
     }
     
     $self->_apply_role;
+    
+    if ($self->can('set_special_vars')) {
+        $self->set_special_vars(@item_variable_params);   
+    }
     
     return $self;
 }
@@ -238,7 +242,7 @@ sub new {
 
     my $self = $class->next::method($attr);
     
-    $self->_encumbrace_trigger($self->_character_id) if $self->_character_id;
+    $self->_item_ownership_change_triggers($self->_character_id) if $self->_character_id;
     
     $self->equip_place_id($self->_equip_place_id, {force_triggers => 1}) if $self->_equip_place_id;
     
@@ -250,7 +254,7 @@ sub delete {
 
 	$self->_check_for_quest_item_removal();
 	
-	$self->_encumbrace_trigger(undef, $self->_character_id);
+	$self->_item_ownership_change_triggers(undef, $self->_character_id);
 	$self->equip_place_id(undef);
 	
     my $ret = $self->next::method(@args);
@@ -262,7 +266,7 @@ sub update {
 	my ( $self, $attr ) = @_;
 
 	if (exists $attr->{character_id}) {
-		$self->_encumbrace_trigger($attr->{character_id}, $self->_character_id);	
+		$self->_item_ownership_change_triggers($attr->{character_id}, $self->_character_id);	
 	}
 	
     my $ret = $self->next::method($attr);
@@ -280,12 +284,12 @@ sub character_id {
 		no warnings 'uninitialized';
 	
 		# Equip place always gets cleared when character changes
-		#  This makes sure the trigger is run correctly
+		#  This makes sure the ownership triggers are run correctly
 		$self->equip_place_id(undef) if $new_char_id != $self->character_id;
 
 		my $current_char_id = $self->_character_id;
 	
-		$self->_encumbrace_trigger($new_char_id, $current_char_id);
+		$self->_item_ownership_change_triggers($new_char_id, $current_char_id);
 	
 		$self->_character_id($new_char_id);
 	}
@@ -293,24 +297,41 @@ sub character_id {
 	return $self->_character_id;	
 }
 
-sub _encumbrace_trigger {
+sub _item_ownership_change_triggers {
 	my $self = shift;
 	my $new_char_id = shift;
 	my $current_char_id = shift;
- 
+	
+	return if defined $new_char_id && defined $current_char_id && $new_char_id == $current_char_id;
+	
+	my ($current_char, $new_char);
+	
 	if (defined $current_char_id) {
-		my $character = $self->belongs_to_character;
-		$character->calculate_encumbrance(-$self->weight) if $character;
+		$current_char = $self->belongs_to_character;
 	}
-
 	if (defined $new_char_id) {
-		my $character = $self->result_source->schema->resultset('Character')->find(
+		$new_char = $self->result_source->schema->resultset('Character')->find(
 			{
 				character_id => $new_char_id,
 			}
-		);
-		$character->calculate_encumbrance($self->weight) if $character;
-	}	
+		);	    
+	}
+	
+	$self->_encumbrace_trigger($new_char, $current_char);
+	$self->_usable_actions_ownership_trigger($new_char, $current_char);
+	
+	$new_char->update if $new_char;
+	$current_char->update if $current_char;
+    
+}
+
+sub _encumbrace_trigger {
+	my $self = shift;
+	my $new_char = shift;
+	my $current_char = shift;
+ 
+    $current_char->calculate_encumbrance(-$self->weight) if $current_char;
+	$new_char->calculate_encumbrance($self->weight) if $new_char;
 }
 
 sub equip_place_id {
@@ -335,6 +356,9 @@ sub equip_place_id {
     				$self->_movement_factor_bonus_trigger($new_equip_place_id, $character);
     				$self->_factors_trigger($new_equip_place_id, $character, @stats_with_bonuses)
     				    unless $trigger_params->{no_factors_trigger};
+    				    
+    				$self->_resistance_bonus_trigger($new_equip_place_id, $character);
+    				$self->_usable_actions_trigger($new_equip_place_id, $character);
     				
     				$character->update;
 				}
@@ -432,6 +456,80 @@ sub _factors_trigger {
 	}
 }
 
+sub _resistance_bonus_trigger {
+	my $self = shift;
+	my $new_equip_place_id = shift;
+	my $character = shift;
+	
+	return unless $character;
+		
+	my @enchantments = $self->search_related(
+		'item_enchantments',
+		{
+			'enchantment.enchantment_name' => 'resistances',
+		},
+		{
+			join => 'enchantment',
+		}
+	);
+	
+	foreach my $enchantment (@enchantments) {
+		my $bonus = $enchantment->variable('Resistance Bonus');
+		my $type = $enchantment->variable('Resistance Type');
+		$bonus = -$bonus unless defined $new_equip_place_id;
+		
+		my $method = "adjust_resist_${type}_bonus";
+		
+		$character->$method($bonus);
+	}    
+}
+
+sub _usable_actions_trigger {
+    my $self = shift;
+	my $new_equip_place_id = shift;
+	my $character = shift;    
+        
+    my @columns = qw(has_usable_actions_non_combat has_usable_actions_combat);
+    
+    undef $self->{_actions};
+    
+    for my $combat (0,1) {        
+        my @actions = $self->usable_actions(combat => $combat, is_equipped => 1);
+        next if ! @actions;
+        
+        my $col = $columns[$combat];
+        
+        if (defined $new_equip_place_id) {
+            $character->$col(1);
+        }
+        else {
+            my @existing_actions = grep { $_->item_id != $self->id } $character->get_item_actions($combat);
+            $character->$col(@existing_actions ? 1 : 0);
+        }
+    }        
+}
+
+sub _usable_actions_ownership_trigger {
+    my $self = shift;
+    my $new_char = shift;
+    my $current_char = shift;
+    
+    my @columns = qw(has_usable_actions_non_combat has_usable_actions_combat);
+    
+    for my $combat (0,1) { 
+        my @new_char_actions = $self->usable_actions(combat => $combat, character => $new_char);
+        my @current_char_actions = $self->usable_actions(combat => $combat, character => $current_char);
+        
+        my $col = $columns[$combat];
+        
+        $new_char->$col(1) if @new_char_actions && $new_char;
+        
+        if ($current_char && @current_char_actions && ! grep { $_->item_id != $self->id } $current_char->get_item_actions($combat)) {
+            $current_char->$col(0);
+        }   
+    }   
+}
+
 sub sell_price {
     my $self = shift;
     my $shop = shift;
@@ -515,7 +613,9 @@ sub equip_item {
             equip_place_name                          => $equipment_slot_name,
             'equip_place_categories.item_category_id' => $self->item_type->item_category_id,
         },
-        { join => 'equip_place_categories', },
+        { 
+            join => 'equip_place_categories', 
+        },
     );
 
     my @slots_changed;
@@ -741,7 +841,11 @@ sub repair_cost {
 #  (e.g. the item is equipped if the action requires that)
 sub usable_actions {
 	my $self = shift;
-	my $combat = shift // 0;
+	my %params = @_;
+	
+	my $combat = $params{combat} // 0;
+	my $is_equipped = $params{is_equipped} // $self->equipped;
+	my $character = $params{character};
 	
 	return @{$self->{_actions}{$combat}} if $self->{_actions}{$combat}; 
 	
@@ -751,15 +855,23 @@ sub usable_actions {
 	foreach my $enchantment (@enchantments) {
 		next unless $enchantment->is_usable($combat);
 		if ($enchantment->must_be_equipped) {
-			push @actions, $enchantment if $self->equipped;
+			push @actions, $enchantment if $is_equipped;
 		}
 		else {
 			push @actions, $enchantment;
 		}
 	}
-		
-	if ($self->item_type->usable && $self->is_usable($combat)) {
-        push @actions, $self;   
+	
+	if ($self->item_type->usable) {
+	    if (! $self->can('is_usable')) {
+	        # It's possible that this could be called before any roles have been applied
+	        #  (i.e. during insertion). In this case, we just want to return, i.e. we don't
+	        #  know if the item can be used now, so we don't try to work it out, and make
+	        #  sure we don't save the result into the cache.
+	        return;
+	    }
+	    	        
+        push @actions, $self if $self->is_usable($combat, $character);   
 	}
 	
 	$self->{_actions}{$combat} = \@actions;

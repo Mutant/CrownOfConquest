@@ -1,13 +1,10 @@
-[% IF message.type == 'damage' %]
-	[% INCLUDE magic/damage.html, message=message %]
-[% ELSIF message.type == 'effect' %]
-	[% INCLUDE magic/effect.html, message=message %]
-[% ELSIF message.type == 'party_effect' %]
-	[% INCLUDE magic/party_effect.html, message=message %]
-[% ELSIF message.type == 'portal' %]
-	[% INCLUDE magic/portal.html, message=message %]
-[% ELSIF message.type == 'summon' %]
-	[% INCLUDE magic/summon.html, message=message %]
-[% ELSIF message.type == 'potion' %]
-	[% INCLUDE magic/potion.html, message=message %]	
+[% IF message.blocked %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> couldn't cast 
+	<span class="combat-weapon">[% message.spell_name %]</span> on <span class="[% target_class %]">[% message.defender.name %]</span>, because 
+	[% message.attacker.pronoun('subjective') %] is muted!
+[% ELSE %]
+	[% tmpl = "magic/" _ message.type _ ".html" %]
+	[% INCLUDE $tmpl, message=message %]
+	
+	[% IF message.recalled %]The spell was recalled! A cast for the day was not used up.[% END %]
 [% END %]

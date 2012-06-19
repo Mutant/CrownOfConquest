@@ -1,12 +1,12 @@
-[% IF char.stat_points %]
-	<span id="statPoint-[% char.character_id %]"><a href="javascript:loadScreen('character/view?character_id=[% char.character_id %]')">
-		<img src="[% c.config.static_path %]/images/actions/statpointsalert.png" border="0">
-	</a></span>
-	<div dojoType="dijit.Tooltip"
-           connectId="statPoint-[% char.character_id %]"
-           label="[% char.stat_points %] stat points to be assigned">
+[% USE infl = Lingua.EN.Inflect; %]
+
+[% IF char.stat_points || char.skill_points %]
+	<span id="statPoint-[% char.character_id %]"><a href="javascript:loadScreen('character/view?selected=skills&character_id=[% char.character_id %]')">
+		<img src="[% c.config.static_path %]/images/actions/statpointsalert.png" border="0"></a></span>
+	<div dojoType="dijit.Tooltip" connectId="statPoint-[% char.character_id %]">
+           [% IF char.stat_points %][% char.stat_points %] [% FILTER inflect(number => char.stat_points) ~%] stat PL(point) [% END ~%] to be assigned<br>[% END %]
+           [% IF char.skill_points %][% char.skill_points %] [% FILTER inflect(number => char.skill_points) ~%] skill PL(point) [% END ~%] to be assigned[% END %]
     </div>
-	</span>
 [% END %]
 [% char_out_of_ammo = char.run_out_of_ammo %]
 [% char_overencumbered = char.is_overencumbered %]
@@ -37,5 +37,4 @@
            connectId="brokenItems-[% char.character_id %]"
            label="[% label %]">
     </div>
-	</span>
 [% END %]

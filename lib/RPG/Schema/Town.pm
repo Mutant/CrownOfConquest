@@ -18,7 +18,8 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Town');
 __PACKAGE__->add_columns(qw/town_id town_name land_id prosperity blacksmith_age blacksmith_skill 
 						    discount_type discount_value discount_threshold pending_mayor gold peasant_tax
 						    party_tax_level_step base_party_tax sales_tax tax_modified_today
-						    mayor_rating peasant_state last_election advisor_fee character_heal_budget/);
+						    mayor_rating peasant_state last_election advisor_fee character_heal_budget
+						    trap_level/);
 						    
 __PACKAGE__->add_columns(
 	pending_mayor_date => {data_type => 'datetime'},
@@ -54,7 +55,11 @@ __PACKAGE__->numeric_columns(
 	},
 	advisor_fee => {
 		min_value => 0,	
-	}
+	},
+	trap_level => {
+	    min_value => 0,
+	    max_value => 10,
+	},
 ); 
 
 __PACKAGE__->set_primary_key('town_id');
@@ -81,7 +86,13 @@ __PACKAGE__->has_many( 'elections', 'RPG::Schema::Election', 'town_id', );
 
 __PACKAGE__->might_have( 'current_election', 'RPG::Schema::Election', 'town_id', { where => {'status' => 'Open'}} );
 
+__PACKAGE__->might_have( 'building', 'RPG::Schema::Building', { 'foreign.land_id' => 'self.land_id' } );
+
 __PACKAGE__->might_have( 'capital_of', 'RPG::Schema::Kingdom', { 'foreign.capital' => 'self.town_id' }, );
+
+__PACKAGE__->has_many( 'guards', 'RPG::Schema::Town_Guards', 'town_id', );
+
+__PACKAGE__->has_many( 'raids', 'RPG::Schema::Town_Raid', 'town_id', );
 
 sub label {
     my $self = shift;
@@ -131,8 +142,14 @@ sub tax_cost {
     my $level_cost = round ($level_modifier * ($party_level - 1 ));
     
     my $prestige_modifier = (0-$prestige) / 300;
+    
+    my $negotiation_modifier = 1;
+    if (ref $party) {
+        my $negotiation_skill = $party->skill_aggregate('Negotiation', 'town_entrance_tax');
+        $negotiation_modifier = 1 - ($negotiation_skill / 100);
+    }
 
-    my $gold_cost = round ($base_cost + $level_cost);
+    my $gold_cost = round (($base_cost + $level_cost) * $negotiation_modifier);
     $gold_cost += round ($gold_cost * $prestige_modifier); 
     $gold_cost = 1 if $gold_cost < 1;
 
@@ -217,9 +234,10 @@ sub expected_garrison_chars_level {
 	my $self = shift;
 	
 	my $expected_garrison_chars_level = 0;
-	$expected_garrison_chars_level = 12 if $self->prosperity > 35;
-	$expected_garrison_chars_level = 25 if $self->prosperity > 65;
-	$expected_garrison_chars_level = 40 if $self->prosperity > 85;
+	$expected_garrison_chars_level = 30  if $self->prosperity > 25;
+	$expected_garrison_chars_level = 50  if $self->prosperity > 45;
+	$expected_garrison_chars_level = 80  if $self->prosperity > 65;
+	$expected_garrison_chars_level = 100 if $self->prosperity > 85;
 	
 	return $expected_garrison_chars_level;
 }
@@ -228,8 +246,6 @@ sub claim_land {
     my $self = shift;
     
     my $kingdom_id = $self->location->kingdom_id;
-    
-    return unless $kingdom_id;
     
     my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset    => $self->result_source->schema->resultset('Land'),
@@ -290,7 +306,6 @@ sub change_allegiance {
     $location->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
     $location->update;
     
-    $self->decrease_mayor_rating(10);
     $self->unclaim_land;
     $self->claim_land;
     $self->update;
@@ -310,6 +325,7 @@ sub change_allegiance {
             {
                 message => "The town of " . $self->town_name . " is now loyal to our kingdom.",
                 day_id => $today->id,
+                type => 'public_message',
             }
         );
     }
@@ -326,6 +342,7 @@ sub change_allegiance {
             {
                 message => $message,
                 day_id => $today->id,
+                type => 'public_message',
             }
         );
 
@@ -378,6 +395,106 @@ sub create_kingdom_town_recs {
             }
         );
     }   
+}
+
+# Check if a party is allowed to enter a town
+sub party_can_enter {
+    my $self = shift;
+    my $party = shift;
+    
+	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
+		{
+			party_id => $party->id,
+			town_id  => $self->id,
+		},
+	);
+	
+	my $reason;
+    
+	# Check if they have really low prestige, and need to be refused.
+	my $mayor = $self->mayor;
+	if (! $mayor || $mayor->party_id != $party->id) {
+		my $prestige_threshold = -90 + round( $self->prosperity / 25 );
+		if ( ($party_town->prestige // 0) <= $prestige_threshold ) {
+		    
+		    $reason = "You've are not allowed into " . $self->town_name . ". You'll need to wait until your prestige improves before they'll let you in";
+		}
+	}
+	
+	# Check if the mayor's party has an IP address in common
+	if ($mayor && ! $mayor->is_npc && $party->is_suspected_of_coop_with($mayor->party)) {	    
+	    $reason = "You cannot enter " . $self->town_name . " as the mayor's party has IP addresses in common with yours";
+	}
+	
+	return ($reason ? 0 : 1, $reason);
+} 
+
+sub blacksmith_skill_label {
+    my $self = shift;
+    
+	if ($self->blacksmith_skill < 3) {
+		return 'terrible';
+	}
+	elsif ($self->blacksmith_skill < 6) {
+		return 'poor';
+	}
+    elsif ($self->blacksmith_skill < 9) {
+		return 'average';
+	}
+    elsif ($self->blacksmith_skill < 12) {
+		return 'average';
+	}
+    elsif ($self->blacksmith_skill < 15) {
+		return 'good';
+	}
+    elsif ($self->blacksmith_skill < 18) {
+		return 'excellent';
+	}
+    elsif ($self->blacksmith_skill < 21) {
+		return 'amazing';
+	}
+    else {
+		return 'god-like';
+	}
+}
+
+# Return the relationship state between the kingdoms of this town and the passed in party
+sub kingdom_relationship_between_party {
+    my $self = shift;
+    my $party = shift;
+    
+    return if ! $party->kingdom_id || ! $self->location->kingdom_id;
+    
+    my $relationship = $party->kingdom->relationship_with($self->location->kingdom_id);
+    
+    return unless $relationship;
+    
+    return $relationship->type;
+    
+}
+
+# Return a hash with the defences of this town
+sub defences {
+    my $self = shift;
+    
+    my $mayor = $self->mayor;
+    my @garrison = $self->result_source->schema->resultset('Character')->search(
+        {
+            status => 'mayor_garrison',
+            status_context => $self->id,
+        },
+    );
+    my $building = $self->building; 
+    
+    my @guards = $self->guards;
+    
+    return (
+        mayor => $mayor,
+        garrison => \@garrison,
+        building => $building,
+        trap_level => $self->trap_level,
+        guards => \@guards,
+    );
 }
 
 1;

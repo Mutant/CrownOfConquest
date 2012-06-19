@@ -9,7 +9,7 @@ use Data::Dumper;
 use Carp;
 
 __PACKAGE__->load_classes(qw/
-    Items Item_Category Race Item_Type Player Party Terrain Land Dimension Class Character Shop Items_Made
+    Items Item_Category Race Item_Type Player Party Terrain Land Dimension Class Character Shop
     Creature CreatureType CreatureGroup Town GameVars Equip_Places Item_Attribute Item_Attribute_Name
     Item_Variable Item_Variable_Params Item_Variable_Name Super_Category Equip_Place_Category Levels
     Spell Memorised_Spells Effect Creature_Effect Character_Effect Mapped_Sectors Day DayLog Combat_Log
@@ -21,6 +21,8 @@ __PACKAGE__->load_classes(qw/
     Enchantment_Item_Category Creature_Category Promo_Code Promo_Org Town_Guards Election Election_Candidate
     Dungeon_Teleporter Dungeon_Special_Room Creature_Spell Building_Type Building Reward_Links Player_Reward_Links
     Kingdom Kingdom_Messages Party_Kingdom Party_Mayor_History Trade Player_Login Capital_History Kingdom_Town
+    Skill Character_Skill Building_Upgrade_Type Building_Upgrade Party_Messages_Recipients Kingdom_Relationship
+    Bomb Kingdom_Claim Kingdom_Claim_Response Global_News Crown_History Conf Town_Raid
     Item_Grid
 /);
 

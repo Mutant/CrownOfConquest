@@ -156,7 +156,7 @@ sub test_bury : Tests(3) {
 	is($characters[2]->in_storage, 0, "Character deleted");
 	
 	$party->discard_changes;
-	is($party->rank_separator_position, 1, "Rank separator moved");
+	is($party->rank_separator_position, 2, "Rank separator moved");
 	
 }
 

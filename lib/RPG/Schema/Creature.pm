@@ -210,7 +210,7 @@ around 'number_of_attacks' => sub {
 	return $self->$orig( 0, @attack_history );
 };
 
-sub resistences {
+sub resistances {
 	my $self = shift;
 	
 	my $type = $self->type;

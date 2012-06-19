@@ -51,4 +51,55 @@ sub test_king : Tests(1) {
     isa_ok($king, 'RPG::Schema::Character', "King returned");
 }
 
+sub test_quests_allowed : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, 'x_size' => 5, 'y_size' => 5, kingdom_id => $kingdom->id);
+    
+    $self->{config}{land_per_kingdom_quests} = 10;
+    $self->{config}{minimum_kingdom_quests} = 2;
+    
+    # WHEN
+    my $quests_allowed = $kingdom->quests_allowed;
+    
+    # THEN
+    is($quests_allowed, 3, "3 quests allowed");    
+       
+}
+
+sub test_quests_allowed_with_leadership : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
+    my $king = $kingdom->king;
+    my @land = Test::RPG::Builder::Land->build_land($self->{schema}, 'x_size' => 5, 'y_size' => 5, kingdom_id => $kingdom->id);
+    
+    $self->{config}{land_per_kingdom_quests} = 10;
+    $self->{config}{minimum_kingdom_quests} = 2;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Leadership',
+        }
+    );    
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $king->id,
+            level => 5,
+        }
+    );        
+    
+    # WHEN
+    my $quests_allowed = $kingdom->quests_allowed;
+    
+    # THEN
+    is($quests_allowed, 8, "8 quests allowed");    
+       
+}
+
 1;

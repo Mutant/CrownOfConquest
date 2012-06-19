@@ -217,6 +217,10 @@ sub test_sector_menu_confirm_attack_set : Tests(3) {
         $creature_group = Test::MockObject::Extends->new($creature_group);
         $creature_group->set_always('compare_to_party', $test->{factor_comparison});
         
+        $self->{mock_forward}->{'get_watcher_factor_comparison'} = sub {            
+            RPG::C::Party->get_watcher_factor_comparison( $self->{c}, $creature_group ) 
+         };
+        
         $self->{c}->stash->{creature_group} = $creature_group;
         
         my $party = Test::RPG::Builder::Party->build_party(
@@ -253,8 +257,11 @@ sub test_select_action : Tests(7) {
     $self->{stash}{party} = $party;
     $self->{params}{'action'} = 'Cast';
     
+    my $mock_spell_action = Test::MockObject->new();
+    $mock_spell_action->set_always('custom', {});
+    
     my $spell = Test::MockObject->new();
-    $spell->set_always('cast', 'mock_cast_result');
+    $spell->set_always('cast', $mock_spell_action);
     $spell->set_always('target', 'character');
     
     my $spell_rs = Test::MockObject->new();
@@ -282,7 +289,7 @@ sub test_select_action : Tests(7) {
     isa_ok($args->[2], 'RPG::Schema::Character', "Character passed as second arg to cast");
     is($args->[2]->id, $char2->id, "Correct char is target of spell");
     
-    is($template_args->[0][0]{params}{message}, "mock_cast_result", "Cast result passed to template");
+    is($template_args->[0][0]{params}{message}, $mock_spell_action, "Cast result passed to template");
     
     is($self->{stash}{messages}, 'spell message', "Messages set correctly");
 }
@@ -309,10 +316,9 @@ sub test_parties_in_sector_land : Tests(1) {
     $self->{mock_forward}->{'/party/pending_mayor_check'} = sub {};
     
     # WHEN
-    RPG::C::Party->parties_in_sector($self->{c}, $land->id);
+    my $parties = RPG::C::Party->parties_in_sector($self->{c}, $land->id);
     
     # THEN
-    my $parties = $template_args->[0][0]{params}{parties};
     is(scalar @$parties, 2, "Two parties in sector");
        
 }

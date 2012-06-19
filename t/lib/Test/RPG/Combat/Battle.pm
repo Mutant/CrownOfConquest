@@ -13,6 +13,8 @@ use Test::More;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Town;
 
 use Data::Dumper;
 use DateTime;
@@ -31,6 +33,7 @@ sub test_get_combatant_list_no_history_multiple_combatants : Tests(1) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, @combatants);
@@ -56,6 +59,7 @@ sub test_get_combatant_list_attack_history_updated : Tests(2) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character, $creature);
@@ -79,6 +83,7 @@ sub test_get_combatant_list_with_history : Tests(5) {
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
    
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
@@ -110,6 +115,7 @@ sub test_get_combatant_list_spell_casters_always_have_only_one_attack : Tests() 
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
+    $battle->mock('sort_combatant_list', sub { shift; @_ });
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
@@ -501,7 +507,9 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     my $self = shift;
     
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0 );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[0]->id );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, hit_points => 0, land_id => $land[8]->id );
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, hit_points => 2 );
     my $combatant = Test::MockObject->new();
     
@@ -534,7 +542,7 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
 	is($result->{combat_complete}, 1, "Combat complete set");
 	
 	$party->discard_changes;
-	is(defined $party->defunct, 1, "Party now marked as defunct"); 
+	is($party->land_id, $land[0]->id, "Party sent to nearby town"); 
 }
 
 sub test_check_for_auto_cast_creature_target : Tests(2) {
@@ -561,6 +569,7 @@ sub test_check_for_auto_cast_creature_target : Tests(2) {
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
+	$battle->mock('opposing_combatants_of', sub {($cg->members)});
 	
 	# WHEN
 	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);
@@ -592,16 +601,18 @@ sub test_check_for_auto_cast_character_target : Tests(2) {
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
 	$character->set_always('check_for_auto_cast', $spell);
+	$character->set_always('last_combat_action', 'Attack');
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
+	$battle->mock('combatants', sub {($cg->members, $party->members)});
 	
 	# WHEN
 	my ($spell_cast, $target) = RPG::Combat::Battle::check_for_auto_cast($battle, $character);
 	
 	# THEN
 	is($spell_cast->id, $spell->id, "Spell id set correctly");
-	is($target->id, $character->id, "Spell target set correctly");	
+	is($target->id, $character->id, "Spell target set correctly");
 
 }
 
@@ -627,7 +638,6 @@ sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	$character->update;
 	$character = Test::MockObject::Extends->new($character);
 	$character->set_true('is_spell_caster');
-	$character->set_always('check_for_auto_cast', $spell);
 	
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponents_of', $cg);
@@ -640,4 +650,5 @@ sub test_check_for_auto_cast_online_so_no_cast : Tests(3) {
 	is($character->last_combat_param1, undef, "No spell id");
 	is($character->last_combat_param2, undef, "No spell target");
 }
+
 1;

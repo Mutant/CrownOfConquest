@@ -38,24 +38,8 @@
 	</script>
 
 	The blacksmith of [% town.town_name %] proudly proclaims he's been working here for [% town.blacksmith_age %] days. Judging by the way he's hammering that
-	sword, you'd guess his skill to be:
-	[% IF town.blacksmith_skill < 3 %]
-		terrible.
-	[% ELSIF town.blacksmith_skill < 6 %]
-		poor.
-	[% ELSIF town.blacksmith_skill < 9 %]
-		average.
-	[% ELSIF town.blacksmith_skill < 12 %]
-		decent.
-	[% ELSIF town.blacksmith_skill < 15 %]
-		good.
-	[% ELSIF town.blacksmith_skill < 18 %]
-		excellent.
-	[% ELSIF town.blacksmith_skill < 21 %]
-		amazing.
-	[% ELSE %]
-		god-like.
-	[% END %]
+	sword, you'd guess his skill to be: [% town.blacksmith_skill_label %].
+
 	<br><br>
 	[% IF full_repair_cost %]<a href="javascript:getPanels('town/blacksmith/full_repair')">Repair All Items</a> ([% full_repair_cost %] gold) 
 	[% IF equipped_repair_cost && equipped_repair_cost != full_repair_cost %]

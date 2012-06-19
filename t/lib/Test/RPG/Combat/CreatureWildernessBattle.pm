@@ -381,6 +381,43 @@ sub test_character_action_use_item : Tests(5) {
 	$self->unmock_dice;
 }
 
+sub test_character_action_autocast_cast_but_has_no_attack : Tests(1) {
+	my $self = shift;
+
+	# GIVEN	
+	$self->{config}{online_threshold} = 5;
+	
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, );
+    my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+    my $cret = ($cg->creatures)[0];
+    
+    $party->last_action(DateTime->now()->subtract( minutes => 10 ));	
+    $party->update;
+	
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+	$character = Test::MockObject::Extends->new($character);
+	$character->set_true('is_spell_caster');
+	$character->set_always('check_for_auto_cast', undef);
+	$character->set_always('last_combat_action', 'Attack');
+	$character->set_always('last_combat_param1', 'autocast');
+	$character->set_always('effect_value', -1);
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		log            => $self->{mock_logger},
+		config         => $self->{config},
+	);	
+	
+	# WHEN
+	my $result = $battle->character_action($character);
+	
+	# THEN
+	is($result, undef, "Character didn't do anything, as no cast selected, and has no attack");
+
+}
+
 sub test_creature_action_basic : Tests(9) {
 	my $self = shift;
 
@@ -463,6 +500,56 @@ sub test_creature_action_cant_target_chars_not_in_party : Tests(11) {
 	is( $args->[1]->id, $creature->id, "Correct creature passed" );
 	isa_ok( $args->[2], "RPG::Schema::Character", "Second param passed to attack was a character" );
 	is( $args->[2]->id, $results->defender->id, "Correct character passed" );
+	
+	# CLEANUP
+	$override->restore;
+}
+
+sub test_creature_action_check_correct_rank_targetted : Tests(10) {
+	my $self = shift;
+
+	# GIVEN
+	my $party    = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, rank_separator_position => 1 );
+	my @characters = $party->characters;
+	my $cg       = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id, character_count => 1);
+	my $creature = ( $cg->creatures )[0];
+		
+	my @shuffled;
+	my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub { @shuffled = @_; return $_[0] } );	
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => { front_rank_attack_chance => 20 },
+		log            => $self->{mock_logger},
+	);
+
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'attack', 1 );
+
+	# WHEN
+	my $results = $battle->creature_action($creature);
+
+	# THEN
+	isa_ok( $results->defender, "RPG::Schema::Character", "opponent was a character" );
+	is($results->defender->character_id, $characters[0]->id, "Front-rank character targetted");
+	is( $results->damage,                                           1,          "Damage returned correctly" );
+	is( $battle->session->{attack_count}{ $results->defender->id }, 1,          "Session updated with attack count" );
+	
+	my ( $method, $args ) = $battle->next_call();
+
+	is( $method, "attack", "Attack called" );
+	isa_ok( $args->[1], "RPG::Schema::Creature", "First param passed to attack was a creature" );
+	is( $args->[1]->id, $creature->id, "Correct creature passed" );
+	isa_ok( $args->[2], "RPG::Schema::Character", "Second param passed to attack was a character" );
+	is( $args->[2]->id, $results->defender->id, "Correct character passed" );
+	
+	my @shuffled_char_ids = map { $_->id } @shuffled;
+	is_deeply(\@shuffled_char_ids, [$characters[0]->id, $characters[0]->id, $characters[1]->id], "Front-rank char added to shuffled list twice")
+	   or diag join ',', @shuffled_char_ids; 
+	
 	
 	# CLEANUP
 	$override->restore;
@@ -682,7 +769,7 @@ sub test_roll_flee_attempt : Tests(5) {
 			roll                   => 60,
 			expected_result        => 1,
 			previous_flee_attempts => 0,
-		},
+		},		
 	);
 
 	$self->mock_dice;
@@ -946,6 +1033,121 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	like( $combat_log_message->message, qr/You fled the battle!/, "Flee message set" );
 }
 
+sub test_execute_round_skills_checked : Tests(2) {
+	my $self = shift;
+
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	
+	my ($character) = $party->characters;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Berserker Rage',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );	
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
+	
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'get_combatant_list', sub { () } );
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	my $combat_log_message = $self->{schema}->resultset('Combat_Log_Messages')->search->first;
+	like( $combat_log_message->message, qr/increasing his damage for 3 rounds/, "Message set correctly");
+	
+	is( $character->character_effects->count, 1, "Effect added to character");
+	
+	$self->unmock_dice;
+	$self->clear_dice_data;	
+}
+
+sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
+	my $self = shift;
+
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	
+	my ($character) = $party->characters;
+	my $item = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Shield', character_id => $character->id);  
+	$character->last_combat_action('Attack');
+	$character->update;
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Shield Bash',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );	
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_hit_points_current => 3 );
+	
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+	$self->{roll_result} = 10;
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	my @messages = $self->{schema}->resultset('Combat_Log_Messages')->search;
+	is(scalar @messages, 1, "1 messages added");
+	like( $messages[0]->message, qr/test_cret #0(.+?) was killed/, "Creature was killed");
+	like( $messages[0]->message, qr/You've killed the creatures/, "Group wiped out");
+	
+    is( $result->{combat_complete}, 1, "Combat ended" );
+	
+		
+	$self->unmock_dice;
+	$self->clear_dice_data;	
+}
+
+
 sub test_characters_killed_during_round_are_skipped : Tests(1) {
 	my $self = shift;
 	
@@ -976,6 +1178,80 @@ sub test_characters_killed_during_round_are_skipped : Tests(1) {
 
 	# THEN
 	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+}
+
+sub test_characters_killed_during_round_are_not_healed : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_level => 20 );
+	
+	my ($creature) = $cg->creatures;
+	my ($char1, $char2) = $party->characters;
+	$char1->hit_points(1);
+	$char1->update;
+	
+	my $heal_spell = $self->{schema}->resultset('Spell')->find(
+	   {
+	       spell_name => 'Heal',
+	   }
+	);
+	$char2->last_combat_action('Cast');
+	$char2->last_combat_param1($heal_spell->id);
+	$char2->last_combat_param2($char1->id);
+	
+	$char2->add_to_memorised_spells(
+	   {
+	       number_cast_today => 0,
+	       memorise_count => 1,
+	       spell_id => $heal_spell->id,
+	   }
+	);
+	
+	$char2->update;	
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+	$battle->mock( 'sort_combatant_list', sub {
+	    my $mock = shift;
+	    my @combatants = @_;
+	    
+	    my @ret;
+	    for my $id ($char1->id, $creature->id, $char2->id ) {
+            push @ret, grep { $_->id == $id } @combatants;
+	    }
+	    	    
+	    return @ret; 
+	});
+	
+	$battle->mock( 'sort_creature_targets', sub {
+	    my $mock = shift;
+	    my @targets = @_;
+	    
+	    my @ret;
+	    for my $id ($char1->id, $char2->id ) {
+            push @ret, grep { $_->id == $id } @targets;
+	    }	    
+	    
+	    return @ret; 
+	});
+	
+	$battle->set_false('check_for_end_of_combat');
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is(scalar @{$result->{messages}}, 2, "Only 2 combat messages");
 }
 
 sub test_finish_creatures_lost : Tests(6) {
@@ -1301,6 +1577,91 @@ sub test_combatants_always_gives_same_objects : Tests(3) {
 	is($combatants1[0], $combatants2[0], "Character is the same object");
 	is($combatants1[1], $combatants2[1], "Creature is the same object");
 	
+}
+
+sub test_check_skills : Tests(2) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);
+	my ($cret) = $cg->creatures;
+	
+	my ($character) = $party->characters;
+    $character->last_combat_action('Attack');
+    $character->update;	
+	
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Shield Bash',
+        }
+    );    	
+	
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 1,
+        }
+    );		
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Shield', character_id => $character->id); 
+    
+	$self->mock_dice;
+	$self->clear_dice_data;	
+	
+	$self->{rolls} = [4, 2];
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	# WHEN
+	my @messages = $battle->check_skills;
+	
+	# THEN
+	is(scalar @messages, 1, "1 Message returned");
+	
+	$cret->discard_changes;
+	is($cret->hit_points_current, 2, "Creature hit points reduced");
+	
+	$self->unmock_dice;
+	$self->clear_dice_data;	
+       
+}
+
+sub test_refresh_combat_factor_called_before_cache_initialised : Tests(3) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my ($char) = $party->characters;
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);    
+	my ($cret) = $cg->creatures;
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	# WHEN
+	$battle->refresh_factor_cache('creature', $cret->id);
+	
+	# THEN
+	my $combat_factors = $battle->combat_factors();
+	
+	is(scalar keys %$combat_factors, 2, "2 sets of factors calculated");
+	is($combat_factors->{creature}{$cret->id}{df}, 8, 'Creature DF set correctly');
+	is($combat_factors->{character}{$char->id}{df}, 0, 'Creature AF set correctly');
+		
+       
 }
 
 1;

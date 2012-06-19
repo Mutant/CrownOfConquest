@@ -35,6 +35,28 @@ function showCapitalDiag(townId, townName, cost) {
 	dijit.byId('capital-select-diag').show();
 }
 
+function confirmQuest(questId, goldValue) {
+	dojo.byId('confirm-quest-gold-value').value = goldValue;
+	dojo.byId('confirm-quest-id').value = questId;
+	
+	dijit.byId('confirm-quest-diag').show();
+}
+
+
+function showContributeDiag(townId, townName) {
+	dojo.byId('contribute-town-id').value = townId;
+	dojo.byId('contribute-town-name').innerHTML = townName;
+	
+	dijit.byId('contribute-diag').show();
+}
+
+function showChangeRelationshipDiag(withId, currentType) {
+	dojo.byId('with-kingdom-id').value = withId;
+	dijit.byId('relationship-type-select').set('value', currentType);
+	
+	dijit.byId('change-relationship-diag').show();
+}
+
 </script>
 
 <div dojoType="dijit.Dialog" id="kingdom-adjust-gold" style="display: none" title="Gold">
@@ -63,6 +85,38 @@ function showCapitalDiag(townId, townName, cost) {
 	</form>
 </div>
 
+<div dojoType="dijit.Dialog" id="confirm-quest-diag" style="display: none" title="Confirm Quest">
+	<form method="POST" action="[% base %]kingdom/confirm_quest" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="quest_id" id="confirm-quest-id" />
+    Confirm the quest. Adjusting the gold reward will require the party to accept the quest.<br>
+    Gold Reward: <input type="text" name="gold_value" id="confirm-quest-gold-value" style="width: 50px"/>
+	[% dialog_buttons('confirm-quest-diag') %]
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="contribute-diag" style="display: none" title="Contribute Gold To A Town">
+	<form method="POST" action="[% base %]kingdom/contribute" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="town_id" id="contribute-town-id" />
+    How much gold do you want to contribute to <span id="contribute-town-name"></span>?
+	<input type="text" dojoType="dijit.form.NumberTextBox" name="contribution" style="width: 50px"
+					constraints="{min:0,places:0}" required="true">	     
+	[% dialog_buttons('contribute-diag') %]
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="change-relationship-diag" style="display: none" title="Change Relationship">
+	<form method="POST" action="[% base %]kingdom/change_relationship" onSubmit="postPanels(this); return false">
+	<input type="hidden" name="with_id" id="with-kingdom-id" />
+    What would you like to change the relationship to:    
+	<select dojoType="dijit.form.Select" name="type" id="relationship-type-select" autocomplete="false">
+        <option value="neutral">Neutral</option>
+        <option value="war">War</option>
+        <option value="peace">Peace</option>
+	</select>    
+    
+	[% dialog_buttons('change-relationship-diag') %]
+	</form>
+</div>
 
 <h2>Manage the Kingdom of [% kingdom.name %] - <a class="main" href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a></h2>
 
@@ -77,9 +131,9 @@ Kingdom Treasury: [% kingdom.gold %] gold
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
-[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Tax', 'Records', 'Messages' ] %]
+[% FOREACH tab IN [ 'Parties', 'Towns', 'Quests', 'Buildings', 'Tax', 'Relationships', 'Description', 'Records', 'Messages', 'Info', 'History' ] %]
 	[% lower_tab = tab | lower %]
-	<div dojoType="dijit.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
+	<div dojoType="dojox.layout.ContentPane" title="[% tab %]" href="[% base %]kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]
 	
 </div>

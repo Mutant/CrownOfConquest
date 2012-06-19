@@ -134,11 +134,8 @@ sub change : Local {
     $new_mayor->mayor_of($c->stash->{town}->id);
     $new_mayor->update;
     
-    $mayor->status(undef);
-    $mayor->status_context(undef);
-    $mayor->update;   
-        
-    $c->stash->{party}->adjust_order;
+    $new_mayor->apply_roles;
+    $new_mayor->gain_mayoralty($c->stash->{town});
     
     my $new_rating = $orig_approval - 10;
     $new_rating = -5 if $new_rating > -5;
@@ -146,15 +143,13 @@ sub change : Local {
     $c->stash->{town}->mayor_rating($new_rating);
     $c->stash->{town}->update;
     
-	$c->model('DBIC::Party_Mayor_History')->create(
-	   {
-	       mayor_name => $new_mayor->character_name,
-	       character_id => $new_mayor->id,
-	       town_id => $c->stash->{town}->id,
-	       got_mayoralty_day => $c->stash->{today}->id,
-	       party_id => $c->stash->{party}->id,
-	   }
-	);  
+    # If the party has less than the max chars, add the mayor into the party
+    # (otherwise, he'll be in the town's inn).
+    if (! $c->stash->{party}->is_full) {
+        $mayor->status(undef);
+        $mayor->status_context(undef);
+        $mayor->update;
+    }
 	
 	$c->stash->{town}->add_to_history(
    		{
@@ -190,28 +185,13 @@ sub guards : Local {
 	
 	my %guard_types = map { $_->id =>  $_ } $c->model('DBIC::CreatureType')->search(
 		{
-			'category.name' => 'Guards',
+			'category.name' => 'Guard',
 		},
 		{
 			join     => 'category',
 			order_by => 'level',
 		}
-	);	
-	
-	my @guards = $c->model('DBIC::Creature')->search(
-		{
-			'dungeon_room.dungeon_id' => $castle->id,
-		},
-		{
-			join => {'creature_group' => {'dungeon_grid' => 'dungeon_room'}},
-		}
-	);		
-	
-	foreach my $guard (@guards) {
-		my $type_id = $guard->creature_type_id;
-		
-		$guard_types{$type_id}->{count}++;
-	}
+	);
 		
 	foreach my $guard_type (values %guard_types) {
 		my $hired = $c->model('DBIC::Town_Guards')->find_or_new(
@@ -224,10 +204,10 @@ sub guards : Local {
 		unless ($hired->in_storage) {
 			$hired->amount($guard_types{$guard_type->id}->{count} || 0);
 			$hired->insert;
-		}		
+		}
 		
-		$guard_types{$guard_type->id}->{to_hire} = $hired->amount;
-		$guard_types{$guard_type->id}->{hired_previously} = $hired->amount_yesterday;
+		$guard_types{$guard_type->id}->{trained} = $hired->amount;
+		$guard_types{$guard_type->id}->{working} = $hired->amount_working;
 	}
 	
 	$c->forward(
@@ -236,44 +216,112 @@ sub guards : Local {
 			{
 				template => 'town/mayor/guards_tab.html',
 				params => {
-					guard_types => [sort { $a->level <=> $b->level } values %guard_types],					
+					guard_types => [sort { $a->level <=> $b->level } values %guard_types],
+					town => $c->stash->{town},					
 				},
 			}
 		]
 	);	
 }
 
-sub update_guards : Local {
+sub train_guards : Local {
 	my ( $self, $c ) = @_;
 	
 	my $params = $c->req->params;
 	
-	foreach my $key (keys %$params) {
-		next unless $key =~ /^type_(\d+)$/;
-		
-		my $type_id = $1;
-		
-		my $creature_type = $c->model('DBIC::CreatureType')->find(
-			{
-				creature_type_id => $type_id,
-			},
-			{
-				prefetch => 'category',
-			}
-		);
-		
-		croak "Invalid creature group" unless $creature_type->category->name eq 'Guards';			
-		
-		my $hired = $c->model('DBIC::Town_Guards')->find(
-			{
-				town_id => $c->stash->{town}->id,
-				creature_type_id => $type_id,
-			}
-		);
-		
-		$hired->amount($params->{$key} || 0);
-		$hired->update;		
+	my $creature_type = $c->model('DBIC::CreatureType')->find(
+		{
+			creature_type_id => $c->req->param('guard_type_id'),
+		},
+		{
+			prefetch => 'category',
+		}
+	);
+	
+	croak "Invalid creature group" unless $creature_type && $creature_type->category->name eq 'Guard';
+	
+	croak "Invalid amount" unless $c->req->param('amount') >= 0;
+	
+	my $cost = $creature_type->hire_cost * $c->req->param('amount');
+	if ($cost > $c->stash->{town}->gold) {
+	    $c->stash->{error} = "The town does not have enough gold";
 	}
+    else {
+        $c->stash->{town}->decrease_gold($cost);
+        $c->stash->{town}->update;
+        
+        $c->stash->{town}->add_to_history(
+            {
+                day_id => $c->stash->{today}->id,
+                type => 'expense',
+                message => 'Guard Training',
+                value => $cost,
+            },                
+        );
+        
+    	my $hired = $c->model('DBIC::Town_Guards')->find(
+    		{
+    			town_id => $c->stash->{town}->id,
+    			creature_type_id => $c->req->param('guard_type_id'),
+    		}
+    	);
+    		
+    	$hired->increase_amount($c->req->param('amount'));
+    	$hired->update;
+    	
+    	# Add them to the castle
+    	$c->stash->{town}->castle->add_or_remove_creatures(
+    	   {
+    	       type => $creature_type,
+    	       amount => $c->req->param('amount'),
+    	   }
+        );
+    }
+	
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
+}
+
+sub fire_guards : Local {
+	my ( $self, $c ) = @_;
+	
+	my $params = $c->req->params;
+	
+	my $creature_type = $c->model('DBIC::CreatureType')->find(
+		{
+			creature_type_id => $c->req->param('guard_type_id'),
+		},
+		{
+			prefetch => 'category',
+		}
+	);
+	
+	croak "Invalid creature group" unless $creature_type && $creature_type->category->name eq 'Guard';
+	
+	croak "Invalid amount" unless $c->req->param('amount') >= 0;
+
+	my $hired = $c->model('DBIC::Town_Guards')->find(
+		{
+			town_id => $c->stash->{town}->id,
+			creature_type_id => $c->req->param('guard_type_id'),
+		}
+	);
+	
+	if ($hired->amount < $c->req->param('amount')) {
+	   $c->stash->{error} = "You do not have that many guards of that type";
+	}
+    else {		
+    	$hired->decrease_amount($c->req->param('amount'));
+    	$hired->amount_working($hired->amount) if $hired->amount_working > $hired->amount;
+    	$hired->update;
+    	
+    	# Remove them from the castle
+    	$c->stash->{town}->castle->add_or_remove_creatures(
+    	   {
+    	       type => $creature_type,
+    	       amount => -$c->req->param('amount'),
+    	   }
+        );    	
+    }
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=guards']] );
 }
@@ -343,7 +391,7 @@ sub balance_sheet : Local {
 sub news : Local {
 	my ($self, $c) = @_;
 	
-	$c->res->body($c->forward('/town/generate_news', [$c->stash->{town}, 7]));			
+	$c->res->body($c->forward('/town/generate_news', [$c->stash->{town}, 7, ['news', 'mayor_news']]));			
 }
 
 sub adjust_gold : Local {
@@ -420,6 +468,9 @@ sub garrison : Local {
 			status => 'mayor_garrison',
 			status_context => $town->id,
 			party_id => $c->stash->{party}->id,
+		},
+		{
+		    order_by => 'character_name',
 		}
 	);
 	
@@ -469,12 +520,10 @@ sub add_to_garrison : Local {
 	
 	croak "Invalid character" unless $character;
 	
-	$character->status('mayor_garrison');
 	$character->status_context($town->id);
+	$character->status('mayor_garrison');
 	$character->creature_group_id($town->mayor->creature_group_id);
 	$character->update;
-	
-	$c->stash->{party}->adjust_order;
 		
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }
@@ -500,12 +549,10 @@ sub remove_from_garrison : Local {
 	
 	croak "Invalid character" unless $character;
 	
-	$character->status(undef);
 	$character->status_context(undef);
+	$character->status(undef);
 	$character->creature_group_id(undef);
 	$character->update;
-	
-	$c->stash->{party}->adjust_order;
 	
 	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=garrison'], 'party'] );
 }
@@ -606,6 +653,8 @@ sub change_allegiance : Local {
     }
     
     $town->change_allegiance($kingdom);
+    $town->decrease_mayor_rating(10);
+    $town->update;
     
     # Adjust parties loyalty if they have a kingdom
     if (my $partys_kingdom = $c->stash->{party}->kingdom) {
@@ -668,6 +717,104 @@ sub combat_log : Local {
             }
         ]
     );       
+}
+
+sub traps : Local {
+    my ($self, $c) = @_;
+    
+    my $town = $c->stash->{town};
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'town/mayor/traps.html',
+                params   => {
+                    town => $town,
+                    trap_maint_cost => $town->trap_level   * $c->config->{town_trap_maint_cost},
+                    trap_upgrade_cost => ($town->trap_level + 1) * $c->config->{town_trap_upgrade_cost},
+                    trap_max_level => $c->config->{town_trap_max_level},
+                },
+            }
+        ]
+    );     
+}
+
+sub upgrade_traps : Local {
+    my ($self, $c) = @_;
+    
+    my $town = $c->stash->{town};
+    my $upgrade_cost = ($town->trap_level + 1) * $c->config->{town_trap_upgrade_cost};
+   
+    if ($town->gold >= $upgrade_cost) {
+        $town->increment_trap_level;
+        $town->decrease_gold($upgrade_cost);
+        $town->update;
+        
+    	$town->add_to_history(
+    		{
+    			type => 'expense',
+    			value => $upgrade_cost,
+    			message => 'Trap Upgrade',
+    			day_id => $c->stash->{today}->id,
+    		}
+    	);         
+    }
+    else {
+        push @{$c->stash->{panel_messages}}, "The town does not have enough gold for the upgrade";
+    }
+	
+	$c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=traps']] );
+}
+
+sub downgrade_traps : Local {
+    my ($self, $c) = @_;
+    
+    $c->stash->{town}->decrement_trap_level;
+    $c->stash->{town}->update;
+    
+    $c->forward( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=traps']] );
+}
+
+sub buildings : Local {
+    my ($self, $c) = @_;
+    
+    if ($c->stash->{town}->location->building) {
+        $c->visit('/building/manage');
+    }
+    else {    
+        $c->visit('/building/construct');
+    }
+}
+
+sub build : Local {
+    my ($self, $c) = @_;
+    
+    $c->visit('/building/build');    
+    
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+}
+
+sub building_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    $c->stash->{no_refresh} = 1;
+    
+    $c->visit('/building/upgrade');    
+    
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    
+}
+
+sub building_build_upgrade : Local {
+    my ($self, $c) = @_;
+    
+    $c->stash->{no_refresh} = 1;
+    
+    $c->visit('/building/build_upgrade');    
+    
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    
 }
 
 1;

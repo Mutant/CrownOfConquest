@@ -236,12 +236,23 @@ sub process_round_result : Private {
 	my @panels_to_refesh = ( 'messages', 'party_status' );
 	if ( $result->{combat_complete} ) {
 
-		if ( !$c->stash->{party}->defunct && ! $result->{creatures_fled} ) {
+		if ( ($result->{losers} && !$c->stash->{party}->is($result->{losers})) && ! $result->{creatures_fled} ) {
 
 			# Check for state of quests
 			# TODO: should do this in offline combat too
 			my $messages = $c->forward( '/quest/check_action', ['creature_group_killed'] );
 			push @{ $c->stash->{combat_messages} }, @$messages;
+		}
+		
+		if ($result->{losers} && $c->stash->{party}->is($result->{losers})) {
+		    # Party lost, refresh whole map
+		    $c->stash->{party}->discard_changes;
+		    $c->stash->{party_location} = $c->stash->{party}->location;
+            push @panels_to_refesh, 'map';
+            
+            $c->stash->{panel_messages} = "The party was wiped out! We awake in a town, clearly brought here by a sympathetic healer. ".
+                "<br>However, we may have lost some of our characters and equipment." .
+                "<br>Note, the party can be restarted by clicking on Tools, and clicking 'Disband Party'."; 
 		}
 					
 		# Force combat main to display final time
@@ -370,6 +381,7 @@ sub build_target_list : Private {
 	my ( $self, $c, $spell, $item ) = @_;
 	
 	my @targets;
+    my @target_data;
 	given ($spell->target) {
 		when ('creature') {
 			@targets = $c->stash->{party}->opponents->members;
@@ -377,21 +389,28 @@ sub build_target_list : Private {
 		when ('character') {
 			@targets = $c->stash->{party}->members;
 		}
+		when ('special') {
+            @target_data = $item->target_list;   
+		}
 	}
 	
-	my @target_data;
-	foreach my $target (@targets) {
-	    next if $target->is_dead;
-		next unless $spell->can_be_cast_on($target);
-		push @target_data, {
-			name => $target->name,
-			id => $target->id,
-		};	
+	if (! @target_data) {
+    	foreach my $target (@targets) {
+    	    next if $target->is_dead;
+    		next unless $spell->can_be_cast_on($target);
+    		push @target_data, {
+    			name => $target->name,
+    			id => $target->id,
+    		};	
+    	}
 	}
 	
-	my $spell_name = $spell->spell_name;
+	my $spell_name;
 	if ($item) {
 		$spell_name .= ' [' . $item->display_name . ']';	
+	}
+	else {
+        $spell_name = $spell->spell_name;
 	}
 	
 	$c->res->body(to_json {spell_targets => \@target_data, spell_name => $spell_name});	
@@ -434,16 +453,9 @@ sub use_target_list : Local {
 	
 	return unless $character;
 	
-	my $action = $c->model('DBIC::Item_Enchantment')->find(
-		{ 
-			item_enchantment_id => $c->req->param('action_id'),			
-		},
-		{
-			prefetch => 'item',
-		},
-	);
+	my $action = $character->get_item_action($c->req->param('action_id'));
 	
-	$c->forward('build_target_list', [$action->spell, $action->item]);
+	$c->forward('build_target_list', [$action->can('spell') ? $action->spell : $action, $action->can('item') ? $action->item : $action]);
 
 }
 

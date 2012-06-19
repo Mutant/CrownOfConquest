@@ -124,14 +124,14 @@ sub test_garrison_flees : Tests(3) {
 	is($party1->in_combat_with, undef, "Party no longer in combat with garrison");
 }
 
-sub test_finish_garrison_lost : Test(5) {
+sub test_finish_garrison_lost : Test(7) {
 	my $self = shift;
 	
 	# GIVEN
 	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
 	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id, land_id => $land[4]->id, character_count => 2);
-	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[4]->id );
 	
 	my @characters = $garrison->characters;
 	
@@ -154,7 +154,8 @@ sub test_finish_garrison_lost : Test(5) {
 	
 	foreach my $char (@characters) {
 		$char->discard_changes;
-		is($char->party_id, undef, "Character removed from party");
+		is($char->status, 'corpse', "Character now a corpse");
+		is($char->status_context, $land[4]->id, "Corpse location set correctly");
 		is($char->garrison_id, undef, "Character removed from garrison");
 	}
 }

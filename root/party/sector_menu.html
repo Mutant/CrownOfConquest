@@ -1,18 +1,25 @@
+<div style="position: absolute; right: 1px; top: 0px;">
+	<a href="javascript:hideMessages()" style="text-decoration: none; font-size: 9px" title="Hide">&#9660</a>
+</div>
+
+<div style="padding-right: 4px">
 [% INCLUDE party/messages_display.html messages=messages, day_logs=day_logs %]
 You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terrain_name %][% IF kingdom %], Kingdom of [% kingdom.name %][% END %])
 [% IF movement_cost %]
 <br>You used <b>[% movement_cost %]</b> turns moving here.
 [% END %]
-[% FOREACH next_building IN buildings %]
-	<br><br>There is a [% next_building.building_type.name %] here that is controlled by 
-	[% IF next_building.owner_id == party.id && next_building.owner_type == 'party' %]
-		you (<a href="javascript:loadScreen('building/manage')">Manage</a>)
+[% IF building %]
+	<br><br>There is a [% building.building_type.name %] here that is controlled by 
+	[% IF building.owner_id == party.id && building.owner_type == 'party' %]
+		you
 	[% ELSE %]
-		[% next_building.owner_name %] 
-		[% IF can_seize_building %]
-			(<a href="javascript:getPanels('building/raze')">Raze</a> / <a href="javascript:getPanels('building/seize')">Seize</a>)
-		[% END %]
+		[% building.owner_name %]
 	[% END %]
+	[% IF building.allowed_to_manage(party) %]
+		(<a href="javascript:loadScreen('building/manage')">Manage</a>) 
+	[% ELSIF can_seize_building %]
+		(<a href="javascript:getPanels('building/raze')">Raze</a> / <a href="javascript:getPanels('building/seize')">Seize</a>)
+	[% END %]	
 [% END %]
 <br><br>
 [% IF orb %]The Orb of [% orb.name %] is here!<br><br>[% END %]
@@ -22,7 +29,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% IF garrison.party_id == party.id %]
 		You have a garrison here.
 	[% ELSE %]
-		There is a garrison here owned by the party "[% garrison.party.name %]" ([% INCLUDE party/kingdom.html party=garrison.party ~%]). [ <a href="javascript:getPanels('/garrison/combat/attack')">Attack</a> ]
+		There is a garrison here owned by the party "<a href="javascript:getPanels('party/profile?party_id=[% garrison.party.id %]')">[% garrison.party.name %]</a>" ([% INCLUDE party/kingdom.html party=garrison.party ~%]).
 	[% END %]
 	<br><br>
 [% END %]
@@ -31,6 +38,10 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	[% FOREACH item IN items %]
 		<a href="javascript:getPanels('/party/pickup_item?item_id=[% item.id %]')">[% item.display_name(1) %]</a>[% UNLESS loop.last %], [% END %]
 	[% END %]
+	<br><br>
+[% END %]
+[% IF bomb %]
+	<img src="[% c.config.static_path %]/images/dungeon/bombrune.png" title="There is a magical bomb here.">	
 	<br><br>
 [% END %]
 
@@ -45,55 +56,64 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 	<br><br>
 [% END %]
 
-[% IF creature_group %]
-	Creatures here: [% INCLUDE combat/creature_group_summary.html %]<br>
-	[% IF factor_comparison %]
-	Your chances against this group:
-		[% IF factor_comparison < -35 %]
-			None whatsoever
-		[% ELSIF factor_comparison < -25 %]
-			Extremely slim
-		[% ELSIF factor_comparison < -15 %]
-	 		It's going to be tough
-		[% ELSIF factor_comparison < -5 %]
-			You've got a shot
-		[% ELSIF factor_comparison < 5 %]
-			It's pretty even
-		[% ELSIF factor_comparison < 15 %]
-			Not too bad
-		[% ELSIF factor_comparison < 25 %]
-			Pretty good
-		[% ELSIF factor_comparison < 35 %]
-			Very good
-		[% ELSE %]
-		    They'll barely touch you
-		[% END %]
+[% IF corpses.size > 0 %]
+	You see [% IF corpses.size == 1 %]a corpse[% ELSE %]some corpses[% END %] belonging to your party. (Click to pick up).
+	[% FOREACH corpse IN corpses %]
+		<a href="javascript:getPanels('party/pickup_corpse?character_id=[% corpse.id %]')">[% corpse.name %]</a>
 	[% END %]
 	<br><br>
 [% END %]
 
-[% IF parties_in_sector %][% parties_in_sector %]<br><br>[% END %]
+[% IF creature_group %]
+	Creatures here: [% INCLUDE combat/creature_group_summary.html %]
+	<br><br>
+[% END %]
 
-<a href="javascript:getPanels('/party/camp')">Camp</a> 
-| <a href="javascript:getPanels('/party/scout')">Scout</a> 
-[% IF creature_group %] | <a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">Attack Creatures</a>[% END %] 
-[% IF orb %] | <a href="javascript:getPanels('/party/destroy_orb')">Destroy the Orb of [% orb.name %]</a>[% END %]
-[% IF dungeon %] | <a href="javascript:getPanels('/party/enter_dungeon')">Enter Dungeon</a>[% END %]
+[% IF parties_in_sector.0 %]
+	[% INCLUDE party/parties_in_sector.html parties=parties_in_sector %]
+	<br><br>
+[% END %]
+
+[% IF creature_group %] 
+<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">
+	<img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
+[% END %]
+
+[% IF parties_in_sector %]
+	[% FOREACH other_party IN parties_in_sector ~%]
+	[% FILTER collapse ~%]
+		<a href="javascript:getPanels('/party/combat/attack?party_id=[% other_party.id %]')">
+			<img src="[% c.config.static_path %]/images/actions/playerattackabutton.png" border="0" title="Attack [% other_party.name %]"></a>
+	[% END ~%]
+	[% END ~%]
+[% END %]
+
+[% IF garrison &&  garrison.party_id != party.id %]
+	<a href="javascript:getPanels('/garrison/combat/attack')"><img src="[% c.config.static_path %]/images/actions/garrisonattackabutton.png" border="0" title="Attack Garrison"></a>
+[% END %] 
+<a href="javascript:getPanels('/party/camp')"><img src="[% c.config.static_path %]/images/actions/campabutton.png" border="0" title="Camp"></a>
+<a href="javascript:getPanels('/party/scout')"><img src="[% c.config.static_path %]/images/actions/scoutabutton.png" border="0" title="Scout"></a> 
+[% IF garrison && garrison.party_id == party.id %]
+ 	<a href="javascript:loadScreen('garrison/manage?garrison_id=[% garrison.id %]')"><img src="[% c.config.static_path %]/images/actions/managegabutton.png" border="0" title="Manage Garrison"></a>
+[% END %]
+[% IF orb %] <a href="javascript:getPanels('/party/destroy_orb')"><img src="[% c.config.static_path %]/images/actions/dorbabutton.png" border="0" title="Destroy the Orb of [% orb.name %]"></a>[% END %]
+[% IF dungeon %] <a href="javascript:getPanels('/party/enter_dungeon')"><img src="[% c.config.static_path %]/images/actions/enterdabutton.png" border="0" title="Enter Dungeon"></a>[% END %]
 [% IF adjacent_towns %]
 	[% FOREACH town IN adjacent_towns %]
-		| <a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]')">Raid [% town.town_name %]</a>
+		<a href="javascript:confirmRaidTown('[% town.town_name %]', '[% town.id %]', 
+			[% IF town.kingdom_relationship_between_party(party) == 'peace' %]true[% ELSE %]false[% END %])">
+			<img src="[% c.config.static_path %]/images/actions/raidabutton.png" border="0" title="Raid [% town.town_name %]"></a>
 	[% END %]
 [% END %]
 [% IF can_build_garrison %]
-	| <a href="javascript:loadScreen('garrison/create')">Create a Garrison</a>
-[% ELSIF garrison.party_id == party.id %]
-	| <a href="javascript:loadScreen('garrison/manage?garrison_id=[% garrison.id %]')">Manage Garrison</a>
+	<a href="javascript:loadScreen('garrison/create')"><img src="[% c.config.static_path %]/images/actions/cgarrisonabutton.png" border="0" title="Create Garrison"></a>
 [% END %]
 [% IF !garrison || garrison.party_id == party.id %]
 	[% IF can_build_building %]
-		| <a href="javascript:loadScreen('building/construct')">Construct a Building</a>
+		<a href="javascript:loadScreen('building/construct')"><img src="[% c.config.static_path %]/images/actions/constructabutton.png" border="0" title="Construct Building"></a>
 	[% END %]
 [% END %]
 [% IF can_claim_land %]
-	| <a href="javascript:getPanels('party/claim_land')">Claim Land</a>
+	<a href="javascript:getPanels('party/claim_land')"><img src="[% c.config.static_path %]/images/actions/claimabutton.png" border="0" title="Claim Land"></a>
 [% END %]
+</div>

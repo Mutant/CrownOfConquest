@@ -44,38 +44,6 @@ sub is_over_flee_threshold {
     return $percentage < $self->flee_threshold ? 1 : 0;
 }
 
-# Award XP to all characters. Takes the amount of xp to award if it's the same for everyone, or a hash of
-#  character id to amount awarded
-# Returns an array with the details of the changes
-sub xp_gain {
-    my ( $self, $awarded_xp ) = @_;
-
-    my @characters = $self->members;
-
-    my @details;
-
-    foreach my $character (@characters) {
-        next if $character->is_dead;
-
-        my $xp_gained = ref $awarded_xp eq 'HASH' ? $awarded_xp->{ $character->id } : $awarded_xp;
-        
-        next if ! $xp_gained || $xp_gained <= 0;
-
-        my $level_up_details = $character->xp( $character->xp + ($xp_gained || 0) );
-
-        push @details, {
-        	character         => $character,	
-			xp_awarded       => $xp_gained,
-            level_up_details => $level_up_details,
-        };
-
-        $character->update;
-    }
-
-    return @details;
-}
-
-
 sub get_least_encumbered_character {
     my $self = shift;
     
@@ -97,6 +65,29 @@ sub average_stat {
     }
     
     return average @stats;
+}
+
+sub flee_chance {
+    my $self = shift;
+    my $opponents = shift;
+    my $flee_attempts = shift // 0;
+    
+	my $level_difference = $opponents->level - $self->level;
+	my $flee_chance =
+		RPG::Schema->config->{base_flee_chance} + ( RPG::Schema->config->{flee_chance_level_modifier} * ( $level_difference > 0 ? $level_difference : 0 ) );
+		
+    my $opp_skill_benefit = $opponents->skill_aggregate('Tactics', 'opponent_flee') // 0;
+    $flee_chance -= $opp_skill_benefit;		
+    
+    my $skill_bonus = $self->skill_aggregate('Strategy', 'flee_bonus') // 0;
+    $flee_chance += $skill_bonus;   
+
+	if ( $self->level == 1 ) {
+		# Bonus chance for being low level
+		$flee_chance += RPG::Schema->config->{flee_chance_low_level_bonus};
+	}
+
+	$flee_chance += ( RPG::Schema->config->{flee_chance_attempt_modifier} * $flee_attempts );       
 }
 
 1;

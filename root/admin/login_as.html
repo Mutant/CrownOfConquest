@@ -1,0 +1,13 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+<b>Login As</b>
+
+<br><br>
+
+<form method="POST" action="[% base %]admin/login_as">
+Email: <input type="text" size="50" name="email"><br>
+Player Name: <input type="text" size="50" name="player_name"><br>
+<input type="submit" value="Submit" name="submit">
+</form>
+
+[% INCLUDE bottom.html %]

@@ -1,0 +1,50 @@
+[% INCLUDE top.html admin_screen=1 %]
+
+<img src="[% c.config.static_path %]/images/creatures/[% creature_type.image %]">
+
+<form method="POST" action="[% base %]/admin/creature_types/update">
+<input type="hidden" name="creature_type_id" value="[% creature_type.creature_type_id %]">
+
+<table>
+	<tr>
+		<td>Creature Type:</td>
+		<td><input type="text" name="creature_type" value="[% creature_type.creature_type %]"></td>
+	</tr>
+	<tr>
+		<td>Category:</td>
+		<td>[% creature_type.category.name %]</td>
+	</tr>
+	<tr>
+		<td>Level:</td>
+		<td><input type="text" name="level" value="[% creature_type.level %]"></td>
+	</tr>
+	<tr>
+		<td>Resist Fire:</td>
+		<td><input type="text" name="fire" value="[% creature_type.fire %]"></td>
+	</tr>
+	<tr>
+		<td>Resist Ice:</td>
+		<td><input type="text" name="ice" value="[% creature_type.ice %]"></td>
+	</tr>
+	<tr>
+		<td>Resist Poison:</td>
+		<td><input type="text" name="poison" value="[% creature_type.poison %]"></td>
+	</tr>
+	<tr>
+		<td>Hire Cost:</td>
+		<td><input type="text" name="hire_cost" value="[% creature_type.hire_cost %]"></td>
+	</tr>
+	<tr>
+		<td>Upkeep:</td>
+		<td><input type="text" name="maint_cost" value="[% creature_type.maint_cost %]"></td>
+	</tr>
+	<tr>
+		<td>Weapon:</td>
+		<td><input type="text" name="weapon" value="[% creature_type.weapon %]"></td>
+	</tr>	
+</table> 
+
+<input type="submit" value="Update">
+</form>
+
+[% INCLUDE bottom.html %]

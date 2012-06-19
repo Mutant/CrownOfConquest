@@ -10,6 +10,19 @@ use Data::Dumper;
 use Games::Dice::Advanced;
 use List::Util qw(shuffle);
 use Math::Round qw(round);
+use HTML::Strip;
+
+sub auto : Private {
+    my ( $self, $c ) = @_;
+    
+    unless ( $c->stash->{party_location}->town ) {
+        $c->error("Not in a town!");
+        return 0;
+    }
+    
+    return 1;
+}    
+    
 
 sub default : Path {
     my ( $self, $c ) = @_;
@@ -36,6 +49,12 @@ sub main : Local {
     }
 
     my $costs = $c->forward( 'calculate_costs', [ $c->stash->{party_location}->town ] );
+    
+    my $vial = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Vial of Dragons Blood',
+        }
+    );
 
     my $panel = $c->forward(
         'RPG::V::TT',
@@ -48,6 +67,7 @@ sub main : Local {
                     item_types                      => \@item_types,
                     dungeon_levels_allowed_to_enter => \@dungeon_levels_allowed_to_enter,
                     town                            => $c->stash->{party_location}->town,
+                    vial                            => $vial,
                 },
                 return_output => 1,
             }
@@ -69,6 +89,8 @@ sub calculate_costs : Private {
         location_cost               => $c->config->{sage_location_cost},
         item_find_cost              => $c->config->{sage_item_find_cost},
         find_dungeon_cost_per_level => $c->config->{sage_find_dungeon_cost_per_level},
+        base_orb_cost               => $c->config->{sage_find_orb_base_cost},
+        orb_level_step              => $c->config->{sage_find_orb_level_step},
     );
 
     if ( $town->discount_type eq 'sage' && $c->stash->{party}->prestige_for_town($town) >= $town->discount_threshold ) {
@@ -85,11 +107,6 @@ sub find_town : Local {
 
     my $party          = $c->stash->{party};
     my $party_location = $c->stash->{party_location};
-
-    unless ( $party_location->town ) {
-        $c->error("Not in a town!");
-        return;
-    }
 
     my $message;
     my $error;
@@ -188,11 +205,6 @@ sub find_item : Local {
     my $party          = $c->stash->{party};
     my $party_location = $c->stash->{party_location};
 
-    unless ( $party_location->town ) {
-        $c->error("Not in a town!");
-        return;
-    }
-
     my $message;
 
     unless ( $party->gold >= $c->config->{sage_item_find_cost} ) {
@@ -259,11 +271,6 @@ sub find_dungeon : Local {
 
     my $party          = $c->stash->{party};
     my $party_location = $c->stash->{party_location};
-
-    unless ( $party_location->town ) {
-        $c->error("Not in a town!");
-        return;
-    }
 
     my $message = eval {
         my $level = $c->req->param('find_level') || croak "Level not defined";
@@ -355,6 +362,115 @@ sub find_dungeon : Local {
     push @{ $c->stash->{refresh_panels} }, ('party_status');
 
     $c->forward('/town/sage/main');
+}
+
+sub find_orb : Local {
+    my ( $self, $c ) = @_;
+    
+    my $party          = $c->stash->{party};
+    my $party_location = $c->stash->{party_location};    
+   
+    my $hs = HTML::Strip->new();
+    
+    my $clean_orb = $hs->parse( $c->req->param('orb_name') );    
+
+    my $message = eval {
+        if (! $c->req->param('orb_name') || ! $c->req->param('amount_to_spend')) {
+            return "Please enter an orb name and an amount to spend";
+        }
+        
+        my $orb = $c->model('DBIC::Creature_Orb')->find(
+            {
+                name => $c->req->param('orb_name'),
+                land_id => {'!=', undef},
+            },
+            {
+                prefetch => 'land',
+            }
+        );
+
+
+        if (! $orb) {
+            return "I don't know of any Orbs with the name " . $clean_orb;
+        }
+        
+        if ($c->req->param('amount_to_spend') > $party->gold) {
+            return "You do not have enough gold";
+        }
+                      
+        my $costs = $c->forward( 'calculate_costs', [ $party_location->town ] );
+
+        my $min_orb_cost = $orb->level * $costs->{base_orb_cost} + (($orb->level-1) * $costs->{orb_level_step});
+            
+        if ($c->req->param('amount_to_spend') < $min_orb_cost) {
+            return "I cannot find the Orb of $clean_orb for such a small amount";
+        }
+        
+        $party->decrease_gold($c->req->param('amount_to_spend'));
+        $party->update;
+        
+        my $inaccuracy = 6 - round($min_orb_cost / $c->req->param('amount_to_spend'));
+        $inaccuracy = 1 if $inaccuracy < 1;
+        
+        my %world_range = $c->model('DBIC::Land')->get_x_y_range();
+        
+        my $x = $orb->land->x + round($inaccuracy/2) - Games::Dice::Advanced->roll('1d'.$inaccuracy);
+        $x = $world_range{min_x} if $x < $world_range{min_x};
+        $x = $world_range{max_x} if $x > $world_range{max_x};
+        
+        my $y = $orb->land->y + round($inaccuracy/2) - Games::Dice::Advanced->roll('1d'.$inaccuracy);
+        $y = $world_range{min_y} if $x < $world_range{min_y};
+        $y = $world_range{max_y} if $x > $world_range{max_y};
+        
+        return "The Orb of $clean_orb is in or around the sector $x, $y";
+    };
+    if ($@) {
+        # Rethrow execptions
+        die $@;
+    }    
+    
+    $c->stash->{messages} = $message;
+
+    push @{ $c->stash->{refresh_panels} }, ('party_status');
+
+    $c->forward('/town/sage/main');    
+    
+}
+
+sub buy_vial : Local {
+    my ( $self, $c ) = @_;
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters_in_party;
+    
+    croak "Invalid character" unless $character;
+    
+    my $vial = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Vial of Dragons Blood',
+        }
+    );    
+    
+    my $cost = $c->req->param('quantity') * $vial->base_cost;
+    
+    if ($c->stash->{party}->gold < $cost) {
+        $c->stash->{messages} = "You do not have enough gold to buy the vials";
+    }
+    else {
+        $c->stash->{party}->decrease_gold($cost);
+        $c->stash->{party}->update;
+        
+        my $vial_item = $c->model('DBIC::Items')->create(
+            {
+                item_type_id => $vial->id,
+            }
+        );
+        $vial_item->variable('Quantity', $c->req->param('quantity'));
+        $vial_item->add_to_characters_inventory($character);
+    }
+    
+    push @{ $c->stash->{refresh_panels} }, ('party_status');
+
+    $c->forward('/town/sage/main');    
 }
 
 1;

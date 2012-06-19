@@ -39,7 +39,7 @@ sub test_allocate_stat_points_doesnt_exceed_max : Tests(5) {
     $self->{roll_result} = 5;
 
     # WHEN
-    %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, \%stats );
+    %stats = RPG::ResultSet::Character->_allocate_stat_points( $stat_pool, $stat_max, $primary_stat, 5, \%stats );
 
     # THEN
     is( $stats{strength},     10, "Strength at max" );
@@ -155,7 +155,7 @@ sub test_create_character_level_5 : Tests(7) {
     is( $character->race_id,  $race->id,  "Character is correct race" );
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    5,          "Character is level 5" );
-    is( $character->xp,       2605,        "Character has 100 xp" );
+    is( $character->xp,       3005,        "Character has correct xp" );
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );
@@ -187,7 +187,7 @@ sub test_create_character_level_10_allocate_equipment : Tests(10) {
     is( $character->race_id,  $race->id,  "Character is correct race" );
     is( $character->class_id, $class->id, "Character is correct class" );
     is( $character->level,    10,          "Character is level 5" );
-    is( $character->xp,       10005,        "Character has 100 xp" );
+    is( $character->xp,       13605,        "Character has correct xp" );
     ok( $character->max_hit_points >= 8, "Character has correct number of hit points" );
     ok( $character->spell_points >= 9,   "Character has correct number of spell points" );
     is( $character->hit_points, $character->max_hit_points, "Character's current hit points is at max" );

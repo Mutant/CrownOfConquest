@@ -23,6 +23,7 @@
 				style="text-decoration: none;">
 		[% END %]
 		
+		[% IF sector.dungeon_room.tileset %][% tileset = sector.dungeon_room.tileset %][% END %]
 		[% IF sector.stairs_up %]
 			[% background_image = "d" _ tileset _ "us.png" %]
 		[% ELSIF sector.stairs_down %]
@@ -46,14 +47,9 @@
 				<span style="z-index: 60; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]></span>
 			[% END %]
 									
-			[% IF sector.treasure_chest %]
-				<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-			[% ELSIF sector.teleporter && ! sector.teleporter.invisible %]
-				<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>	
-			[% ELSE %]
-				[% IF sector.overlay == 'skeleton' %]
-					<img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
-				[% END %]
+
+			[% IF ! objects.$x.$y && sector.overlay == 'skeleton' %]
+				<img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
 			[% END %]
 			
 			[% IF cgs.$x.$y %]
@@ -65,6 +61,15 @@
 					connectId="m_[% x _ y %]">
 					[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
 				</div>
+				[% END %]
+			[% ELSIF objects.$x.$y %]
+				[% sector_objects = objects.$x.$y %]
+				[% IF sector_objects.bomb %]
+					<span id="b_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/bombrune.png" border=0 width=[% size %] height=[% size %]></span>
+				[% ELSIF sector_objects.treasure_chest %]
+					<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
+				[% ELSIF sector_objects.teleporter && ! sector_objects.teleporter.invisible %]
+					<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>	
 				[% END %]
 			[% ELSIF parties.$x.$y.0 %]
 				[%# TODO: handle multiple parties in a sector %]

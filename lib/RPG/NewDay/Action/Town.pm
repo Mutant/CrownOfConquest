@@ -11,7 +11,7 @@ use Data::Dumper;
 use Carp;
 
 # Run after Inn, so calculations of inn costs are applied before prosperity changes
-sub depends { qw/RPG::NewDay::Action::Inn/ }
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Inn/ }
 
 sub run {
     my $self    = shift;
@@ -57,21 +57,26 @@ sub calculate_prosperity {
     my $party_town_rec = $context->schema->resultset('Party_Town')->find(
         { town_id => $town->id, },
         {
-            select => [ { sum => 'tax_amount_paid_today' }, { sum => 'raids_today' } ],
-            as     => [ 'tax_collected', 'raids_today' ],
+            select => [ { sum => 'tax_amount_paid_today' }, ],
+            as     => [ 'tax_collected', ],
         }
     );
+    
+    my $raids_today = $context->schema->resultset('Town_Raid')->search(
+        { 
+            town_id => $town->id,
+            day_id =>  $context->yesterday->id,            
+        },
+    )->count;
 
     my $ctr_avg = $town->location->get_surrounding_ctr_average( $context->config->{prosperity_calc_ctr_range} );
 
     my $ctr_diff = $global_avg_ctr - $ctr_avg;
     
     my $tax_collected = 0;
-    my $raids_today = 0;
     
     if ($party_town_rec) {
     	$tax_collected = $party_town_rec->get_column('tax_collected') // 0;
-    	$raids_today = $party_town_rec->get_column('raids_today') // 0;
     }
     
     my $approval_change = round (($town->mayor_rating // 0) / 20);
@@ -92,13 +97,19 @@ sub calculate_prosperity {
     
     $items_value = $items_value / 50000;
     $items_value = 2 if $items_value > 2;
+    
+    my $capital_bonus = 0;
+    if ($town->capital_of) {
+        $capital_bonus = 3;
+    }
 
     my $prosp_change =
         ( ( $tax_collected || 0 ) / 100 ) +
         ( $ctr_diff / 20 ) -
         ( $raids_today || 0 ) +
         $approval_change +
-        $items_value;
+        $items_value +
+        $capital_bonus;
 
     $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};
     $prosp_change = -$context->config->{max_prosp_change} if $prosp_change < -$context->config->{max_prosp_change};
@@ -112,7 +123,7 @@ sub calculate_prosperity {
     $prosp_change = round $prosp_change;
 
     $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')'. 
-    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value]");
+    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value, capital_bonus: $capital_bonus]");
 
     $town->adjust_prosperity( $prosp_change );
     $town->update;

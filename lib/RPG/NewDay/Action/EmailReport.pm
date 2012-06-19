@@ -22,7 +22,7 @@ sub run {
 
 	my $party_rs = $context->schema->resultset('Party')->search(
 		{
-			created                    => { '!=', undef },
+			'me.created'                    => { '!=', undef },
 			defunct                    => undef,
 			'player.deleted'           => 0,
 			'player.send_daily_report' => 1,
@@ -40,6 +40,7 @@ sub run {
 		my @party_messages = $context->schema->resultset('Party_Messages')->search(
 			party_id => $party->id,
 			day_id => $context->yesterday->day_id,
+			type => 'standard',
 		);
 		
 		my $offline_combat_count = $context->schema->resultset('Combat_Log')->get_offline_log_count( $party, $context->yesterday->date_started );

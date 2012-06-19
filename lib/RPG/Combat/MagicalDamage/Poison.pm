@@ -3,8 +3,6 @@ package RPG::Combat::MagicalDamage::Poison;
 use strict;
 use warnings;
 
-use base qw(RPG::Combat::MagicalDamage);
-
 use Games::Dice::Advanced;
 
 sub apply {
@@ -15,7 +13,7 @@ sub apply {
 		type => 'Poison',
 	);
 
-	if ( $self->opponent_resisted( $params{opponent}, 'Poison' ) ) {
+	if ( $params{opponent}->resistance_roll('Poison') ) {
 		$magical_damage_result->resisted(1);
 		return $magical_damage_result;
 	}

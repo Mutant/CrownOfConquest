@@ -2,12 +2,13 @@ package RPG::Schema::Building;
 
 use Moose;
 use Data::Dumper;
+use Carp;
 
 extends 'DBIx::Class';
 
-use feature 'switch';
-
 use RPG::ResultSet::RowsInSectorRange;
+
+use feature 'switch';
 
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
@@ -28,6 +29,9 @@ __PACKAGE__->belongs_to(
     { 'foreign.land_id' => 'self.land_id' },
     {cascade_delete => 0}
 );
+
+__PACKAGE__->has_many( 'upgrades', 'RPG::Schema::Building_Upgrade', 'building_id' );
+
 #  Get owner_name.  TODO: this is inefficient, should be joined but owner_id / owner_type needs a special join.
 sub owner_name {
 	my $self = shift;
@@ -51,6 +55,43 @@ sub owner_name {
 		}
 	}
 	return $self->{owner_name};
+}
+
+sub owner {
+    my $self = shift;
+    
+    given ($self->owner_type) {
+        when ('party') {
+            # If there's a garrison in the sector, the garrison is considered owner
+            my $garrison = $self->result_source->schema->resultset('Garrison')->find(
+                {
+                    land_id => $self->land_id,
+                }
+            );
+            
+            return $garrison if $garrison;            
+            
+            return $self->result_source->schema->resultset('Party')->find(
+	           { 
+	               'party_id' => $self->owner_id, 
+	           }
+            );
+        }
+        when ('kingdom') {
+            return $self->result_source->schema->resultset('Kingdom')->find(
+                { 
+                    'kingdom_id' => $self->owner_id, 
+                }
+            );           
+        }
+        when ('town') {
+            return $self->result_source->schema->resultset('Town')->find(
+                { 
+                    'town_id' => $self->owner_id, 
+                }
+            );            
+        }
+    }
 }
 
 # Returns true if the entity passed in owns the building
@@ -107,6 +148,84 @@ sub unclaim_land {
         $sector->claimed_by_type(undef);
         $sector->update;
     }     
+}
+
+sub get_bonus {
+    my $self = shift;
+    my $bonus_type = shift;
+    my $level = shift;
+
+    my $upgrade_type = RPG::Schema::Building_Upgrade_Type->upgrade_type_for_bonus($bonus_type);
+
+    croak "No such bonus type: $bonus_type" unless $upgrade_type;
+    
+    my $upgrade = $self->find_related(
+        'upgrades',
+        {
+            'type.name' => $upgrade_type,
+        },
+        {
+            prefetch => 'type',
+        }
+    );
+
+    my $bonus = 0;
+    
+    if ($upgrade) {
+        $level //= $upgrade->level - $upgrade->damage;
+            
+        $bonus = $level * $upgrade->type->modifier_per_level;
+    }
+        
+    if ($bonus_type eq 'defence_factor') {
+        $bonus += $self->building_type->defense_factor;
+    }        
+    
+    return $bonus;
+}
+
+sub allowed_to_manage {
+    my $self = shift;
+    my $party = shift;
+    
+    if ($self->owner_type eq 'party') {
+        if ($self->owner_id == $party->id && $party->land_id == $self->land_id) {
+            return 1;
+        }
+    }
+    
+    if ($self->owner_type eq 'town') {
+        my $mayor = $self->owner->mayor;
+        if ($mayor && $mayor->party_id == $party->id) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+    
+    if ($self->owner_type eq 'kingdom') {
+        return 0 if $party->land_id != $self->land_id;
+        
+        # Can manage building owned by the kingdom if they are the king, or have
+        #  a garrison there
+        my $garrison = $self->result_source->schema->resultset('Garrison')->find(
+            {
+                land_id => $self->land_id,
+                party_id => $party->id,
+            }
+        );
+        
+        return 1 if $garrison;
+        
+        my $king = $self->owner->king;
+        if ($king && $king->party_id == $party->id) {
+            return 1;
+        }       
+ 
+    }
+    
+    return 0;
 }
 
 1;

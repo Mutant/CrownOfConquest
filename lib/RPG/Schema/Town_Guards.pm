@@ -8,9 +8,11 @@ use Carp;
 __PACKAGE__->load_components(qw/Numeric Core/);
 __PACKAGE__->table('Town_Guards');
 
-__PACKAGE__->add_columns(qw/town_id creature_type_id amount amount_yesterday/);
+__PACKAGE__->add_columns(qw/town_id creature_type_id amount amount_working/);
 
 __PACKAGE__->set_primary_key(qw/town_id creature_type_id/);
+
+__PACKAGE__->belongs_to( 'creature_type', 'RPG::Schema::CreatureType', 'creature_type_id' );
 
 __PACKAGE__->numeric_columns(
 	amount => {

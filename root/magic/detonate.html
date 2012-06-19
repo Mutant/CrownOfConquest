@@ -1,0 +1,13 @@
+[% IF message.custom.no_vial %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> can't cast Detonate, because [% message.attacker.pronoun('subjective') %] doesn't have
+	a Vial of Dragons Blood to use.
+
+[% ELSIF message.custom.in_town %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> can't cast Detonate, because it cannot be cast in a town.
+	
+[% ELSIF message.custom.existing_bomb %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> can't cast Detonate, because there is already a bomb in this sector.
+
+[% ELSIF message.custom.planted %]
+	<span class="combat-party-attacker">[% message.attacker.name %]</span> planted a bomb.
+[% END %]

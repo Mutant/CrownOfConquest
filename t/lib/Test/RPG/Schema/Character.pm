@@ -21,14 +21,24 @@ use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Kingdom;
 use Test::RPG::Builder::Creature;
+use Test::RPG::Builder::Land;
+use Test::RPG::Builder::Garrison;
+use Test::RPG::Builder::Building;
+use Test::RPG::Builder::Item_Type;
 
 sub character_startup : Tests(startup => 1) {
     my $self = shift;
 
 	$self->{dice} = Test::MockObject->new();
     $self->{dice}->fake_module( 'Games::Dice::Advanced', roll => sub { $self->{roll_result} || 0 }, );
-
+    
     use_ok('RPG::Schema::Character');
+}
+
+sub character_setup : Tests(setup) {
+    my $self = shift;
+
+    $self->{schema}->resultset('Building_Upgrade_Type')->search()->update( { modifier_per_level => 3 });    
 }
 
 sub character_shutdown : Tests(shutdown) {
@@ -98,6 +108,8 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 1,
+        
     );
 
     my $item2 = Test::RPG::Builder::Item->build_item(
@@ -116,6 +128,7 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 2,
     );
 
     my $item3 = Test::RPG::Builder::Item->build_item(
@@ -128,6 +141,7 @@ sub test_defence_factor : Tests(1) {
                 item_attribute_value => 3,
             }
         ],
+        equip_place_id => 3,
     );
 
     # WHEN
@@ -445,7 +459,8 @@ sub test_ammunition_for_item : Tests(1) {
                 item_variable_value => 5,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $ammo2 = Test::RPG::Builder::Item->build_item(
@@ -458,7 +473,8 @@ sub test_ammunition_for_item : Tests(1) {
                 item_variable_name => 'Quantity',
                 item_variable_value => 20,
             },
-        ],        
+        ],
+        no_equip_place => 1,
     );
     
     $ammo2->update({item_type_id => $ammo1->item_type_id});
@@ -511,7 +527,8 @@ sub test_run_out_of_ammo_has_run_out : Tests(1) {
                 item_variable_value => 0,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $weapon = Test::RPG::Builder::Item->build_item(
@@ -552,7 +569,8 @@ sub test_run_out_of_ammo_hasnt_run_out : Tests(1) {
                 item_variable_value => 1,
             
             },
-        ]
+        ],
+        no_equip_place => 1,
     );
     
     my $weapon = Test::RPG::Builder::Item->build_item(
@@ -1040,17 +1058,18 @@ sub test_get_item_actions : Tests(3) {
             }
         ],
         character_id => $character->id,
+        no_equip_place => 1,
     );    
     
-	my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id );
+	my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], character_id => $character->id, equip_place_id => 1, );
 	my ($enchantment) = $item2->item_enchantments;
 	$enchantment->variable('Spell', 'Heal');
 	$enchantment->variable_max('Casts Per Day', 2);
 	$enchantment->variable('Spell Level', 3);    
 	
-	my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'] );
+	my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['spell_casts_per_day'], equip_place_id => 2, );
 	
-	my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['daily_heal'], character_id => $character->id );
+	my $item4 = Test::RPG::Builder::Item->build_item( $self->{schema}, enchantments => ['daily_heal'], character_id => $character->id, equip_place_id => 3, );
 	
 	# WHEN
 	my @actions = $character->get_item_actions(1);
@@ -1061,8 +1080,289 @@ sub test_get_item_actions : Tests(3) {
 	my $action1 = $actions[0]->isa('RPG::Schema::Items') ? $actions[0] : $actions[1];
 	
 	is($action1->id, $item1->id, "Usable item returned");
-	is($actions[1]->id, $enchantment->id, "Enchantment returned");
+	is($actions[1]->id, $enchantment->id, "Enchantment returned");    
+}
+
+sub test_critical_hit_chance : Tests(1) {
+    my $self = shift;
     
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, divinity => 10, level => 3);
+    
+    $self->{config}{character_divinity_points_per_chance_of_critical_hit} = 10;	
+	$self->{config}{character_level_per_bonus_point_to_critical_hit} = 1;
+	
+	# WHEN
+	my $chance = $character->critical_hit_chance;
+	
+	# THEN
+	is($chance, 4, "Critical hit chance correct");
+}
+
+sub test_critical_hit_chance_with_eagle_eye : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, divinity => 10, level => 3);
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Eagle Eye',
+        }
+    );
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $character->id,
+            level => 5,
+        }
+    );    
+    
+    $self->{config}{character_divinity_points_per_chance_of_critical_hit} = 10;	
+	$self->{config}{character_level_per_bonus_point_to_critical_hit} = 1;
+	
+	# WHEN
+	my $chance = $character->critical_hit_chance;
+	
+	# THEN
+	is($chance, 9, "Critical hit chance correct with eagle eye");
+}
+
+sub test_garrison_character_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	# WHEN
+    $character1->calculate_defence_factor;
+    
+    # THEN
+    is($character1->defence_factor, 14, "Character has correct DF");
+}
+
+sub test_garrison_character_gets_building_bonus_when_moved_into_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	# WHEN
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+    
+    # THEN
+    is($character1->defence_factor, 14, "Character has correct DF");   
+}
+
+sub test_garrison_character_loses_building_bonus_when_moved_out_of_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+		
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	# WHEN
+	$character1->garrison_id(undef);
+	$character1->update;
+    
+    # THEN
+    is($character1->defence_factor, 10, "Character has correct DF");   
+}
+
+sub test_mayor_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[4]->id );
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10, mayor_of => $town->id );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $town->id, owner_type => 'town' );
+	
+	# WHEN
+    $character->calculate_defence_factor;
+    
+    # THEN
+    is($character->defence_factor, 14, "Character has correct DF");
+}
+
+sub test_mayor_garrison_char_gets_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[4]->id );
+	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10, 
+	   status => 'mayor_garrison', status_context => $town->id );
+
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $town->id, owner_type => 'town' );
+	
+	# WHEN
+    $character->calculate_defence_factor;
+    
+    # THEN
+    is($character->defence_factor, 14, "Character has correct DF");
+}
+
+sub test_garrison_character_gets_upgrade_bonus_in_building : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	
+	my $character1 = Test::RPG::Builder::Character->build_character( $self->{schema}, strength => 10, agility => 10 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character1->garrison_id($garrison->id);
+	$character1->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, land_id => $land[4]->id, owner_id => $party->id, owner_type => 'party' );
+    my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
+        {
+            name => 'Rune of Attack',
+        }
+    );
+    $building->add_to_upgrades(
+        {
+            type_id => $upgrade_type->type_id,
+            level => 2,
+        }
+    );	
+	
+	# WHEN
+    $character1->calculate_attack_factor;
+    
+    # THEN
+    is($character1->attack_factor, 16, "Character has correct AF");
+}
+
+sub test_calculate_resistance_bonuses_with_items : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 20);
+	
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( 
+		$self->{schema}, 
+		enchantments => [ 'resistances' ],
+	);	
+
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+			item_type_id => $item_type->id,
+			character_id => $character->id,
+		},
+		{
+			number_of_enchantments => 1,
+		},
+	);	
+	$item->variable('Resistance Bonus', 3);
+	$item->variable('Resistance Type', 'ice');
+	$item->update;
+	
+	# WHEN
+	$character->calculate_resistance_bonuses;
+	$character->update;
+	
+	# THEN
+	$character->discard_changes;
+	is($character->resist_ice_bonus, 3, "Resist ice bonus increased");
+	is($character->resistance('Ice'), 3, "Resistance to ice calculated correctly");       
+}
+
+sub test_calculate_resistance_bonuses_with_items_and_buildings : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, constitution => 20);
+	
+	my $item_type = Test::RPG::Builder::Item_Type->build_item_type( 
+		$self->{schema}, 
+		enchantments => [ 'resistances' ],
+	);	
+
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+			item_type_id => $item_type->id,
+			character_id => $character->id,
+		},
+		{
+			number_of_enchantments => 1,
+		},
+	);	
+	$item->variable('Resistance Bonus', 3);
+	$item->variable('Resistance Type', 'ice');
+	$item->update;
+	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	
+	$character->garrison_id($garrison->id);
+	$character->update;
+	
+	my $building = Test::RPG::Builder::Building->build_building( $self->{schema}, owner_id => $party->id, owner_type => 'party', land_id => $land[4]->id, );
+    my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
+        {
+            name => 'Rune of Protection',
+        }
+    );
+    $building->add_to_upgrades(
+        {
+            type_id => $upgrade_type->type_id,
+            level => 2,
+        }
+    );		
+	
+	# WHEN
+	$character->calculate_resistance_bonuses;
+	$character->update;
+	
+	# THEN
+	$character->discard_changes;
+	is($character->resist_ice_bonus, 9, "Resist ice bonus increased");
+	is($character->resistance('Ice'), 9, "Resistance to ice calculated correctly");       
+	
+	is($character->resist_fire_bonus, 6, "Resist Fire bonus increased");
+	is($character->resistance('Fire'), 6, "Resistance to Fire calculated correctly");  
+	
+	is($character->resist_poison_bonus, 6, "Resist Poison bonus increased");
+	is($character->resistance('Poison'), 6, "Resistance to Poison calculated correctly");  	
 }
 
 1;

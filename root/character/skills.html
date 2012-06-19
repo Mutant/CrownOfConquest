@@ -1,0 +1,57 @@
+<h3>Skills</h3>
+
+[% USE wrap %]
+
+[% MACRO show_skill(skill, level, count) BLOCK %]
+	[% IF count % 3 == 1 %]
+	<tr>
+	[% END %]
+	
+	<td>[% skill.skill_name %] <span id="skill_desc_[% skill.id %]">(?)</span></td>
+	<div dojoType="dijit.Tooltip" connectId="skill_desc_[% skill.id %]">
+		[% skill.description | wrap(50, '', '<br>') ~%]
+		<br><br>
+		[% FILTER wrap(50, '', '<br>') ~%]
+			Base Stat(s): [% skill.base_stats || 'None' ~%]
+		[% END ~%]
+	</div>
+	<td style="width: 200px">
+		[% IF level %]( Level [% level %] )[% END %] 
+		
+		[% IF can_assign_skill_points && level < c.config.max_skill_level %]
+			<a href="javascript:getPanels('character/use_skill_point?skill_id=[% skill.id %]&character_id=[% character.id %]')" title="Assign a point to this skill">
+			<img src="[% c.config.static_path %]/images/actions/statpointsalert.png" border="0"></a></td>
+		[% END %]
+	</td>
+		
+	[% IF count % 3 == 0 %]
+	</tr>
+	[% END %]
+[% END %]
+
+[% IF can_assign_skill_points %]
+Skill Points To Assign: [% character.skill_points %]<br>
+<br>
+[% END %]
+
+[% IF known_skills.size <= 0 %]
+	[% character.character_name %] does not currently have any skills.
+[% END %]
+
+<table>
+
+[% FOREACH skill IN known_skills %]
+	[% show_skill(skill, skill.character_skills.level, loop.count) %]
+[% END %]
+
+[% IF can_assign_skill_points && available_skills.size > 0 %]
+	<tr>
+		<td colspan="6"><br>Learn a new skill:</td>
+	</tr>
+	[% FOREACH skill IN available_skills %]
+		[% show_skill(skill, undef, loop.count) %]
+	[% END %]
+[% ELSIF character.skill_points > 0 && ! character.party_id %]
+	<tr><td>([% character.skill_points %] skill point[% IF character.skill_points > 1 %]s[% END %] unallocated)</td></tr>
+[% END %]
+</table>

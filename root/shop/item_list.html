@@ -22,9 +22,9 @@
 				[% id = item_type.id %]
 				[% cost = item_type.modified_cost(shop) %]
 			[% ELSIF sell_type == 'quantity' %]
-				[% item_type = item %]
+				[% item_type = item.item_type %]
 				[% id = item.id %]
-				[% cost = item_type.modified_cost(shop) %]
+				[% cost = item_type.modified_cost(shop) %]			
 			[% ELSIF sell_type == 'enchanted' %]
 				[% item_type = item.item_type %]
 				[% id = item.item_id %]
@@ -44,8 +44,9 @@
 								[% END %]
 							</span>
 						</span>
-					</div>
+					</div>				
 					<div style="text-align: center">([% cost %] gold[% IF sell_type=='quantity' %] each[% END %])</div>
+					[% IF sell_type == 'quantity' %]<span id="item-quantity-[% id %]">[% item.variable('Quantity') %]</span> available[% END %]
 					
 				
 					<div dojoType="dijit.Tooltip"

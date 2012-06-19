@@ -6,6 +6,7 @@ use warnings;
 use Carp;
 
 use RPG::Combat::SpellActionResult;
+use List::Util qw(shuffle);
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Spell');
@@ -62,9 +63,14 @@ sub cast {
     confess "Character has not memorised spell" if !$memorised_spell || $memorised_spell->casts_left_today <= 0;
 
     my $result = $self->_cast_impl($character, $target);
-
-    $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
-    $memorised_spell->update;
+    
+    if ($character->execute_skill('Recall', 'cast')) {
+        $result->recalled(1);
+    }    
+    elsif ( ! $result->didnt_cast ) {    
+        $memorised_spell->number_cast_today( $memorised_spell->number_cast_today + 1 );
+        $memorised_spell->update;
+    }
 
     return $result;
 }
@@ -95,8 +101,8 @@ sub _cast_impl {
     my $result = RPG::Combat::SpellActionResult->new(
         spell_name => $self->spell_name,
         attacker   => $caster,
-        defender   => $target,
-        $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
+        defender   => $result_params->{defender} // $target,
+        ref $target && $target->can('is_dead') ? (defender_killed => $target->is_dead) : (),
         %$result_params,
     );
     
@@ -137,6 +143,35 @@ sub can_be_cast_on {
 	my $target = shift;
 	
 	return 1;	
+}
+
+# Select target for spell for auto-cast purposes
+sub select_target {
+    my $self = shift;
+    my @targets = @_;
+    
+    @targets = grep { $self->can_be_cast_on($_) } @targets;
+    
+    return unless @targets;
+    
+    return (shuffle @targets)[0];
+}
+
+# Select a target for buffs - one that is alive, and is either
+#  not a character or is set to attack
+sub _select_buff_target {
+    my $self = shift;
+    my @targets = @_;
+    
+    my @possible_targets;
+    foreach my $target (@targets) {
+        push @possible_targets, $target
+            if ! $target->is_dead && (! $target->is_character || $target->last_combat_action eq 'Attack');   
+    }
+    
+    return unless @possible_targets;
+    
+    return (shuffle @possible_targets)[0];
 }
 
 1;

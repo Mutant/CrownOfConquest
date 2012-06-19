@@ -3,7 +3,7 @@
 [% END %]
 
 [% IF guest %]
-	[% INCLUDE top.html guest_screen=1 %]
+	[% INCLUDE layout/box_top.html guest_screen=1 %]
 [% ELSE %]
 	[% INCLUDE help/subnav.html %]
 [% END %]
@@ -58,5 +58,5 @@ Kalle Haapaniemi<br>
 Shane Heres
 
 [% IF guest %]
-	[% INCLUDE bottom.html %]
+	[% INCLUDE layout/box_bottom.html %]
 [% END %]

@@ -1,14 +1,5 @@
 <h3>Garrisoned Characters</h3>
 
-<script>
-function saveCharacterOrder(select, char_id) {
-	dojo.xhrGet( {
-        url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
-        handleAs: "text",        
-    });
-}
-</script>
-
 Any characters garrisoned in the town will fight alongside the mayor. You can garrison up to [% max_chars %] characters in the town.
 
 <br><br>

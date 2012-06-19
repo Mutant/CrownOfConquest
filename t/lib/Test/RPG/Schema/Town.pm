@@ -63,6 +63,41 @@ sub test_tax_cost_with_prestige : Tests(2) {
     is($tax_cost->{turns}, 12, "Turn cost set correctly");       
 }
 
+sub test_tax_cost_with_negotiation : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1, character_level => 3);
+    my ($char) = $party->characters;
+    
+    my $skill = $self->{schema}->resultset('Skill')->find(
+        {
+            skill_name => 'Negotiation',
+        }
+    ); 
+    
+    my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
+        {
+            skill_id => $skill->id,
+            character_id => $char->id,
+            level => 5,
+        }
+    );    
+    
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50);
+    
+    $self->{config}{tax_per_prosperity} = 0.3;
+    $self->{config}{tax_level_modifier} = 0.25;
+    $self->{config}{tax_turn_divisor} = 10;
+    
+    # WHEN
+    my $tax_cost = $town->tax_cost($party);
+    
+    # THEN
+    is($tax_cost->{gold}, 37, "Gold cost set correctly");
+    is($tax_cost->{turns}, 4, "Turn cost set correctly");       
+}
+
 sub test_has_road_to_connected : Tests(1) {
     my $self = shift;
     

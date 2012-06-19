@@ -41,7 +41,7 @@ sub view : Local {
     $c->stats->profile("Queried map sectors");
 
 	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
-	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
+	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 
     my $mapped_sectors_by_coord;
     foreach my $sector (@mapped_sectors) {
@@ -55,10 +55,15 @@ sub view : Local {
 			push @mapped_sectors, $sector;
 		}	
 	}
+	
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 0,
+    };	
 
     $c->stats->profile("Finshed /dungeon/view");
 
-    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ] );
+    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ] );
 }
 
 sub build_viewable_sector_grids : Private {
@@ -94,7 +99,7 @@ sub build_viewable_sector_grids : Private {
             y                              => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
             'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
             'dungeon_room.floor'           => $current_location->dungeon_room->floor,
-            'in_combat_with.party_id'      => undef,
+            'in_combat_with.party_id'      => [undef, $c->stash->{party}->id],
         },
         {
             prefetch => [ { 'creature_group' => { 'creatures' => 'type' } }, ],
@@ -108,6 +113,9 @@ sub build_viewable_sector_grids : Private {
         next unless $cg;
         
         my $group_size = $cg->number_alive;
+        
+        next if $group_size <= 0;
+        
         if ($group_size <= 3) {
             $cg->{group_size} = '1';
         }
@@ -118,11 +126,16 @@ sub build_viewable_sector_grids : Private {
             $cg->{group_size} = '3';
         }
         
-        # Find category of first creatures
-        my $cret = ($cg->creatures)[0];
-        if ($cret) {
-            my $category = $cret->type->category;
-            $cg->{group_img} = $category->dungeon_group_img;
+        if ($cg->has_mayor) {
+            $cg->{group_img} = 'mayor';
+        }
+        else {        
+            # Find category of first creatures
+            my $cret = ($cg->creatures)[0];
+            if ($cret) {
+                my $category = $cret->type->category;
+                $cg->{group_img} = $category->dungeon_group_img;
+            }
         }
         
         $cgs->[ $cg_rec->x ][ $cg_rec->y ] = $cg;
@@ -164,7 +177,29 @@ sub build_viewable_sector_grids : Private {
         $parties->[ $party_rec->x ][ $party_rec->y ] = \@parties;
     }
  
-    $c->stats->profile("Got Parties");	    
+    $c->stats->profile("Got Parties");
+    
+    my $objects;
+    my $objects_rs = $c->model('DBIC::Dungeon_Grid')->search(
+        {
+            'x'               => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
+            'y'               => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
+            'dungeon_room.dungeon_room_id' => $current_location->dungeon_room_id,
+            'dungeon_room.floor'           => $current_location->dungeon_room->floor,
+        },
+        {
+            prefetch => ['dungeon_room', 'teleporter', 'treasure_chest', 'bomb'],
+        },
+    );
+    
+    $objects_rs->result_class('DBIx::Class::ResultClass::HashRefInflator'); 
+    
+    while (my $object = $objects_rs->next) {
+        next unless $object->{bomb} || $object->{teleporter} || $object->{treasure_chest};        
+        $objects->[ $object->{x} ][ $object->{y} ] = $object;
+    }
+    
+    $c->stats->profile("Got Objects");
 	
     # Find viewable sectors, add newly discovered sectors to party's map
     my @viewable_sectors;
@@ -195,11 +230,11 @@ sub build_viewable_sector_grids : Private {
     
     $c->stats->profile("Got viewable sectors");	
 
-    return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties];		
+    return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties, $objects];		
 }
 
 sub render_dungeon_grid : Private {
-    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties ) = @_;
+    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ) = @_;
 
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 
@@ -226,12 +261,10 @@ sub render_dungeon_grid : Private {
 
     my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
    
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'dungeonRefresh',
-        	data => $scroll_to,
-    	}
-    ];    
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'dungeonRefresh',
+        data => $scroll_to,
+    };    
     
     return $c->forward(
         'RPG::V::TT',
@@ -250,6 +283,7 @@ sub render_dungeon_grid : Private {
                     allowed_to_move_to  => $allowed_to_move_to,
                     cgs                 => $cgs,
                     parties             => $parties,
+                    objects             => $objects,
                     allowed_move_hashes => $c->flash->{allowed_move_hashes},
                     in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
                     zoom_level => $c->session->{zoom_level} || 2,
@@ -293,7 +327,7 @@ sub move_to : Local {
 
     croak "Can't find sector: $sector_id" unless $sector;
 
-    $c->log->debug( "Attempting to move to " . $sector->x . ", " . $sector->y );
+    #$c->log->debug( "Attempting to move to " . $sector->x . ", " . $sector->y );
 
     # Check they're moving to a sector in the dungeon they're currently in
     if ( $current_location->dungeon_room->dungeon_id != $sector->dungeon_room->dungeon_id ) {
@@ -312,9 +346,11 @@ sub move_to : Local {
     	$c->stash->{error} = "One or more characters are carrying two much equipment. Your party cannot move"; 
 	}   
     
-    else {    	
-    	if ($sector->dungeon_room->special_room_id && 
-    	   ! $c->session->{special_room_alerts}{$sector->dungeon_room_id} && $sector->dungeon_room_id != $current_location->dungeon_room_id) {
+    else {
+    	if ($sector->dungeon_room->special_room_id 
+    	   && ! $c->session->{special_room_alerts}{$sector->dungeon_room_id}
+    	   && $sector->dungeon_room_id != $current_location->dungeon_room_id
+    	   && $sector->dungeon_room->is_active) {
             # They're moving into a special room for the first time in this session, so send an alert.            
             my $message = $c->forward(
                 'RPG::V::TT',
@@ -390,7 +426,7 @@ sub build_updated_sectors_data : Private {
 	my $new_location = $c->model('DBIC::Dungeon_Grid')->find($sector_id);
 	
 	my $grids = $c->forward('build_viewable_sector_grids', [$new_location]);
-	my ($sectors_to_update, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties) = @$grids;
+	my ($sectors_to_update, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 	
 	my $sectors_to_update_grid;
 	foreach my $sector (@$sectors_to_update) {
@@ -467,6 +503,7 @@ sub build_updated_sectors_data : Private {
 		                	sector => $current_sector,
 		                	cgs => $cgs,
 		                	parties => $parties,
+		                	objects => $objects,
 		                	allowed_to_move_to => $allowed_to_move_to,
 		                	viewable_sectors => $viewable_sector_grid,
 		                	x => $x,
@@ -533,7 +570,6 @@ sub build_updated_sectors_data : Private {
         },
         {
             join     => [ 'dungeon_room', 'mapped_dungeon_grid' ],
-            prefetch => ['treasure_chest', 'teleporter'],
         },
     );
 	my $old_sectors_grid;
@@ -676,6 +712,10 @@ sub move_creatures : Private {
         return unless @sectors;
         
         my $sector_to_move_to = $sectors[0];
+        
+        # Rare monsters / mayors not allowed to move out of room
+        next if ($cg->has_rare_monster || $cg->has_mayor)
+            && $sector_to_move_to->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
 
         if ($sector_to_move_to) {
             $cg->dungeon_grid_id( $sector_to_move_to->id );
@@ -693,9 +733,38 @@ sub open_door : Local {
             'dungeon_grid_id' => $c->stash->{party}->dungeon_grid_id,
         },
     );
+    
+    croak "Invalid door" unless $door;
 
-    if ( !$door || !$door->can_be_passed ) {
-        croak "Cannot open door";
+    if ( ! $door->can_be_passed ) {
+    	my $message = $c->forward(
+    		'RPG::V::TT',
+    		[
+    			{
+    				template => 'dungeon/unblock_door_diag.html',
+    				params   => {
+    					party => $c->stash->{party},
+    					door => $door,
+    					dismantle_cost => $c->config->{dismantle_door_cost},
+    				},
+    				return_output => 1,
+    			}
+    		]
+    	);
+    	
+    	$c->forward('/panel/create_submit_dialog', 
+    		[
+    			{
+    				content => $message,
+    				submit_url => 'dungeon/unblock_door',
+    				dialog_title => 'Unblock Door',
+    			}
+    		],
+    	);    
+    	
+    	$c->forward( '/panel/refresh', [ 'messages' ] );
+    	
+    	return;    
     }
 
     my ( $opposite_x, $opposite_y ) = $door->opposite_sector;
@@ -737,13 +806,18 @@ sub sector_menu : Local {
     my @doors = $current_location->available_doors;
 
     my $parties_in_sector = $c->forward( '/party/parties_in_sector', [ undef, $current_location->id ] );
-    
+
     if ($c->session->{temp_dungeon_messages}) {
-        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages};
+        $c->stash->{messages} = [$c->stash->{messages}] unless ref $c->stash->{messages} eq 'ARRAY';
         $c->stash->{messages} //= [];
-        push @{ $c->stash->{messages} }, @{ $c->session->{temp_dungeon_messages} };
+
+        my $temp = ref $c->session->{temp_dungeon_messages} eq 'ARRAY' ? $c->session->{temp_dungeon_messages} : [$c->session->{temp_dungeon_messages}];
+        push @{ $c->stash->{messages} }, @$temp;
         undef $c->session->{temp_dungeon_messages};
     }
+    
+    my $comparison_details = $c->forward('/party/get_watcher_factor_comparison', [$creature_group]);    
+    my ($factor_comparison, $confirm_attack) = @$comparison_details;
 
     return $c->forward(
         'RPG::V::TT',
@@ -758,6 +832,8 @@ sub sector_menu : Local {
                     parties_in_sector      => $parties_in_sector,
                     dungeon_type           => $current_location->dungeon_room->dungeon->type,
                     castle_move_type       => $c->session->{castle_move_type} || '',
+                    factor_comparison      => $factor_comparison,
+                    coonfirm_attack        => $confirm_attack,
                 },
                 return_output => 1,
             }
@@ -790,6 +866,30 @@ sub unblock_door : Local {
     my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters;
     
     croak "Character is dead" if $character->is_dead;
+
+    if ( $c->req->param('action') eq 'dismantle' ) {
+        if ( $c->stash->{party}->turns < $c->config->{dismantle_door_cost} ) {
+            $c->stash->{error} = "You don't have enough turns to dismantle the door";
+            $c->detach( '/panel/refresh', ['messages'] );
+        }
+        
+        $c->stash->{messages} = "The party spends " . $c->config->{dismantle_door_cost} . " dismantling the door. It is now unblocked";
+        
+        $door->state('open');
+        $door->update;
+        
+        my $opposite_door = $door->opposite_door;
+        $opposite_door->state('open');
+        $opposite_door->update;
+
+        $c->stash->{refresh_panels} = ['map'];        
+    
+        $c->stash->{party}->turns( $c->stash->{party}->turns - $c->config->{dismantle_door_cost} );
+        $c->stash->{party}->update;
+    
+        $c->detach( '/panel/refresh', [ 'messages', 'party_status' ] );        
+        
+    }
 
     # Only attempt to unblock door if action matches door's type
     if ( $action_for_door{ $c->req->param('action') } eq $door->type ) {
@@ -897,6 +997,11 @@ sub exit : Private {
     $c->stash->{party}->update;
     
     undef $c->session->{spotted};
+    
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'setMinimapVisibility',
+        data => 1,
+    };    
 
     $c->forward( '/panel/refresh', [ 'map', 'messages', 'party_status', 'zoom', 'party', 'creatures' ] );
 }
@@ -934,10 +1039,11 @@ sub search_room : Local {
 
     if (@secret_doors) {
         my $avg_int = $c->stash->{party}->average_stat('intelligence');
+        my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'search_room');
 
         my $roll = Games::Dice::Advanced->roll( '1d' . ( 15 + ( $current_location->dungeon_room->dungeon->level * 5 ) ) );
 
-        if ( $roll <= $avg_int ) {
+        if ( $roll <= $avg_int + $bonus) {
             my $door_found = ( shuffle @secret_doors )[0];
 
             $door_found->state('open');
@@ -1079,10 +1185,13 @@ sub handle_chest_trap : Private {
 	my ( $self, $c, $current_location ) = @_;
 	
 	my $avg_div = $c->stash->{party}->average_stat('divinity');
+	my $bonus = $c->stash->{party}->skill_aggregate('Awareness', 'chest_trap');
+	
 	unless ($c->session->{detected_trap}[$current_location->x][$current_location->y] || 
-		Games::Dice::Advanced->roll('1d30') <= $avg_div) {
+		Games::Dice::Advanced->roll('1d30') <= $avg_div + $bonus) {
 		# Failed to detect trap
-		$c->detach('trigger_trap', [$current_location]);
+		$c->forward('trigger_trap', [$current_location]);
+		return;
 	}
 	
 	$c->stash->{dialog_to_display} = 'chest-trap';
@@ -1130,24 +1239,35 @@ sub trigger_trap : Private {
 	
 	my $dungeon = $current_location->dungeon_room->dungeon;
 	
+	$c->forward('execute_trap', [$chest->trap, $dungeon->level]);
+	
+	$current_location->treasure_chest->trap(undef);
+	$current_location->treasure_chest->update;
+	
+    $c->detach( '/panel/refresh', [ 'messages', 'party' ] );		
+}
+
+sub execute_trap : Private {
+    my ($self, $c, $trap_type, $level) = @_;
+
 	my $target = (shuffle(grep { ! $_->is_dead } $c->stash->{party}->characters))[0];
 	my $trap_variable;
-	
-	given($chest->trap) {
+    
+	given($trap_type) {
 		when ("Curse") {
-			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
 				effect_name => 'Cursed',
 				target => $target,
 				duration => $trap_variable,
-				modifier => -8 * $dungeon->level,
+				modifier => -8 * $level,
 				combat => 0,
 				modified_state => 'attack_factor',					
 			});	
 		}
 		
 		when ("Hypnotise") {
-			$trap_variable = Games::Dice::Advanced->roll('2d3') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
 				effect_name => 'Hypnotised',
 				target => $target,
@@ -1158,8 +1278,20 @@ sub trigger_trap : Private {
 			});	
 		}	
 		
+		when ("Mute") {
+			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
+			$c->model('DBIC::Effect')->create_effect({
+				effect_name => 'Muted',
+				target => $target,
+				duration => $trap_variable,
+				modifier => 0,
+				combat => 0,
+				modified_state => 'block_spell_casting',					
+			});	
+		}			
+		
 		when ("Detonate") {
-			$trap_variable = Games::Dice::Advanced->roll('2d4') * $dungeon->level;
+			$trap_variable = Games::Dice::Advanced->roll('2d4') * $level;
 			$target->hit($trap_variable, undef, 'an explosion');
 		}				
 	}
@@ -1171,7 +1303,7 @@ sub trigger_trap : Private {
                 template => 'dungeon/trigger_chest_trap.html',
                 params   => {
                     target => $target,
-                    trap => $chest->trap,
+                    trap => $trap_type,
                     trap_variable => $trap_variable,
                     
                 },
@@ -1180,13 +1312,10 @@ sub trigger_trap : Private {
         ]
     );
 
-    $c->stash->{messages} = $message;	
-	
-	$current_location->treasure_chest->trap(undef);
-	$current_location->treasure_chest->update;
-	
-    $c->detach( '/panel/refresh', [ 'messages', 'party' ] );
-		
+    push @{$c->stash->{messages}}, $message;
+    
+    push @{$c->stash->{refresh_panels}}, 'party';
+     
 }
  
 

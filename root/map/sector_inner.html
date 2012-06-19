@@ -44,16 +44,29 @@
 			<img src="[% c.config.static_path %]/images/dungeon/herecircle.png" style="
 					position: absolute;
 					top: 0px;
+					left: 0px;
+					z-index: 50;
+				" 
+				border = 0 
+				width="[% sector_width %]"
+				height="[% sector_height %]"
+				id="herecircle"
+				>
+    	[% END %]
+    	
+    	[% IF position.garrison && ! position.buildings %]
+			<img src="[% c.config.static_path %]/images/map/playerpartymapimage.png" style="
+					position: absolute;
+					top: 0px;
 					left: 0px;												
 				" 
 				border = 0 
 				width="[% sector_width %]"
 				height="[% sector_height %]"
-				[% title = sector_title(position) %]
-				[%  IF title %]title="[% title %]"[% END %]
-				id="herecircle"
-				>
-    	[% END %]						
+				[% title = sector_title(position) | trim | collapse %]
+				[% IF title %]title="[% title %]"[% END %]			
+				>    	
+		[% END %]
 	
 		[% FOREACH road IN position.roads %]
 			[% IF road.position %]

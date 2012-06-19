@@ -37,22 +37,20 @@ sub view : Local {
 	my $character = $c->stash->{character};
 
     my %chars_by_type;
+    my @characters;
+    my $group;
  	if ( $character->party_id ) {
-        %chars_by_type = $self->gen_character_list($c);
+        ($group, %chars_by_type) = $self->gen_character_list($c, $character);
+    	
  	}
  	else {
-		#@characters = $c->stash->{party_location}->town->characters;
+		@characters = $c->stash->{party_location}->town->characters;
  	}
 	my $can_buy = 0;
 	if ($character->town_id && $c->stash->{party}->gold >= $character->value && ! $c->stash->{party}->is_full) {
-	   $can_buy = 1; 	          
+        $can_buy = 1; 	          
 	}
 	
-	my $group = 'party';
-	$group = 'mayors' if $character->mayor_of;
-	$group = 'garrisons' if $character->garrison_id;
-	$group = 'others' if $character->status;
-
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -60,7 +58,7 @@ sub view : Local {
 				template => 'character/view.html',
 				params   => {
 					character           => $character,
-					character_list      => \%chars_by_type,
+					character_list      => %chars_by_type ? \%chars_by_type : \@characters,
 					selected            => $c->stash->{selected_tab} || $c->req->param('selected') || '',
 					item_mode => $c->req->param('item_mode') || '',
 					can_buy => $can_buy,
@@ -74,33 +72,55 @@ sub view : Local {
 
 # Generate a data structure with the party's characters for the 'jump to' menu 
 sub gen_character_list {
-    my ( $self, $c ) = @_;
+    my ( $self, $c, $character ) = @_;
     
     my %chars_by_type;
+    my $group = 'others';
     
- 	$chars_by_type{party} = [map { {name => $_->character_name, id => $_->id} } $c->stash->{party}->characters];
-	$chars_by_type{garrisons} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			garrison_id => { '!=', undef },
-		}
-	)];
-	
-	$chars_by_type{mayors} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			mayor_of => { '!=', undef },
-		}
-	)];
-	
-	$chars_by_type{others} = [map { {name => $_->character_name, id => $_->id} } $c->model('DBIC::Character')->search(
-		{
-			party_id    => $c->stash->{party}->id,
-			status => { '!=', undef },
-		}
-	)];
-	
-	return %chars_by_type;    
+    my @characters = $c->model('DBIC::Character')->search(
+        {
+            party_id => $c->stash->{party}->id,
+        }
+    );
+    
+    foreach my $other_char (@characters) {
+        if ($other_char->garrison_id && $character->garrison_id == $other_char->garrison_id) {
+            push @{ $chars_by_type{group} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+            $group = 'group';
+        }
+        elsif ($other_char->mayor_of && $other_char->mayor_of == $character->mayor_of || 
+            $other_char->mayor_of && $character->status eq 'mayor_garrison' && $character->status_context == $other_char->mayor_of ||
+            $character->mayor_of && $other_char->status eq 'mayor_garrison' && $other_char->status_context == $character->mayor_of ||
+            $character->status && $character->status eq 'mayor_garrison' && $other_char->status eq 'mayor_garrison' && $other_char->status_context == $character->status_context) {
+                
+            push @{ $chars_by_type{group} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+            $group = 'group';
+        }
+        elsif (grep { $_->id == $other_char->id } $c->stash->{party}->characters) {
+            push @{ $chars_by_type{party} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };            
+        }
+        else {
+            push @{ $chars_by_type{others} }, {
+                name => $other_char->name,
+                id => $other_char->id,
+            };
+        }
+    }
+    
+ 	if (! $character->status && $group ne 'group') {
+        $group = 'party';
+	}
+		
+	return ($group, %chars_by_type);    
 }
 
 sub stats : Local {
@@ -134,8 +154,14 @@ sub equipment_tab : Local {
 		map { $equipped_items->{$_} ? ( $equipped_items->{$_}->id => $equipped_items->{$_} ) : () } keys %$equipped_items;
 
 	my %equip_place_category_list = $c->model('DBIC::Equip_Places')->equip_place_category_list;
-
-	my @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+	
+	my @allowed_to_give_to_characters;
+	if (! $character->garrison_id || $c->stash->{party_location}->land_id == $character->garrison->land_id) {
+	   @allowed_to_give_to_characters = $c->stash->{party}->characters_in_sector;
+	}
+	else {
+	    @allowed_to_give_to_characters = $character->garrison->members;
+	}
 
 	$c->forward(
 		'RPG::V::TT',
@@ -251,8 +277,10 @@ sub split_item : Local {
 		},
 		{
 			prefetch => [
-                'belongs_to_character',                
-            ]
+                'belongs_to_character',
+                'item_variables',
+            ],
+            for => 'update',            
 		}
 	);
     
@@ -296,9 +324,15 @@ sub item_list : Local {
 sub equip_item : Local {
 	my ( $self, $c ) = @_;
 
-	my $item =
-		$c->model('DBIC::Items')
-		->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } }, }, );
+	my $item = $c->model('DBIC::Items')->find( 
+	   { 
+	       item_id => $c->req->param('item_id'), 
+	   }, 
+	   { 
+	       prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } },
+	       #for => 'update', 
+	   }, 
+    );
 
     my $character = $item->belongs_to_character;
     
@@ -363,19 +397,24 @@ sub give_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-	my @characters = $c->stash->{party}->characters_in_sector;
-	my ($original_character) = grep { $_->id eq $item->character_id } @characters;
+	my $original_character = $item->belongs_to_character;
 
-	# Make sure this item belongs to a character in the party
-	unless ($original_character) {
-		$c->log->warn( "Attempted to give item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
+	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
+	
+	if ($original_character->garrison_id) {
+	    my $garrison = $original_character->garrison;
+	    my $invalid_char = 0;
+	    if ($c->stash->{party_location}->land_id == $garrison->land_id) {
+	        # Party is in sector, so can give to chars in same garrison or in party
+	        $invalid_char = 1 if $original_character->garrison_id != $character->garrison_id &&
+	           ! $character->is_in_party;
+	    }
+	    else {	    
+            # If party is not in sector, can only give to character in same garrison
+             $invalid_char = 1 unless $original_character->garrison_id == $character->garrison_id;
+	    }
+	    
+	    croak "Cannot give item to this character" if $invalid_char;
 	}
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
@@ -388,7 +427,7 @@ sub give_item : Local {
 		to_json(
 			{
 				clear_equip_place => $slot_to_clear,
-				encumbrance       => $original_character->encumbrance,
+				encumbrance       => $character->encumbrance,
 			}
 		)
 	);
@@ -403,21 +442,18 @@ sub drop_item : Local {
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
-	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters_in_sector;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
-		$c->log->warn( "Attempted to drop item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
-	}
+	my $original_character = $item->belongs_to_character;
+
+	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
-
+	
+	if ( $character->garrison_id ) {
+		$item->land_id( $character->garrison->land_id );
+		$item->character_id(undef);
+		$item->equip_place_id(undef);
+		$item->update;        
+	}
 	if ( $c->stash->{party_location}->town ) {
 
 		# If we're in a town, just delete the item...
@@ -450,8 +486,7 @@ sub unequip_item : Local {
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
 
 	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters_in_sector;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
+	if ( $item->character_id != $character->id ) {
 		$c->log->warn( "Attempted to unequip item  "
 				. $item->id
 				. " within party "
@@ -610,12 +645,122 @@ sub update_spells : Local {
     $c->forward( '/panel/refresh', [[screen => 'character/view?selected=spells&character_id=' . $character->id], 'party'] );
 }
 
+sub skills : Local {
+    my ( $self, $c ) = @_;
+   
+   	my $character = $c->stash->{character};
+
+	return unless $character;
+	
+	my @known_skills =$c->model('DBIC::Skill')->search(
+	   {
+	       'character_skills.character_id' => $character->id,
+	   },
+	   {
+	       prefetch => 'character_skills',
+	       order_by => 'skill_name',
+	   }
+	);
+	
+	my $can_assign_skill_points = $character->party_id && $character->skill_points > 0 ? 1 : 0;
+	
+	my @available_skills;
+	if ($can_assign_skill_points) {
+	    my @skills = $c->model('DBIC::Skill')->search(
+	       {},
+	       {
+	           order_by => 'skill_name',
+	       },	    
+	    );
+	    
+	    foreach my $skill (@skills) {
+	       # Remove all skills that are already know by this character
+	       if (! grep { $_->id == $skill->id } @known_skills) {
+	           push @available_skills, $skill;   
+	       }   
+	    }	    
+	}
+	
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'character/skills.html',
+				params   => {
+					character              => $character,
+                    known_skills           => \@known_skills,
+                    available_skills       => \@available_skills,
+                    can_assign_skill_points => $can_assign_skill_points,
+				}
+			}
+		]
+	);
+}
+
+sub use_skill_point : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->forward('check_action_allowed');
+    
+    # Re-read character and lock for update
+	my $character = $c->model('DBIC::Character')->find( 
+	   { 
+	       character_id => $c->stash->{character}->id,
+	   }, 
+	   { 
+	       for => 'update', 
+	   },
+	);
+    
+    if ($character->skill_points <= 0) {
+        $c->stash->{error} = 'No stat points to assign';
+        $c->forward( '/panel/refresh' );
+        return;
+    }
+    
+    my $skill = $c->model('DBIC::Skill')->find({ skill_id => $c->req->param('skill_id') });
+    croak "Invalid skill\n" unless $skill;
+    
+    my $character_skill = $c->model('DBIC::Character_Skill')->find_or_create(
+        {
+            character_id => $character->id,
+            skill_id => $skill->id,
+        },
+        {
+            for => 'update',
+        },
+    );
+    
+    if ($character_skill->level >= $c->config->{max_skill_level}) {
+        $c->stash->{error} = 'That skill is already at the max level!';
+        $c->forward( '/panel/refresh' );
+        return;
+    }
+    
+    $character_skill->increment_level;
+    $character_skill->update;
+    
+    $character->decrement_skill_points;
+    $character->update;
+    
+    $c->forward( '/panel/refresh', [[screen => 'character/view?selected=skills&character_id=' . $character->id], 'party'] );
+    
+}
+
 sub add_stat_point : Local {
 	my ( $self, $c ) = @_;
 
 	$c->forward('check_action_allowed');
 
-	my $character = $c->stash->{character};
+    # Re-read character and lock for update
+	my $character = $c->model('DBIC::Character')->find( 
+	   { 
+	       character_id => $c->stash->{character}->id,
+	   }, 
+	   { 
+	       for => 'update', 
+	   },
+	);
 
 	unless ( $character->stat_points != 0 ) {
 		$c->res->body( to_json( { error => 'No stat points to add' } ) );
@@ -690,6 +835,8 @@ sub bury : Local {
 	$c->forward('check_action_allowed');
 
 	my $character = $c->stash->{character};
+	
+	croak "Cannot bury while in combat" if $c->stash->{party}->in_combat;
 
 	$c->model('DBIC::Grave')->create(
 		{

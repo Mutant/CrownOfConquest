@@ -1,0 +1,23 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Day Stats</h2>
+
+<table>
+<tr>	
+	<th>Date</th>
+	<th># Of Logins</th>	
+	<th># Of Turns Used</th>
+</tr>
+[% count = 0 %]
+[% FOREACH rec IN counts %]
+	<tr>
+		<td>[% rec.get_column('date') %]</td>
+		<td>[% rec.get_column('count') %]</td>
+		<td>[% turns_used.$count.turns_used %]</td>
+	</tr>
+	[% count = count + 1 %]
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

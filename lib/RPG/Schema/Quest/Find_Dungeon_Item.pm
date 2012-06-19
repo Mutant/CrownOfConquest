@@ -52,6 +52,7 @@ sub set_quest_params {
     my @chests = $self->result_source->schema->resultset('Treasure_Chest')->search(
     	{
     		'dungeon.dungeon_id' => $dungeon_to_use->id,
+    		'dungeon_room.special_room_id' => undef,
     	},
     	{
     		join => { 'dungeon_grid' => { 'dungeon_room' => 'dungeon' }},
@@ -178,7 +179,7 @@ sub ready_to_complete {
 sub finish_quest {
 	my $self = shift;
 	
-	my $item = $self->item;
+	my $item = eval {$self->item};
 	return unless $item;
 	$item->character_id(undef);
 	$item->treasure_chest_id(undef);

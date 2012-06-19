@@ -181,7 +181,7 @@ sub process_round_result_party_wiped_out : Tests(5) {
     is(scalar @{$self->{stash}{combat_messages}}, 1, "Two messages added");
     is($self->{stash}{combat_messages}[0], "some message", "Correct message given");
     is($self->{stash}{combat_complete}, 1, "Combat complete recorded in stash"); 
-    is_deeply($params, ['messages', 'party', 'party_status', 'map'], "Correct panels refreshed");
+    is_deeply($params, ['messages', 'party_status',], "Correct panels refreshed");
 }
 
 sub test_main_already_loaded_cg_picked_up_new_effects : Tests(2) {
@@ -202,12 +202,12 @@ sub test_main_already_loaded_cg_picked_up_new_effects : Tests(2) {
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
     
     # WHEN
-    RPG::C::Combat->display_cg($self->{c}, $cg);
+    RPG::C::Combat->display_opponents($self->{c}, $cg);
     
     # THEN
-    my %creature_effects_by_id = %{$template_args->[0][0]{params}{creature_effects_by_id}};
+    my %creature_effects_by_id = %{$template_args->[0][0]{params}{effects_by_id}{creature}};
     is(scalar @{$creature_effects_by_id{$creature->id}}, 1, "One effect found for creature");
-    is($creature_effects_by_id{$creature->id}->[0]->effect->id, $effect->id, "Correct effect found");    
+    is($creature_effects_by_id{$creature->id}->[0]->id, $effect->id, "Correct effect found");    
 }
 
 1;

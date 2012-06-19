@@ -51,6 +51,13 @@ sub schedule {
 		}
     );
     
+    $schema->resultset('Global_News')->create(
+        {
+            day_id => $today->id,
+            message => "The town of " . $town->town_name . " has scheduled an election for day $day.",
+        },
+    );
+    
     return $election;	
 }
 

@@ -8,6 +8,24 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
 
+[% SWITCH c.session.screen_width %]
+[% CASE 'large' %]
+	[% width = '1050px' %]
+[% CASE 'medium' %]
+	[% width = '920px' %]
+[% CASE %]
+	[% width = '800px' %]
+[% END %]
+<style>
+.kingdomsTabContainer {
+	width: [% width %];
+}
+</style>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
+<script type="text/javascript" src="[% base %]static/js/jquery.tablesorter.min.js"></script>
+
 <link rel="stylesheet" type="text/css" href="[% c.config.static_path %]/main.css" />
 <link rel="browser-game-info" href="http://www.kingdoms-game.com/static/browser_games_hub.xml" />
 
@@ -68,7 +86,9 @@ function show_message(message) {
 <div id="content-outer" class="main">
 
 <div style="width: 100%">
-	<div class="login-info" style="text-align: center">
+
+	<div class="login-info" style="text-align: center; color: white; padding-left: 30px">
+		<br>
 	[% IF main_screen %]
 		User: <b>[% c.session.player.player_name %]</b> /
 		Party: <b>[% party.name %]</b> /
@@ -85,20 +105,21 @@ function show_message(message) {
 	<br>
 	<a href="[% base %]player/submit_bug" target="_blank">Submit A Bug</a> / 
 	<a href="[% base %]player/contact" target="_blank">Contact Us</a>
-	<br><br>
-	<a href="[% IF main_screen %]javascript:loadScreen('donate')[% ELSE %][% base %]donate[% END %]">
-		<img src="/static/images/donate.gif" border="0">
-	</a>		
 	</div>
 
+	<div style="float: right">
+		<br>
+		<a href="[% IF main_screen %]javascript:loadScreen('donate/screen')[% ELSE %][% base %]donate[% END %]">
+			<img src="/static/images/donate.gif" border="0">
+		</a>
+	</div>
 
-	<div style="background:url([% base %]static/images/logofin.png) no-repeat center center; height: 60px; cursor: pointer" onClick="document.location='[% base %]'">
-		&nbsp;
+	<div style="background:url([% base %]static/images/kingdomlogo2.png) no-repeat center center; height: 80px; cursor: pointer" onClick="document.location='[% base %]'">
 	</div>
 
 </div>
 	
-<div id="nav">
+<div id="nav" style="width: 100%">
 	[% IF admin_screen %]
 		[% INCLUDE admin/left_hand_nav.html %]
 	[% ELSIF guest_screen %]	

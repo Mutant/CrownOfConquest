@@ -45,7 +45,8 @@ sub generate_character {
     my $stat_max  = RPG::Schema->config->{stat_max};
 
     # Initial allocation of stat points
-    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, \%stats );
+    my $stat_weight = $params{stat_weight} // Games::Dice::Advanced->roll('1d6') + 4;
+    %stats = $self->_allocate_stat_points( $stat_pool, $stat_max, $class->primary_stat, $stat_weight, \%stats );
 
     # Yes, we're quite sexist
     my $gender = Games::Dice::Advanced->roll('1d3') > 1 ? 'male' : 'female';
@@ -70,7 +71,7 @@ sub generate_character {
     for ( 2 .. $level ) {
         $character->roll_all;
 
-        %stats = $self->_allocate_stat_points( RPG::Schema->config->{stat_points_per_level}, undef, $class->primary_stat, \%stats );
+        %stats = $self->_allocate_stat_points( RPG::Schema->config->{stat_points_per_level}, undef, $class->primary_stat, $stat_weight, \%stats );
 
         for my $stat ( keys %stats ) {
             $character->set_column( $stat, $stats{$stat} );
@@ -78,6 +79,8 @@ sub generate_character {
 
         $character->update;
     }
+    
+    $self->_assign_skill_points($character);
 
     if ($roll_points) {
         $character->hit_points( $character->max_hit_points );
@@ -96,11 +99,19 @@ sub _allocate_stat_points {
     my $stat_pool    = shift;
     my $stat_max     = shift;
     my $primary_stat = shift;
+    my $weight       = shift;
     my $stats        = shift;
+    
+    confess "Too much weight: $weight" if $weight > 30;
 
     my @stats = keys %$stats;
     # Primary stat goes in multiple times to make it more likely to get added
-    push @stats, $primary_stat if defined $primary_stat;
+    if (defined $primary_stat) {
+        push @stats, $primary_stat for (1..$weight);    
+    }
+    
+    # Also add constitution multiple times
+    push @stats, 'constitution' for (1..($weight > 3 ? $weight - 3 : 1));
 
     # Allocate 1 point to a random stat until the pool is used
     while ( $stat_pool > 0 ) {
@@ -207,6 +218,47 @@ sub _allocate_equipment {
 
         $item->equip_item( $equip_place->equip_place_name, 0 );
     }
+}
+
+sub _assign_skill_points {
+    my $self = shift;
+    my $character = shift;
+    
+    my $skill_points = $character->level - 1;
+    
+    return if $skill_points <= 0;
+    
+    my $unassigned_skill_points = 0;
+    
+    if ($skill_points >= 8) {
+        my $unassigned_skill_points = RPG::Maths->weighted_random_number(1..10);
+        $unassigned_skill_points = $skill_points-2 if $unassigned_skill_points > $skill_points-2;
+    }
+    
+    my @skills = shuffle $self->result_source->schema->resultset('Skill')->search();
+    
+    foreach my $skill (@skills) {
+        if ($skill->skill_name eq 'Recall' && ! $character->is_spell_caster) {
+            next;
+        }
+        
+        my $level = Games::Dice::Advanced->roll('1d10');
+        
+        $level = $skill_points if $level > $skill_points;
+        
+        $character->add_to_character_skills(
+            {
+                skill_id => $skill->id,
+                level => $level,
+            }
+        );
+        
+        $skill_points -= $level;
+        
+        last if $skill_points <= $unassigned_skill_points;
+    }
+    
+       
 }
 
 1;

@@ -6,6 +6,7 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 use Text::Wrap;
+use JSON;
 
 use Carp;
 
@@ -64,6 +65,19 @@ sub accept : Local {
         unless ($c->stash->{party}->allowed_more_quests) {
     		croak "Not allowed any more quests";	
     	}
+    	
+    	if (! $quest->party_can_accept_quest($c->stash->{party})) {
+            my $reason = $quest->cant_accept_quest_reason;
+            
+            $c->res->body(
+                to_json {
+                    message => $reason,
+                    accepted => 0,
+                }
+            );
+             
+            return;
+    	}
         
         my $town = $c->stash->{party_location}->town;
         
@@ -100,7 +114,12 @@ sub accept : Local {
 	    );
     };
     
-    $c->res->body($message);
+    $c->res->body(
+        to_json {
+            message => $message,
+            accepted => 1,
+        }
+    );
     
     if ($quest->kingdom_id) {
         $c->forward('/quest/list');  
@@ -144,6 +163,29 @@ sub decline : Local {
     
 }
 
+sub negotiate : Local {
+    my ( $self, $c ) = @_;
+    
+    my $quest = $c->model('DBIC::Quest')->find(
+        {
+            quest_id => $c->req->param('quest_id'),
+            status => 'Not Started',
+            kingdom_id => $c->stash->{party}->kingdom_id,
+            party_id => $c->stash->{party}->party_id,
+        },
+    );
+    
+    croak "Invalid quest" unless $quest;    
+    
+    $quest->status('Negotiating');
+    $quest->gold_value($c->req->param('gold_value'));
+    $quest->update;
+    
+    push @{$c->stash->{panel_messages}}, "Negotiation request sent to the King";
+    
+    $c->forward('/quest/list'); 
+}
+
 sub list : Local {
     my ( $self, $c ) = @_;
     
@@ -152,7 +194,7 @@ sub list : Local {
     my @quests = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            status   => ['Not Started', 'In Progress', 'Awaiting Reward'],
+            status   => ['Not Started', 'In Progress', 'Awaiting Reward', 'Requested'],
         },
         { 
             prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ],
@@ -190,6 +232,13 @@ sub check_action : Private {
             push @messages, $message if $message;
         }
     }
+    
+    # Check if this action affects any other quests    
+    my @quests = $c->model('DBIC::Quest')->find_quests_by_interested_action($action);
+    
+    foreach my $quest (@quests) {
+        $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
+    }    
     
     return \@messages;
 }

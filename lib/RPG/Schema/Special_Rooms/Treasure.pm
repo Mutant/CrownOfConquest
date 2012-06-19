@@ -82,19 +82,46 @@ sub generate_special {
     }    
 }
 
-sub remove_special {
+sub _chests {
     my $self = shift;
     
     my $schema = $self->result_source->schema;
     
-    $schema->resultset('Treasure_Chest')->search(
+    my @chests = $schema->resultset('Treasure_Chest')->search(
         {
             'dungeon_grid.dungeon_room_id' => $self->id,
         },
         {
             join => 'dungeon_grid',
         }
-    )->delete;
+    );
+    
+    return @chests;    
+}
+
+sub remove_special {
+    my $self = shift;
+    
+    my @chests = $self->_chests;
+    
+    foreach my $chest (@chests) {
+        $chest->delete;
+    }
 } 
+
+sub is_active {
+    my $self = shift;
+    
+    my @chests = $self->_chests;
+    
+    my $active = 0;
+    foreach my $chest (@chests) {
+        if (! $chest->is_empty || $chest->gold > 0) {
+            $active = 1;
+        }   
+    }
+    
+    return $active;
+}
 
 1;

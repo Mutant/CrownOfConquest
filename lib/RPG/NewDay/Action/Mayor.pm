@@ -776,7 +776,7 @@ sub generate_advice {
                 $advice = "The town does not have a building. Construct one to help defend it";
                 last;
             }
-            my @upgrades = $town->upgrades;
+            my @upgrades = $building->upgrades;
             my $rune_level;
     	    foreach my $upgrade (@upgrades) {
                 next unless $upgrade->type =~ /^Rune/;

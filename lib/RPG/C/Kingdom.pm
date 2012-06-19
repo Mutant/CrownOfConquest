@@ -786,6 +786,14 @@ sub change_relationship : Local {
     
     croak "Couldn't find relationship" unless $current_relationship;
     
+    my $with_kingdom = $c->model('DBIC::Kingdom')->find(
+        {
+            kingdom_id => $c->req->param('with_id'),
+        }
+    );
+    
+    croak "Couldn't find kingdom to have relationship with" unless $with_kingdom;
+    
     if ($c->req->param('type') ne $current_relationship->type) {
         $current_relationship->ended($c->stash->{today}->id);
         $current_relationship->update;
@@ -797,6 +805,14 @@ sub change_relationship : Local {
                 begun => $c->stash->{today}->id,
             }
         );
+        
+        $c->model('DBIC::Global_News')->create(
+            {
+                day_id => $c->stash->{today}->id,
+                message => "The Kingdom of " . $c->stash->{kingdom}->name . " declares their relationship with " 
+                    . $with_kingdom->name . " has changed from " . $current_relationship->type . " to " . $c->req->param('type'),
+            }
+        );        
     }
     
     $c->forward( '/panel/refresh', [[screen => 'kingdom?selected=relationships']] );        

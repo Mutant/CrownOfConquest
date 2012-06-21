@@ -19,6 +19,7 @@ foreach my $shop (@shops) {
     next if defined $shop_id && $shop_id != $shop->id;
     warn "Processing shop: " . $shop->id;
     
+    my %sectors;
     for my $x (1..8) {
         for my $y (1..12) {
             my $sector = $schema->resultset('Item_Grid')->find_or_create(
@@ -32,6 +33,7 @@ foreach my $shop (@shops) {
             $sector->item_id(undef);
             $sector->start_sector(undef);
             $sector->update;
+            $sectors{"$x,$y"} = $sector;
         }
     }
 
@@ -45,43 +47,33 @@ foreach my $shop (@shops) {
     );
     
     foreach my $item (@items) {
-        #warn "Checking for item: " . $item->id;
-        my @empty_sectors = $schema->resultset('Item_Grid')->search(
-            {
-                item_id => undef,
-            },
-        );
-        my %empty_sectors;
-        foreach my $sector (@empty_sectors) {
-            $empty_sectors{$sector->x . ',' . $sector->y} = $sector;
-        }
-                
-        COORD: foreach my $coord (sort by_coord keys %empty_sectors) {
+        COORD: foreach my $coord (sort by_coord keys %sectors) {
             my ($start_x,$start_y) = split /,/, $coord;
             
             my $end_x = $start_x + $item->item_type->height - 1;
             my $end_y = $start_y + $item->item_type->width  - 1;
             
             #warn "$start_x, $end_x, $start_y, $end_y";
+            my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
             for my $x ($start_x..$end_x) {
                 for my $y ($start_y..$end_y) {
-                     if (! $empty_sectors{"$x,$y"}) {                         
+                     if (! $sectors{"$x,$y"}) {                         
                          next COORD;
                      }
-                     push @sectors_to_use, $empty_sectors{"$x,$y"};
+                     push @sectors_to_use, $sectors{"$x,$y"};                     
                 }
             }
             
             foreach my $sector (@sectors_to_use) {
                 $sector->item_id($item->id);
                 $sector->update;
+                delete $sectors{$sector->x.",".$sector->y};
             }
-                        
-            my $sector = $empty_sectors{$coord};
-            $sector->start_sector(1);
-            $sector->update;
+            
+            $start_sector->start_sector(1);
+            $start_sector->update;
             
             last;
         }

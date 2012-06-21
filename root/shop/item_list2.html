@@ -9,7 +9,7 @@
 	[% WHILE x < width %]
 		[% x = x + 1 %]
 		
-		<div class="[% class %]" id="[% id_prefix %]-[% x %]-[% y %]" style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center">		
+		<div class="[% class %]" id="[% id_prefix %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]" style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center">		
 		</div>
 		
 	[% END %]
@@ -32,6 +32,7 @@ $( ".shop-item" ).draggable({revert: "invalid"});
 $( ".purchase-sector" ).droppable({
 	accept: ".shop-item",
 	drop: function( event, ui ) {
+	/*
 		var targetParts = event.target.id.split('-');
 		
 		var item = ui.draggable[0];
@@ -40,13 +41,19 @@ $( ".purchase-sector" ).droppable({
 		$( "#purchase-grid" ).append(item);
 
 		item.style.top  = (parseInt(targetParts[2] - 1) * 42) + 'px';
-		item.style.left = (parseInt(targetParts[1] - 1) * 42) + 'px';
+		item.style.left = (parseInt(targetParts[1] - 1) * 42) + 'px';*/
 	},
-	
-	hoverClass: "ui-state-active",
-		
+			
 	over: function(event, ui) {
-		//console.log(ui);
+		var item = ui.draggable;
+		var hoverSector = $(this);
+		//console.log(hoverSector.attr('sectorX'));
+		for (var x = hoverSector.attr('sectorX'); x < item.attr('itemWidth'); x++) {
+			for (var y = hoverSector.attr('sectorY'); y < item.attr('itemHeight'); y++) {
+				console.log("purchase-" + x + y );
+				$( "purchase-" + x + "-" + y ).addClass('ui-state-active');
+			}
+		}
 	}
 	
 });
@@ -67,10 +74,11 @@ $( ".purchase-sector" ).droppable({
 [% FOREACH item_data IN items_in_grid %]
 	[% item = item_data.value %]
 	[% coords = item_data.key.split(',') %]
-	<div id="item-[% item.id %]" class="shop-item height[% item.item_type.height %] width[% item.item_type.width %]" 
-		style="position: absolute; left: [% (coords.1 - 1) * 42 %]px; top: [% (coords.0 - 1) * 42 %]px; padding: auto; margin: 1px;
-			width: [% item.item_type.width * 40 %]px; height: [% item.item_type.height * 40%]px; text-align: center; overflow: hidden; background: black"> 
-		<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]" style="margin: auto">
+	<div id="item-[% item.id %]" class="shop-item"
+		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" 
+		style="position: absolute; left: [% (coords.1 - 1) * 42 + 1 %]px; top: [% (coords.0 - 1) * 42 + 1 %]px; 		
+			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
+			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;">
 	</div>
 [% END %]
 </div>

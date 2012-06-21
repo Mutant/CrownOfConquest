@@ -65,9 +65,6 @@ sub standard_tab : Local {
 	
 	my %items_in_grid = $shop->items_in_grid;
 
-	# Get item_types 'made'
-	my @item_types_made = $shop->item_types_made;
-
 	# Get a sorted list of categories
 	my @categories = $c->model('DBIC::Item_Category')->search( {}, { order_by => 'item_category', }, );
 

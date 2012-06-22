@@ -29,8 +29,10 @@
 <script>
 $( ".shop-item" ).draggable({revert: "invalid"});
 
+var over;
 $( ".purchase-sector" ).droppable({
 	accept: ".shop-item",
+	tolerance: "pointer",
 	drop: function( event, ui ) {
 	/*
 		var targetParts = event.target.id.split('-');
@@ -47,16 +49,72 @@ $( ".purchase-sector" ).droppable({
 	over: function(event, ui) {
 		var item = ui.draggable;
 		var hoverSector = $(this);
-		//console.log(hoverSector.attr('sectorX'));
-		for (var x = hoverSector.attr('sectorX'); x < item.attr('itemWidth'); x++) {
-			for (var y = hoverSector.attr('sectorY'); y < item.attr('itemHeight'); y++) {
-				console.log("purchase-" + x + y );
-				$( "purchase-" + x + "-" + y ).addClass('ui-state-active');
-			}
+		
+		var currentCoord = {
+			x: parseInt(hoverSector.attr('sectorX')),
+			y: parseInt(hoverSector.attr('sectorY')),
 		}
+		
+		if (typeof over != 'undefined' && (over.x != currentCoord.x || over.y != currentCoord.y)) {
+			//console.log("over cleared: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+			clearDropSectors(over, item);
+		}
+				
+		//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		over = currentCoord; 
+		
+		var sectors = findDropSectors(currentCoord, item);
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].addClass('ui-state-active');
+		}
+	},
+	
+	out: function(event, ui) {
+		var item = ui.draggable;
+		var hoverSector = $(this);
+				
+		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		
+		var currentCoord = {
+			x: hoverSector.attr('sectorX'),
+			y: hoverSector.attr('sectorY'),
+		}		
+		
+		if (typeof over != 'undefined' && over.x == currentCoord.x && over.y == currentCoord.y) {
+			clearDropSectors(currentCoord, item);
+		}
+
 	}
 	
 });
+
+function clearDropSectors(coord, item) {
+	var sectors = findDropSectors(coord, item);
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].removeClass('ui-state-active');
+	}
+}
+
+function findDropSectors(coord, item) {
+	var startX = parseInt(coord.x);
+	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
+	var startY = parseInt(coord.y);
+	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
+	
+	//console.log(startX, endX, startY, endY);
+	
+	var sectors = [];
+	
+	for (var x = startX; x < endX; x++) {
+		for (var y = startY; y < endY; y++) {
+			//console.log("purchase-" + x + "-" + y );
+			//$( "#purchase-" + x + "-" + y ).addClass('ui-state-active');
+			sectors.push($( "#purchase-" + x + "-" + y ));
+		}
+	}
+	
+	return sectors;
+}
 
 </script>
 

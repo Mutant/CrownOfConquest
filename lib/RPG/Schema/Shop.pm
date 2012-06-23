@@ -1,7 +1,7 @@
 package RPG::Schema::Shop;
 use base 'DBIx::Class';
-use strict;
-use warnings;
+
+use Moose;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Shop');
@@ -77,11 +77,17 @@ __PACKAGE__->has_many(
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
+__PACKAGE__->has_many('items', 'RPG::Schema::Items', 'shop_id');
+
+__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.shop_id'}, { where => { owner_type => 'shop' } });
+
 __PACKAGE__->belongs_to(
     'in_town',
     'RPG::Schema::Town',
     { 'foreign.town_id' => 'self.town_id' }
 );
+
+with qw/RPG::Schema::Role::Item_Grid/;
 
 sub grouped_items_in_shop {
 	my $self = shift;
@@ -172,28 +178,6 @@ sub shop_name {
 	my $self = shift;
 	
 	return $self->shop_owner_name . "'s " . $self->shop_suffix;	
-}
-
-sub items_in_grid {
-    my $self = shift;
-    
-    my @sectors = $self->result_source->schema->resultset('Item_Grid')->search(
-        {
-            owner_type => 'shop',
-            owner_id => $self->id,
-            start_sector => 1,
-        }
-    );
-    
-    my %grid;
-    
-    foreach my $sector (@sectors) {
-        next unless $sector->item_id;
-        $grid{$sector->x . ',' . $sector->y} = $sector->item;   
-    }
-    
-    return %grid;
-       
 }
 
 1;

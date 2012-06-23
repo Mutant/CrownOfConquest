@@ -407,3 +407,6 @@ div.enlargedTitle {
 .tundra .dijitTooltipBelow .dijitTooltipConnector { display:none; }
 .tundra .dijitTooltipRight .dijitTooltipConnector { display:none; }
 
+/* Equipment */
+.item-droppable { background: green }
+

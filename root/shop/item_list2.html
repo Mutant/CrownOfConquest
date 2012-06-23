@@ -1,35 +1,14 @@
 [% max_width = 12 %]
 [% max_height = 8 %]
 
-[% MACRO create_grid(class, id_prefix, height, width) BLOCK %]
-[% x = 0 %]
-[% y = 0 %]
-[% WHILE y < height %]
-	[% y = y + 1 %]
-	[% WHILE x < width %]
-		[% x = x + 1 %]
-		
-		<div class="[% class %]" id="[% id_prefix %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]" style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center">		
-		</div>
-		
-	[% END %]
-	<br style="clear: left"/>
-	[% x = 0 %]
-[% END %]
-[% END %]
-
-
-<div id="shop_grid" style="position: relative">
-
 [% counter = 0 %]
 
 <style>
-.ui-state-active { background: green }
+
 </style>
 <script>
 $( ".shop-item" ).draggable({revert: "invalid"});
 
-var over;
 $( ".purchase-sector" ).droppable({
 	accept: ".shop-item",
 	tolerance: "pointer",
@@ -43,78 +22,21 @@ $( ".purchase-sector" ).droppable({
 		$( "#purchase-grid" ).append(item);
 
 		item.style.top  = (parseInt(targetParts[2] - 1) * 42) + 'px';
-		item.style.left = (parseInt(targetParts[1] - 1) * 42) + 'px';*/
+		item.style.left = (parseInt(targetParts[1] - 1) * 42) + 'px';
+	*/
 	},
 			
 	over: function(event, ui) {
-		var item = ui.draggable;
-		var hoverSector = $(this);
-		
-		var currentCoord = {
-			x: parseInt(hoverSector.attr('sectorX')),
-			y: parseInt(hoverSector.attr('sectorY')),
-		}
-		
-		if (typeof over != 'undefined' && (over.x != currentCoord.x || over.y != currentCoord.y)) {
-			//console.log("over cleared: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
-			clearDropSectors(over, item);
-		}
-				
-		//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
-		over = currentCoord; 
-		
-		var sectors = findDropSectors(currentCoord, item);
-		for (var i = 0; i < sectors.length; i++) {
-			sectors[i].addClass('ui-state-active');
-		}
+		dragItemOver(event, ui);
 	},
 	
 	out: function(event, ui) {
-		var item = ui.draggable;
-		var hoverSector = $(this);
-				
-		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
-		
-		var currentCoord = {
-			x: hoverSector.attr('sectorX'),
-			y: hoverSector.attr('sectorY'),
-		}		
-		
-		if (typeof over != 'undefined' && over.x == currentCoord.x && over.y == currentCoord.y) {
-			clearDropSectors(currentCoord, item);
-		}
-
+		dragItemOut(event, ui);
 	}
 	
 });
 
-function clearDropSectors(coord, item) {
-	var sectors = findDropSectors(coord, item);
-	for (var i = 0; i < sectors.length; i++) {
-		sectors[i].removeClass('ui-state-active');
-	}
-}
 
-function findDropSectors(coord, item) {
-	var startX = parseInt(coord.x);
-	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
-	var startY = parseInt(coord.y);
-	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
-	
-	//console.log(startX, endX, startY, endY);
-	
-	var sectors = [];
-	
-	for (var x = startX; x < endX; x++) {
-		for (var y = startY; y < endY; y++) {
-			//console.log("purchase-" + x + "-" + y );
-			//$( "#purchase-" + x + "-" + y ).addClass('ui-state-active');
-			sectors.push($( "#purchase-" + x + "-" + y ));
-		}
-	}
-	
-	return sectors;
-}
 
 </script>
 

@@ -60,24 +60,11 @@ sub standard_tab : Local {
 	my @shops_in_town = $party->location->town->shops;
 
 	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;    
-    
-	#my @items = $shop->grouped_items_in_shop;
-	
+    	
 	my %items_in_grid = $shop->items_in_grid;
 
 	# Get a sorted list of categories
 	my @categories = $c->model('DBIC::Item_Category')->search( {}, { order_by => 'item_category', }, );
-
-	my %items;
-
-	# Put everything into a hash by category
-	#foreach my $item (@items) {
-	#	push @{ $items{ $item->item_type->category->item_category }{item} }, $item;
-	#}
-
-	#foreach my $item_type (@item_types_made) {
-	#	push @{ $items{ $item_type->category->item_category }{quantity} }, $item_type;
-	#}
 	
 	$c->forward(
 		'RPG::V::TT',
@@ -86,9 +73,7 @@ sub standard_tab : Local {
 				template => 'shop/standard_items.html',
 				params   => {
 					shop  => $shop,
-					items_in_grid => \%items_in_grid,					
-					#items => \%items,
-					#items => \@items,
+					items_in_grid => \%items_in_grid,
 				}
 			}
 		]

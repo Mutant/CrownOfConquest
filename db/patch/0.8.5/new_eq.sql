@@ -39,8 +39,16 @@ CREATE TABLE `Item_Grid` (
   `item_id` INTEGER DEFAULT NULL,
   `x` INTEGER  NOT NULL,
   `y` INTEGER  NOT NULL,
-  `start_sector` TINYINT DEFAULT 1,
+  `start_sector` TINYINT DEFAULT 0,
   PRIMARY KEY (`item_grid_id`)
 )
 ENGINE = InnoDB;
+
+ALTER TABLE `Equip_Places` ADD COLUMN `height` INTEGER  NOT NULL DEFAULT 1 AFTER `equip_place_name`,
+ ADD COLUMN `width` INTEGER  NOT NULL DEFAULT 1 AFTER `height`;
+UPDATE `Equip_Places` set height = 2 where equip_place_name = 'Head';
+UPDATE `Equip_Places` set height = 2, width = 2 where equip_place_name = 'Torso and Legs';
+UPDATE `Equip_Places` set height = 3, width = 2 where equip_place_name = 'Left Hand';
+UPDATE `Equip_Places` set height = 3, width = 2 where equip_place_name = 'Right Hand';
+
 

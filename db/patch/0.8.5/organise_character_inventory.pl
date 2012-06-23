@@ -11,20 +11,20 @@ my $config = RPG::LoadConf->load();
 
 my $schema = RPG::Schema->connect( $config, @{$config->{'Model::DBIC'}{connect_info}} );
 
-my $shop_id = shift;
+my $char_id = shift;
 
-my @shops = $schema->resultset('Shop')->search;
+my @chars = $schema->resultset('Character')->search;
 
-foreach my $shop (@shops) {
-    next if defined $shop_id && $shop_id != $shop->id;
-    warn "Processing shop: " . $shop->id;
+foreach my $char (@chars) {
+    next if defined $char_id && $char_id != $char->id;
+    warn "Processing char: " . $char->id;
     
     for my $x (1..8) {
-        for my $y (1..12) {
+        for my $y (1..14) {
             my $sector = $schema->resultset('Item_Grid')->find_or_create(
                 {
-                    owner_id => $shop->id,
-                    owner_type => 'shop',
+                    owner_id => $char->id,
+                    owner_type => 'character',
                     x => $x,
                     y => $y,
                 }
@@ -35,6 +35,6 @@ foreach my $shop (@shops) {
         }
     }
     
-    $shop->organise_items;
-       
+    $char->organise_items;
 }
+    

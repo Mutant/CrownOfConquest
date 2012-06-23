@@ -879,3 +879,85 @@ function viewKingdomInfo(kingdomId) {
 	    timeout: 45000
     });	
 }
+
+/* Equipment */
+function clearDropSectors(coord, item, gridIdPrefix) {
+	var sectors = findDropSectors(coord, item, gridIdPrefix);
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].removeClass('item-droppable');
+	}
+}
+
+function findDropSectors(coord, item, gridIdPrefix) {
+	var startX = parseInt(coord.x);
+	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
+	var startY = parseInt(coord.y);
+	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
+	
+	//console.log(startX, endX, startY, endY);
+	
+	var sectors = [];
+	
+	for (var x = startX; x < endX; x++) {
+		for (var y = startY; y < endY; y++) {
+			sectors.push($( "#" + gridIdPrefix + "-" + x + "-" + y ));
+		}
+	}	
+	
+	
+	return sectors;
+}
+
+var over;
+
+function dragItemOver(event, ui, hoverSector) {
+	var item = ui.draggable;
+	
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	if (typeof over != 'undefined' && (over.x != currentCoord.x || over.y != currentCoord.y)) {
+		//console.log("over cleared: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+	}
+			
+	//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+	over = currentCoord; 
+		
+	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {		
+		sectors[i].addClass('item-droppable');
+	}
+}
+
+function dragItemOut(event, ui, hoverSector) {
+	var item = ui.draggable;
+
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	if (typeof over != 'undefined' && over.x == currentCoord.x && over.y == currentCoord.y) {
+		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+		over = undefined;
+	}
+}
+
+function dropItem(event, ui, hoverSector) {
+	var item = ui.draggable;
+	
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}	
+	
+	var grid = $( "#" + hoverSector.attr("idPrefix") + "-grid" );
+	
+	$(item).detach().css({top: (currentCoord.y - 1) * 42,left: (currentCoord.x - 1) * 42}).appendTo(grid);
+	
+	clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+}

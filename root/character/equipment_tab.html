@@ -1,4 +1,18 @@
+[% PROCESS equipment/grid.html %]
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
+	[% equip_place = equip_places.$slot_orig %]
+	[% item = equipped_items.$slot_orig %]
+	<td id="[% slot %]-equip_place" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
+		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]">
+		[% IF item %]
+			[% item_div("inventory", item) %]
+		[% ELSE %]
+			[% slot_orig %]
+		[% END %]
+	</td>
+[% END %]
+
+[% MACRO old_display_equipped_item(equipped_items, slot_orig) BLOCK %]
 		[% slot = slot_orig %]
 		[% item = equipped_items.$slot_orig %]
 		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
@@ -23,16 +37,8 @@
 		</td>
 [% END %]
 
-<table class="main" cellpadding="5" height="100%">
-	<tr>
-		<td valign="top" width="250" style="
-		border: 2px solid black;         
-		-moz-border-radius: 10px;
-        -webkit-border-radius: 10px;
-        -khtml-border-radius: 10px;
-        border-radius: 10px;">
-
 <script>
+
 	// Hack to get around dojo deficiency
 	var currentItemId;
 	function saveCurrentItemId(id) {
@@ -40,9 +46,9 @@
 	}
 	
 function createItemMenus() {
-	createInventoryMenu(); 
-	createEquippedMenu();
-	createQuantityMenu();
+	//createInventoryMenu(); 
+	//createEquippedMenu();
+	//createQuantityMenu();
 }
 	
 function createInventoryMenu() { 
@@ -173,11 +179,11 @@ function addCommonMenuItems(menu) {
 
 </script>
 
-<b>Equipped Items</b>
+<div style="background: black; margin: 0px; padding: 0px; height: 100%">
 
-<br><br><br><br>
-
-<div align="center">
+<div style="float: left">
+	<b>Equipped Items</b>
+	<br><br>
 	<table class="main">
 		<tr>
 			<td></td>
@@ -196,18 +202,13 @@ function addCommonMenuItems(menu) {
 	</table>
 </div>
 
-</td><td valign="top">
+<div style="float: left; margin-left: 10px">
 
 <b>Inventory</b>
-
-<br><br>
-
-[% IF character.item_change_allowed %]
-	Mouse over an item to get it's stats. Drag an item onto an equip slot to the left to equip it. Alternatively, right click an 
-	item to equip it, drop it, or give it to another character.<br> 
-[% END %]
 
 <div dojoType="dojox.layout.ContentPane" href="[% base %]/character/inventory?character_id=[% character.id %]" 
 	id="inventory-panel" [% IF character.item_change_allowed %]onDownloadEnd="createItemMenus()"[% END %] loadingMessage=""></div>
 
-</td></tr></table>
+</div>
+
+</div>

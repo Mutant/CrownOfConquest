@@ -162,6 +162,8 @@ sub equipment_tab : Local {
 	else {
 	    @allowed_to_give_to_characters = $character->garrison->members;
 	}
+	
+	my %equip_places = map { $_->equip_place_name => $_ } $c->model('DBIC::Equip_Places')->search();
 
 	$c->forward(
 		'RPG::V::TT',
@@ -173,7 +175,7 @@ sub equipment_tab : Local {
 					equipped_items                => $equipped_items,
 					equipped_items_by_id          => \%equipped_items_by_id,
 					equip_place_category_list     => \%equip_place_category_list,
-					equip_places                  => [ keys %equip_place_category_list ],
+					equip_places                  => \%equip_places,
 					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
 					party                         => $c->stash->{party},
 				}
@@ -189,36 +191,7 @@ sub inventory : Local {
 
 	croak "Invalid character id" unless $character;
 
-	my $item_mode = $c->req->param('item_mode') || 'char';
-
-	my $criteria;
-	my @extra_join;
-
-	if ( $item_mode eq 'char' ) {
-		$criteria = { character_id => $c->req->param('character_id'), };
-	}
-	else {
-		confess "Item mode Disabled";    # Disabled for now, since it's pretty slow...
-		$criteria = { 'belongs_to_character.party_id' => $c->stash->{party}->id, };
-		@extra_join = ('belongs_to_character');
-	}
-
-	my @items = $c->model('DBIC::Items')->search(
-		$criteria,
-		{
-			prefetch => [
-				{ 'item_variables' => 'item_variable_name' },
-				{
-					'item_type' => [
-						'category',
-						{ 'item_attributes' => 'item_attribute_name' },
-					]
-				},
-			],
-			join     => [@extra_join],
-			order_by => 'item_category',
-		},
-	);
+    my %items_in_grid = $character->items_in_grid;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -228,7 +201,7 @@ sub inventory : Local {
 				params   => {
 					character => $character,
 					party     => $c->stash->{party},
-					items     => \@items,
+					items_in_grid => \%items_in_grid,
 				}
 			}
 		]

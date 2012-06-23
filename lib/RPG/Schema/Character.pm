@@ -106,6 +106,10 @@ __PACKAGE__->has_many( 'character_skills', 'RPG::Schema::Character_Skill', 'char
 
 __PACKAGE__->many_to_many( 'skills' => 'character_skills', 'skill' );
 
+__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.character_id'}, { where => { owner_type => 'character' } });
+
+with qw/RPG::Schema::Role::Item_Grid/;
+
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
 

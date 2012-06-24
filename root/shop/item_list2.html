@@ -1,11 +1,10 @@
+[% PROCESS equipment/grid.html %]
+
 [% max_width = 12 %]
 [% max_height = 8 %]
 
 [% counter = 0 %]
 
-<style>
-
-</style>
 <script>
 $( ".shop-item" ).draggable({revert: "invalid"});
 
@@ -37,28 +36,6 @@ $( ".purchase-sector" ).droppable({
 });
 
 
-
 </script>
 
-<div id="purchase-grid" style="position: relative; float: left">
-[% create_grid('purchase-sector', 'purchase', max_height, max_width) %]
-</div>
-
-<div style="width: 10px; float: left">&nbsp;</div>
-
-[% width  = 0 %]
-[% height = 0 %]
-<div id="shop-grid" style="position: relative; float: left">
-[% create_grid('shop-sector', 'shop', max_height, max_width) %]
-
-[% FOREACH item_data IN items_in_grid %]
-	[% item = item_data.value %]
-	[% coords = item_data.key.split(',') %]
-	<div id="item-[% item.id %]" class="shop-item"
-		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" 
-		style="position: absolute; left: [% (coords.1 - 1) * 42 + 1 %]px; top: [% (coords.0 - 1) * 42 + 1 %]px; 		
-			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
-			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;">
-	</div>
-[% END %]
-</div>
+[% create_grid('shop', items_in_grid, max_height, max_width, ) %]

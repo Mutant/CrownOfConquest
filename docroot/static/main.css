@@ -409,4 +409,5 @@ div.enlargedTitle {
 
 /* Equipment */
 .item-droppable { background: green }
+.item-blocked   { background: #8B0000 }
 

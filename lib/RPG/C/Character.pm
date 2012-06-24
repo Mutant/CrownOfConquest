@@ -164,6 +164,8 @@ sub equipment_tab : Local {
 	}
 	
 	my %equip_places = map { $_->equip_place_name => $_ } $c->model('DBIC::Equip_Places')->search();
+	
+	my $items_in_grid = $character->items_in_grid;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -177,6 +179,7 @@ sub equipment_tab : Local {
 					equip_place_category_list     => \%equip_place_category_list,
 					equip_places                  => \%equip_places,
 					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
+					items_in_grid                 => $items_in_grid,
 					party                         => $c->stash->{party},
 				}
 			}
@@ -303,7 +306,6 @@ sub equip_item : Local {
 	   }, 
 	   { 
 	       prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } },
-	       #for => 'update', 
 	   }, 
     );
 
@@ -325,7 +327,6 @@ sub equip_item : Local {
 			return;
 		}
 		else {
-
 			# Rethrow
 			croak $@;
 		}

@@ -1,25 +1,5 @@
 [% INCLUDE shop/header.html shop_link='shop/purchase' %]
 
-<script>	
-	function init() {
-		dojo.subscribe("/dnd/move/stop", function(mover){
-			var node = mover.node;
-			var itemPos = dojo.position(node);
-			
-			var dropPos = dojo.position(dojo.byId('drop'));
-						
-			if (itemPos.x >= dropPos.x && itemPos.x <= dropPos.x + dropPos.h &&
-			    itemPos.y >= dropPos.y && itemPos.y <= dropPos.y + dropPos.w) {
-			 
-			 	console.log("Inside");
-			    
-			}
-		});	
-	}
-		
-	dojo.addOnLoad(init);
-</script>
-
 
 <div id="standard" dojoType="dojox.layout.ContentPane" href="[% base %]/shop/standard_tab?shop_id=[% shop.id %]">
 

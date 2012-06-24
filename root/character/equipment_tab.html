@@ -2,8 +2,8 @@
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
 	[% equip_place = equip_places.$slot_orig %]
 	[% item = equipped_items.$slot_orig %]
-	<td id="[% slot %]-equip_place" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
-		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]">
+	<td id="equip_place_[% equip_place.id %]" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
+		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slotId="[% equip_place.id %]">
 		[% IF item %]
 			[% item_div("inventory", item) %]
 		[% ELSE %]
@@ -12,32 +12,36 @@
 	</td>
 [% END %]
 
-[% MACRO old_display_equipped_item(equipped_items, slot_orig) BLOCK %]
-		[% slot = slot_orig %]
-		[% item = equipped_items.$slot_orig %]
-		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
-			accept="[% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %],[% END %][% END %]"
-			align="center" style="border: lightgray 1px dashed" 
-			width="50">			
-			<span id="[% slot %]-item-id" style="display: none">[% item.id %]</span>
-			<span onMouseOver="saveCurrentItemId(dojo.byId('[% slot %]-item-id').innerHTML)">
-
-			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
-				style="[% IF ! item.item_type.image %]display: none[% END %]"
-				>
-			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>			
-			<div dojoType="dijit.Tooltip"
-	           		connectId="[% slot %]-equip_place"
-	           		id="[% slot %]-tooltip"
-					style="display: none;">
-						[% IF item %][% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %][% END %] 
-	        </div>	        
-	        <span id="[% slot %]-slot-label" [% IF item %]style="display: none"[% END %]>[% slot_orig %]</span>
-	        </span>
-		</td>
+<script>
+[% FOREACH slot_data IN equip_places %]
+	[% slot = slot_data.value %] 
+	$( "#equip_place_[% slot.id %]" ).droppable({
+		accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
+		drop: function( event, ui ) {
+			dropItemOnEquipSlot(event, ui, $(this));
+		},
+		hoverClass: "item-droppable",			
+	});
 [% END %]
 
-<script>
+$( ".inventory-item" ).draggable({revert: "invalid"});
+
+$( ".inventory" ).droppable({
+	accept: ".inventory-item",
+	drop: function( event, ui ) {
+		dropItem(event, ui, $(this));
+	},
+			
+	over: function(event, ui) {
+		dragItemOver(event, ui, $(this));
+	},
+	
+	out: function(event, ui) {
+		dragItemOut(event, ui, $(this));
+	}
+	
+});
+
 
 	// Hack to get around dojo deficiency
 	var currentItemId;
@@ -206,9 +210,6 @@ function addCommonMenuItems(menu) {
 
 <b>Inventory</b>
 
-<div dojoType="dojox.layout.ContentPane" href="[% base %]/character/inventory?character_id=[% character.id %]" 
-	id="inventory-panel" [% IF character.item_change_allowed %]onDownloadEnd="createItemMenus()"[% END %] loadingMessage=""></div>
-
-</div>
+[% create_grid('inventory', items_in_grid, 8, 14) %]
 
 </div>

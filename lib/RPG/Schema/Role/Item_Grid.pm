@@ -35,8 +35,8 @@ sub organise_items {
             my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
-            for my $x ($start_x..$end_x) {
-                for my $y ($start_y..$end_y) {
+            for my $y ($start_y..$end_y) {
+                for my $x ($start_x..$end_x) {                
                      if (! $sectors{"$x,$y"}) {                         
                          next COORD;
                      }
@@ -67,17 +67,20 @@ sub items_in_grid {
     my @sectors = $self->search_related('item_sectors',
         {
             start_sector => 1,
-        }
+            'me.item_id' => {'!=', undef},
+        },
+        {
+            prefetch => {'item' => {'item_type' => 'category'}},
+        },
     );
     
-    my %grid;
+    my $grid;
     
     foreach my $sector (@sectors) {
-        next unless $sector->item_id;
-        $grid{$sector->x . ',' . $sector->y} = $sector->item;   
+        $grid->{$sector->x}{$sector->y} = $sector->item;
     }
     
-    return %grid;
+    return $grid;
        
 } 
 
@@ -87,8 +90,8 @@ sub by_coord($$) {
     my ($x1, $y1) = split /,/, $a;
     my ($x2, $y2) = split /,/, $b;
     
-    return $y1 <=> $y2 if $x1 == $x2;
-    return $x1 <=> $x2;       
+    return $x1 <=> $x2 if $y1 == $y2;
+    return $y1 <=> $y2;
 }
 
 1;

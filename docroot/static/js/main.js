@@ -885,6 +885,7 @@ function clearDropSectors(coord, item, gridIdPrefix) {
 	var sectors = findDropSectors(coord, item, gridIdPrefix);
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].removeClass('item-droppable');
+		sectors[i].removeClass('item-blocked');
 	}
 }
 
@@ -902,8 +903,7 @@ function findDropSectors(coord, item, gridIdPrefix) {
 		for (var y = startY; y < endY; y++) {
 			sectors.push($( "#" + gridIdPrefix + "-" + x + "-" + y ));
 		}
-	}	
-	
+	}
 	
 	return sectors;
 }
@@ -912,7 +912,7 @@ var over;
 
 function dragItemOver(event, ui, hoverSector) {
 	var item = ui.draggable;
-	
+		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),
@@ -924,11 +924,14 @@ function dragItemOver(event, ui, hoverSector) {
 	}
 			
 	//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
-	over = currentCoord; 
+	over = currentCoord;
 		
 	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
+	
+	var canDrop = canDropOnSectors(sectors, item);
+	
 	for (var i = 0; i < sectors.length; i++) {		
-		sectors[i].addClass('item-droppable');
+		sectors[i].addClass(canDrop ? 'item-droppable' : 'item-blocked');
 	}
 }
 
@@ -953,11 +956,63 @@ function dropItem(event, ui, hoverSector) {
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	var origLoc = item.parent();
+		
+	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
+	
+	var canDrop = canDropOnSectors(sectors, item);
+	
+	if (! canDrop) {
+		$(item).detach().css({top: 0, left: 0}).appendTo(origLoc);
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+		return;
+	}
+	
+	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
+	
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].removeClass('item-droppable');
+		sectors[i].removeClass('item-blocked');
+		sectors[i].attr('hasItem', item.attr("itemId"));
+	}
+	
+	// TODO: deal with equip slots
+	var origCoord = {
+		x: parseInt(origLoc.attr('sectorX')),
+		y: parseInt(origLoc.attr('sectorY')),	
+	}
+	
+	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', '0');
 	}	
+}
+
+function dropItemOnEquipSlot(event, ui, slot) {
+	var item = ui.draggable;
 	
-	var grid = $( "#" + hoverSector.attr("idPrefix") + "-grid" );
+	var existingItem = slot.children();
+	if (existingItem) {
+		existingItem.css({display: 'none'});
+	}
+	slot.html('');
 	
-	$(item).detach().css({top: (currentCoord.y - 1) * 42,left: (currentCoord.x - 1) * 42}).appendTo(grid);
+	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
 	
-	clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+	$.post(urlBase + 'character/equip_item', { item_id: item.attr('itemId') }, function(data) {
+		
+	});
+}
+
+function canDropOnSectors(sectors, item) {
+	var canDrop = true;
+	for (var i = 0; i < sectors.length; i++) {	
+		if (sectors[i].attr("hasItem") != 0 && sectors[i].attr("hasItem") != item.attr("itemId")) {
+			canDrop = false;
+		}
+	}
+	
+	return canDrop;	
 }

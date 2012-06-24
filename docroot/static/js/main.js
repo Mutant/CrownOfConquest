@@ -950,7 +950,7 @@ function dragItemOut(event, ui, hoverSector) {
 	}
 }
 
-function dropItem(event, ui, hoverSector) {
+function dropItem(event, ui, hoverSector, charId) {
 	var item = ui.draggable;
 	
 	var currentCoord = {
@@ -970,6 +970,10 @@ function dropItem(event, ui, hoverSector) {
 		return;
 	}
 	
+	$.post(urlBase + 'character/move_item', { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y }, function(data) {
+		loadCharStats(charId);
+	});	
+	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
 	
 	for (var i = 0; i < sectors.length; i++) {
@@ -987,10 +991,10 @@ function dropItem(event, ui, hoverSector) {
 	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].attr('hasItem', '0');
-	}	
+	}
 }
 
-function dropItemOnEquipSlot(event, ui, slot) {
+function dropItemOnEquipSlot(event, ui, slot, charId) {
 	var item = ui.draggable;
 	
 	var existingItem = slot.children();
@@ -1001,13 +1005,20 @@ function dropItemOnEquipSlot(event, ui, slot) {
 	
 	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
 	
-	$.post(urlBase + 'character/equip_item', { item_id: item.attr('itemId') }, function(data) {
-		
+	$.post(urlBase + 'character/equip_item', { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') }, function(data) {
+		loadCharStats(charId);
 	});
 }
 
 function canDropOnSectors(sectors, item) {
+	var totalSize = parseInt(item.attr('itemWidth')) * parseInt(item.attr('itemHeight'));
+	
+	if (totalSize < sectors.length) {
+		return false;
+	}
+	
 	var canDrop = true;
+	
 	for (var i = 0; i < sectors.length; i++) {	
 		if (sectors[i].attr("hasItem") != 0 && sectors[i].attr("hasItem") != item.attr("itemId")) {
 			canDrop = false;
@@ -1015,4 +1026,8 @@ function canDropOnSectors(sectors, item) {
 	}
 	
 	return canDrop;	
+}
+
+function loadCharStats(charId) {
+	$( '#stats-panel' ).load(urlBase + "/character/stats?character_id=" + charId);
 }

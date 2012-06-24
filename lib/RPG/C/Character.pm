@@ -358,6 +358,8 @@ sub equip_item : Local {
 			item_id   => undef,
 		};
 	}
+	
+	$character->remove_item_from_grid($item);
 
 	$c->res->body( to_json( { changed_slots => \%ret } ) );
 }
@@ -450,41 +452,30 @@ sub drop_item : Local {
 	);
 }
 
-sub unequip_item : Local {
+sub move_item : Local {
 	my ( $self, $c ) = @_;
 
 	$c->forward('check_character_can_change_items');
 
 	my $character = $c->stash->{character};
-
-	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
-
-	# Make sure this item belongs to a character in the party
-	if ( $item->character_id != $character->id ) {
-		$c->log->warn( "Attempted to unequip item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
-	}
-
-	return unless $item->equip_place_id;
-
-	my $slot_to_clear = $item->equipped_in->equip_place_name;
-
-	$item->equip_place_id(undef);
-	$item->update;
-
-	$c->res->body(
-		to_json(
-			{
-				clear_equip_place => $slot_to_clear,
-			}
-		)
+	
+	my $item = $c->model('DBIC::Items')->find( 
+	   { 
+	       item_id => $c->req->param('item_id'), 
+	       character_id => $character->id 
+	   },
+	   {
+	       prefetch => 'item_type',
+	   }, 
 	);
+	
+	croak "Invalid item" unless $item;
+	
+    $character->remove_item_from_grid($item);
+    $character->add_item_to_grid($item, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') } );
+    
+	$item->equip_place_id(undef);
+	$item->update;    
 }
 
 # Called by shop screen to get list of equipment.

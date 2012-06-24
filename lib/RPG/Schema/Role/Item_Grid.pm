@@ -7,6 +7,13 @@ requires qw/item_sectors search_related/;
 sub organise_items {
     my $self = shift;
     
+    $self->item_sectors->update(
+        {
+            start_sector => undef,
+            item_id => undef,
+        }
+    );      
+    
     my @sectors = $self->item_sectors;
     my %sectors;
     
@@ -82,7 +89,38 @@ sub items_in_grid {
     
     return $grid;
        
-} 
+}
+
+sub remove_item_from_grid {
+    my $self = shift;
+    my $item = shift;
+    
+	$self->search_related('item_sectors',
+	   {
+	       item_id => $item->id,
+	   }
+    )->update( { item_id => undef } );       
+}
+
+sub add_item_to_grid {
+    my $self = shift;
+    my $item = shift;
+    my $start_coord = shift;
+    
+    $self->search_related('item_sectors',
+        {
+            x => { '>=', $start_coord->{x}, '<=', $start_coord->{x} + $item->item_type->width - 1, },
+            y => { '>=', $start_coord->{y}, '<=', $start_coord->{y} + $item->item_type->height - 1, },
+        }
+    )->update( { item_id => $item->id } );
+    
+    $self->search_related('item_sectors',
+        {
+            x => $start_coord->{x},
+            y => $start_coord->{y},
+        },
+    )->update( { start_sector => 1 } );
+}
 
 sub by_coord($$) {
     my ($a, $b) = @_;

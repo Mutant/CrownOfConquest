@@ -99,7 +99,7 @@ sub remove_item_from_grid {
 	   {
 	       item_id => $item->id,
 	   }
-    )->update( { item_id => undef } );       
+    )->update( { item_id => undef, start_sector => undef, } );       
 }
 
 sub add_item_to_grid {

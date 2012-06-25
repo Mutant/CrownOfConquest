@@ -982,7 +982,6 @@ function dropItem(event, ui, hoverSector, charId) {
 		sectors[i].attr('hasItem', item.attr("itemId"));
 	}
 	
-	// TODO: deal with equip slots
 	var origCoord = {
 		x: parseInt(origLoc.attr('sectorX')),
 		y: parseInt(origLoc.attr('sectorY')),	
@@ -997,15 +996,37 @@ function dropItem(event, ui, hoverSector, charId) {
 function dropItemOnEquipSlot(event, ui, slot, charId) {
 	var item = ui.draggable;
 	
-	var existingItem = slot.children();
-	if (existingItem) {
-		existingItem.css({display: 'none'});
+	var origLoc = item.parent();
+	var origCoord = {
+		x: parseInt(origLoc.attr('sectorX')),
+		y: parseInt(origLoc.attr('sectorY')),	
+	}	
+	
+	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', '0');
+	}	
+
+	var params = { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') };
+	
+	var existingItem = slot.children().first();
+	if (existingItem.length > 0) {
+		var sectors = findSectorsForItem(existingItem, item.parent().attr('idPrefix'));
+				
+		$(existingItem).detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+		
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', existingItem.attr("itemId"));
+		}
+		
+		params.existing_item_x = sectors[0].attr('sectorX');
+		params.existing_item_y = sectors[0].attr('sectorY');
 	}
 	slot.html('');
-	
+			
 	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
-	
-	$.post(urlBase + 'character/equip_item', { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') }, function(data) {
+
+	$.post(urlBase + 'character/equip_item', params, function(data) {
 		loadCharStats(charId);
 	});
 }
@@ -1030,4 +1051,53 @@ function canDropOnSectors(sectors, item) {
 
 function loadCharStats(charId) {
 	$( '#stats-panel' ).load(urlBase + "/character/stats?character_id=" + charId);
+}
+
+function findSectorsForItem(item, grid) {
+	var empty = $( '#' + grid + '-grid' ).children('[hasItem="0"]');
+	
+	var itemHeight = parseInt(item.attr('itemHeight'));
+	var itemWidth = parseInt(item.attr('itemWidth'));
+	
+	//console.log("height: " + itemHeight + ", width: " + itemWidth);
+	
+	var emptyGrid = {};
+	
+	empty.each(function(){
+		var emptySector = $(this);
+				
+		if (typeof emptyGrid[emptySector.attr('sectorX')] == 'undefined') {
+			emptyGrid[emptySector.attr('sectorX')] = {};
+		}
+		
+		emptyGrid[emptySector.attr('sectorX')][emptySector.attr('sectorY')] = emptySector;
+	});
+	
+	var sectors;
+	
+	empty.each(function(){
+		var emptySector = $(this);
+		sectors = [];
+		
+		var startX = parseInt(emptySector.attr('sectorX'));
+		var startY = parseInt(emptySector.attr('sectorY'));
+		var maxX = (startX + itemWidth - 1);
+		var maxY = (startY + itemHeight - 1);
+		
+		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);		
+		
+		for (var x = startX; x <= maxX; x++) {
+			for (var y = startY; y <= maxY; y++) {
+				if (emptyGrid[x] && emptyGrid[x][y]) {
+					sectors.push(emptyGrid[x][y]);
+				}
+			}
+		}
+		
+		if (sectors.length >= (itemHeight*itemWidth)) {
+			return false;
+		}
+	});	
+	
+	return sectors;
 }

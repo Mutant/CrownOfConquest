@@ -84,7 +84,7 @@ sub gen_character_list {
     );
     
     foreach my $other_char (@characters) {
-        if ($other_char->garrison_id && $character->garrison_id == $other_char->garrison_id) {
+        if ($other_char->garrison_id && $character->garrison_id && $character->garrison_id == $other_char->garrison_id) {
             push @{ $chars_by_type{group} }, {
                 name => $other_char->name,
                 id => $other_char->id,
@@ -315,6 +315,16 @@ sub equip_item : Local {
     
     $c->stash->{character} = $character;
     $c->forward('check_character_can_change_items');
+        
+    my $equipped_item = $c->model('DBIC::Items')->find(
+        {
+            character_id   => $character->id,
+            'equipped_in.equip_place_name' => $c->req->param('equip_place'),
+        },
+        {
+            join => 'equipped_in',
+        },        
+    );    
 
 	my @slots_changed;
 	my $equip_place = $c->req->param('equip_place');
@@ -331,6 +341,10 @@ sub equip_item : Local {
 			croak $@;
 		}
 	}
+	
+ 	if ($equipped_item) {
+ 	     $character->add_item_to_grid($equipped_item, { x => $c->req->param('existing_item_x'), y => $c->req->param('existing_item_y') } );
+ 	}
 
 	my %ret = (
 		$c->req->param('equip_place') => {

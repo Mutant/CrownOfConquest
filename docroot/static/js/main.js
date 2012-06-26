@@ -1009,9 +1009,15 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 
 	var params = { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') };
 	
-	var existingItem = slot.children().first();
+	var existingItem = slot.children('.'+item.parent().attr('idPrefix')+'-item').first();
 	if (existingItem.length > 0) {
 		var sectors = findSectorsForItem(existingItem, item.parent().attr('idPrefix'));
+		
+		if (sectors.length < 1) {
+			console.log("Failed finding sectors for", existingItem);
+			console.log("Dropped item", item);
+			console.log("Prefix: " + item.parent().attr('idPrefix'));
+		}
 				
 		$(existingItem).detach().css({top: 0,left: 0}).appendTo(sectors[0]);
 		

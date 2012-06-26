@@ -316,66 +316,27 @@ sub equip_item : Local {
     $c->stash->{character} = $character;
     $c->forward('check_character_can_change_items');
         
-    my $equipped_item = $c->model('DBIC::Items')->find(
-        {
-            character_id   => $character->id,
-            'equipped_in.equip_place_name' => $c->req->param('equip_place'),
-        },
-        {
-            join => 'equipped_in',
-        },        
-    );    
-
-	my @slots_changed;
 	my $equip_place = $c->req->param('equip_place');
-	eval { @slots_changed = $item->equip_item($equip_place); };
-	if ($@) {
-
-		# TODO: need better way of detecting exceptions
-		if ( $@ =~ "Can't equip an item of that type there" ) {
-			$c->res->body( to_json( { error => "You can't equip a " . $item->item_type->item_type . " there!" } ) );
-			return;
-		}
-		else {
-			# Rethrow
-			croak $@;
-		}
-	}
-	
- 	if ($equipped_item) {
- 	     $character->add_item_to_grid($equipped_item, { x => $c->req->param('existing_item_x'), y => $c->req->param('existing_item_y') } );
- 	}
-
-	my %ret = (
-		$c->req->param('equip_place') => {
-			item_type => $item->item_type->item_type,
-			image     => $item->item_type->image,
-			tooltip   => $c->forward( '/item/tooltip', [1] ),
-			item_id   => $item->id,
-		},
+	my @extra_items = $item->equip_item($equip_place, 
+	   existing_item_x => $c->req->param('existing_item_x'),
+	   existing_item_y => $c->req->param('existing_item_y'),
 	);
+	
+	my @ret;
 
 	my $slots_cleared;
-	if ( scalar @slots_changed > 1 ) {
+	if ( @extra_items ) {
+	    my $item = $extra_items[0];
+	    my $sector = $item->start_sector; 
 
-		# More than one slot changed... clear anything that wasn't the slot we tried to equip to
-		my @slots_to_clear = grep { $_ ne $c->req->param('equip_place') } @slots_changed;
-
-		# Don't expect to get more than one slot changed (which might be a poor assumption)
-		# Just warn for now if we have more than 1
-		$c->log->warn("Found more than one slot to clear in equip_item") if scalar @slots_to_clear > 1;
-
-		$ret{ $slots_to_clear[0] } = {
-			item_type => undef,
-			image     => undef,
-			tooltip   => '',
-			item_id   => undef,
-		};
+		@ret = ({
+		    item_id => $item->id,
+			new_x => $sector->x,
+			new_y => $sector->y,
+		});
 	}
 	
-	$character->remove_item_from_grid($item);
-
-	$c->res->body( to_json( { changed_slots => \%ret } ) );
+	$c->res->body( to_json( { extra_items => \@ret } ) );
 }
 
 sub give_item : Local {

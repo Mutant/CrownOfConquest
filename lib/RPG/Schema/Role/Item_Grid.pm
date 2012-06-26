@@ -107,9 +107,13 @@ sub add_item_to_grid {
     my $item = shift;
     my $start_coord = shift;
     
+    if (! $start_coord) {
+        $start_coord = $self->find_location_for_item($item);   
+    }
+    
     $self->search_related('item_sectors',
         {
-            x => { '>=', $start_coord->{x}, '<=', $start_coord->{x} + $item->item_type->width - 1, },
+            x => { '>=', $start_coord->{x}, '<=', $start_coord->{x} + $item->item_type->width  - 1, },
             y => { '>=', $start_coord->{y}, '<=', $start_coord->{y} + $item->item_type->height - 1, },
         }
     )->update( { item_id => $item->id } );
@@ -120,6 +124,41 @@ sub add_item_to_grid {
             y => $start_coord->{y},
         },
     )->update( { start_sector => 1 } );
+}
+
+sub find_location_for_item {
+    my $self = shift;
+    my $item = shift;
+    
+    my @sectors = $self->search_related('item_sectors',
+        {
+            item_id => undef,
+        },
+        {
+            order_by => 'y,x',
+        },
+    );
+    
+    my $grid;
+    foreach my $sector (@sectors) {
+        $grid->{$sector->x}{$sector->y} = $sector;
+    }
+    
+    foreach my $sector (@sectors) {
+        my $sectors_found = 0;
+        for my $x ($sector->x .. $sector->x + $item->item_type->width - 1) {
+            for my $y ($sector->y .. $sector->y + $item->item_type->height - 1) {
+                $sectors_found++ if $grid->{$x}{$y};   
+            }
+        }
+        
+        if ($sectors_found >= ($item->item_type->width * $item->item_type->height)) {
+            return {
+                x => $sector->x,
+                y => $sector->y,
+            }   
+        }
+    }
 }
 
 sub by_coord($$) {

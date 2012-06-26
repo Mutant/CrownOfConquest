@@ -1028,7 +1028,27 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 
 	$.post(urlBase + 'character/equip_item', params, function(data) {
 		loadCharStats(charId);
-	});
+		
+		if (data.extra_items) {		
+			for (var i = 0; i < data.extra_items.length; i++) {
+				var extraItemData = data.extra_items[i];
+				var extraItem = $('#item-' + extraItemData.item_id);
+								
+				var origCoord = {
+					x: parseInt(extraItemData.new_x),
+					y: parseInt(extraItemData.new_y),	
+				}
+				
+				var sectors = findDropSectors(origCoord, extraItem, origLoc.attr("idPrefix"));								
+				
+				extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+				
+				for (var i = 0; i < sectors.length; i++) {
+					sectors[i].attr('hasItem', extraItem.attr("itemId"));
+				}
+			}
+		}
+	}, 'json');
 }
 
 function canDropOnSectors(sectors, item) {

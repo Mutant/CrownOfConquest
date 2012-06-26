@@ -216,7 +216,7 @@ sub _allocate_equipment {
         $item->character_id( $character->id );
         $item->update;
 
-        $item->equip_item( $equip_place->equip_place_name, 0 );
+        $item->equip_item( $equip_place->equip_place_name, replace_existing_equipment => 0 );
     }
 }
 

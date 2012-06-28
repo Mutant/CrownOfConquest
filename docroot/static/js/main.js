@@ -912,6 +912,8 @@ var over;
 
 function dragItemOver(event, ui, hoverSector) {
 	var item = ui.draggable;
+	
+	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
 		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
@@ -937,6 +939,8 @@ function dragItemOver(event, ui, hoverSector) {
 
 function dragItemOut(event, ui, hoverSector) {
 	var item = ui.draggable;
+	
+	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
 
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
@@ -952,6 +956,8 @@ function dragItemOut(event, ui, hoverSector) {
 
 function dropItem(event, ui, hoverSector, charId) {
 	var item = ui.draggable;
+	
+	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
 	
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),

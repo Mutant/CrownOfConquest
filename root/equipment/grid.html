@@ -39,10 +39,11 @@
 
 [% MACRO item_div(class, item) BLOCK %]
 	<div id="item-[% item.id %]" class="[% class %]-item [% item.item_type.category.item_category | lower | replace('\s+', '_') %]-category"
-		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]"
+		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]" isQuantity="[% item.is_quantity %]"
 		style="z-index: 100;
 			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
-			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;">
+			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;"
+			onMouseOver="saveCurrentItemId('[% item.id %]')">
 		<div dojoType="dijit.Tooltip"
 			connectId="item-[% item.id %]"
 			id="item-tooltip-[% item.id %]"

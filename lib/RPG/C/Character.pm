@@ -249,7 +249,19 @@ sub split_item : Local {
 	);
 	
 	$new_item->variable_row('Quantity', $c->req->param('new_quantity'));
+	$c->stash->{character}->add_item_to_grid($new_item);
 	$item->variable_row('Quantity', $item->variable('Quantity') - $c->req->param('new_quantity'));
+	my $sector = $new_item->start_sector;
+	
+	$c->res->body(
+		to_json(
+    		{
+    		    item_id => $new_item->id,
+    			new_x => $sector->x,
+    			new_y => $sector->y,
+    		}
+		)
+	);	
 }
 
 sub item_list : Local {
@@ -345,6 +357,9 @@ sub give_item : Local {
 	}
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
+	
+	$original_character->remove_item_from_grid($item);
+	$character->add_item_to_grid($item) if ! $item->equip_place_id;
 
 	$item->equip_place_id(undef);
 	$item->add_to_characters_inventory($character);
@@ -372,6 +387,8 @@ sub drop_item : Local {
 	my $original_character = $item->belongs_to_character;
 
 	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
+	
+	$character->remove_item_from_grid($item);
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 	

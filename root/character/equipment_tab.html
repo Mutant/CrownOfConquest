@@ -25,111 +25,6 @@
 	});
 [% END %]
 
-setupInventory('[% character.id %]');
-
-	// Hack to get around dojo deficiency
-	var currentItemId;
-	function saveCurrentItemId(id) {
-		currentItemId = id;
-	}
-	
-function createItemMenus() {
-	//createInventoryMenu(); 
-	//createEquippedMenu();
-	//createQuantityMenu();
-}
-	
-function createInventoryMenu() { 
-	if (dijit.byId('item_inventory_menu') != undefined) {
-		dijit.byId('item_inventory_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (! item.equipped && ! item.quantity)
-		  return true;
-	}), function(item) { return item.id } ); 
-
-	var params = {id:"item_inventory_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-	
-	var equipSubMenu = new dijit.Menu();
-	
-	[% FOREACH equip_place IN equip_places %]
-		params = {
-			label: "[% equip_place %]",
-			onClick: function(event) {
-				equip_item('[% equip_place %]', currentItemId);
-			}
-		};
-		
-		var item = new dijit.MenuItem(params,document.createElement("div"));
-		equipSubMenu.addChild(item);			
-	[% END %]
-	
-	params = {
-		label: "Equip Item In",
-		popup: equipSubMenu,
-		iconClass: "menuExpandIcon"
-	};			
-	var equipPopupMenu = new dijit.PopupMenuItem(params);
-	menu.addChild(equipPopupMenu);
-	
-	addCommonMenuItems(menu);	
-} 	
-
-function createQuantityMenu() {
-	if (dijit.byId('item_quantity_menu') != undefined) {
-		dijit.byId('item_quantity_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (item.quantity)
-		  return true;
-	}), function(item) { return item.id } ); 
-	
-	var params = {id:"item_quantity_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-	
-	params = {
-		label: "Split",
-		onClick: function() {
-			split_item(currentItemId);
-		}
-	};
-	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(splitItem);
-	
-	addCommonMenuItems(menu);		
-}
-
-function createEquippedMenu() {
-	if (dijit.byId('item_equipped_menu') != undefined) {
-		dijit.byId('item_equipped_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (item.equipped)
-		  return true;
-	}), function(item) { return item.equipped + '-equip_place' } ); 
-
-	var params = {id:"item_equipped_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-
-	params = {
-		label: "Unequip Item",
-		onClick: function() {
-			unequip_item(currentItemId, '[% character.id %]');
-		}
-	};			
-	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(dropItem);
-	
-	addCommonMenuItems(menu);			
-}
-
 function addCommonMenuItems(menu) {
 	var giveSubMenu = new dijit.Menu();
 
@@ -164,6 +59,10 @@ function addCommonMenuItems(menu) {
 	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
 	menu.addChild(dropItem);	
 }
+
+setupInventory('[% character.id %]');
+
+createItemMenus();
 
 </script>
 

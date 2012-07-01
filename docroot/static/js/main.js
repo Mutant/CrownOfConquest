@@ -1140,6 +1140,28 @@ function findSectorsForItem(item, grid) {
 	return sectors;
 }
 
+function removeFromGrid(itemId,deleteItem) {
+	var item = $( '#item-' + itemId );
+	
+	var origLoc = item.parent();
+	var origCoord = {
+		x: parseInt(origLoc.attr('sectorX')),
+		y: parseInt(origLoc.attr('sectorY')),	
+	}
+
+	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', '0');
+	}
+	
+	if (deleteItem) {
+		dijit.byId('item-tooltip-' + item.attr('itemId')).destroyRecursive();
+		item.remove();		
+	}
+}
+
+/* Character Inventory */
+
 function organiseInventory(charId) {
 	$.get(urlBase + 'character/organise_inventory', { character_id: charId }, function(data) {
 		var widgets = dijit.findWidgets(dojo.byId('inventory-outer'));
@@ -1168,7 +1190,140 @@ function setupInventory(charId) {
 		
 		out: function(event, ui) {
 			dragItemOut(event, ui, $(this));
-		}
-		
+		}		
 	});
+	
+	$(".inventory-item").contextMenu('myMenu1', {});
+	createItemMenus();
+}
+
+// Hack to get around dojo deficiency
+var currentItemId;
+function saveCurrentItemId(id) {
+	currentItemId = id;
+}
+	
+function createItemMenus() {
+	createInventoryMenu(); 
+	createQuantityMenu();
+}
+	
+function createInventoryMenu() { 
+	if (dijit.byId('item_inventory_menu') != undefined) {
+		dijit.byId('item_inventory_menu').destroyRecursive();			
+	}
+	
+	var itemIds = [];
+	$( '.inventory-item' ).each(function(){
+		if ($(this).attr('isQuantity') == 0) {
+			itemIds.push($(this).attr('id'));
+		}	
+	});
+
+	var params = {id:"item_inventory_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+		
+	addCommonMenuItems(menu);	
+} 	
+
+function createQuantityMenu() {
+	if (dijit.byId('item_quantity_menu') != undefined) {
+		dijit.byId('item_quantity_menu').destroyRecursive();			
+	}
+	
+	var itemIds = [];
+	$( '.inventory-item' ).each(function(){
+		if ($(this).attr('isQuantity') == 1) {
+			itemIds.push($(this).attr('id'));
+		}	
+	});
+	
+	var params = {id:"item_quantity_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+	
+	params = {
+		label: "Split",
+		onClick: function() {
+			split_item(currentItemId);
+		}
+	};
+	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(splitItem);
+	
+	addCommonMenuItems(menu);		
+}
+
+
+
+function give_item_to(char_id, item_id) {
+	removeFromGrid(item_id, true);
+
+	dojo.xhrGet( {
+        url: urlBase + "character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+			loadCharStats(char_id);
+        	if (! inCharWindow) {
+        		getPanels('party/refresh_party_list');
+        	}
+        }
+    });	       
+}
+
+function drop_item_diag(item_id, char_id) {
+	dojo.byId('drop-item-id').value = item_id;
+	dojo.byId('drop-char-id').value = char_id;
+	dijit.byId('drop-item-diag').show();
+}
+
+function drop_item(args) {
+	var item_id = args.item_id;
+	var char_id = args.char_id;
+	
+	removeFromGrid(item_id, true);
+
+	dojo.xhrGet( {
+        url: urlBase + "character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {	        	
+        	loadCharStats(char_id);
+        	if (! inCharWindow) {
+        		getPanels('party/refresh_party_list');
+        	}
+        }
+    });	       
+}	
+
+function split_item(item_id) {
+	dojo.byId('split-item-id').value = item_id;
+	dijit.byId('split-diag').show();
+}
+
+function split_item_submit(arguments) {
+	var itemId = arguments.item_id;
+	dojo.xhrGet( {
+        url: urlBase + "character/split_item?item_id=" + itemId + "&new_quantity=" + arguments.new_quantity,
+        handleAs: "json",	
+        load: function(responseObject) {
+        	var item = $( '#item-' + itemId );        
+        	var newItem = item.clone(true);
+        	newItem.attr('id', 'item-' + responseObject.item_id);
+        	newItem.attr('itemId',responseObject.item_id);
+        
+    		var origCoord = {
+				x: parseInt(responseObject.new_x),
+				y: parseInt(responseObject.new_y),	
+			}
+			
+			var sectors = findDropSectors(origCoord, newItem, 'inventory');						
+			
+			newItem.css({top: 0,left: 0}).appendTo(sectors[0]);
+			
+			for (var i = 0; i < sectors.length; i++) {
+				sectors[i].attr('hasItem', newItem.attr("itemId"));
+			}
+        }
+    });	 	
 }

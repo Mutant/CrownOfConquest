@@ -145,7 +145,7 @@ sub find_location_for_item {
             item_id => undef,
         },
         {
-            order_by => 'y,x',
+            order_by => 'x,y',
         },
     );
     

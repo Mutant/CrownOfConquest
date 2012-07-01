@@ -783,6 +783,8 @@ sub add_to_characters_inventory {
             }
         }
     }
+    
+    $character->add_item_to_grid($self) if ! $self->equipped;
 
     # May do nothing, since equip_item does an update, but if nothing was auto equipped, we need to do this
     $self->update;

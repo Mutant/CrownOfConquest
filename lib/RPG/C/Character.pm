@@ -359,7 +359,6 @@ sub give_item : Local {
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 	
 	$original_character->remove_item_from_grid($item);
-	$character->add_item_to_grid($item) if ! $item->equip_place_id;
 
 	$item->equip_place_id(undef);
 	$item->add_to_characters_inventory($character);

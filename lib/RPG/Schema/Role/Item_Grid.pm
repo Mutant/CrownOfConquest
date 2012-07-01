@@ -39,7 +39,7 @@ sub organise_items {
             my $end_x = $start_x + $item->item_type->height - 1;
             my $end_y = $start_y + $item->item_type->width  - 1;
             
-            warn "$start_x, $start_y; $end_x, $end_y";
+            #warn "$start_x, $start_y; $end_x, $end_y";
             my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
@@ -129,15 +129,17 @@ sub add_item_to_grid {
             y => { '>=', $start_coord->{y}, '<=', $start_coord->{y} + $item->item_type->height - 1, },
         }
     );
+        
+    $sectors[0]->start_sector(1);
     
     foreach my $sector (@sectors) {
         if ($sector->item_id) {
             confess "Can't add item to grid sectors " . $sector->x . "," . $sector->y . " when item " . $sector->item_id . " already there";
         }
         $sector->item_id($item->id);
+        $sector->update;
     }
-    
-    $sectors[0]->start_sector(1);
+     
 }
 
 sub find_location_for_item {

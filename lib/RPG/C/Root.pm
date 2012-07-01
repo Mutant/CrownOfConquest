@@ -40,8 +40,6 @@ sub auto : Private {
     
     $c->model('DBIC')->schema->log( $c->log );
     
-    #$c->model('DBIC')->storage->dbh->do("SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE");
-
     $c->model('DBIC')->storage->txn_begin;
     
     # If they have a 'partial' login, check they're accessing one of the allowed paths
@@ -189,32 +187,52 @@ sub default : Private {
 sub end : Private {
     my ( $self, $c ) = @_;
 
-    if ( $c->stash->{party} && ! $c->stash->{dont_update_last_action} ) {
-        $c->stash->{party}->last_action( DateTime->now() );
-        $c->stash->{party}->update;
-    }
-
-    $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
-    $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
-
-    if ( scalar @{ $c->error } ) {
-
-        # Log error message
-        $c->log->error('An error occured...');
-        $c->log->error( "Action: " . $c->action );
-        $c->log->error( "Path: " . $c->req->path );
-        $c->log->error( "Params: " . Dumper $c->req->params );
-        $c->log->error( "Player: " . $c->session->{player}->id ) if $c->session->{player};
-        $c->log->error( "Party: " . $c->stash->{party}->id )     if $c->stash->{party};
-        foreach my $err_str ( @{ $c->error } ) {
-            $c->log->error($err_str);
+    eval {
+        if ( $c->stash->{party} && ! $c->stash->{dont_update_last_action} ) {
+            $c->stash->{party}->last_action( DateTime->now() );
+            $c->stash->{party}->update;
         }
-
+    
+        $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
+        $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
+    
+        if ( scalar @{ $c->error } ) {
+    
+            # Log error message
+            $c->log->error('An error occured...');
+            $c->log->error( "Action: " . $c->action );
+            $c->log->error( "Path: " . $c->req->path );
+            $c->log->error( "Params: " . Dumper $c->req->params );
+            $c->log->error( "Player: " . $c->session->{player}->id ) if $c->session->{player};
+            $c->log->error( "Party: " . $c->stash->{party}->id )     if $c->stash->{party};
+            foreach my $err_str ( @{ $c->error } ) {
+                $c->log->error($err_str);
+            }
+    
+            $c->model('DBIC')->storage->txn_rollback;
+    
+            # Display error page
+            $c->forward(
+                'RPG::V::TT',
+                [
+                    {
+                        template => 'error.html',
+                    }
+                ]
+            );
+    
+            $c->error(0);
+        }
+        else {
+            $c->model('DBIC')->storage->txn_commit;
+        }
+    };
+    if ($@) {        
+        # Make really sure we don't crash, and rollback cleanly 
+        $c->log->error("Error when finishing up request: $@");
+        
         $c->model('DBIC')->storage->txn_rollback;
-
-        #$dbh->rollback unless $dbh->{AutoCommit};
-
-        # Display error page
+        
         $c->forward(
             'RPG::V::TT',
             [
@@ -223,13 +241,6 @@ sub end : Private {
                 }
             ]
         );
-
-        $c->error(0);
-    }
-    else {
-        $c->model('DBIC')->storage->txn_commit;
-
-        #$dbh->commit unless $dbh->{AutoCommit};
     }
 
     return 1 if $c->response->status =~ /^3\d\d$/;

@@ -24,24 +24,7 @@
 	});
 [% END %]
 
-$( ".inventory-item" ).draggable({revert: "invalid"});
-
-$( ".inventory" ).droppable({
-	accept: ".inventory-item",
-	drop: function( event, ui ) {
-		dropItem(event, ui, $(this), '[% character.id %]');
-	},
-			
-	over: function(event, ui) {
-		dragItemOver(event, ui, $(this));
-	},
-	
-	out: function(event, ui) {
-		dragItemOut(event, ui, $(this));
-	}
-	
-});
-
+setupInventory('[% character.id %]');
 
 	// Hack to get around dojo deficiency
 	var currentItemId;
@@ -208,8 +191,10 @@ function addCommonMenuItems(menu) {
 
 <div style="float: left; margin-left: 10px">
 
-<b>Inventory</b>
+<b>Inventory</b> <span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>
 
+<div id="inventory-outer">
 [% create_grid('inventory', items_in_grid, 8, 14) %]
+</div>
 
 </div>

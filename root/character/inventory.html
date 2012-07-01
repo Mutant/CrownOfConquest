@@ -1,23 +1,2 @@
 [% PROCESS equipment/grid.html %]
-
-<script>
-$( ".inventory-item" ).draggable({revert: "invalid"});
-
-$( ".inventory" ).droppable({
-	accept: ".inventory-item",
-	drop: function( event, ui ) {
-		dropItem(event, ui, $(this));
-	},
-			
-	over: function(event, ui) {
-		dragItemOver(event, ui, $(this));
-	},
-	
-	out: function(event, ui) {
-		//dragItemOut(event, ui, $(this));
-	}
-	
-});
-</script>
-
 [% create_grid('inventory', items_in_grid, 8, 14) %]

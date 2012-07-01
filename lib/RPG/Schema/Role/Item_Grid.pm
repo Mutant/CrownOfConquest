@@ -22,28 +22,29 @@ sub organise_items {
     }
     
     my @items = $self->search_related('items',
-        {},
+        {
+            'equip_place_id' => undef,
+        },
         {
             prefetch => {'item_type' => 'category'},
-            order_by => 'category.item_category',            
+            order_by => 'category.item_category, me.item_id',            
         }
-    );            
-    
-    foreach my $item (@items) {
-        next if $item->equipped;
+    );
         
-        COORD: foreach my $coord (sort by_coord keys %sectors) {
+    foreach my $item (@items) {
+        my @coords = sort by_coord keys %sectors;   
+        COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
             
             my $end_x = $start_x + $item->item_type->height - 1;
             my $end_y = $start_y + $item->item_type->width  - 1;
             
-            #warn "$start_x, $end_x, $start_y, $end_y";
+            warn "$start_x, $start_y; $end_x, $end_y";
             my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
-            for my $y ($start_y..$end_y) {
-                for my $x ($start_x..$end_x) {                
+            for my $x ($start_x..$end_x) {
+                for my $y ($start_y..$end_y) {                
                      if (! $sectors{"$x,$y"}) {                         
                          next COORD;
                      }
@@ -64,8 +65,17 @@ sub organise_items {
         }    
         
         # TODO: add to next tab
-    }        
-       
+    }       
+}
+
+sub by_coord($$) {
+    my ($a, $b) = @_;
+    
+    my ($x1, $y1) = split /,/, $a;
+    my ($x2, $y2) = split /,/, $b;
+    
+    return $y1 <=> $y2 if $x1 == $x2;
+    return $x1 <=> $x2;
 }
 
 sub items_in_grid {
@@ -159,16 +169,6 @@ sub find_location_for_item {
             }   
         }
     }
-}
-
-sub by_coord($$) {
-    my ($a, $b) = @_;
-    
-    my ($x1, $y1) = split /,/, $a;
-    my ($x2, $y2) = split /,/, $b;
-    
-    return $x1 <=> $x2 if $y1 == $y2;
-    return $y1 <=> $y2;
 }
 
 1;

@@ -891,9 +891,9 @@ function clearDropSectors(coord, item, gridIdPrefix) {
 
 function findDropSectors(coord, item, gridIdPrefix) {
 	var startX = parseInt(coord.x);
-	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
+	var endX   = parseInt(coord.x) + parseInt(item.attr('itemHeight'));
 	var startY = parseInt(coord.y);
-	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
+	var endY   = parseInt(coord.y) + parseInt(item.attr('itemWidth'));
 	
 	//console.log(startX, endX, startY, endY);
 	
@@ -1113,8 +1113,8 @@ function findSectorsForItem(item, grid) {
 		
 		var startX = parseInt(emptySector.attr('sectorX'));
 		var startY = parseInt(emptySector.attr('sectorY'));
-		var maxX = (startX + itemWidth - 1);
-		var maxY = (startY + itemHeight - 1);
+		var maxX = (startX + itemHeight - 1);
+		var maxY = (startY + itemWidth - 1);
 		
 		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);		
 		
@@ -1132,4 +1132,37 @@ function findSectorsForItem(item, grid) {
 	});	
 	
 	return sectors;
+}
+
+function organiseInventory(charId) {
+	$.get(urlBase + 'character/organise_inventory', { character_id: charId }, function(data) {
+		var widgets = dijit.findWidgets(dojo.byId('inventory-outer'));
+		dojo.forEach(widgets, function(w) {
+		    w.destroyRecursive(true);
+		});		
+	
+		$( '#inventory-outer' ).html(data);
+		setupInventory(charId);
+		dojo.parser.parse(dojo.byId('inventory-outer'));
+	});
+}
+
+function setupInventory(charId) {
+	$( ".inventory-item" ).draggable({revert: "invalid"});
+	
+	$( ".inventory" ).droppable({
+		accept: ".inventory-item",
+		drop: function( event, ui ) {
+			dropItem(event, ui, $(this), charId);
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this));
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		}
+		
+	});
 }

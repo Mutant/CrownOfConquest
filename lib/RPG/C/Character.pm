@@ -187,30 +187,6 @@ sub equipment_tab : Local {
 	);
 }
 
-sub inventory : Local {
-	my ( $self, $c ) = @_;
-
-	my $character = $c->stash->{character};
-
-	croak "Invalid character id" unless $character;
-
-    my %items_in_grid = $character->items_in_grid;
-
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'character/inventory.html',
-				params   => {
-					character => $character,
-					party     => $c->stash->{party},
-					items_in_grid => \%items_in_grid,
-				}
-			}
-		]
-	);
-}
-
 sub item_details : Local {
 	my ( $self, $c ) = @_;
 
@@ -451,6 +427,28 @@ sub move_item : Local {
     
 	$item->equip_place_id(undef);
 	$item->update;    
+}
+
+sub organise_inventory : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->stash->{character};
+	
+	$character->organise_items();
+	
+	my $items_in_grid = $character->items_in_grid;
+		
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'character/inventory.html',
+				params   => {
+				    items_in_grid => $items_in_grid,
+				}
+			}
+		]
+	);	
 }
 
 # Called by shop screen to get list of equipment.

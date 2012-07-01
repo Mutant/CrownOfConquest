@@ -982,20 +982,26 @@ function dropItem(event, ui, hoverSector, charId) {
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
 	
+	console.log("sectors now have item: " + sectors.length);
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].removeClass('item-droppable');
 		sectors[i].removeClass('item-blocked');
 		sectors[i].attr('hasItem', item.attr("itemId"));
 	}
-	
-	var origCoord = {
-		x: parseInt(origLoc.attr('sectorX')),
-		y: parseInt(origLoc.attr('sectorY')),	
+			
+	if (origLoc.hasClass('equip-slot')) {
+		origLoc.html(origLoc.attr('slotName'));
 	}
-	
-	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
-	for (var i = 0; i < sectors.length; i++) {
-		sectors[i].attr('hasItem', '0');
+	else {	
+		var origCoord = {
+			x: parseInt(origLoc.attr('sectorX')),
+			y: parseInt(origLoc.attr('sectorY')),	
+		}
+		
+		var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', '0');
+		}
 	}
 }
 

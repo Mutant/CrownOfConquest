@@ -3,7 +3,8 @@
 	[% equip_place = equip_places.$slot_orig %]
 	[% item = equipped_items.$slot_orig %]
 	<td id="equip_place_[% equip_place.id %]" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
-		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]">
+		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]"
+		slotName="[% slot_orig %]">
 		[% IF item %]
 			[% item_div("inventory", item) %]
 		[% ELSE %]
@@ -166,7 +167,7 @@ function addCommonMenuItems(menu) {
 
 </script>
 
-<div style="background: black; margin: 0px; padding: 0px; height: 100%">
+<div style="background: black; margin: 0px; padding: 0px; height: 100%" id="equipment-tab">
 
 <div style="float: left">
 	<b>Equipped Items</b>

@@ -117,23 +117,27 @@ sub add_item_to_grid {
     my $item = shift;
     my $start_coord = shift;
     
+    confess "Can't add equipped item to grid" if $item->equipped;
+    
     if (! $start_coord) {
         $start_coord = $self->find_location_for_item($item);   
     }
     
-    $self->search_related('item_sectors',
+    my @sectors = $self->search_related('item_sectors',
         {
             x => { '>=', $start_coord->{x}, '<=', $start_coord->{x} + $item->item_type->width  - 1, },
             y => { '>=', $start_coord->{y}, '<=', $start_coord->{y} + $item->item_type->height - 1, },
         }
-    )->update( { item_id => $item->id } );
+    );
     
-    $self->search_related('item_sectors',
-        {
-            x => $start_coord->{x},
-            y => $start_coord->{y},
-        },
-    )->update( { start_sector => 1 } );
+    foreach my $sector (@sectors) {
+        if ($sector->item_id) {
+            confess "Can't add item to grid sectors " . $sector->x . "," . $sector->y . " when item " . $sector->item_id . " already there";
+        }
+        $sector->item_id($item->id);
+    }
+    
+    $sectors[0]->start_sector(1);
 }
 
 sub find_location_for_item {

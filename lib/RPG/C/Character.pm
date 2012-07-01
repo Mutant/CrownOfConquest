@@ -438,12 +438,14 @@ sub move_item : Local {
 	);
 	
 	croak "Invalid item" unless $item;
+
+	$item->equip_place_id(undef);
+	$item->update;
 	
     $character->remove_item_from_grid($item);
     $character->add_item_to_grid($item, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') } );
     
-	$item->equip_place_id(undef);
-	$item->update;    
+
 }
 
 sub organise_inventory : Local {

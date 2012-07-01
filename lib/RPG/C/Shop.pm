@@ -35,6 +35,8 @@ sub purchase : Local {
 	}
 
 	my @characters = $party->characters;
+	
+	my $items_in_grid = $shop->items_in_grid;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -45,11 +47,18 @@ sub purchase : Local {
 					shop          => $shop,
 					characters    => \@characters,
 					shops_in_town => \@shops_in_town,
+					items_in_grid => $items_in_grid,
 					town          => $party->location->town,
 				}
 			}
 		]
 	);
+}
+
+sub character_inventory : Local {
+    my ( $self, $c ) = @_;
+    	
+    $c->visit('/character/equipment_tab');
 }
 
 sub standard_tab : Local {
@@ -196,69 +205,35 @@ sub character_sell_tab : Local {
 
 sub buy_item : Local {
 	my ( $self, $c ) = @_;
-
-	my $shop = $c->model('DBIC::Shop')->find( $c->req->param('shop_id') );
+	
+    my $item = $c->model('DBIC::Items')->find(
+		{
+			item_id => $c->req->param('item_id'),
+		},
+		{
+			prefetch => 'item_type',
+		}
+	);
 
 	my $party = $c->stash->{party};
 
+    my $shop = $item->in_shop;
 	my $town = $shop->in_town;
 
 	if ( $town->id != 0 && $town->id != $party->location->town->id ) {
 		croak "Attempting to buy an item in another town";
-
-		# TODO: this does allow them to buy items from a different shop in the same town, which may or may not be OK
-		return;
 	}
-
-	my $item;
 	my $count = 0;
 	my $cost = 0;
 	my $enchanted = 0;
 
-	if ( $c->req->param('item_type_id') ) {
-		my $item_rs = $c->model('DBIC::Items')->search(
-			{
-				'item_type.item_type_id'           => $c->req->param('item_type_id'),
-				shop_id                            => $shop->id,
-				'item_enchantments.enchantment_id' => undef,
-			},
-			{
-				prefetch => 'item_type',
-				join     => 'item_enchantments',
-			},
-		);
-
-		if ( $item_rs->count == 0 ) {
-			push @{ $c->stash->{error} }, "The shop no longer has any of those items left. Another party may have just bought the last one!";
-			$c->forward( '/panel/refresh' );
-			return;
-		}
-
-		$item  = $item_rs->first;
-		$count = $item_rs->count - 1;		
-		$cost = $item->item_type->modified_cost( $item->in_shop );
+	if (! $item) {
+		push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
+		$c->forward( '/panel/refresh' );
+		return;
 	}
-	else {
-		$item = $c->model('DBIC::Items')->find(
-			{
-				item_id => $c->req->param('item_id'),
-				shop_id => $shop->id,
-			},
-			{
-				prefetch => 'item_type',
-			}
-		);
-
-		unless ($item) {
-			push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
-			$c->forward( '/panel/refresh' );
-			return;
-		}
-		
-		$cost = $item->sell_price( $item->in_shop, 0 );
-		
-		$enchanted = 1;
-	}
+	
+	$cost = $item->sell_price( $item->in_shop, 0 );	
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
@@ -274,19 +249,12 @@ sub buy_item : Local {
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
 
-	$item->add_to_characters_inventory($character);
+	$item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
 	
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'purchase',
-        	data => {
-        	    tab => $enchanted ? 'enchanted' : 'standard',
-        	},
-    	}
-    ];	
+	$shop->remove_item_from_grid($item);
 
     $c->forward( '/panel/refresh', ['party_status'] );
 }

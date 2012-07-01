@@ -1,6 +1,73 @@
-[% INCLUDE shop/header.html shop_link='shop/purchase' %]
+[% PROCESS equipment/grid.html %]
+
+<h1>[% shop.shop_name %]</h1>
+
+Shops in [% town.town_name %]: 
+[% FOREACH other_shop IN shops_in_town %]
+	[% IF shop.id == other_shop.id %]
+		<span id="current-selection">[% other_shop.shop_name %]</span>
+	[% ELSE %]
+		<a href="javascript:loadScreen('shop/purchase?shop_id=[% other_shop.id %]')">[% other_shop.shop_name %]</a>
+	[% END %]
+	&nbsp;
+[% END %]
+<br><br>
+
+[% IF shop.status == 'Open' %]
+	[% shop.shop_owner_name %] welcomes you to his humble store. "I hope you find what you're looking for!"
+[% ELSIF shop.status == 'Opening' %]
+	[% shop.shop_owner_name %] greets you. "My brand new shop is only just opening! Come back soon for a fine selection of equipment"
+[% ELSIF shop.status == 'Closed' %]
+	There doesn't seem to be anyone here. The shop appears to be closed.
+[% ELSIF shop.status == 'Closing' %]
+	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
+	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
+[% END %]
+
+<script>
+	$( ".shop-item" ).draggable({revert: "invalid"});
+	
+	$( ".shop" ).droppable({
+		accept: ".inventory-item",
+		drop: function( event, ui ) {
+			//dropItem(event, ui, $(this), charId);
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this));
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		}		
+	});
+	
+	function loadCharShopInventory(charId) {
+		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory?character_id=' + charId );
+	}
+	
+	$(function() {
+		loadCharShopInventory('[% characters.0.id %]');
+	});
+	
+</script>
+
+<div align="center" stlye="margin-top: 2px">
+[% FOREACH char IN characters %]
+<a href="javascript:loadCharShopInventory('[% char.id %]')"><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0" title="[% char.name %]"></a>
+[% END %]
+</div>
+
+<div style="float: left; min-width: 620px; margin-right: 10px">	
+	<div id="char-shop-inventory">
+		&nbsp;		
+	</div>
+
+</div>
+
+<div style="float: left;">
+<b>Items For Sale</b>
 
 
-<div id="standard" dojoType="dojox.layout.ContentPane" href="[% base %]/shop/standard_tab?shop_id=[% shop.id %]">
-
+[% create_grid('shop', items_in_grid, 8, 12 ) %]
 </div>

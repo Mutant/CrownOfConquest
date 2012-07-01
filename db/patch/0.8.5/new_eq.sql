@@ -19,6 +19,7 @@ UPDATE `Item_Type` set height = 2 where item_type = 'Steel Head Cap';
 UPDATE `Item_Type` set height = 2 where item_type = 'Flail';
 UPDATE `Item_Type` set height = 2 where item_type = 'Mace';
 UPDATE `Item_Type` set height = 3 where item_type = 'Spear';
+UPDATE `Item_Type` set height = 3 where item_type = 'Pike';
 UPDATE `Item_Type` set height = 2 where item_type = 'Quarterstaff';
 UPDATE `Item_Type` set height = 3 where item_type = 'Halberd';
 UPDATE `Item_Type` set height = 3 where item_type = 'Broadsword';

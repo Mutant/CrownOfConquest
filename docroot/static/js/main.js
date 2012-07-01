@@ -976,13 +976,18 @@ function dropItem(event, ui, hoverSector, charId) {
 		return;
 	}
 	
-	$.post(urlBase + 'character/move_item', { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y }, function(data) {
-		loadCharStats(charId);
-	});	
+	if (item.hasClass('inventory-item')) {	
+		$.post(urlBase + 'character/move_item', { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y }, function(data) {
+			loadCharStats(charId);
+		});
+	}
+	else {	
+		getPanels('shop/buy_item?item_id=' + item.attr('itemId') + '&character_id=' + charId 
+			+ '&grid_x=' + currentCoord.x + '&grid_y=' + currentCoord.y);
+	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
 	
-	console.log("sectors now have item: " + sectors.length);
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].removeClass('item-droppable');
 		sectors[i].removeClass('item-blocked');
@@ -1179,7 +1184,7 @@ function setupInventory(charId) {
 	$( ".inventory-item" ).draggable({revert: "invalid"});
 	
 	$( ".inventory" ).droppable({
-		accept: ".inventory-item",
+		accept: ".inventory-item, .shop-item",
 		drop: function( event, ui ) {
 			dropItem(event, ui, $(this), charId);
 		},
@@ -1192,8 +1197,6 @@ function setupInventory(charId) {
 			dragItemOut(event, ui, $(this));
 		}		
 	});
-	
-	$(".inventory-item").contextMenu('myMenu1', {});
 	createItemMenus();
 }
 

@@ -727,6 +727,7 @@ sub equip_item {
 sub add_to_characters_inventory {
     my $self      = shift;
     my $character = shift;
+    my $grid_loc  = shift;
 
     croak "Must pass a character record to add_to_characters_inventory() - got: $character"
         unless $character->isa('RPG::Schema::Character');
@@ -784,7 +785,7 @@ sub add_to_characters_inventory {
         }
     }
     
-    $character->add_item_to_grid($self) if ! $self->equipped;
+    $character->add_item_to_grid($self, $grid_loc) if ! $self->equipped;
 
     # May do nothing, since equip_item does an update, but if nothing was auto equipped, we need to do this
     $self->update;

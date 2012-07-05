@@ -377,7 +377,7 @@ div.enlargedTitle {
 
 /* Tooltip */
 
-.tundra .dijitTooltipContainer
+.tundra .dijitTooltipContainer, .tooltip
 {
 	background: black;
 	color: #EECAA2;
@@ -394,6 +394,14 @@ div.enlargedTitle {
         border-radius: 10px;
 	-moz-box-shadow: 1px 1px 1px #6B6B6B;
         box-shadow: 1px 1px 1px #6B6B6B;
+}
+
+.tooltip {
+	display: none;
+	z-index: 500;
+	text-align: left;
+	min-width: 250px;
+	position: fixed;
 }
 
 .dj_webkit .tundra .dijitTooltipContainer {

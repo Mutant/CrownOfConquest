@@ -913,7 +913,9 @@ var over;
 function dragItemOver(event, ui, hoverSector) {
 	var item = ui.draggable;
 	
-	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
+	if (openTooltip) {
+		openTooltip.hide();
+	}
 		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
@@ -940,8 +942,6 @@ function dragItemOver(event, ui, hoverSector) {
 function dragItemOut(event, ui, hoverSector) {
 	var item = ui.draggable;
 	
-	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
-
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),
@@ -956,9 +956,7 @@ function dragItemOut(event, ui, hoverSector) {
 
 function dropItem(event, ui, hoverSector, charId) {
 	var item = ui.draggable;
-	
-	dijit.byId('item-tooltip-' + item.attr('itemId')).close();
-	
+		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),
@@ -1160,7 +1158,6 @@ function removeFromGrid(itemId,deleteItem) {
 	}
 	
 	if (deleteItem) {
-		dijit.byId('item-tooltip-' + item.attr('itemId')).destroyRecursive();
 		item.remove();		
 	}
 }
@@ -1180,6 +1177,7 @@ function organiseInventory(charId) {
 	});
 }
 
+var openTooltip;
 function setupInventory(charId) {
 	$( ".inventory-item" ).draggable({revert: "invalid"});
 	
@@ -1197,7 +1195,38 @@ function setupInventory(charId) {
 			dragItemOut(event, ui, $(this));
 		}		
 	});
+
+	setupItemTooltips(".inventory-item");
 	createItemMenus();
+}
+
+function setupItemTooltips(selector) {
+	$(selector).simpletip({		
+		position: 'right',	
+		
+		content: '<img src="' + urlBase + 'static/images/layout/loader.gif">',
+		
+		onBeforeShow: function(){
+			var itemId = this.getParent().attr('itemId');
+			this.getParent().css({ zIndex: 101 });
+			
+			if (this.getParent().attr('loaded') == 'true') {
+				return;
+			}
+			
+			this.load(urlBase + 'item/tooltip?item_id=' + itemId);
+			this.getParent().attr('loaded', 'true');
+			
+			openTooltip = this;
+		},
+		
+		onHide: function(){
+			var itemId = this.getParent().attr('itemId');
+			this.getParent().css({ zIndex: 100 });
+			
+			openTooltip = undefined;
+		},		
+	});
 }
 
 // Hack to get around dojo deficiency

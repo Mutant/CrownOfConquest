@@ -42,12 +42,15 @@ Shops in [% town.town_name %]:
 		}		
 	});
 	
-	function loadCharShopInventory(charId) {
-		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory?character_id=' + charId );
+	function loadCharShopInventory(charId) {	
+		$( '#char-shop-inventory').html('<img src="[% base %]static/images/layout/loader.gif">');
+		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
+		
 	}
 	
 	$(function() {
 		loadCharShopInventory('[% characters.0.id %]');
+		setupItemTooltips('.shop-item');
 	});
 	
 </script>

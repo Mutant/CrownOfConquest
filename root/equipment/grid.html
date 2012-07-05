@@ -43,16 +43,8 @@
 		style="z-index: 100;
 			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
 			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;"
-			onMouseOver="saveCurrentItemId('[% item.id %]')">
-		<div dojoType="dijit.Tooltip"
-			connectId="item-[% item.id %]"
-			id="item-tooltip-[% item.id %]"
-			style="display: none">
-				[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
-		</div>
-	</div>
-
-	
+			onMouseOver="saveCurrentItemId('[% item.id %]')">		
+	</div>	
 [% END %]
 
 [% MACRO create_grid(grid_type, items_in_gird, height, width) BLOCK %]

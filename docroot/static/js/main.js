@@ -912,11 +912,7 @@ var over;
 
 function dragItemOver(event, ui, hoverSector) {
 	var item = ui.draggable;
-	
-	if (openTooltip) {
-		openTooltip.hide();
-	}
-		
+			
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),
@@ -1166,20 +1162,19 @@ function removeFromGrid(itemId,deleteItem) {
 
 function organiseInventory(charId) {
 	$.get(urlBase + 'character/organise_inventory', { character_id: charId }, function(data) {
-		var widgets = dijit.findWidgets(dojo.byId('inventory-outer'));
-		dojo.forEach(widgets, function(w) {
-		    w.destroyRecursive(true);
-		});		
-	
 		$( '#inventory-outer' ).html(data);
 		setupInventory(charId);
-		dojo.parser.parse(dojo.byId('inventory-outer'));
 	});
 }
 
-var openTooltip;
 function setupInventory(charId) {
-	$( ".inventory-item" ).draggable({revert: "invalid"});
+	$( ".inventory-item" ).draggable({
+		revert: "invalid",		
+		
+		drag: function( event, ui ) {
+			$(this).simpletip().hide();
+		},
+	});
 	
 	$( ".inventory" ).droppable({
 		accept: ".inventory-item, .shop-item",
@@ -1193,7 +1188,7 @@ function setupInventory(charId) {
 		
 		out: function(event, ui) {
 			dragItemOut(event, ui, $(this));
-		}		
+		},
 	});
 
 	setupItemTooltips(".inventory-item");
@@ -1203,6 +1198,7 @@ function setupInventory(charId) {
 function setupItemTooltips(selector) {
 	$(selector).simpletip({		
 		position: 'right',	
+		showTime: 250,
 		
 		content: '<img src="' + urlBase + 'static/images/layout/loader.gif">',
 		
@@ -1216,15 +1212,11 @@ function setupItemTooltips(selector) {
 			
 			this.load(urlBase + 'item/tooltip?item_id=' + itemId);
 			this.getParent().attr('loaded', 'true');
-			
-			openTooltip = this;
 		},
 		
 		onHide: function(){
 			var itemId = this.getParent().attr('itemId');
 			this.getParent().css({ zIndex: 100 });
-			
-			openTooltip = undefined;
 		},		
 	});
 }

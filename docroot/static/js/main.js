@@ -891,9 +891,9 @@ function clearDropSectors(coord, item, gridIdPrefix) {
 
 function findDropSectors(coord, item, gridIdPrefix) {
 	var startX = parseInt(coord.x);
-	var endX   = parseInt(coord.x) + parseInt(item.attr('itemHeight'));
+	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
 	var startY = parseInt(coord.y);
-	var endY   = parseInt(coord.y) + parseInt(item.attr('itemWidth'));
+	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
 	
 	//console.log(startX, endX, startY, endY);
 	
@@ -1020,9 +1020,9 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 
 	var params = { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') };
 	
-	var existingItem = slot.children('.'+item.parent().attr('idPrefix')+'-item').first();
+	var existingItem = slot.children().first();
 	if (existingItem.length > 0) {
-		var sectors = findSectorsForItem(existingItem, item.parent().attr('idPrefix'));
+		var sectors = findSectorsForItem(existingItem, 'inventory');
 		
 		if (sectors.length < 1) {
 			console.log("Failed finding sectors for", existingItem);
@@ -1042,30 +1042,42 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	slot.html('');
 			
 	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
+	
+	console.log(params);
+	
+	if (item.hasClass('inventory-item')) {
+		$.post(urlBase + 'character/equip_item', params, function(data) {
+			data.char_id = charId;
+			equipItemCallback(data);
+		}, 'json');
+	}
+	else {
+		getPanels('shop/buy_item?' + $.param(params) );
+	}
+}
 
-	$.post(urlBase + 'character/equip_item', params, function(data) {
-		loadCharStats(charId);
-		
-		if (data.extra_items) {		
-			for (var i = 0; i < data.extra_items.length; i++) {
-				var extraItemData = data.extra_items[i];
-				var extraItem = $('#item-' + extraItemData.item_id);
-								
-				var origCoord = {
-					x: parseInt(extraItemData.new_x),
-					y: parseInt(extraItemData.new_y),	
-				}
-				
-				var sectors = findDropSectors(origCoord, extraItem, origLoc.attr("idPrefix"));								
-				
-				extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
-				
-				for (var i = 0; i < sectors.length; i++) {
-					sectors[i].attr('hasItem', extraItem.attr("itemId"));
-				}
+function equipItemCallback(data) {
+	loadCharStats(data.char_id);
+	
+	if (data.extra_items) {		
+		for (var i = 0; i < data.extra_items.length; i++) {
+			var extraItemData = data.extra_items[i];
+			var extraItem = $('#item-' + extraItemData.item_id);
+							
+			var origCoord = {
+				x: parseInt(extraItemData.new_x),
+				y: parseInt(extraItemData.new_y),	
+			}
+			
+			var sectors = findDropSectors(origCoord, extraItem, 'inventory');								
+			
+			extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+			
+			for (var i = 0; i < sectors.length; i++) {
+				sectors[i].attr('hasItem', extraItem.attr("itemId"));
 			}
 		}
-	}, 'json');
+	}
 }
 
 function canDropOnSectors(sectors, item) {
@@ -1118,10 +1130,10 @@ function findSectorsForItem(item, grid) {
 		
 		var startX = parseInt(emptySector.attr('sectorX'));
 		var startY = parseInt(emptySector.attr('sectorY'));
-		var maxX = (startX + itemHeight - 1);
-		var maxY = (startY + itemWidth - 1);
+		var maxX = (startX + itemWidth - 1);
+		var maxY = (startY + itemHeight - 1);
 		
-		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);		
+		console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);		
 		
 		for (var x = startX; x <= maxX; x++) {
 			for (var y = startY; y <= maxY; y++) {

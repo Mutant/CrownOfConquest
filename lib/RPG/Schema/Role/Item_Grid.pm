@@ -36,15 +36,15 @@ sub organise_items {
         COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
             
-            my $end_x = $start_x + $item->item_type->height - 1;
-            my $end_y = $start_y + $item->item_type->width  - 1;
+            my $end_x = $start_x + $item->item_type->width - 1;
+            my $end_y = $start_y + $item->item_type->height  - 1;
             
             #warn "$start_x, $start_y; $end_x, $end_y";
             my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
-            for my $x ($start_x..$end_x) {
-                for my $y ($start_y..$end_y) {                
+            for my $y ($start_y..$end_y) {
+                for my $x ($start_x..$end_x) {                
                      if (! $sectors{"$x,$y"}) {                         
                          next COORD;
                      }
@@ -74,8 +74,8 @@ sub by_coord($$) {
     my ($x1, $y1) = split /,/, $a;
     my ($x2, $y2) = split /,/, $b;
     
-    return $y1 <=> $y2 if $x1 == $x2;
-    return $x1 <=> $x2;
+    return $x1 <=> $x2 if $y1 == $y2;
+    return $y1 <=> $y2;
 }
 
 sub items_in_grid {
@@ -87,7 +87,7 @@ sub items_in_grid {
             'me.item_id' => {'!=', undef},
         },
         {
-            prefetch => {'item' => {'item_type' => 'category'}},
+            prefetch => {'item' => { 'item_type' => 'category' } },
         },
     );
     
@@ -122,6 +122,11 @@ sub add_item_to_grid {
     if (! $start_coord) {
         $start_coord = $self->find_location_for_item($item);   
     }
+    
+    confess "No start coords" if ! $start_coord || ! $start_coord->{x} || ! $start_coord->{y};
+    
+    #warn "startX: " . $start_coord->{x} . "; endX: " . ($start_coord->{x} + $item->item_type->width  - 1);
+    #warn "startY: " . $start_coord->{y} . "; endY: " . ($start_coord->{y} + $item->item_type->height - 1);
     
     my @sectors = $self->search_related('item_sectors',
         {
@@ -162,6 +167,10 @@ sub find_location_for_item {
     
     foreach my $sector (@sectors) {
         my $sectors_found = 0;
+        
+        #warn "startX " . $sector->x . "; endX" . $sector->x + $item->item_type->width - 1;
+        #warn "startY " . $sector->y . "; endY" . $sector->y + $item->item_type->height - 1;
+        
         for my $x ($sector->x .. $sector->x + $item->item_type->width - 1) {
             for my $y ($sector->y .. $sector->y + $item->item_type->height - 1) {
                 $sectors_found++ if $grid->{$x}{$y};   

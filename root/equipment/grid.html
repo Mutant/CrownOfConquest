@@ -2,18 +2,18 @@
 	[% x = 0 %]
 	[% y = 0 %]
 	[% blocked = {} %]
-	[% WHILE x < height %]
-		[% x = x + 1 %]
-		[% WHILE y < width %]
-			[% y = y + 1 %]
+	[% WHILE y < height %]
+		[% y = y + 1 %]
+		[% WHILE x < width %]
+			[% x = x + 1 %]
 			
 			[% item = items_in_grid.$x.$y %]
 			
 			[% IF item %]
 				[% blockedX = x %]
 				[% blockedY = y %]
-				[% WHILE blockedX < (x+item.item_type.height) %]
-					[% WHILE blockedY < (y+item.item_type.width) %]										
+				[% WHILE blockedX < (x+item.item_type.width) %]
+					[% WHILE blockedY < (y+item.item_type.height) %]										
 						[% blocked.$blockedX.$blockedY = item.id %]
 						[% blockedY = blockedY + 1 %]									
 					[% END %]		
@@ -32,7 +32,7 @@
 			
 		[% END %]
 		<br style="clear: left"/>
-		[% y = 0 %]
+		[% x = 0 %]
 	[% END %]
 [% END %]
 

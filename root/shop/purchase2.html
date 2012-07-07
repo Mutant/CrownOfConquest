@@ -25,7 +25,13 @@ Shops in [% town.town_name %]:
 [% END %]
 
 <script>
-	$( ".shop-item" ).draggable({revert: "invalid"});
+	$( ".shop-item" ).draggable({
+		revert: "invalid",		
+		
+		drag: function( event, ui ) {
+			$(this).simpletip().hide();
+		},
+	});
 	
 	$( ".shop" ).droppable({
 		accept: ".inventory-item",

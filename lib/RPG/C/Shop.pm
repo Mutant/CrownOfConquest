@@ -248,8 +248,16 @@ sub buy_item : Local {
 	}
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
-
-	$item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
+	
+	if ($c->req->param('equip_place')) {
+	    $item->character_id($character->id);
+	    $item->update;        
+	    my $ret = $c->forward('/character/equip_item_impl', [$item]);
+	    $item->add_to_characters_inventory($character);
+	}
+	else {
+	   $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
+	}
 
 	$party->gold( $party->gold - $cost );
 	$party->update;

@@ -165,6 +165,7 @@ sub equipment_tab : Local {
 	
 	my %equip_places = map { $_->equip_place_name => $_ } $c->model('DBIC::Equip_Places')->search();
 	
+	$c->log->debug("Querying items in grid");	
 	my $items_in_grid = $character->items_in_grid;
 
 	$c->forward(
@@ -304,6 +305,14 @@ sub equip_item : Local {
     $c->stash->{character} = $character;
     $c->forward('check_character_can_change_items');
         
+    my $ret = $c->forward('equip_item_impl', [$item]);
+	
+	$c->res->body( to_json( { extra_items => $ret } ) );
+}
+
+sub equip_item_impl : Private {
+    my ($self, $c, $item) = @_;   
+
 	my $equip_place = $c->req->param('equip_place');
 	my @extra_items = $item->equip_item($equip_place, 
 	   existing_item_x => $c->req->param('existing_item_x'),
@@ -324,7 +333,8 @@ sub equip_item : Local {
 		});
 	}
 	
-	$c->res->body( to_json( { extra_items => \@ret } ) );
+	return \@ret;
+
 }
 
 sub give_item : Local {

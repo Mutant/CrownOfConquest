@@ -1181,11 +1181,7 @@ function organiseInventory(charId) {
 
 function setupInventory(charId) {
 	$( ".inventory-item" ).draggable({
-		revert: "invalid",		
-		
-		drag: function( event, ui ) {
-			$(this).simpletip().hide();
-		},
+		revert: "invalid",
 	});
 	
 	$( ".inventory" ).droppable({
@@ -1208,29 +1204,7 @@ function setupInventory(charId) {
 }
 
 function setupItemTooltips(selector) {
-	$(selector).simpletip({		
-		position: 'right',	
-		showTime: 250,
-		
-		content: '<img src="' + urlBase + 'static/images/layout/loader.gif">',
-		
-		onBeforeShow: function(){
-			var itemId = this.getParent().attr('itemId');
-			this.getParent().css({ zIndex: 101 });
-			
-			if (this.getParent().attr('loaded') == 'true') {
-				return;
-			}
-			
-			this.load(urlBase + 'item/tooltip?item_id=' + itemId);
-			this.getParent().attr('loaded', 'true');
-		},
-		
-		onHide: function(){
-			var itemId = this.getParent().attr('itemId');
-			this.getParent().css({ zIndex: 100 });
-		},		
-	});
+	$(selector).cluetip({cluetipClass: 'tooltip', showTitle: false, cluezIndex: '5000'});
 }
 
 // Hack to get around dojo deficiency

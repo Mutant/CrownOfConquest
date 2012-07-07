@@ -377,7 +377,7 @@ div.enlargedTitle {
 
 /* Tooltip */
 
-.tundra .dijitTooltipContainer, .tooltip
+.tundra .dijitTooltipContainer, .cluetip-tooltip, #cluetip-waitimage
 {
 	background: black;
 	color: #EECAA2;
@@ -396,12 +396,19 @@ div.enlargedTitle {
         box-shadow: 1px 1px 1px #6B6B6B;
 }
 
-.tooltip {
+.cluetip-tooltip {
 	display: none;
 	z-index: 500;
 	text-align: left;
-	min-width: 250px;
-	position: fixed;
+	font-size: 9pt;
+	font-family: verdana, kalimati, helvetica;
+}
+
+
+#cluetip-waitimage {
+	background:url(images/layout/loader.gif) no-repeat left center;
+	min-height: 24px;
+	min-width: 24px;
 }
 
 .dj_webkit .tundra .dijitTooltipContainer {

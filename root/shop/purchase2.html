@@ -26,11 +26,7 @@ Shops in [% town.town_name %]:
 
 <script>
 	$( ".shop-item" ).draggable({
-		revert: "invalid",		
-		
-		drag: function( event, ui ) {
-			$(this).simpletip().hide();
-		},
+		revert: "invalid",
 	});
 	
 	$( ".shop" ).droppable({

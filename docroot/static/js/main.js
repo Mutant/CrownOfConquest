@@ -1301,9 +1301,9 @@ function drop_item(args) {
 	dojo.xhrGet( {
         url: urlBase + "character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
         handleAs: "json",	
-        load: function(responseObject, ioArgs) {	        	
+        load: function(responseObject, ioArgs) {
         	loadCharStats(char_id);
-        	if (! inCharWindow) {
+        	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) {        	
         		getPanels('party/refresh_party_list');
         	}
         }

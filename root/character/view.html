@@ -105,15 +105,6 @@ $(function() {
 	</form>
 </div>
 
-<div dojoType="dijit.Dialog" id="drop-item-diag" style="display: none" title="Drop Item Confirmation" execute="drop_item(arguments[0])">
-	<input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
-	<input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
-    Are you sure you want to drop the item?<br>
-    (Note, items dropped in town will disappear forever!)
-	[% dialog_buttons('drop-item-diag') %]
-	</form>
-</div>
-
 <div class="characterStats">
 
 <img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %].png" style="float: left">

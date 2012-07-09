@@ -254,6 +254,13 @@ sub buy_item : Local {
 	    $item->update;        
 	    my $ret = $c->forward('/character/equip_item_impl', [$item]);
 	    $item->add_to_characters_inventory($character);
+	    
+	    $c->stash->{panel_callbacks} = [
+        	{
+            	name => 'equipItem',
+            	data => { extra_items => $ret },
+        	}
+        ];
 	}
 	else {
 	   $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});

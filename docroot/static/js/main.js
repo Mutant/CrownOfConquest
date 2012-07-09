@@ -1047,7 +1047,8 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	
 	if (item.hasClass('inventory-item')) {
 		$.post(urlBase + 'character/equip_item', params, function(data) {
-			data.char_id = charId;
+			loadCharStats(data.char_id);
+			data.char_id = charId;			
 			equipItemCallback(data);
 		}, 'json');
 	}
@@ -1056,9 +1057,8 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	}
 }
 
-function equipItemCallback(data) {
-	loadCharStats(data.char_id);
-	
+function equipItemCallback(data) {	
+	console.log(data);
 	if (data.extra_items) {		
 		for (var i = 0; i < data.extra_items.length; i++) {
 			var extraItemData = data.extra_items[i];
@@ -1204,7 +1204,11 @@ function setupInventory(charId) {
 }
 
 function setupItemTooltips(selector) {
-	$(selector).cluetip({cluetipClass: 'tooltip', showTitle: false, cluezIndex: '5000'});
+	$(selector).cluetip({cluetipClass: 'tooltip', showTitle: false, cluezIndex: '5000', hoverIntent: {
+                      sensitivity:  7,
+                      interval:     170,
+                      timeout:      0
+    },});
 }
 
 // Hack to get around dojo deficiency

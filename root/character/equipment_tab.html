@@ -14,15 +14,17 @@
 [% END %]
 
 <script>
-[% FOREACH slot_data IN equip_places %]
-	[% slot = slot_data.value %] 
-	$( "#equip_place_[% slot.id %]" ).droppable({
-		accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
-		drop: function( event, ui ) {
-			dropItemOnEquipSlot(event, ui, $(this), '[% character.id %]');
-		},
-		hoverClass: "item-droppable",			
-	});
+[% IF item_change_allowed %]
+	[% FOREACH slot_data IN equip_places %]
+		[% slot = slot_data.value %] 
+		$( "#equip_place_[% slot.id %]" ).droppable({
+			accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
+			drop: function( event, ui ) {
+				dropItemOnEquipSlot(event, ui, $(this), '[% character.id %]');
+			},
+			hoverClass: "item-droppable",			
+		});
+	[% END %]
 [% END %]
 
 function addCommonMenuItems(menu) {
@@ -60,7 +62,11 @@ function addCommonMenuItems(menu) {
 	menu.addChild(dropItem);	
 }
 
-setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
+[% IF item_change_allowed %]
+	setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
+[% ELSE %]
+	setupItemTooltips(".inventory-item");
+[% END %]
 
 createItemMenus();
 
@@ -91,7 +97,7 @@ createItemMenus();
 
 <div style="float: left; margin-left: 10px">
 
-<b>Inventory</b> <span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>
+<b>Inventory</b> [% IF item_change_allowed %]<span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>[% END %]
 
 <div id="inventory-outer">
 [% create_grid('inventory', items_in_grid, 8, 8, in_shop) %]

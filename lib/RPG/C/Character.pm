@@ -183,6 +183,7 @@ sub equipment_tab : Local {
 					items_in_grid                 => $items_in_grid,
 					party                         => $c->stash->{party},
 					in_shop                       => $in_shop,
+					item_change_allowed           => $character->item_change_allowed,
 				}
 			}
 		]

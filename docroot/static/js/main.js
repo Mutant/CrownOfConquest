@@ -1538,5 +1538,7 @@ function loadShopTab(shopId, tab) {
 
 function loadCharShopInventory(charId) {	
 	$( '#char-shop-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
-	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });		
+	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
+	$('.char-shop-link').removeClass('current-selection');
+	$('#char-shop-link-'+charId).addClass('current-selection');
 }

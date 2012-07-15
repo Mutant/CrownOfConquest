@@ -34,9 +34,9 @@
 	});	
 </script>
 
-<div align="center" stlye="margin-top: 2px">
+<div align="center" style="margin-top: 5px; margin-bottom: 5px">
 [% FOREACH char IN characters %]
-<a href="javascript:loadCharShopInventory('[% char.id %]')"><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0" title="[% char.name %]"></a>
+<span id="char-shop-link-[% char.id %]" class="char-shop-link"><a href="javascript:loadCharShopInventory('[% char.id %]')">[% char.name %]</a></span>
 [% END %]
 </div>
 

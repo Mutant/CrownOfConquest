@@ -316,7 +316,7 @@ h1 {margin: 0; padding: 1px}
 	height: 5px;
 }
 
-#current-selection {
+#current-selection, .current-selection {
 	background: #5F5F5F;
 }
 

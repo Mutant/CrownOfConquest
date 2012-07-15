@@ -1084,8 +1084,8 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 		
 	if (item.hasClass('inventory-item')) {
 		$.post(urlBase + 'character/equip_item', params, function(data) {
-			loadCharStats(data.char_id);
-			data.char_id = charId;			
+			data.char_id = charId;
+			loadCharStats(data.char_id);						
 			equipItemCallback(data);
 		}, 'json');
 	}

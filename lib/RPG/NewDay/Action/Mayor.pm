@@ -36,6 +36,8 @@ sub run {
 	    }
 	}
 	
+	$c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0 } );
+	
 	die join "\n", @errors if @errors;	
 }
 

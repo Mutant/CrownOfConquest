@@ -19,8 +19,8 @@ foreach my $shop (@shops) {
     next if defined $shop_id && $shop_id != $shop->id;
     warn "Processing shop: " . $shop->id;
     
-    for my $x (1..8) {
-        for my $y (1..12) {
+    for my $x (1..12) {
+        for my $y (1..8) {
             my $sector = $schema->resultset('Item_Grid')->find_or_create(
                 {
                     owner_id => $shop->id,

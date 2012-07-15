@@ -27,7 +27,7 @@ UPDATE `Item_Type` set height = 2 where item_type = 'War Hammer';
 UPDATE `Item_Type` set height = 3 where item_type = 'Long Bow';
 UPDATE `Item_Type` set height = 2, width = 2 where item_type = 'Scale Mail';
 UPDATE `Item_Type` set height = 2, width = 2 where item_type = 'Full Plate Mail';
-UPDATE `Item_Type` set width = 2 where item_type = 'Medium Steel Shield';
+UPDATE `Item_Type` set height = 2 where item_type = 'Medium Steel Shield';
 UPDATE `Item_Type` set height = 2, width = 2 where item_type = 'Large Steel Shield';
 UPDATE `Item_Type` set height = 2 where item_type = 'Mallet';
 UPDATE `Item_Type` set height = 2 where item_type = 'Pickaxe';

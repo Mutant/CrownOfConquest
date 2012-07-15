@@ -32,6 +32,7 @@ sub organise_items {
     );
         
     foreach my $item (@items) {
+        #warn "item: " . $item->id;
         my @coords = sort by_coord keys %sectors;   
         COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
@@ -43,14 +44,18 @@ sub organise_items {
             my $start_sector = $sectors{$coord};
             
             my @sectors_to_use;
-            for my $y ($start_y..$end_y) {
-                for my $x ($start_x..$end_x) {                
+            for my $x ($start_x..$end_x) {
+                for my $y ($start_y..$end_y) {
                      if (! $sectors{"$x,$y"}) {                         
                          next COORD;
                      }
                      push @sectors_to_use, $sectors{"$x,$y"};                     
                 }
             }
+            
+            #warn scalar @sectors_to_use . ' < ' . ($item->item_type->width * $item->item_type->height);
+            
+            next if scalar @sectors_to_use < ($item->item_type->width * $item->item_type->height);
             
             foreach my $sector (@sectors_to_use) {
                 $sector->item_id($item->id);

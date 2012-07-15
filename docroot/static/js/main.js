@@ -1012,8 +1012,11 @@ function dropItem(item, hoverSector, charId, quantity) {
 			params.quantity = quantity;
 			url = 'shop/buy_quantity_item';
 		}
-	
+			
 		getPanels(url + '?' + $.param(params));
+		
+		item.removeClass('shop-item');
+		item.addClass('inventory-item');
 	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);

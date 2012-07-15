@@ -214,6 +214,8 @@ sub buy_item : Local {
 			prefetch => 'item_type',
 		}
 	);
+	
+	croak "Can't buy quantity item" if $item->is_quantity;
 
 	my $party = $c->stash->{party};
 
@@ -233,7 +235,7 @@ sub buy_item : Local {
 		return;
 	}
 	
-	$cost = $item->sell_price( $item->in_shop, 0 );	
+    $cost = $item->sell_price( $item->in_shop, 0 );
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
@@ -274,30 +276,27 @@ sub buy_item : Local {
     $c->forward( '/panel/refresh', ['party_status'] );
 }
 
-# TODO: fair bit of duplication between this and buy_item
 sub buy_quantity_item : Local {
 	my ( $self, $c ) = @_;
 
 	my $party = $c->stash->{party};
 
-	# Make sure the shop they're in checks out
-	my $shop = $c->model('DBIC::Shop')->find(
+    my $item = $c->model('DBIC::Items')->find(
+ 		{
+			item_id => $c->req->param('item_id'),
+ 		},
 		{
-			shop_id => $c->req->param('shop_id'),
-		},
-	);
-
-	croak  "Invalid shop" unless $shop;
-
-	my $item = $c->model('DBIC::Items')->find( 
-	   { 
-	       item_id => $c->req->param('item_id'),
-	       shop_id => $c->req->param('shop_id'), 
-	   }
-	);
-	
-	croak "Invalid item" unless $item;
-
+			prefetch => 'item_type',
+		}
+ 	);
+ 	
+ 	croak "Not quantity item" unless $item->is_quantity;
+ 	
+    croak "No quantity supplied" if ! $c->req->param('quantity');
+    
+    my $shop = $item->in_shop;
+	my $town = $shop->in_town;    
+ 
 	# Make sure the shop they're in is in the town they're in
 	if ( $shop->town_id != 0 && $shop->town_id != $party->location->town->id ) {
 		croak "Attempting to buy an item in another town";
@@ -334,7 +333,7 @@ sub buy_quantity_item : Local {
     my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
 
 	$new_item->variable( 'Quantity', $c->req->param('quantity') );
-	$new_item->add_to_characters_inventory($character);
+	my $stacked_on_item = $new_item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
@@ -343,24 +342,29 @@ sub buy_quantity_item : Local {
 	my $new_shop_quantity = $item->variable( 'Quantity' ) - $c->req->param('quantity');
 	$item->variable( 'Quantity', $new_shop_quantity );
 	if ($new_shop_quantity <= 0) {
+	    $shop->remove_item_from_grid($item);
 	    $item->delete;
 	}
-	
+		
     $c->stash->{panel_callbacks} = [
     	{
         	name => 'quantityPurchase',
         	data => {
-        	    item_id => $item->id,
-        	    quantity => $new_shop_quantity,
+        	    shop_item => {
+        	       item_id => $item->id,
+        	       quantity => $new_shop_quantity,
+        	    },
+                item_stacked => defined $new_item->character_id ? 0 : 1,
+                inv_item => $new_item->id,
+                stacked_on_item => $stacked_on_item->id,
         	},
     	}
     ];	
-	 
-   
-    $c->forward( '/panel/refresh', ['party_status'] );
+	
 
+    $c->forward( '/panel/refresh', ['party_status'] );       
 }
-
+ 
 sub sell_item : Local {
 	my ( $self, $c ) = @_;
 

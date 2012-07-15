@@ -1,4 +1,27 @@
 [% PROCESS equipment/grid.html %]
+[% PROCESS layout/diag_buttons.html %]
+
+<div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="dropQuantityItem(arguments[0]);">
+    <span id="quantity-selection-message"></span>
+    <input id="quantity-spinner" type="text"
+        dojoType="dijit.form.NumberTextBox"
+        name= "quantity"
+        value="1"
+        constraints="{min:1,max:1000,places:0}"
+        promptMessage= "Enter a value between 1 and 1000"
+        required= "true"
+        invalidMessage= "Invalid quantity."
+		style="width: 80px"
+        />
+    <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="quantity-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="quantity-item-sector" name="purchasing_item_sector" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+	<br>
+	<div align="center">
+    	<button dojoType=dijit.form.Button type="submit">OK</button>
+    	<button dojoType=dijit.form.Button onclick="returnItem(dojo.byId('quantity-item-id').value); hideDiag('quantity-selection'); return false;">Cancel</button>
+    </div>
+</div>
 
 <h1>[% shop.shop_name %]</h1>
 
@@ -28,6 +51,8 @@ Shops in [% town.town_name %]:
 	$( ".shop-item" ).draggable({
 		revert: "invalid",
 	});
+	
+	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper' , 'clone');
 	
 	$( ".shop" ).droppable({
 		accept: ".inventory-item",

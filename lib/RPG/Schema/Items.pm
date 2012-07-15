@@ -754,7 +754,7 @@ sub add_to_characters_inventory {
             # Don't delete this item, just don't add it to inventory
             $self->character_id(undef);
             $self->update;
-            return;             
+            return $item;             
         }   
     }
 

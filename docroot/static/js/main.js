@@ -950,8 +950,22 @@ function dragItemOut(event, ui, hoverSector) {
 	}
 }
 
-function dropItem(event, ui, hoverSector, charId) {
+function dropItemOnGrid(event, ui, hoverSector, charId) {
 	var item = ui.draggable;
+	
+	dropItem(item, hoverSector, charId);
+}
+
+function dropQuantityItem(params) {
+	var item = $('#item-'+params.purchasing_item_id);
+	
+	var newItem = $(item).clone();
+	newItem.attr('id', 'item-quantity-new');
+	var hoverSector = $('#'+params.purchasing_item_sector);
+	dropItem(newItem, hoverSector, params.purchasing_char_id, params.quantity);
+}
+
+function dropItem(item, hoverSector, charId, quantity) {
 		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
@@ -970,14 +984,21 @@ function dropItem(event, ui, hoverSector, charId) {
 		return;
 	}
 	
+	var params = { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y };
+	
 	if (item.hasClass('inventory-item')) {	
-		$.post(urlBase + 'character/move_item', { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y }, function(data) {
+		$.post(urlBase + 'character/move_item', params, function(data) {
 			loadCharStats(charId);
 		});
 	}
-	else {	
-		getPanels('shop/buy_item?item_id=' + item.attr('itemId') + '&character_id=' + charId 
-			+ '&grid_x=' + currentCoord.x + '&grid_y=' + currentCoord.y);
+	else {		
+		var url = 'shop/buy_item';
+		if (typeof quantity !== 'undefined') {
+			params.quantity = quantity;
+			url = 'shop/buy_quantity_item';
+		}
+	
+		getPanels(url + '?' + $.param(params));
 	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
@@ -1042,9 +1063,7 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	slot.html('');
 			
 	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
-	
-	console.log(params);
-	
+		
 	if (item.hasClass('inventory-item')) {
 		$.post(urlBase + 'character/equip_item', params, function(data) {
 			loadCharStats(data.char_id);
@@ -1057,8 +1076,7 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	}
 }
 
-function equipItemCallback(data) {	
-	console.log(data);
+function equipItemCallback(data) {
 	if (data.extra_items) {		
 		for (var i = 0; i < data.extra_items.length; i++) {
 			var extraItemData = data.extra_items[i];
@@ -1170,6 +1188,55 @@ function removeFromGrid(itemId,deleteItem) {
 	}
 }
 
+function returnItem(itemId) {
+	var item = $( '#item-' + itemId );
+	
+	var origLoc = item.parent();
+
+	$(item).detach().css({top: 0,left: 0}).appendTo(origLoc);
+}
+
+function quantityPurchaseCallback(data) {
+	if ( data.shop_item.quantity <= 0 ) {
+		removeFromGrid(data.shop_item.item_id, true);
+	}
+	
+	if (data.item_stacked == '1') {
+		removeFromGrid('quantity-new', true);
+		
+		var stackedOnItem = $( '#item-' + data.stacked_on_item );
+		stackedOnItem.attr('rel', stackedOnItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + stackedOnItem.attr('id'));		
+		
+	}
+	else {	
+		var item = $( '#item-quantity-new' );
+		
+		item.attr('itemId', data.inv_item);
+		item.attr('id', 'item-' + data.inv_item);
+		item.attr('onmouseover', "saveCurrentItemId('" + data.inv_item + "');");
+	
+		item.attr('rel', urlBase + 'item/tooltip?item_id=' + data.inv_item);
+		setupItemTooltips('#' + item.attr('id'));		
+		 
+		var loc = item.parent();
+		var coord = {
+			x: parseInt(loc.attr('sectorX')),
+			y: parseInt(loc.attr('sectorY')),	
+		}		
+		
+		var sectors = findDropSectors(coord, item, 'inventory');
+		
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', data.inv_item.item_id);
+		}
+	}
+	
+	var shopItem = $( '#item-' + data.shop_item.item_id );
+	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+	setupItemTooltips('#' + shopItem.attr('id'));
+}
+
 /* Character Inventory */
 
 function organiseInventory(charId) {
@@ -1182,12 +1249,23 @@ function organiseInventory(charId) {
 function setupInventory(charId) {
 	$( ".inventory-item" ).draggable({
 		revert: "invalid",
-	});
+	});	
 	
 	$( ".inventory" ).droppable({
 		accept: ".inventory-item, .shop-item",
 		drop: function( event, ui ) {
-			dropItem(event, ui, $(this), charId);
+			var item = ui.draggable;
+		
+			if (item.hasClass('shop-item') && item.attr('isQuantity') == 1) {
+				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to buy?";
+				dojo.byId('quantity-char-id').value = charId;
+				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-item-sector').value = $(this).attr('id');
+				dijit.byId('quantity-selection').show();
+			}
+			else {
+				dropItemOnGrid(event, ui, $(this), charId);
+			}
 		},
 				
 		over: function(event, ui) {

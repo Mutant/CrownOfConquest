@@ -36,8 +36,8 @@ sub organise_items {
         COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
             
-            my $end_x = $start_x + $item->item_type->width - 1;
-            my $end_y = $start_y + $item->item_type->height  - 1;
+            my $end_x = $start_x + $item->item_type->width  - 1;
+            my $end_y = $start_y + $item->item_type->height - 1;
             
             #warn "$start_x, $start_y; $end_x, $end_y";
             my $start_sector = $sectors{$coord};

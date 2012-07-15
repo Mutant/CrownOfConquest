@@ -13,6 +13,7 @@
         invalidMessage= "Invalid quantity."
 		style="width: 80px"
         />
+    <input id="quantity-shop-id" name="purchasing_shop_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-sector" name="purchasing_item_sector" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
@@ -52,16 +53,27 @@ Shops in [% town.town_name %]:
 		revert: "invalid",
 	});
 	
-	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper' , 'clone');
+	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
 	
 	$( ".shop" ).droppable({
 		accept: ".inventory-item",
 		drop: function( event, ui ) {
-			sellItem(event, ui, $(this), '[% shop.id %]');
+			var item = ui.draggable;
+		
+			if (item.attr('isQuantity') == 1) {
+				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to sell?";
+				dojo.byId('quantity-shop-id').value = '[% shop.id %]';
+				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-item-sector').value = $(this).attr('id');
+				dijit.byId('quantity-selection').show();
+			}
+			else {
+				sellItemEvent(event, ui,  $(this), '[% shop.id %]');
+			}	
 		},
 				
 		over: function(event, ui) {
-			dragItemOver(event, ui, $(this));
+			dragItemOver(event, ui, $(this), true);
 		},
 		
 		out: function(event, ui) {

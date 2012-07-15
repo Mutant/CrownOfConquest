@@ -142,7 +142,7 @@ sub stats : Local {
 }
 
 sub equipment_tab : Local {
-	my ( $self, $c ) = @_;
+	my ( $self, $c, $in_shop ) = @_;
 
 	my $character = $c->stash->{character};
 
@@ -182,6 +182,7 @@ sub equipment_tab : Local {
 					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
 					items_in_grid                 => $items_in_grid,
 					party                         => $c->stash->{party},
+					in_shop                       => $in_shop,
 				}
 			}
 		]

@@ -911,7 +911,7 @@ function findDropSectors(coord, item, gridIdPrefix) {
 var over;
 var grid;
 
-function dragItemOver(event, ui, hoverSector) {
+function dragItemOver(event, ui, hoverSector, dropAlwaysAllowed) {
 	var item = ui.draggable;
 			
 	var currentCoord = {
@@ -934,7 +934,7 @@ function dragItemOver(event, ui, hoverSector) {
 		
 	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
 	
-	var canDrop = canDropOnSectors(sectors, item);
+	var canDrop = dropAlwaysAllowed ? true : canDropOnSectors(sectors, item);
 	
 	for (var i = 0; i < sectors.length; i++) {		
 		sectors[i].addClass(canDrop ? 'item-droppable' : 'item-blocked');
@@ -967,8 +967,16 @@ function dropQuantityItem(params) {
 	
 	var newItem = $(item).clone();
 	newItem.attr('id', 'item-quantity-new');
-	var hoverSector = $('#'+params.purchasing_item_sector);
-	dropItem(newItem, hoverSector, params.purchasing_char_id, params.quantity);
+	var hoverSector = $('#'+params.purchasing_item_sector);	
+	
+	if (newItem.hasClass('shop-item')) {		
+		dropItem(newItem, hoverSector, params.purchasing_char_id, params.quantity);
+	}
+	else {
+		sellItem(newItem, params.purchasing_shop_id, hoverSector, params.quantity);
+		item.attr('rel', item.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + item.attr('id'));
+	}
 }
 
 function dropItem(item, hoverSector, charId, quantity) {
@@ -1212,10 +1220,12 @@ function organiseInventory(charId) {
 	});
 }
 
-function setupInventory(charId) {
+function setupInventory(charId, inShop) {
 	$( ".inventory-item" ).draggable({
 		revert: "invalid",
-	});	
+	});
+	
+	$( ".inventory-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
 	
 	$( ".inventory" ).droppable({
 		accept: ".inventory-item, .shop-item",
@@ -1388,24 +1398,27 @@ function split_item_submit(arguments) {
 
 /* Shop */
 
-function sellItem(event, ui, hoverSector, shopId) {
+function sellItemEvent(event, ui, hoverSector, shopId) {
 	var item = ui.draggable;
 	
+	sellItem(item, shopId, hoverSector);
+	
+	removeFromGrid(item.attr('itemId'), true);	
+}
+
+function sellItem(item, shopId, hoverSector, quantity) {
 	var coord = {
 		x: parseInt(hoverSector.attr('sectorX')),
 		y: parseInt(hoverSector.attr('sectorY')),			
 	};
 	
-	clearDropSectors(coord, item, 'shop');		
-	
-	removeFromGrid(item.attr('itemId'), true);
-	
-	var params = { shop_id: shopId, item_id: item.attr('itemId') };
-	getPanels('shop/sell_item?' + $.param(params) );
+	clearDropSectors(coord, item, 'shop');
+
+	var params = { shop_id: shopId, item_id: item.attr('itemId'), quantity: quantity };
+	getPanels('shop/sell_item?' + $.param(params) );	
 }
 
 function sellCallback(data) {
-
 	if (data.messages) {
 		var messages = data.messages;
 		var message = "";
@@ -1418,6 +1431,16 @@ function sellCallback(data) {
 			dojo.byId('message-text').innerHTML = message;
 			dijit.byId('message-diag').show();
 		}
+	}
+	
+	if (data.remove_item) {
+		removeFromGrid(data.remove_item, true);
+	}
+	
+	if (data.existing_shop_quantity_item) {
+		var existingQuan = $( '#item-' + data.existing_shop_quantity_item );
+		existingQuan.attr('rel', existingQuan.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + existingQuan.attr('id'));		
 	}
 }
 

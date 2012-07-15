@@ -60,7 +60,7 @@ function addCommonMenuItems(menu) {
 	menu.addChild(dropItem);	
 }
 
-setupInventory('[% character.id %]');
+setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
 
 createItemMenus();
 

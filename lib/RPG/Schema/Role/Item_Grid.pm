@@ -10,12 +10,14 @@ sub organise_items_in_tabs {
     my $width = shift;
     my $height = shift;
     my @items = @_;
+    
+    $self->item_sectors->delete;
    
     my $max_tab;
     for my $tab (1..10) {
         for my $x (1..$width) {
             for my $y (1..$height) {
-                my $sector = $self->result_source->schema->resultset('Item_Grid')->find_or_create(
+                my $sector = $self->result_source->schema->resultset('Item_Grid')->create(
                     {
                         owner_id => $self->id,
                         owner_type => $owner_type,
@@ -33,12 +35,6 @@ sub organise_items_in_tabs {
         
         last unless @items;
     }
-    
-    $self->search_related('item_sectors',
-        {
-            tab => {'>', $max_tab},
-        }
-    )->delete;
     
     warn scalar @items . " items remaining when organising into tabs" if @items;
 }
@@ -66,11 +62,12 @@ sub organise_items_impl {
     my $tab = shift;
     my @items = @_;
     
-    $self->item_sectors->update(
+    #warn "tab: $tab";
+    
+    $self->search_related('item_sectors', { tab => $tab })->update(
         {
             start_sector => undef,
             item_id => undef,
-            tab => $tab,
         }
     );    
     
@@ -80,13 +77,13 @@ sub organise_items_impl {
     foreach my $sector (@sectors) {
         $sectors{$sector->x . "," . $sector->y} = $sector;   
     }
-    
-    my @coords = sort by_coord keys %sectors;
-    
+        
     my @remaining_items;
         
     while (my $item = shift @items) {
         #warn "item: " . $item->id;
+        
+        my @coords = sort by_coord keys %sectors;
         
         my $placed = 0;
         

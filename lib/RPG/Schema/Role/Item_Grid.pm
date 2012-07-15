@@ -9,17 +9,8 @@ sub organise_items_in_tabs {
     my $owner_type = shift;
     my $width = shift;
     my $height = shift;
-    
-    my @items = $self->search_related('items',
-        {
-            'equip_place_id' => undef,
-        },
-        {
-            prefetch => {'item_type' => 'category'},
-            order_by => 'category.item_category, me.item_id',            
-        }
-    );
-    
+    my @items = @_;
+   
     my $max_tab;
     for my $tab (1..10) {
         for my $x (1..$width) {
@@ -54,15 +45,7 @@ sub organise_items_in_tabs {
 
 sub organise_items {
     my $self = shift;
-    
-    $self->item_sectors->update(
-        {
-            start_sector => undef,
-            item_id => undef,
-            tab => 1,
-        }
-    );
-  
+ 
     my @items = $self->search_related('items',
         {
             'equip_place_id' => undef,
@@ -82,6 +65,14 @@ sub organise_items_impl {
     my $self = shift;
     my $tab = shift;
     my @items = @_;
+    
+    $self->item_sectors->update(
+        {
+            start_sector => undef,
+            item_id => undef,
+            tab => $tab,
+        }
+    );    
     
     my @sectors = $self->search_related('item_sectors', { tab => $tab });
     my %sectors;

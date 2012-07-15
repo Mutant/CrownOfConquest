@@ -19,6 +19,6 @@ foreach my $shop (@shops) {
     next if defined $shop_id && $shop_id != $shop->id;
     warn "Processing shop: " . $shop->id;
     
-    $shop->organise_items_in_tabs('shop', 12, 8);
+    $shop->organise;
        
 }

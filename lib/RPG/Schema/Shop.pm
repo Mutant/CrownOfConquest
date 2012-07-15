@@ -89,6 +89,33 @@ __PACKAGE__->belongs_to(
 
 with qw/RPG::Schema::Role::Item_Grid/;
 
+sub organise {
+    my $self = shift;
+    
+    my @items = $self->search_related('items',
+        {
+            'equip_place_id' => undef,
+        },
+        {
+            prefetch => {'item_type' => 'category'},
+            order_by => 'category.item_category, me.item_id',            
+        }
+    );
+        
+    my @organised;
+    my @special;
+    foreach my $item (@items) {
+        if (! $item->enchantments_count && ! $item->upgraded) {
+            push @organised, $item;
+        }
+        else {
+            push @special, $item;
+        }
+    }
+    
+    $self->organise_items_in_tabs('shop', 12, 8, @organised, @special);
+}
+
 sub grouped_items_in_shop {
 	my $self = shift;
 	

@@ -227,7 +227,7 @@ sub find_location_for_item {
                 tab => $tab,
             },
             {
-                order_by => 'x,y',
+                order_by => 'y,x',
             },
         );
         

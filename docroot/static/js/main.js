@@ -1381,7 +1381,7 @@ function split_item_submit(arguments) {
         	var item = $( '#item-' + itemId );        
         	var newItem = item.clone(true);
         	newItem.attr('id', 'item-' + responseObject.item_id);
-        	newItem.attr('itemId',responseObject.item_id);
+        	newItem.attr('itemId',responseObject.item_id);        	
         
     		var origCoord = {
 				x: parseInt(responseObject.new_x),
@@ -1395,6 +1395,12 @@ function split_item_submit(arguments) {
 			for (var i = 0; i < sectors.length; i++) {
 				sectors[i].attr('hasItem', newItem.attr("itemId"));
 			}
+			
+			item.attr('rel', item.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+			setupItemTooltips('#' + item.attr('id'));
+			
+			newItem.attr('rel', urlBase + 'item/tooltip?item_id=' + responseObject.item_id);
+			setupItemTooltips('#' + newItem.attr('id'));
         }
     });	 	
 }

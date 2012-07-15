@@ -35,7 +35,9 @@ sub tooltip : Local {
     $item_category_file_name =~ s/ /_/g;
     
     $template = $item_category_file_name if -e $c->config->{root} . '/' . $item_category_file_name;
-
+    
+    my $quantity = $item->is_quantity;
+        
     my $res = $c->forward(
         'RPG::V::TT',
         [
@@ -44,6 +46,10 @@ sub tooltip : Local {
                 params   => {
                     item      => $item,
                     item_type => $item_type,
+                    buy_price => $item->shop_id && ! $quantity ? $item->sell_price($item->in_shop, 0) : undef,
+                    quantity_buy_price => $item->shop_id && $quantity ? $item->sell_price($item->in_shop, 0, undef, 1) : undef,
+                    sell_price => $c->req->param('in_shop') && ! $quantity ? $item->sell_price($item->in_shop) : undef,
+                    quantity_sell_price => $c->req->param('in_shop') && $quantity ? $item->sell_price($item->in_shop, undef, undef, 1) : undef,
                 },
                 return_output => $return_res,
             }

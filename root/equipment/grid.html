@@ -1,4 +1,4 @@
-[% MACRO make_grid(class, items_in_grid, width, height) BLOCK %]
+[% MACRO make_grid(class, items_in_grid, width, height, in_shop) BLOCK %]
 	[% x = 0 %]
 	[% y = 0 %]
 	[% blocked = {} %]
@@ -26,7 +26,7 @@
 				style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center"
 				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]">		
 				[% IF item %]
-					[% item_div(class, item) %]
+					[% item_div(class, item, in_shop) %]
 				[% END %]			
 			</div>
 			
@@ -43,12 +43,12 @@
 		style="z-index: 100;
 			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
 			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image %]') center center no-repeat;"
-			onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]">		
+			onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]&in_shop=[% in_shop %]">		
 	</div>	
 [% END %]
 
-[% MACRO create_grid(grid_type, items_in_gird, height, width) BLOCK %]
+[% MACRO create_grid(grid_type, items_in_grid, height, width, in_shop) BLOCK %]
 	<div id="[% grid_type %]-grid">
-		[% make_grid(grid_type, items_in_grid, height, width) %]
+		[% make_grid(grid_type, items_in_grid, height, width, in_shop) %]
 	</div>
 [% END %]

@@ -6,7 +6,7 @@
 		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]"
 		slotName="[% slot_orig %]">
 		[% IF item %]
-			[% item_div("inventory", item) %]
+			[% item_div("inventory", item, in_shop) %]
 		[% ELSE %]
 			[% slot_orig %]
 		[% END %]
@@ -94,7 +94,7 @@ createItemMenus();
 <b>Inventory</b> <span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>
 
 <div id="inventory-outer">
-[% create_grid('inventory', items_in_grid, 8, 8) %]
+[% create_grid('inventory', items_in_grid, 8, 8, in_shop) %]
 </div>
 
 </div>

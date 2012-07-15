@@ -24,73 +24,14 @@
     </div>
 </div>
 
-<h1>[% shop.shop_name %]</h1>
-
-Shops in [% town.town_name %]: 
-[% FOREACH other_shop IN shops_in_town %]
-	[% IF shop.id == other_shop.id %]
-		<span id="current-selection">[% other_shop.shop_name %]</span>
-	[% ELSE %]
-		<a href="javascript:loadScreen('shop/purchase?shop_id=[% other_shop.id %]')">[% other_shop.shop_name %]</a>
-	[% END %]
-	&nbsp;
-[% END %]
-<br><br>
-
-[% IF shop.status == 'Open' %]
-	[% shop.shop_owner_name %] welcomes you to his humble store. "I hope you find what you're looking for!"
-[% ELSIF shop.status == 'Opening' %]
-	[% shop.shop_owner_name %] greets you. "My brand new shop is only just opening! Come back soon for a fine selection of equipment"
-[% ELSIF shop.status == 'Closed' %]
-	There doesn't seem to be anyone here. The shop appears to be closed.
-[% ELSIF shop.status == 'Closing' %]
-	You notice a sign on the wall: "[% shop.shop_owner_name %] regrets to inform you that his shop will soon be closing down due to 
-	a downturn in the local economy. He'd like to thank all his loyal customers from years gone by".
-[% END %]
+[% INCLUDE shop/header.html %]
 
 <script>
-	$( ".shop-item" ).draggable({
-		revert: "invalid",
-	});
-	
-	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
-	
-	$( ".shop" ).droppable({
-		accept: ".inventory-item",
-		drop: function( event, ui ) {
-			var item = ui.draggable;
-		
-			if (item.attr('isQuantity') == 1) {
-				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to sell?";
-				dojo.byId('quantity-shop-id').value = '[% shop.id %]';
-				dojo.byId('quantity-item-id').value = item.attr('itemId');
-				dojo.byId('quantity-item-sector').value = $(this).attr('id');
-				dijit.byId('quantity-selection').show();
-			}
-			else {
-				sellItemEvent(event, ui,  $(this), '[% shop.id %]');
-			}	
-		},
-				
-		over: function(event, ui) {
-			dragItemOver(event, ui, $(this), true);
-		},
-		
-		out: function(event, ui) {
-			dragItemOut(event, ui, $(this));
-		}		
-	});
-	
-	function loadCharShopInventory(charId) {	
-		$( '#char-shop-inventory').html('<img src="[% base %]static/images/layout/loader.gif">');
-		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });		
-	}
-	
 	$(function() {
 		loadCharShopInventory('[% characters.0.id %]');
+		setupShop('[% shop.id %]');
 		setupItemTooltips('.shop-item');
-	});
-	
+	});	
 </script>
 
 <div align="center" stlye="margin-top: 2px">
@@ -109,6 +50,12 @@ Shops in [% town.town_name %]:
 <div style="float: left;">
 <b>Items For Sale</b>
 
-
+[% IF max_tab > 1 %]
+	[% tab = 1 %]
+	[% WHILE tab <= max_tab %]
+		<a href="javascript:loadShopTab('[% shop.id %]','[% tab %]')">[% tab %]</a>&nbsp;
+		[% tab = tab + 1 %]
+	[% END %]
+[% END %]
 [% create_grid('shop', items_in_grid, 12, 8 ) %]
 </div>

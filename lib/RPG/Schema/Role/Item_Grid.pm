@@ -2,24 +2,13 @@ package RPG::Schema::Role::Item_Grid;
 
 use Moose::Role;
 
-requires qw/item_sectors search_related/;
+requires qw/item_sectors search_related id result_source/;
 
-sub organise_items {
+sub organise_items_in_tabs {
     my $self = shift;
-    
-    $self->item_sectors->update(
-        {
-            start_sector => undef,
-            item_id => undef,
-        }
-    );      
-    
-    my @sectors = $self->item_sectors;
-    my %sectors;
-    
-    foreach my $sector (@sectors) {
-        $sectors{$sector->x . "," . $sector->y} = $sector;   
-    }
+    my $owner_type = shift;
+    my $width = shift;
+    my $height = shift;
     
     my @items = $self->search_related('items',
         {
@@ -30,10 +19,86 @@ sub organise_items {
             order_by => 'category.item_category, me.item_id',            
         }
     );
+    
+    my $max_tab;
+    for my $tab (1..10) {
+        for my $x (1..$width) {
+            for my $y (1..$height) {
+                my $sector = $self->result_source->schema->resultset('Item_Grid')->find_or_create(
+                    {
+                        owner_id => $self->id,
+                        owner_type => $owner_type,
+                        x => $x,
+                        y => $y,
+                        tab => $tab,
+                    }
+                );
+            }
+        }
         
-    foreach my $item (@items) {
+        @items = $self->organise_items_impl($tab, @items);
+        
+        $max_tab = $tab;
+        
+        last unless @items;
+    }
+    
+    $self->search_related('item_sectors',
+        {
+            tab => {'>', $max_tab},
+        }
+    )->delete;
+    
+    warn scalar @items . " items remaining when organising into tabs" if @items;
+}
+
+sub organise_items {
+    my $self = shift;
+    
+    $self->item_sectors->update(
+        {
+            start_sector => undef,
+            item_id => undef,
+            tab => 1,
+        }
+    );
+  
+    my @items = $self->search_related('items',
+        {
+            'equip_place_id' => undef,
+        },
+        {
+            prefetch => {'item_type' => 'category'},
+            order_by => 'category.item_category, me.item_id',            
+        }
+    );
+    
+    my @remaining = $self->organise_items_impl(1, @items);
+    
+    warn scalar @remaining . " items remaining when organising into tabs" if @remaining; 
+}
+
+sub organise_items_impl {
+    my $self = shift;
+    my $tab = shift;
+    my @items = @_;
+    
+    my @sectors = $self->search_related('item_sectors', { tab => $tab });
+    my %sectors;
+    
+    foreach my $sector (@sectors) {
+        $sectors{$sector->x . "," . $sector->y} = $sector;   
+    }
+    
+    my @coords = sort by_coord keys %sectors;
+    
+    my @remaining_items;
+        
+    while (my $item = shift @items) {
         #warn "item: " . $item->id;
-        my @coords = sort by_coord keys %sectors;   
+        
+        my $placed = 0;
+        
         COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
             
@@ -66,11 +131,15 @@ sub organise_items {
             $start_sector->start_sector(1);
             $start_sector->update;
             
+            $placed = 1;
+            
             last;
-        }    
+        }
         
-        # TODO: add to next tab
-    }       
+        push @remaining_items, $item if ! $placed;
+    }
+    
+    return @remaining_items;
 }
 
 sub by_coord($$) {
@@ -85,11 +154,13 @@ sub by_coord($$) {
 
 sub items_in_grid {
     my $self = shift;
+    my $tab = shift // 1;
     
     my @sectors = $self->search_related('item_sectors',
         {
             start_sector => 1,
             'me.item_id' => {'!=', undef},
+            'tab' => $tab,
         },
         {
             prefetch => {'item' => { 'item_type' => 'category' } },
@@ -121,11 +192,13 @@ sub add_item_to_grid {
     my $self = shift;
     my $item = shift;
     my $start_coord = shift;
+    my $tab = shift // 1;
     
     confess "Can't add equipped item to grid" if $item->equipped;
     
     if (! $start_coord) {
-        $start_coord = $self->find_location_for_item($item);   
+        $start_coord = $self->find_location_for_item($item);
+        $tab = $start_coord->{tab};
     }
     
     confess "No start coords" if ! $start_coord || ! $start_coord->{x} || ! $start_coord->{y};
@@ -137,6 +210,7 @@ sub add_item_to_grid {
         {
             x => { '>=', $start_coord->{x}, '<=', $start_coord->{x} + $item->item_type->width  - 1, },
             y => { '>=', $start_coord->{y}, '<=', $start_coord->{y} + $item->item_type->height - 1, },
+            tab => $tab,
         }
     );
         
@@ -156,39 +230,60 @@ sub find_location_for_item {
     my $self = shift;
     my $item = shift;
     
-    my @sectors = $self->search_related('item_sectors',
-        {
-            item_id => undef,
-        },
-        {
-            order_by => 'x,y',
-        },
-    );
+    my $max_tab = $self->max_tab;
     
-    my $grid;
-    foreach my $sector (@sectors) {
-        $grid->{$sector->x}{$sector->y} = $sector;
-    }
-    
-    foreach my $sector (@sectors) {
-        my $sectors_found = 0;
+    for my $tab (1..$max_tab) {    
+        my @sectors = $self->search_related('item_sectors',
+            {
+                item_id => undef,
+                tab => $tab,
+            },
+            {
+                order_by => 'x,y',
+            },
+        );
         
-        #warn "startX " . $sector->x . "; endX" . $sector->x + $item->item_type->width - 1;
-        #warn "startY " . $sector->y . "; endY" . $sector->y + $item->item_type->height - 1;
+        my $grid;
+        foreach my $sector (@sectors) {
+            $grid->{$sector->x}{$sector->y} = $sector;
+        }
         
-        for my $x ($sector->x .. $sector->x + $item->item_type->width - 1) {
-            for my $y ($sector->y .. $sector->y + $item->item_type->height - 1) {
-                $sectors_found++ if $grid->{$x}{$y};   
+        foreach my $sector (@sectors) {
+            my $sectors_found = 0;
+            
+            #warn "startX " . $sector->x . "; endX" . $sector->x + $item->item_type->width - 1;
+            #warn "startY " . $sector->y . "; endY" . $sector->y + $item->item_type->height - 1;
+            
+            for my $x ($sector->x .. $sector->x + $item->item_type->width - 1) {
+                for my $y ($sector->y .. $sector->y + $item->item_type->height - 1) {
+                    $sectors_found++ if $grid->{$x}{$y};   
+                }
+            }
+            
+            if ($sectors_found >= ($item->item_type->width * $item->item_type->height)) {
+                return {
+                    x => $sector->x,
+                    y => $sector->y,
+                    tab => $tab,
+                }   
             }
         }
-        
-        if ($sectors_found >= ($item->item_type->width * $item->item_type->height)) {
-            return {
-                x => $sector->x,
-                y => $sector->y,
-            }   
-        }
     }
+}
+
+sub max_tab {
+    my $self = shift;
+    
+    my $max_tab = $self->find_related('item_sectors',
+        {},
+        {
+            'select' => { max => 'tab' },
+            'as'     => 'max_tab',
+        }
+    )->get_column('max_tab');
+    
+    return $max_tab;
+               
 }
 
 1;

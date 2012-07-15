@@ -12,7 +12,7 @@ use Carp;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Item_Grid');
 
-__PACKAGE__->add_columns(qw/item_grid_id owner_id owner_type item_id start_sector x y/);
+__PACKAGE__->add_columns(qw/item_grid_id owner_id owner_type item_id start_sector tab x y/);
 
 __PACKAGE__->set_primary_key(qw/item_grid_id/);
 

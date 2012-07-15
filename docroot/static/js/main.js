@@ -1401,6 +1401,40 @@ function split_item_submit(arguments) {
 
 /* Shop */
 
+function setupShop(shopId) {
+	$( ".shop-item" ).draggable({
+		revert: "invalid",
+	});
+	
+	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
+	
+	$( ".shop" ).droppable({
+		accept: ".inventory-item",
+		drop: function( event, ui ) {
+			var item = ui.draggable;
+		
+			if (item.attr('isQuantity') == 1) {
+				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to sell?";
+				dojo.byId('quantity-shop-id').value = shopId;
+				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-item-sector').value = $(this).attr('id');
+				dijit.byId('quantity-selection').show();
+			}
+			else {
+				sellItemEvent(event, ui,  $(this), shopId);
+			}	
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this), true);
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		}		
+	});
+}
+
 function sellItemEvent(event, ui, hoverSector, shopId) {
 	var item = ui.draggable;
 	
@@ -1486,4 +1520,17 @@ function quantityPurchaseCallback(data) {
 	var shopItem = $( '#item-' + data.shop_item.item_id );
 	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
 	setupItemTooltips('#' + shopItem.attr('id'));
+}
+
+function loadShopTab(shopId, tab) {
+	$.get(urlBase + 'shop/item_tab', { shop_id: shopId, tab: tab }, function(data) {
+		$( '#shop-grid' ).html(data);
+		setupShop(shopId);
+		setupItemTooltips('.shop-item');
+	});
+}
+
+function loadCharShopInventory(charId) {	
+	$( '#char-shop-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
+	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });		
 }

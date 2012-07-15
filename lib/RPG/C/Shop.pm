@@ -8,6 +8,7 @@ use Data::Dumper;
 use JSON;
 use Carp;
 use Set::Object qw(set);
+use Try::Tiny;
 
 sub purchase : Local {
 	my ( $self, $c ) = @_;
@@ -37,6 +38,8 @@ sub purchase : Local {
 	my @characters = $party->characters;
 	
 	my $items_in_grid = $shop->items_in_grid;
+	
+	my $max_tab = $shop->max_tab;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -49,6 +52,7 @@ sub purchase : Local {
 					shops_in_town => \@shops_in_town,
 					items_in_grid => $items_in_grid,
 					town          => $party->location->town,
+					max_tab       => $max_tab,
 				}
 			}
 		]
@@ -291,7 +295,13 @@ sub sell_item : Local {
             $shop_item->variable('Quantity', $shop_item->variable('Quantity') + $quantity_for_shop);
             $shop_item->update;
             $shop->remove_item_from_grid($shop_item);
-            $shop->add_item_to_grid($shop_item);
+            
+            try {
+                $shop->add_item_to_grid($shop_item);
+            }
+            catch {
+                $c->log->debug("Error when adding item to shop grid: $_");
+            };
             
             $existing_shop_quantity_item = $shop_item->id;
 	    } 
@@ -312,7 +322,12 @@ sub sell_item : Local {
 			
 			$item->shop_id( $shop->id );
 			$item->update;
-			$shop->add_item_to_grid($item);
+			try {
+                $shop->add_item_to_grid($item);
+            }
+            catch {
+                $c->log->debug("Error when adding item to shop grid: $_");
+            };
 		}
 		else {
 			$item->delete;
@@ -337,6 +352,33 @@ sub sell_item : Local {
 
 
     $c->forward( '/panel/refresh', ['party_status'] );    
+}
+
+sub item_tab : Local {
+	my ( $self, $c ) = @_;
+    
+	my $party = $c->stash->{party};
+
+	my @shops_in_town = $party->location->town->shops;
+
+	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
+	
+	croak "Shop closed" if $shop->status eq 'Closed' || $shop->status eq 'Opening';
+	
+	my $items_in_grid = $shop->items_in_grid($c->req->param('tab'));	
+
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'shop/item_tab.html',
+				params   => {
+					items_in_grid => $items_in_grid,
+				}
+			}
+		]
+	);	
+    
 }
 
 1;

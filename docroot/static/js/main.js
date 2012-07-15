@@ -909,6 +909,7 @@ function findDropSectors(coord, item, gridIdPrefix) {
 }
 
 var over;
+var grid;
 
 function dragItemOver(event, ui, hoverSector) {
 	var item = ui.draggable;
@@ -925,6 +926,11 @@ function dragItemOver(event, ui, hoverSector) {
 			
 	//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
 	over = currentCoord;
+	
+	if (typeof grid != 'undefined' && grid != hoverSector.attr('grid')) {
+		$('.'+grid).removeClass('item-droppable').removeClass('item-blocked');
+	}
+	grid = hoverSector.attr('grid');
 		
 	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
 	
@@ -947,7 +953,7 @@ function dragItemOut(event, ui, hoverSector) {
 		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
 		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
 		over = undefined;
-	}
+	}	
 }
 
 function dropItemOnGrid(event, ui, hoverSector, charId) {
@@ -966,6 +972,7 @@ function dropQuantityItem(params) {
 }
 
 function dropItem(item, hoverSector, charId, quantity) {
+	grid = undefined;
 		
 	var currentCoord = {
 		x: parseInt(hoverSector.attr('sectorX')),
@@ -1184,7 +1191,8 @@ function removeFromGrid(itemId,deleteItem) {
 	}
 	
 	if (deleteItem) {
-		item.remove();		
+		item.remove();
+		$(document).trigger('hideCluetip');
 	}
 }
 
@@ -1195,48 +1203,6 @@ function returnItem(itemId) {
 
 	$(item).detach().css({top: 0,left: 0}).appendTo(origLoc);
 }
-
-function quantityPurchaseCallback(data) {
-	if ( data.shop_item.quantity <= 0 ) {
-		removeFromGrid(data.shop_item.item_id, true);
-	}
-	
-	if (data.item_stacked == '1') {
-		removeFromGrid('quantity-new', true);
-		
-		var stackedOnItem = $( '#item-' + data.stacked_on_item );
-		stackedOnItem.attr('rel', stackedOnItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
-		setupItemTooltips('#' + stackedOnItem.attr('id'));		
-		
-	}
-	else {	
-		var item = $( '#item-quantity-new' );
-		
-		item.attr('itemId', data.inv_item);
-		item.attr('id', 'item-' + data.inv_item);
-		item.attr('onmouseover', "saveCurrentItemId('" + data.inv_item + "');");
-	
-		item.attr('rel', urlBase + 'item/tooltip?item_id=' + data.inv_item);
-		setupItemTooltips('#' + item.attr('id'));		
-		 
-		var loc = item.parent();
-		var coord = {
-			x: parseInt(loc.attr('sectorX')),
-			y: parseInt(loc.attr('sectorY')),	
-		}		
-		
-		var sectors = findDropSectors(coord, item, 'inventory');
-		
-		for (var i = 0; i < sectors.length; i++) {
-			sectors[i].attr('hasItem', data.inv_item.item_id);
-		}
-	}
-	
-	var shopItem = $( '#item-' + data.shop_item.item_id );
-	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
-	setupItemTooltips('#' + shopItem.attr('id'));
-}
-
 /* Character Inventory */
 
 function organiseInventory(charId) {
@@ -1418,4 +1384,80 @@ function split_item_submit(arguments) {
 			}
         }
     });	 	
+}
+
+/* Shop */
+
+function sellItem(event, ui, hoverSector, shopId) {
+	var item = ui.draggable;
+	
+	var coord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),			
+	};
+	
+	clearDropSectors(coord, item, 'shop');		
+	
+	removeFromGrid(item.attr('itemId'), true);
+	
+	var params = { shop_id: shopId, item_id: item.attr('itemId') };
+	getPanels('shop/sell_item?' + $.param(params) );
+}
+
+function sellCallback(data) {
+
+	if (data.messages) {
+		var messages = data.messages;
+		var message = "";
+		for ( var i in messages ) {
+			if (messages[i]) {
+				message += messages[i] + '<br>';
+			}
+		}
+		if (message) {
+			dojo.byId('message-text').innerHTML = message;
+			dijit.byId('message-diag').show();
+		}
+	}
+}
+
+function quantityPurchaseCallback(data) {
+	if ( data.shop_item.quantity <= 0 ) {
+		removeFromGrid(data.shop_item.item_id, true);
+	}
+	
+	if (data.item_stacked == '1') {
+		removeFromGrid('quantity-new', true);
+		
+		var stackedOnItem = $( '#item-' + data.stacked_on_item );
+		stackedOnItem.attr('rel', stackedOnItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + stackedOnItem.attr('id'));		
+		
+	}
+	else {	
+		var item = $( '#item-quantity-new' );
+		
+		item.attr('itemId', data.inv_item);
+		item.attr('id', 'item-' + data.inv_item);
+		item.attr('onmouseover', "saveCurrentItemId('" + data.inv_item + "');");
+	
+		item.attr('rel', urlBase + 'item/tooltip?item_id=' + data.inv_item);
+		setupItemTooltips('#' + item.attr('id'));		
+		 
+		var loc = item.parent();
+		var coord = {
+			x: parseInt(loc.attr('sectorX')),
+			y: parseInt(loc.attr('sectorY')),	
+		}		
+		
+		var sectors = findDropSectors(coord, item, 'inventory');
+		
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', data.inv_item.item_id);
+		}
+	}
+	
+	var shopItem = $( '#item-' + data.shop_item.item_id );
+	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+	setupItemTooltips('#' + shopItem.attr('id'));
 }

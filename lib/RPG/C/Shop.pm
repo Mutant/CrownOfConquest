@@ -371,80 +371,15 @@ sub sell_item : Local {
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => 'category' }, }, );
 	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
 	
-	my $original_char = $item->character_id;
-
-	if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
-		return;
-	}
-
-	my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
-
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'sell',
-        	data => {
-        	    char_id => $original_char,
-        	    messages => $messages,
-        	},
-    	}
-    ];	
-
-    $c->forward( '/panel/refresh', ['party_status'] );    
-}
-
-sub sell_multi_item : Local {
-	my ( $self, $c ) = @_;
-
-	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
-	my @item_ids = $c->req->param('item_id');
-
-	my @items = $c->model('DBIC::Items')->search(
-		{
-			item_id => \@item_ids,
-		},
-		{ prefetch => { 'item_type' => 'category' }, },
-	);
-
-    my $original_char;
-	my @messages;
-	foreach my $item (@items) {
-	    $original_char = $item->character_id;
-	    
-		if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
-			return;
-		}
-
-		my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
-		@messages = ( @messages, @$messages );
-	}
+	croak "Invalid item" if ! $item;
+	croak "Invalid shop" if ! $shop;
 	
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'sell',
-        	data => {
-        	    char_id => $original_char,
-        	    messages => \@messages,
-        	},
-    	}
-    ];	
-
-    $c->forward( '/panel/refresh', ['party_status'] );
-}
-
-sub sell_single_item : Private {
-	my ( $self, $c, $item, $shop ) = @_;
+	my $character = $item->belongs_to_character;
 
 	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
-		$c->log->warn( "Attempted to sell item "
-				. $item->id
-				. " by party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
+	my @characters = $c->stash->{party}->characters_in_party;
+	if ( scalar( grep { $_->id == $item->character_id } @characters ) == 0 ) {
+		croak "Selling item from invalid character";
 	}
 
 	# Make sure the shop they're in is in the town they're in
@@ -499,6 +434,7 @@ sub sell_single_item : Private {
 	else {
     	$item->character_id(undef);
     	$item->equip_place_id(undef);
+    	$character->remove_item_from_grid($item);
 
 		# If it's not a quantity item, give it back to the shop, except for item categories with "delete_when_sold_to_shop"
 		if ( ! $item->item_type->category->delete_when_sold_to_shop ) {
@@ -509,6 +445,7 @@ sub sell_single_item : Private {
 			
 			$item->shop_id( $shop->id );
 			$item->update;
+			$shop->add_item_to_grid($item);
 		}
 		else {
 			$item->delete;
@@ -517,6 +454,27 @@ sub sell_single_item : Private {
 	
 	$c->stash->{party}->gold( $c->stash->{party}->gold + $sell_price );
 	$c->stash->{party}->update;
+
+	my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
+
+    if ($messages) {
+        $c->stash->{panel_callbacks} = [
+        	{
+            	name => 'sell',
+            	data => {
+            	    messages => $messages,
+            	},
+        	}
+        ];
+    }
+
+    $c->forward( '/panel/refresh', ['party_status'] );    
+}
+
+sub sell_single_item : Private {
+	my ( $self, $c, $item, $shop ) = @_;
+
+
 
 	return 1;
 }

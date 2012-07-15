@@ -57,7 +57,7 @@ Shops in [% town.town_name %]:
 	$( ".shop" ).droppable({
 		accept: ".inventory-item",
 		drop: function( event, ui ) {
-			//dropItem(event, ui, $(this), charId);
+			sellItem(event, ui, $(this), '[% shop.id %]');
 		},
 				
 		over: function(event, ui) {
@@ -71,8 +71,7 @@ Shops in [% town.town_name %]:
 	
 	function loadCharShopInventory(charId) {	
 		$( '#char-shop-inventory').html('<img src="[% base %]static/images/layout/loader.gif">');
-		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
-		
+		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });		
 	}
 	
 	$(function() {

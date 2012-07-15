@@ -24,7 +24,7 @@
 			
 			<div class="[% class %]" idPrefix="[% class %]" id="[% class %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]" 
 				style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center"
-				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]">		
+				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]">		
 				[% IF item %]
 					[% item_div(class, item) %]
 				[% END %]			

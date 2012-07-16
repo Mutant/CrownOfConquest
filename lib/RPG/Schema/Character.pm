@@ -552,6 +552,8 @@ sub roll_all {
         $self->$method($increase);
         $rolls{$resistance} = $increase;
     }
+    
+    $self->create_item_grid;
 
     $self->update;
 
@@ -1447,6 +1449,12 @@ sub set_starting_equipment {
             $item->variable( 'Quantity', 250 );
         }
     }
+}
+
+sub create_item_grid {
+    my $self = shift;
+
+    $self->create_grid('character', 8, 8);       
 }
 
 # Returns the spell to cast if there is one, undef otherwise

@@ -15,18 +15,7 @@ sub organise_items_in_tabs {
       
     my $max_tab;
     for my $tab (1..10) {
-        my @data;
-        for my $x (1..$width) {
-            for my $y (1..$height) {
-                push @data, [ $self->id, $owner_type, $x, $y, $tab ];
-            }
-        }
-        
-        $self->result_source->schema->populate('Item_Grid', [
-                [ qw/ owner_id owner_type x y tab /],
-                @data,
-            ],
-        );
+        $self->create_grid($owner_type, $width, $height, $tab);
         
         @items = $self->organise_items_impl($tab, @items);
                 
@@ -36,6 +25,28 @@ sub organise_items_in_tabs {
     }
     
     warn scalar @items . " items remaining when organising into tabs" if @items;
+}
+
+sub create_grid {
+    my $self = shift;
+    my $owner_type = shift;
+    my $width = shift;
+    my $height = shift;
+    my $tab = shift // 1;
+    
+    my @data;
+    
+    for my $x (1..$width) {
+        for my $y (1..$height) {
+            push @data, [ $self->id, $owner_type, $x, $y, $tab ];
+        }
+    }
+    
+    $self->result_source->schema->populate('Item_Grid', [
+            [ qw/ owner_id owner_type x y tab /],
+            @data,
+        ]
+    );   
 }
 
 sub organise_items {

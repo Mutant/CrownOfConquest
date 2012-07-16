@@ -10,27 +10,26 @@ sub organise_items_in_tabs {
     my $width = shift;
     my $height = shift;
     my @items = @_;
-    
+        
     $self->item_sectors->delete;
-   
+      
     my $max_tab;
     for my $tab (1..10) {
+        my @data;
         for my $x (1..$width) {
             for my $y (1..$height) {
-                my $sector = $self->result_source->schema->resultset('Item_Grid')->create(
-                    {
-                        owner_id => $self->id,
-                        owner_type => $owner_type,
-                        x => $x,
-                        y => $y,
-                        tab => $tab,
-                    }
-                );
+                push @data, [ $self->id, $owner_type, $x, $y, $tab ];
             }
         }
         
-        @items = $self->organise_items_impl($tab, @items);
+        $self->result_source->schema->populate('Item_Grid', [
+                [ qw/ owner_id owner_type x y tab /],
+                @data,
+            ],
+        );
         
+        @items = $self->organise_items_impl($tab, @items);
+                
         $max_tab = $tab;
         
         last unless @items;
@@ -63,13 +62,13 @@ sub organise_items_impl {
     my @items = @_;
     
     #warn "tab: $tab";
-    
+        
     $self->search_related('item_sectors', { tab => $tab })->update(
         {
             start_sector => undef,
             item_id => undef,
         }
-    );    
+    );
     
     my @sectors = $self->search_related('item_sectors', { tab => $tab });
     my %sectors;
@@ -79,14 +78,14 @@ sub organise_items_impl {
     }
         
     my @remaining_items;
-        
+            
     while (my $item = shift @items) {
         #warn "item: " . $item->id;
         
         my @coords = sort by_coord keys %sectors;
         
         my $placed = 0;
-        
+                
         COORD: foreach my $coord (@coords) {
             my ($start_x,$start_y) = split /,/, $coord;
             
@@ -109,16 +108,23 @@ sub organise_items_impl {
             #warn scalar @sectors_to_use . ' < ' . ($item->item_type->width * $item->item_type->height);
             
             next if scalar @sectors_to_use < ($item->item_type->width * $item->item_type->height);
+                        
+            my @sector_ids;
             
             foreach my $sector (@sectors_to_use) {
-                $sector->item_id($item->id);
-                $sector->update;
+                push @sector_ids, $sector->id;
                 delete $sectors{$sector->x.",".$sector->y};
             }
             
+            $self->result_source->schema->resultset('Item_Grid')->search(
+                {
+                    item_grid_id => \@sector_ids,
+                },
+            )->update( { item_id => $item->id } );                    
+            
             $start_sector->start_sector(1);
             $start_sector->update;
-            
+                        
             $placed = 1;
             
             last;
@@ -126,7 +132,7 @@ sub organise_items_impl {
         
         push @remaining_items, $item if ! $placed;
     }
-    
+        
     return @remaining_items;
 }
 

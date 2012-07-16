@@ -55,4 +55,7 @@ UPDATE `Equip_Places` set height = 3, width = 2 where equip_place_name = 'Right 
 
 ALTER TABLE `Item_Grid` ADD COLUMN `tab` INTEGER  NOT NULL DEFAULT 1 AFTER `item_id`;
 
+ALTER TABLE `Item_Grid` ADD INDEX `owner_idx`(`owner_id`, `owner_type`);
+
+
 

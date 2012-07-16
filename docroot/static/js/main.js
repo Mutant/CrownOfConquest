@@ -1090,6 +1090,8 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 		}, 'json');
 	}
 	else {
+		item.removeClass('shop-item');
+		item.addClass('inventory-item');
 		getPanels('shop/buy_item?' + $.param(params) );
 	}
 }
@@ -1226,6 +1228,9 @@ function organiseInventory(charId) {
 function setupInventory(charId, inShop) {
 	$( ".inventory-item" ).draggable({
 		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},
 	});
 	
 	$( ".inventory-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
@@ -1410,6 +1415,9 @@ function split_item_submit(arguments) {
 function setupShop(shopId) {
 	$( ".shop-item" ).draggable({
 		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},		
 	});
 	
 	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	

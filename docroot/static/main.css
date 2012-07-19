@@ -87,6 +87,10 @@ br {
 	background-color: #2F2F2F;
 }
 
+.tundra .dijitTabPaneWrapper, .tundra .dijitTabContainerTop-tabs {
+	border-color: #4D4D4D;
+}
+
 #content-outer {
 	height: auto;
 	min-height: 250px;

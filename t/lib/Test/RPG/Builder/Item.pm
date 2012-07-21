@@ -29,6 +29,8 @@ sub build_item {
 	            base_cost => $params{base_cost} // 1,
 	            weight => $params{weight} // 100,
 	            usable => $params{usable} // 0,
+	            width => $params{width} // 1,
+	            height => $params{height} // 1,
 	        }
 	    );
 	    

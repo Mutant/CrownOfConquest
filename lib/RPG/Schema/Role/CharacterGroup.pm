@@ -10,6 +10,7 @@ use List::Util qw(sum shuffle);
 use POSIX;
 use Carp;
 use Statistics::Basic qw(average);
+use Try::Tiny;
 
 sub level {
     my $self = shift;
@@ -44,14 +45,32 @@ sub is_over_flee_threshold {
     return $percentage < $self->flee_threshold ? 1 : 0;
 }
 
-sub get_least_encumbered_character {
+sub give_item_to_character {
     my $self = shift;
+    my $item = shift;
     
     my @characters = shuffle grep { ! $_->is_dead } $self->members;
     
     @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
     
-    return $characters[0];
+    my $given_to;
+    LOOP: foreach my $character (@characters) {
+        try {
+            $item->add_to_characters_inventory($character);
+        }
+        catch {
+            if ($_ =~ /^Couldn't find room for item/) {                
+                next LOOP;
+            }
+            
+            die $_;
+        };
+                
+        $given_to = $character;
+        last;   
+    }
+    
+    return $given_to;
 }
 
 sub average_stat {

@@ -228,9 +228,7 @@ sub cancel : Local {
     }
     
     my $item = $trade->item;
-    my $character = $c->stash->{party}->get_least_encumbered_character;        		
-        
-    $item->add_to_characters_inventory($character);    
+    my $character = $c->stash->{party}->give_item_to_character($item);    
     
     $trade->status('Cancelled');
     $trade->update;
@@ -264,9 +262,7 @@ sub purchase : Local {
         $c->stash->{party}->update;
         
         my $item = $trade->item;
-        my $character = $c->stash->{party}->get_least_encumbered_character;        		
-            
-        $item->add_to_characters_inventory($character);    
+        my $character = $c->stash->{party}->give_item_to_character($item);    
         
         $trade->status('Accepted');
         $trade->purchased_by($c->stash->{party}->id);

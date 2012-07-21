@@ -1103,9 +1103,7 @@ sub open_chest : Local {
 			next;			
 		}
 		
-        my $finder = $c->stash->{party}->get_least_encumbered_character;        		
-        
-        $item->add_to_characters_inventory($finder);
+        my $finder = $c->stash->{party}->give_item_to_character($item);
         
         push @items_found, {
         	character => $finder,

@@ -784,20 +784,19 @@ sub add_to_characters_inventory {
         # Try equipping the item in each empty equip place (without removing any existing items)
         LOOP: foreach my $equip_place (keys %equipped_items) {
             if ( !$equipped_items{$equip_place} ) {
-                eval {
+                try {
                     if ( $self->equip_item( $equip_place, replace_existing_equipment => 0 ) )
                     {
-    
                         # Equip was successful, so don't try to equip again
                         no warnings;
                         last LOOP;
                     }
                 };
-                if ($@) {
-                    unless ( $@ =~ "Can't equip an item of that type there" ) {
-                        croak $@;
+                catch {
+                    if ( $_ !~ /Can't equip an item of that type there/ ) {
+                        croak $_;
                     }
-                }
+                };
             }
         }
     }

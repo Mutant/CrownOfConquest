@@ -28,4 +28,4 @@ if ($ARGV[0] && $ARGV[0] eq '--refresh-schema') {
 	system("$rmProg $dumpFile");
 }
 
-runtests('run_test_classes.pl');
+runtests(glob 'bin/*.t');

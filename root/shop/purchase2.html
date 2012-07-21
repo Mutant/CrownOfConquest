@@ -1,5 +1,6 @@
 [% PROCESS equipment/grid.html %]
 [% PROCESS layout/diag_buttons.html %]
+[% INCLUDE item/drop_diag.html %]
 
 <div dojoType="dijit.Dialog" id="quantity-selection" style="display: none" title="Select Quantity" execute="dropQuantityItem(arguments[0]);">
     <span id="quantity-selection-message"></span>

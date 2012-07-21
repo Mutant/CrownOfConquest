@@ -58,7 +58,7 @@ sub send {
         my $msg = MIME::Lite->new(
             From    => $config->{send_email_from},
             To => $email_rec->{email},
-            Subject => '[Kingdoms] ' . $params->{subject},
+            Subject => '[CrownOfConquest] ' . $params->{subject},
             Data    => $params->{body} . $email_footer,
             Type    => 'text/html',
         );

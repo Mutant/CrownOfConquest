@@ -1,6 +1,6 @@
 <p>Hi,</p>
 
-<p>You signed up to Kingdoms ([% url %]), but you haven't logged in in over [% warning_days %] days. If you don't log in within the next 
+<p>You signed up to Crown Of Conquest ([% url %]), but you haven't logged in in over [% warning_days %] days. If you don't log in within the next 
 [% grace_days %] days, your account will be disabled.</p>
 
 <p>You'll be able to re-enable your account by logging back in, although you may lose some standing in the game in the mean time.</p>

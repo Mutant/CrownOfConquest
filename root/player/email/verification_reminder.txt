@@ -1,6 +1,6 @@
 <p>Hi,
 
-<p>You've signed up to Kingdoms ([% url %]), but haven't yet verified your account. This is a reminder of your verification code.</p>
+<p>You've signed up to Crown Of Conquest ([% url %]), but haven't yet verified your account. This is a reminder of your verification code.</p>
 
 <p>Your code is: [% player.verification_code %].</p>
 

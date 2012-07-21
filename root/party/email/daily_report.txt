@@ -1,4 +1,4 @@
-<h2>Kingdoms Daily Report for "[% party.name %]", Game Day [% c.yesterday.day_number %]</h2>
+<h2>Crown Of Conquest Daily Report for "[% party.name %]", Game Day [% c.yesterday.day_number %]</h2>
 
 Current Turns: [% party.turns %]
 [% IF party.turns == c.config.maximum_turns %]
@@ -188,5 +188,5 @@ You don't current have any active quests.
 [% END %]
 
 <br><br>
-Note, you can disable this email by logging into Kingdoms, clicking on "Tools", and un-checking the "Send a Daily Report" option.  
+Note, you can disable this email by logging into Crown Of Conquest, clicking on "Tools", and un-checking the "Send a Daily Report" option.  
 

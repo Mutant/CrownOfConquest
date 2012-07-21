@@ -584,7 +584,7 @@ sub survey : Local {
 	my $msg = MIME::Lite->new(
 		From    => $c->config->{send_email_from},
 		To      => $c->config->{send_email_from},
-		Subject => '[Kingdoms] Survey Response',
+		Subject => '[CrownOfConquest] Survey Response',
 		Data    => "A survey was completed. The response was:\n\n" . Dumper $survey,
 	);
 	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );	
@@ -674,7 +674,7 @@ sub reward_callback : Local : Args(1) {
         
     	$c->model('DBIC::Party_Messages')->create(
     		{
-    			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Kingdoms at " . $link->label,
+    			message => "You received " . $player_reward_link->link->turn_rewards . " turns for voting for Crown of Conquest at " . $link->label,
     			alert_party => 1,
     			party_id => $party->id,
     			day_id => $today->id,
@@ -726,7 +726,7 @@ sub submit_email : Private {
     		From    => $c->config->{send_email_from},
     		To      => $c->config->{send_email_from},
     		'Reply-To' => $email,
-    		Subject => "[Kingdoms] ($type): " . $c->req->param('subject'),
+    		Subject => "[CrownOfConquest] ($type): " . $c->req->param('subject'),
     		Data    => $c->req->param('body'),
     	);
     	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );        

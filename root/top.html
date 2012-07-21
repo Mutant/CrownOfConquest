@@ -2,7 +2,7 @@
 
 <head>
 
-<title>Kingdoms - the web-based RPG</title>
+<title>Crown Of Conquest - the web-based RPG</title>
 
 [% INCLUDE layout/dojo.html %]
 
@@ -114,7 +114,7 @@ function show_message(message) {
 		</a>
 	</div>
 
-	<div style="background:url([% base %]static/images/kingdomlogo2.png) no-repeat center center; height: 80px; cursor: pointer" onClick="document.location='[% base %]'">
+	<div style="background:url([% base %]static/images/coclogo[% IF main_screen %]small[% ELSE %]big[% END %].png) no-repeat center center; height: [% IF main_screen %]60[% ELSE %]134[% END %]px; cursor: pointer" onClick="document.location='[% base %]'">
 	</div>
 
 </div>

@@ -1,4 +1,4 @@
 <br><br>
 ---<br>
-This email was sent from the game "<a href="[% config.url_root %]">Kingdoms"</a>. If you enjoy Kingdoms, please consider <a href="[% config.url_root %]/donate">donating</a>.<br>
+This email was sent from the game "<a href="[% config.url_root %]">Crown Of Conquest"</a>. If you enjoy Crown Of Conquest, please consider <a href="[% config.url_root %]/donate">donating</a>.<br>
 [% IF email_hash ~%]Annoyed by this email? <a href="[% config.url_root %]/player/email_login?email=[% email %]&h=[% email_hash %]">Click here to unsubscribe</a>[% END ~%]

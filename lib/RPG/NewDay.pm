@@ -73,7 +73,7 @@ sub run {
 			my $msg = MIME::Lite->new(
 				From    => $config->{send_email_from},
 				To      => $config->{send_email_from},
-				Subject => '[Kingdoms] Error running new day script',
+				Subject => '[CrownOfConquest] Error running new day script',
 				Data    => "Error was: $error_str",
 			);
 			$msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );

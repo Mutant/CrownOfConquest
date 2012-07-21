@@ -1,5 +1,5 @@
-<p>Thanks for registering to play Kingdoms. Your account has been activated. In order to receive emails from the system, you must verify your email address.</p>
+<p>Thanks for registering to play Crown Of Conquest. Your account has been activated. In order to receive emails from the system, you must verify your email address.</p>
 
-<p>Your verification code for Kingdoms is: [% verification_code %].</p>
+<p>Your verification code for Crown Of Conquest is: [% verification_code %].</p>
 
 <p>You can verify your account by going to this URL: [% base %]/player/verify?verification_code=[% verification_code %]&email=[% email %]</p>

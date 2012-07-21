@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay;
 
-use base qw(Test::RPG);
+use base qw(Test::RPG::DB);
 
 __PACKAGE__->runtests unless caller();
 
@@ -17,39 +17,6 @@ sub startup : Test(startup => 1) {
     my $self = shift;
 
     use_ok 'RPG::NewDay';
-
-}
-
-sub test_run_loads_normal_config : Tests(1) {
-    my $self = shift;
-
-    my $mock_config = { log_file_dir => 'bar' };
-    my $mock_yaml = Test::MockObject::Extra->new();
-    $mock_yaml->fake_module( 'YAML', LoadFile => sub { $mock_config }, );
-
-    my $mock_logger = Test::MockObject::Extends->new('Log::Dispatch');
-
-    my $mock_new_day = Test::MockObject->new();
-    $mock_new_day->mock('do_new_day', sub{});
-
-    RPG::NewDay::run($mock_new_day);
-
-    my ( $method, $args ) = $mock_new_day->next_call();
-
-    my $config_passed = $args->[1];
-
-    is_deeply( $mock_config, $config_passed );
-    
-    $mock_yaml->unfake_module();
-    local $SIG{__WARN__} = sub {
-		my ($msg) = @_;
-		
-		return if $msg =~ /Subroutine (\S+) redefined/;
-		
-		print STDERR $msg;
-	};
-    
-    require YAML;
 
 }
 
@@ -87,7 +54,7 @@ sub test_do_new_day_two_plugins_run : Tests(3) {
     );
 
     # WHEN
-    $new_day->do_new_day($self->{config}, $self->{mock_logger}, $dt);
+    $new_day->do_new_day($self->{schema}, $self->{config}, $self->{mock_logger}, $dt);
     
     # THEN
     $plugin1->called_ok('run', "Run called on plugin 1");

@@ -1,140 +1,31 @@
+[% PROCESS equipment/grid.html %]
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
-		[% slot = slot_orig %]
-		[% item = equipped_items.$slot_orig %]
-		<td dojoType="rpg.dnd.Target" id="[% slot %]-equip_place" 
-			accept="[% FOREACH category IN equip_place_category_list.$slot_orig %][% category %][% UNLESS loop.last %],[% END %][% END %]"
-			align="center" style="border: lightgray 1px dashed" 
-			width="50">			
-			<span id="[% slot %]-item-id" style="display: none">[% item.id %]</span>
-			<span onMouseOver="saveCurrentItemId(dojo.byId('[% slot %]-item-id').innerHTML)">
-
-			<img src="[% IF item.item_type.image %][% c.config.static_path %]/images/items/[% item.item_type.image %][% END %]" id="[% slot %]-equip-place-image"
-				style="[% IF ! item.item_type.image %]display: none[% END %]"
-				>
-			<span id="[% slot %]-equip-place-text">[% IF ! item.item_type.image %][% item.item_type.item_type %][% END %]</span>			
-			<div dojoType="dijit.Tooltip"
-	           		connectId="[% slot %]-equip_place"
-	           		id="[% slot %]-tooltip"
-					style="display: none;">
-						[% IF item %][% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %][% END %] 
-	        </div>	        
-	        <span id="[% slot %]-slot-label" [% IF item %]style="display: none"[% END %]>[% slot_orig %]</span>
-	        </span>
-		</td>
+	[% equip_place = equip_places.$slot_orig %]
+	[% item = equipped_items.$slot_orig %]
+	<td id="equip_place_[% equip_place.id %]" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
+		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]"
+		slotName="[% slot_orig %]">
+		[% IF item %]
+			[% item_div("inventory", item, in_shop) %]
+		[% ELSE %]
+			[% slot_orig %]
+		[% END %]
+	</td>
 [% END %]
 
-<table class="main" cellpadding="5" height="100%">
-	<tr>
-		<td valign="top" width="250" style="
-		border: 2px solid black;         
-		-moz-border-radius: 10px;
-        -webkit-border-radius: 10px;
-        -khtml-border-radius: 10px;
-        border-radius: 10px;">
-
 <script>
-	// Hack to get around dojo deficiency
-	var currentItemId;
-	function saveCurrentItemId(id) {
-		currentItemId = id;
-	}
-	
-function createItemMenus() {
-	createInventoryMenu(); 
-	createEquippedMenu();
-	createQuantityMenu();
-}
-	
-function createInventoryMenu() { 
-	if (dijit.byId('item_inventory_menu') != undefined) {
-		dijit.byId('item_inventory_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (! item.equipped && ! item.quantity)
-		  return true;
-	}), function(item) { return item.id } ); 
-
-	var params = {id:"item_inventory_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-	
-	var equipSubMenu = new dijit.Menu();
-	
-	[% FOREACH equip_place IN equip_places %]
-		params = {
-			label: "[% equip_place %]",
-			onClick: function(event) {
-				equip_item('[% equip_place %]', currentItemId);
-			}
-		};
-		
-		var item = new dijit.MenuItem(params,document.createElement("div"));
-		equipSubMenu.addChild(item);			
+[% IF item_change_allowed %]
+	[% FOREACH slot_data IN equip_places %]
+		[% slot = slot_data.value %] 
+		$( "#equip_place_[% slot.id %]" ).droppable({
+			accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
+			drop: function( event, ui ) {
+				dropItemOnEquipSlot(event, ui, $(this), '[% character.id %]');
+			},
+			hoverClass: "item-droppable",			
+		});
 	[% END %]
-	
-	params = {
-		label: "Equip Item In",
-		popup: equipSubMenu,
-		iconClass: "menuExpandIcon"
-	};			
-	var equipPopupMenu = new dijit.PopupMenuItem(params);
-	menu.addChild(equipPopupMenu);
-	
-	addCommonMenuItems(menu);	
-} 	
-
-function createQuantityMenu() {
-	if (dijit.byId('item_quantity_menu') != undefined) {
-		dijit.byId('item_quantity_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (item.quantity)
-		  return true;
-	}), function(item) { return item.id } ); 
-	
-	var params = {id:"item_quantity_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-	
-	params = {
-		label: "Split",
-		onClick: function() {
-			split_item(currentItemId);
-		}
-	};
-	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(splitItem);
-	
-	addCommonMenuItems(menu);		
-}
-
-function createEquippedMenu() {
-	if (dijit.byId('item_equipped_menu') != undefined) {
-		dijit.byId('item_equipped_menu').destroyRecursive();			
-	}
-	
-	var itemIds = dojo.map(dojo.filter(itemMenuData, function(item) {
-		if (item.equipped)
-		  return true;
-	}), function(item) { return item.equipped + '-equip_place' } ); 
-
-	var params = {id:"item_equipped_menu", targetNodeIds:itemIds };
-
-	var menu = new dijit.Menu(params,document.createElement("div"));
-
-	params = {
-		label: "Unequip Item",
-		onClick: function() {
-			unequip_item(currentItemId, '[% character.id %]');
-		}
-	};			
-	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(dropItem);
-	
-	addCommonMenuItems(menu);			
-}
+[% END %]
 
 function addCommonMenuItems(menu) {
 	var giveSubMenu = new dijit.Menu();
@@ -171,13 +62,23 @@ function addCommonMenuItems(menu) {
 	menu.addChild(dropItem);	
 }
 
+[% IF item_change_allowed %]
+	setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
+[% ELSE %]
+	setupItemTooltips(".inventory-item");
+[% END %]
+
+createItemMenus();
+
 </script>
 
-<b>Equipped Items</b>
+[% INCLUDE item/drop_diag.html %]
 
-<br><br><br><br>
+<div style="background: black; margin: 0px; padding: 0px; height: 100%" id="equipment-tab">
 
-<div align="center">
+<div style="float: left">
+	<b>Equipped Items</b>
+	<br><br>
 	<table class="main">
 		<tr>
 			<td></td>
@@ -196,18 +97,12 @@ function addCommonMenuItems(menu) {
 	</table>
 </div>
 
-</td><td valign="top">
+<div style="float: left; margin-left: 10px">
 
-<b>Inventory</b>
+<b>Inventory</b> [% IF item_change_allowed %]<span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>[% END %]
 
-<br><br>
+<div id="inventory-outer">
+[% create_grid('inventory', items_in_grid, 8, 8, in_shop) %]
+</div>
 
-[% IF character.item_change_allowed %]
-	Mouse over an item to get it's stats. Drag an item onto an equip slot to the left to equip it. Alternatively, right click an 
-	item to equip it, drop it, or give it to another character.<br> 
-[% END %]
-
-<div dojoType="dojox.layout.ContentPane" href="[% base %]/character/inventory?character_id=[% character.id %]" 
-	id="inventory-panel" [% IF character.item_change_allowed %]onDownloadEnd="createItemMenus()"[% END %] loadingMessage=""></div>
-
-</td></tr></table>
+</div>

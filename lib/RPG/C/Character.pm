@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use JSON;
 use HTML::Strip;
+use Try::Tiny;
 
 use Carp;
 
@@ -84,7 +85,7 @@ sub gen_character_list {
     );
     
     foreach my $other_char (@characters) {
-        if ($other_char->garrison_id && $character->garrison_id == $other_char->garrison_id) {
+        if ($other_char->garrison_id && $character->garrison_id && $character->garrison_id == $other_char->garrison_id) {
             push @{ $chars_by_type{group} }, {
                 name => $other_char->name,
                 id => $other_char->id,
@@ -142,7 +143,7 @@ sub stats : Local {
 }
 
 sub equipment_tab : Local {
-	my ( $self, $c ) = @_;
+	my ( $self, $c, $in_shop ) = @_;
 
 	my $character = $c->stash->{character};
 
@@ -162,6 +163,11 @@ sub equipment_tab : Local {
 	else {
 	    @allowed_to_give_to_characters = $character->garrison->members;
 	}
+	
+	my %equip_places = map { $_->equip_place_name => $_ } $c->model('DBIC::Equip_Places')->search();
+	
+	$c->log->debug("Querying items in grid");	
+	my $items_in_grid = $character->items_in_grid;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -173,62 +179,12 @@ sub equipment_tab : Local {
 					equipped_items                => $equipped_items,
 					equipped_items_by_id          => \%equipped_items_by_id,
 					equip_place_category_list     => \%equip_place_category_list,
-					equip_places                  => [ keys %equip_place_category_list ],
+					equip_places                  => \%equip_places,
 					allowed_to_give_to_characters => \@allowed_to_give_to_characters,
+					items_in_grid                 => $items_in_grid,
 					party                         => $c->stash->{party},
-				}
-			}
-		]
-	);
-}
-
-sub inventory : Local {
-	my ( $self, $c ) = @_;
-
-	my $character = $c->stash->{character};
-
-	croak "Invalid character id" unless $character;
-
-	my $item_mode = $c->req->param('item_mode') || 'char';
-
-	my $criteria;
-	my @extra_join;
-
-	if ( $item_mode eq 'char' ) {
-		$criteria = { character_id => $c->req->param('character_id'), };
-	}
-	else {
-		confess "Item mode Disabled";    # Disabled for now, since it's pretty slow...
-		$criteria = { 'belongs_to_character.party_id' => $c->stash->{party}->id, };
-		@extra_join = ('belongs_to_character');
-	}
-
-	my @items = $c->model('DBIC::Items')->search(
-		$criteria,
-		{
-			prefetch => [
-				{ 'item_variables' => 'item_variable_name' },
-				{
-					'item_type' => [
-						'category',
-						{ 'item_attributes' => 'item_attribute_name' },
-					]
-				},
-			],
-			join     => [@extra_join],
-			order_by => 'item_category',
-		},
-	);
-
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'character/inventory.html',
-				params   => {
-					character => $character,
-					party     => $c->stash->{party},
-					items     => \@items,
+					in_shop                       => $in_shop,
+					item_change_allowed           => $character->item_change_allowed,
 				}
 			}
 		]
@@ -297,7 +253,19 @@ sub split_item : Local {
 	);
 	
 	$new_item->variable_row('Quantity', $c->req->param('new_quantity'));
+	$c->stash->{character}->add_item_to_grid($new_item);
 	$item->variable_row('Quantity', $item->variable('Quantity') - $c->req->param('new_quantity'));
+	my $sector = $new_item->start_sector;
+	
+	$c->res->body(
+		to_json(
+    		{
+    		    item_id => $new_item->id,
+    			new_x => $sector->x,
+    			new_y => $sector->y,
+    		}
+		)
+	);	
 }
 
 sub item_list : Local {
@@ -330,7 +298,6 @@ sub equip_item : Local {
 	   }, 
 	   { 
 	       prefetch => { 'item_type' => { 'item_attributes' => 'item_attribute_name' } },
-	       #for => 'update', 
 	   }, 
     );
 
@@ -340,52 +307,76 @@ sub equip_item : Local {
     
     $c->stash->{character} = $character;
     $c->forward('check_character_can_change_items');
+        
+    my $ret = $c->forward('equip_item_impl', [$item]);
+	
+	$c->res->body( to_json( $ret ) );
+}
 
-	my @slots_changed;
+sub equip_item_impl : Private {
+    my ($self, $c, $item) = @_;   
+
 	my $equip_place = $c->req->param('equip_place');
-	eval { @slots_changed = $item->equip_item($equip_place); };
-	if ($@) {
-
-		# TODO: need better way of detecting exceptions
-		if ( $@ =~ "Can't equip an item of that type there" ) {
-			$c->res->body( to_json( { error => "You can't equip a " . $item->item_type->item_type . " there!" } ) );
-			return;
-		}
-		else {
-
-			# Rethrow
-			croak $@;
-		}
+	my $no_room = 0;
+	my $return_item;
+	
+	my @extra_items = try {
+        $item->equip_item($equip_place, 
+            existing_item_x => $c->req->param('existing_item_x'),
+            existing_item_y => $c->req->param('existing_item_y'),
+	   );
 	}
-
-	my %ret = (
-		$c->req->param('equip_place') => {
-			item_type => $item->item_type->item_type,
-			image     => $item->item_type->image,
-			tooltip   => $c->forward( '/item/tooltip', [1] ),
-			item_id   => $item->id,
-		},
-	);
-
-	my $slots_cleared;
-	if ( scalar @slots_changed > 1 ) {
-
-		# More than one slot changed... clear anything that wasn't the slot we tried to equip to
-		my @slots_to_clear = grep { $_ ne $c->req->param('equip_place') } @slots_changed;
-
-		# Don't expect to get more than one slot changed (which might be a poor assumption)
-		# Just warn for now if we have more than 1
-		$c->log->warn("Found more than one slot to clear in equip_item") if scalar @slots_to_clear > 1;
-
-		$ret{ $slots_to_clear[0] } = {
-			item_type => undef,
-			image     => undef,
-			tooltip   => '',
-			item_id   => undef,
-		};
+	catch {
+        if ($_ =~ /^Couldn't find room for item/) {
+            $no_room = 1;
+            
+            # Add the item back into the grid
+            my $character = $item->belongs_to_character;
+            $character->add_item_to_grid($item);
+            
+            my $equipped_item = $c->model('DBIC::Items')->find(
+                {
+                    character_id   => $character->id,
+                    'equipped_in.equip_place_name' => $equip_place,
+                },
+                {
+                    join => 'equipped_in',
+                }
+            );
+            
+            $return_item = $equipped_item;
+        }
+        else {
+            die $_;
+        }
+	};
+	
+	my %ret;
+	
+	if ($no_room) {
+	    my $sector = $item->start_sector; 
+	    %ret = (
+            no_room => 1,
+            item_id => $item->id,
+            x => $sector->x,
+			y => $sector->y,
+			return_item => $return_item ? $return_item->id : undef,
+			slot => $equip_place,	       
+	    );
 	}
+	elsif ( @extra_items ) {
+	    my $item = $extra_items[0];
+	    my $sector = $item->start_sector; 
 
-	$c->res->body( to_json( { changed_slots => \%ret } ) );
+		%ret = (extra_items => [{
+		    item_id => $item->id,
+			new_x => $sector->x,
+			new_y => $sector->y,
+		}]);
+	}
+	
+	return \%ret;
+
 }
 
 sub give_item : Local {
@@ -418,6 +409,8 @@ sub give_item : Local {
 	}
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
+	
+	$original_character->remove_item_from_grid($item);
 
 	$item->equip_place_id(undef);
 	$item->add_to_characters_inventory($character);
@@ -445,6 +438,8 @@ sub drop_item : Local {
 	my $original_character = $item->belongs_to_character;
 
 	croak "Item doesn't belong to character in the party" unless $original_character->party_id == $c->stash->{party}->id;
+	
+	$character->remove_item_from_grid($item);
 
 	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 	
@@ -476,41 +471,60 @@ sub drop_item : Local {
 	);
 }
 
-sub unequip_item : Local {
+sub move_item : Local {
 	my ( $self, $c ) = @_;
 
 	$c->forward('check_character_can_change_items');
 
 	my $character = $c->stash->{character};
-
-	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), } );
-
-	# Make sure this item belongs to a character in the party
-	if ( $item->character_id != $character->id ) {
-		$c->log->warn( "Attempted to unequip item  "
-				. $item->id
-				. " within party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
-	}
-
-	return unless $item->equip_place_id;
-
-	my $slot_to_clear = $item->equipped_in->equip_place_name;
+	
+	my $item = $c->model('DBIC::Items')->find( 
+	   { 
+	       item_id => $c->req->param('item_id'), 
+	       character_id => $character->id 
+	   },
+	   {
+	       prefetch => 'item_type',
+	   }, 
+	);
+	
+	croak "Invalid item" unless $item;
 
 	$item->equip_place_id(undef);
 	$item->update;
+	
+    $character->remove_item_from_grid($item);
+    $character->add_item_to_grid($item, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') } );
+    
 
-	$c->res->body(
-		to_json(
+}
+
+sub organise_inventory : Local {
+	my ( $self, $c ) = @_;
+	
+	my $character = $c->stash->{character};
+	
+	my @remaining = $character->organise_items();
+	
+	if (@remaining) {
+	    # Tried to organise items, but some were left.
+	    #  Undo everything! 
+	    $c->model('DBIC')->storage->txn_rollback;
+	}
+	
+	my $items_in_grid = $character->items_in_grid;
+		
+	$c->forward(
+		'RPG::V::TT',
+		[
 			{
-				clear_equip_place => $slot_to_clear,
+				template => 'character/inventory.html',
+				params   => {
+				    items_in_grid => $items_in_grid,
+				}
 			}
-		)
-	);
+		]
+	);	
 }
 
 # Called by shop screen to get list of equipment.

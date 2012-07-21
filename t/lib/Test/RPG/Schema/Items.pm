@@ -129,15 +129,18 @@ sub test_variable_params_created : Tests(5) {
 
 }
 
-sub test_basic_equip_item : Tests(3) {
+sub test_basic_equip_item : Tests(2) {
     my $self = shift;
     
     my $item = $self->{item};
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->create_item_grid;
+    $item->character_id($character->id);
+    $item->update;    
     
-    my @slots_changed = $item->equip_item($self->{equip_place}->equip_place_name);
+    my @extra_items_removed = $item->equip_item($self->{equip_place}->equip_place_name);
     
-    is(scalar @slots_changed, 1, "one slot changed");
-    is($slots_changed[0],  $self->{equip_place}->equip_place_name, "Only the slot were equipping has changed");
+    is(scalar @extra_items_removed, 0, "no extra items removed");
     is($item->equip_place_id, $self->{equip_place}->equip_place_id, "Item has been moved into equip place");
 }
 
@@ -939,6 +942,7 @@ sub test_add_to_characters_inventory_not_stacked : Tests(2) {
     
     # GIVEN
     my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->create_item_grid;
     
     my $item1 = Test::RPG::Builder::Item->build_item(
         $self->{schema},

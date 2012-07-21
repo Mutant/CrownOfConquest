@@ -20,7 +20,7 @@ dojo.require("dijit.form.NumberSpinner");
 dojo.require("rpg.dnd.Target");
 dojo.require("dijit.form.Form");
 dojo.require("dojo.cookie");
-dojo.require("dojo.data.ItemFileReadStore");
+dojo.require("dojo.dnd.Moveable");
 
 /* Map Movement */
 
@@ -878,4 +878,702 @@ function viewKingdomInfo(kingdomId) {
 
 	    timeout: 45000
     });	
+}
+
+/* Equipment */
+function clearDropSectors(coord, item, gridIdPrefix) {
+	var sectors = findDropSectors(coord, item, gridIdPrefix);
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].removeClass('item-droppable');
+		sectors[i].removeClass('item-blocked');
+	}
+}
+
+function findDropSectors(coord, item, gridIdPrefix) {
+	var startX = parseInt(coord.x);
+	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
+	var startY = parseInt(coord.y);
+	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
+	
+	//console.log(startX, endX, startY, endY);
+	
+	var sectors = [];
+	
+	for (var x = startX; x < endX; x++) {
+		for (var y = startY; y < endY; y++) {
+			sectors.push($( "#" + gridIdPrefix + "-" + x + "-" + y ));
+		}
+	}
+	
+	return sectors;
+}
+
+var over;
+var grid;
+
+function dragItemOver(event, ui, hoverSector, dropAlwaysAllowed) {
+	var item = ui.draggable;
+			
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	if (typeof over != 'undefined' && (over.x != currentCoord.x || over.y != currentCoord.y)) {
+		//console.log("over cleared: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+	}
+			
+	//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+	over = currentCoord;
+	
+	if (typeof grid != 'undefined' && grid != hoverSector.attr('grid')) {
+		$('.'+grid).removeClass('item-droppable').removeClass('item-blocked');
+	}
+	grid = hoverSector.attr('grid');
+		
+	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
+	
+	var canDrop = dropAlwaysAllowed ? true : canDropOnSectors(sectors, item);
+	
+	for (var i = 0; i < sectors.length; i++) {		
+		sectors[i].addClass(canDrop ? 'item-droppable' : 'item-blocked');
+	}
+}
+
+function dragItemOut(event, ui, hoverSector) {
+	var item = ui.draggable;
+	
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	if (typeof over != 'undefined' && over.x == currentCoord.x && over.y == currentCoord.y) {
+		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+		over = undefined;
+	}	
+}
+
+function dropItemOnGrid(event, ui, hoverSector, charId) {
+	var item = ui.draggable;
+	
+	dropItem(item, hoverSector, charId);
+}
+
+function dropQuantityItem(params) {
+	var item = $('#item-'+params.purchasing_item_id);
+	
+	var newItem = $(item).clone();
+	newItem.attr('id', 'item-quantity-new');
+	var hoverSector = $('#'+params.purchasing_item_sector);	
+	
+	if (newItem.hasClass('shop-item')) {		
+		dropItem(newItem, hoverSector, params.purchasing_char_id, params.quantity);
+	}
+	else {
+		sellItem(newItem, params.purchasing_shop_id, hoverSector, params.quantity);
+		item.attr('rel', item.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + item.attr('id'));
+	}
+}
+
+function dropItem(item, hoverSector, charId, quantity) {
+	grid = undefined;
+		
+	var currentCoord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),
+	}
+	
+	var origLoc = item.parent();
+		
+	var sectors = findDropSectors(currentCoord, item, hoverSector.attr("idPrefix"));
+	
+	var canDrop = canDropOnSectors(sectors, item);
+	
+	if (! canDrop) {
+		$(item).detach().css({top: 0, left: 0}).appendTo(origLoc);
+		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
+		return;
+	}
+	
+	var params = { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y };
+	
+	if (item.hasClass('inventory-item')) {	
+		$.post(urlBase + 'character/move_item', params, function(data) {
+			loadCharStats(charId);
+		});
+	}
+	else {		
+		var url = 'shop/buy_item';
+		if (typeof quantity !== 'undefined') {
+			params.quantity = quantity;
+			url = 'shop/buy_quantity_item';
+		}
+			
+		getPanels(url + '?' + $.param(params));
+		
+		item.removeClass('shop-item');
+		item.addClass('inventory-item');
+	}
+	
+	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
+	
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].removeClass('item-droppable');
+		sectors[i].removeClass('item-blocked');
+		sectors[i].attr('hasItem', item.attr("itemId"));
+	}
+			
+	if (origLoc.hasClass('equip-slot')) {
+		origLoc.html(origLoc.attr('slotName'));
+	}
+	else {	
+		var origCoord = {
+			x: parseInt(origLoc.attr('sectorX')),
+			y: parseInt(origLoc.attr('sectorY')),	
+		}
+		
+		var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', '0');
+		}
+	}
+}
+
+function dropItemOnEquipSlot(event, ui, slot, charId) {
+	var item = ui.draggable;
+	
+	var origLoc = item.parent();
+	var origCoord = {
+		x: parseInt(origLoc.attr('sectorX')),
+		y: parseInt(origLoc.attr('sectorY')),	
+	}	
+	
+	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', '0');
+	}	
+
+	var params = { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') };
+	
+	var existingItem = slot.children().first();
+	if (existingItem.length > 0) {
+		var sectors = findSectorsForItem(existingItem, 'inventory');
+		
+		if (sectors.length < 1) {
+			// Couldn't find any space for existing item
+			returnItem(item.attr('itemId'));
+			$(document).trigger('hideCluetip');
+			dojo.byId('error-message').innerHTML = "There is no room in the character's inventory to swap out the old item";
+			dijit.byId('error').show();
+			return;
+		}
+				
+		$(existingItem).detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+		
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', existingItem.attr("itemId"));
+		}
+		
+		params.existing_item_x = sectors[0].attr('sectorX');
+		params.existing_item_y = sectors[0].attr('sectorY');
+	}
+	slot.html('');
+			
+	$(item).detach().css({top: 0, left: 0}).appendTo(slot);
+		
+	if (item.hasClass('inventory-item')) {
+		$.post(urlBase + 'character/equip_item', params, function(data) {
+			data.char_id = charId;
+			loadCharStats(data.char_id);						
+			equipItemCallback(data);
+		}, 'json');
+	}
+	else {
+		item.removeClass('shop-item');
+		item.addClass('inventory-item');
+		getPanels('shop/buy_item?' + $.param(params) );
+	}
+}
+
+function equipItemCallback(data) {
+
+	if (data.extra_items) {
+		for (var i = 0; i < data.extra_items.length; i++) {
+			var extraItemData = data.extra_items[i];
+			
+			putItemOnGrid(extraItemData.item_id, parseInt(extraItemData.new_x), parseInt(extraItemData.new_y));
+
+		}
+	}
+	if (data.no_room) {
+		$(document).trigger('hideCluetip');
+	
+		putItemOnGrid(data.item_id, parseInt(data.x), parseInt(data.y));		
+		
+		dojo.byId('error-message').innerHTML = "There is no room in the character's inventory to swap out the old item";
+		dijit.byId('error').show();
+		
+		if (data.return_item) {
+			var slot = $( '.equip-slot[slot="' + data.slot + '"]' );
+			var item = $('#item-' + data.return_item);			
+			
+			$(item).detach().css({top: 0, left: 0}).appendTo(slot);
+		}
+		
+	}
+}
+
+function putItemOnGrid(itemId, x, y) {
+	var extraItem = $('#item-' + itemId);
+					
+	var origCoord = {
+		x: x,
+		y: y,	
+	}
+	
+	var sectors = findDropSectors(origCoord, extraItem, 'inventory');								
+	
+	extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+	
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', extraItem.attr("itemId"));
+	}
+}
+
+function canDropOnSectors(sectors, item) {
+	var totalSize = parseInt(item.attr('itemWidth')) * parseInt(item.attr('itemHeight'));
+	
+	if (totalSize < sectors.length) {
+		return false;
+	}
+	
+	var canDrop = true;
+	
+	for (var i = 0; i < sectors.length; i++) {	
+		if (sectors[i].attr("hasItem") != 0 && sectors[i].attr("hasItem") != item.attr("itemId")) {
+			canDrop = false;
+		}
+	}
+	
+	return canDrop;	
+}
+
+function loadCharStats(charId) {
+	$( '#stats-panel' ).load(urlBase + "/character/stats?character_id=" + charId);
+}
+
+function findSectorsForItem(item, grid) {
+	var empty = $( '#' + grid + '-grid' ).children('[hasItem="0"]');
+	
+	var itemHeight = parseInt(item.attr('itemHeight'));
+	var itemWidth = parseInt(item.attr('itemWidth'));
+	
+	//console.log("height: " + itemHeight + ", width: " + itemWidth);
+	
+	var emptyGrid = {};
+	
+	empty.each(function(){
+		var emptySector = $(this);
+				
+		if (typeof emptyGrid[emptySector.attr('sectorX')] == 'undefined') {
+			emptyGrid[emptySector.attr('sectorX')] = {};
+		}
+		
+		emptyGrid[emptySector.attr('sectorX')][emptySector.attr('sectorY')] = emptySector;
+	});
+	
+	var sectors = [];
+	
+	empty.each(function(){
+		var emptySector = $(this);
+		
+		var startX = parseInt(emptySector.attr('sectorX'));
+		var startY = parseInt(emptySector.attr('sectorY'));
+		var maxX = (startX + itemWidth - 1);
+		var maxY = (startY + itemHeight - 1);
+		
+		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);
+		
+		for (var x = startX; x <= maxX; x++) {
+			for (var y = startY; y <= maxY; y++) {
+				if (typeof emptyGrid[x] != 'undefined' && typeof emptyGrid[x][y] != 'undefined') {
+					sectors.push(emptyGrid[x][y]);
+				}
+			}
+		}
+				
+		if (sectors.length >= (itemHeight*itemWidth)) {
+			return false;
+		}
+		
+		sectors = [];
+	});	
+	
+	return sectors;
+}
+
+function removeFromGrid(itemId,deleteItem) {
+	var item = $( '#item-' + itemId );
+	
+	var origLoc = item.parent();
+	var origCoord = {
+		x: parseInt(origLoc.attr('sectorX')),
+		y: parseInt(origLoc.attr('sectorY')),	
+	}
+
+	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', '0');
+	}
+	
+	if (deleteItem) {
+		item.remove();
+		$(document).trigger('hideCluetip');
+	}
+}
+
+function returnItem(itemId) {
+	var item = $( '#item-' + itemId );
+	
+	var origLoc = item.parent();
+
+	$(item).detach().css({top: 0,left: 0}).appendTo(origLoc);
+}
+/* Character Inventory */
+
+function organiseInventory(charId) {
+	$.get(urlBase + 'character/organise_inventory', { character_id: charId }, function(data) {
+		$( '#inventory-outer' ).html(data);
+		setupInventory(charId);
+	});
+}
+
+function setupInventory(charId, inShop) {
+	$( ".inventory-item" ).draggable({
+		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},
+	});
+	
+	$( ".inventory-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
+	
+	$( ".inventory" ).droppable({
+		accept: ".inventory-item, .shop-item",
+		drop: function( event, ui ) {
+			var item = ui.draggable;
+		
+			if (item.hasClass('shop-item') && item.attr('isQuantity') == 1) {
+				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to buy?";
+				dojo.byId('quantity-char-id').value = charId;
+				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-item-sector').value = $(this).attr('id');
+				dijit.byId('quantity-selection').show();
+			}
+			else {
+				dropItemOnGrid(event, ui, $(this), charId);
+			}
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this));
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		},
+	});
+
+	setupItemTooltips(".inventory-item");
+	createItemMenus();
+}
+
+function setupItemTooltips(selector) {
+	$(selector).cluetip({cluetipClass: 'tooltip', showTitle: false, cluezIndex: '5000', hoverIntent: {
+                      sensitivity:  7,
+                      interval:     170,
+                      timeout:      0
+    },});
+}
+
+// Hack to get around dojo deficiency
+var currentItemId;
+function saveCurrentItemId(id) {
+	currentItemId = id;
+}
+	
+function createItemMenus() {
+	createInventoryMenu(); 
+	createQuantityMenu();
+}
+	
+function createInventoryMenu() { 
+	if (dijit.byId('item_inventory_menu') != undefined) {
+		dijit.byId('item_inventory_menu').destroyRecursive();			
+	}
+	
+	var itemIds = [];
+	$( '.inventory-item' ).each(function(){
+		if ($(this).attr('isQuantity') == 0) {
+			itemIds.push($(this).attr('id'));
+		}	
+	});
+
+	var params = {id:"item_inventory_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+		
+	addCommonMenuItems(menu);	
+} 	
+
+function createQuantityMenu() {
+	if (dijit.byId('item_quantity_menu') != undefined) {
+		dijit.byId('item_quantity_menu').destroyRecursive();			
+	}
+	
+	var itemIds = [];
+	$( '.inventory-item' ).each(function(){
+		if ($(this).attr('isQuantity') == 1) {
+			itemIds.push($(this).attr('id'));
+		}	
+	});
+	
+	var params = {id:"item_quantity_menu", targetNodeIds:itemIds };
+
+	var menu = new dijit.Menu(params,document.createElement("div"));
+	
+	params = {
+		label: "Split",
+		onClick: function() {
+			split_item(currentItemId);
+		}
+	};
+	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(splitItem);
+	
+	addCommonMenuItems(menu);		
+}
+
+
+
+function give_item_to(char_id, item_id) {
+	removeFromGrid(item_id, true);
+
+	dojo.xhrGet( {
+        url: urlBase + "character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+			loadCharStats(char_id);
+        	if (! inCharWindow) {
+        		getPanels('party/refresh_party_list');
+        	}
+        }
+    });	       
+}
+
+function drop_item_diag(item_id, char_id) {
+	dojo.byId('drop-item-id').value = item_id;
+	dojo.byId('drop-char-id').value = char_id;
+	dijit.byId('drop-item-diag').show();
+}
+
+function drop_item(args) {
+	var item_id = args.item_id;
+	var char_id = args.char_id;
+	
+	removeFromGrid(item_id, true);
+
+	dojo.xhrGet( {
+        url: urlBase + "character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
+        handleAs: "json",	
+        load: function(responseObject, ioArgs) {
+        	loadCharStats(char_id);
+        	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) {        	
+        		getPanels('party/refresh_party_list');
+        	}
+        }
+    });	       
+}	
+
+function split_item(item_id) {
+	dojo.byId('split-item-id').value = item_id;
+	dijit.byId('split-diag').show();
+}
+
+function split_item_submit(arguments) {
+	var itemId = arguments.item_id;
+	dojo.xhrGet( {
+        url: urlBase + "character/split_item?item_id=" + itemId + "&new_quantity=" + arguments.new_quantity,
+        handleAs: "json",	
+        load: function(responseObject) {
+        	var item = $( '#item-' + itemId );        
+        	var newItem = item.clone(true);
+        	newItem.attr('id', 'item-' + responseObject.item_id);
+        	newItem.attr('itemId',responseObject.item_id);        	
+        
+    		var origCoord = {
+				x: parseInt(responseObject.new_x),
+				y: parseInt(responseObject.new_y),	
+			}
+			
+			var sectors = findDropSectors(origCoord, newItem, 'inventory');						
+			
+			newItem.css({top: 0,left: 0}).appendTo(sectors[0]);
+			
+			for (var i = 0; i < sectors.length; i++) {
+				sectors[i].attr('hasItem', newItem.attr("itemId"));
+			}
+			
+			item.attr('rel', item.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+			setupItemTooltips('#' + item.attr('id'));
+			
+			newItem.attr('rel', urlBase + 'item/tooltip?item_id=' + responseObject.item_id);
+			setupItemTooltips('#' + newItem.attr('id'));
+        }
+    });	 	
+}
+
+/* Shop */
+
+function setupShop(shopId) {
+	$( ".shop-item" ).draggable({
+		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},		
+	});
+	
+	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
+	
+	$( ".shop" ).droppable({
+		accept: ".inventory-item",
+		drop: function( event, ui ) {
+			var item = ui.draggable;
+		
+			if (item.attr('isQuantity') == 1) {
+				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to sell?";
+				dojo.byId('quantity-shop-id').value = shopId;
+				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-item-sector').value = $(this).attr('id');
+				dijit.byId('quantity-selection').show();
+			}
+			else {
+				sellItemEvent(event, ui,  $(this), shopId);
+			}	
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this), true);
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		}		
+	});
+}
+
+function sellItemEvent(event, ui, hoverSector, shopId) {
+	var item = ui.draggable;
+	
+	sellItem(item, shopId, hoverSector);
+	
+	removeFromGrid(item.attr('itemId'), true);	
+}
+
+function sellItem(item, shopId, hoverSector, quantity) {
+	var coord = {
+		x: parseInt(hoverSector.attr('sectorX')),
+		y: parseInt(hoverSector.attr('sectorY')),			
+	};
+	
+	clearDropSectors(coord, item, 'shop');
+
+	var params = { shop_id: shopId, item_id: item.attr('itemId'), quantity: quantity };
+	getPanels('shop/sell_item?' + $.param(params) );	
+}
+
+function sellCallback(data) {
+	if (data.messages) {
+		var messages = data.messages;
+		var message = "";
+		for ( var i in messages ) {
+			if (messages[i]) {
+				message += messages[i] + '<br>';
+			}
+		}
+		if (message) {
+			dojo.byId('message-text').innerHTML = message;
+			dijit.byId('message-diag').show();
+		}
+	}
+	
+	if (data.remove_item) {
+		removeFromGrid(data.remove_item, true);
+	}
+	
+	if (data.existing_shop_quantity_item) {
+		var existingQuan = $( '#item-' + data.existing_shop_quantity_item );
+		existingQuan.attr('rel', existingQuan.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + existingQuan.attr('id'));		
+	}
+}
+
+function quantityPurchaseCallback(data) {
+	if ( data.shop_item.quantity <= 0 ) {
+		removeFromGrid(data.shop_item.item_id, true);
+	}
+	
+	if (data.item_stacked == '1') {
+		removeFromGrid('quantity-new', true);
+		
+		var stackedOnItem = $( '#item-' + data.stacked_on_item );
+		stackedOnItem.attr('rel', stackedOnItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+		setupItemTooltips('#' + stackedOnItem.attr('id'));		
+		
+	}
+	else {	
+		var item = $( '#item-quantity-new' );
+		
+		item.attr('itemId', data.inv_item);
+		item.attr('id', 'item-' + data.inv_item);
+		item.attr('onmouseover', "saveCurrentItemId('" + data.inv_item + "');");
+	
+		item.attr('rel', urlBase + 'item/tooltip?item_id=' + data.inv_item);
+		setupItemTooltips('#' + item.attr('id'));		
+		 
+		var loc = item.parent();
+		var coord = {
+			x: parseInt(loc.attr('sectorX')),
+			y: parseInt(loc.attr('sectorY')),	
+		}		
+		
+		var sectors = findDropSectors(coord, item, 'inventory');
+		
+		for (var i = 0; i < sectors.length; i++) {
+			sectors[i].attr('hasItem', data.inv_item.item_id);
+		}
+	}
+	
+	var shopItem = $( '#item-' + data.shop_item.item_id );
+	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
+	setupItemTooltips('#' + shopItem.attr('id'));
+}
+
+function loadShopTab(shopId, tab) {
+	$.get(urlBase + 'shop/item_tab', { shop_id: shopId, tab: tab }, function(data) {
+		$( '#shop-grid' ).html(data);
+		setupShop(shopId);
+		setupItemTooltips('.shop-item');
+	});
+}
+
+function loadCharShopInventory(charId) {	
+	$( '#char-shop-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
+	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
+	$('.char-shop-link').removeClass('current-selection');
+	$('#char-shop-link-'+charId).addClass('current-selection');
 }

@@ -494,25 +494,33 @@ sub test_change_allegiance : Tests() {
     is($quests[1]->status, 'Complete', "second quest is still complete");        
 }
 
-sub test_get_least_encumbered_character : Tests(1) {
+sub test_give_item_to_character : Tests(1) {
     my $self = shift;
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+    );    
+    
+    
     my @characters = $party->characters;
     
     $characters[0]->encumbrance(50);
+    $characters[0]->create_item_grid;
     $characters[0]->update;
 
     $characters[1]->encumbrance(30);
+    $characters[1]->create_item_grid;
     $characters[1]->update;
     
     $characters[2]->encumbrance(20);
     $characters[2]->hit_points(0);
+    $characters[2]->create_item_grid;
     $characters[2]->update;    
     
     # WHEN
-    my $character = $party->get_least_encumbered_character;
+    my $character = $party->give_item_to_character($item1);
     
     # THEN
     is($character->id, $characters[1]->id, "Correct character returned");   

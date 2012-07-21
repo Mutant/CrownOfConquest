@@ -885,12 +885,10 @@ sub pickup_item : Local {
 		return;
 	}
 
-	my $random_char = $party->get_least_encumbered_character;
+	my $random_char = $party->give_item_to_character($item);
 
 	$party->turns( $party->turns - 1 );
 	$party->update;
-
-	$item->add_to_characters_inventory($random_char);
 
 	$c->stash->{messages} = $random_char->character_name . " picks up the " . $item->display_name(1);
 

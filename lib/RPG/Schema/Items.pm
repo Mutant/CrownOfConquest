@@ -129,8 +129,9 @@ __PACKAGE__->has_many( 'item_enchantments', 'RPG::Schema::Item_Enchantments', 'i
 
 __PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' );
 
-with 'RPG::Schema::Item::Variables';
+__PACKAGE__->has_many( 'grid_sectors', 'RPG::Schema::Item_Grid', 'item_id' );
 
+with 'RPG::Schema::Item::Variables';
 
 sub variables {
 	my $self = shift;
@@ -589,24 +590,24 @@ sub is_quantity {
     return $self->variable('Quantity') ? 1 : 0;
 }
 
-=head2 equip_item($equipment_slot_name, $replace_existing_equipment)
+=head2 equip_item($equipment_slot_name, replace_existing_equipment => 0)
 
 Equip an item  belonging to a particular character in a given equipment slot. Checks that the item can be equipped in that slot,
 throwing an exception if it can't be.
 
-The $replace_existing_equipment is a boolean (defaults to true) that specifies whether any existing equipment should be removed
+The replace_existing_equipment is a boolean (defaults to true) that specifies whether any existing equipment should be removed
 to complete the equip (including considerations for things such as two-handed weapons).
 
-Returns a list of equip slot names that have been changed (or an empty list if nothing has changed). Note, if the item is already
-equiped elsewhere, the slot it's being moved to will be in the return list.
+Returns any extra items that were also unequipped as the result of the item being equipped
 
 =cut
 
 sub equip_item {
     my $self                       = shift;
     my $equipment_slot_name        = shift;
-    my $replace_existing_equipment = shift;
-    $replace_existing_equipment = 1 unless defined $replace_existing_equipment;
+    my %params = @_;
+        
+    my $replace_existing_equipment = $params{replace_existing_equipment} // 1;
 
     my ($equip_place) = $self->result_source->schema->resultset('Equip_Places')->search(
         {
@@ -617,8 +618,6 @@ sub equip_item {
             join => 'equip_place_categories', 
         },
     );
-
-    my @slots_changed;
 
     # Make sure this category of item can be equipped here
     unless ($equip_place) {
@@ -638,17 +637,29 @@ sub equip_item {
             equip_place_id => $equip_place->id,
         }
     );
+    
+    my $character = $self->belongs_to_character;    
+    $character->remove_item_from_grid($self);
 
     if ($equipped_item) {
         if ($replace_existing_equipment) {
             $equipped_item->equip_place_id(undef);
             $equipped_item->update;
+            
+            $character->add_item_to_grid($equipped_item, 
+                { 
+                    x => $params{'existing_item_x'}, 
+                    y => $params{'existing_item_y'} 
+                } 
+            );            
         }
         else {
             # We're not replacing existing items, so nothing more to do here
             return;
         }
     }
+
+    my @extra_items;
 
     # Check to see if we're going to affect the opposite hand's equipped item
     my $other_hand = $equip_place->opposite_hand;
@@ -665,16 +676,19 @@ sub equip_item {
         # If this item and the item in opposite hand are both weapons, we have to unequip old weapon
         #  unless $replace_existing_equipment is false, in which case we return
         # Note, we bypass the 'factors trigger' when unequipping these items. This is an optimisation,
-        #  since we don't want to trigger calculation of attack/defence factr until we equip the actual
+        #  since we don't want to trigger calculation of attack/defence factor until we equip the actual
         #  item.
         if (   $item_in_opposite_hand
             && $item_in_opposite_hand->item_type->category->super_category->super_category_name eq 'Weapon'
             && $self->item_type->category->super_category->super_category_name eq 'Weapon' )
         {
             if ($replace_existing_equipment) {
+                # Order here is important... we want to unequip, then add to grid
+                #  before updating to DB. Adding to grid may throw an exception
                 $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
-                $item_in_opposite_hand->update;
-                push @slots_changed, $other_hand->equip_place_name;
+                $character->add_item_to_grid($item_in_opposite_hand);
+                $item_in_opposite_hand->update;                
+                push @extra_items, $item_in_opposite_hand;
             }
             else {
                 return;
@@ -690,8 +704,25 @@ sub equip_item {
                 if ( $item_in_opposite_hand && $item_in_opposite_hand->id != $self->id ) {
                     if ($replace_existing_equipment) {
                         $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
+                        
+                        try {
+                            $character->add_item_to_grid($item_in_opposite_hand);
+                        }
+                        catch {
+                            # Not enough room in inventory grid to add off hand item.
+                            #  Put exisiting item back in slot and rethrow
+                            if ($_ =~ /^Couldn't find room for item/ && $equipped_item) {                                
+                                $character->remove_item_from_grid($equipped_item);                                
+                                $equipped_item->equip_place_id( $equip_place->id );
+                                $equipped_item->update;
+                            }
+                            
+                            die $_;
+                        };
+                            
+                                                    
                         $item_in_opposite_hand->update;
-                        push @slots_changed, $other_hand->equip_place_name;
+                        push @extra_items, $item_in_opposite_hand;
                     }
                     else {
 
@@ -702,23 +733,18 @@ sub equip_item {
             }
         }
     }
-
-    # Check if this item is already equipped. If it is, record the fact that it's current slot has changed.
-    if ( $self->equip_place_id ) {
-        push @slots_changed, $self->equipped_in->equip_place_name;
-    }
-
+    
     $self->equip_place_id( $equip_place->id );
     $self->update;
-    push @slots_changed, $equipment_slot_name;
 
-    return @slots_changed;
+    return @extra_items;
 }
 
 # Add item to a characters equipment list, including auto-equipping if necessary
 sub add_to_characters_inventory {
     my $self      = shift;
     my $character = shift;
+    my $grid_loc  = shift;
 
     croak "Must pass a character record to add_to_characters_inventory() - got: $character"
         unless $character->isa('RPG::Schema::Character');
@@ -745,7 +771,7 @@ sub add_to_characters_inventory {
             # Don't delete this item, just don't add it to inventory
             $self->character_id(undef);
             $self->update;
-            return;             
+            return $item;             
         }   
     }
 
@@ -758,23 +784,24 @@ sub add_to_characters_inventory {
         # Try equipping the item in each empty equip place (without removing any existing items)
         LOOP: foreach my $equip_place (keys %equipped_items) {
             if ( !$equipped_items{$equip_place} ) {
-                eval {
-                    if ( $self->equip_item( $equip_place, 0 ) )
+                try {
+                    if ( $self->equip_item( $equip_place, replace_existing_equipment => 0 ) )
                     {
-    
                         # Equip was successful, so don't try to equip again
                         no warnings;
                         last LOOP;
                     }
                 };
-                if ($@) {
-                    unless ( $@ =~ "Can't equip an item of that type there" ) {
-                        croak $@;
+                catch {
+                    if ( $_ !~ /Can't equip an item of that type there/ ) {
+                        croak $_;
                     }
-                }
+                };
             }
         }
     }
+    
+    $character->add_item_to_grid($self, $grid_loc) if ! $self->equipped;
 
     # May do nothing, since equip_item does an update, but if nothing was auto equipped, we need to do this
     $self->update;
@@ -979,6 +1006,18 @@ sub repair {
     $character->calculate_attack_factor;
     $character->calculate_defence_factor;
     $character->update;		       
+}
+
+sub start_sector {
+    my $self = shift;
+    
+    my $sector = $self->find_related('grid_sectors',
+        {
+            start_sector => 1,
+        }
+    );
+    
+    return $sector;   
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

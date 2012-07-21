@@ -106,6 +106,10 @@ __PACKAGE__->has_many( 'character_skills', 'RPG::Schema::Character_Skill', 'char
 
 __PACKAGE__->many_to_many( 'skills' => 'character_skills', 'skill' );
 
+__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.character_id'}, { where => { owner_type => 'character' } });
+
+with qw/RPG::Schema::Role::Item_Grid/;
+
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
 
@@ -548,6 +552,8 @@ sub roll_all {
         $self->$method($increase);
         $rolls{$resistance} = $increase;
     }
+    
+    $self->create_item_grid;
 
     $self->update;
 
@@ -1443,6 +1449,12 @@ sub set_starting_equipment {
             $item->variable( 'Quantity', 250 );
         }
     }
+}
+
+sub create_item_grid {
+    my $self = shift;
+
+    $self->create_grid('character', 8, 8);       
 }
 
 # Returns the spell to cast if there is one, undef otherwise

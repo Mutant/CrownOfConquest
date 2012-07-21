@@ -1384,6 +1384,7 @@ sub test_check_for_item_found_correct_prevalence_used : Tests(5) {
 	# GIVEN
 	my $party     = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
 	my $character = ( $party->characters )[0];
+	$character->create_item_grid;
 	my $cg        = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => 1 );
 
 	$self->{config}{chance_to_find_item}                   = 10;
@@ -1422,6 +1423,7 @@ sub test_check_for_item_found_enchantment_created : Tests(6) {
 	# GIVEN
 	my $party     = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
 	my $character = ( $party->characters )[0];
+	$character->create_item_grid;
 	my $cg        = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => 10 );
 
 	$self->{config}{chance_to_find_item}                   = 10;
@@ -1466,6 +1468,7 @@ sub test_check_for_item_found_prev_roll : Tests(5) {
 	# GIVEN
 	my $party     = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
 	my $character = ( $party->characters )[0];
+	$character->create_item_grid;
 	my $cg        = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_level => 5 );
 
 	$self->{config}{chance_to_find_item}                   = 10;

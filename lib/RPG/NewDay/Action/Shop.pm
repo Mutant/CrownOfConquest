@@ -142,6 +142,8 @@ sub run {
                 }
             }
             
+            $shop->organise;
+            
             $c->logger->info("Added $added_count items (value left to add: $item_value_to_add)");
             
         }

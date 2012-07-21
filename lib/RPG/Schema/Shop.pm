@@ -1,7 +1,7 @@
 package RPG::Schema::Shop;
 use base 'DBIx::Class';
-use strict;
-use warnings;
+
+use Moose;
 
 __PACKAGE__->load_components(qw/ Core/);
 __PACKAGE__->table('Shop');
@@ -77,11 +77,44 @@ __PACKAGE__->has_many(
     { 'foreign.shop_id' => 'self.shop_id' }
 );
 
+__PACKAGE__->has_many('items', 'RPG::Schema::Items', 'shop_id');
+
+__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.shop_id'}, { where => { owner_type => 'shop' } });
+
 __PACKAGE__->belongs_to(
     'in_town',
     'RPG::Schema::Town',
     { 'foreign.town_id' => 'self.town_id' }
 );
+
+with qw/RPG::Schema::Role::Item_Grid/;
+
+sub organise {
+    my $self = shift;
+    
+    my @items = $self->search_related('items',
+        {
+            'equip_place_id' => undef,
+        },
+        {
+            prefetch => {'item_type' => 'category'},
+            order_by => 'category.item_category, me.item_id',            
+        }
+    );
+        
+    my @organised;
+    my @special;
+    foreach my $item (@items) {
+        if (! $item->enchantments_count && ! $item->upgraded) {
+            push @organised, $item;
+        }
+        else {
+            push @special, $item;
+        }
+    }
+    
+    $self->organise_items_in_tabs('shop', 12, 8, @organised, @special);
+}
 
 sub grouped_items_in_shop {
 	my $self = shift;

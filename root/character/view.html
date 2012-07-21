@@ -7,178 +7,12 @@
 <script type="text/javascript">
     function init() {
 		[% IF group %]displayCharList('[% group %]');[% END %]
-				
-		/* Inventory DND */
-		dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-			var t = dojo.dnd.manager().target;
-	
-			tmp = t.node.id.split(/-/);
-			var target_id = tmp[0];
-			var target_type = tmp[1];
-	
-	   		order_val = nodes[0].id.split(/-/);
-			var item_id = order_val[1];
-			
-			if (target_type == 'equip_place') {
-				equip_item(target_id, item_id);
-			}
-		});
-	}
-	
-	var inProgress = {};
-	function equip_item(equip_place, item_id) {
-		[%# Hack to get around the fact that the equip slots are defined each time the char screen loads %]
-		if (inProgress[equip_place + ' ' + item_id]) {
-			return;
-		}
-		inProgress[equip_place + ' ' + item_id] = true;
-	
-		dojo.xhrGet( {
-	        url: "[% base %]/character/equip_item?item_id=" +  item_id + "&equip_place=" + equip_place,
-	        handleAs: "json",
-	        load: function(responseObject, ioArgs) {
-	        	if (responseObject.error) {
-       	          	dojo.byId('error-message').innerHTML = responseObject.error;
-			      	dijit.byId('error').show();
-	        	}
-	        	else {
-		        	var changed_slots = responseObject.changed_slots;
-	        		for (changed_slot in changed_slots) {
-	        			var item = changed_slots[changed_slot];
-	        			dijit.byId(changed_slot + '-tooltip').label = item.tooltip; 
-						dojo.byId(changed_slot + '-item-id').innerHTML = item.item_id; 
-	        				        			  			
-	        			if (item.image) {	        				
-	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'block';
-	        				dojo.byId(changed_slot + '-slot-label').style.display = 'none';
-	        				dojo.byId(changed_slot + '-equip-place-image').src = '[% c.config.static_path %]/images/items/' + item.image;
-	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = '';
-	        			} 
-	        			else if (item.text) {	        			
-	        				dojo.byId(changed_slot + '-equip-place-image').style.display = 'none';
-	        				dojo.byId(changed_slot + '-slot-label').style.display = 'none';
-	        				dojo.byId(changed_slot + '-equip-place-image').src = '';
-	        				dojo.byId(changed_slot + '-equip-place-text').innerHTML = item.item_type;
-	        			}
-	        			else {
-       						clearEquipSlot(changed_slot);
-	        			}
-	        			reloadInventory();
-	        			reloadStats();
-	        			[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
-	        		}
-				}
-				
-				inProgress[equip_place + ' ' + item_id] = false;
-	        },
-	        error: function(err) {
-	        	console.debug(err);
-	        	
-	        	inProgress[equip_place + ' ' + item_id] = false;
-	        }
-	    });
-	}
-	
-	function give_item_to(char_id, item_id) {
-		dojo.xhrGet( {
-	        url: "[% base %]/character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
-	        handleAs: "json",	
-	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();
-	        	reloadStats();
-	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]	        	
-	        	dojo.byId('encumbrance-value').innerHTML = responseObject.encumbrance;
-				
-				if (responseObject.clear_equip_place) {
-					clearEquipSlot(responseObject.clear_equip_place);					
-				}				
-	        }
-	    });	       
-	}
-	
-	function drop_item_diag(item_id, char_id) {
-		dojo.byId('drop-item-id').value = item_id;
-		dojo.byId('drop-char-id').value = char_id;
-		dijit.byId('drop-item-diag').show();
 	}
 
-	function drop_item(args) {
-		var item_id = args.item_id;
-		var char_id = args.char_id;
-	
-		dojo.xhrGet( {
-	        url: "[% base %]/character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,
-	        handleAs: "json",	
-	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();
-	        	reloadStats();
-	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
-				
-				if (responseObject.clear_equip_place) {
-					clearEquipSlot(responseObject.clear_equip_place);					
-				}				
-	        }
-	    });	       
-	}	
-	
-	function unequip_item(item_id, char_id) {
-		dojo.xhrGet( {
-	        url: "[% base %]/character/unequip_item?item_id=" +  item_id + "&character_id=" + char_id,
-	        handleAs: "json",	
-	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();
-	        	reloadStats();
-	        	[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
-				clearEquipSlot(responseObject.clear_equip_place);
-	        }
-	    });	       
-	}
-	
-	function split_item(item_id) {
-		dojo.byId('split-item-id').value = item_id;
-		dijit.byId('split-diag').show();
-	}
-	
-	function split_item_submit(arguments) {
-		dojo.xhrGet( {
-	        url: "[% base %]/character/split_item?item_id=" +  arguments.item_id + "&new_quantity=" + arguments.new_quantity,
-	        handleAs: "text",	
-	        load: function(responseObject, ioArgs) {
-	        	reloadInventory();
-	        }
-	    });	 	
-	}
-	
-	
 	dojo.addOnLoad( init );
 	
-function clearEquipSlot(slot_name) {
-	dojo.byId(slot_name + '-equip-place-image').style.display = 'none';
-	dojo.byId(slot_name + '-slot-label').style.display = 'block';
-	dojo.byId(slot_name + '-equip-place-image').src = '';
-	dojo.byId(slot_name + '-equip-place-text').innerHTML = '';	
-	dijit.byId(slot_name + '-tooltip').label = ''; 
-}	
+	var inCharWindow = '[% window ? 'true' : 'false' %]';
 
-function reloadInventory() {
-     dojo.xhrGet({
-         url: "[% base %]/character/inventory?character_id=[% character.id %]",
-         load: function(data,ioa){
-              dijit.byId('inventory-panel').setContent(data);
-              createItemMenus();
-         },
-         timeout: 15000,
-     });
-}
-
-function reloadStats() {
-     dojo.xhrGet({
-         url: "[% base %]/character/stats?character_id=[% character.id %]",
-         load: function(data,ioa){
-              dijit.byId('stats-panel').setContent(data);
-         } 
-     });
-}
 
 function addStatPoint(char_id, stat) {
 	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
@@ -243,6 +77,10 @@ function calculateSpellPoints() {
 	dojo.byId('spell-points-used').innerHTML = points_used;
 }
 
+$(function() {
+	loadCharStats('[% character.id %]');
+});
+
 </script>
 
 [% INCLUDE town/recruitment/dialog.html %]
@@ -264,15 +102,6 @@ function calculateSpellPoints() {
     Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="new_name">
     <input id="name-char-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
 	[% dialog_buttons('change-name-diag') %]
-	</form>
-</div>
-
-<div dojoType="dijit.Dialog" id="drop-item-diag" style="display: none" title="Drop Item Confirmation" execute="drop_item(arguments[0])">
-	<input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
-	<input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
-    Are you sure you want to drop the item?<br>
-    (Note, items dropped in town will disappear forever!)
-	[% dialog_buttons('drop-item-diag') %]
 	</form>
 </div>
 
@@ -342,8 +171,7 @@ function calculateSpellPoints() {
 
 </div>
 
-<div dojoType="dijit.layout.ContentPane" href="[% base %]/character/stats?character_id=[% character.id %]" 
-	id="stats-panel" loadingMessage="" [% IF ! window %]class="characterStats"[% END %]></div>
+<div id="stats-panel" class="characterStats" style="float: left"></div>
 
 </div>
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">

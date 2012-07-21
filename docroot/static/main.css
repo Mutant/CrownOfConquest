@@ -87,6 +87,10 @@ br {
 	background-color: #2F2F2F;
 }
 
+.tundra .dijitTabPaneWrapper, .tundra .dijitTabContainerTop-tabs {
+	border-color: #4D4D4D;
+}
+
 #content-outer {
 	height: auto;
 	min-height: 250px;
@@ -316,7 +320,7 @@ h1 {margin: 0; padding: 1px}
 	height: 5px;
 }
 
-#current-selection {
+#current-selection, .current-selection {
 	background: #5F5F5F;
 }
 
@@ -377,7 +381,7 @@ div.enlargedTitle {
 
 /* Tooltip */
 
-.tundra .dijitTooltipContainer
+.tundra .dijitTooltipContainer, .cluetip-tooltip, #cluetip-waitimage
 {
 	background: black;
 	color: #EECAA2;
@@ -396,6 +400,21 @@ div.enlargedTitle {
         box-shadow: 1px 1px 1px #6B6B6B;
 }
 
+.cluetip-tooltip {
+	display: none;
+	z-index: 500;
+	text-align: left;
+	font-size: 9pt;
+	font-family: verdana, kalimati, helvetica;
+}
+
+
+#cluetip-waitimage {
+	background:url(images/layout/loader.gif) no-repeat left center;
+	min-height: 24px;
+	min-width: 24px;
+}
+
 .dj_webkit .tundra .dijitTooltipContainer {
 	-webkit-box-shadow: 1px 1px 1px #6B6B6B;
 }
@@ -406,4 +425,8 @@ div.enlargedTitle {
 .tundra .dijitTooltipLeft .dijitTooltipConnector { display:none; }
 .tundra .dijitTooltipBelow .dijitTooltipConnector { display:none; }
 .tundra .dijitTooltipRight .dijitTooltipConnector { display:none; }
+
+/* Equipment */
+.item-droppable { background: green }
+.item-blocked   { background: #8B0000 }
 

@@ -189,9 +189,6 @@ sub check_for_item_found {
 			return;
 		}
 
-		# Choose a character to find it
-		my $finder = $self->character_group->get_least_encumbered_character;
-		
 		# Create the item
 		my $item;
 		if ($self->session->{rare_cg} || $avg_creature_level >= $self->config->{minimum_enchantment_creature_level}) {
@@ -237,7 +234,8 @@ sub check_for_item_found {
 		
 		$item ||= $self->schema->resultset('Items')->create( { item_type_id => $item_type->id, }, );
 
-		$item->add_to_characters_inventory($finder);
+		# Choose a character to find it
+		my $finder = $self->character_group->give_item_to_character($item);
 
 		$self->result->{found_items} = [
 			{

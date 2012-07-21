@@ -8,6 +8,7 @@ use Data::Dumper;
 use JSON;
 use Carp;
 use Set::Object qw(set);
+use Try::Tiny;
 
 sub purchase : Local {
 	my ( $self, $c ) = @_;
@@ -35,208 +36,68 @@ sub purchase : Local {
 	}
 
 	my @characters = $party->characters;
-
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'shop/purchase.html',
-				params   => {
-					shop          => $shop,
-					characters    => \@characters,
-					shops_in_town => \@shops_in_town,
-					town          => $party->location->town,
-				}
-			}
-		]
-	);
-}
-
-sub standard_tab : Local {
-    my ( $self, $c ) = @_;
-    
-    $c->forward('item_tab', [0]);
-}
-
-sub enchanted_tab : Local {
-	my ( $self, $c ) = @_;
-
-    $c->forward('item_tab', [1]);
-
-}
-
-sub item_tab : Private {
-    my ( $self, $c, $enchanted ) = @_;
-    
-	my $party = $c->stash->{party};
-
-	my @shops_in_town = $party->location->town->shops;
-
-	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
 	
-	my @items = $enchanted ? $shop->enchanted_items_in_shop : $shop->grouped_items_in_shop;
-
-	# Put everything into a hash by category
-	my %items;
-	foreach my $item (@items) {
-	    my $sell_type = 'item';
-	    $sell_type = 'quantity' if $item->has_variable('Quantity');
-	    $sell_type = 'enchanted' if $enchanted;
-	    
-		push @{ $items{ $item->item_type->category->item_category }{$sell_type} }, $item;
-	}
+	my $items_in_grid = $shop->items_in_grid;
+	
+	my $max_tab = $shop->max_tab;
 
 	$c->forward(
 		'RPG::V::TT',
 		[
 			{
-				template => 'shop/item_list.html',
-				params   => {
-					shop  => $shop,
-					items => \%items,
-				}
-			}
-		]
-	);    
-}
-
-sub sell : Local {
-	my ( $self, $c ) = @_;
-
-	my $party = $c->stash->{party};
-
-	my @shops_in_town = $party->location->town->shops;
-
-	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
-
-	my @characters = $party->characters;
-
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'shop/sell.html',
+				template => 'shop/purchase2.html',
 				params   => {
 					shop          => $shop,
 					characters    => \@characters,
 					shops_in_town => \@shops_in_town,
-					gold          => $party->gold,
+					items_in_grid => $items_in_grid,
 					town          => $party->location->town,
-					current_tab   => $c->session->{sell_active_tab} || '',
+					max_tab       => $max_tab,
 				}
 			}
 		]
 	);
 }
 
-sub character_sell_tab : Local {
-	my ( $self, $c ) = @_;
-
-	my $character = $c->model('DBIC::Character')->find(
-		{
-			character_id => $c->req->param('character_id'),
-			garrison_id  => undef,
-		}
-	);
-
-	croak "Invalid character" unless $character->party_id == $c->stash->{party}->id;
-
-	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id') } );
-
-	if ( $shop->town_id != $c->stash->{party}->location->town->id ) {
-		croak "Invalid shop";
-	}
-
-	$c->session->{sell_active_tab} = $character->id;
-
-	my @items = $c->model('DBIC::Items')->search(
-		{ character_id => $c->req->param('character_id'), },
-		{
-			prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-			order_by => 'item_category',
-		},
-	);
-
-	$c->forward(
-		'RPG::V::TT',
-		[
-			{
-				template => 'shop/character_sell_tab.html',
-				params   => {
-					items     => \@items,
-					shop      => $shop,
-					character => $character,
-				}
-			}
-		]
-	);
+sub character_inventory : Local {
+    my ( $self, $c ) = @_;
+    	
+    $c->visit('/character/equipment_tab', [1]);
 }
 
 sub buy_item : Local {
 	my ( $self, $c ) = @_;
-
-	my $shop = $c->model('DBIC::Shop')->find( $c->req->param('shop_id') );
+	
+    my $item = $c->model('DBIC::Items')->find(
+		{
+			item_id => $c->req->param('item_id'),
+		},
+		{
+			prefetch => 'item_type',
+		}
+	);
+	
+	croak "Can't buy quantity item" if $item->is_quantity;
 
 	my $party = $c->stash->{party};
 
+    my $shop = $item->in_shop;
 	my $town = $shop->in_town;
 
 	if ( $town->id != 0 && $town->id != $party->location->town->id ) {
 		croak "Attempting to buy an item in another town";
-
-		# TODO: this does allow them to buy items from a different shop in the same town, which may or may not be OK
-		return;
 	}
-
-	my $item;
 	my $count = 0;
 	my $cost = 0;
 	my $enchanted = 0;
 
-	if ( $c->req->param('item_type_id') ) {
-		my $item_rs = $c->model('DBIC::Items')->search(
-			{
-				'item_type.item_type_id'           => $c->req->param('item_type_id'),
-				shop_id                            => $shop->id,
-				'item_enchantments.enchantment_id' => undef,
-			},
-			{
-				prefetch => 'item_type',
-				join     => 'item_enchantments',
-			},
-		);
-
-		if ( $item_rs->count == 0 ) {
-			push @{ $c->stash->{error} }, "The shop no longer has any of those items left. Another party may have just bought the last one!";
-			$c->forward( '/panel/refresh' );
-			return;
-		}
-
-		$item  = $item_rs->first;
-		$count = $item_rs->count - 1;		
-		$cost = $item->item_type->modified_cost( $item->in_shop );
+	if (! $item) {
+		push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
+		$c->forward( '/panel/refresh' );
+		return;
 	}
-	else {
-		$item = $c->model('DBIC::Items')->find(
-			{
-				item_id => $c->req->param('item_id'),
-				shop_id => $shop->id,
-			},
-			{
-				prefetch => 'item_type',
-			}
-		);
-
-		unless ($item) {
-			push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
-			$c->forward( '/panel/refresh' );
-			return;
-		}
-		
-		$cost = $item->sell_price( $item->in_shop, 0 );
-		
-		$enchanted = 1;
-	}
+	
+    $cost = $item->sell_price( $item->in_shop, 0 );
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
@@ -251,48 +112,53 @@ sub buy_item : Local {
 	}
 
 	my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
-
-	$item->add_to_characters_inventory($character);
+	
+	if ($c->req->param('equip_place')) {
+	    $item->character_id($character->id);
+	    $item->update;        
+	    my $ret = $c->forward('/character/equip_item_impl', [$item]);
+	    $item->add_to_characters_inventory($character);
+	    
+	    $c->stash->{panel_callbacks} = [
+        	{
+            	name => 'equipItem',
+            	data => $ret,
+        	}
+        ];
+	}
+	else {
+	   $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
+	}
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
 	
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'purchase',
-        	data => {
-        	    tab => $enchanted ? 'enchanted' : 'standard',
-        	},
-    	}
-    ];	
+	$shop->remove_item_from_grid($item);
 
     $c->forward( '/panel/refresh', ['party_status'] );
 }
 
-# TODO: fair bit of duplication between this and buy_item
 sub buy_quantity_item : Local {
 	my ( $self, $c ) = @_;
 
 	my $party = $c->stash->{party};
 
-	# Make sure the shop they're in checks out
-	my $shop = $c->model('DBIC::Shop')->find(
+    my $item = $c->model('DBIC::Items')->find(
+ 		{
+			item_id => $c->req->param('item_id'),
+ 		},
 		{
-			shop_id => $c->req->param('shop_id'),
-		},
-	);
-
-	croak  "Invalid shop" unless $shop;
-
-	my $item = $c->model('DBIC::Items')->find( 
-	   { 
-	       item_id => $c->req->param('item_id'),
-	       shop_id => $c->req->param('shop_id'), 
-	   }
-	);
-	
-	croak "Invalid item" unless $item;
-
+			prefetch => 'item_type',
+		}
+ 	);
+ 	
+ 	croak "Not quantity item" unless $item->is_quantity;
+ 	
+    croak "No quantity supplied" if ! $c->req->param('quantity');
+    
+    my $shop = $item->in_shop;
+	my $town = $shop->in_town;    
+ 
 	# Make sure the shop they're in is in the town they're in
 	if ( $shop->town_id != 0 && $shop->town_id != $party->location->town->id ) {
 		croak "Attempting to buy an item in another town";
@@ -329,7 +195,7 @@ sub buy_quantity_item : Local {
     my ($character) = grep { $_->id == $c->req->param('character_id') } $party->characters_in_party;
 
 	$new_item->variable( 'Quantity', $c->req->param('quantity') );
-	$new_item->add_to_characters_inventory($character);
+	my $stacked_on_item = $new_item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
 
 	$party->gold( $party->gold - $cost );
 	$party->update;
@@ -338,104 +204,44 @@ sub buy_quantity_item : Local {
 	my $new_shop_quantity = $item->variable( 'Quantity' ) - $c->req->param('quantity');
 	$item->variable( 'Quantity', $new_shop_quantity );
 	if ($new_shop_quantity <= 0) {
+	    $shop->remove_item_from_grid($item);
 	    $item->delete;
 	}
-	
+		
     $c->stash->{panel_callbacks} = [
     	{
         	name => 'quantityPurchase',
         	data => {
-        	    item_id => $item->id,
-        	    quantity => $new_shop_quantity,
+        	    shop_item => {
+        	       item_id => $item->id,
+        	       quantity => $new_shop_quantity,
+        	    },
+                item_stacked => defined $new_item->character_id ? 0 : 1,
+                inv_item => $new_item->id,
+                stacked_on_item => $stacked_on_item ? $stacked_on_item->id : undef,
         	},
     	}
     ];	
-	 
-   
-    $c->forward( '/panel/refresh', ['party_status'] );
+	
 
+    $c->forward( '/panel/refresh', ['party_status'] );       
 }
-
+ 
 sub sell_item : Local {
 	my ( $self, $c ) = @_;
 
 	my $item = $c->model('DBIC::Items')->find( { item_id => $c->req->param('item_id'), }, { prefetch => { 'item_type' => 'category' }, }, );
 	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
 	
-	my $original_char = $item->character_id;
-
-	if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
-		return;
-	}
-
-	my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
-
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'sell',
-        	data => {
-        	    char_id => $original_char,
-        	    messages => $messages,
-        	},
-    	}
-    ];	
-
-    $c->forward( '/panel/refresh', ['party_status'] );    
-}
-
-sub sell_multi_item : Local {
-	my ( $self, $c ) = @_;
-
-	my $shop = $c->model('DBIC::Shop')->find( { shop_id => $c->req->param('shop_id'), } );
-	my @item_ids = $c->req->param('item_id');
-
-	my @items = $c->model('DBIC::Items')->search(
-		{
-			item_id => \@item_ids,
-		},
-		{ prefetch => { 'item_type' => 'category' }, },
-	);
-
-    my $original_char;
-	my @messages;
-	foreach my $item (@items) {
-	    $original_char = $item->character_id;
-	    
-		if ( !$c->forward( 'sell_single_item', [ $item, $shop ] ) ) {
-			return;
-		}
-
-		my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
-		@messages = ( @messages, @$messages );
-	}
+	croak "Invalid item" if ! $item;
+	croak "Invalid shop" if ! $shop;
 	
-    $c->stash->{panel_callbacks} = [
-    	{
-        	name => 'sell',
-        	data => {
-        	    char_id => $original_char,
-        	    messages => \@messages,
-        	},
-    	}
-    ];	
-
-    $c->forward( '/panel/refresh', ['party_status'] );
-}
-
-sub sell_single_item : Private {
-	my ( $self, $c, $item, $shop ) = @_;
+	my $character = $item->belongs_to_character;
 
 	# Make sure this item belongs to a character in the party
-	my @characters = $c->stash->{party}->characters;
-	if ( scalar( grep { $_->id eq $item->character_id } @characters ) == 0 ) {
-		$c->log->warn( "Attempted to sell item "
-				. $item->id
-				. " by party "
-				. $c->stash->{party}->id
-				. ", but item does not belong to this party (item is owned by character: "
-				. $item->character_id
-				. ")" );
-		return;
+	my @characters = $c->stash->{party}->characters_in_party;
+	if ( scalar( grep { $_->id == $item->character_id } @characters ) == 0 ) {
+		croak "Selling item from invalid character";
 	}
 
 	# Make sure the shop they're in is in the town they're in
@@ -447,6 +253,9 @@ sub sell_single_item : Private {
 	}
 	
 	my $sell_price = $item->sell_price($shop);
+	
+	my $removed_quantity_item;
+	my $existing_shop_quantity_item;
 
 	if ( $item->variable('Quantity') ) {
 	    my $quantity_for_shop = 0;
@@ -469,11 +278,13 @@ sub sell_single_item : Private {
 	    else {
     		# Selling the whole thing, just delete it.
     		$quantity_for_shop = $item->variable('Quantity');
+    		$character->remove_item_from_grid($item);
+    		$removed_quantity_item = $item->id;
             $item->delete;
 	    }
 	    
 	    # Add it to the shop
-	    if ($quantity_for_shop) {
+	    if (! $item->item_type->category->delete_when_sold_to_shop && $quantity_for_shop) {
             my $shop_item = $c->model('DBIC::Items')->find_or_create(
                 {
                     shop_id => $shop->id,
@@ -483,6 +294,16 @@ sub sell_single_item : Private {
             
             $shop_item->variable('Quantity', $shop_item->variable('Quantity') + $quantity_for_shop);
             $shop_item->update;
+            $shop->remove_item_from_grid($shop_item);
+            
+            try {
+                $shop->add_item_to_grid($shop_item);
+            }
+            catch {
+                $c->log->debug("Error when adding item to shop grid: $_");
+            };
+            
+            $existing_shop_quantity_item = $shop_item->id;
 	    } 
 	    
 	}
@@ -490,6 +311,7 @@ sub sell_single_item : Private {
 	else {
     	$item->character_id(undef);
     	$item->equip_place_id(undef);
+    	$character->remove_item_from_grid($item);
 
 		# If it's not a quantity item, give it back to the shop, except for item categories with "delete_when_sold_to_shop"
 		if ( ! $item->item_type->category->delete_when_sold_to_shop ) {
@@ -500,6 +322,12 @@ sub sell_single_item : Private {
 			
 			$item->shop_id( $shop->id );
 			$item->update;
+			try {
+                $shop->add_item_to_grid($item);
+            }
+            catch {
+                $c->log->debug("Error when adding item to shop grid: $_");
+            };
 		}
 		else {
 			$item->delete;
@@ -509,7 +337,48 @@ sub sell_single_item : Private {
 	$c->stash->{party}->gold( $c->stash->{party}->gold + $sell_price );
 	$c->stash->{party}->update;
 
-	return 1;
+	my $messages = $c->forward( '/quest/check_action', [ 'sell_item', $item ] );
+
+    $c->stash->{panel_callbacks} = [
+    	{
+        	name => 'sell',
+        	data => {
+        	    messages => $messages,
+        	    remove_item => $removed_quantity_item,
+        	    existing_shop_quantity_item => $existing_shop_quantity_item,
+        	},
+    	}
+    ];
+
+
+    $c->forward( '/panel/refresh', ['party_status'] );    
+}
+
+sub item_tab : Local {
+	my ( $self, $c ) = @_;
+    
+	my $party = $c->stash->{party};
+
+	my @shops_in_town = $party->location->town->shops;
+
+	my ($shop) = grep { $c->req->param('shop_id') eq $_->id } @shops_in_town;
+	
+	croak "Shop closed" if $shop->status eq 'Closed' || $shop->status eq 'Opening';
+	
+	my $items_in_grid = $shop->items_in_grid($c->req->param('tab'));	
+
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'shop/item_tab.html',
+				params   => {
+					items_in_grid => $items_in_grid,
+				}
+			}
+		]
+	);	
+    
 }
 
 1;

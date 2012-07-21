@@ -6,4 +6,8 @@
 	<b>[% item_type.item_type %]</b><br>
 [% END %]
 
+[% IF buy_price %]Price: [% buy_price %] gold<br>[% END %]
+[% IF quantity_buy_price %]Price: [% quantity_buy_price %] gold each<br>[% END %]
+[% IF sell_price %]Value: [% sell_price %] gold<br>[% END %]
+[% IF quantity_sell_price %]Value: [% quantity_sell_price %] gold each<br>[% END %]
 Weight: [% IF item %][% item.weight %][% ELSE %][% item_type.weight %][% END %]<br>

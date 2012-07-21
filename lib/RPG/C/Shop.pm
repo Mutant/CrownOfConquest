@@ -122,7 +122,7 @@ sub buy_item : Local {
 	    $c->stash->{panel_callbacks} = [
         	{
             	name => 'equipItem',
-            	data => { extra_items => $ret },
+            	data => $ret,
         	}
         ];
 	}

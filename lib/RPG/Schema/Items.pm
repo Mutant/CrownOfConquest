@@ -638,8 +638,7 @@ sub equip_item {
         }
     );
     
-    my $character = $self->belongs_to_character;
-    
+    my $character = $self->belongs_to_character;    
     $character->remove_item_from_grid($self);
 
     if ($equipped_item) {
@@ -677,16 +676,18 @@ sub equip_item {
         # If this item and the item in opposite hand are both weapons, we have to unequip old weapon
         #  unless $replace_existing_equipment is false, in which case we return
         # Note, we bypass the 'factors trigger' when unequipping these items. This is an optimisation,
-        #  since we don't want to trigger calculation of attack/defence factr until we equip the actual
+        #  since we don't want to trigger calculation of attack/defence factor until we equip the actual
         #  item.
         if (   $item_in_opposite_hand
             && $item_in_opposite_hand->item_type->category->super_category->super_category_name eq 'Weapon'
             && $self->item_type->category->super_category->super_category_name eq 'Weapon' )
         {
             if ($replace_existing_equipment) {
+                # Order here is important... we want to unequip, then add to grid
+                #  before updating to DB. Adding to grid may throw an exception
                 $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
-                $item_in_opposite_hand->update;
                 $character->add_item_to_grid($item_in_opposite_hand);
+                $item_in_opposite_hand->update;                
                 push @extra_items, $item_in_opposite_hand;
             }
             else {
@@ -703,8 +704,24 @@ sub equip_item {
                 if ( $item_in_opposite_hand && $item_in_opposite_hand->id != $self->id ) {
                     if ($replace_existing_equipment) {
                         $item_in_opposite_hand->equip_place_id(undef, {no_factor_trigger => 1});
+                        
+                        try {
+                            $character->add_item_to_grid($item_in_opposite_hand);
+                        }
+                        catch {
+                            # Not enough room in inventory grid to add off hand item.
+                            #  Put exisiting item back in slot and rethrow
+                            if ($_ =~ /^Couldn't find room for item/ && $equipped_item) {                                
+                                $character->remove_item_from_grid($equipped_item);                                
+                                $equipped_item->equip_place_id( $equip_place->id );
+                                $equipped_item->update;
+                            }
+                            
+                            die $_;
+                        };
+                            
+                                                    
                         $item_in_opposite_hand->update;
-                        $character->add_item_to_grid($item_in_opposite_hand);
                         push @extra_items, $item_in_opposite_hand;
                     }
                     else {
@@ -716,7 +733,7 @@ sub equip_item {
             }
         }
     }
-
+    
     $self->equip_place_id( $equip_place->id );
     $self->update;
 

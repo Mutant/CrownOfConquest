@@ -1064,9 +1064,12 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 		var sectors = findSectorsForItem(existingItem, 'inventory');
 		
 		if (sectors.length < 1) {
-			console.log("Failed finding sectors for", existingItem);
-			console.log("Dropped item", item);
-			console.log("Prefix: " + item.parent().attr('idPrefix'));
+			// Couldn't find any space for existing item
+			returnItem(item.attr('itemId'));
+			$(document).trigger('hideCluetip');
+			dojo.byId('error-message').innerHTML = "There is no room in the character's inventory to swap out the old item";
+			dijit.byId('error').show();
+			return;
 		}
 				
 		$(existingItem).detach().css({top: 0,left: 0}).appendTo(sectors[0]);
@@ -1097,24 +1100,47 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 }
 
 function equipItemCallback(data) {
-	if (data.extra_items) {		
+
+	if (data.extra_items) {
 		for (var i = 0; i < data.extra_items.length; i++) {
 			var extraItemData = data.extra_items[i];
-			var extraItem = $('#item-' + extraItemData.item_id);
-							
-			var origCoord = {
-				x: parseInt(extraItemData.new_x),
-				y: parseInt(extraItemData.new_y),	
-			}
 			
-			var sectors = findDropSectors(origCoord, extraItem, 'inventory');								
-			
-			extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
-			
-			for (var i = 0; i < sectors.length; i++) {
-				sectors[i].attr('hasItem', extraItem.attr("itemId"));
-			}
+			putItemOnGrid(extraItemData.item_id, parseInt(extraItemData.new_x), parseInt(extraItemData.new_y));
+
 		}
+	}
+	if (data.no_room) {
+		$(document).trigger('hideCluetip');
+	
+		putItemOnGrid(data.item_id, parseInt(data.x), parseInt(data.y));		
+		
+		dojo.byId('error-message').innerHTML = "There is no room in the character's inventory to swap out the old item";
+		dijit.byId('error').show();
+		
+		if (data.return_item) {
+			var slot = $( '.equip-slot[slot="' + data.slot + '"]' );
+			var item = $('#item-' + data.return_item);			
+			
+			$(item).detach().css({top: 0, left: 0}).appendTo(slot);
+		}
+		
+	}
+}
+
+function putItemOnGrid(itemId, x, y) {
+	var extraItem = $('#item-' + itemId);
+					
+	var origCoord = {
+		x: x,
+		y: y,	
+	}
+	
+	var sectors = findDropSectors(origCoord, extraItem, 'inventory');								
+	
+	extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
+	
+	for (var i = 0; i < sectors.length; i++) {
+		sectors[i].attr('hasItem', extraItem.attr("itemId"));
 	}
 }
 
@@ -1160,30 +1186,31 @@ function findSectorsForItem(item, grid) {
 		emptyGrid[emptySector.attr('sectorX')][emptySector.attr('sectorY')] = emptySector;
 	});
 	
-	var sectors;
+	var sectors = [];
 	
 	empty.each(function(){
 		var emptySector = $(this);
-		sectors = [];
 		
 		var startX = parseInt(emptySector.attr('sectorX'));
 		var startY = parseInt(emptySector.attr('sectorY'));
 		var maxX = (startX + itemWidth - 1);
 		var maxY = (startY + itemHeight - 1);
 		
-		console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);		
+		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);
 		
 		for (var x = startX; x <= maxX; x++) {
 			for (var y = startY; y <= maxY; y++) {
-				if (emptyGrid[x] && emptyGrid[x][y]) {
+				if (typeof emptyGrid[x] != 'undefined' && typeof emptyGrid[x][y] != 'undefined') {
 					sectors.push(emptyGrid[x][y]);
 				}
 			}
 		}
-		
+				
 		if (sectors.length >= (itemHeight*itemWidth)) {
 			return false;
 		}
+		
+		sectors = [];
 	});	
 	
 	return sectors;

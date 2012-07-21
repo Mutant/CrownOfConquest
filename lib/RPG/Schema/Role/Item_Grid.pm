@@ -1,6 +1,7 @@
 package RPG::Schema::Role::Item_Grid;
 
 use Moose::Role;
+use Carp;
 
 requires qw/item_sectors search_related id result_source/;
 
@@ -203,6 +204,9 @@ sub add_item_to_grid {
     
     if (! $start_coord) {
         $start_coord = $self->find_location_for_item($item);
+        
+        croak "Couldn't find room for item" unless $start_coord;
+        
         $tab = $start_coord->{tab};
     }
     

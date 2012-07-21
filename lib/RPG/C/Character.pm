@@ -7,6 +7,7 @@ use base 'Catalyst::Controller';
 use Data::Dumper;
 use JSON;
 use HTML::Strip;
+use Try::Tiny;
 
 use Carp;
 
@@ -309,33 +310,72 @@ sub equip_item : Local {
         
     my $ret = $c->forward('equip_item_impl', [$item]);
 	
-	$c->res->body( to_json( { extra_items => $ret } ) );
+	$c->res->body( to_json( $ret ) );
 }
 
 sub equip_item_impl : Private {
     my ($self, $c, $item) = @_;   
 
 	my $equip_place = $c->req->param('equip_place');
-	my @extra_items = $item->equip_item($equip_place, 
-	   existing_item_x => $c->req->param('existing_item_x'),
-	   existing_item_y => $c->req->param('existing_item_y'),
-	);
+	my $no_room = 0;
+	my $return_item;
 	
-	my @ret;
-
-	my $slots_cleared;
-	if ( @extra_items ) {
+	my @extra_items = try {
+        $item->equip_item($equip_place, 
+            existing_item_x => $c->req->param('existing_item_x'),
+            existing_item_y => $c->req->param('existing_item_y'),
+	   );
+	}
+	catch {
+        if ($_ =~ /^Couldn't find room for item/) {
+            $no_room = 1;
+            
+            # Add the item back into the grid
+            my $character = $item->belongs_to_character;
+            $character->add_item_to_grid($item);
+            
+            my $equipped_item = $c->model('DBIC::Items')->find(
+                {
+                    character_id   => $character->id,
+                    'equipped_in.equip_place_name' => $equip_place,
+                },
+                {
+                    join => 'equipped_in',
+                }
+            );
+            
+            $return_item = $equipped_item;
+        }
+        else {
+            die $_;
+        }
+	};
+	
+	my %ret;
+	
+	if ($no_room) {
+	    my $sector = $item->start_sector; 
+	    %ret = (
+            no_room => 1,
+            item_id => $item->id,
+            x => $sector->x,
+			y => $sector->y,
+			return_item => $return_item ? $return_item->id : undef,
+			slot => $equip_place,	       
+	    );
+	}
+	elsif ( @extra_items ) {
 	    my $item = $extra_items[0];
 	    my $sector = $item->start_sector; 
 
-		@ret = ({
+		%ret = (extra_items => [{
 		    item_id => $item->id,
 			new_x => $sector->x,
 			new_y => $sector->y,
-		});
+		}]);
 	}
 	
-	return \@ret;
+	return \%ret;
 
 }
 

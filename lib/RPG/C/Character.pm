@@ -504,7 +504,13 @@ sub organise_inventory : Local {
 	
 	my $character = $c->stash->{character};
 	
-	$character->organise_items();
+	my @remaining = $character->organise_items();
+	
+	if (@remaining) {
+	    # Tried to organise items, but some were left.
+	    #  Undo everything! 
+	    $c->model('DBIC')->storage->txn_rollback;
+	}
 	
 	my $items_in_grid = $character->items_in_grid;
 		

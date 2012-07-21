@@ -65,7 +65,9 @@ sub organise_items {
     
     my @remaining = $self->organise_items_impl(1, @items);
     
-    warn scalar @remaining . " items remaining when organising into tabs" if @remaining; 
+    warn scalar @remaining . " items remaining when organising into tabs" if @remaining;
+    
+    return @remaining; 
 }
 
 sub organise_items_impl {
@@ -204,7 +206,6 @@ sub add_item_to_grid {
     
     if (! $start_coord) {
         $start_coord = $self->find_location_for_item($item);
-        
         croak "Couldn't find room for item" unless $start_coord;
         
         $tab = $start_coord->{tab};

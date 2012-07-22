@@ -23,7 +23,8 @@ sub run {
 	);
 	
 	foreach my $skill (@skills) {
-	   $skill->execute('new_day');   
+        next if $skill->char_with_skill->is_dead;
+        $skill->execute('new_day');   
 	}
 }
 

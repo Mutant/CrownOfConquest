@@ -201,6 +201,7 @@ sub _allocate_equipment {
         my @item_types = $self->result_source->schema->resultset('Item_Type')->search(
             {
                 prevalence               => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
+                'category.always_enchanted' => 0,
                 'category.item_category' => \@categories,
             },
             { join => 'category', },

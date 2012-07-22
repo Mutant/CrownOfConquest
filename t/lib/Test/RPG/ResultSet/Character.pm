@@ -173,6 +173,12 @@ sub test_create_character_level_10_allocate_equipment : Tests(10) {
     	equip_places_allowed => ['Left Hand', 'Right Hand'],
     );
     
+    my $item_type2 = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, 
+    	category_name => 'Amuelet',
+    	equip_places_allowed => ['Neck'],
+    	always_enchanted => 1,
+    );    
+    
     $self->{roll_result} = 5;
 
     # WHEN

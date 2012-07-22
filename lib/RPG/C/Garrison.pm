@@ -330,7 +330,7 @@ sub manage : Local {
 	
 	my @party_garrisons = $c->stash->{party}->garrisons;
 	
-	my $building = $c->stash->{party_location}->building;
+	my $building = $c->stash->{garrison}->land->building;
 	
     $c->forward(
         'RPG::V::TT',
@@ -343,7 +343,7 @@ sub manage : Local {
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
                     editable => $self->is_editable($c),
-                    has_building => $building && $building->owner_type eq 'party' && $building->owner_id == $c->stash->{party}->id ? 1 : 0,
+                    has_building => $building->allowed_to_manage($c->stash->{party}),
                 },
             }
         ]

@@ -630,10 +630,10 @@ sub generate_treasure_chests {
 			# Choose a sector
 			my $sector_to_use;
 			foreach my $sector (shuffle @sectors) {
-				unless ($sector->has_door) {
-					$sector_to_use = $sector;
-					last;
-				}
+			    next if $sector->stairs_up || $sector->stairs_down || $sector->has_door;			    
+			    
+                $sector_to_use = $sector;
+                last;
 			}
 			
 			# Couldn't find a sector to use... skip this room

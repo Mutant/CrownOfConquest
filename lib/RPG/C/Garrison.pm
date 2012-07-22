@@ -678,6 +678,8 @@ sub building_tab : Local {
 	
 	$c->stash->{building_url_prefix} = 'garrison/building_';
 	
+	$c->stash->{building} = $c->stash->{garrison}->land->building;
+	
 	$c->forward('/building/manage');   
 }
 
@@ -691,6 +693,8 @@ sub building_upgrade : Local {
 		},
 	);
     $c->stash->{no_refresh} = 1;
+    
+    $c->stash->{building} = $garrison->land->building;
     
     $c->forward('/building/upgrade');    
     
@@ -709,6 +713,8 @@ sub building_build_upgrade : Local {
 	);
     $c->stash->{no_refresh} = 1;
     
+    $c->stash->{building} = $garrison->land->building;
+    
     $c->forward('/building/build_upgrade');    
     
     $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'party_status', 'messages'] );
@@ -726,6 +732,8 @@ sub building_cede : Local {
 	);
     $c->stash->{no_refresh} = 1;
     
+    $c->stash->{building} = $garrison->land->building;
+    
     $c->forward('/building/cede');    
     
     $c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $garrison->id . '&selected=building'], 'messages', 'party_status'] );    
@@ -741,6 +749,8 @@ sub building_raze : Local {
 		},
 	);
     $c->stash->{no_refresh} = 1;
+    
+    $c->stash->{building} = $garrison->land->building;
     
     $c->forward('/building/raze');    
     

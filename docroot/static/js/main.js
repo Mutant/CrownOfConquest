@@ -1111,7 +1111,7 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 			equipItemCallback(data);
 		}, 'json');
 	}
-	if (item.hasClass('garrison-item')) {
+	else if (item.hasClass('garrison-item')) {
 		$.post(urlBase + 'garrison/transfer_item', params, function(data) {
 			data.char_id = charId;					
 			equipItemCallback(data);

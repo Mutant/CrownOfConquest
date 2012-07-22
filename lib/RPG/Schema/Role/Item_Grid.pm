@@ -7,22 +7,20 @@ requires qw/item_sectors search_related id result_source/;
 
 sub organise_items_in_tabs {
     my $self = shift;
-    my $owner_type = shift;
-    my $width = shift;
-    my $height = shift;
+    my $params = shift;
     my @items = @_;
+    
+    my $max_tabs = $params->{max_tabs} // 10;
+    my $allow_empty_tabs = $params->{allow_empty_tabs} // 0;
         
     $self->item_sectors->delete;
       
-    my $max_tab;
-    for my $tab (1..10) {
-        $self->create_grid($owner_type, $width, $height, $tab);
+    for my $tab (1..$max_tabs) {
+        $self->create_grid($params->{owner_type}, $params->{width}, $params->{height}, $tab);
         
         @items = $self->organise_items_impl($tab, @items);
-                
-        $max_tab = $tab;
-        
-        last unless @items;
+              
+        last if ! $allow_empty_tabs && ! @items;
     }
     
     warn scalar @items . " items remaining when organising into tabs" if @items;

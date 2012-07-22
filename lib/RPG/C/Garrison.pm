@@ -353,8 +353,7 @@ sub manage : Local {
 sub is_editable {
     my ($self, $c) = @_;
     
-    return $c->stash->{party_location}->id == $c->stash->{garrison}->land->id && ! $c->stash->{party}->in_combat ? 1 : 0;
-   
+    return $c->stash->{garrison} && $c->stash->{party_location}->id == $c->stash->{garrison}->land->id && ! $c->stash->{party}->in_combat ? 1 : 0;
 }
 
 sub character_tab : Local {
@@ -460,103 +459,168 @@ sub messages_tab : Local {
     );	
 }
 
-sub get_owned_equipment : Local {
-	my ($self, $c, $party_id, $garrison_id) = @_;
-	return $c->model('DBIC::Items')->search(
-        	{ 
-	        	-or => ['belongs_to_character.garrison_id' => $garrison_id,
-	        			'belongs_to_character.party_id' => $party_id]
-	        },
-	        {
-	        	join => 'belongs_to_character',
-	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-	            order_by => 'item_category',
-	        },
-	);
-}
-
 
 sub equipment_tab : Local {
 	my ($self, $c) = @_;
 	
 	my $editable = $self->is_editable($c);
 	
-	my @party_equipment;
+	my @characters = $editable ? $c->stash->{party}->characters_in_sector : $c->stash->{garrison}->members;
 	
-	if ($editable) {
-		@party_equipment = $c->model('DBIC::Items')->search(
-        	{ 
-	        	'belongs_to_character.garrison_id' => undef,
-	        	'belongs_to_character.mayor_of' => undef,
-	        	'belongs_to_character.status' => undef,
-	        	'belongs_to_character.party_id' => $c->stash->{party}->id, 
-	        },
-	        {
-	        	join => 'belongs_to_character',
-	            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-	            order_by => 'item_category',
-	        },
-	    );
-	}
-    
-	my @garrison_equipment = $c->model('DBIC::Items')->search(
-        { 
-        	'garrison_id' => $c->stash->{garrison}->id, 
-        },
-        {
-            prefetch => [ { 'item_type' => 'category' }, 'item_variables', ],
-            order_by => 'item_category',
-        },
-    );    
-    
-    my @categories = $c->model('DBIC::Item_Category')->search( { hidden => 0 }, { order_by => 'item_category', }, );
-	
+	my $items_in_grid = $c->stash->{garrison}->items_in_grid;
+		
     $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'garrison/equipment.html',
                 params   => {
-                	party_equipment => \@party_equipment,
-                	garrison_equipment => \@garrison_equipment,
-                	characters => [$c->stash->{party}->characters_in_party],
-                	categories => \@categories,
+                	items_in_grid => $items_in_grid,
+                	characters => \@characters,
                 	garrison => $c->stash->{garrison},
                 	party => $c->stash->{party},
                 	editable => $editable,
+                	max_tab => $c->stash->{garrison}->max_tab,
                 },
             }
         ]
     );		
 }
 
-sub move_item : Local {
+sub transfer_item : Local {
 	my ($self, $c) = @_;
 	
 	my $editable = $self->is_editable($c);
 	
-	return unless $editable;
-	
 	my $item = $c->model('DBIC::Items')->find($c->req->param('item_id'));
 	
 	croak "Item not found" unless $item;
-	
-	my @characters = $c->stash->{party}->characters_in_party;
-	
-	if ($item->garrison_id == $c->stash->{garrison}->id) {
-		# Move back to party
-		my $character = (shuffle @characters)[0];
-		$item->add_to_characters_inventory($character);
+
+	my $garrison;
+	if ($editable) {
+	    $garrison = $c->stash->{party_location}->garrison;
 	}
 	else {
-		# Add to garrison, if it belonged to one of the party's characters
-		if (grep { $_->id == $item->character_id } @characters) {
-			$item->garrison_id($c->stash->{garrison}->id);
+	    # If not 'editable' (i.e. party in sector with garrison), we can only transfer
+	    #  to/from chars in the garrison
+	    if (! $c->stash->{garrison}) {
+	       # Transfer is from garrison to character. The request doesn't have a garrison id,
+	       #  so, get it from the character we're transferring to
+	       my $character = $c->model('DBIC::Character')->find(
+	           {
+	               character_id => $c->req->param('character_id'),
+	               party_id => $c->stash->{party}->id,
+	           }
+	       );
+	       croak "Can't find character" unless $character;
+	       $garrison = $character->garrison;
+	    }
+	    else {
+	        $garrison = $c->stash->{garrison};
+	    }
+	}
+	
+	croak "Couldn't find garrison" unless $garrison;
+	
+		my @characters = $editable ? $c->stash->{party}->characters_in_sector : $garrison->members;
+		
+	if ($item->garrison_id == $garrison->id) {
+		# Move back to party
+		my ($character) = grep { $_->id == $c->req->param('character_id') } @characters;
+
+        if ($c->req->param('equip_place')) {
+            $item->character_id($character->id);
+	        $item->update;     
+            my $ret = $c->forward('/character/equip_item_impl', [$item]);
+            $item->add_to_characters_inventory($character);
+           
+            $c->res->body( to_json( $ret ) );
+        }
+        else {
+            $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') }, 0);
+        }
+		$garrison->remove_item_from_grid($item);
+	}
+	else {
+		# Add to garrison, if it belonged to one of the allowed characters
+		if (grep { $_->id == $item->character_id } @characters) {    
+		    
+			$item->garrison_id($garrison->id);			
+			$item->belongs_to_character->remove_item_from_grid($item);
 			$item->character_id(undef);
 			$item->equip_place_id(undef);
-			$item->update;
+			$garrison->add_item_to_grid( $item, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') }, $c->req->param('tab')); 
+			$item->update;			
 		}
 	}
+}
+
+sub move_item : Local {
+    my ($self, $c) = @_;
+    
+	my $garrison = $c->stash->{garrison};
+	
+	my $item = $c->model('DBIC::Items')->find( 
+	   { 
+	       item_id => $c->req->param('item_id'), 
+	       garrison_id => $garrison->id 
+	   },
+	   {
+	       prefetch => 'item_type',
+	   }, 
+	);
+	
+	croak "Invalid item" unless $item;
+	
+    $garrison->remove_item_from_grid($item);
+    $garrison->add_item_to_grid($item, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y') } );    
+}
+
+sub organise_equipment : Local {
+    my ($self, $c) = @_;
+    
+	my $garrison = $c->stash->{garrison};
+	
+	$garrison->organise_equipment;
+	
+	my $items_in_grid = $garrison->items_in_grid;
+		
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'garrison/equip_grid.html',
+				params   => {
+				    items_in_grid => $items_in_grid,
+				}
+			}
+		]
+	);    
+}
+
+sub item_tab : Local {
+	my ( $self, $c ) = @_;
+    
+	my $items_in_grid = $c->stash->{garrison}->items_in_grid($c->req->param('tab'));	
+
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'garrison/equip_grid.html',
+				params   => {
+					items_in_grid => $items_in_grid,
+					tab => $c->req->param('tab'),
+				}
+			}
+		]
+	);
+}
+
+sub character_inventory : Local {
+    my ( $self, $c ) = @_;
+    	
+    $c->visit('/character/equipment_tab');
 }
 
 sub adjust_gold : Local {

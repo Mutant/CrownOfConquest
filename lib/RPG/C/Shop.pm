@@ -374,11 +374,11 @@ sub item_tab : Local {
 				template => 'shop/item_tab.html',
 				params   => {
 					items_in_grid => $items_in_grid,
+					tab => $c->req->param('tab'),
 				}
 			}
 		]
-	);	
-    
+	);
 }
 
 1;

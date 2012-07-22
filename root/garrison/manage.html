@@ -1,47 +1,11 @@
 [% PROCESS layout/diag_buttons.html %]
 
 <script type="text/javascript">
-	dojo.require("dojox.layout.ContentPane");
-	dojo.require("dijit.layout.TabContainer");
-	dojo.require("dijit.form.FilteringSelect");
-
 function saveCharacterOrder(select, char_id) {
 	dojo.xhrGet( {
         url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
         handleAs: "text",        
     });
-}
-
-function moveItem(itemSpan, confirmed) {
-	item_id = (itemSpan.id.split('-'))[2];
-
-	if (! confirmed && dojo.byId('item_equip_' + item_id).style.display != 'none' && dojo.byId('item_equip_' + item_id).innerHTML.match('<br>')) {
-		dojo.byId('move-item-id').value = itemSpan.id;
-		dijit.byId('confirm-move').show();
-		return;
-	}
-
-	[%# find if it's in a category or not %]
-	parent = itemSpan.parentNode;
-	
-	var newParent;
-	if (parent.id == 'garrison-equipment') {
-		newParent = dojo.byId('party-equipment');
-	}
-	else {
-		newParent = dojo.byId('garrison-equipment');
-	}
-	
-	newParent.appendChild(itemSpan);
-
-	dojo.byId('item_equip_' + item_id).style.display = 'none';
-
-	dojo.xhrGet( {
-        url: "[% base %]/garrison/move_item?item_id=" + item_id + '&garrison_id=[% garrison.id %]',
-        handleAs: "text",        
-    });	
-    
-    dijit.byId('item-dijit-' + item_id).close();
 }
 
 function confirmedMove(arguments) {
@@ -141,7 +105,7 @@ Garrison Gold: [% garrison.gold %]
 
 <br><br>
 
-<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
      <div dojoType="dojox.layout.ContentPane" title="Characters" 
     	href="[% base %]garrison/character_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'garrison' %]selected="true"[% END %]>    
@@ -162,14 +126,14 @@ Garrison Gold: [% garrison.gold %]
 	    	href="[% base %]garrison/building_tab?garrison_id=[% garrison.id %]"
 	    	[% IF selected == 'building' %]selected="true"[% END %]>    
 	    </div>
-	[% END %]    
+	[% END %]
 
-    <div dojoType="dojox.layout.ContentPane" title="Messages" 
+    <div dojoType="dijit.layout.ContentPane" title="Messages" 
     	href="[% base %]garrison/messages_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'messages' %]selected="true"[% END %]>    
     </div>
 
-    <div dojoType="dojox.layout.ContentPane" title="Combat Log" 
+    <div dojoType="dijit.layout.ContentPane" title="Combat Log" 
     	href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
     	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
     </div>

@@ -979,7 +979,7 @@ function dropQuantityItem(params) {
 	}
 }
 
-function dropItem(item, hoverSector, charId, quantity) {
+function dropItem(item, hoverSector, charId, quantity, extra) {
 	grid = undefined;
 		
 	var currentCoord = {
@@ -999,12 +999,31 @@ function dropItem(item, hoverSector, charId, quantity) {
 		return;
 	}
 	
-	var params = { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y };
+	var params = { item_id: item.attr('itemId'), character_id: charId, grid_x: currentCoord.x, grid_y: currentCoord.y, tab: hoverSector.attr('tab') };
 	
-	if (item.hasClass('inventory-item')) {	
-		$.post(urlBase + 'character/move_item', params, function(data) {
-			loadCharStats(charId);
-		});
+	if (item.hasClass('inventory-item')) {
+		if (hoverSector.attr('grid') === 'inventory') {
+			$.post(urlBase + 'character/move_item', params, function(data) {
+				loadCharStats(charId);
+			});
+		}
+		if (hoverSector.attr('grid') === 'garrison') {
+			params.garrison_id = extra.garrisonId;
+			$.post(urlBase + 'garrison/transfer_item', params);
+			item.removeClass('inventory-item');
+			item.addClass('garrison-item');
+		}					
+	}
+	else if (item.hasClass('garrison-item')) {		
+		if (hoverSector.attr('grid') === 'inventory') {
+			$.post(urlBase + 'garrison/transfer_item', params);
+			item.removeClass('garrison-item');
+			item.addClass('inventory-item');
+		}
+		if (hoverSector.attr('grid') === 'garrison') {
+			params.garrison_id = extra.garrisonId;
+			$.post(urlBase + 'garrison/move_item', params);
+		}
 	}
 	else {		
 		var url = 'shop/buy_item';
@@ -1091,6 +1110,12 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 			loadCharStats(data.char_id);						
 			equipItemCallback(data);
 		}, 'json');
+	}
+	if (item.hasClass('garrison-item')) {
+		$.post(urlBase + 'garrison/transfer_item', params, function(data) {
+			data.char_id = charId;					
+			equipItemCallback(data);
+		}, 'json');	
 	}
 	else {
 		item.removeClass('shop-item');
@@ -1263,7 +1288,7 @@ function setupInventory(charId, inShop) {
 	$( ".inventory-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
 	
 	$( ".inventory" ).droppable({
-		accept: ".inventory-item, .shop-item",
+		accept: ".inventory-item, .shop-item, .garrison-item",
 		drop: function( event, ui ) {
 			var item = ui.draggable;
 		
@@ -1576,4 +1601,55 @@ function loadCharShopInventory(charId) {
 	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
 	$('.char-shop-link').removeClass('current-selection');
 	$('#char-shop-link-'+charId).addClass('current-selection');
+}
+
+/* Garrison */
+
+function setupGarrison(garrisonId) {
+	$( ".garrison-item" ).draggable({
+		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},		
+	});
+	
+	$( ".garrison" ).droppable({
+		accept: ".garrison-item, .inventory-item",
+		drop: function( event, ui ) {
+			var item = ui.draggable;
+		
+			dropItem(item, $(this), '', null, { garrisonId: garrisonId } );
+		},
+				
+		over: function(event, ui) {
+			dragItemOver(event, ui, $(this), true);
+		},
+		
+		out: function(event, ui) {
+			dragItemOut(event, ui, $(this));
+		}		
+	});
+	
+	setupItemTooltips('.garrison-item');
+}
+
+function organiseGarrisonEquipment(garrisonId) {
+	$.get(urlBase + 'garrison/organise_equipment', { garrison_id: garrisonId }, function(data) {
+		$( '#garrison-equipment-outer' ).html(data);
+		setupGarrison(garrisonId);
+	});
+}
+
+function loadGarrisonTab(garrisonId, tab) {
+	$.get(urlBase + 'garrison/item_tab', { garrison_id: garrisonId, tab: tab }, function(data) {
+		$( '#garrison-equipment-outer' ).html(data);
+		setupGarrison(garrisonId);
+	});
+}
+
+function loadCharGarrisonInventory(charId) {	
+	$( '#char-garrison-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
+	$( '#char-garrison-inventory').load( urlBase + 'garrison/character_inventory', { character_id: charId });
+	$('.char-garrison-link').removeClass('current-selection');
+	$('#char-garrison-link-'+charId).addClass('current-selection');
 }

@@ -33,9 +33,12 @@ __PACKAGE__->belongs_to(
     {cascade_delete => 0, join_type => 'LEFT OUTER'}
 );
 
+__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.garrison_id'}, { where => { owner_type => 'garrison' } });
+
 with qw/
 	RPG::Schema::Role::BeingGroup
 	RPG::Schema::Role::CharacterGroup
+	RPG::Schema::Role::Item_Grid
 /;
 
 sub rank_separator_position {
@@ -207,6 +210,20 @@ around 'get_equipment' => sub {
 	
 	return (@equipment, @garrison_equipment);   
 };
+
+sub organise_equipment {
+    my $self = shift;
+    
+    my @items = $self->search_related('items',
+        {},
+        {
+            prefetch => {'item_type' => 'category'},
+            order_by => 'category.item_category, me.item_id',            
+        }
+    );        
+    
+    $self->organise_items_in_tabs({ owner_type => 'garrison', width => 8, height => 8, max_tabs => 5, allow_empty_tabs => 1}, @items);
+}
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 	

@@ -113,7 +113,7 @@ sub organise {
         }
     }
     
-    $self->organise_items_in_tabs('shop', 12, 8, @organised, @special);
+    $self->organise_items_in_tabs({owner_type => 'shop', width => 12, height => 8 }, @organised, @special);
 }
 
 sub grouped_items_in_shop {

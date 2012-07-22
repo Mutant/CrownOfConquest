@@ -1,4 +1,4 @@
-[% MACRO make_grid(class, items_in_grid, width, height, in_shop) BLOCK %]
+[% MACRO make_grid(class, items_in_grid, width, height, tab, in_shop) BLOCK %]
 	[% x = 0 %]
 	[% y = 0 %]
 	[% blocked = {} %]
@@ -24,7 +24,7 @@
 			
 			<div class="[% class %]" idPrefix="[% class %]" id="[% class %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]" 
 				style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center"
-				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]">		
+				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]" tab="[% tab %]">		
 				[% IF item %]
 					[% item_div(class, item, in_shop) %]
 				[% END %]			
@@ -37,7 +37,7 @@
 [% END %]
 
 
-[% MACRO item_div(class, item) BLOCK %]
+[% MACRO item_div(class, item, in_shop) BLOCK %]
 	<div id="item-[% item.id %]" class="[% class %]-item [% item.item_type.category.item_category | lower | replace('\s+', '_') %]-category"
 		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]" isQuantity="[% item.is_quantity %]"
 		style="z-index: 100;
@@ -47,8 +47,11 @@
 	</div>	
 [% END %]
 
-[% MACRO create_grid(grid_type, items_in_grid, height, width, in_shop) BLOCK %]
+[% MACRO create_grid(grid_type, items_in_grid, height, width, tab, in_shop) BLOCK %]
+	[% IF ! tab %]
+		[% tab = 1 %]
+	[% END %]
 	<div id="[% grid_type %]-grid">
-		[% make_grid(grid_type, items_in_grid, height, width, in_shop) %]
+		[% make_grid(grid_type, items_in_grid, height, width, tab, in_shop) %]
 	</div>
 [% END %]

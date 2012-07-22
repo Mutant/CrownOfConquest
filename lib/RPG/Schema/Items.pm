@@ -745,6 +745,7 @@ sub add_to_characters_inventory {
     my $self      = shift;
     my $character = shift;
     my $grid_loc  = shift;
+    my $auto_eqip = shift // 1;
 
     croak "Must pass a character record to add_to_characters_inventory() - got: $character"
         unless $character->isa('RPG::Schema::Character');
@@ -777,7 +778,7 @@ sub add_to_characters_inventory {
 
     my $category = $self->item_type->category;
     
-    if ($category->equip_place_categories->count > 0 ) {
+    if ($auto_eqip && $category->equip_place_categories->count > 0 ) {
     
         my %equipped_items = %{ $character->equipped_items() };
     

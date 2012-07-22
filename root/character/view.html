@@ -90,20 +90,7 @@ $(function() {
     <button dojoType=dijit.form.Button type="submit">OK</button>
 </div>
 
-
-<div dojoType="dijit.Dialog" id="split-diag" style="display: none" title="Split Item" execute="split_item_submit(arguments[0]);">
-    Amount to split out: <input type="text" dojoType=dijit.form.TextBox name="new_quantity" value="1">
-    <input id="split-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none">
-	[% dialog_buttons('split-diag') %]
-</div>
-
-<div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name">
-	<form method="POST" action="[% base %]/character/change_name" onSubmit="postPanels(this); return false">
-    Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="new_name">
-    <input id="name-char-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('change-name-diag') %]
-	</form>
-</div>
+[% INCLUDE item/menu_diags.html %]
 
 <div class="characterStats">
 
@@ -196,6 +183,8 @@ $(function() {
     <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]"
     	[% IF selected == 'history' %]selected="true"[% END %]>    
     </div>
+
+</div>
 
 </div>
 

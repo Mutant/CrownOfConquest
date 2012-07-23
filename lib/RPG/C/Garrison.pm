@@ -105,6 +105,8 @@ sub add : Local {
 		}
 	);
 	
+	$garrison->organise_equipment;
+	
 	my @garrison_chars = $c->model('DBIC::Character')->search(
 		{
 			character_id => \@char_ids_to_garrison,
@@ -343,7 +345,7 @@ sub manage : Local {
                     selected => $c->req->param('selected') || '',
                     message => $c->flash->{message} || undef,
                     editable => $self->is_editable($c),
-                    has_building => $building->allowed_to_manage($c->stash->{party}),
+                    has_building => $building && $building->allowed_to_manage($c->stash->{party}),
                 },
             }
         ]

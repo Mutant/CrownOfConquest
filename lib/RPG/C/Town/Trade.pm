@@ -143,7 +143,15 @@ sub equipment : Local {
 sub create : Local {
     my ($self, $c) = @_;
     
-    my $item = $c->model('DBIC::Items')->find($c->req->param('trade_item_id'));
+    my $item = $c->model('DBIC::Items')->find(
+        {
+            item_id => $c->req->param('trade_item_id'),
+        },         
+        {
+            # Lock the item row - prevents multiple trade rows getting created
+            for => 'update', 
+        },
+    );
     
     croak "Item not found" unless $item;
     
@@ -197,6 +205,16 @@ sub create : Local {
     $item->character_id(undef);
     $item->equip_place_id(undef);
     $item->update;
+    
+    # Make sure there's no existing open trade for this item
+    my $existing_trade = $c->model('DBIC::Trade')->find(
+        {
+            item_id => $item->id,
+            status => 'Offered',
+        },
+    );
+    
+    croak "Already an open trade for item " . $item->id if $existing_trade;
     
     my $trade = $c->model('DBIC::Trade')->create(
         {

@@ -609,6 +609,37 @@ sub test_caclulate_approval_with_charisma : Tests(1) {
            
 }
 
+sub test_caclulate_approval_rune_adjustment : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id );
+    my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
+    my $building = Test::RPG::Builder::Building->build_building($self->{schema}, owner_type => 'town', owner_id => $town->id, land_id => $town->land_id);
+    my $upgrade_type = $self->{schema}->resultset('Building_Upgrade_Type')->find(
+        {
+            name => 'Rune of Defence',
+        }
+    );
+    $building->add_to_upgrades(
+        {
+            type_id => $upgrade_type->type_id,
+            level => 4,
+        }
+    );    
+    
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->calculate_approval($town);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->mayor_rating, -6, "Mayor rating reduced");           
+}
+
 sub test_collect_tax : Tests(6) {
     my $self = shift;
     

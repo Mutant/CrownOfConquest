@@ -247,11 +247,10 @@ sub calculate_approval {
 	if ($building) {
 	    my @upgrades = $building->upgrades;
 	    foreach my $upgrade (@upgrades) {
-            next unless $upgrade->type =~ /^Rune/;
+            next unless $upgrade->type->name =~ /^Rune/;
             $rune_level += $upgrade->level;
 	    }
 	}
-	
 	my $rune_adjustment = $rune_level - $expected_rune_level;
 		
 	# A random component to approval

@@ -34,7 +34,7 @@ Top Kingdoms By:
 [% FOREACH kingdom IN kingdoms %]
 	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
 		<td>[% loop.count %]</td>		
-		<td>[% kingdom.name %] [% IF kingdom.has_crown %]<img src="[% base %]static/images/kingdom/smallcrown.png" title="The Crown of Majesty">[% END %]</td>
+		<td>[% kingdom.name %] [% IF kingdom.has_crown %]<img src="[% base %]static/images/kingdom/smallcrown.png" title="The Crown of Conquest">[% END %]</td>
 		<td>[% king = kingdom.king %]
 		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% END %])
 		</td>

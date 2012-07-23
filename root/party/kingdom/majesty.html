@@ -2,7 +2,7 @@
 
 [% IF kingdom.has_crown %]
 	<div style="float: right; margin-right: 15px">
-	<img src="[% base %]static/images/kingdom/bigcrown.png" alt="The Crown of Majesty"><br>
+	<img src="[% base %]static/images/kingdom/bigcrown.png" alt="The Crown of Conquest"><br>
 	<div align="center"><a href="javascript:loadScreen('party/kingdom/view_crown_history')">View History</a></div>
 	</div>
 [% END %]
@@ -15,9 +15,9 @@
 	<p>We have been the most majestic Kingdom for [% kingdom.majesty_leader_since_string %].</p>
 
 	[% IF kingdom.has_crown %]
-		Our exalted [% IF kingdom.king.gender == 'male' %]King[% ELSE %]Queen[% END %] was awarded the Crown of Majesty by the Venerable High Priest.
+		Our exalted [% IF kingdom.king.gender == 'male' %]King[% ELSE %]Queen[% END %] was awarded the Crown of Conquest by the Venerable High Priest.
 	[% ELSE %]
 		We must maintain our position as the most majestic for [% wait_period %] days, and achieve a minimum majesty score of [% minimum_majesty %]
-		to be awarded the Crown of Majesty
+		to be awarded the Crown of Conquest
 	[% END %]
 [% END %]

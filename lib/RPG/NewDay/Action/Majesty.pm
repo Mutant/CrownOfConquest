@@ -74,7 +74,7 @@ sub run {
                 $leader->add_to_messages(
                     {
                         day_id => $c->current_day->id,
-                        message => "Our kingdom has been awarded the Crown of Majesty. We are now the greatest kingdom in the realm!",
+                        message => "Our kingdom has been awarded the Crown of Conquest. We are now the greatest kingdom in the realm!",
                         type => 'message',
                     }
                 );
@@ -84,7 +84,7 @@ sub run {
                 $c->schema->resultset('Global_News')->create(
                     {
                         day_id => $c->current_day->id,
-                        message => "The Venerable High Priest bestows the Crown of Majesty upon the $title of " . $leader->name . ". They are truely the most "
+                        message => "The Venerable High Priest bestows the Crown of Conquest upon the $title of " . $leader->name . ". They are truely the most "
                             . "majestic kingdom of the realm",
                     }
                 );
@@ -92,7 +92,7 @@ sub run {
                 $c->schema->resultset('Crown_History')->create(
                      {
                         day_id => $c->current_day->id,
-                        message => "The Kingdom of " . $leader->name . " was awarded the Crown of Majesty",
+                        message => "The Kingdom of " . $leader->name . " was awarded the Crown of Conquest",
                      },      
                 );                
                 
@@ -110,7 +110,7 @@ sub run {
             {
                 type => 'message',
                 day_id => $c->current_day->id,
-                message => "We are no longer the most majestic kingdom in the realm! We've been forced to hand back the Crown of Majesty",
+                message => "We are no longer the most majestic kingdom in the realm! We've been forced to hand back the Crown of Conquest",
             }
         );
         
@@ -118,14 +118,14 @@ sub run {
             {
                 day_id => $c->current_day->id,
                 message => "The Kingdom of " . $has_crown->name . " is no longer the greatest in the realm. The Venerable High Priest asks that they hand" .
-                    " back the Crown of Majesty so that it may be placed upon a worthier head",
+                    " back the Crown of Conquest so that it may be placed upon a worthier head",
             }
         );
         
         $c->schema->resultset('Crown_History')->create(
              {
                 day_id => $c->current_day->id,
-                message => "The Kingdom of " . $has_crown->name . " no longer possesses the Crown of Majesty",
+                message => "The Kingdom of " . $has_crown->name . " no longer possesses the Crown of Conquest",
              },      
         );
     }

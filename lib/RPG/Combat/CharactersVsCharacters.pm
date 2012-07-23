@@ -9,7 +9,7 @@ use Carp;
 use List::Util qw/shuffle/;
 use DateTime;
 
-requires 'deduct_turns';
+requires qw/deduct_turns group_initiated/;
 
 has 'character_group_1'       => ( is => 'rw', required => 1 );
 has 'character_group_2'       => ( is => 'rw', required => 1 );
@@ -146,7 +146,11 @@ sub check_for_offline_flee {
 	foreach my $group (@opps) {
 		$opp++;
 
-		next if $group->is_online || !$group->is_over_flee_threshold;
+        # If the group didn't initiate, we use offline flee threshold. This is 'safer' then
+        #  just an 'is_online' check, because they could have been active a few minutes ago
+        #  so would appear 'online' even though they didn't. This would mean they'd never flee
+        # Could result in fleeing during online combat though...
+		next if $self->group_initiated($group) || !$group->is_over_flee_threshold;
 
 		if ( $self->party_flee($opp) ) {
 			my $enemy_num = $opp == 1 ? 2 : 1;

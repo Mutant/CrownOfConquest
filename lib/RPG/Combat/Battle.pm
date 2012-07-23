@@ -80,6 +80,18 @@ sub opposing_combatants_of {
     return @combatants;
 }
 
+# Returns true if the group initiated combat
+sub group_initiated {
+    my $self = shift;
+    my $group = shift;
+    
+    my $opp_number = $self->opponent_number_of_group($group);
+    
+    my $initiated_by = $self->initiated_by;
+    
+    return $initiated_by eq 'opp'.$opp_number ? 1 : 0;
+}
+
 # TODO: logic really needs a tidy up
 sub execute_round {
 	my $self = shift;

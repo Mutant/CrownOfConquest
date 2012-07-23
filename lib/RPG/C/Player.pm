@@ -299,6 +299,8 @@ sub register : Local {
                     referred_by       => $referring_player ? $referring_player->id : undef,
                     created           => DateTime->now(),
                     last_login        => DateTime->now(),
+                    screen_width      => 'auto',
+                    screen_height     => 'auto',
                 }
             );
             

@@ -202,6 +202,9 @@ sub character_move : Local {
         croak "Invalid character" unless $character->is_in_party;
         $character->garrison_id($c->stash->{garrison}->garrison_id);
         
+        croak "Can't remove last living character from garrison" 
+            if ! $swap_char && $c->stash->{garrison}->number_alive <= 1 && ! $character->is_dead;            
+        
         if ($swap_char) {
             croak "Invalid character" unless $swap_char->garrison_id == $c->stash->{garrison}->garrison_id;
             $swap_char->garrison_id(undef);   
@@ -210,6 +213,9 @@ sub character_move : Local {
     else {
         croak "Invalid character" unless $character->garrison_id == $c->stash->{garrison}->garrison_id;
         $character->garrison_id(undef);
+        
+        croak "Can't remove last living character from party" 
+            if ! $swap_char && $c->stash->{party}->number_alive <= 1 && ! $character->is_dead;        
         
         if ($swap_char) {
             croak "Invalid character" unless $swap_char->is_in_party;

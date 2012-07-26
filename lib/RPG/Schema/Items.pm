@@ -432,14 +432,13 @@ sub _factors_trigger {
 	my $new_equip_place_id = shift;
 	my $character = shift;
 	my @stats_with_bonuses = @_;
-	
+		
 	return unless $character;
-
+		
 	my $key = defined $new_equip_place_id ? 'add' : 'remove';
-
+	
 	if (my $af_attr = $self->attribute('Attack Factor')) {
-	   $character->calculate_attack_factor({$key => [$self]}); 
-	   return;  
+	   $character->calculate_attack_factor({$key => [$self]});
 	}
 	# If we're not equipping something with AF, but the item changes str or agl, 
 	#  we need to calculate attack factor
@@ -449,10 +448,9 @@ sub _factors_trigger {
 	
 	if (my $df_attr = $self->attribute('Defence Factor')) {
 	   $character->calculate_defence_factor({$key => [$self]});
-	   return;   
 	}	
 	# Ditto DF
-	elsif (grep { $_ eq 'agility' } @stats_with_bonuses) {	
+	elsif (grep { $_ eq 'agility' } @stats_with_bonuses) {
 	   $character->calculate_defence_factor;
 	}
 }

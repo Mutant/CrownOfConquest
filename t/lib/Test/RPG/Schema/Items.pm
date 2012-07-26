@@ -493,7 +493,17 @@ sub test_equipping_item_updates_stat_bonus_including_df : Tests(2) {
     $character->calculate_attack_factor;
     $character->update;
     
-    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, char_id => $character->id, enchantments => ['stat_bonus'], no_equip_place => 1);
+    my $item = Test::RPG::Builder::Item->build_item($self->{schema}, 
+        char_id => $character->id, 
+        enchantments => ['stat_bonus'], 
+        no_equip_place => 1,
+        attributes => [
+            {
+                item_attribute_name => 'Attack Factor',
+                item_attribute_value => 10,
+            },
+        ],
+    );
     $item->variable('Stat Bonus', 'agility');
     $item->variable('Bonus', 2);
     $item->update;

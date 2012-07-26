@@ -287,23 +287,31 @@ sub sell_item : Local {
 	    
 	    # Add it to the shop
 	    if (! $item->item_type->category->delete_when_sold_to_shop && $quantity_for_shop) {
-            my $shop_item = $c->model('DBIC::Items')->find_or_create(
+            my $shop_item = $c->model('DBIC::Items')->find_or_new(
                 {
                     shop_id => $shop->id,
                     item_type_id => $item->item_type_id,
                 },
             );
             
-            $shop_item->variable('Quantity', $shop_item->variable('Quantity') + $quantity_for_shop);
-            $shop_item->update;
-            $shop->remove_item_from_grid($shop_item);
-            
-            try {
-                $shop->add_item_to_grid($shop_item);
+            my $new_quantity;
+            if ($shop_item->in_storage) {
+                $new_quantity = $shop_item->variable('Quantity') + $quantity_for_shop;                
             }
-            catch {
-                $c->log->debug("Error when adding item to shop grid: $_");
-            };
+            else {
+                $shop_item->insert;
+                $new_quantity = $quantity_for_shop;
+                
+                try {
+                    $shop->add_item_to_grid($shop_item);
+                }
+                catch {
+                    $c->log->debug("Error when adding item to shop grid: $_");
+                };
+            }
+                     
+            $shop_item->variable('Quantity', $new_quantity);
+            $shop_item->update;            
             
             $existing_shop_quantity_item = $shop_item->id;
 	    } 

@@ -201,7 +201,7 @@ party_viewing_range: 3
 turns_per_hour: 25
 
 # Maximum number of turns a party is allowed to have
-maximum_turns: 1500
+maximum_turns: 1000
 
 # Min / Max percentage amount to heal characters each day (based on rest)
 min_heal_percentage: 2

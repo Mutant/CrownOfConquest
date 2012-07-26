@@ -60,7 +60,7 @@
 	        	}
 
 	        	if (data.no_garrison_move) {
-	        		$('.garrison-char').draggable( "option", "disabled", true );
+	        		$('.garrison-char[isDead=false]').draggable( "option", "disabled", true );
 	        	}
 	        	else {
 	        		$('.garrison-char').draggable( "option", "disabled", false );
@@ -77,7 +77,7 @@
     $( ".garrison-char, .party-char" ).draggable({revert: "invalid"});
     
     [% IF garrison.number_alive <= 1 %]
-    	$('.garrison-char').draggable( "option", "disabled", true );
+    	$('.garrison-char[isDead=false]').draggable( "option", "disabled", true );
     [% END %]
     [% IF party.number_alive <= 1 %]
     	$('.party-char').draggable( "option", "disabled", true );

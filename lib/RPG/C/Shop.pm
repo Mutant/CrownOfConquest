@@ -156,6 +156,8 @@ sub buy_quantity_item : Local {
  	
     croak "No quantity supplied" if ! $c->req->param('quantity');
     
+    croak "Invalid quantity" unless $c->req->param('quantity') =~ /^\d+$/;
+    
     my $shop = $item->in_shop;
 	my $town = $shop->in_town;    
  

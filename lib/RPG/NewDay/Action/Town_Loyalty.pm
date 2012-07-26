@@ -93,7 +93,7 @@ sub run {
                     x => $town_sector->x,
                     y => $town_sector->y,
                 },
-                search_range => 21,
+                search_range => 35,
                 increment_search_by => 0,
                 rows_as_hashrefs => 1,
                 criteria => {

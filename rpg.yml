@@ -692,7 +692,7 @@ kingdom_co_op_grace: 7
 capital_move_cost_per_sector: 6
 
 # Chance sectors not connected to capital go neutral
-chance_unconnected_sector_becomes_neutral: 20
+chance_unconnected_sector_becomes_neutral: 10
 
 # Number of days a claim for the throne takes
 claim_wait_period: 7

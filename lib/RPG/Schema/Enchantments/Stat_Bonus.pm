@@ -59,7 +59,7 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 	
-	return 145 * $self->variable('Bonus');	
+	return 265 * $self->variable('Bonus');	
 }
 
 1;

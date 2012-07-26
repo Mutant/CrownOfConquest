@@ -52,7 +52,7 @@ sub tooltip {
 sub sell_price_adjustment {
 	my $self = shift;
 
-	return 95 * $self->variable('Extra Turns') + ( $self->must_be_equipped ? 0 : 700 );
+	return 115 * $self->variable('Extra Turns') + ( $self->must_be_equipped ? 0 : 700 );
 }
 
 sub new_day {

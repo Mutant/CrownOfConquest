@@ -69,7 +69,7 @@ sub creature_category {
 sub sell_price_adjustment {
 	my $self = shift;
 	
-	return 115 * $self->variable('Bonus');	
+	return 70 * $self->variable('Bonus');	
 }
 
 1;

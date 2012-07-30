@@ -470,7 +470,7 @@ var current_size = 'small';
 function setMessagePanelSize(size) {
 	if (size == 'large' && current_size == 'small') {	
 		dojo.byId('messages-pane').style.top = "80px";
-		dojo.byId('messages-pane').style.right = "80[x";
+		dojo.byId('messages-pane').style.right = "80px";
 		dojo.byId('messages-pane').style.bottom = '80px';
 		dojo.byId('messages-pane').style.left = '90px';
 		dojo.byId('messages-pane').style.width = "80%";

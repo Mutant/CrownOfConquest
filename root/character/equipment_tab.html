@@ -100,7 +100,7 @@ createItemMenus();
 <b>Inventory</b> [% IF item_change_allowed %]<span style="font-size: 10px"><a href="javascript:organiseInventory('[% character.id %]')">Organise</a></span>[% END %]
 
 <div id="inventory-outer">
-[% create_grid('inventory', items_in_grid, 8, 8, in_shop) %]
+[% create_grid('inventory', items_in_grid, 8, 8, undef, in_shop) %]
 </div>
 
 </div>

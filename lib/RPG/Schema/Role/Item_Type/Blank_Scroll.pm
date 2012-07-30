@@ -67,9 +67,10 @@ sub use {
     my $new_item = $self->result_source->schema->resultset('Items')->create(
         {
             item_type_id => $scroll_item_type->id,
-            character_id => $character->id,
         }
     );
+    
+    $new_item->add_to_characters_inventory($character);
     
     $new_item->variable('Spell', $mem_spell->spell->spell_name);
     $new_item->update;

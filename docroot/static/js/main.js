@@ -468,23 +468,13 @@ function executeCallbacks(callBacks) {
 
 var current_size = 'small';
 function setMessagePanelSize(size) {
-	if (size == 'large' && current_size == 'small') {
-		dojo.byId('messages-pane').style.overflow = 'hidden';
-		dojo.animateProperty({
-		  node:"messages-pane",
-		  duration: 400,		  
-		  properties: {
-		      left: 80,
-		      bottom: 80,
-		      top: 80,
-		      right: 80,
-		  }
-		}).play();
-	
+	if (size == 'large' && current_size == 'small') {	
+		dojo.byId('messages-pane').style.top = "80px";
+		dojo.byId('messages-pane').style.right = "80[x";
+		dojo.byId('messages-pane').style.bottom = '80px';
+		dojo.byId('messages-pane').style.left = '90px';
 		dojo.byId('messages-pane').style.width = "80%";
 		dojo.byId('messages-pane').style.height = "70%";
-	
-		dojo.byId('messages-pane').style.overflow = 'auto';
 		current_size = 'large';
 	}
 	

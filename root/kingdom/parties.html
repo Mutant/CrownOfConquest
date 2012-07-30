@@ -19,7 +19,10 @@ The following parties have sworn allegiance to our Kingdom.
 		<th>Party</th>
 		<th>Player</th>
 		<th>Level</th>
-		<th>Number of Characters</th>
+		<th>Created</th>
+		<th>Last Active</th>
+		<th>Turns Used</th>
+		<th>Number<br>of Characters</th>
 		<th>Loyalty Rating</th>		
 		<th></th>
 	</tr>
@@ -27,10 +30,13 @@ The following parties have sworn allegiance to our Kingdom.
 [% PROCESS kingdom/loyalty_rating.html %]
 
 [% FOREACH party IN parties %]
-	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
+	<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %] text-align: center">
 		<td><a href="javascript:getPanels('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>
 		<td>[% party.player.player_name %]</td>
 		<td>[% party.level %]</td>
+		<td>[% party.created.ymd %]</td>
+		<td>[% party.player.time_since_last_login %]</td>
+		<td>[% party.turns_used %]</td>
 		<td>[% party.get_column('character_count') %]</td>
 		<td>
 			[% IF party.id != kingdom.king.party_id %]

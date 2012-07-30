@@ -141,6 +141,7 @@ sub parties : Local {
 	       ],
 	       '+as' => ['character_count'],
 	       group_by  => 'me.party_id',
+	       prefetch => 'player',
 	   }
     );
     

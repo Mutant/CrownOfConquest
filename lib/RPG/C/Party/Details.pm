@@ -200,6 +200,7 @@ sub options : Local {
                 	send_email_announcements => $c->stash->{party}->player->send_email_announcements,
                 	display_tip_of_the_day => $c->stash->{party}->player->display_tip_of_the_day,
                 	display_announcements => $c->stash->{party}->player->display_announcements,
+                	display_town_leave_warning => $c->session->{player}->display_town_leave_warning,
                 	send_email => $c->stash->{party}->player->send_email,
                 	screen_width => $c->session->{player}->screen_width,
                 	screen_height => $c->session->{player}->screen_height,
@@ -230,8 +231,10 @@ sub update_email_options : Local {
     $player->send_email_announcements($c->req->param('send_email_announcements') ? 1 : 0);
     $player->display_announcements($c->req->param('display_announcements') ? 1 : 0);
     $player->display_tip_of_the_day($c->req->param('display_tip_of_the_day') ? 1 : 0);
+    $player->display_town_leave_warning($c->req->param('display_town_leave_warning') ? 1 : 0);
     $player->send_email($c->req->param('send_email') ? 1 : 0);
     $player->update;
+    $c->session->{player} = $player;
     $c->stash->{panel_messages} = 'Changes Saved';
     
     $c->forward('options');

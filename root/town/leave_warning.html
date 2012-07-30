@@ -1,0 +1,10 @@
+The wilderness is full of dangerous monsters.<br><br>
+You may want to level up your party in the sewers before leaving the safety of town!
+<br><br>
+<label>
+<input type="checkbox" value="1" checked onClick="$.get('[% base %]player/account/set_town_leave_warning_flag', { value: this.checked });">
+Display this warning?</label>
+<br>
+<div align="center">
+	<button dojoType=dijit.form.Button onclick="hideDiag('dialog'); return false;">OK</button>
+</div>

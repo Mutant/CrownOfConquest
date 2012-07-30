@@ -171,4 +171,14 @@ sub reverify : Local {
 
 }
 
+sub set_town_leave_warning_flag : Local {
+	my ( $self, $c ) = @_;
+	
+	my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
+	$player->display_town_leave_warning($c->req->param('value') eq 'true' ? 1 : 0);
+	$player->update;
+	
+	$c->session->{player} = $player;
+}
+
 1;

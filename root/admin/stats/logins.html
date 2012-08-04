@@ -3,20 +3,32 @@
 
 <h2>Day Stats</h2>
 
-<table>
+<table class="main" cellpadding=3 cellspacing=0>
 <tr>	
 	<th>Date</th>
-	<th># Of Logins</th>	
-	<th># Of Turns Used</th>
+	<th># Of<br>Visitors</th>
+	<th># Of<br>Logins</th>
+	<th># Of<br>Unique<br>Logins</th>
+	<th># Of<br>Regs</th>
+	<th># Of<br>Turns<br>Used</th>
+	<th>% Of<br>Visitor<br>Logins</th>
+	<th>% Of<br>Visitor<br>Regs</th>
+	<th>% Of<br>Visitor<br>Bounces</th>
+	<th>Avg<br>Turns<br>Per User</th>
 </tr>
-[% count = 0 %]
 [% FOREACH rec IN counts %]
-	<tr>
-		<td>[% rec.get_column('date') %]</td>
-		<td>[% rec.get_column('count') %]</td>
-		<td>[% turns_used.$count.turns_used %]</td>
+	<tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+		<td>[% rec.date %]</td>
+		<td>[% rec.visitor_count %]</td>
+		<td>[% rec.total_login_count %]</td>
+		<td>[% rec.unique_login_count %]</td>
+		<td>[% rec.registration_count %]</td>		
+		<td>[% rec.turns_used %]</td>
+		<td>[% rec.login_percent %]</td>
+		<td>[% rec.reg_percent %]</td>
+		<td>[% rec.bounce_percent %]</td>
+		<td>[% rec.avg_turns %]</td>
 	</tr>
-	[% count = count + 1 %]
 [% END %]
 </table>
 

@@ -19,7 +19,7 @@ sub default : Private {
 sub daily_stats : Local {
     my ( $self, $c ) = @_;
     
-    my @counts = $c->model('DBIC::Player_Login')->search(
+    my @total_login_counts = $c->model('DBIC::Player_Login')->search(
         {
             login_date => {'>=', DateTime->now()->subtract( months => 1 )},
         },
@@ -31,14 +31,78 @@ sub daily_stats : Local {
         }
     );
     
+    my $dbh = $c->model('DBIC')->storage->dbh;
+    my $sql = "select date, count(*) as count from (select distinct date(login_date) as date, player_id from Player_Login) pl where date >= ? "
+        . " group by date order by date desc";
+        
+    my $unique_login_counts = $dbh->selectall_arrayref( $sql, { Slice => {} }, DateTime->now()->subtract( months => 1 )->ymd, );
+    
+    my @registration_counts = $c->model('DBIC::Player')->search(
+        {
+            created => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            select => [ {date => 'created', -as => 'date'}, {count => '*', -as => 'count'}],
+            as => ['date','count'],
+            order_by => 'date desc',
+            group_by => 'date',
+        }
+    );    
+    
+    my @visitors = $c->model('DBIC::Day_Stats')->search(
+        {
+            date => {'>=', DateTime->now()->subtract( months => 1 )},
+        },        
+        {
+            order_by => 'date desc',
+        },
+    );     
+           
     my @turns_used = $c->model('DBIC::Day')->search(
         {
             date_started => {'>=', DateTime->now()->subtract( months => 1 )},
         },
         {
             order_by => 'date_started desc',
+            '+select' => {date => 'date_started', -as => 'date'},
+            '+as' => 'date',
         },
     );
+    
+    my @counts;
+    for my $visitor_stats (@visitors) {
+        my $date = $visitor_stats->get_column('date');
+        
+        my %stats = (
+            date => $date,
+            visitor_count => $visitor_stats->get_column('visitors'),
+        );
+
+        my ($total_login_count_rec) = grep { $_->get_column('date') eq $date } @total_login_counts;
+        $stats{total_login_count} = $total_login_count_rec && $total_login_count_rec->get_column('count') // 0;
+        
+        my ($unique_login_count_rec) = grep { $_->{date} eq $date } @$unique_login_counts;
+        $stats{unique_login_count} = $unique_login_count_rec && $unique_login_count_rec->{count} // 0;
+        
+        my ($registrar_count_rec) = grep { $_->get_column('date') eq $date } @registration_counts;
+        $stats{registration_count} = $registrar_count_rec && $registrar_count_rec->get_column('count') // 0;
+       
+        my ($turns_used_rec) = grep { $_->get_column('date') eq $date } @turns_used;
+        $stats{turns_used} = $turns_used_rec && $turns_used_rec->turns_used // 0;
+        
+        if ($stats{visitor_count} != 0) {
+            $stats{login_percent} = sprintf '%0.2f', ($stats{total_login_count} / $stats{visitor_count} * 100);
+            $stats{reg_percent} = sprintf '%0.2f', ($stats{registration_count} / $stats{visitor_count} * 100);
+        
+            my $bounced = $stats{visitor_count} - $stats{total_login_count};
+            $stats{bounce_percent} = sprintf '%0.2f', ($bounced / $stats{visitor_count} * 100);
+        }
+        
+        $stats{avg_turns} = sprintf '%d', $stats{turns_used} / $stats{total_login_count}
+            if $stats{total_login_count} != 0;
+        
+        push @counts, \%stats;
+    }
     
     return $c->forward(
         'RPG::V::TT',
@@ -47,7 +111,6 @@ sub daily_stats : Local {
                 template => 'admin/stats/logins.html',
                 params   => {
                     counts => \@counts,
-                    turns_used => \@turns_used,
                 },
             }
         ]

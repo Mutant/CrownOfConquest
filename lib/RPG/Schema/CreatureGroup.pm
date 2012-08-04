@@ -263,6 +263,8 @@ sub auto_heal {
         
         my $to_heal = $character->max_hit_points - $character->hit_points;
         
+        next if $to_heal <= 0;
+        
         my $cost = $to_heal * $cost_per_hp;
         
         if ($cost > $budget_left) {

@@ -399,6 +399,12 @@ sub parties : Local {
     $c->visit('/party/kingdom/parties');
 }
 
+sub majesty : Local {
+    my ( $self, $c ) = @_;
+    
+    $c->forward('/party/kingdom/majesty');
+}
+
 sub towns : Local {
 	my ( $self, $c ) = @_;
 	

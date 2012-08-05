@@ -58,6 +58,8 @@ sub generate_special {
     }
 }
 
+# Remove the rare monster's CG (unless they were killed
+#  as indicated by param passed, in which case we have nothing more to do here)
 sub remove_special {
     my $self = shift;
     my %params = @_;

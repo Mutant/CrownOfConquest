@@ -23,11 +23,11 @@ DBIC::Schema::Profiler:
 
 map_image_path: /images/map/
 
-url_root: http://kingdoms-game.com/
+url_root: http://crownofconquest.com/
 
-forum_url: http://forum.kingdoms-game.com/index.php
+forum_url: http://forum.crownofconquest.com/index.php
 
-static_path: http://kingdoms-game.com/static
+static_path: http://crownofconquest.com/static
 
 dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.6.1
 dojo_path: /dojo/dojo.xd.js

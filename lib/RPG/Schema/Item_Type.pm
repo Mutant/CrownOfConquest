@@ -186,7 +186,7 @@ sub image_name {
     my $enchanted = shift // 0;
     
     my $image = $self->image;
-    warn $enchanted;
+
     if ($enchanted) {
         $image =~ s/(\.png)/m$1/i;   
     }

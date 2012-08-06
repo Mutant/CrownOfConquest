@@ -66,6 +66,7 @@ sub generate_character {
 
     # Roll for first level
     $character->roll_all if $roll_points;
+    $character->create_item_grid;
 
     # Roll stats for all further levels above 1
     for ( 2 .. $level ) {

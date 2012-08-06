@@ -551,9 +551,7 @@ sub roll_all {
         my $method = "increase_resist_${resistance}";
         $self->$method($increase);
         $rolls{$resistance} = $increase;
-    }
-    
-    $self->create_item_grid;
+    }    
 
     $self->update;
 

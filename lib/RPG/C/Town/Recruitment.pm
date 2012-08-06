@@ -181,6 +181,7 @@ sub create_trained : Local {
     }
 
     $character->roll_all;
+    $character->create_item_grid;
     $character->set_default_spells;
     $character->set_starting_equipment;
 

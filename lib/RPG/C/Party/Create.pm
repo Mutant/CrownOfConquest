@@ -117,6 +117,8 @@ sub save_party : Local {
 
     foreach my $character ( $c->stash->{party}->characters ) {
         $character->roll_all;
+        
+        $character->create_item_grid;
 
         $character->set_default_spells;
 

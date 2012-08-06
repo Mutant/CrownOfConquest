@@ -181,4 +181,18 @@ sub variable_param {
 	return $param;
 }
 
+sub image_name {
+    my $self = shift;
+    my $enchanted = shift // 0;
+    
+    my $image = $self->image;
+    warn $enchanted;
+    if ($enchanted) {
+        $image =~ s/(\.png)/m$1/i;   
+    }
+    
+    return $image;
+       
+}
+
 1;

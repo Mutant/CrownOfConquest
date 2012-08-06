@@ -91,10 +91,11 @@ sub daily_stats : Local {
         $stats{turns_used} = $turns_used_rec && $turns_used_rec->turns_used // 0;
         
         if ($stats{visitor_count} != 0) {
-            $stats{login_percent} = sprintf '%0.2f', ($stats{total_login_count} / $stats{visitor_count} * 100);
-            $stats{reg_percent} = sprintf '%0.2f', ($stats{registration_count} / $stats{visitor_count} * 100);
-        
-            my $bounced = $stats{visitor_count} - $stats{total_login_count};
+            $stats{login_percent} = sprintf '%0.2f', ($stats{unique_login_count} / $stats{visitor_count} * 100);
+            
+            my $bounced = $stats{visitor_count} - $stats{unique_login_count} - $stats{registration_count};
+            $stats{reg_percent} = sprintf '%0.2f', ($stats{registration_count} / $bounced * 100);        
+            
             $stats{bounce_percent} = sprintf '%0.2f', ($bounced / $stats{visitor_count} * 100);
         }
         

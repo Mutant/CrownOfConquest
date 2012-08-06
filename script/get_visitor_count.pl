@@ -10,8 +10,7 @@ use DateTime;
 use DateTime::Format::Strptime;
 use File::Slurp;
 
-my $DATA_DIR = '/home/sam/';
-#my $DATA_DIR = '/var/lib/awstats';
+my $DATA_DIR = '/var/lib/awstats/';
 
 my $config = RPG::LoadConf->load();
 
@@ -27,7 +26,7 @@ if ($date) {
     $dt = $strp->parse_datetime($date);
 }
 else {
-    $dt = DateTime->now()->subtract( days => 1 );
+    $dt = DateTime->now()->subtract( hours => 1 );
 }
 
 my $file = 'awstats' . sprintf('%02d', $dt->month()) . $dt->year() . '.txt';

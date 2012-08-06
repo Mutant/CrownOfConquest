@@ -504,11 +504,25 @@ sub organise_inventory : Local {
 	
 	my $character = $c->stash->{character};
 	
+    my $item_rs = $character->search_related('items',
+        {
+            'equip_place_id' => undef,
+        },
+    );
+    
+    my $in_grid = $character->search_related('item_sectors',
+        {
+            item_id => [$item_rs->get_column('item_id')->all],
+            start_sector => 1,
+        },
+    )->count;
+    my $item_count = $item_rs->count;
+	
 	my @remaining = $character->organise_items();
 	
-	if (@remaining) {
+	if ($item_count > $in_grid && @remaining) {
 	    # Tried to organise items, but some were left.
-	    #  Undo everything! 
+	    #  Undo everything! (Unless there were already some outside the grid) 
 	    $c->model('DBIC')->storage->txn_rollback;
 	}
 	

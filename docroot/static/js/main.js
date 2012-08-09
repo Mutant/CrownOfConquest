@@ -1591,6 +1591,7 @@ function loadCharShopInventory(charId) {
 	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
 	$('.char-shop-link').removeClass('current-selection');
 	$('#char-shop-link-'+charId).addClass('current-selection');
+	$( '#char-shop-inventory').attr('charId', charId);
 }
 
 /* Garrison */
@@ -1642,4 +1643,24 @@ function loadCharGarrisonInventory(charId) {
 	$( '#char-garrison-inventory').load( urlBase + 'garrison/character_inventory', { character_id: charId });
 	$('.char-garrison-link').removeClass('current-selection');
 	$('#char-garrison-link-'+charId).addClass('current-selection');
+}
+
+var currentShopCharData;
+
+function loadShop(shopId) {
+	currentShopCharData = {};
+	currentShopCharData.html = $( '#char-shop-inventory').html();
+	currentShopCharData.charId = $( '#char-shop-inventory').attr('charId');
+	loadScreen('shop/purchase?shop_id=' + shopId);	
+}
+
+function usePreloadedCharInventory() {
+	$( '#char-shop-inventory').html(currentShopCharData.html);
+	$( '#char-shop-inventory').attr('charId', currentShopCharData.charId)
+	
+	setupInventory(currentShopCharData.charId, true);
+	createItemMenus();
+	$('#char-shop-link-'+currentShopCharData.charId).addClass('current-selection');
+	
+	currentShopCharData = null;
 }

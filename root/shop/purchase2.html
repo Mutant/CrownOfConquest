@@ -29,10 +29,15 @@
 
 <script>
 	$(function() {
-		loadCharShopInventory('[% characters.0.id %]');
+		if (typeof currentShopCharData != 'undefined') {
+			usePreloadedCharInventory();
+		}
+		else {	
+			loadCharShopInventory('[% characters.0.id %]');
+		}
 		setupShop('[% shop.id %]');
 		setupItemTooltips('.shop-item');
-	});	
+	});
 </script>
 
 <div align="center" style="margin-top: 5px; margin-bottom: 5px">

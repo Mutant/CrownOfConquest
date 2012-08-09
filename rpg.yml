@@ -670,7 +670,7 @@ minimum_kingdom_quests: 2
 kingdom_quest_offer_time_limit: 12
 
 # Number of towns required before a kingdom can be declared
-town_count_for_kingdom_declaration: 8
+town_count_for_kingdom_declaration: 4
 
 # Minimum level for declaring a kingdom
 minimum_kingdom_level: 16

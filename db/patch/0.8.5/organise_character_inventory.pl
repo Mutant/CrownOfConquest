@@ -15,36 +15,11 @@ my $char_id = shift;
 
 $schema->resultset('Item_Grid')->search( { owner_type => 'character' } )->delete;
 
-my @party_chars = $schema->resultset('Character')->search(
-    {
-        'party.defunct' => undef,
-    },
-    {
-        join => 'party',
-    }
-);
+my @chars = $schema->resultset('Character')->search();
 
-my @recruitment_chars = $schema->resultset('Character')->search(
-    {
-        'party_id' => undef,
-    },
-);
+create_grid(@chars);
 
-my @defunct_chars = $schema->resultset('Character')->search(
-    {
-        'party.defunct' => {'!=', undef},
-    },
-    {
-        join => 'party',
-    }
-);
-
-create_grid(@party_chars, @recruitment_chars, @defunct_chars);
-
-process_chars(@party_chars);
-process_chars(@recruitment_chars);
-process_chars(@defunct_chars);
-
+process_chars(@chars);
 
 sub create_grid {
     my @chars = @_;

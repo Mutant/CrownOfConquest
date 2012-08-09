@@ -129,7 +129,7 @@ __PACKAGE__->has_many( 'item_enchantments', 'RPG::Schema::Item_Enchantments', 'i
 
 __PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' );
 
-__PACKAGE__->has_many( 'grid_sectors', 'RPG::Schema::Item_Grid', 'item_id' );
+__PACKAGE__->has_many( 'grid_sectors', 'RPG::Schema::Item_Grid', 'item_id', { cascade_delete => 0 } );
 
 with 'RPG::Schema::Item::Variables';
 

@@ -498,39 +498,34 @@ sub equipment_tab : Local {
 sub transfer_item : Local {
 	my ($self, $c) = @_;
 	
+	# May not have been passed garrison id, see if there's one in the sector
+	$c->stash->{garrison} //= $c->stash->{party_location}->garrison;
+	
 	my $editable = $self->is_editable($c);
 	
 	my $item = $c->model('DBIC::Items')->find($c->req->param('item_id'));
 	
 	croak "Item not found" unless $item;
 
-	my $garrison;
-	if ($editable) {
-	    $garrison = $c->stash->{party_location}->garrison;
-	}
-	else {
-	    # If not 'editable' (i.e. party in sector with garrison), we can only transfer
-	    #  to/from chars in the garrison
-	    if (! $c->stash->{garrison}) {
-	       # Transfer is from garrison to character. The request doesn't have a garrison id,
-	       #  so, get it from the character we're transferring to
-	       my $character = $c->model('DBIC::Character')->find(
-	           {
-	               character_id => $c->req->param('character_id'),
-	               party_id => $c->stash->{party}->id,
-	           }
-	       );
-	       croak "Can't find character" unless $character;
-	       $garrison = $character->garrison;
-	    }
-	    else {
-	        $garrison = $c->stash->{garrison};
-	    }
-	}
+	my $garrison = $c->stash->{garrison};
+	if (! $garrison) {
+       # Transfer is from garrison to character. The request doesn't have a garrison id,
+       #  so, get it from the character we're transferring to
+       my $character = $c->model('DBIC::Character')->find(
+           {
+               character_id => $c->req->param('character_id'),
+               party_id => $c->stash->{party}->id,
+           }
+       );
+       croak "Can't find character" unless $character;
+       $garrison = $character->garrison;
+    }
 	
-	croak "Couldn't find garrison" unless $garrison;
+	confess "Couldn't find garrison (editable: $editable)" unless $garrison;
 	
-		my @characters = $editable ? $c->stash->{party}->characters_in_sector : $garrison->members;
+	croak "Garrison not owned by party" if $garrison->party_id != $c->stash->{party}->id;
+	
+	my @characters = $editable ? $c->stash->{party}->characters_in_sector : $garrison->members;
 		
 	if ($item->garrison_id == $garrison->id) {
 		# Move back to party

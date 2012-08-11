@@ -1530,8 +1530,7 @@ function sellCallback(data) {
 			}
 		}
 		if (message) {
-			dojo.byId('message-text').innerHTML = message;
-			dijit.byId('message-diag').show();
+			show_message(message);
 		}
 	}
 	

@@ -29,8 +29,10 @@
 
 <script>
 	$(function() {
-		if (typeof currentShopCharData != 'undefined') {
-			usePreloadedCharInventory();
+		if (typeof shopCharData != 'undefined' && typeof shopCharData.currentChar != 'undefined') {
+			usePreloadedCharInventory(shopCharData.currentChar);
+			$('.char-shop-link').removeClass('current-selection');
+			$('#char-shop-link-'+shopCharData.currentChar).addClass('current-selection');				
 		}
 		else {	
 			loadCharShopInventory('[% characters.0.id %]');

@@ -355,7 +355,6 @@ function panelLoadCallback(responseObject, ioArgs) {
 	}
 	
 	if (responseObject.bring_messages_to_front == 1) {
-		console.log(responseObject.bring_messages_to_front);
 		messagesToFront();
 	}
 	
@@ -578,7 +577,7 @@ function hideDiag(diagName) {
 /* Screen */
 var screenHistory = [];
 var currentUrl;
-function loadScreen(url) {
+function loadScreen(url, noOnClose) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
 	}
@@ -591,6 +590,10 @@ function loadScreen(url) {
 	
 	screenHistory.push(url);
 	currentUrl = url;
+	
+	if (! noOnClose) {
+		processOnCloseScreen();
+	}	
 	
 	dojo.xhrGet( {
         url: urlBase + url,
@@ -607,6 +610,8 @@ function closeScreen() {
 	dijit.byId('screen-pane').set("content", '');
 	screenHistory = [];
 	displayed = false;
+	
+	processOnCloseScreen();
 }
 
 function backScreen() {
@@ -631,6 +636,19 @@ function backScreen() {
 		return;
 	}
 	loadScreen(url);
+}
+
+var onCloseScreen = [];
+
+function addOnCloseScreen(onCloseFunc) {
+	onCloseScreen.push(onCloseFunc);
+}
+
+function processOnCloseScreen() {
+	var func;
+	while (func = onCloseScreen.pop()) {
+		func();
+	}
 }
 
 /* Options */
@@ -884,9 +902,7 @@ function findDropSectors(coord, item, gridIdPrefix) {
 	var endX   = parseInt(coord.x) + parseInt(item.attr('itemWidth'));
 	var startY = parseInt(coord.y);
 	var endY   = parseInt(coord.y) + parseInt(item.attr('itemHeight'));
-	
-	//console.log(startX, endX, startY, endY);
-	
+		
 	var sectors = [];
 	
 	for (var x = startX; x < endX; x++) {
@@ -910,11 +926,9 @@ function dragItemOver(event, ui, hoverSector, dropAlwaysAllowed) {
 	}
 	
 	if (typeof over != 'undefined' && (over.x != currentCoord.x || over.y != currentCoord.y)) {
-		//console.log("over cleared: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
 		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
 	}
 			
-	//console.log("over: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
 	over = currentCoord;
 	
 	if (typeof grid != 'undefined' && grid != hoverSector.attr('grid')) {
@@ -940,7 +954,6 @@ function dragItemOut(event, ui, hoverSector) {
 	}
 	
 	if (typeof over != 'undefined' && over.x == currentCoord.x && over.y == currentCoord.y) {
-		//console.log("out: " + hoverSector.attr('sectorX') + "," + hoverSector.attr('sectorY'));
 		clearDropSectors(over, item, hoverSector.attr("idPrefix"));
 		over = undefined;
 	}	
@@ -1186,9 +1199,7 @@ function findSectorsForItem(item, grid) {
 	
 	var itemHeight = parseInt(item.attr('itemHeight'));
 	var itemWidth = parseInt(item.attr('itemWidth'));
-	
-	//console.log("height: " + itemHeight + ", width: " + itemWidth);
-	
+		
 	var emptyGrid = {};
 	
 	empty.each(function(){
@@ -1210,9 +1221,7 @@ function findSectorsForItem(item, grid) {
 		var startY = parseInt(emptySector.attr('sectorY'));
 		var maxX = (startX + itemWidth - 1);
 		var maxY = (startY + itemHeight - 1);
-		
-		//console.log("startX: " + startX + ", startY: " + startY + ", maxX: " + maxX + ", maxY: " + maxY);
-		
+				
 		for (var x = startX; x <= maxX; x++) {
 			for (var y = startY; y <= maxY; y++) {
 				if (typeof emptyGrid[x] != 'undefined' && typeof emptyGrid[x][y] != 'undefined') {
@@ -1586,12 +1595,37 @@ function loadShopTab(shopId, tab) {
 	});
 }
 
-function loadCharShopInventory(charId) {	
+var shopCharData;
+
+function loadCharShopInventory(charId) {
+	if (typeof shopCharData == 'undefined') {
+		addOnCloseScreen(function() {
+			shopCharData = undefined;
+		});
+		
+		shopCharData = {};
+	}
+
 	$( '#char-shop-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
-	$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId });
+	if (typeof shopCharData[charId] != 'undefined') {
+		usePreloadedCharInventory(charId);
+	}
+	else {		
+		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId }, function(data) {
+			shopCharData[charId] = data;
+			shopCharData.currentChar = charId;
+		} );
+	}
+			
 	$('.char-shop-link').removeClass('current-selection');
-	$('#char-shop-link-'+charId).addClass('current-selection');
-	$( '#char-shop-inventory').attr('charId', charId);
+	$('#char-shop-link-'+charId).addClass('current-selection');	
+}
+
+function usePreloadedCharInventory(charId) {
+	$( '#char-shop-inventory').html(shopCharData[charId]);
+	
+	setupInventory(charId, true);
+	createItemMenus();	
 }
 
 /* Garrison */
@@ -1643,24 +1677,4 @@ function loadCharGarrisonInventory(charId) {
 	$( '#char-garrison-inventory').load( urlBase + 'garrison/character_inventory', { character_id: charId });
 	$('.char-garrison-link').removeClass('current-selection');
 	$('#char-garrison-link-'+charId).addClass('current-selection');
-}
-
-var currentShopCharData;
-
-function loadShop(shopId) {
-	currentShopCharData = {};
-	currentShopCharData.html = $( '#char-shop-inventory').html();
-	currentShopCharData.charId = $( '#char-shop-inventory').attr('charId');
-	loadScreen('shop/purchase?shop_id=' + shopId);	
-}
-
-function usePreloadedCharInventory() {
-	$( '#char-shop-inventory').html(currentShopCharData.html);
-	$( '#char-shop-inventory').attr('charId', currentShopCharData.charId)
-	
-	setupInventory(currentShopCharData.charId, true);
-	createItemMenus();
-	$('#char-shop-link-'+currentShopCharData.charId).addClass('current-selection');
-	
-	currentShopCharData = null;
 }

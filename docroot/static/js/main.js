@@ -1426,7 +1426,7 @@ function drop_item(args) {
 
 function split_item(item_id) {
 	dojo.byId('split-item-id').value = item_id;
-	dijit.byId('split-diag').show();
+	dijit.byId('split-diag').show();	
 }
 
 function split_item_submit(arguments) {
@@ -1458,6 +1458,8 @@ function split_item_submit(arguments) {
 			
 			newItem.attr('rel', urlBase + 'item/tooltip?item_id=' + responseObject.item_id);
 			setupItemTooltips('#' + newItem.attr('id'));
+			
+			createQuantityMenu();
         }
     });	 	
 }

@@ -91,7 +91,17 @@ sub organise_items_impl {
         
     my @remaining_items;
             
-    while (my $item = shift @items) {
+    while (my $item_data = shift @items) {
+        my $item;
+        my $count;
+        if (ref $item_data eq 'HASH') {
+            $item  = $item_data->{item};
+            $count = $item_data->{count};
+        }
+        else {
+            $item = $item_data;
+        }
+        
         #warn "item: " . $item->id;
         
         my @coords = sort by_coord keys %sectors;
@@ -135,6 +145,7 @@ sub organise_items_impl {
             )->update( { item_id => $item->id } );                    
             
             $start_sector->start_sector(1);
+            $start_sector->quantity($count);
             $start_sector->update;
                         
             $placed = 1;
@@ -176,7 +187,13 @@ sub items_in_grid {
     my $grid;
     
     foreach my $sector (@sectors) {
-        $grid->{$sector->x}{$sector->y} = $sector->item;
+        my $item = $sector->item;
+        
+        if ($sector->quantity > 1) {
+            $item->{stacked_quantity} = $sector->quantity;
+        }
+        
+        $grid->{$sector->x}{$sector->y} = $item;
     }
     
     return $grid;

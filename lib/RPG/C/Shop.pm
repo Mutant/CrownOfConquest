@@ -77,6 +77,12 @@ sub buy_item : Local {
 		}
 	);
 	
+	if (! $item) {
+		push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
+		$c->forward( '/panel/refresh' );
+		return;
+	}	
+	
 	croak "Can't buy quantity item" if $item->is_quantity;
 
 	my $party = $c->stash->{party};
@@ -87,17 +93,8 @@ sub buy_item : Local {
 	if ( $town->id != 0 && $town->id != $party->location->town->id ) {
 		croak "Attempting to buy an item in another town";
 	}
-	my $count = 0;
-	my $cost = 0;
-	my $enchanted = 0;
-
-	if (! $item) {
-		push @{ $c->stash->{error} }, "The shop no longer has this item. Another party may have bought it!";
-		$c->forward( '/panel/refresh' );
-		return;
-	}
 	
-    $cost = $item->sell_price( $item->in_shop, 0 );
+    my $cost = $item->sell_price( $item->in_shop, 0 );
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
@@ -133,7 +130,37 @@ sub buy_item : Local {
 	$party->gold( $party->gold - $cost );
 	$party->update;
 	
-	$shop->remove_item_from_grid($item);
+	my $item_sector = $shop->find_related('item_sectors',
+	   {
+	       item_id => $item->id,
+	       start_sector => 1,
+	   }
+	);
+	
+	if ($item_sector->quantity > 1) {        
+        # Find next item id
+        my $next_item = $shop->search_related('items_in_shop',
+            {
+                item_type_id => $item->item_type_id,
+            }
+        )->first;
+        
+	    push @{$c->stash->{panel_callbacks}}, {
+        	name => 'updateStackItemData',
+        	data => {
+        	    original_item_id => $item->id,
+        	    new_item_id => $next_item->id,
+        	    new_quantity => $item_sector->quantity-1,
+        	},
+    	};
+    	
+        $item_sector->quantity($item_sector->quantity-1);
+        $item_sector->item_id($next_item->id);
+        $item_sector->update;
+	}
+	else {	
+	   $shop->remove_item_from_grid($item);
+	}
 
     $c->forward( '/panel/refresh', ['party_status'] );
 }

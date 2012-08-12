@@ -37,6 +37,19 @@ sub tooltip : Local {
     $template = $item_category_file_name if -e $c->config->{root} . '/' . $item_category_file_name;
     
     my $quantity = $item->is_quantity;
+    
+    my $stacked_quantity;
+    if ($item->shop_id) {
+    	my $item_sector = $item->find_related('grid_sectors',
+    	   {
+    	       owner_id => $item->shop_id,
+    	       owner_type => 'shop',
+    	       start_sector => 1,
+    	   },
+    	);
+    	
+    	$stacked_quantity = $item_sector->quantity if $item_sector->quantity > 1;
+    }
         
     my $res = $c->forward(
         'RPG::V::TT',
@@ -50,6 +63,7 @@ sub tooltip : Local {
                     quantity_buy_price => $item->shop_id && $quantity ? $item->sell_price($item->in_shop, 0, undef, 1) : undef,
                     sell_price => $c->req->param('in_shop') && ! $quantity ? $item->sell_price($item->in_shop) : undef,
                     quantity_sell_price => $c->req->param('in_shop') && $quantity ? $item->sell_price($item->in_shop, undef, undef, 1) : undef,
+                    stacked_quantity => $stacked_quantity,
                 },
                 return_output => $return_res,
             }

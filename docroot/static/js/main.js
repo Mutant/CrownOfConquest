@@ -1038,6 +1038,12 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 			
 		getPanels(url + '?' + $.param(params));
 		
+		if (item.attr("isStacked") == 1) {
+			var newItem = $(item).clone();
+			item.attr('id', 'item-stacked-old');
+			item = newItem;
+		}
+		
 		item.removeClass('shop-item');
 		item.addClass('inventory-item');
 		
@@ -1070,6 +1076,12 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 
 function dropItemOnEquipSlot(event, ui, slot, charId) {
 	var item = ui.draggable;
+	
+	if (item.attr("isStacked") == 1) {
+		var newItem = $(item).clone();
+		item.attr('id', 'item-stacked-old');
+		item = newItem;
+	}	
 	
 	var origLoc = item.parent();
 	var origCoord = {
@@ -1468,7 +1480,6 @@ function split_item_submit(arguments) {
 }
 
 /* Shop */
-
 function setupShop(shopId) {
 	$( ".shop-item" ).draggable({
 		revert: "invalid",
@@ -1477,7 +1488,7 @@ function setupShop(shopId) {
 		},		
 	});
 	
-	$( ".shop-item[isQuantity=1]" ).draggable("option", 'helper', 'clone');	
+	$( ".shop-item[isQuantity=1],.shop-item[isStacked=1]" ).draggable("option", 'helper', 'clone');	
 	
 	$( ".shop" ).droppable({
 		accept: ".inventory-item",
@@ -1592,6 +1603,36 @@ function quantityPurchaseCallback(data) {
 	var shopItem = $( '#item-' + data.shop_item.item_id );
 	shopItem.attr('rel', shopItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
 	setupItemTooltips('#' + shopItem.attr('id'));
+}
+
+function updateStackItemDataCallback(data) {
+	console.log(data);
+
+	var item = $( '#item-stacked-old' );
+
+	item.attr('itemId', data.new_item_id);
+	item.attr('id', 'item-' + data.new_item_id);
+	item.attr('onmouseover', "saveCurrentItemId('" + data.new_item_id + "');");
+
+	item.attr('rel', urlBase + 'item/tooltip?item_id=' + data.new_item_id  + '&no_cache=' + Math.random() *100000000000);
+	setupItemTooltips('#' + item.attr('id'));
+	
+	var droppedItem	= $( '#item-' + data.original_item_id );
+	droppedItem.attr('rel', urlBase + 'item/tooltip?item_id=' + data.original_item_id  + '&no_cache=' + Math.random() *100000000000);
+	setupItemTooltips('#' + droppedItem.attr('id'));
+	droppedItem.draggable({
+		revert: "invalid",
+		drag: function( event, ui ) {
+			$(document).trigger('hideCluetip');
+		},
+	});	
+	
+	createInventoryMenu();
+	
+	if (data.new_quantity <= 1) {
+		item.attr('isStacked', 0);
+		item.draggable("option", 'helper', 'original');
+	}
 }
 
 function loadShopTab(shopId, tab) {

@@ -42,7 +42,8 @@
 [% MACRO item_div(class, item, in_shop) BLOCK %]
 	<div id="item-[% item.id %]" class="[% class %]-item [% item.item_type.category.item_category | lower | replace('\s+', '_') %]-category"
 		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]" isQuantity="[% item.is_quantity %]"
-		[% IF item.is_quantity %]quantityAvailable="[% item.variable('Quantity') %]"[% END %]
+		[% IF item.is_quantity %]quantityAvailable="[% item.variable('Quantity') %]"[% END %] 
+		[% IF item.stacked_quantity %]isStacked=1[% END %]
 		style="z-index: 100;
 			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
 			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image_name(item.enchantments_count) %]') center center no-repeat;"

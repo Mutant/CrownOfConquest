@@ -93,27 +93,26 @@ sub organise {
     my $self = shift;
     
     my @items = $self->search_related('items',
-        {
-            'equip_place_id' => undef,
-        },
+        {},
         {
             prefetch => {'item_type' => 'category'},
-            order_by => 'category.item_category, me.item_id',            
+            order_by => 'category.item_category',
         }
     );
         
-    my @organised;
+    my %organised;
     my @special;
     foreach my $item (@items) {
         if (! $item->enchantments_count && ! $item->upgraded) {
-            push @organised, $item;
+            $organised{$item->item_type_id}{count}++;
+            $organised{$item->item_type_id}{item} //= $item;
         }
         else {
             push @special, $item;
         }
     }
     
-    $self->organise_items_in_tabs({owner_type => 'shop', width => 12, height => 8 }, @organised, @special);
+    $self->organise_items_in_tabs({owner_type => 'shop', width => 12, height => 8 }, values %organised, @special);
 }
 
 sub grouped_items_in_shop {

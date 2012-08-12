@@ -1612,20 +1612,33 @@ function loadCharShopInventory(charId) {
 		
 		shopCharData = {};
 	}
+	
+	if (shopCharData.currentChar) {
+		console.log("Changing current char:" + shopCharData.currentChar);
+		shopCharData[shopCharData.currentChar] = $( '#char-shop-inventory').html();
+	}
 
 	$( '#char-shop-inventory').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
 	if (typeof shopCharData[charId] != 'undefined') {
 		usePreloadedCharInventory(charId);
+		shopCharData.currentChar = charId;
 	}
 	else {		
-		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId }, function(data) {
-			shopCharData[charId] = data;
+		$( '#char-shop-inventory').load( urlBase + 'shop/character_inventory', { character_id: charId }, function(data) {			
 			shopCharData.currentChar = charId;
 		} );
 	}
 			
 	$('.char-shop-link').removeClass('current-selection');
 	$('#char-shop-link-'+charId).addClass('current-selection');	
+}
+
+function loadShop(shopId) {
+	if (shopCharData.currentChar) {
+		shopCharData[shopCharData.currentChar] = $( '#char-shop-inventory').html();
+	}
+	
+	loadScreen('shop/purchase?shop_id=' + shopId, true)
 }
 
 function usePreloadedCharInventory(charId) {

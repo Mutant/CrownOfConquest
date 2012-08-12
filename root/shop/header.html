@@ -5,7 +5,7 @@ Shops in [% town.town_name %]:
 	[% IF shop.id == other_shop.id %]
 		<span id="current-selection">[% other_shop.shop_name %]</span>
 	[% ELSE %]
-		<a href="javascript:loadScreen('shop/purchase?shop_id=[% other_shop.id %]', true)">[% other_shop.shop_name %]</a>
+		<a href="javascript:loadShop('[% other_shop.id %]')">[% other_shop.shop_name %]</a>
 	[% END %]
 	&nbsp;
 [% END %]

@@ -19,11 +19,16 @@ Your town has level [% town.trap_level %] traps. The maintenance cost is [% trap
 
 (Downgrading is free).
 
+
 <br><br>
 
+[% IF town.trap_level < trap_max_level %]
 <button dojoType="dijit.form.Button" name="submitButton" onClick="getPanels('/town/mayor/upgrade_traps?town_id=[% town.id %]')">
 	Upgrade
 </button>
+[% END %]
+[% IF town.trap_level > 0 %]
 <button dojoType="dijit.form.Button" name="submitButton" onClick="getPanels('/town/mayor/downgrade_traps?town_id=[% town.id %]')">
 	Downgrade
 </button>
+[% END %]

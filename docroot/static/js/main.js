@@ -21,6 +21,7 @@ dojo.require("rpg.dnd.Target");
 dojo.require("dijit.form.Form");
 dojo.require("dojo.cookie");
 dojo.require("dojo.dnd.Moveable");
+dojo.require("dojo.data.ItemFileReadStore");
 
 /* Map Movement */
 

@@ -181,6 +181,11 @@ sub finish_quest {
 	
 	my $item = eval {$self->item};
 	return unless $item;
+	
+	if ($item->character_id) {
+        $item->character->remove_item_from_grid($item);   
+	}
+	
 	$item->character_id(undef);
 	$item->treasure_chest_id(undef);
 	$item->land_id(undef);

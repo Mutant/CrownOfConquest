@@ -202,7 +202,8 @@ sub create : Local {
         
     }
     
-    $item->character_id(undef);
+    $item->belongs_to_character->remove_item_from_grid($item);
+    $item->character_id(undef);    
     $item->equip_place_id(undef);
     $item->update;
     

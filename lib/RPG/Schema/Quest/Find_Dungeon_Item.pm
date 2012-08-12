@@ -183,7 +183,7 @@ sub finish_quest {
 	return unless $item;
 	
 	if ($item->character_id) {
-        $item->character->remove_item_from_grid($item);   
+        $item->belongs_to_character->remove_item_from_grid($item);   
 	}
 	
 	$item->character_id(undef);

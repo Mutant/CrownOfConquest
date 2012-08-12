@@ -1296,6 +1296,7 @@ function setupInventory(charId, inShop) {
 				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to buy?";
 				dojo.byId('quantity-char-id').value = charId;
 				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-spinner').value = 1;
 				dojo.byId('quantity-item-sector').value = $(this).attr('id');
 				dijit.byId('quantity-selection').show();
 			}
@@ -1485,6 +1486,7 @@ function setupShop(shopId) {
 				dojo.byId('quantity-selection-message').innerHTML = "How many would you like to sell?";
 				dojo.byId('quantity-shop-id').value = shopId;
 				dojo.byId('quantity-item-id').value = item.attr('itemId');
+				dojo.byId('quantity-spinner').value = item.attr('quantityAvailable');
 				dojo.byId('quantity-item-sector').value = $(this).attr('id');
 				dijit.byId('quantity-selection').show();
 			}
@@ -1558,8 +1560,7 @@ function quantityPurchaseCallback(data) {
 		
 		var stackedOnItem = $( '#item-' + data.stacked_on_item );
 		stackedOnItem.attr('rel', stackedOnItem.attr('rel') + '&no_cache=' + Math.random() *100000000000);
-		setupItemTooltips('#' + stackedOnItem.attr('id'));		
-		
+		setupItemTooltips('#' + stackedOnItem.attr('id'));	
 	}
 	else {	
 		var item = $( '#item-quantity-new' );
@@ -1582,6 +1583,8 @@ function quantityPurchaseCallback(data) {
 		for (var i = 0; i < sectors.length; i++) {
 			sectors[i].attr('hasItem', data.inv_item.item_id);
 		}
+		
+		createQuantityMenu();
 	}
 	
 	var shopItem = $( '#item-' + data.shop_item.item_id );

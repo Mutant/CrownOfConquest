@@ -1040,6 +1040,8 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 		
 		item.removeClass('shop-item');
 		item.addClass('inventory-item');
+		
+		createInventoryMenu();
 	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);

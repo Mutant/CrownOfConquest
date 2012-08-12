@@ -582,6 +582,10 @@ function loadScreen(url, noOnClose) {
 	if (dojo.byId('screen-outer').style.display == 'none') {
 		dojo.byId('screen-outer').style.display = 'block';
 	}
+
+	if (! noOnClose) {
+		processOnCloseScreen();
+	}
 	
 	messagesToBack();
 		
@@ -591,11 +595,7 @@ function loadScreen(url, noOnClose) {
 	
 	screenHistory.push(url);
 	currentUrl = url;
-	
-	if (! noOnClose) {
-		processOnCloseScreen();
-	}	
-	
+
 	dojo.xhrGet( {
         url: urlBase + url,
         handleAs: "text",

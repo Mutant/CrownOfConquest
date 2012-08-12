@@ -146,7 +146,7 @@ sub add : Local {
 
 sub character_move : Local {
     my ($self, $c) = @_;
-    
+
     my $character = $c->model('DBIC::Character')->find(
         {
             'character_id' => $c->req->param('character_id'),
@@ -199,26 +199,26 @@ sub character_move : Local {
     }
     
     elsif ($c->req->param('to') eq 'garrison') {
-        croak "Invalid character" unless $character->is_in_party;
+        croak "Attempting to move character into garrison from outside party" unless $character->is_in_party;
         $character->garrison_id($c->stash->{garrison}->garrison_id);
         
-        croak "Can't remove last living character from garrison" 
-            if ! $swap_char && $c->stash->{garrison}->number_alive <= 1 && ! $character->is_dead;            
+        croak "Can't remove last living character from party" 
+            if ! $swap_char && $c->stash->{party}->number_alive <= 1 && ! $character->is_dead;            
         
         if ($swap_char) {
-            croak "Invalid character" unless $swap_char->garrison_id == $c->stash->{garrison}->garrison_id;
+            croak "Attempting to swap out char not in garrison" unless $swap_char->garrison_id == $c->stash->{garrison}->garrison_id;
             $swap_char->garrison_id(undef);   
         }
     }
     else {
-        croak "Invalid character" unless $character->garrison_id == $c->stash->{garrison}->garrison_id;
+        croak "Attempting to move character out of garrison when not in garrison" unless $character->garrison_id == $c->stash->{garrison}->garrison_id;
         $character->garrison_id(undef);
         
-        croak "Can't remove last living character from party" 
-            if ! $swap_char && $c->stash->{party}->number_alive <= 1 && ! $character->is_dead;        
+        croak "Can't remove last living character from garrison" 
+            if ! $swap_char && $c->stash->{garrison}->number_alive <= 1 && ! $character->is_dead;        
         
         if ($swap_char) {
-            croak "Invalid character" unless $swap_char->is_in_party;
+            croak "Attempting to swap out char not in party" unless $swap_char->is_in_party;
             $swap_char->garrison_id($c->stash->{garrison}->garrison_id);            
         }
     }

@@ -1675,7 +1675,7 @@ function loadCharShopInventory(charId) {
 }
 
 function loadShop(shopId) {
-	if (shopCharData.currentChar) {
+	if (typeof shopCharData != 'undefined' && shopCharData.currentChar) {
 		shopCharData[shopCharData.currentChar] = $( '#char-shop-inventory').html();
 	}
 	

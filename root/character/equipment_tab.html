@@ -15,6 +15,7 @@
 
 <script>
 [% IF item_change_allowed %]
+	function setupEquipSlotDrops() {
 	[% FOREACH slot_data IN equip_places %]
 		[% slot = slot_data.value %] 
 		$( "#equip_place_[% slot.id %]" ).droppable({
@@ -25,6 +26,7 @@
 			hoverClass: "item-droppable",			
 		});
 	[% END %]
+	}
 [% END %]
 
 function addCommonMenuItems(menu) {

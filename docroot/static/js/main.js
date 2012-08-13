@@ -1328,6 +1328,7 @@ function setupInventory(charId, inShop) {
 		},
 	});
 
+	setupEquipSlotDrops();
 	setupItemTooltips(".inventory-item");
 	createItemMenus();
 }

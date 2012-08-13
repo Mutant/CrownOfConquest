@@ -442,14 +442,15 @@ sub turns {
     # Update the day's turns used
     my $turns_used = $self->_turns - $new_turns;
 
-    # XXX: the turns used might not be 100% accurate, because two separate parties could read the same value from the day table, and commit their
-    #  changes separately.
-    my $day = $self->result_source->schema->resultset('Day')->find_today;
+    my $day_stats = $self->result_source->schema->resultset('Party_Day_Stats')->find_or_create(
+        {
+            date => DateTime->now()->ymd(),
+            party_id => $self->id,
+        },
+    );
     
-    confess "Can't find today" unless $day;
-    
-    $day->turns_used( ( $day->turns_used || 0 ) + $turns_used );
-    $day->update;
+    $day_stats->turns_used( ( $day_stats->turns_used || 0 ) + $turns_used );
+    $day_stats->update;
 
     # No need to call update, since something else will call it to update the new turns value
     $self->turns_used( ( $self->turns_used || 0 ) + $turns_used );

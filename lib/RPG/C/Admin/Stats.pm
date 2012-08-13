@@ -58,14 +58,15 @@ sub daily_stats : Local {
         },
     );     
            
-    my @turns_used = $c->model('DBIC::Day')->search(
+    my @turns_used = $c->model('DBIC::Party_Day_Stats')->search(
         {
-            date_started => {'>=', DateTime->now()->subtract( months => 1 )},
+            date => {'>=', DateTime->now()->subtract( months => 1 )},
         },
         {
-            order_by => 'date_started desc',
-            '+select' => {date => 'date_started', -as => 'date'},
-            '+as' => 'date',
+            order_by => 'date desc',
+            '+select' => {sum => 'turns_used'},
+            '+as' => 'turns_used',
+            group_by => 'date',
         },
     );
     
@@ -88,7 +89,7 @@ sub daily_stats : Local {
         $stats{registration_count} = $registrar_count_rec && $registrar_count_rec->get_column('count') // 0;
        
         my ($turns_used_rec) = grep { $_->get_column('date') eq $date } @turns_used;
-        $stats{turns_used} = $turns_used_rec && $turns_used_rec->turns_used // 0;
+        $stats{turns_used} = $turns_used_rec && $turns_used_rec->get_column('turns_used') // 0;
         
         if ($stats{visitor_count} != 0) {
             $stats{login_percent} = sprintf '%0.2f', ($stats{unique_login_count} / $stats{visitor_count} * 100);

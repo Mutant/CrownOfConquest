@@ -124,7 +124,7 @@ sub buy_item : Local {
         ];
 	}
 	else {
-	   $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')});
+	   $item->add_to_characters_inventory($character, { x => $c->req->param('grid_x'), y => $c->req->param('grid_y')}, 0);
 	}
 
 	$party->gold( $party->gold - $cost );

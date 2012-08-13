@@ -2,6 +2,7 @@ package RPG::Schema::Role::Item_Grid;
 
 use Moose::Role;
 use Carp;
+use List::Util qw(max);
 
 requires qw/item_sectors search_related id result_source/;
 
@@ -255,7 +256,7 @@ sub find_location_for_item {
     my $self = shift;
     my $item = shift;
     
-    my $max_tab = $self->max_tab;
+    my $max_tab = max grep { /^\d+$/ } $self->tabs;
     
     for my $tab (1..$max_tab) {    
         my @sectors = $self->search_related('item_sectors',
@@ -296,19 +297,21 @@ sub find_location_for_item {
     }
 }
 
-sub max_tab {
+sub tabs {
     my $self = shift;
     
-    my $max_tab = $self->find_related('item_sectors',
+    my @tab_recs = $self->search_related('item_sectors',
         {},
         {
-            'select' => { max => 'tab' },
-            'as'     => 'max_tab',
+            'select' => 'tab',
+            distinct => 1,
+            order_by => 'tab',
         }
-    )->get_column('max_tab');
+    );
     
-    return $max_tab;
-               
+    my @tabs = map { $_->tab } @tab_recs;
+
+    return @tabs;               
 }
 
 1;

@@ -488,7 +488,7 @@ sub equipment_tab : Local {
                 	garrison => $c->stash->{garrison},
                 	party => $c->stash->{party},
                 	editable => $editable,
-                	max_tab => $c->stash->{garrison}->max_tab,
+                	tabs => [$c->stash->{garrison}->tabs],
                 },
             }
         ]

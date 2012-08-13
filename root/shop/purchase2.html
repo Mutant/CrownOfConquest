@@ -58,12 +58,12 @@
 <div style="float: left;">
 <b>Items For Sale</b>
 
-[% IF max_tab > 1 %]
-	[% tab = 1 %]
-	[% WHILE tab <= max_tab %]
-		<a href="javascript:loadShopTab('[% shop.id %]','[% tab %]')">[% tab %]</a>&nbsp;
-		[% tab = tab + 1 %]
+[% IF tabs.size > 1 %]
+	[% FOREACH tab IN tabs %]
+		<span id="shop-tab-[% shop.id %]-[% tab %]" class="shop-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadShopTab('[% shop.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
 	[% END %]
 [% END %]
+
 [% create_grid('shop', items_in_grid, 12, 8 ) %]
+
 </div>

@@ -17,15 +17,13 @@
 [% END %]
 </div>
 
-<div style="float: left; margin-right: 10px">
+<div style="float: left; margin-right: 10px; min-width: 336px">
 <b>Garrison Equipment</b> 
 	<span style="font-size: 10px"><a href="javascript:organiseGarrisonEquipment('[% garrison.id %]')">Organise</a></span>
 
-[% IF max_tab > 1 %]
-	[% tab = 1 %]
-	[% WHILE tab <= max_tab %]
-		<a href="javascript:loadGarrisonTab('[% garrison.id %]','[% tab %]')">[% tab %]</a>&nbsp;
-		[% tab = tab + 1 %]
+[% IF tabs.size > 1 %]
+	[% FOREACH tab IN tabs %]
+		<span id="garrison-tab-[% garrison.id %]-[% tab %]" class="garrison-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadGarrisonTab('[% garrison.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
 	[% END %]
 [% END %]
 <div id="garrison-equipment-outer">

@@ -39,7 +39,7 @@ sub purchase : Local {
 	
 	my $items_in_grid = $shop->items_in_grid;
 	
-	my $max_tab = $shop->max_tab;
+	my @tabs = $shop->tabs;
 
 	$c->forward(
 		'RPG::V::TT',
@@ -52,7 +52,7 @@ sub purchase : Local {
 					shops_in_town => \@shops_in_town,
 					items_in_grid => $items_in_grid,
 					town          => $party->location->town,
-					max_tab       => $max_tab,
+					tabs          => \@tabs,
 				}
 			}
 		]

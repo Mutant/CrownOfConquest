@@ -1636,11 +1636,16 @@ function updateStackItemDataCallback(data) {
 }
 
 function loadShopTab(shopId, tab) {
+	$( '#shop-grid').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
+
 	$.get(urlBase + 'shop/item_tab', { shop_id: shopId, tab: tab }, function(data) {
 		$( '#shop-grid' ).html(data);
 		setupShop(shopId);
 		setupItemTooltips('.shop-item');
 	});
+	
+	$('.shop-tab-link').removeClass('current-selection');
+	$('#shop-tab-'+shopId+'-'+tab).addClass('current-selection');		
 }
 
 var shopCharData;
@@ -1727,10 +1732,15 @@ function organiseGarrisonEquipment(garrisonId) {
 }
 
 function loadGarrisonTab(garrisonId, tab) {
+	$( '#garrison-grid').html('<img src="' + urlBase + 'static/images/layout/loader.gif">');
+
 	$.get(urlBase + 'garrison/item_tab', { garrison_id: garrisonId, tab: tab }, function(data) {
 		$( '#garrison-equipment-outer' ).html(data);
 		setupGarrison(garrisonId);
 	});
+	
+	$('.garrison-tab-link').removeClass('current-selection');
+	$('#garrison-tab-'+garrisonId+'-'+tab).addClass('current-selection');	
 }
 
 function loadCharGarrisonInventory(charId) {	

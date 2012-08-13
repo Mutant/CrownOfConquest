@@ -101,18 +101,40 @@ sub organise {
     );
         
     my %organised;
-    my @special;
+    my @enchanted;
+    my @upgraded;
     foreach my $item (@items) {
-        if (! $item->enchantments_count && ! $item->upgraded) {
+        if ($item->enchantments_count) {
+            push @enchanted, $item;
+        }
+        elsif ($item->upgraded) {
+            push @upgraded, $item;   
+        }
+        else {
             $organised{$item->item_type_id}{count}++;
             $organised{$item->item_type_id}{item} //= $item;
         }
-        else {
-            push @special, $item;
-        }
     }
     
-    $self->organise_items_in_tabs({owner_type => 'shop', width => 12, height => 8 }, values %organised, @special);
+    $self->organise_items_in_tabs({owner_type => 'shop', width => 12, height => 8 }, values %organised);
+    
+    my $ench_count = 1;
+    while (@enchanted) {
+        my $tab = "Enchanted";
+        $tab .= " ($ench_count)" if $ench_count > 1;
+        $self->create_grid('shop', 12, 8, $tab);
+        @enchanted = $self->organise_items_impl($tab, @enchanted);
+        $ench_count++;
+    }
+
+    my $upgraded_count = 1;
+    while (@upgraded) {
+        my $tab = "Upgraded";
+        $tab .= " ($upgraded_count)" if $upgraded_count > 1;
+        $self->create_grid('shop', 12, 8, $tab);
+        @upgraded = $self->organise_items_impl($tab, @upgraded);
+        $upgraded_count++;
+    }
 }
 
 sub grouped_items_in_shop {

@@ -43,7 +43,7 @@ var shotDescs = {
 function showShot(shotId) {
 	dojo.byId('screeshot-view').style.visibility = 'visible';
 	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/layout/loader.gif";
-	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".png";
+	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".jpg";
 	dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
 }
 
@@ -52,7 +52,6 @@ function closeShotScreen() {
 }
 
 </script>
-
 
 <div dojoType="dijit.Dialog" id="ie-diag" style="display: none" title="Internet Explorer 7 Limitations">
     It seems like you're using Internet Explorer 7 or earlier.

@@ -1451,6 +1451,10 @@ sub set_starting_equipment {
 
 sub create_item_grid {
     my $self = shift;
+    
+    if ( $self->item_sectors->count > 0 ) {
+        return;
+    }
 
     $self->create_grid('character', 8, 8);       
 }

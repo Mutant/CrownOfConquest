@@ -37,7 +37,7 @@ function addCommonMenuItems(menu) {
 			params = {
 				label: "[% char_in_party.name | html_entity %]",
 				onClick: function() {
-					give_item_to('[% char_in_party.id %]', currentItemId);
+					give_item_to('[% character.id %]','[% char_in_party.id %]', currentItemId);
 				}
 			};
 			

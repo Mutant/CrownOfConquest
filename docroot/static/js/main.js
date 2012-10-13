@@ -1401,11 +1401,11 @@ function createQuantityMenu() {
 
 
 
-function give_item_to(char_id, item_id) {
+function give_item_to(char_id, give_to_char_id, item_id) {
 	removeFromGrid(item_id, true);
 
 	dojo.xhrGet( {
-        url: urlBase + "character/give_item?item_id=" +  item_id + "&character_id=" + char_id,
+        url: urlBase + "character/give_item?item_id=" +  item_id + "&character_id=" + give_to_char_id,
         handleAs: "json",	
         load: function(responseObject, ioArgs) {
 			loadCharStats(char_id);

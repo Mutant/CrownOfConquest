@@ -1454,7 +1454,8 @@ function split_item_submit(arguments) {
         	var item = $( '#item-' + itemId );        
         	var newItem = item.clone(true);
         	newItem.attr('id', 'item-' + responseObject.item_id);
-        	newItem.attr('itemId',responseObject.item_id);        	
+        	newItem.attr('itemId',responseObject.item_id);    
+        	newItem.attr('onmouseover', "saveCurrentItemId('" + responseObject.item_id + "');");    	
         
     		var origCoord = {
 				x: parseInt(responseObject.new_x),

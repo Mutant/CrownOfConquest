@@ -87,7 +87,7 @@ sub test_cost_to_build_with_skilled_party : Tests(1) {
 }
 
 
-sub test_consume_items : Tests() {
+sub test_consume_items : Tests(4) {
     my $self = shift;
     
     # GIVEN
@@ -134,6 +134,14 @@ sub test_consume_items : Tests() {
                 item_variable_value => 200,
             }
         ], character_id => $characters[1]->id, item_type_name => 'Type2', no_equip_place => 1,);
+
+
+    $characters[0]->create_item_grid;
+    $characters[1]->create_item_grid;
+    
+    $characters[0]->add_item_to_grid($item1);
+    $characters[0]->add_item_to_grid($item2);
+    $characters[1]->add_item_to_grid($item3);        
     
     # WHEN
     $building_type->consume_items(
@@ -147,6 +155,7 @@ sub test_consume_items : Tests() {
     # THEN
     $item1->discard_changes;
     is($item1->variable('Quantity'), undef, "Item1 used up");
+    is($item1->start_sector, undef, "Item1 no longer in grid");
 
     $item2->discard_changes;
     is($item2->variable('Quantity'), 50, "Item2 used up");

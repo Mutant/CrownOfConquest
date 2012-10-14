@@ -29,7 +29,12 @@ foreach my $character (@chars) {
         );
         
         if (! $item) {
-            print "Item " . $in_grid->item_id . " is in char's grid but does not exist\n";    
+            print "Item " . $in_grid->item_id . " is in char's grid but does not exist, removing\n";
+        	$character->search_related('item_sectors',
+        	   {
+        	       item_id => $in_grid->item_id ,
+        	   }
+            )->update( { item_id => undef, start_sector => undef, } );               
         }
     }
 }

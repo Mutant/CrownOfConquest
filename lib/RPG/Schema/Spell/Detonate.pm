@@ -59,6 +59,7 @@ sub _cast {
 
     my $vial = shift @vials;
     if ($vial->variable('Quantity') == 1) {
+        $character->remove_item_from_grid($vial);
         $vial->delete;
     }
     else {

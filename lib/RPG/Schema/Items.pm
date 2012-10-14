@@ -131,6 +131,8 @@ __PACKAGE__->many_to_many( 'enchantments' => 'item_enchantments', 'enchantment' 
 
 __PACKAGE__->has_many( 'grid_sectors', 'RPG::Schema::Item_Grid', 'item_id', { cascade_delete => 0 } );
 
+__PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
+
 with 'RPG::Schema::Item::Variables';
 
 sub variables {

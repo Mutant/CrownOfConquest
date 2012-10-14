@@ -817,7 +817,10 @@ sub wiped_out {
             }
         );
         
-        $items[0]->delete if @items;
+        if (@items) {
+            $char->remove_item_from_grid($items[0]);
+            $items[0]->delete;
+        }
     }
     
     # One char gets auto-ressed

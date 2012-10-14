@@ -74,6 +74,7 @@ sub run {
 
 				push @items_lost, $item->display_name;
 				
+				$character->remove_item_from_grid($item);
 				$item->delete;
 			}
 			

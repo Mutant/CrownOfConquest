@@ -48,6 +48,13 @@ sub consume_items {
 	#  We had enough resources, so decrement quantities and possibly delete the items.
 	foreach my $to_consume (@items_to_consume) {
 		if ($to_consume->{quantity} == 0) {
+		    if (my $character = $to_consume->{item}->belongs_to_character) {
+                $character->remove_item_from_grid($to_consume->{item});   
+		    }
+		    elsif (my $garrison = $to_consume->{item}->garrison) {
+		        $garrison->remove_item_from_grid($to_consume->{item});
+		    }
+		    
 			$to_consume->{item}->delete;
 		} else {
 			my $var = $to_consume->{item}->variable_row('Quantity');

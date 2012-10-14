@@ -13,6 +13,8 @@ after 'use' => sub {
     my $quantity = $self->variable('Quantity');
     $quantity--;
     if ($quantity <= 0) {
+        my $character = $self->belongs_to_character;
+        $character->remove_item_from_grid($self);
         $self->delete;   
     }
     else {

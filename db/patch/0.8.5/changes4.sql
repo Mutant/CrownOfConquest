@@ -1,0 +1,2 @@
+ALTER TABLE `Item_Grid` MODIFY COLUMN `start_sector` TINYINT(4)  DEFAULT NULL;
+

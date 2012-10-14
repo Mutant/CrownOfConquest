@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Moose::Role;
+use Try::Tiny;
 
 with 'RPG::Schema::Role::Item_Type::Usable';
 
@@ -54,10 +55,7 @@ sub use {
     );
 
     return unless $mem_spell && $mem_spell->casts_left_today > 0;
-    
-    $mem_spell->number_cast_today( $mem_spell->number_cast_today + 1 );
-    $mem_spell->update;
-    
+   
     my $scroll_item_type = $self->result_source->schema->resultset('Item_Type')->find(
         {
             item_type => 'Scroll',
@@ -70,7 +68,35 @@ sub use {
         }
     );
     
-    $new_item->add_to_characters_inventory($character);
+    my $no_room = 0;
+    try {
+        $new_item->add_to_characters_inventory($character);
+    }
+    catch {
+        if ($_ =~ /Couldn't find room for item/) {
+            $new_item->delete;
+            
+            $no_room = 1;             
+        }
+        else {
+            die $_;
+        }
+    };
+    
+    if ($no_room) {
+        return RPG::Combat::SpellActionResult->new(
+            spell_name => $mem_spell->spell->spell_name,
+            attacker   => $character,
+            defender   => $self,
+            type       => 'inscribe',
+            custom     => {
+                inventory_full => 1,
+            },
+        );
+    }
+    
+    $mem_spell->number_cast_today( $mem_spell->number_cast_today + 1 );
+    $mem_spell->update;    
     
     $new_item->variable('Spell', $mem_spell->spell->spell_name);
     $new_item->update;

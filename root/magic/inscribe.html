@@ -1,2 +1,7 @@
+[% IF message.custom.inventory_full %]
+<span class="combat-party-attacker">[% message.attacker.name %]</span>  does not have enough room in [% message.attacker.pronoun("subjective") %]
+inventory to create a new scroll.
+[% ELSE %]
 <span class="combat-party-attacker">[% message.attacker.name %]</span> inscribed a scroll with the <span class="combat-weapon">[% message.spell_name %]</span> spell.
 [% message.attacker.pronoun("subjective") | ucfirst %] used up one casting of this spell.
+[% END %]

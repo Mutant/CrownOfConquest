@@ -1409,7 +1409,7 @@ function give_item_to(char_id, give_to_char_id, item_id) {
         handleAs: "json",	
         load: function(responseObject, ioArgs) {
 			loadCharStats(char_id);
-        	if (! inCharWindow) {
+        	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) { 
         		getPanels('party/refresh_party_list');
         	}
         }

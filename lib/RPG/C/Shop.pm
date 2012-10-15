@@ -98,6 +98,17 @@ sub buy_item : Local {
 
 	if ( $party->gold < $cost ) {
 		push @{ $c->stash->{error} }, "Your party doesn't have enough gold to buy this item";
+		
+        $c->stash->{panel_callbacks} = [
+        	{
+            	name => 'purchaseFailed',
+            	data => {
+            	    item_id => $item->id,
+            	},
+        	}
+        ];	
+			
+		
 		$c->forward( '/panel/refresh' );
 		return;
 	}

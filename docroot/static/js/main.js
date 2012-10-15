@@ -1170,16 +1170,19 @@ function equipItemCallback(data) {
 	}
 }
 
-function putItemOnGrid(itemId, x, y) {
+function putItemOnGrid(itemId, x, y, grid) {
 	var extraItem = $('#item-' + itemId);
+	
+	if (typeof grid === 'undefined') {
+		grid = 'inventory'; 
+	}
 					
 	var origCoord = {
 		x: x,
 		y: y,	
-	}
-	
-	var sectors = findDropSectors(origCoord, extraItem, 'inventory');								
-	
+	};
+		
+	var sectors = findDropSectors(origCoord, extraItem, grid);								
 	extraItem.detach().css({top: 0,left: 0}).appendTo(sectors[0]);
 	
 	for (var i = 0; i < sectors.length; i++) {
@@ -1607,9 +1610,20 @@ function quantityPurchaseCallback(data) {
 	setupItemTooltips('#' + shopItem.attr('id'));
 }
 
-function updateStackItemDataCallback(data) {
-	console.log(data);
+function purchaseFailedCallback(data) {
+	removeFromGrid(data.item_id, false);
+	
+	var item = $( '#item-' + data.item_id );
+	
+	var sectors = findSectorsForItem(item, 'shop');
+	
+	putItemOnGrid(data.item_id, sectors[0].attr('sectorX'), sectors[0].attr('sectorY'), 'shop');	
+	
+	item.removeClass('inventory-item');
+	item.addClass('shop-item');	
+}
 
+function updateStackItemDataCallback(data) {
 	var item = $( '#item-stacked-old' );
 
 	item.attr('itemId', data.new_item_id);

@@ -480,15 +480,14 @@ sub move_item : Local {
 	
 	my $item = $c->model('DBIC::Items')->find( 
 	   { 
-	       item_id => $c->req->param('item_id'), 
-	       character_id => $character->id 
+	       item_id => $c->req->param('item_id'),	       
 	   },
 	   {
 	       prefetch => 'item_type',
 	   }, 
 	);
 	
-	croak "Invalid item" unless $item;
+	croak "Invalid item" unless $item && $item->character_id == $character->id;
 
 	$item->equip_place_id(undef);
 	$item->update;
@@ -519,7 +518,7 @@ sub organise_inventory : Local {
     my $item_count = $item_rs->count;
 	
 	my @remaining = $character->organise_items();
-	
+		
 	if ($item_count > $in_grid && @remaining) {
 	    # Tried to organise items, but some were left.
 	    #  Undo everything! (Unless there were already some outside the grid) 

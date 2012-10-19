@@ -561,6 +561,8 @@ sub refresh_mayor {
 					},
 				);
 				
+				$mayor->add_item_to_grid($new_ammo);
+				
 				$new_ammo->variable( 'Quantity', 200 );
 			}
 		}

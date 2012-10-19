@@ -197,11 +197,12 @@ sub test_check_for_pending_mayor_expiry : Tests(2) {
 	is($town->pending_mayor_date, undef, "Pending mayor date cleared");
 }
 
-sub test_refresh_mayor : Tests(5) {
+sub test_refresh_mayor : Tests(6) {
 	my $self = shift;
 	
 	# GIVEN
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, max_hit_point => 10 );
+	$character->create_item_grid;
 	my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
 	my $ammo_type = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema},
 		variables => [{name => 'Quantity', create_on_insert => 1}],
@@ -236,6 +237,7 @@ sub test_refresh_mayor : Tests(5) {
 	my ($new_ammo) = grep { $_->id != $item->id && $_->id != $ammo->id } @items;
 	is($new_ammo->item_type_id, $ammo_type->id, "Ammo created with correct item type");
 	is($new_ammo->variable('Quantity'), 200, "Quantity of ammo set correctly");
+	isnt($new_ammo->start_sector, undef, "Ammo added to inventory grid");
 	
 	$item->discard_changes;
 	is($item->variable('Durability'), 100, "Weapon repaired");

@@ -49,6 +49,7 @@ sub execute {
                     character_id => $character->id,
                 }
             );
+            $character->add_item_to_grid($ammo_item);
         }
         
         my $extra = $character->intelligence + ( Games::Dice::Advanced->roll('1d40') - 20);

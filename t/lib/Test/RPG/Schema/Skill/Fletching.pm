@@ -83,12 +83,13 @@ sub test_execute_existing_ammo : Tests(3) {
     is($item1->variable('Quantity'), 15, "Ammo quantity increased");
 }
 
-sub test_execute_new_ammo_item : Tests(4) {
+sub test_execute_new_ammo_item : Tests(5) {
     my $self = shift;
     
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 1);
     my ($char) = $party->characters;
+    $char->create_item_grid;
     
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
@@ -133,6 +134,7 @@ sub test_execute_new_ammo_item : Tests(4) {
     my ($new_item) = grep { $_->id != $item2->id } $char->items;
     is($new_item->item_type_id, $item_type->id, "New item of ammunition type created");
     is($new_item->variable('Quantity'), 10, "New item has correct quantity");
+    isnt($new_item->start_sector, undef, "Item added to inventory grid");
 }
 
 sub test_execute_not_a_ranged_weapon : Tests(2) {

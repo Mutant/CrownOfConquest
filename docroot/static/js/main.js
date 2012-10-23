@@ -1013,20 +1013,20 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 		}
 		if (hoverSector.attr('grid') === 'garrison') {
 			params.garrison_id = extra.garrisonId;
-			$.post(urlBase + 'garrison/transfer_item', params);
+			$.post(urlBase + 'garrison/transfer_item', params).error(function() { panelErrorCallback(); });
 			item.removeClass('inventory-item');
 			item.addClass('garrison-item');
 		}					
 	}
 	else if (item.hasClass('garrison-item')) {		
 		if (hoverSector.attr('grid') === 'inventory') {
-			$.post(urlBase + 'garrison/transfer_item', params);
+			$.post(urlBase + 'garrison/transfer_item', params).error(function() { panelErrorCallback(); });
 			item.removeClass('garrison-item');
 			item.addClass('inventory-item');
 		}
 		if (hoverSector.attr('grid') === 'garrison') {
 			params.garrison_id = extra.garrisonId;
-			$.post(urlBase + 'garrison/move_item', params);
+			$.post(urlBase + 'garrison/move_item', params).error(function() { panelErrorCallback(); });
 		}
 	}
 	else {		
@@ -1092,7 +1092,7 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 	var sectors = findDropSectors(origCoord, item, origLoc.attr("idPrefix"));
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].attr('hasItem', '0');
-	}	
+	}
 
 	var params = { item_id: item.attr('itemId'), character_id: charId, equip_place: slot.attr('slot') };
 	
@@ -1127,13 +1127,15 @@ function dropItemOnEquipSlot(event, ui, slot, charId) {
 			data.char_id = charId;
 			loadCharStats(data.char_id);						
 			equipItemCallback(data);
-		}, 'json');
+		}, 'json')
+		.error(function() { panelErrorCallback(); });
 	}
 	else if (item.hasClass('garrison-item')) {
 		$.post(urlBase + 'garrison/transfer_item', params, function(data) {
 			data.char_id = charId;					
 			equipItemCallback(data);
-		}, 'json');	
+		}, 'json')
+		.error(function() { panelErrorCallback(); });	
 	}
 	else {
 		item.removeClass('shop-item');
@@ -1415,6 +1417,10 @@ function give_item_to(char_id, give_to_char_id, item_id) {
         	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) { 
         		getPanels('party/refresh_party_list');
         	}
+        	
+        	if (typeof shopCharData != 'undefined' && typeof shopCharData[give_to_char_id] != 'undefined') {
+        		shopCharData[give_to_char_id] = undefined;
+        	}
         }
     });	       
 }
@@ -1676,7 +1682,6 @@ function loadCharShopInventory(charId) {
 	}
 	
 	if (shopCharData.currentChar) {
-		console.log("Changing current char:" + shopCharData.currentChar);
 		shopCharData[shopCharData.currentChar] = $( '#char-shop-inventory').html();
 	}
 

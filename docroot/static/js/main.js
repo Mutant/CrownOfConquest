@@ -1454,12 +1454,17 @@ function createQuantityMenu(charId) {
 
 
 function give_item_to(char_id, give_to_char_id, item_id) {
-	removeFromGrid(item_id, true);
-
 	dojo.xhrGet( {
         url: urlBase + "character/give_item?item_id=" +  item_id + "&character_id=" + give_to_char_id,
         handleAs: "json",	
         load: function(responseObject, ioArgs) {
+        	if (responseObject.no_room) {
+				dojo.byId('error-message').innerHTML = "The character has no room in their inventory for that item";
+				dijit.byId('error').show();        		
+				return;
+        	}
+        
+        	removeFromGrid(item_id, true);
 			loadCharStats(char_id);
         	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) { 
         		getPanels('party/refresh_party_list');

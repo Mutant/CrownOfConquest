@@ -407,20 +407,30 @@ sub give_item : Local {
 	    
 	    croak "Cannot give item to this character" if $invalid_char;
 	}
-
-	my $slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
 	
-	$original_character->remove_item_from_grid($item);
-
-	$item->equip_place_id(undef);
-	$item->add_to_characters_inventory($character);
-	$item->update;
+	my $coords = $character->find_location_for_item($item);
+	
+	my $slot_to_clear;
+	my $no_room = 0;
+	if ($coords) {
+    	$slot_to_clear = $item->equip_place_id ? $item->equipped_in->equip_place_name : undef;
+    	
+    	$original_character->remove_item_from_grid($item);
+    
+    	$item->equip_place_id(undef);
+        $item->add_to_characters_inventory($character, $coords);	
+    	$item->update;
+	}
+	else {
+	    $no_room = 1;
+	}
 
 	$c->res->body(
 		to_json(
 			{
 				clear_equip_place => $slot_to_clear,
 				encumbrance       => $character->encumbrance,
+				no_room           => $no_room,
 			}
 		)
 	);

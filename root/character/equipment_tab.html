@@ -29,48 +29,19 @@
 	}
 [% END %]
 
-function addCommonMenuItems(menu) {
-	var giveSubMenu = new dijit.Menu();
-
-	[% FOREACH char_in_party IN allowed_to_give_to_characters %]
-		[% UNLESS char_in_party.character_id == character.id %]
-			params = {
-				label: "[% char_in_party.name | html_entity %]",
-				onClick: function() {
-					give_item_to('[% character.id %]','[% char_in_party.id %]', currentItemId);
-				}
-			};
-			
-			var item = new dijit.MenuItem(params,document.createElement("div"));
-			giveSubMenu.addChild(item);			
-		[% END %]
-	[% END %]
-
-	params = {
-		label: "Give Item To",
-		popup: giveSubMenu,
-		iconClass: "menuExpandIcon"
-	};			
-	var givePopupMenu = new dijit.PopupMenuItem(params);
-	menu.addChild(givePopupMenu);	
-
-	params = {
-		label: "Drop Item",
-		onClick: function() {
-			drop_item_diag(currentItemId, '[% character.id %]');
-		}
-	};			
-	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
-	menu.addChild(dropItem);	
-}
+var giveCharData = [];
+[% FOREACH char_in_party IN allowed_to_give_to_characters %]
+	[% UNLESS char_in_party.character_id == character.id %]
+		giveCharData.push({ charId: '[% char_in_party.character_id %]', charName: '[% char_in_party.character_name %]' });
+	[% END %]	
+[% END %]
+addToGiveCharList('[% character.id %]', giveCharData);
 
 [% IF item_change_allowed %]
 	setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
 [% ELSE %]
 	setupItemTooltips(".inventory-item");
 [% END %]
-
-createItemMenus();
 
 </script>
 

@@ -162,6 +162,7 @@ sub buy_item : Local {
         	    original_item_id => $item->id,
         	    new_item_id => $next_item->id,
         	    new_quantity => $item_sector->quantity-1,
+        	    character_id => $character->id,
         	},
     	};
     	

@@ -1047,7 +1047,7 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 		item.removeClass('shop-item');
 		item.addClass('inventory-item');
 		
-		createInventoryMenu();
+		createInventoryMenu(charId);
 	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
@@ -1335,7 +1335,7 @@ function setupInventory(charId, inShop) {
 
 	setupEquipSlotDrops();
 	setupItemTooltips(".inventory-item");
-	createItemMenus();
+	createItemMenus(charId);
 }
 
 function setupItemTooltips(selector) {
@@ -1352,12 +1352,12 @@ function saveCurrentItemId(id) {
 	currentItemId = id;
 }
 	
-function createItemMenus() {
-	createInventoryMenu(); 
-	createQuantityMenu();
+function createItemMenus(charId) {
+	createInventoryMenu(charId); 
+	createQuantityMenu(charId);
 }
 	
-function createInventoryMenu() { 
+function createInventoryMenu(charId) { 
 	if (dijit.byId('item_inventory_menu') != undefined) {
 		dijit.byId('item_inventory_menu').destroyRecursive();			
 	}
@@ -1373,10 +1373,57 @@ function createInventoryMenu() {
 
 	var menu = new dijit.Menu(params,document.createElement("div"));
 		
-	addCommonMenuItems(menu);	
+	addCommonMenuItems(menu, charId);	
+}
+
+var giveCharList = {};
+
+function addToGiveCharList(charId, data) {
+	giveCharList[charId] = data;
+}
+
+var lastCharId;
+function addCommonMenuItems(menu, charId) {
+	var giveSubMenu = new dijit.Menu();
+	
+	if (typeof charId == 'undefined') {
+		charId = lastCharId;
+	}
+	lastCharId = charId;
+	
+	$.each(giveCharList[charId], function(index, charData) {
+		if (charData.charId != charId) {		
+			params = {
+				label: charData.charName,
+				onClick: function() {
+					give_item_to(charId,charData.charId,currentItemId);
+				}
+			};
+			
+			var item = new dijit.MenuItem(params,document.createElement("div"));
+			giveSubMenu.addChild(item);		
+		}
+	});	
+
+	params = {
+		label: "Give Item To",
+		popup: giveSubMenu,
+		iconClass: "menuExpandIcon"
+	};			
+	var givePopupMenu = new dijit.PopupMenuItem(params);
+	menu.addChild(givePopupMenu);	
+
+	params = {
+		label: "Drop Item",
+		onClick: function() {
+			drop_item_diag(currentItemId, '[% character.id %]');
+		}
+	};			
+	var dropItem = new dijit.MenuItem(params,document.createElement("div"));
+	menu.addChild(dropItem);	
 } 	
 
-function createQuantityMenu() {
+function createQuantityMenu(charId) {
 	if (dijit.byId('item_quantity_menu') != undefined) {
 		dijit.byId('item_quantity_menu').destroyRecursive();			
 	}
@@ -1401,7 +1448,7 @@ function createQuantityMenu() {
 	var splitItem = new dijit.MenuItem(params,document.createElement("div"));
 	menu.addChild(splitItem);
 	
-	addCommonMenuItems(menu);		
+	addCommonMenuItems(menu, charId);		
 }
 
 
@@ -1649,7 +1696,7 @@ function updateStackItemDataCallback(data) {
 		},
 	});	
 	
-	createInventoryMenu();
+	createInventoryMenu(data.character_id);
 	
 	if (data.new_quantity <= 1) {
 		item.attr('isStacked', 0);
@@ -1712,7 +1759,7 @@ function usePreloadedCharInventory(charId) {
 	$( '#char-shop-inventory').html(shopCharData[charId]);
 	
 	setupInventory(charId, true);
-	createItemMenus();	
+	createItemMenus(charId);
 }
 
 /* Garrison */

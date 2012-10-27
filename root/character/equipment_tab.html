@@ -32,7 +32,7 @@
 var giveCharData = [];
 [% FOREACH char_in_party IN allowed_to_give_to_characters %]
 	[% UNLESS char_in_party.character_id == character.id %]
-		giveCharData.push({ charId: '[% char_in_party.character_id %]', charName: '[% char_in_party.character_name %]' });
+		giveCharData.push({ charId: '[% char_in_party.character_id %]', charName: '[% char_in_party.character_name | html_entity %]' });
 	[% END %]	
 [% END %]
 addToGiveCharList('[% character.id %]', giveCharData);

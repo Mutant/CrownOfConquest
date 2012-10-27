@@ -515,6 +515,18 @@ sub enter : Local {
 		$c->detach( '/panel/refresh', ['messages'] );
 	}
 
+    $c->forward('pay_tax', [$town]);
+
+	$c->stash->{entered_town} = 1;
+
+	$c->forward('/map/move_to', [{'refresh_current' => 1}]);
+}
+
+sub pay_tax : Private {
+	my ( $self, $c, $town, $payment_method ) = @_;
+	
+	$payment_method //= $c->req->param('payment_method');  
+        
 	my $cost = $town->tax_cost( $c->stash->{party} );
 	
 	my $party_town = $c->model('DBIC::Party_Town')->find_or_create(
@@ -526,9 +538,9 @@ sub enter : Local {
 
 	# Pay tax, if necessary
 	if ( $cost->{gold} ) {
-		croak "Payment method not specified" unless $c->req->param('payment_method');
+		croak "Payment method not specified" unless $payment_method;
 
-		if ( $c->req->param('payment_method') eq 'gold' ) {
+		if ( $payment_method eq 'gold' ) {
 			if ( $cost->{gold} > $c->stash->{party}->gold ) {
 				$c->stash->{panel_messages} = ["You don't have enough gold to pay the tax"];
 				$c->detach( '/panel/refresh', ['messages'] );
@@ -556,11 +568,7 @@ sub enter : Local {
 
 		$party_town->increment_prestige;
 		$party_town->update;
-	}
-
-	$c->stash->{entered_town} = 1;
-
-	$c->forward('/map/move_to', [{'refresh_current' => 1}]);
+	}    
 }
 
 sub raid : Local {
@@ -889,6 +897,83 @@ sub become_mayor : Local {
 	push @{ $c->stash->{panel_messages} }, $messages if $messages && @$messages;
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party', 'map' ] );
+}
+
+sub coach : Local {
+	my ( $self, $c ) = @_;
+
+	my $town = $c->model('DBIC::Town')->find(
+	   { 
+	       land_id => $c->stash->{party_location}->id,	        
+	   },
+	   {
+	       prefetch => 'location',
+	   },
+    );
+
+    my @coaches = $town->coaches($c->stash->{party});
+
+	my $panel = $c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template      => 'town/coach.html',
+				params        => {
+                    coaches => \@coaches,
+                    town => $town,
+                    party => $c->stash->{party},
+				},
+				return_output => 1,
+			}
+		]
+	);
+
+	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+	$c->forward('/panel/refresh');
+}
+
+sub take_coach : Local {
+	my ( $self, $c ) = @_;    
+	
+	my $town = $c->model('DBIC::Town')->find(
+	   { 
+	       land_id => $c->stash->{party_location}->id,	        
+	   },
+	   {
+	       prefetch => 'location',
+	   },
+    );
+
+    my @coaches = $town->coaches($c->stash->{party});
+    
+    my ($coach) = grep { $_->{town}->town_id == $c->req->param('destination') } @coaches;
+    
+    croak "Invalid destination" unless $coach;
+    
+    croak "Cannot enter town" unless $coach->{can_enter};
+    
+    my $party = $c->stash->{party};
+    
+    if ($party->gold < $coach->{gold_cost}) {
+		$c->stash->{panel_messages} = ["You don't have enough gold to pay for the coach"];
+		$c->detach( '/panel/refresh', ['messages'] );           
+    }
+
+    if ($party->turns < $coach->{turns_cost}) {
+		$c->stash->{panel_messages} = ["You don't have enough turns to take the coach"];
+		$c->detach( '/panel/refresh', ['messages'] );
+    }
+    
+    $c->forward('pay_tax',[$coach->{town}, 'gold']);
+    
+    $party->gold($party->gold - $coach->{base_gold_cost});
+    $party->turns($party->turns - $coach->{turn_cost});
+    $party->land_id($coach->{town}->land_id);
+    $party->update;
+    $c->stash->{party_location} = $c->model('DBIC::Land')->find( { land_id => $c->stash->{party}->land_id, } );
+    
+    $c->forward('/panel/refresh', ['messages','map','party_status']);
 }
 
 1;

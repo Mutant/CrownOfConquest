@@ -9,6 +9,7 @@ use Carp;
 
 use Math::Round qw(round);
 use RPG::ResultSet::RowsInSectorRange;
+use RPG::Maths;
 
 __PACKAGE__->load_components(qw/Numeric InflateColumn::DateTime Core/);
 __PACKAGE__->table('Town');
@@ -495,6 +496,52 @@ sub defences {
         trap_level => $self->trap_level,
         guards => \@guards,
     );
+}
+
+sub coaches {
+    my $self = shift;
+    my $party = shift;
+    
+    my @towns_in_range = $self->result_source->schema->resultset('Town')->find_in_range(
+        {
+            x => $self->location->x,
+            y => $self->location->y,
+        },
+        RPG::Schema->config()->{town_coach_range},
+    );
+    
+    my @coaches;
+    foreach my $town (@towns_in_range) {
+        my $coach_town_x = $town->location->x;
+        my $coach_town_y = $town->location->y;
+        
+        my $distance = RPG::Map->get_distance_between_points(
+            {
+                x => $self->location->x,
+                y => $self->location->y,
+            },
+            {
+                x => $coach_town_x,
+                y => $coach_town_y,
+            },
+        ); 
+        
+        my ($can_enter, $reason) = $town->party_can_enter($party);
+        
+        push @coaches, {
+            town => $town,
+            distance => $distance,
+            base_gold_cost => $distance * RPG::Schema->config()->{town_coach_gold_cost},
+            gold_cost => ($distance * RPG::Schema->config()->{town_coach_gold_cost}) 
+                + ($party->level * RPG::Schema->config()->{town_coach_party_level_gold_cost}),
+            turn_cost => int ($distance * RPG::Schema->config()->{town_coach_turn_cost}),
+            tax => $town->tax_cost($party),
+            can_enter => $can_enter,
+            reason => $reason,
+        };               
+    }
+    
+    return @coaches;
 }
 
 1;

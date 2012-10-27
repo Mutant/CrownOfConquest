@@ -468,6 +468,18 @@ town_trap_upgrade_cost: 500
 # Max level of town traps
 town_trap_max_level: 10
 
+# Range of towns that a town will have a coach service to
+town_coach_range: 20
+
+# Gold cost per sector for town coaches
+town_coach_gold_cost: 86
+
+# Extra gold cost per party level for town coaches
+town_coach_party_level_gold_cost: 54
+
+# Turn cost per sector for town coaches
+town_coach_turn_cost: 1.6
+
 # ----- Dungeon Params ----- #
 
 # Amount of land per dungeon

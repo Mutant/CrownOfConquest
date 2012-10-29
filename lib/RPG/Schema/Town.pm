@@ -521,7 +521,7 @@ sub coaches {
                 x => $self->location->x,
                 y => $self->location->y,
             },
-            RPG::Schema->config()->{town_coach_range},
+            RPG::Schema->config()->{town_coach_range} * 2 + 1,
         );
     }
     
@@ -543,7 +543,8 @@ sub coaches {
         
         my ($can_enter, $reason) = $town->party_can_enter($party);
         
-        if ($can_enter && $town->kingdom_relationship_between_party($party, 0) eq 'war') {
+        my $relationship = $town->kingdom_relationship_between_party($party, 0) // '';
+        if ($can_enter && $relationship eq 'war') {
             $can_enter = 0;
             $reason = "You cannot take a coach to a town that your kingdom is at war with";   
         }
@@ -551,7 +552,6 @@ sub coaches {
         push @coaches, {
             town => $town,
             distance => $distance,
-            base_gold_cost => $distance * RPG::Schema->config()->{town_coach_gold_cost},
             gold_cost => ($distance * RPG::Schema->config()->{town_coach_gold_cost}) 
                 + ($party->level * RPG::Schema->config()->{town_coach_party_level_gold_cost}),
             turn_cost => int ($distance * RPG::Schema->config()->{town_coach_turn_cost}),

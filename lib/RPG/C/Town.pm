@@ -945,10 +945,8 @@ sub take_coach : Local {
 	   },
     );
 
-    my @coaches = $town->coaches($c->stash->{party});
-    
-    my ($coach) = grep { $_->{town}->town_id == $c->req->param('destination') } @coaches;
-    
+    my ($coach) = $town->coaches($c->stash->{party}, $c->req->param('destination'));
+        
     croak "Invalid destination" unless $coach;
     
     croak "Cannot enter town" unless $coach->{can_enter};
@@ -967,7 +965,7 @@ sub take_coach : Local {
     
     $c->forward('pay_tax',[$coach->{town}, 'gold']);
     
-    $party->gold($party->gold - $coach->{base_gold_cost});
+    $party->gold($party->gold - $coach->{gold_cost});
     $party->turns($party->turns - $coach->{turn_cost});
     $party->land_id($coach->{town}->land_id);
     $party->update;

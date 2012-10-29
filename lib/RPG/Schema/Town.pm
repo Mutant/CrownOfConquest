@@ -463,15 +463,18 @@ sub blacksmith_skill_label {
 sub kingdom_relationship_between_party {
     my $self = shift;
     my $party = shift;
+    my $from_party = shift // 1; # Whether the relationship is from the party's point of view, or the towns
     
     return if ! $party->kingdom_id || ! $self->location->kingdom_id;
     
-    my $relationship = $party->kingdom->relationship_with($self->location->kingdom_id);
+    my $from_kingdom  = $from_party ? $party->kingdom : $self->location->kingdom;
+    my $to_kingdom_id = $from_party ? $self->location->kingdom_id : $party->kingdom_id; 
+    
+    my $relationship = $from_kingdom->relationship_with($to_kingdom_id);
     
     return unless $relationship;
     
-    return $relationship->type;
-    
+    return $relationship->type;    
 }
 
 # Return a hash with the defences of this town
@@ -501,17 +504,29 @@ sub defences {
 sub coaches {
     my $self = shift;
     my $party = shift;
+    my $town_id = shift;
     
-    my @towns_in_range = $self->result_source->schema->resultset('Town')->find_in_range(
-        {
-            x => $self->location->x,
-            y => $self->location->y,
-        },
-        RPG::Schema->config()->{town_coach_range},
-    );
+    my @towns;
+    if ($town_id) {
+        my $town = $self->result_source->schema->resultset('Town')->find(
+            {
+                town_id => $town_id,
+            }
+        );
+        @towns = ($town);
+    }
+    else {
+        @towns = $self->result_source->schema->resultset('Town')->find_in_range(
+            {
+                x => $self->location->x,
+                y => $self->location->y,
+            },
+            RPG::Schema->config()->{town_coach_range},
+        );
+    }
     
     my @coaches;
-    foreach my $town (@towns_in_range) {
+    foreach my $town (@towns) {
         my $coach_town_x = $town->location->x;
         my $coach_town_y = $town->location->y;
         
@@ -527,6 +542,11 @@ sub coaches {
         ); 
         
         my ($can_enter, $reason) = $town->party_can_enter($party);
+        
+        if ($can_enter && $town->kingdom_relationship_between_party($party, 0) eq 'war') {
+            $can_enter = 0;
+            $reason = "You cannot take a coach to a town that your kingdom is at war with";   
+        }
         
         push @coaches, {
             town => $town,

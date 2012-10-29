@@ -47,6 +47,7 @@ sub test_enter : Tests(4) {
 
     $self->{mock_forward}{'/map/move_to'} = sub { };
     $self->{mock_forward}{'/map/can_move_to_sector'} = sub {};
+    $self->{mock_forward}{'pay_tax'} = sub { return RPG::C::Town->pay_tax($self->{c}, @{ $_[0] }) };
 
     # WHEN
     RPG::C::Town->enter( $self->{c} );

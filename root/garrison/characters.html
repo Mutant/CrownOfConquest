@@ -7,6 +7,7 @@
 </style>
 
 <script>
+	var change_made = false;
 	$( ".char-slot" ).droppable({
 		accept: ".garrison-char, .party-char",
 		drop: function( event, ui ) {
@@ -67,8 +68,12 @@
 	        	}
 	        }, 'json');
 	        
-	        if (changed) {
-	       		getPanels('party/refresh_party_list');
+	        if (changed && ! change_made) {
+				addOnCloseScreen(function() {
+					getPanels('party/refresh_party_list');
+				});
+				change_made = false;
+	       		
 	        }
 		},		
 		hoverClass: "ui-state-active",

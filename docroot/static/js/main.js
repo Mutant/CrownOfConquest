@@ -1051,7 +1051,7 @@ function dropItem(item, hoverSector, charId, quantity, extra) {
 	}
 	
 	$(item).detach().css({top: 0,left: 0}).appendTo(hoverSector);
-	
+
 	for (var i = 0; i < sectors.length; i++) {
 		sectors[i].removeClass('item-droppable');
 		sectors[i].removeClass('item-blocked');
@@ -1287,6 +1287,18 @@ function returnItem(itemId) {
 
 	$(item).detach().css({top: 0,left: 0}).appendTo(origLoc);
 }
+
+var equipmentChangeRegistered = false;
+function registerEquipmentChange() {
+	if (! equipmentChangeRegistered) {
+		equipmentChangeRegistered = true;
+		addOnCloseScreen(function() {
+			getPanels('party/refresh_party_list');
+			equipmentChangeRegistered = false;
+		});
+	}		
+}
+
 /* Character Inventory */
 
 function organiseInventory(charId) {
@@ -1466,15 +1478,13 @@ function give_item_to(char_id, give_to_char_id, item_id) {
         
         	removeFromGrid(item_id, true);
 			loadCharStats(char_id);
-        	if (typeof inCharWindow  === 'undefined' || ! inCharWindow) { 
-        		getPanels('party/refresh_party_list');
-        	}
         	
         	if (typeof shopCharData != 'undefined' && typeof shopCharData[give_to_char_id] != 'undefined') {
         		shopCharData[give_to_char_id] = undefined;
         	}
         }
-    });	       
+    });
+    registerEquipmentChange();
 }
 
 function drop_item_diag(item_id, char_id) {
@@ -1488,6 +1498,7 @@ function drop_item(args) {
 	var char_id = args.char_id;
 	
 	removeFromGrid(item_id, true);
+	registerEquipmentChange();
 
 	dojo.xhrGet( {
         url: urlBase + "character/drop_item?item_id=" +  item_id + "&character_id=" + char_id,

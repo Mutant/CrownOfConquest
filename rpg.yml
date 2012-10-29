@@ -469,7 +469,7 @@ town_trap_upgrade_cost: 500
 town_trap_max_level: 10
 
 # Range of towns that a town will have a coach service to
-town_coach_range: 20
+town_coach_range: 21
 
 # Gold cost per sector for town coaches
 town_coach_gold_cost: 86

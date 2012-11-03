@@ -82,8 +82,8 @@ sub sector_menu : Private {
 
 	$creature_group ||= $c->stash->{party_location}->available_creature_group;
 
-    my $comparison_details = $c->forward('get_watcher_factor_comparison', [$creature_group]);
-    my ($factor_comparison, $confirm_attack) = @$comparison_details;
+    my $comparison_details = $c->forward('check_cg_comparison', [$creature_group]);
+    my ($has_watcher, $confirm_attack) = @$comparison_details;
 
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
@@ -182,7 +182,7 @@ sub sector_menu : Private {
 					kingdom                => $kingdom || undef,
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 					movement_cost          => $c->stash->{movement_cost} // 0,
-					factor_comparison      => $factor_comparison,
+					has_watcher            => $has_watcher,
 					corpses                => \@corpses,
 					bomb                   => $c->stash->{party_location}->bomb,
 				},
@@ -192,11 +192,11 @@ sub sector_menu : Private {
 	);	
 }
 
-sub get_watcher_factor_comparison : Private {
+sub check_cg_comparison : Private {
  	my ( $self, $c, $creature_group ) = @_;  
  	
  	my $confirm_attack = 0;
- 	my $factor_comparison; 
+ 	my $has_watcher; 
  	
 	if ($creature_group) {
 		$confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
@@ -204,7 +204,7 @@ sub get_watcher_factor_comparison : Private {
     	$c->stats->profile('Beginning factor comaprison');
 		    
 		# Check for a watcher effect
-		my $has_watcher = $c->model('DBIC::Effect')->search(
+		$has_watcher = $c->model('DBIC::Effect')->search(
             {
                 'party_effect.party_id' => $c->stash->{party}->id,
                 'effect_name' => 'Watcher',
@@ -216,15 +216,54 @@ sub get_watcher_factor_comparison : Private {
 		)->count >= 1 ? 1 : 0;		
 		
 		$c->stats->profile('Got watcher boolean');
-		
-		if ($has_watcher) {
-			$factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
-		}
-		    	
+	    	
     	$c->stats->profile('Completed factor comaprison');		
 	}
 	
-	return [$factor_comparison, $confirm_attack];
+	return [$has_watcher, $confirm_attack];
+}
+
+sub get_factor_comparison : Local {
+ 	my ( $self, $c ) = @_;  
+ 	
+	# Check for a watcher effect
+	my $has_watcher = $c->model('DBIC::Effect')->search(
+        {
+            'party_effect.party_id' => $c->stash->{party}->id,
+            'effect_name' => 'Watcher',
+            'time_left' => {'>', 0},
+        },
+        {
+            join => 'party_effect',
+        }
+	)->count >= 1 ? 1 : 0;
+	
+	croak "Doesn't have watcher effect" unless $has_watcher;
+	
+	my $creature_group;
+	if ($c->stash->{party}->dungeon_grid_id) {
+	   $creature_group = $c->stash->{party}->dungeon_grid->available_creature_group;
+	}
+	else {	
+	   $creature_group = $c->stash->{party_location}->available_creature_group;
+	}
+	
+	croak "Doesn't have a CG in sector" unless $creature_group;
+
+    my $factor_comparison = $creature_group->compare_to_party( $c->stash->{party} );
+    
+	$c->forward(
+		'RPG::V::TT',
+		[
+			{
+				template => 'combat/factor_comparison.html',
+				params   => {
+					factor_comparison => $factor_comparison,
+				},
+			}
+		]
+	);    
+   
 }
 
 sub pending_mayor_check : Private {

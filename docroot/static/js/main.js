@@ -866,6 +866,10 @@ function postRoundCallback() {
 	    preventCache: true	    
     });
 }
+
+function checkComparison() {
+	$( '#factor-comparison' ).load(urlBase + "party/get_factor_comparison");
+}
 	
 /* Kingdoms */
 var selectedKingdom;

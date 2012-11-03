@@ -85,9 +85,13 @@ sub build_viewable_sector_grids : Private {
     	},
     );
     
+    $c->log->debug("Got sectors allowed to move to");
+    
     $c->stats->profile("Queried sectors allowed to move to");
 
 	my $allowed_to_move_to = $current_location->sectors_allowed_to_move_to( $c->config->{dungeon_move_maximum} );
+
+    $c->log->debug("Built allowed to move to hash");
 
     $c->stats->profile("Built allowed to move to hash");
 	
@@ -816,8 +820,8 @@ sub sector_menu : Local {
         undef $c->session->{temp_dungeon_messages};
     }
     
-    my $comparison_details = $c->forward('/party/get_watcher_factor_comparison', [$creature_group]);    
-    my ($factor_comparison, $confirm_attack) = @$comparison_details;
+    my $comparison_details = $c->forward('/party/check_cg_comparison', [$creature_group]);    
+    my ($has_watcher, $confirm_attack) = @$comparison_details;
 
     return $c->forward(
         'RPG::V::TT',
@@ -832,7 +836,7 @@ sub sector_menu : Local {
                     parties_in_sector      => $parties_in_sector,
                     dungeon_type           => $current_location->dungeon_room->dungeon->type,
                     castle_move_type       => $c->session->{castle_move_type} || '',
-                    factor_comparison      => $factor_comparison,
+                    has_watcher            => $has_watcher,
                     coonfirm_attack        => $confirm_attack,
                 },
                 return_output => 1,

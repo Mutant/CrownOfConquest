@@ -140,7 +140,7 @@ sub search_in_dungeon_range {
     my $self = shift;
     my %params = @_;
     
-    return RPG::ResultSet::RowsInSectorRange->find_in_range(
+    my @cgs = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset => $self,
         relationship => 'dungeon_grid',
         base_point => $params{base_point},
@@ -148,16 +148,18 @@ sub search_in_dungeon_range {
         include_base_point => 1,
         increment_search_by => 0,
         criteria => {
-            'in_combat_with.party_id' => undef,
             'dungeon_room.dungeon_id' => $params{dungeon_id},
         },
         attrs => {
              join => [
-                'in_combat_with',
                 { 'dungeon_grid' => 'dungeon_room' }
              ],  
         }
-    );   
+    );
+    
+    @cgs = grep { ! $_->in_combat } @cgs;
+    
+    return @cgs;
 }
 
 # Find a CG in range of a sector, and move them into that sector (ready for combat)

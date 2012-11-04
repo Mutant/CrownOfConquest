@@ -861,8 +861,6 @@ sub attack {
 	return ($damage, $crit);
 }
 
-# TODO: could be moved into Schema class (and have equivilent for any being, like execute_defence)
-#  needs a bit of refactoring to make sure weapons, etc. are cached though.
 sub check_character_attack {
 	my ( $self, $attacker ) = @_;
 
@@ -871,9 +869,7 @@ sub check_character_attack {
 	unless ( $self->character_weapons->{ $attacker->id }{indestructible} ) {
 		my $weapon_durability = $self->character_weapons->{ $attacker->id }{durability} || 0;
 
-		return { weapon_broken => 1 }
-			if $weapon_durability == 0
-				&& !$self->character_weapons->{ $attacker->id }{indestructible};
+		return { weapon_broken => 1 } if $weapon_durability == 0;
 
 		my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
 
@@ -881,22 +877,24 @@ sub check_character_attack {
 
 			$self->log->debug('Reducing durability of weapon');
 			$weapon_durability--;
-
-			my $var = $self->schema->resultset('Item_Variable')->find(
-				{
-					item_id                                 => $self->character_weapons->{ $attacker->id }{id},
-					'item_variable_name.item_variable_name' => 'Durability',
-				},
-				{ join => 'item_variable_name', }
-			);
-
-			if ($var) {
-				$var->update( { item_variable_value => $weapon_durability, } );
-				$self->character_weapons->{ $attacker->id }{durability} = $weapon_durability;
-			}
+			
+			$self->character_weapons->{ $attacker->id }{durability} = $weapon_durability;
 		}
 
 		if ( $weapon_durability <= 0 ) {
+   	        # Weapon broken
+   	        my $item = $self->schema->resultset('Items')->find(
+   	            {
+   	                item_id => $self->character_weapons->{ $attacker->id }{id},
+   	            },
+   	            {
+   	                prefetch => 'item_variables',
+   	            },   	            
+   	        );
+   	        $item->variable('Durability', 0);
+   	        $attacker->calculate_attack_factor;
+   	        $attacker->update;		    
+		    
 			return { weapon_broken => 1 };
 		}
 	}
@@ -1057,6 +1055,20 @@ sub end_of_combat_cleanup {
        	    foreach my $item (@items) {
                 $item->variable('Durability', $armour->{$item->id});
        	    }
+		}
+		
+		# Update weapon durability
+		if ($self->character_weapons->{ $combatant->id }{id}) {
+            my $weapon = $self->schema->resultset('Items')->find(
+       	        {
+       	            'me.item_id' => $self->character_weapons->{ $combatant->id }{id},
+       	        },
+       	        {
+       	            prefetch => 'item_variables',
+       	        },
+       	    );
+       	    
+       	    $weapon->variable('Durability', $self->character_weapons->{ $combatant->id }{durability});
 		}
 	}
 }

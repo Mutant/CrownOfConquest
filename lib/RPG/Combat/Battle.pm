@@ -145,19 +145,28 @@ sub execute_round {
     	    #  Left here just in case there are cases where other instances of combatant data are written to
     	    $combatant->discard_changes;
     		next if $combatant->is_dead;
+    		
+    		#$self->stats->profile('Processing combatant');
     
     		my $action_result;
     		if ( $combatant->is_character ) {
+    		    $self->log->debug("Executing character action");
+    		    
     			$action_result = $self->character_action($combatant);
     
     			if ($action_result) {
     				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
     			}
+    			
+    			#$self->stats->profile('done character action');
     		}
     		else {
+    		    $self->log->debug("Executing creature action");
     			$action_result = $self->creature_action($combatant);
+    			
+    			#$self->stats->profile('done creature action');
     		}
-    
+    		    
     		if ($action_result) {
     			push @combat_messages, $action_result;
     
@@ -174,6 +183,8 @@ sub execute_round {
     				last;
     			}
     		}
+    		
+    		#$self->stats->profile('Done with result');
     	}
 	};
 	if ($@) {
@@ -303,9 +314,7 @@ sub record_messages {
 	my %display_messages;
 
 	foreach my $opp_number ( 1 .. 2 ) {
-	    my $group = $opponents[ $opp_number - 1 ];
-	    
-	    $self->stats->profile("Recording messages for group $opp_number");
+	    my $group = $opponents[ $opp_number - 1 ];	    
 	    
 		next if $group->group_type eq 'creature_group' && ! $group->has_mayor;
 		
@@ -320,9 +329,7 @@ sub record_messages {
 			stats    => $self->stats,
 		);
 		
-		$self->log->debug("Done generating combat messages");
-		
-		$self->stats->profile("Built messages");
+		$self->log->debug("Done generating combat messages");	
 
 		$self->schema->resultset('Combat_Log_Messages')->create(
 			{
@@ -333,9 +340,7 @@ sub record_messages {
 			},
 		);
 		
-		$self->stats->profile("Written messages");
-
-		$display_messages{$opp_number} = \@messages;
+    	$display_messages{$opp_number} = \@messages;
 	}
 
 	$self->result->{display_messages} = \%display_messages;
@@ -387,9 +392,7 @@ sub check_skills {
     my @messages;
     
     my $character_weapons = $self->character_weapons;
-    
-    $self->stats->profile('check_skills: got character weapons');
-   
+       
     foreach my $char_id (keys %$character_weapons) {
         my $character = $self->combatants_by_id->{character}{$char_id};
         
@@ -397,9 +400,10 @@ sub check_skills {
         
         foreach my $skill ( keys %{ $character_weapons->{$char_id}{skills} }) {
             $self->log->debug("Checking $skill skill for character $char_id");
-            
+                        
             my $char_skill = $character->get_skill($skill);
-            
+            #$self->stats->profile("Read $skill skill");
+                        
             my $defender;
             if ($char_skill->needs_defender) {
                 try {
@@ -409,21 +413,26 @@ sub check_skills {
                     $self->log->debug("Error finding opponent: $_");
                 };
                 
-                return unless $defender;
+                return unless $defender;                
             }
             
-            my %results = $char_skill->execute('combat', $character, $defender);            
+            #$self->stats->profile("Got defender");
+            
+            my %results = $char_skill->execute('combat', $character, $defender);  
+            
+            #$self->stats->profile("Executed");
             
             if ($results{fired}) {
                 push @messages, $results{message};
                 
                 if ($results{factor_changed}) {
-                    $self->refresh_factor_cache('character', $char_id);   
-                }   
+                    $self->refresh_factor_cache('character', $char_id);                       
+                }
+                
             }
         }
         
-        $self->stats->profile('check_skills: done a skill check');
+        
     }
     
     return @messages;
@@ -782,11 +791,10 @@ sub attack {
 
 	$self->log->debug("About to execute defence");
 
-	if ( my $defence_message = $defender->execute_defence ) {
+	if ( $defender->is_character and my $defence_message = $self->check_character_defence($defender) ) {
 		if ( $defence_message->{armour_broken} ) {
-
 			# Armour has broken, clear out this character's factor cache
-			$self->refresh_factor_cache( 'character', $attacker->id );
+			$self->refresh_factor_cache( 'character', $defender->id );
 		}
 	}
 	
@@ -889,9 +897,6 @@ sub check_character_attack {
 		}
 
 		if ( $weapon_durability <= 0 ) {
-
-			# TODO: need to refresh party list
-			#push @{ $c->stash->{refresh_panels} }, 'party';
 			return { weapon_broken => 1 };
 		}
 	}
@@ -931,6 +936,40 @@ sub check_character_attack {
 	}
 
 	return;
+}
+
+sub check_character_defence {
+   	my ( $self, $defender ) = @_;
+   	   	  	
+   	return unless defined $self->character_weapons->{ $defender->id }{armour};
+   	
+   	my $armour = $self->character_weapons->{ $defender->id }{armour};
+   	
+   	foreach my $item_id (keys %$armour) {   	    
+   	    my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
+   	    $armour->{$item_id}-- if $weapon_damage_roll == 1;
+   	    
+   	    $self->log->debug("Armour $item_id durability now: " . $armour->{$item_id});
+   	    
+   	    if ($armour->{$item_id} == 0) {
+   	        # Armour broken
+   	        my $item = $self->schema->resultset('Items')->find(
+   	            {
+   	                item_id => $item_id,
+   	            },
+   	            {
+   	                prefetch => 'item_variables',
+   	            },   	            
+   	        );
+   	        $item->variable('Durability', 0);
+   	        $defender->calculate_defence_factor;
+   	        $defender->update;
+   	        
+   	        return { armour_broken => 1 };
+   	    } 
+   	}
+   	
+   	return;   	
 }
 
 # Party (or garrison) attempts to flee
@@ -1002,6 +1041,23 @@ sub end_of_combat_cleanup {
 		$combatant->last_combat_param1(undef);
 		$combatant->last_combat_param2(undef);
 		$combatant->update;
+		
+		# Update armour durability
+		my $armour = $self->character_weapons->{ $combatant->id }{armour};
+		if ($armour) {
+            my @items= $self->schema->resultset('Items')->search(
+       	        {
+       	            'me.item_id' => [keys %$armour],
+       	        },
+       	        {
+       	            prefetch => 'item_variables',
+       	        },
+       	    );
+       	    
+       	    foreach my $item (@items) {
+                $item->variable('Durability', $armour->{$item->id});
+       	    }
+		}
 	}
 }
 
@@ -1198,21 +1254,36 @@ sub _build_character_weapons {
 					$creature_bonus{ $enchantment->variable('Creature Category') } = $enchantment->variable('Bonus');
 				}
 			}
-
+			
 			$character_weapons{ $combatant->id }{creature_bonus} = \%creature_bonus;
-
 		}
 		else {
 			$character_weapons{ $combatant->id }{durability} = 1;
 		}
+		
+		# And armour...
+        my @items = $combatant->get_equipped_item( 'Armour', 1 );
+        
+        foreach my $item (@items) {
+        	next if $item->variable('Indestructible');
+        	
+        	my $dur = $item->variable('Durability');
+        	
+        	next unless $dur;
+        	
+        	$character_weapons{ $combatant->id }{armour}{ $item->id } = $item->variable('Durability');
+        }		
 		
 		# Also cache any combat skills
 		foreach my $skill (@combat_skills) {
 		    my $skill_name = $skill->skill_name;		    
 		    my $char_skill = $combatant->get_skill($skill_name);
 
+            # XXX: if we passed the $char_skill object to this cache, it would save
+            #  the need to re-read it in check_skills(). However, because some Moose magick
+            #  re-blesses it (when dynamically applying the role), it can't be thawed properly
             $character_weapons{ $combatant->id }{skills}{$skill_name} = 1
-                if $char_skill;   
+                if $char_skill;
 		}		
 	}
 

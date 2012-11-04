@@ -1378,6 +1378,61 @@ sub test_end_of_combat_cleanup_creates_town_history : Tests(3) {
 	$self->unmock_dice;
 }
 
+sub test_end_of_combat_cleanup_updates_armour_durability : Tests(2) {
+	my $self = shift;
+
+	# GIVEN
+	my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, land_id => $land[8]->id );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, land_id => $land[8]->id );
+	$party->in_combat_with( $cg->id );
+	$party->update;
+	
+	my ($char) = $party->characters; 
+
+	$self->{config}{nearby_town_range} = 5;
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	my $armour = Test::RPG::Builder::Item->build_item(
+	   $self->{schema},
+	   category_name => 'Armour',
+	   super_category_name => 'Armour',
+	   variables => {
+	       item_variable_name => 'Durability',
+	       item_variable_value => 100,  
+	   },
+	);
+	
+	my $shield = Test::RPG::Builder::Item->build_item(
+	   $self->{schema},
+	   category_name => 'Armour',
+	   super_category_name => 'Shield',
+	   variables => {
+	       item_variable_name => 'Durability',
+	       item_variable_value => 95,  
+	   },
+	);	
+	
+	$battle->character_weapons()->{$char->id}{armour}{$armour->id} = 90;
+	$battle->character_weapons()->{$char->id}{armour}{$shield->id} = 95;
+	
+
+	# WHEN
+	$battle->end_of_combat_cleanup();
+
+	# THEN
+	is($armour->variable('Durability'), 90, "Armour's durability reduced");
+	is($shield->variable('Durability'), 95, "Shield's durability reduced");
+}
+
 sub test_check_for_item_found_correct_prevalence_used : Tests(5) {
 	my $self = shift;
 
@@ -1504,7 +1559,7 @@ sub test_check_for_item_found_prev_roll : Tests(5) {
 
 }
 
-sub test_oppoent_number_of_being : Tests(2) {
+sub test_opponent_number_of_being : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -1532,7 +1587,7 @@ sub test_oppoent_number_of_being : Tests(2) {
 
 }
 
-sub test_oppoent_number_of_group : Tests(2) {
+sub test_opponent_number_of_group : Tests(2) {
 	my $self = shift;
 
 	# GIVEN
@@ -1578,8 +1633,7 @@ sub test_combatants_always_gives_same_objects : Tests(3) {
 	# THEN
 	is(scalar @combatants1, scalar @combatants2, "Combatants lists the same size");
 	is($combatants1[0], $combatants2[0], "Character is the same object");
-	is($combatants1[1], $combatants2[1], "Creature is the same object");
-	
+	is($combatants1[1], $combatants2[1], "Creature is the same object");	
 }
 
 sub test_check_skills : Tests(2) {
@@ -1663,8 +1717,90 @@ sub test_refresh_combat_factor_called_before_cache_initialised : Tests(3) {
 	is(scalar keys %$combat_factors, 2, "2 sets of factors calculated");
 	is($combat_factors->{creature}{$cret->id}{df}, 8, 'Creature DF set correctly');
 	is($combat_factors->{character}{$char->id}{df}, 0, 'Creature AF set correctly');
-		
-       
+}
+
+sub test_check_character_defence : Tests(2) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my ($char) = $party->characters;
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);      
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	my $armour = Test::RPG::Builder::Item->build_item(
+	   $self->{schema},
+	   character_id => $char->id,
+	   category_name => 'Armour',
+	   super_category_name => 'Armour',
+	   variables => {
+	       item_variable_name => 'Durability',
+	       item_variable_value => 100,  
+	   },
+	);	
+	
+	$self->mock_dice;
+	$self->{roll_result} = 1;
+	
+	# WHEN
+	$battle->check_character_defence($char);
+	
+	# THEN
+	is($battle->character_weapons()->{$char->id}{armour}{$armour->id}, 99, "Armour's durability reduced");
+	is($armour->variable('Durability'), 100, "Not reduced in DB yet");
+}
+
+sub test_check_character_defence_armour_broken : Tests(3) {
+    my $self = shift;
+    
+	# GIVEN	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my ($char) = $party->characters;
+	
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1,);      
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	
+	my $armour = Test::RPG::Builder::Item->build_item(
+	   $self->{schema},
+	   character_id => $char->id,
+	   category_name => 'Armour',
+	   super_category_name => 'Armour',
+	   variables => {
+	       item_variable_name => 'Durability',
+	       item_variable_value => 1,  
+	   },
+	   attributes => {
+	       item_attribute_name => 'Defence Factor',
+	       item_attribute_value => '10',  
+	   },
+	);	
+	
+	$self->mock_dice;
+	$self->{roll_result} = 1;
+	
+	# WHEN
+	my $res = $battle->check_character_defence($char);
+	
+	# THEN
+	is($battle->character_weapons()->{$char->id}{armour}{$armour->id}, 0, "Armour's durability reduced");
+	$armour->discard_changes;
+	is($armour->variable('Durability'), 0, "Updated in DB");
+	is($res->{armour_broken}, 1, "Correct result returned");
 }
 
 1;

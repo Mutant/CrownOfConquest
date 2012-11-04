@@ -64,7 +64,7 @@ sub variable_row {
 
     return unless $variable;
 
-    if ($new_val) {
+    if (defined $new_val) {
         $variable->item_variable_value($new_val);
         $variable->update;
         $self->{_variables}{$variable_name} = $variable; 

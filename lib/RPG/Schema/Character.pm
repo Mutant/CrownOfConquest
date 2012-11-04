@@ -910,12 +910,15 @@ sub damage {
 
 sub weapon {
     my $self = shift;
+    my $item = shift;
+    
+    if (! $item) {
+        my @items = $self->get_equipped_item('Weapon');
 
-    my @items = $self->get_equipped_item('Weapon');
-
-    # Assume only one weapon equipped.
-    # TODO needs to change to support multiple weapons
-    my $item = shift @items;
+        # Assume only one weapon equipped.
+        # TODO needs to change to support multiple weapons
+        $item = shift @items;
+    }
 
     return $item ? $item->item_type->item_type : 'Bare Hands';
 }
@@ -929,7 +932,7 @@ Returns a list of any equipped item records for a specified super category.
 sub get_equipped_item {
     my $self           = shift;
     my $category       = shift || croak 'Category not supplied';
-    my $variables_only = shift // 0; #/
+    my $variables_only = shift // 0;
 
     return @{ $self->{equipped_item}{$category} } if ref $self->{equipped_item}{$category} eq 'ARRAY';
 
@@ -1126,61 +1129,6 @@ sub run_out_of_ammo {
     }
 
     return $run_out;
-}
-
-# Called when character is attacked. Used to take damage to armour
-sub execute_defence {
-    my $self = shift;
-
-    my @items = $self->get_equipped_item( 'Armour', 1 );
-
-    my $armour_now_broken = 0;
-    foreach my $item (@items) {
-    	next if $item->variable('Indestructible');
-    	
-        my $durability_rec = $item->variable_row('Durability');
-        if ($durability_rec) {
-            return if $durability_rec->item_variable_value == 0;
-
-            my $new_durability = $self->_check_damage_to_item($durability_rec);
-
-            if ( $new_durability <= 0 ) {
-                # Recalculate defence factor
-                $self->calculate_defence_factor;
-                $self->update;
-
-                # Armour is now broken
-                $armour_now_broken = 1;
-            }
-        }
-    }
-
-    return $armour_now_broken ? { armour_broken => 1 } : undef;
-
-}
-
-# Checks if we should deal damage to an item (i.e. decrements durability). Damage is dealt based on chance
-# Returns the new durability, or undef if it was already broken
-sub _check_damage_to_item {
-    my $self           = shift;
-    my $durability_rec = shift;
-
-    if ( $durability_rec->item_variable_value == 0 ) {
-        return undef;
-    }
-    else {
-        my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
-
-        my $durability = $durability_rec->item_variable_value;
-
-        if ( $weapon_damage_roll == 1 ) {
-            $durability--;
-            $durability_rec->item_variable_value($durability);
-            $durability_rec->update;
-        }
-
-        return $durability;
-    }
 }
 
 # Accessor for xp. If xp updated, also checks if the character should be leveled up. If it should, returns a hash of details

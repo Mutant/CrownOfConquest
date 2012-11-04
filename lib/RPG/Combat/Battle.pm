@@ -33,6 +33,7 @@ has 'combat_factors'    => ( is => 'rw', isa => 'HashRef',                 requi
 has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_character_weapons', lazy => 1, );
 has 'combatants_by_id'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_by_id',  lazy => 1, );
 has 'result' => ( is => 'ro', isa => 'HashRef', init_arg => undef, default => sub { {} } );
+has 'stats' => ( is => 'ro' );
 
 sub opponent_number_of_being {
 	my $self  = shift;
@@ -101,9 +102,10 @@ sub execute_round {
 	
     my @combat_messages;
 
-	# Check for stalemates, fleeing or no one alive in one of the groups
-	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
 	eval {
+        $self->stats->profile('In execute_round');
+    	# Check for stalemates, fleeing or no one alive in one of the groups
+    	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
     	my $dead_group = $self->check_for_end_of_combat;
     	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
     
@@ -114,20 +116,27 @@ sub execute_round {
     
     		return;
     	}
+    	$self->stats->profile('Done initial end of combat check');
     
     	# Process magical effects
     	$self->process_effects;
+    	
+    	$self->stats->profile('Processed effects');
     
     	return if $self->result->{combat_complete};
     
     	my @combatants = $self->combatants;
     
     	# Get list of combatants, modified for changes in attack frequency, and randomised in order
-    	@combatants = $self->get_combatant_list(@combatants); 
+    	@combatants = $self->get_combatant_list(@combatants);
+    	
+    	$self->stats->profile('Got combatant list'); 
   	
     	push @combat_messages, $self->check_skills;
     	
     	$self->check_for_end_of_combat;
+    	
+    	$self->stats->profile('Checked skills');
     	
     	return if $self->result->{combat_complete};	
     	
@@ -170,12 +179,16 @@ sub execute_round {
 	if ($@) {
 	    die $@;
 	}
+	
+	$self->stats->profile('Processed round');
 
 	$self->combat_log->increment_rounds;
 
 	push @{ $self->result->{messages} }, @combat_messages;
 
 	$self->record_messages;
+	
+	$self->stats->profile('Recorded messages');
 	
 	undef $self->{_auto_cast_checked_for};
 	undef $self->{_cast_this_round};
@@ -292,14 +305,24 @@ sub record_messages {
 	foreach my $opp_number ( 1 .. 2 ) {
 	    my $group = $opponents[ $opp_number - 1 ];
 	    
+	    $self->stats->profile("Recording messages for group $opp_number");
+	    
 		next if $group->group_type eq 'creature_group' && ! $group->has_mayor;
+		
+		$self->log->debug("Generating combat messages");
 
 		my @messages = RPG::Combat::MessageDisplayer->display(
 			config   => $self->config,
 			group    => $group,
 			opponent => $opponents[ $opp_number == 1 ? 1 : 0 ],
-			result   => $self->result
+			result   => $self->result,
+			weapons  => $self->character_weapons,
+			stats    => $self->stats,
 		);
+		
+		$self->log->debug("Done generating combat messages");
+		
+		$self->stats->profile("Built messages");
 
 		$self->schema->resultset('Combat_Log_Messages')->create(
 			{
@@ -309,6 +332,8 @@ sub record_messages {
 				message         => join "", @messages,
 			},
 		);
+		
+		$self->stats->profile("Written messages");
 
 		$display_messages{$opp_number} = \@messages;
 	}
@@ -362,6 +387,8 @@ sub check_skills {
     my @messages;
     
     my $character_weapons = $self->character_weapons;
+    
+    $self->stats->profile('check_skills: got character weapons');
    
     foreach my $char_id (keys %$character_weapons) {
         my $character = $self->combatants_by_id->{character}{$char_id};
@@ -395,6 +422,8 @@ sub check_skills {
                 }   
             }
         }
+        
+        $self->stats->profile('check_skills: done a skill check');
     }
     
     return @messages;
@@ -1160,6 +1189,7 @@ sub _build_character_weapons {
 			$character_weapons{ $combatant->id }{ammunition}           = $combatant->ammunition_for_item($weapon);
 			$character_weapons{ $combatant->id }{magical_damage_type}  = $weapon->variable('Magical Damage Type');
 			$character_weapons{ $combatant->id }{magical_damage_level} = $weapon->variable('Magical Damage Level');
+			$character_weapons{ $combatant->id }{weapon_name}          = $combatant->weapon($weapon);
 
 			my @enchantments = $weapon->item_enchantments;
 			my %creature_bonus;

@@ -18,7 +18,7 @@ sub display {
 	my $config = $params{config} || confess "Config not defined";
 	
 	my @messages;
-	
+		
     push @messages,
         RPG::Template->process(
         	$config,
@@ -26,9 +26,10 @@ sub display {
         	{
 				combat_messages => $result->{messages},
                 combat_complete => $result->{combat_complete},
-                group           => $group,            
+                group           => $group,
+                weapons         => $params{weapons},
             }
-        );
+        );    
 
     if ( $result->{combat_complete} ) {
     	# TODO: wotamess

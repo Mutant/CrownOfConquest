@@ -160,50 +160,44 @@ sub test_number_of_attacks : Tests(15) {
     $mock_char->set_true('class_name');
 
     $mock_char->set_always( 'effect_value', 0.5 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 1, 1 ) ), 2, '2 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 1, 1 ) ), 2, '2 attacks allowed this round because of modifier', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 1, 2 ) ), 1, '1 attacks allowed this round because of history', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 1, 2 ) ), 1, '1 attacks allowed this round because of history', );
 
     $mock_char->set_always( 'effect_value', 0.33 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 2, 1, 1 ) ), 2, '2 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 2, 1, 1 ) ), 2, '2 attacks allowed this round because of modifier', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 2, 1 ) ), 1, '1 attacks allowed this round because of history', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 2, 1 ) ), 1, '1 attacks allowed this round because of history', );
 
     $mock_char->set_always( 'effect_value', 1 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 7, 2 ) ), 2, '2 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 7, 2 ) ), 2, '2 attacks allowed this round because of modifier', );
 
     $mock_char->set_always( 'effect_value', 1.5 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 2, 2 ) ), 3, '3 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 2, 2 ) ), 3, '3 attacks allowed this round because of modifier', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 2, 3 ) ), 2, '2 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 2, 3 ) ), 2, '2 attacks allowed this round because of modifier', );
 
     $mock_char->set_always( 'effect_value', 1.25 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 2, 3, 2, 2 ) ), 2, '2 attacks allowed this round because of history', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 2, 3, 2, 2 ) ), 2, '2 attacks allowed this round because of history', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 3, 2, 2, 2 ) ), 3, '3 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 3, 2, 2, 2 ) ), 3, '3 attacks allowed this round because of modifier', );
     
     $mock_char->set_always( 'effect_value', -1 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 0, 0 ) ), 0, '0 attacks allowed this round because of modifier', );    
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 0, 0 ) ), 0, '0 attacks allowed this round because of modifier', );    
 
     $mock_char->set_always( 'effect_value', -0.5 );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 0, 1 ) ), 0, '0 attacks allowed this round because of modifier', );
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, ( 1, 0 ) ), 1, '1 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 0, 1 ) ), 0, '0 attacks allowed this round because of modifier', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, undef, ( 1, 0 ) ), 1, '1 attacks allowed this round because of modifier', );
 
     # Test archer's extra attacks
     $mock_char->set_always( 'class_name', 'Archer' );
-    my $mock_weapon = Test::MockObject->new();
-    $mock_weapon->set_always( 'item_type',     $mock_weapon );
-    $mock_weapon->set_always( 'category',      $mock_weapon );
-    $mock_weapon->set_always( 'item_category', 'Ranged Weapon' );
-
-    $mock_char->set_always( 'get_equipped_item', $mock_weapon );
     $mock_char->set_always( 'effect_value',      0 );
 
-    is( RPG::Schema::Character::number_of_attacks($mock_char), 1, '1 attacks allowed for an archer', );
+    is( RPG::Schema::Character::number_of_attacks($mock_char, 1), 1, '1 attacks allowed for an archer', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, (2) ), 1, '1 attacks allowed for an archer', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, 1, (2) ), 1, '1 attacks allowed for an archer', );
 
-    is( RPG::Schema::Character::number_of_attacks( $mock_char, (1) ), 2, '2 attacks allowed for an archer', );
+    is( RPG::Schema::Character::number_of_attacks( $mock_char, 1, (1) ), 2, '2 attacks allowed for an archer', );
 }
 
 sub test_execute_defence_basic : Tests(1) {

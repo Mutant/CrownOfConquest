@@ -353,17 +353,22 @@ sub get_combatant_list {
 	my @sorted_combatants;
 
 	foreach my $combatant (@combatants) {
+	    
 		my @attack_history;
 
 		my $type = $combatant->is_character ? 'character' : 'creature';
 		
 		my $number_of_attacks = 1;
     	@attack_history = @{ $self->session->{attack_history}{$type}{ $combatant->id } }
-    			if $self->session->{attack_history}{$type}{ $combatant->id };		
+    			if $self->session->{attack_history}{$type}{ $combatant->id };    				
 		
-		if ($type ne 'character' || $combatant->last_combat_action ne 'Cast') {   
-    		$number_of_attacks = $combatant->number_of_attacks(@attack_history);
-		}
+		if ($type ne 'character' || $combatant->last_combat_action ne 'Cast') {
+		    my $is_ranged = $type eq 'character' ? 
+		      $self->character_weapons->{ $combatant->id }{is_ranged} :
+		      undef;
+		    		    
+    		$number_of_attacks = $combatant->number_of_attacks($is_ranged, @attack_history);
+		}		
 		
 		push @attack_history, $number_of_attacks;
 
@@ -396,7 +401,7 @@ sub check_skills {
     foreach my $char_id (keys %$character_weapons) {
         my $character = $self->combatants_by_id->{character}{$char_id};
         
-        next if $character->is_dead;
+        next if ! $character || $character->is_dead;
         
         foreach my $skill ( keys %{ $character_weapons->{$char_id}{skills} }) {
             $self->log->debug("Checking $skill skill for character $char_id");
@@ -1258,6 +1263,7 @@ sub _build_character_weapons {
 			$character_weapons{ $combatant->id }{magical_damage_type}  = $weapon->variable('Magical Damage Type');
 			$character_weapons{ $combatant->id }{magical_damage_level} = $weapon->variable('Magical Damage Level');
 			$character_weapons{ $combatant->id }{weapon_name}          = $combatant->weapon($weapon);
+			$character_weapons{ $combatant->id }{is_ranged}            = $weapon->item_type->category->item_category eq 'Ranged Weapon' ? 1 : 0;
 
 			my @enchantments = $weapon->item_enchantments;
 			my %creature_bonus;

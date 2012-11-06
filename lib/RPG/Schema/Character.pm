@@ -1308,17 +1308,14 @@ sub in_front_rank {
 # Return the number of attacks allowed by this character
 around 'number_of_attacks' => sub {
 	my $orig = shift;
-    my $self           = shift;
+    my $self = shift;
+    my $has_ranged_weapon = shift;      
     my @attack_history = @_;	
     
     my $modifier = 0;
     
-    if ( $self->class->class_name eq 'Archer' ) {
-        my @weapons = $self->get_equipped_item('Weapon');
-
-        my $ranged_weapons = grep { $_->item_type->category->item_category eq 'Ranged Weapon' } @weapons;
-
-        $modifier = 0.5 if $ranged_weapons >= 1;
+    if ( $has_ranged_weapon && $self->class->class_name eq 'Archer' ) {
+        $modifier = 0.5;
     }
     
     return $self->$orig($modifier, @attack_history);

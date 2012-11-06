@@ -205,6 +205,7 @@ sub change_hit_points {
 around 'number_of_attacks' => sub {
 	my $orig           = shift;
 	my $self           = shift;
+	my $ranged_weapon  = shift;
 	my @attack_history = @_;
 
 	return $self->$orig( 0, @attack_history );

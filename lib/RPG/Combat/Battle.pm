@@ -32,6 +32,7 @@ has 'combat_log'        => ( is => 'ro', isa => 'RPG::Schema::Combat_Log', init_
 has 'combat_factors'    => ( is => 'rw', isa => 'HashRef',                 required => 0,     builder => '_build_combat_factors',    lazy => 1, );
 has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 required => 0,     builder => '_build_character_weapons', lazy => 1, );
 has 'combatants_by_id'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_by_id',  lazy => 1, );
+has 'combatants_alive'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_alive',  lazy => 1, );
 has 'result' => ( is => 'ro', isa => 'HashRef', init_arg => undef, default => sub { {} } );
 has 'stats' => ( is => 'ro' );
 
@@ -168,20 +169,27 @@ sub execute_round {
     		}
     		    
     		if ($action_result) {
+    		    $self->log->debug("Processing combat action result");    		    
     			push @combat_messages, $action_result;
     
+                #$self->stats->profile('Recording damage');
     			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
     
     			if ( $action_result->defender_killed ) {
-    				$self->combat_log->record_death( $self->opponent_number_of_being( $action_result->defender ) );
+    			    my $opp_number_of_killed_combatant = $self->opponent_number_of_being( $action_result->defender );
+    				$self->combat_log->record_death( $opp_number_of_killed_combatant );
+    				$self->combatants_alive->{$opp_number_of_killed_combatant}--;
     
     				my $type = $action_result->defender->is_character ? 'character' : 'creature';
     				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
+    				#$self->stats->profile('Handled dead combatant');
     			}
     
     			if ( my $losers = $self->check_for_end_of_combat ) {
     				last;
     			}
+    			#$self->stats->profile('Checked for end of combat');
+    			$self->log->debug("Done Processing combat action result");
     		}
     		
     		#$self->stats->profile('Done with result');
@@ -233,8 +241,9 @@ sub stalemate_check {
 sub check_for_end_of_combat {
 	my $self = shift;
 
+    my $opp_num = 1;
 	foreach my $opponents ( $self->opponents ) {
-		if ( $opponents->number_alive <= 0 ) {
+		if ( $self->combatants_alive->{$opp_num} <= 0 ) {
 			my $opp = 'opp' . ($self->opponent_number_of_group($opponents) == 1 ? 2 : 1);
 
 			#$self->log->debug("Combat over, opp #$opp won"); 
@@ -255,6 +264,7 @@ sub check_for_end_of_combat {
 
 			return $opponents;
 		}
+		$opp_num++;
 	}
 }
 
@@ -1313,7 +1323,7 @@ sub _build_character_weapons {
 sub _build_combatants_by_id {
 	my $self = shift;
 
-	my %combatants_by_id;
+    my %combatants_by_id;
 
 	foreach my $combatant ( $self->combatants ) {
 		my $type = $combatant->is_character ? 'character' : 'creature';
@@ -1321,6 +1331,24 @@ sub _build_combatants_by_id {
 	}
 
 	return \%combatants_by_id;
+}
+
+sub _build_combatants_alive {    
+    my $self = shift;
+    
+    return $self->session->{combatants_alive} if defined $self->session->{combatants_alive};
+    
+    my @opps = $self->opponents;
+    
+    my %number_alive;
+    for my $opp (1..2) {
+        $number_alive{$opp} = $opps[$opp-1]->number_alive;
+    }
+    
+    $self->session->{combatants_alive} = \%number_alive;
+    
+    return \%number_alive;
+    
 }
 
 sub DEMOLISH {

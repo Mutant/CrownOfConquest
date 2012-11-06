@@ -187,8 +187,12 @@ sub select_action : Local {
 
 sub fight : Local {
 	my ( $self, $c ) = @_;
+	
+	$c->stats->profile('In /combat/fight');
 
 	$c->stash->{creature_group} ||= $c->model('DBIC::CreatureGroup')->get_by_id( $c->stash->{party}->in_combat_with );
+	
+	$c->stats->profile('Got CG');
 
 	my $battle = RPG::Combat::CreatureWildernessBattle->new(
 		creature_group      => $c->stash->{creature_group},
@@ -199,10 +203,16 @@ sub fight : Local {
 		log                 => $c->log,
 		creatures_can_flee  => $c->stash->{party_location}->orb ? 0 : 1,    # Don't flee if there's an orb present
 	);
+	
+	$c->stats->profile('Created battle');
 
 	my $result = $battle->execute_round;
+	
+	$c->stats->profile('Executed round');
 
 	$c->forward( '/combat/process_round_result', [$result] );
+	
+	$c->stats->profile('Processed round result');
 }
 
 sub flee : Local {

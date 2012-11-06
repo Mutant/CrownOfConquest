@@ -34,7 +34,6 @@ has 'character_weapons' => ( is => 'ro', isa => 'HashRef',                 requi
 has 'combatants_by_id'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_by_id',  lazy => 1, );
 has 'combatants_alive'  => ( is => 'ro', isa => 'HashRef',                 init_arg => undef, builder => '_build_combatants_alive',  lazy => 1, );
 has 'result' => ( is => 'ro', isa => 'HashRef', init_arg => undef, default => sub { {} } );
-has 'stats' => ( is => 'ro' );
 
 sub opponent_number_of_being {
 	my $self  = shift;
@@ -104,7 +103,6 @@ sub execute_round {
     my @combat_messages;
 
 	eval {
-        $self->stats->profile('In execute_round');
     	# Check for stalemates, fleeing or no one alive in one of the groups
     	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
     	my $dead_group = $self->check_for_end_of_combat;
@@ -117,28 +115,21 @@ sub execute_round {
     
     		return;
     	}
-    	$self->stats->profile('Done initial end of combat check');
     
     	# Process magical effects
     	$self->process_effects;
-    	
-    	$self->stats->profile('Processed effects');
-    
+    	    
     	return if $self->result->{combat_complete};
     
     	my @combatants = $self->combatants;
     
     	# Get list of combatants, modified for changes in attack frequency, and randomised in order
     	@combatants = $self->get_combatant_list(@combatants);
-    	
-    	$self->stats->profile('Got combatant list'); 
   	
     	push @combat_messages, $self->check_skills;
     	
     	$self->check_for_end_of_combat;
-    	
-    	$self->stats->profile('Checked skills');
-    	
+    	    	
     	return if $self->result->{combat_complete};	
     	
     	foreach my $combatant (@combatants) {
@@ -146,9 +137,7 @@ sub execute_round {
     	    #  Left here just in case there are cases where other instances of combatant data are written to
     	    $combatant->discard_changes;
     		next if $combatant->is_dead;
-    		
-    		#$self->stats->profile('Processing combatant');
-    
+    		    
     		my $action_result;
     		if ( $combatant->is_character ) {
     		    $self->log->debug("Executing character action");
@@ -158,22 +147,17 @@ sub execute_round {
     			if ($action_result) {
     				$self->session->{damage_done}{ $combatant->id } += $action_result->damage || 0;
     			}
-    			
-    			#$self->stats->profile('done character action');
     		}
     		else {
     		    $self->log->debug("Executing creature action");
     			$action_result = $self->creature_action($combatant);
-    			
-    			#$self->stats->profile('done creature action');
     		}
     		    
     		if ($action_result) {
     		    $self->log->debug("Processing combat action result");    		    
     			push @combat_messages, $action_result;
     
-                #$self->stats->profile('Recording damage');
-    			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
+       			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
     
     			if ( $action_result->defender_killed ) {
     			    my $opp_number_of_killed_combatant = $self->opponent_number_of_being( $action_result->defender );
@@ -182,32 +166,26 @@ sub execute_round {
     
     				my $type = $action_result->defender->is_character ? 'character' : 'creature';
     				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
-    				#$self->stats->profile('Handled dead combatant');
     			}
     
     			if ( my $losers = $self->check_for_end_of_combat ) {
     				last;
     			}
-    			#$self->stats->profile('Checked for end of combat');
+    			
     			$self->log->debug("Done Processing combat action result");
-    		}
+    		}    		
     		
-    		#$self->stats->profile('Done with result');
     	}
 	};
 	if ($@) {
 	    die $@;
 	}
 	
-	$self->stats->profile('Processed round');
-
 	$self->combat_log->increment_rounds;
 
 	push @{ $self->result->{messages} }, @combat_messages;
 
 	$self->record_messages;
-	
-	$self->stats->profile('Recorded messages');
 	
 	undef $self->{_auto_cast_checked_for};
 	undef $self->{_cast_this_round};
@@ -417,7 +395,6 @@ sub check_skills {
             $self->log->debug("Checking $skill skill for character $char_id");
                         
             my $char_skill = $character->get_skill($skill);
-            #$self->stats->profile("Read $skill skill");
                         
             my $defender;
             if ($char_skill->needs_defender) {
@@ -430,13 +407,9 @@ sub check_skills {
                 
                 return unless $defender;                
             }
-            
-            #$self->stats->profile("Got defender");
-            
+                        
             my %results = $char_skill->execute('combat', $character, $defender);  
-            
-            #$self->stats->profile("Executed");
-            
+                        
             if ($results{fired}) {
                 push @messages, $results{message};
                 

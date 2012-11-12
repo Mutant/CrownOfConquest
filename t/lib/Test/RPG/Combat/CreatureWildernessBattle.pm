@@ -862,7 +862,7 @@ sub test_execute_round_creature_killed : Tests(9) {
 	# GIVEN
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
 	my $char  = ( $party->characters )[0];
-	my $cg    = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	my $cg    = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 2 );
 	my $cret  = ( $cg->creatures )[0];
 
 	my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -1140,8 +1140,7 @@ sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
 	like( $messages[0]->message, qr/test_cret #0(.+?) was killed/, "Creature was killed");
 	like( $messages[0]->message, qr/You've killed the creatures/, "Group wiped out");
 	
-    is( $result->{combat_complete}, 1, "Combat ended" );
-	
+    is( $result->{combat_complete}, 1, "Combat ended" );	
 		
 	$self->unmock_dice;
 	$self->clear_dice_data;	
@@ -1801,6 +1800,193 @@ sub test_check_character_defence_armour_broken : Tests(3) {
 	$armour->discard_changes;
 	is($armour->variable('Durability'), 0, "Updated in DB");
 	is($res->{armour_broken}, 1, "Correct result returned");
+}
+
+sub test_execute_defence_basic : Tests(1) {
+    my $self = shift;
+
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	
+	my ($char) = $party->characters;
+
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Armour',
+    );
+    
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);    
+
+    # WHEN
+    my $result = $battle->check_character_defence($char);
+
+    # THEN
+    is( $result, undef, "Does nothing if armour has no durability" );
+}
+
+sub test_execute_defence_decrement_durability : Tests(2) {
+    my $self = shift;
+
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	
+	my ($char) = $party->characters;
+
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Armour',
+        variables           => [
+            {
+                item_variable_name  => 'Durability',
+                item_variable_value => 5,
+            },
+        ],
+    );
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);    
+
+    $self->mock_dice;
+
+    # Force decrement
+    $self->{roll_result} = 1;
+
+    # WHEN
+    my $result = $battle->check_character_defence($char);
+
+    # THEN
+    is( $result, undef, "No message returned" );
+    is( $battle->character_weapons->{ $char->id }{armour}{$item1->id}, 4, "Durability decremented" );
+}
+
+sub test_execute_defence_armour_broken : Tests(3) {
+    my $self = shift;
+
+    # GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, agility => 10 );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	
+	my ($char) = $party->characters;
+
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        char_id             => $char->id,
+        super_category_name => 'Armour',
+        variables           => [
+            {
+                item_variable_name  => 'Durability',
+                item_variable_value => 1,
+            },
+        ],
+        attributes => [
+            {
+                item_attribute_name  => 'Defence Factor',
+                item_attribute_value => 2,
+            }
+        ],        
+    );
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);  
+
+    # Force decrement
+    $self->mock_dice;
+    $self->{roll_result} = 1;
+
+    # WHEN
+    my $result = $battle->check_character_defence($char);
+
+    # THEN
+    is_deeply( $result, { armour_broken => 1 }, "Message returned to indicate broken armour" );
+    $item1->discard_changes;
+    is( $item1->variable('Durability'), 0, "Durability now 0" );
+    
+    $char->discard_changes;
+    is($char->defence_factor, 10, "Defence factor of armour no longer included");
+}
+
+sub test_execute_defence_indestructible_armour : Tests(1) {
+	my $self = shift;
+	
+	# GIVEN
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type( 
+		$self->{schema}, 
+		enchantments => [ 'indestructible' ],
+		variables => [
+			{
+				name => 'Durability',
+				create_on_insert => 1,
+				keep_max => 1,
+				min_value => 10,
+				max_value => 10,
+			},
+		],
+		attributes => [
+			{
+				item_attribute_name => 'Defence Factor',
+				item_attribute_value => 10,
+			}			
+		], 
+	);	
+	
+	my $super_cat = $item_type->category->super_category;
+	$super_cat->super_category_name('Armour');
+	$super_cat->update;
+	
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, agility => 10 );
+	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1 );
+	
+	my ($char) = $party->characters;
+	$char->create_item_grid;
+	
+	my $item = $self->{schema}->resultset('Items')->create_enchanted(
+		{
+			item_type_id => $item_type->id,
+		},
+		{
+			number_of_enchantments => 1,
+		},
+	);
+	
+	$item->add_to_characters_inventory($char);	
+	
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);  
+
+    # Force decrement
+    $self->mock_dice;
+    $self->{roll_result} = 1;
+
+    # WHEN
+    my $result = $battle->check_character_defence($char);
+	
+	# THEN
+	is($result, undef, "Armour not considered broken");	
 }
 
 1;

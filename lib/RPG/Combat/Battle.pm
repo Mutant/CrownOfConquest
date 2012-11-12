@@ -273,6 +273,10 @@ sub _process_effects {
 
 			push @{ $self->result->{messages} }, $result;
 			
+			if ($being->is_dead) {
+                $self->combatants_alive->{$self->opponent_number_of_being($being)}--;  			    
+			}
+			
 			if ($self->check_for_end_of_combat) {
 				return;
 			}
@@ -314,7 +318,6 @@ sub record_messages {
 			opponent => $opponents[ $opp_number == 1 ? 1 : 0 ],
 			result   => $self->result,
 			weapons  => $self->character_weapons,
-			stats    => $self->stats,
 		);
 		
 		$self->log->debug("Done generating combat messages");	
@@ -415,6 +418,10 @@ sub check_skills {
                 
                 if ($results{factor_changed}) {
                     $self->refresh_factor_cache('character', $char_id);                       
+                }
+                
+                if ($defender && $defender->is_dead) {
+                    $self->combatants_alive->{$self->opponent_number_of_being($defender)}--;   
                 }
                 
             }
@@ -931,7 +938,7 @@ sub check_character_defence {
    	
    	my $armour = $self->character_weapons->{ $defender->id }{armour};
    	
-   	foreach my $item_id (keys %$armour) {   	    
+   	foreach my $item_id (keys %$armour) {
    	    my $weapon_damage_roll = Games::Dice::Advanced->roll('1d3');
    	    $armour->{$item_id}-- if $weapon_damage_roll == 1;
    	    

@@ -34,6 +34,7 @@ sub test_get_combatant_list_no_history_multiple_combatants : Tests(1) {
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
     $battle->mock('sort_combatant_list', sub { shift; @_ });
+    $battle->set_always('character_weapons',{});
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, @combatants);
@@ -54,12 +55,13 @@ sub test_get_combatant_list_attack_history_updated : Tests(2) {
     my $creature = Test::MockObject->new();
     $creature->set_always('number_of_attacks', 1);
     $creature->set_false('is_character');
-    $creature->set_always('id', 1);
+    $creature->set_always('id', 1);    
     
     my $battle = Test::MockObject->new();
     my $session = {attack_history => {}};
     $battle->mock('session', sub { return $session });
     $battle->mock('sort_combatant_list', sub { shift; @_ });
+    $battle->set_always('character_weapons',{});
     
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character, $creature);
@@ -84,6 +86,7 @@ sub test_get_combatant_list_with_history : Tests(5) {
     my $session = {attack_history => {'character' => { $character->id => [2,2] }}};
     $battle->mock('session', sub { return $session });
     $battle->mock('sort_combatant_list', sub { shift; @_ });
+    $battle->set_always('character_weapons',{});
    
     # WHEN
     my @sorted_combatants = RPG::Combat::Battle::get_combatant_list($battle, $character);
@@ -93,8 +96,8 @@ sub test_get_combatant_list_with_history : Tests(5) {
 
     my ($name, $args) = $character->next_call();
     is($name, 'number_of_attacks', "Number of attacks called");
-    is($args->[1], 2, "First attack history passed");
-    is($args->[2], 2, "Second attack history passed");
+    is($args->[2], 2, "First attack history passed");
+    is($args->[3], 2, "Second attack history passed");
     is($session->{attack_history}{character}{$character->id}[2], 2, "Session updated for character");
 }
 
@@ -487,6 +490,7 @@ sub test_check_for_end_of_combat_cg_defeated : Tests(5) {
 	$battle->mock('result', sub { $result } );	
 	$battle->set_always('finish');
 	$battle->set_always('end_of_combat_cleanup');	
+	$battle->set_always('combatants_alive', {1 => 2, 2 => 0} );
 	
 	# WHEN
 	RPG::Combat::Battle::check_for_end_of_combat($battle, $combatant);
@@ -518,10 +522,12 @@ sub test_check_check_for_end_of_combat_defeated : Tests(6) {
     $combat_log->set_true('encounter_ended');
     
     my $result = {};
+    my $combatants_alive = {1 =>0};
         
 	my $battle = Test::MockObject->new();
 	$battle->set_always('opponent_number_of_group', 1);
 	$battle->set_list('opponents', $party, $cg);
+	$battle->set_always('combatants_alive', $combatants_alive );
 	$battle->set_always('combat_log', $combat_log);
 	$battle->mock('result', sub { $result } );
 	$battle->set_always('finish');

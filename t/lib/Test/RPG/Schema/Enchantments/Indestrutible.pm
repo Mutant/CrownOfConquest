@@ -77,35 +77,4 @@ sub test_init : Tests(1) {
 	is($item->variable('Durability'), undef, "Item has no durability");
 }
 
-sub test_indestructible_armour : Tests(2) {
-	my $self = shift;
-	
-	# GIVEN
-	my $super_cat = $self->{item_type}->category->super_category;
-	$super_cat->super_category_name('Armour');
-	$super_cat->update;
-	
-	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, agility => 10);
-	
-	my $item = $self->{schema}->resultset('Items')->create_enchanted(
-		{
-			item_type_id => $self->{item_type}->id,
-		},
-		{
-			number_of_enchantments => 1,
-		},
-	);
-	
-	$item->add_to_characters_inventory($character);	
-	
-	# WHEN
-	$character->discard_changes;
-	my $df = $character->defence_factor;
-	my $exe_result = $character->execute_defence;
-	
-	# THEN
-	is($df, 20, "Indestructible item included in defence factor, even though it has no durability");
-	is($exe_result, undef, "Armour not considered broken");	
-}
-
-
+1;

@@ -35,7 +35,8 @@ sub run {
     # Leave messages for those parties who detonated bombs
     foreach my $party_id (keys %party_msgs) {
         my $message = ($party_msgs{$party_id} == 1 ? 'A bomb' : $party_msgs{$party_id} . ' bombs') . 
-            ' that we planted ' . ($party_msgs{$party_id} == 1 ? 'has' : 'have') . ' detonated'; 
+            ' that we planted ' . ($party_msgs{$party_id} == 1 ? 'has' : 'have') . ' detonated. ' . 
+            scalar(@damaged_upgrades) . ' upgrades were damaged'; 
         
         $c->schema->resultset('Party_Messages')->create(
             {

@@ -77,7 +77,7 @@ sub test_detonate_single_bomb_wilderness_building : Tests(5) {
     
     my @messages = $party1->messages;
     is(scalar @messages, 1, "Message created for detonating party");
-    is($messages[0]->message, "A bomb that we planted has detonated", "Correct message text"); 
+    is($messages[0]->message, "A bomb that we planted has detonated. 2 upgrades were damaged", "Correct message text"); 
 
     @messages = $party2->messages;
     is(scalar @messages, 1, "Message created for building owner");
@@ -151,7 +151,7 @@ sub test_detonate_multiple_bombs_town_building : Tests(6) {
     
     my @messages = $party1->messages;
     is(scalar @messages, 1, "Message created for detonating party");
-    is($messages[0]->message, "2 bombs that we planted have detonated", "Correct message text"); 
+    is($messages[0]->message, "2 bombs that we planted have detonated. 2 upgrades were damaged", "Correct message text"); 
 
     @messages = $party2->messages;
     is(scalar @messages, 1, "Message created for building owner");

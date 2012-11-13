@@ -28,7 +28,7 @@
 [% END %]
 
 [% IF creature_group %]
-	<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]', true)"><img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
+	<a href="javascript:getPanels('/dungeon/combat/party_attacks')"><img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
 [% END %]
 <a href="javascript:getPanels('/dungeon/search_room')"><img src="[% c.config.static_path %]/images/actions/searchabutton.png" border="0" title="Search Room"></a>
 [% IF current_location.treasure_chest %]

@@ -82,9 +82,6 @@ sub sector_menu : Private {
 
 	$creature_group ||= $c->stash->{party_location}->available_creature_group;
 
-    my $comparison_details = $c->forward('check_cg_comparison', [$creature_group]);
-    my ($has_watcher, $confirm_attack) = @$comparison_details;
-
 	my @graves = $c->model('DBIC::Grave')->search( { land_id => $c->stash->{party_location}->id, }, );
 
 	my $dungeon = $c->model('DBIC::Dungeon')->find( { land_id => $c->stash->{party_location}->id, }, );
@@ -162,7 +159,6 @@ sub sector_menu : Private {
 				params   => {
 					party                  => $c->stash->{party},
 					creature_group         => $creature_group,
-					confirm_attack         => $confirm_attack || 0,
 					messages               => $c->flash->{messages} || $c->stash->{messages},
 					day_logs               => $c->stash->{day_logs},
 					location               => $c->stash->{party_location},
@@ -182,7 +178,7 @@ sub sector_menu : Private {
 					kingdom                => $kingdom || undef,
 					can_claim_land         => $c->stash->{party}->can_claim_land($c->stash->{party_location}),
 					movement_cost          => $c->stash->{movement_cost} // 0,
-					has_watcher            => $has_watcher,
+					has_watcher            => $c->stash->{party}->has_effect('Watcher'),
 					corpses                => \@corpses,
 					bomb                   => $c->stash->{party_location}->bomb,
 				},
@@ -190,37 +186,6 @@ sub sector_menu : Private {
 			}
 		]
 	);	
-}
-
-sub check_cg_comparison : Private {
- 	my ( $self, $c, $creature_group ) = @_;  
- 	
- 	my $confirm_attack = 0;
- 	my $has_watcher; 
- 	
-	if ($creature_group) {
-		$confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
-  	
-    	$c->stats->profile('Beginning factor comaprison');
-		    
-		# Check for a watcher effect
-		$has_watcher = $c->model('DBIC::Effect')->search(
-            {
-                'party_effect.party_id' => $c->stash->{party}->id,
-                'effect_name' => 'Watcher',
-                'time_left' => {'>', 0},
-            },
-            {
-                join => 'party_effect',
-            }
-		)->count >= 1 ? 1 : 0;		
-		
-		$c->stats->profile('Got watcher boolean');
-	    	
-    	$c->stats->profile('Completed factor comaprison');		
-	}
-	
-	return [$has_watcher, $confirm_attack];
 }
 
 sub get_factor_comparison : Local {

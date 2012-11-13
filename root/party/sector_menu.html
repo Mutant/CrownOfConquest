@@ -75,7 +75,7 @@ You are in sector: [% location.x %], [% location.y %] ( [% location.terrain.terr
 [% END %]
 
 [% IF creature_group %] 
-<a href="javascript:checkAttack('[% creature_group.id %]','[% confirm_attack %]')">
+<a href="javascript:getPanels('/combat/party_attacks')">
 	<img src="[% c.config.static_path %]/images/actions/mobattackabutton.png" border="0" title="Attack Creatures"></a>
 [% END %]
 

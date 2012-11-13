@@ -55,6 +55,38 @@ sub execute_attack : Private {
 	}
 
 	if ($creature_group) {
+	    if (! $c->req->param('attack_confirmed')) {
+            my $confirm_attack = $creature_group->level > $c->stash->{party}->level && !$creature_group->party_within_level_range( $c->stash->{party} );
+            
+            if ($confirm_attack) {
+            	my $message = $c->forward(
+            		'RPG::V::TT',
+            		[
+            			{
+            				template => 'combat/confirm_attack.html',
+            				params   => {},
+            				return_output => 1,
+            			}
+            		]
+            	);
+            	
+            	my $submit = $c->stash->{party}->dungeon_grid_id ? 'dungeon/combat/party_attacks' : 'combat/party_attacks';
+            	
+            	$c->forward('/panel/create_submit_dialog', 
+            		[
+            			{
+            				content => $message,
+            				submit_url => $submit,
+            				dialog_title => 'Confirm Attack?',
+            			}
+            		],
+            	);
+            	
+            	$c->forward( '/panel/refresh', ['messages'] );
+            	return;
+            }
+	    }
+	    
 		$c->stash->{creature_group} = $creature_group;
 
 		$c->stash->{party}->initiate_combat( $creature_group );
@@ -65,7 +97,6 @@ sub execute_attack : Private {
 		$c->stash->{error} = "The creatures have moved, or have been attacked by someone else.";
 		$c->forward( '/panel/refresh', ['messages'] );
 	}
-
 }
 
 sub switch : Private {

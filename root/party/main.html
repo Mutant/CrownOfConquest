@@ -80,21 +80,6 @@ function disarmTrap(dialogFields) {
 	getPanels("/dungeon/disarm_trap");
 }
 
-function checkAttack(creatureGroupId, confirmAttack, in_dungeon) {
-	if (confirmAttack == 1) {
-		dojo.byId('creature-group-id').value = creatureGroupId;
-		dijit.byId('confirm-attack').show();
-	}
-	else {
-		prefix = '';
-		if (in_dungeon) {
-			prefix = '/dungeon';
-		}
-		
-		getPanels(prefix + '/combat/party_attacks?creature_group_id=' + creatureGroupId);
-	}
-}
-
 function execConfirmedAttack(dialogFields) {
 	getPanels('/combat/party_attacks?creature_group_id=' + dialogFields.creature_group_id);
 }
@@ -177,13 +162,6 @@ function showMessages() {
 
 <div dojoType="dijit.Dialog" id="dialog" style="display: none" title="Dialog">
 	<div id="dialog-content"></div>
-</div>
-
-
-<div dojoType="dijit.Dialog" id="confirm-attack" style="display: none" title="Confirm Attack" execute="execConfirmedAttack(arguments[0]);">
-    <span id="confirmation-message">Are you sure you want to attack these creatures? They look pretty tough!</span>
-    <input id="creature-group-id" name="creature_group_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('confirm-attack') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-bury" style="display: none" title="Bury Character" execute="bury(arguments[0]);">

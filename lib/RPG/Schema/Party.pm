@@ -1156,6 +1156,25 @@ sub world_explored {
     return ($explored / $world_size) * 100;   
 }
 
+sub has_effect {
+    my $self = shift;
+    my $effect_name = shift;
+    
+    my $count = $self->search_related(
+        'party_effects',    
+        {
+            'party_id' => $self->id,
+            'effect.effect_name' => $effect_name,
+            'time_left' => {'>', 0},
+        },
+        {
+            join => 'effect',
+        }
+	)->count;
+	
+	return $count >= 1 ? 1 : 0;
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 

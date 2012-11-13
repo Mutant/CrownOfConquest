@@ -136,46 +136,21 @@ sub create_in_dungeon {
     return $cg;
 }
 
-sub search_in_dungeon_range {
+# Find a CG in a dungeon room (ready for combat)
+sub find_in_dungeon_room_for_combat {
     my $self = shift;
     my %params = @_;
     
-    my @cgs = RPG::ResultSet::RowsInSectorRange->find_in_range(
-        resultset => $self,
-        relationship => 'dungeon_grid',
-        base_point => $params{base_point},
-        search_range => $params{search_range},
-        include_base_point => 1,
-        increment_search_by => 0,
-        criteria => {
-            'dungeon_room.dungeon_id' => $params{dungeon_id},
+    my @cgs = $self->search(
+        {
+            'dungeon_grid.dungeon_room_id' => $params{sector}->dungeon_room_id,
         },
-        attrs => {
-             join => [
-                { 'dungeon_grid' => 'dungeon_room' }
-             ],  
+        {
+            join => 'dungeon_grid',
         }
     );
     
     @cgs = grep { ! $_->in_combat } @cgs;
-    
-    return @cgs;
-}
-
-# Find a CG in range of a sector, and move them into that sector (ready for combat)
-sub find_in_dungeon_range_for_combat {
-    my $self = shift;
-    my %params = @_;
-    
-    $params{dungeon_id} //= $params{sector}->dungeon_room->dungeon_id;
-    $params{base_point} //= {
-        x => $params{sector}->x,
-        y => $params{sector}->y,  
-    };
-    
-    my @cgs = $self->search_in_dungeon_range(
-        %params,
-    );
    
     my $cg = (shuffle @cgs)[0];
   

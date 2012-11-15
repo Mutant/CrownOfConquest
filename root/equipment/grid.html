@@ -47,7 +47,7 @@
 		style="z-index: 100;
 			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
 			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image_name(item.enchantments_count) %]') center center no-repeat;"
-			onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]&in_shop=[% in_shop %][% IF item.is_quantity %]&no_cache=[% Math.rand %][% END %]">		
+			onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]&in_shop=[% in_shop %]&no_cache=[% Math.rand %]">		
 	</div>	
 [% END %]
 

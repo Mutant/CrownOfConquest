@@ -61,6 +61,10 @@ __PACKAGE__->numeric_columns(
 	    min_value => 0,
 	    max_value => 10,
 	},
+	blacksmith_skill => {
+	   min_value => 0,
+	   max_value => 25,   
+	}
 ); 
 
 __PACKAGE__->set_primary_key('town_id');

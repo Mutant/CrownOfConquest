@@ -194,8 +194,7 @@ sub initiate_dungeon_battles {
 
         # No CG in the sector with the party. See if there are any nearby cgs
         if (! $cg) {        
-            $cg = $c->schema->resultset('CreatureGroup')->find_in_dungeon_range_for_combat(
-                search_range => 5 * 2 - 1,
+            $cg = $c->schema->resultset('CreatureGroup')->find_in_dungeon_room_for_combat(
                 sector => $sector,
             );
             

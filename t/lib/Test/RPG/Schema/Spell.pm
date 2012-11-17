@@ -14,6 +14,7 @@ use Test::RPG::Builder::Creature;
 use Test::RPG::Builder::Character;
 use Test::RPG::Builder::Party;
 use Test::RPG::Builder::Item;
+use Test::RPG::Builder::Effect;
 
 sub startup : Tests(startup=>1) {
     use_ok('RPG::Schema::Spell');
@@ -513,6 +514,50 @@ sub test_cast_detonate_with_stacked_vial : Tests(5) {
     
     $vial->discard_changes;
     is($vial->variable('Quantity'), 2, "Vial was used");
+}
+
+sub test_cleanse : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Cleanse', } );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $caster = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $caster->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    ); 
+    
+    my $effect1 = Test::RPG::Builder::Effect->build_effect(
+        $self->{schema},
+        effect_name => 'effect1',
+        modifier => 1,
+        character_id => $target->id,
+    );
+
+    my $effect2 = Test::RPG::Builder::Effect->build_effect(
+        $self->{schema},
+        effect_name => 'effect2',
+        modifier => -1,
+        character_id => $target->id,
+    );
+    
+    # WHEN
+    my $result = $spell->cast( $caster, $target );    
+        
+    # THEN
+    my @effects = $target->character_effects;
+    is(scalar @effects, 1, "Only 1 effect left on target character");
+    is($effects[0]->effect->effect_name, 'effect1', "Correct effect is left");
+        
+    is($result->type, 'cleanse', "Correct type returned");    
+    
 }
 
 1;

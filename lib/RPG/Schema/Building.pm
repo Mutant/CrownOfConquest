@@ -208,7 +208,9 @@ sub allowed_to_manage {
         return 0 if $party->land_id != $self->land_id;
         
         # Can manage building owned by the kingdom if they are the king, or have
-        #  a garrison there
+        #  a garrison there, and are loyal to the kingdom
+        return 0 if $party->kingdom_id != $self->owner_id;
+        
         my $garrison = $self->result_source->schema->resultset('Garrison')->find(
             {
                 land_id => $self->land_id,

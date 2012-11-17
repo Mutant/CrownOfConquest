@@ -1193,10 +1193,11 @@ sub resurrect_cost {
 sub resurrect {
     my $self = shift;
     my $town = shift;
+    my $charge_party = shift // 1;
     
     my $party = $self->party;
     
-    if ($party) {    
+    if ($charge_party && $party) {    
         $party->decrease_gold( $self->resurrect_cost );
         $party->update;
     }

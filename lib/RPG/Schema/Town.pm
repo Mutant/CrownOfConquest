@@ -361,7 +361,7 @@ sub decline_mayoralty {
 	$self->add_to_history(
 		{
 			type => 'news',
-			message => 'There is currently no mayor. The town is under marshal law.',
+			message => 'There is currently no mayor. The town is under martial law.',
 			day_id => $self->result_source->schema->resultset('Day')->find_today->id,
 		}
 	); 

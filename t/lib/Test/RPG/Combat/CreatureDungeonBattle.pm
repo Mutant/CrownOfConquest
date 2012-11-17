@@ -91,11 +91,14 @@ sub test_auto_heal_called_for_mayors_group : Tests(1) {
     my $self = shift;
 
     # GIVEN
-    my $dungeon_grid = Test::RPG::Builder::Dungeon_Grid->build_dungeon_grid($self->{schema});
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema});
+    my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 5, dungeon_id => $dungeon->id);
+    my @sectors = $dungeon_room->sectors;    
+    my $dungeon_grid = $sectors[0];
 
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, dungeon_grid_id => $dungeon_grid->id );
     
-    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000, land_id => $dungeon->land_id);
     $town->character_heal_budget(1000);
     $town->update;
     
@@ -136,7 +139,7 @@ sub test_auto_heal_called_for_mayors_group : Tests(1) {
     is($char1->hit_points, 10, "Character 1 auto-healed");    
 }
 
-sub test_auto_heal_called_for_mayors_group_even_if_mayor_dead : Tests(1) {
+sub test_auto_heal_called_for_mayors_group_even_if_mayor_dead : Tests(4) {
     my $self = shift;
 
     # GIVEN
@@ -147,7 +150,7 @@ sub test_auto_heal_called_for_mayors_group_even_if_mayor_dead : Tests(1) {
 
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, dungeon_grid_id => $dungeon_grid->id );
     
-    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, prosperity => 50, gold => 1000, land_id => $dungeon->land_id);
     $town->character_heal_budget(1000);
     $town->update;
     
@@ -186,7 +189,15 @@ sub test_auto_heal_called_for_mayors_group_even_if_mayor_dead : Tests(1) {
     
     # THEN
     $char1->discard_changes;    
-    is($char1->hit_points, 10, "Character 1 auto-healed");    
+    is($char1->hit_points, 10, "Character 1 auto-healed");
+    
+    $mayor->discard_changes;
+    is($mayor->is_dead, 0, "Mayor no longer dead, as opponents fled");
+    
+    my @history = $town->history;
+    is(scalar @history, 2, "Two messages added to town's history");
+    is($history[1]->message, "test was slain in combat. However, as the raiders fled the town's healer resurrected him at no charge",
+        "Correct message added to town's history");
 }
 
 sub test_mayor_tactics_bonus_applied_to_guards_af : Tests(2) {

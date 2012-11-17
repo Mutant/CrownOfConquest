@@ -595,10 +595,10 @@ sub refresh_mayor {
     	foreach my $char (@dead_garrison_chars) {
             my $cost = $char->resurrect_cost;
             if ($cost <= $to_spend) {
-                $char->resurrect($town);
+                $char->resurrect($town, 0);
                 $to_spend-=$cost;
                 $spent+=$cost;
-                $town->decrease_gold($cost);   
+                $town->decrease_gold($cost);
             }
     	}
     	

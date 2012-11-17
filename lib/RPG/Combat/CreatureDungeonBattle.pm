@@ -13,11 +13,43 @@ with qw/
 after 'execute_round' => sub {
     my $self = shift;
 
-    # If the creature_group contained a mayor, call auto-heal on the group if they didn't lose that battle
+    # If the creature_group contained a mayor, call auto-heal on the group if they didn't lose the battle
     if ($self->result->{combat_complete} && $self->creature_group->has_mayor) {
         my $mayor_lost = $self->result->{creatures_fled} || ($self->result->{losers} && $self->result->{losers}->is($self->creature_group));
         
-        $self->creature_group->auto_heal if ! $mayor_lost;
+        if (! $mayor_lost) {
+            $self->creature_group->auto_heal;
+            
+            my $dungeon = $self->location->dungeon_room->dungeon;
+            my $town = $self->schema->resultset('Town')->find(
+                {
+                    land_id => $dungeon->land_id,
+                }
+            );            
+            
+
+            my $mayor = $town->mayor;
+            
+            # If the mayor is dead, ressurect them
+            if ($mayor->is_dead) {
+                $mayor->resurrect($town, 0);
+                
+            	$town->add_to_history(
+            		{
+            			type => 'mayor_news',
+            			message => $mayor->character_name . ' was slain in combat. However, as the raiders ' 
+                            . ($self->result->{party_fled} ? 'fled' : 'were defeated by the mayor\'s party')
+                            . ' the town\'s healer resurrected ' . $mayor->pronoun('objective') . ' at no charge',
+            			day_id => $self->schema->resultset('Day')->find_today->id,
+            		}
+            	);
+                
+                # Also, make sure there is no pending mayor recorded, as the raiders lost
+                $town->pending_mayor(undef);
+                $town->pending_mayor_date(undef);
+                $town->update;
+            }
+        }
     }
     
     return unless $self->result->{losers};

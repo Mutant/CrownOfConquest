@@ -210,4 +210,77 @@ sub test_main_already_loaded_cg_picked_up_new_effects : Tests(2) {
     is($creature_effects_by_id{$creature->id}->[0]->id, $effect->id, "Correct effect found");    
 }
 
+sub test_execute_attack_confirm_attack_required : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN    
+    $self->{config}->{cg_attack_max_factor_difference} = 2;
+    $self->{config}->{cg_attack_max_level_below_party} = 4;
+    
+    my @tests = (
+        {
+            cg_level => 1,
+            party_level => 1,
+            expected_result => 0,
+            factor_comparison => 3,
+            name => 'cg and party level the same',
+        },
+        {
+            cg_level => 3,
+            party_level => 1,
+            factor_comparison => 2,
+            expected_result => 0,   
+            name => 'cg level on the threshold',
+        },    
+        {
+            cg_level => 4,
+            party_level => 1,
+            expected_result => 1,
+            factor_comparison => 1,   
+            name => 'cg level above the threshold',
+        },            
+    );
+    
+    my $template_args;
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
+    my $confirm_required;
+    $self->{mock_forward}->{'/panel/create_submit_dialog'} = sub { $confirm_required = 1 };
+    $self->{mock_forward}->{'/panel/refresh'} = sub {};
+  
+    # WHEN
+    my %results;
+    foreach my $test (@tests) {
+        $confirm_required = 0;
+        
+        my $party = Test::RPG::Builder::Party->build_party(
+            $self->{schema},
+            character_count => 3,
+            character_level => $test->{party_level},
+        );
+        
+        $self->{c}->stash->{party} = $party;
+        $self->{c}->stash->{party_location} = $party->location; 
+
+    
+        my $creature_group = Test::RPG::Builder::CreatureGroup->build_cg(
+            $self->{schema},
+            creature_level => $test->{cg_level},
+            land_id => $party->land_id,
+        );
+        
+        $creature_group = Test::MockObject::Extends->new($creature_group);
+        $creature_group->set_always('compare_to_party', $test->{factor_comparison});
+       
+        RPG::C::Combat->execute_attack($self->{c}, $creature_group);
+        
+        $results{$test->{name}} = $confirm_required;        
+    }    
+    
+    # THEN
+    foreach my $test (@tests) {
+        is($results{$test->{name}}, $test->{expected_result}, $test->{name} . " - Confirm attack set correctly");
+    }
+    
+}
+
 1;

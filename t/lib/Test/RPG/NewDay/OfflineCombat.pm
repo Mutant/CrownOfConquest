@@ -329,25 +329,13 @@ sub test_initiate_dungeon_battles_cg_nearby : Tests(6) {
             y => 1,
         },
         bottom_right => {
-            x => 1,
-            y => 1,
-        },
-        create_walls => 1,
-    );
-    my $room2 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, 
-        dungeon_id => $dungeon->id,
-        top_left => {
-            x => 1,
-            y => 2,
-        },
-        bottom_right => {
-            x => 4,
-            y => 4,
+            x => 5,
+            y => 5,
         },
         create_walls => 1,
     );    
     my ($sector1) = $room1->sectors;
-    my $sector2 = (shuffle $room2->sectors)[0];
+    my $sector2 = (shuffle $room1->sectors)[0];
    
     my $party = Test::RPG::Builder::Party->build_party($self->{schema}, 
     	last_action => DateTime->now->subtract(minutes=>15),

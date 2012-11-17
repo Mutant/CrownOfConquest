@@ -154,7 +154,7 @@ sub test_create_in_wilderness_doesnt_use_same_type_twice : Tests(6) {
 
 }
 
-sub test_find_in_dungeon_range_for_combat : Tests(2) {
+sub test_find_in_dungeon_room_for_combat : Tests(2) {
     my $self = shift;
     
     # GIVEN
@@ -177,7 +177,7 @@ sub test_find_in_dungeon_range_for_combat : Tests(2) {
     my ($find_from_sector) = grep { $_->x == 3 && $_->y == 3 } $room1->sectors; 
     
     # WHEN
-    my $found_cg = $self->{schema}->resultset('CreatureGroup')->find_in_dungeon_range_for_combat(
+    my $found_cg = $self->{schema}->resultset('CreatureGroup')->find_in_dungeon_room_for_combat(
         sector => $find_from_sector,
         search_range => 5,
     );

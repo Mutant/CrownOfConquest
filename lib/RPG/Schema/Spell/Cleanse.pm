@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use Games::Dice::Advanced;
+use List::Util qw(shuffle);
 
 sub _cast {
     my ( $self, $character, $target, $level ) = @_;
@@ -27,7 +28,25 @@ sub select_target {
     my $self = shift;
     my @targets = @_;
     
-    return $self->_select_buff_target(@targets);
+    my @possible_targets;
+    foreach my $target (@targets) {
+        next if $target->is_dead;
+        
+        my $debuff_count = $target->search_related('character_effects',
+            {
+                'effect.modifier' => {'<', 0},
+            },
+            {
+                join => 'effect',
+            },
+        )->count;
+        
+        push @possible_targets, $target if $debuff_count > 0;
+    }
+    
+    return unless @possible_targets;
+    
+    return (shuffle @possible_targets)[0];
 }
 
 1;

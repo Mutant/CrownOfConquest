@@ -560,4 +560,45 @@ sub test_cleanse : Tests(3) {
     
 }
 
+sub test_cleanse_select_target : Tests(1) {
+    my $self = shift;
+    
+    # GIVEN    
+    my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Cleanse', } );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 3 );
+    my @chars = $party->characters;
+    my $caster = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
+    
+    
+    my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
+        {
+            character_id      => $caster->id,
+            spell_id          => $spell->id,
+            memorise_count    => 1,
+            number_cast_today => 0,
+        }
+    ); 
+    
+    my $effect1 = Test::RPG::Builder::Effect->build_effect(
+        $self->{schema},
+        effect_name => 'effect1',
+        modifier => 1,
+        character_id => $chars[0]->id,
+    );
+
+    my $effect2 = Test::RPG::Builder::Effect->build_effect(
+        $self->{schema},
+        effect_name => 'effect2',
+        modifier => -1,
+        character_id => $chars[1]->id,
+    );
+    
+    # WHEN
+    my $target = $spell->select_target( $party->characters );    
+        
+    # THEN
+    is($target->id, $chars[1]->id, "Correct character targetted");   
+    
+}
+
 1;

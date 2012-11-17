@@ -154,7 +154,6 @@ sub execute_round {
     		}
     		    
     		if ($action_result) {
-    		    $self->log->debug("Processing combat action result");    		    
     			push @combat_messages, $action_result;
     
        			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
@@ -167,12 +166,10 @@ sub execute_round {
     				my $type = $action_result->defender->is_character ? 'character' : 'creature';
     				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
     			}
-    
+    			    
     			if ( my $losers = $self->check_for_end_of_combat ) {
     				last;
     			}
-    			
-    			$self->log->debug("Done Processing combat action result");
     		}    		
     		
     	}

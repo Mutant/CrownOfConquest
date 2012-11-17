@@ -13,9 +13,11 @@ with qw/
 after 'execute_round' => sub {
     my $self = shift;
 
-    # If the creature_group contained a mayor, call auto-heal on the group
+    # If the creature_group contained a mayor, call auto-heal on the group if they didn't lose that battle
     if ($self->result->{combat_complete} && $self->creature_group->has_mayor) {
-        $self->creature_group->auto_heal;   
+        my $mayor_lost = $self->result->{creatures_fled} || ($self->result->{losers} && $self->result->{losers}->is($self->creature_group));
+        
+        $self->creature_group->auto_heal if ! $mayor_lost;
     }
     
     return unless $self->result->{losers};

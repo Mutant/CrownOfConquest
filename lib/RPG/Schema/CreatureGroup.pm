@@ -227,7 +227,7 @@ sub auto_heal {
         },
     );
     
-    return if ! $mayor || $mayor->is_dead;
+    return if ! $mayor;
 
     my $town = $mayor->mayor_of_town;
     

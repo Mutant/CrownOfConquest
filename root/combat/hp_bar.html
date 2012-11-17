@@ -1,1 +1,4 @@
-<div style="width: 3px; height: [% being.health * 100 %]%; bottom: 0px; position: absolute; background: #9E0B0F;"></div>
+[% hp_pc = being.health * 100 %]
+[% IF hp_pc < 2 && hp_pc > 0 %][% hp_pc = 2 %][% END %]
+
+<div style="width: 3px; height: [% hp_pc %]%; bottom: 0px; position: absolute; background: #9E0B0F;"></div>

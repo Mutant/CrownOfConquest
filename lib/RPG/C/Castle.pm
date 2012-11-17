@@ -199,7 +199,7 @@ sub successful_flee : Private {
 		# Lose pending mayor
 		if ($town->pending_mayor == $c->stash->{party}->id) {
             $town->decline_mayoralty;
-            $message .= " You lose your chance to claim the mayoralty after defeating the mayor. The town is now under marshal law";
+            $message .= " You lose your chance to claim the mayoralty after defeating the mayor. The town is now under martial law";
 		}
 		$town->update;
 		

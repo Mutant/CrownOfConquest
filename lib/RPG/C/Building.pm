@@ -375,7 +375,7 @@ sub seize : Local {
 
 	my $building = $c->stash->{building};
 	
-	croak "Cannot raze a town's building" if $building->owner_type eq 'town';
+	croak "Cannot seize a town's building" if $building->owner_type eq 'town';
 	
 	croak "No building to seize\n" unless $building;
 	
@@ -461,9 +461,25 @@ sub raze : Local {
 	croak "No building to raze\n" unless $building;
 	
 	croak "Cannot raze a town's building" if $building->owner_type eq 'town';
-	
+
 	my $turns_to_raze = $building->building_type->turns_to_raze($c->stash->{party});
-		
+	
+	if (! $c->req->param('raze_confirmed')) {
+        $c->forward('/panel/create_submit_dialog_from_template', 
+    		[
+    			{
+                    template => 'building/confirm_raze.html',
+                    params => {
+                        turns_to_raze => $turns_to_raze,
+                    },
+    				submit_url => '/building/raze',
+    				dialog_title => 'Confirm Raze',
+    			}
+    		],
+    	);
+    	$c->detach('/panel/refresh');
+	}
+
 	#  Make sure the party has enough turns to raze.	
 	if ( $c->stash->{party}->turns < $turns_to_raze ) {
 	    $c->stash->{error} = "You need at least " . $turns_to_raze . " turns to raze the building";
@@ -532,7 +548,7 @@ sub raze : Local {
 	
 	$c->forward('/map/refresh_current_loc');
 
-    $c->forward( '/panel/refresh', [[screen => 'close'], 'messages'] ) unless $c->stash->{no_refresh};;
+    $c->forward( '/panel/refresh', [[screen => 'close'], 'messages', 'party_status'] ) unless $c->stash->{no_refresh};;
 }
 
 sub cede : Local {

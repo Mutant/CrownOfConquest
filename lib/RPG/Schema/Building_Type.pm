@@ -263,7 +263,7 @@ sub turns_to_raze {
     my $self = shift;
     my $party = shift;
     
-    return round $self->labor_to_raze / $party->characters_in_party->count; 
+    return $self->labor_to_raze; 
 }
 
 1;

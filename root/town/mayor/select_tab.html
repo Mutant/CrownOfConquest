@@ -3,17 +3,21 @@
 The mayor of [% town.town_name %] is <b>[% town.mayor.character_name %]</b>.
 
 <br><br>
-<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="confirmRelinquishMayoralty()">
-	Relinquish Mayoralty
-</button>
-
-[% IF party_in_town %]
-<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="confirmChangeMayor()">
-	Change Mayor
-</button>
+[% IF ! town.current_election %]
+	<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="confirmRelinquishMayoralty()">
+		Relinquish Mayoralty
+	</button>
+	
+	[% IF party_in_town %]
+	<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="confirmChangeMayor()">
+		Change Mayor
+	</button>
+	[% ELSE %]
+	<br><br>
+	(You can change the mayor if your party is in the mayor's town).
+	[% END %]
 [% ELSE %]
-<br><br>
-(You can change the mayor if your party is in the mayor's town).
+	You cannot change or relinquish the mayoralty while an election is scheduled.
 [% END %]
 
 <h4>Elections</h4>

@@ -49,8 +49,8 @@ sub main : Local {
     			prefetch => 'mayor_of_town',
     		}
 	   );
-	}	
-
+	}
+	
 	$c->forward(
 		'RPG::V::TT',
 		[
@@ -107,6 +107,9 @@ sub tax : Local {
 sub relinquish : Local {
     my ($self, $c) = @_;
     
+    croak "Cannot relinquish mayoralry while election is scheduled" 
+        if $c->stash->{town}->current_election->count >= 1; 
+    
     my $mayor = $c->stash->{town}->mayor;
     $mayor->lose_mayoralty(0);
 
@@ -120,6 +123,9 @@ sub change : Local {
     my ($self, $c) = @_;
     
     croak "Not in town" unless $c->stash->{in_town};
+    
+    croak "Cannot change mayoralry while election is scheduled" 
+        if $c->stash->{town}->current_election->count >= 1;    
     
     my $mayor = $c->stash->{town}->mayor;
     

@@ -38,6 +38,8 @@ sub run {
 	
 	$c->schema->resultset('Party_Town')->search->update( { tax_amount_paid_today => 0 } );
 	
+	$self->alert_parties_about_exceeding_mayor_limit;
+	
 	die join "\n", @errors if @errors;	
 }
 
@@ -293,6 +295,8 @@ sub check_for_revolt {
 	my $start_revolt = 0;
 	my $revolt_reason = 'mayor';
 	
+	my $mayor = $town->mayor;
+	
 	if ($town->mayor_rating < -30) {
 		my $rating = $town->mayor_rating + 100;
 	
@@ -313,6 +317,21 @@ sub check_for_revolt {
 		$start_revolt = 1 if $roll > $rating;
 		$revolt_reason = 'kingdom';  
 	}
+	elsif (! $mayor->is_npc) {
+        # Check party is not over mayor limit (excluding towns already in revolt)
+        my $party = $mayor->party;
+        my $partys_towns = $party->mayors->search_related(
+            'mayor_of_town',
+            {
+                peasant_state => [ undef, {'!=', 'revolt'} ],
+            },
+        )->count;
+                        
+	    if ($party->mayor_count_allowed < $partys_towns) {
+            $c->logger->debug("Starting revolt as party has $partys_towns, which exceeded max of " . $party->mayor_count_allowed);
+	        $start_revolt = 1;   
+	    }
+	}
 		
 	if ($start_revolt) {
 		$town->peasant_state('revolt');
@@ -324,9 +343,7 @@ sub check_for_revolt {
             	message => "The peasants have had enough of being treated poorly, and revolt against the $revolt_reason!",
 			}		
 		);
-		
-		my $mayor = $town->mayor;
-		
+				
 		unless ($mayor->is_npc) {
 			$c->schema->resultset('Party_Messages')->create(
 				{
@@ -390,11 +407,19 @@ sub process_revolt {
     if ($mayor) {
         $negotiation_bonus = $mayor->execute_skill('Negotiation', 'mayor_overthrow_check') // 0;
     }
+    
+    my $too_many_mayors_penalty = 0;
+    if (! $mayor->is_npc) {
+        # If the party is over their max mayor count, give a big penalty
+        my $party = $mayor->party;
+        $too_many_mayors_penalty = 40 if $party->mayor_count_allowed < $party->mayors->count;
+    }
 
 	$c->logger->debug("Checking for overthrow of mayor; guard bonus: $guard_bonus; prosp penalty: $prosp_penalty; garrison bonus: $garrison_bonus;" .
-	   " kingdom loyalty penalty: $kingdom_loyalty_penalty; negotiation bonus: $negotiation_bonus");
+	   " kingdom loyalty penalty: $kingdom_loyalty_penalty; negotiation bonus: $negotiation_bonus; too many mayors penalty: $too_many_mayors_penalty");
 
-    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty + $garrison_bonus - $kingdom_loyalty_penalty + $negotiation_bonus;
+    my $roll = Games::Dice::Advanced->roll('1d100') + $guard_bonus - $prosp_penalty 
+        + $garrison_bonus - $kingdom_loyalty_penalty + $negotiation_bonus - $too_many_mayors_penalty;
         
     $c->logger->debug("Overthrow roll: $roll");
         
@@ -1048,6 +1073,36 @@ sub gain_xp {
 		}
 	);	    
     
+}
+
+sub alert_parties_about_exceeding_mayor_limit {
+    my $self = shift;
+    
+    my $c = $self->context;
+    
+    # Find parties that have at least one mayor
+    my @parties = $c->schema->resultset('Party')->search(
+        {
+            defunct => undef,
+        },
+    );
+    
+    foreach my $party (@parties) {
+        my $mayor_count = $party->mayors->count;
+        my $count_allowed = $party->mayor_count_allowed;
+        if ($count_allowed < $mayor_count) {
+            # They have too many mayors - alert them
+            $party->add_to_messages(
+                {
+					message => "We have $mayor_count mayors, which exceeds our maximum of $count_allowed. We should relinquish " .
+					   "the mayoralties of some of our towns, or risk revolts!",
+					alert_party => 1,
+					party_id => $party->party_id,
+					day_id => $c->current_day->id,
+                }
+            );                                   
+        }   
+    }
 }
 
 1;

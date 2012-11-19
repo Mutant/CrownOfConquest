@@ -252,6 +252,12 @@ train_turn_cost: 50
 # Minumum level for training new characters
 train_min_party_level: 12
 
+# Minimum party level that allows party to have mayors 
+min_party_level_for_mayors: 15
+
+# Minimum level of characters that count towards mayor count limit
+mayor_limit_char_min_level: 20
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack

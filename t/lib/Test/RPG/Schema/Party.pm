@@ -636,5 +636,80 @@ sub test_flee_chance_with_strategy : Tests(1) {
 	is($chance, 56, "Correct flee chance");
 }
 
+sub test_mayor_count_allowed : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my @tests = (
+        {
+            char_levels => ['7'],
+            expected_result => 0,
+            description => 'No mayors allowed as under min level',
+        }, 
+        {
+            char_levels => ['15'],
+            expected_result => 1,
+            description => 'One mayor allowed, as above min level with no high level chars',
+        },
+        {
+            char_levels => [qw/15 20 20 20/],
+            expected_result => 2,
+            description => 'Two mayors allowed, as above min level with 3 high level chars',
+        },   
+        {
+            char_levels => [qw/19 20 20 20 25 22/],
+            expected_result => 2,
+            description => 'Two mayors allowed, as above min level with 5 high level chars',
+        },     
+        {
+            char_levels => [qw/19 20 20 20 25 22 20 20 20 22/],
+            expected_result => 3,
+            description => 'Three mayors allowed, as above min level with 9 high level chars, one in inn',
+            chars_in_inn => [qw/0 1/],
+        },
+        {
+            char_levels => [qw/19 20 20 20 25 22 20 20 20 22/],
+            expected_result => 2,
+            description => 'Two mayors allowed, as above min level with 9 high level chars, one in inn, 3 dead',
+            chars_in_inn => [qw/0 1/],
+            dead_chars => [qw/2 3 6/],
+        },        
+
+    );
+        
+    # WHEN / THEN
+    foreach my $test (@tests) {
+        my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 0);
+        my $char_count = 0;
+        foreach my $char_level (@{$test->{char_levels}}) {            
+            my $status = '';
+            if ($char_count ~~ $test->{chars_in_inn}) {
+               $status = 'inn';
+            }
+            
+            my $hit_points = 100;
+            if ($char_count ~~ $test->{dead_chars}) {
+               $hit_points = 0;
+            }
+            
+            my $char = Test::RPG::Builder::Character->build_character($self->{schema}, 
+                level => $char_level, 
+                party_id => $party->id, 
+                status => $status,
+                hit_points => $hit_points,
+            );
+            
+            $char_count++;            
+        }
+        
+        #foreach my $char ($party->characters) {
+        #    diag "Char, level: " . $char->level . ", status: " . $char->status . ", hps: " . $char->hit_points;   
+        #}
+        
+        my $count = $party->mayor_count_allowed;    
+        is($count, $test->{expected_result}, $test->{description});
+    }
+}
+
 1;
 

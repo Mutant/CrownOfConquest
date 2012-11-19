@@ -177,6 +177,41 @@ sub test_process_revolt_peasants_do_damage : Tests(4) {
 	undef $self->{rolls};
 }
 
+sub test_process_revolt_party_over_limit : Tests(4) {
+	my $self = shift;
+	
+	# GIVEN
+	$self->{rolls} = [64];
+	$self->{roll_result} = 1;
+	
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, peasant_state => 'revolt' );
+	
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, mayor_of => $town->id, party_id => $party->id);
+
+    $self->{config}{level_hit_points_max}{test_class} = 6;
+
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+		
+	# WHEN
+	$action->process_revolt($town);
+	
+	# THEN
+	$character->discard_changes;
+	is($character->mayor_of, undef, "Character no longer mayor of town");
+	
+	$town->discard_changes;
+	is($town->peasant_state, undef, "Peasants no longer in revolt");
+	is($town->mayor_rating, 0, "Mayor approval reset");
+	
+	my $new_mayor = $self->{schema}->resultset('Character')->find(
+		{
+			mayor_of => $town->id,
+		}
+	);
+	is(defined $new_mayor, 1, "New mayor generated");
+}
+
 sub test_check_for_pending_mayor_expiry : Tests(2) {
 	my $self = shift;
 	
@@ -861,7 +896,7 @@ sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
 	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 73, peasant_tax => 0 );
 	my $castle = Test::RPG::Builder::Dungeon->build_dungeon($self->{schema}, type => 'castle', land_id => $town->land_id);
 	my $room1 = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($self->{schema}, x_size => 5, 'y_size' => 4, dungeon_id => $castle->id, make_stairs => 1);
-	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 20);
 	
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
 	$character->mayor_of($town->id);
@@ -874,11 +909,11 @@ sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
 	
 	# THEN
 	$town->discard_changes;
-	is($town->peasant_state, '', "Town is not in revolt");
+	is($town->peasant_state, undef, "Town is not in revolt");
 	is($town->gold, 0, "Town's gold is 0 - no tax collected");
 }
 
-sub test_gain_xp : Tests() {
+sub test_gain_xp : Tests(3) {
     my $self = shift;
     
     # GIVEN
@@ -912,7 +947,97 @@ sub test_gain_xp : Tests() {
     
     my @messages = $town->history;
     is(scalar @messages, 1, "Town has 1 message");
-    like($messages[0]->message, qr{test gained 47 xp from being mayor}, "Town message has correct text");
+    like($messages[0]->message, qr{test gained 47 xp from being mayor}, "Town message has correct text");    
+}
+
+sub test_check_for_revolt_party_over_mayor_limit : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town1 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $town2 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
+    my $mayor1 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town1->id, party_id => $party->id, level => 15 );
+    my $mayor2 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town2->id, party_id => $party->id, level => 15 );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+            
+    # WHEN
+    $action->check_for_revolt($town1);
+    
+    # THEN
+    $town1->discard_changes;
+    is($town1->peasant_state, 'revolt', "Town now in revolt");
+    
+    my @history = $town1->history;
+    is(scalar @history, 1, "One message added to town's history");
+    is($history[0]->message, "The peasants have had enough of being treated poorly, and revolt against the mayor!", "Correct history message");
+    
+    my @messages = $party->messages;
+    is(scalar @messages, 1, "One message added to party's history");
+    is($messages[0]->message, "test sends word that the peasants of Test Town have risen up in open rebellion against the mayor", "Correct party message");  
+    
+}
+
+sub test_check_for_revolt_party_over_mayor_limit_but_one_town_already_revolting : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town1 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $town2 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50, peasant_state => 'revolt' );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
+    my $mayor1 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town1->id, party_id => $party->id, level => 15 );
+    my $mayor2 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town2->id, party_id => $party->id, level => 15 );
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->check_for_revolt($town1);
+    
+    # THEN
+    $town1->discard_changes;
+    is($town1->peasant_state, undef, "Town not put into revolt");
+    
+    my @history = $town1->history;
+    is(scalar @history, 0, "No message added to town's history");
+    
+    my @messages = $party->messages;
+    is(scalar @messages, 0, "No message added to party's history");
+}
+
+sub test_alert_parties_about_exceeding_mayor_limit : Tests(4) {
+    my $self = shift;
+    
+    # GIVEN
+	my $town1 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $town2 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
+    my $mayor1 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town1->id, party_id => $party->id, level => 15 );
+    my $mayor2 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town2->id, party_id => $party->id, level => 15 );
+    
+    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
+    my $town3 = Test::RPG::Builder::Town->build_town( $self->{schema}, prosperity => 50, mayor_rating => 50 );
+    my $mayor3 = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town2->id, party_id => $party2->id, level => 15 );
+    
+    my $party3 = Test::RPG::Builder::Party->build_party($self->{schema});
+    
+    my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+    
+    # WHEN
+    $action->alert_parties_about_exceeding_mayor_limit;
+    
+    # THEN
+    my @messages = $party->messages;
+    is(scalar @messages, 1, "Party 1 given 1 message");
+    is($messages[0]->message, "We have 2 mayors, which exceeds our maximum of 1. We should relinquish " .
+					   "the mayoralties of some of our towns, or risk revolts!", "Correct message text");
+        
+    
+    my @messages2 = $party2->messages;
+    is(scalar @messages2, 0, "Party 2 not given a message");
+
+    my @messages3 = $party3->messages;
+    is(scalar @messages3, 0, "Party 3 not given a message");
     
 }
 

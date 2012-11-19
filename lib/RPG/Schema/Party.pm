@@ -296,14 +296,12 @@ sub movement_factor {
 sub mayors {
     my $self = shift;
     
-    my @mayors = $self->search_related(
+    return $self->search_related(
         'characters',
         {
             'mayor_of' => {'!=', undef},
         }
     );
-    
-    return @mayors;
 }
 
 around 'move_to' => sub {
@@ -1173,6 +1171,23 @@ sub has_effect {
 	)->count;
 	
 	return $count >= 1 ? 1 : 0;
+}
+
+sub mayor_count_allowed {
+    my $self = shift;
+    
+    return 0 if $self->level < RPG::Schema->config->{min_party_level_for_mayors};
+    
+    my $high_level_char_count = $self->search_related(
+        'characters',
+        {
+            level => { '>=', RPG::Schema->config->{mayor_limit_char_min_level} },
+            status => [ undef, {'!=', 'inn'} ],
+            hit_points => { '>', 0 },
+        }
+    );
+    
+    return 1 + int ($high_level_char_count / 3);   
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

@@ -133,9 +133,9 @@ sub run {
         if ($capital) {
             my $changed = 0;
             foreach my $sector (@sectors) {
-                if (! $sector->{claimed_by_id} && ! $connected_sectors->{$sector->{x}}{$sector->{y}}) {
-                    # Sector not connected to capital, roll to see if it should be made neutral
-                    if (Games::Dice::Advanced->roll('1d100') <= $c->config->{chance_unconnected_sector_becomes_neutral}) {
+                if (! $sector->{claimed_by_id}) {
+                    # Sector is a "free" claim (not claimed by building or town), roll for going neutral
+                    if (Games::Dice::Advanced->roll('1d100') <= $c->config->{chance_free_claimed_sector_becomes_neutral}) {
                         my $land = $schema->resultset('Land')->find($sector->{land_id});
                         $land->kingdom_id(undef);
                         $land->update;
@@ -144,7 +144,7 @@ sub run {
                 }                   
             }
             
-            $c->logger->debug("Changed $changed disconnected sectors to neutral");
+            $c->logger->debug("Changed $changed free claimed sectors to neutral");
         }       
     }    
 }

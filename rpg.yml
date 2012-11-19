@@ -712,8 +712,8 @@ kingdom_co_op_grace: 7
 # Gold cost per sector of kingdom to move the capital
 capital_move_cost_per_sector: 6
 
-# Chance sectors not connected to capital go neutral
-chance_unconnected_sector_becomes_neutral: 10
+# Chance sectors not claimed by town or building go neutral
+chance_free_claimed_sector_becomes_neutral: 15
 
 # Number of days a claim for the throne takes
 claim_wait_period: 7

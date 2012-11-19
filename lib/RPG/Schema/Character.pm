@@ -1009,11 +1009,14 @@ sub hit {
     		
     		# The party that killed them is marked as 'pending mayor' of the town
     		# .. Attacker might be a party or a character  		
-    		my $killing_party = $attacker->isa('RPG::Schema::Party') ? $attacker : $attacker->party; 	
-
-  			$town->pending_mayor($killing_party->id);
-   			$town->pending_mayor_date(DateTime->now());        	
-        	$town->update;
+    		my $killing_party = $attacker->isa('RPG::Schema::Party') ? $attacker : $attacker->party; 
+    		
+    		# Only set them pending mayor if they're allowed more towns
+    		if ($killing_party->mayor_count_allowed > $killing_party->mayors->count) {
+                $town->pending_mayor($killing_party->id);
+                $town->pending_mayor_date(DateTime->now());        	
+                $town->update;
+    		}
     	}	
     }
 }

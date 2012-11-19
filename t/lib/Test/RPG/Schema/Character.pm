@@ -859,7 +859,7 @@ sub test_hit_killed_mayor : Tests(2) {
     $character->mayor_of($town->id);
     $character->update;      
     
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
     my $killer = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
     
     # WHEN
@@ -881,7 +881,7 @@ sub test_hit_killed_mayor_by_effect : Tests(2) {
     $character->mayor_of($town->id);
     $character->update;      
     
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 15);
     
     # WHEN
     $character->hit(9, $party, 'poison');
@@ -891,6 +891,28 @@ sub test_hit_killed_mayor_by_effect : Tests(2) {
     
     $town->discard_changes;
     is($town->pending_mayor, $party->id, "Party set to pending mayor");
+}
+
+sub test_hit_killed_mayor_not_enough_towns : Tests(2) {
+    my $self = shift;    
+    
+    # GIVEN   
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, hit_points => 7, max_hit_points => 10);
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema});
+    $character->mayor_of($town->id);
+    $character->update;      
+    
+    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2, level => 14);
+    my $killer = Test::RPG::Builder::Character->build_character($self->{schema}, party_id => $party->id);
+    
+    # WHEN
+    $character->hit(9, $killer);
+    
+    # THEN
+    is($character->hit_points, 0, "Character took damage");
+    
+    $town->discard_changes;
+    is($town->pending_mayor, undef, "Party not set to pending mayor");
 }
 
 sub test_get_item_action_usable_item : Tests(1) {

@@ -53,6 +53,11 @@
 			<td>[% party.world_explored | format('%.2f') %]%</td>
 		</tr>
 		<tr>
+			<td></td>
+			<td>Land Claimed Today:</td>
+			<td>[% party.land_claimed_today %] (Max allowed: [% c.config.max_land_claimed_per_day %])</td>
+		</tr>
+		<tr>
 			<td id="refer-a-friend-help">(?)</td>
 			<td id="refer-a-friend-label">Refer a friend URL</td>
 			<td>[% base %]player/register?referred_by=[% party.player.player_name %]</td>

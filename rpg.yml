@@ -258,6 +258,9 @@ min_party_level_for_mayors: 15
 # Minimum level of characters that count towards mayor count limit
 mayor_limit_char_min_level: 20
 
+# Maximum number of land that can be claimed per game day
+max_land_claimed_per_day: 10
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack

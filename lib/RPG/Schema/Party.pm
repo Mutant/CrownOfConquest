@@ -896,6 +896,20 @@ sub broken_equipped_items_hash {
 	return %broken_items_by_char_id;
 }
 
+sub land_claimed_today {
+    my $self = shift;
+    
+    my $claim_land_count = $self->find_related(
+        'messages',
+        {
+            type => 'claim_land_count',
+            day_id => $self->result_source->schema->resultset('Day')->find_today->id,
+        }
+    );
+    
+    return $claim_land_count ? $claim_land_count->message : 0;
+}
+
 sub can_claim_land {
     my $self = shift;
     my $land = shift;
@@ -903,6 +917,8 @@ sub can_claim_land {
     return 0 unless $self->kingdom_id;
     
     return 0 unless $self->level >= RPG::Schema->config->{minimum_land_claim_level};
+    
+    return 0 if $self->land_claimed_today >= RPG::Schema->config->{max_land_claimed_per_day};        
         
     return $land->can_be_claimed($self->kingdom_id);
 }

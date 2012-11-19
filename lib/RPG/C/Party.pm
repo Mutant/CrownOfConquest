@@ -1016,6 +1016,16 @@ sub claim_land : Local {
 	$c->stash->{party_location}->kingdom_id($c->stash->{party}->kingdom_id);
 	$c->stash->{party_location}->update;
 	
+    my $day_stats = $c->model('DBIC::Party_Messages')->find_or_create(
+        {
+            day_id => $c->stash->{today}->id,
+            party_id => $c->stash->{party}->id,
+            type => 'claim_land_count',
+        },
+    );
+    $day_stats->message($day_stats->message+1);
+    $day_stats->update;
+	
 	my $kingdom = $c->stash->{party}->kingdom;
 	my $land_count = $kingdom->sectors->count;
 	if ($kingdom->highest_land_count < $land_count) {

@@ -22,6 +22,7 @@ sub build_kingdom {
             active => $params{active} // 1,
             majesty_leader_since => $params{majesty_leader_since} // undef,
             has_crown => $params{has_crown} // 0,
+            capital => $params{capital} // undef,
         }   
     );
     

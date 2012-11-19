@@ -14,6 +14,7 @@ use Test::RPG::Builder::Town;
 use Test::RPG::Builder::Land;
 use Test::RPG::Builder::Day;
 use Test::RPG::Builder::Dungeon;
+use Test::RPG::Builder::Kingdom;
 
 use RPG::Schema::Town;
 
@@ -342,5 +343,57 @@ sub test_coaches_specific_town : Tests(8) {
 	is($coaches[0]->{can_enter}, 1, "Correct first town can enter");
 }
 
+sub test_change_allegiance : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN
+    my $old_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, );
+    my $new_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, );
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, kingdom_id => $old_kingdom->id);
+    
+    # WHEN
+    $town->change_allegiance($new_kingdom);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->location->kingdom_id, $new_kingdom->id, "Town now loyal to new kingdom");
+    
+    my @messages1 = $new_kingdom->messages;
+    is(scalar @messages1, 1, "1 message added to new kingdom");
+    is($messages1[0]->message, "The town of Test Town is now loyal to our kingdom.", "correct message text"); 
+
+    my @messages2 = $old_kingdom->messages;
+    is(scalar @messages2, 1, "1 message added to old kingdom");
+    is($messages2[0]->message, "The town of Test Town is no longer loyal to our kingdom.", "correct message text");
+}
+
+sub test_change_allegiance_capital : Tests(6) {
+    my $self = shift;
+    
+    # GIVEN
+    my $old_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, );
+    my $new_kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, );
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, kingdom_id => $old_kingdom->id);
+    $old_kingdom->capital($town->id);
+    $old_kingdom->update;
+    
+    # WHEN
+    $town->change_allegiance($new_kingdom);
+    
+    # THEN
+    $town->discard_changes;
+    is($town->location->kingdom_id, $new_kingdom->id, "Town now loyal to new kingdom");
+    
+    my @messages1 = $new_kingdom->messages;
+    is(scalar @messages1, 1, "1 message added to new kingdom");
+    is($messages1[0]->message, "The town of Test Town is now loyal to our kingdom.", "correct message text"); 
+
+    my @messages2 = $old_kingdom->messages;
+    is(scalar @messages2, 1, "1 message added to old kingdom");
+    is($messages2[0]->message, "The town of Test Town is no longer loyal to our kingdom. We no longer have a capital!", "correct message text");
+    
+    $old_kingdom->discard_changes;
+    is($old_kingdom->capital, undef, "Old kingdom no longer has a capital");
+}
 
 1;

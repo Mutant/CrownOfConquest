@@ -7,6 +7,9 @@
 <div style="min-height: 350px" dojoType="dijit.layout.TabContainer">
     <div dojoType="dijit.layout.ContentPane" title="Current" style="display: none">
     
+    Your party has <b>[% mayors.size %]</b> mayor[% IF mayors.size > 1 %]s[% END %], out of a maximum allowed of <b>[% party.mayor_count_allowed %]</b>.
+    (<a href="[% base %]help/reference/mayors" target="_new">?</a>)<br><br>
+    
 	[% UNLESS mayors.0 %]
 	None of your characters are mayors of a town
 	[% ELSE %]

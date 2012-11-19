@@ -1,0 +1,23 @@
+[% INCLUDE help/top.html %]
+
+<h3>Mayors</h3>
+
+<p>At party level [% c.config.min_party_level_for_mayors %], you gain the ability to install characters as mayor of a town. There are two ways to do this: by
+force or democratically.</p>
+
+<p>To become mayor by force, you have to raid the town and defeat the mayor and anyone in their group in combat. You then have to leave the town's dungeon by the
+stairs (you <i>cannot</i> use Portal). When you leave, you'll be asked to select one of your characters as mayor. This character will leave the party, so make sure
+you select wisely.</p>
+
+<p>If you'd rather take a town peacefully, you'll have to wait until the incumbent mayor calls an election. If you see a town with an election (you can find them
+in the global news), you can select one of your characters to run. You'll need to study polling data carefully, and ensure you've spent enough on your campaign to
+win.</p>
+
+<p>Your party can adequately control only a small number of towns. This number is based on the number of characters you control over level 
+[% c.config.mayor_limit_char_min_level %], only counting living characters, and those not in the inn. You can control 1 town for every 3 of these characters,
+plus 1 for "free" once you reach level [% c.config.min_party_level_for_mayors %]. You can see how many you can control at any given time in your list of mayors.
+If you exceed this number, expect some of your towns to rise up in brutal revolution!</p>  
+
+[% INCLUDE help/reference/contents_link.html %]
+
+[% INCLUDE help/bottom.html %]

@@ -307,6 +307,7 @@ sub mayors : Local {
                 template => 'party/details/mayors.html',
                 params   => {
                     mayors => \@mayors,
+                    party => $c->stash->{party},
                 },
             }
         ]

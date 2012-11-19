@@ -261,20 +261,20 @@ function loadNewSectors(sectorsAdded) {
 			} 
 		}
 	}
-
-	dojo.xhrGet( {
-        url: urlBase + "map/load_sectors?" + qString,
-        handleAs: "json",
-        
-        load: updateSectors,
-
-	    timeout: 45000	
-    });    
+	
+	if (qString != '') {
+		dojo.xhrGet( {
+	        url: urlBase + "map/load_sectors?" + qString,
+	        handleAs: "json",
+	        
+	        load: updateSectors,
+	
+		    timeout: 45000	
+	    });
+	}   
 }
 
 function updateSectors(responseObject) {
-	var herecircle = dojo.byId('herecircle');
-
 	var data = responseObject.sector_data;
 
 	for(var j=0; j<data.length; j++) {
@@ -289,9 +289,7 @@ function updateSectors(responseObject) {
 		}
 	}
 	
-	var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y); 
-	
-	newSector.appendChild(herecircle);
+	var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y);
 }
 
 function refreshSectorCallback(data) {

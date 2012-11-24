@@ -666,6 +666,12 @@ min_party_level_for_garrison_attack: 6
 # Number of days garrison must be in a sector before they will begin claiming land
 garrison_time_to_claim_land: 2
 
+# Period to check for recent garrison battles (in hours)
+garrison_recent_battle_period: 12
+
+# Number of attacks allowed within the garrison recent period
+garrison_recent_battle_max: 3
+
 # ----- Enchantment Params ----- #
 
 # Minimum creature level that has enchanted items

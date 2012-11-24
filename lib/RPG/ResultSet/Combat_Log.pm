@@ -56,6 +56,20 @@ sub get_offline_log_count {
     )->count;
 }
 
+sub get_recent_battle_count_for_garrison {
+    my $self  = shift;
+    my $garrison = shift;
+    
+    my $date_range_start = DateTime->now->subtract( hours => RPG::Schema->config->{garrison_recent_battle_period} );  
+    
+    return $self->search(
+        {
+            $self->_group_type_critiera($garrison, 'garrison'),
+            encounter_ended => { '>', $date_range_start },
+        },
+    )->count;
+}
+
 # name = bad
 sub get_offline_garrison_log_count {
     my $self  = shift;

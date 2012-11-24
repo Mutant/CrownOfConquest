@@ -25,6 +25,9 @@ sub attack : Local {
 	elsif ( ! $building && $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
 		$c->stash->{error} = "The garrison is too weak to attack";
 	}
+	elsif ( $c->model('DBIC::Combat_Log')->get_recent_battle_count_for_garrison( $garrison ) >= $c->config->{garrison_recent_battle_max} ) {
+	    $c->stash->{error} = 'This garrison has been attacked too many times recently';
+	}
     elsif ( $c->stash->{party}->is_suspected_of_coop_with($garrison->party) ) {
         $c->stash->{error} = 'Cannot attack this garrison as the party that owns it has IP addresses in common with your account'; 
     }

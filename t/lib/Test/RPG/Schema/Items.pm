@@ -365,8 +365,8 @@ sub test_sell_price_enchanted : Tests(2) {
 	my $sell_price_modified = $item->sell_price(undef, 1);
 	
 	# THEN
-	is($sell_price, 520, "Correct sell price returned");
-	is($sell_price_modified, 416, "Correct modified sell price returned");
+	is($sell_price, 740, "Correct sell price returned");
+	is($sell_price_modified, 592, "Correct modified sell price returned");
 		
 }
 

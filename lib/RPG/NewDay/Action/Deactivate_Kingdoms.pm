@@ -79,6 +79,21 @@ sub check_for_inactive {
         
         $party->update;
     }
+    
+    # Buildings get given to the former king's party, or destroyed for NPC parties
+    my @buildings = $kingdom->buildings;
+    foreach my $building (@buildings) {
+        $building->unclaim_land;
+        
+        if (! $king->is_npc) {
+            $building->owner_id($king->party_id);
+            $building->owner_type('party');
+            $building->update;
+        }
+        else {
+            $building->delete;
+        }
+    }
 
     $king->status(undef);
     $king->status_context(undef);

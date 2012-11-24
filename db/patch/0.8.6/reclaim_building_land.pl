@@ -16,5 +16,6 @@ my @buildings = $schema->resultset('Building')->search(
 );
 
 foreach my $building (@buildings) {
+    $building->unclaim_land;
     $building->claim_land;
 }

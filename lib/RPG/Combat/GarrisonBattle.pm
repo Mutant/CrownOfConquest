@@ -4,6 +4,7 @@ use Moose::Role;
 
 use Data::Dumper;
 use RPG::Template;
+use DateTime;
 
 requires qw/garrison/;
 
@@ -17,6 +18,7 @@ sub garrison_flee {
 	}
 	$self->garrison->unclaim_land;
 	$self->garrison->gold(0);
+	$self->garrison->established(DateTime->now());
 	$self->garrison->update;		
 }
 

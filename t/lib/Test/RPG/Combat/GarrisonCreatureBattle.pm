@@ -9,6 +9,7 @@ __PACKAGE__->runtests unless caller();
 
 use Test::More;
 use Test::MockObject::Extends;
+use DateTime;
 
 use Test::RPG::Builder::CreatureGroup;
 use Test::RPG::Builder::Party;
@@ -58,7 +59,7 @@ sub test_new : Tests(2) {
     is($garrison->in_combat_with, $cg->id, "Garrison now in combat with CG");
 }
 
-sub test_check_for_flee : Tests(8) {
+sub test_check_for_flee : Tests(9) {
 	my $self = shift;
 
 	# GIVEN
@@ -66,8 +67,9 @@ sub test_check_for_flee : Tests(8) {
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
+	my $orig_established = DateTime->now->subtract( days => 2 );
 	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, 
-	   character_count => 2, hit_points => 1, max_hit_point => 10 );
+	   character_count => 2, hit_points => 1, max_hit_point => 10, established => $orig_established );
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, garrison_id => $garrison->id );
 	
 	$character->garrison_id($garrison->id);
@@ -99,7 +101,8 @@ sub test_check_for_flee : Tests(8) {
     $garrison->discard_changes();
     isnt($garrison->land_id, $land[4]->id, "No longer in original location");
     is($garrison->gold, 0, "Garrison lost all its gold");
-    is($battle->result->{party_fled}, 1, "Correct value set in battle result"); 	
+    is($battle->result->{party_fled}, 1, "Correct value set in battle result");
+    isnt($garrison->established, $orig_established, "Garrison establisehd date updated" ); 
     
     $item->discard_changes();
     is($item->garrison_id, undef, "Garrison equipment no longer in storage");
@@ -187,8 +190,6 @@ sub test_execute_round : Tests(1) {
 	$character->garrison_id($garrison->id);
 	$character->update;
 	
-	my $home = $ENV{RPG_HOME};
-
     my $battle = RPG::Combat::GarrisonCreatureBattle->new(
         schema         => $self->{schema},
         garrison       => $garrison,

@@ -170,6 +170,11 @@ sub add_creature {
 
 	my $hps = Games::Dice::Advanced->roll( $type->level . 'd8' );
 	
+	# Extra HPs for rare monsters
+	if ($type->rare) {
+	   $hps += $type->level * 10;
+	}
+	
 	my $melee_weapons = $self->melee_weapons;
 
 	my $weapon = 'Claws';

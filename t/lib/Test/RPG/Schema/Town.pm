@@ -396,4 +396,26 @@ sub test_change_allegiance_capital : Tests(6) {
     is($old_kingdom->capital, undef, "Old kingdom no longer has a capital");
 }
 
+sub test_claim_land : Tests(27) {
+    my $self = shift;
+    
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema}, );
+    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[4]->id, );
+    $land[4]->kingdom_id($kingdom->id);
+    $land[4]->update;
+    
+    # WHEN
+    $town->claim_land;
+    
+	# THEN
+	foreach my $land (@land) {
+	   $land->discard_changes;	
+	   is($land->kingdom_id, $kingdom->id, "Land now claimed by kingdom");    
+	   is($land->claimed_by_id, $town->id, "Town claimed sector " . $land->id);
+	   is($land->claimed_by_type, 'town', "Claimed by type correct for sector " . $land->id);     
+	}  
+}
+
 1;

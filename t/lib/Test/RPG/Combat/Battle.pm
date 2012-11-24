@@ -222,7 +222,7 @@ sub test_check_character_attack_with_ammo : Tests(2) {
     is($ammo1->variable('Quantity'), 4, "Quantity of ammo updated");
 }
 
-sub test_check_character_attack_with_ammo_run_out : Tests(2) {
+sub test_check_character_attack_with_ammo_run_out : Tests(3) {
     my $self = shift;
     
     # GIVEN
@@ -233,14 +233,16 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
         char_id             => $attacker->id,
         super_category_name => 'Ammo',
         category_name       => 'Ammo',
+        no_equip_place => 1,
         variables => [
             {
                 item_variable_name => 'Quantity',
-                item_variable_value => 0,
-            
+                item_variable_value => 0,            
             },
         ]
     );
+    $attacker->create_item_grid;
+    $attacker->add_item_to_grid($ammo1);
             
     my $character_weapons = {};              
     $character_weapons->{$attacker->id}{id} = 1;
@@ -267,7 +269,14 @@ sub test_check_character_attack_with_ammo_run_out : Tests(2) {
     is_deeply($ret, { no_ammo => 1 }, "No ammo message returned");
     
     $ammo1->discard_changes;
-    is($ammo1->in_storage, 0, "Ammo deleted");    
+    is($ammo1->in_storage, 0, "Ammo deleted");  
+    
+    my $grid_count = $self->{schema}->resultset('Item_Grid')->search(
+        {
+            item_id => $ammo1->id,
+        },
+    )->count;
+    is($grid_count, 0, "Item removed from grid");  
         
 }
 

@@ -21,4 +21,14 @@ UPDATE `Garrison` set established = now();
 
 ALTER TABLE `Garrison` ADD COLUMN `claim_land_order` TINYINT(4)  NOT NULL DEFAULT 0;
 
+UPDATE `Creature_Type` set image = 'demonking.png' where creature_type = 'Demon King';
+UPDATE `Creature_Type` set image = 'demonlord.png' where creature_type = 'Demon Lord';
+UPDATE `Creature_Type` set image = 'demonspawn.png' where creature_type = 'Devils Spawn';
+UPDATE `Creature_Type` set image = 'fireelemental.png' where creature_type = 'Fire Elemental';
+UPDATE `Creature_Type` set image = 'greaterdemon.png' where creature_type = 'Greater Demon';
+UPDATE `Creature_Type` set image = 'icedragon.png' where creature_type = 'Ice Dragon';
+UPDATE `Creature_Type` set image = 'lesserdemon.png' where creature_type = 'Lesser Demon';
+UPDATE `Creature_Type` set image = 'platinumdragon.png' where creature_type = 'Platinum Dragon';
+UPDATE `Creature_Type` set image = 'wrait.png' where creature_type = 'Wraith';
+
 

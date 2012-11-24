@@ -1,5 +1,7 @@
 <h3>Garrison Orders</h3>
 
+[% USE wrap %]
+
 <form method="post" action="[% base %]garrison/update_orders" onSubmit="postPanels(this); return false">
 <input type="hidden" name="garrison_id" value="[% garrison.id %]">
 <table class="main">
@@ -39,9 +41,12 @@
            		connectId="claim-land"
            		id="claim-land-tooltip"
 				style="display: none">
-			If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the<br>
-			garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before<br>
-			the land will be claimed.
+			[% claim_land_tooltip_text = BLOCK ~%][% FILTER collapse %]
+			If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the
+			garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before
+			the land will be claimed. Beware, this will open your garrison up to attacks from high level parties!"
+			[% END %][% END %]
+			[% wrap(claim_land_tooltip_text, 80, '', '<br>') %]
 		</div>			
 	</tr>	
 	<tr id="flee-threshold">
@@ -51,9 +56,12 @@
            		connectId="flee-threshold"
            		id="flee-threshold-tooltip"
 				style="display: none">
-			Percentage of hit points remaining before characters in this garrison will attempt to flee from combat.<br>
-			If a garrison flees, they will move to an adjacent sector and form a new garrison. Any items stashed at the<br>
-			original garrison will be lost.			 
+			[% flee_threshold_tooltip_text = BLOCK ~%][% FILTER collapse %]
+			Percentage of hit points remaining before characters in this garrison will attempt to flee from combat.
+			If a garrison flees, they will move to an adjacent sector and form a new garrison. Any items stashed at the
+			original garrison will be lost.
+			[% END ~%][% END ~%]
+			[% wrap(flee_threshold_tooltip_text, 80, '', '<br>') %]			 
 		</div>		
 	</tr>
 </table>

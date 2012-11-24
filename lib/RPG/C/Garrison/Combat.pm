@@ -22,7 +22,9 @@ sub attack : Local {
 	if ( $garrison->in_combat ) {
 		$c->stash->{error} = "The garrison is already in combat";
 	}
-	elsif ( ! $building && $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
+	elsif ( ! $building && ! $garrison->claim_land_order && 
+        $c->stash->{party}->level - $garrison->level > $c->config->{max_party_garrison_level_difference} ) {
+		
 		$c->stash->{error} = "The garrison is too weak to attack";
 	}
 	elsif ( $c->model('DBIC::Combat_Log')->get_recent_battle_count_for_garrison( $garrison ) >= $c->config->{garrison_recent_battle_max} ) {

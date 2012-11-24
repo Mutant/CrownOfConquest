@@ -16,3 +16,9 @@ UPDATE Building_Type set land_claim_range = 2 where name = 'Tower';
 UPDATE Building_Type set land_claim_range = 3 where name = 'Fort';
 UPDATE Building_Type set land_claim_range = 4 where name = 'Castle';
 
+ALTER TABLE `Garrison` ADD COLUMN `established` DATETIME  NOT NULL;
+UPDATE `Garrison` set established = now();
+
+ALTER TABLE `Garrison` ADD COLUMN `claim_land_order` TINYINT(4)  NOT NULL DEFAULT 0;
+
+

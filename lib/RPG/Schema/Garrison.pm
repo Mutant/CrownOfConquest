@@ -12,9 +12,13 @@ __PACKAGE__->table('Garrison');
 __PACKAGE__->resultset_class('RPG::ResultSet::Garrison');
 
 __PACKAGE__->add_columns(qw/garrison_id land_id party_id creature_attack_mode party_attack_mode flee_threshold in_combat_with gold name
-                            attack_parties_from_kingdom attack_friendly_parties/);
+                            attack_parties_from_kingdom attack_friendly_parties claim_land_order/);
 
 __PACKAGE__->numeric_columns(qw/gold/);
+
+__PACKAGE__->add_columns(
+    established   => { data_type => 'datetime' },
+);
 
 __PACKAGE__->set_primary_key('garrison_id');
 
@@ -39,6 +43,7 @@ with qw/
 	RPG::Schema::Role::BeingGroup
 	RPG::Schema::Role::CharacterGroup
 	RPG::Schema::Role::Item_Grid
+	RPG::Schema::Role::Land_Claim
 /;
 
 sub rank_separator_position {
@@ -53,6 +58,26 @@ sub members {
 
 sub group_type {
 	return 'garrison';
+}
+
+sub land_claim_range {
+    my $self = shift;
+    
+    return 1;   
+}
+
+sub kingdom {
+    my $self = shift;
+    
+    my $party = $self->party;
+    
+    return $party->kingdom;
+}
+
+sub location {
+    my $self = shift;
+    
+    return $self->land;
 }
 
 sub number_alive {

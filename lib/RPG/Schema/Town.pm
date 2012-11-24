@@ -7,6 +7,8 @@ use base 'DBIx::Class';
 
 use Carp;
 
+use Moose;
+
 use Math::Round qw(round);
 use RPG::ResultSet::RowsInSectorRange;
 use RPG::Maths;
@@ -99,6 +101,8 @@ __PACKAGE__->has_many( 'guards', 'RPG::Schema::Town_Guards', 'town_id', );
 
 __PACKAGE__->has_many( 'raids', 'RPG::Schema::Town_Raid', 'town_id', );
 
+with 'RPG::Schema::Role::Land_Claim';
+
 sub label {
     my $self = shift;
     
@@ -168,6 +172,12 @@ sub tax_cost {
     };
 }
 
+sub land_claim_range {
+    my $self = shift;
+    
+    return RPG::Schema->config->{town_land_claim_range};   
+}
+
 sub has_road_to {
     my $self = shift;
     my $dest_town = shift;
@@ -175,6 +185,14 @@ sub has_road_to {
     my $found_town = 0;
     
     return $self->_find_roads($self->location, $dest_town->location);
+}
+
+sub kingdom {
+    my $self = shift;
+    
+    my $location = $self->location;
+    
+    return $location->kingdom;   
 }
 
 sub _find_roads {
@@ -245,52 +263,6 @@ sub expected_garrison_chars_level {
 	$expected_garrison_chars_level = 100 if $self->prosperity > 85;
 	
 	return $expected_garrison_chars_level;
-}
-
-sub claim_land {
-    my $self = shift;
-    
-    my $kingdom_id = $self->location->kingdom_id;
-    
-    my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
-        resultset    => $self->result_source->schema->resultset('Land'),
-        relationship => 'me',
-        base_point   => {
-            x => $self->location->x,
-            y => $self->location->y,
-        },
-        search_range        => RPG::Schema->config->{town_land_claim_range} * 2 + 1,
-        increment_search_by => 0,
-    );
-    
-    foreach my $sector (@sectors) {
-        # Skip sectors already claimed
-        if (defined $sector->claimed_by_type && ($sector->claimed_by_type ne 'town' || $sector->claimed_by_id != $self->id)) {
-            next;   
-        } 
-        
-        $sector->kingdom_id($kingdom_id);
-        $sector->claimed_by_id($self->id);
-        $sector->claimed_by_type('town');
-        $sector->update;
-    }    
-}
-
-sub unclaim_land {
-    my $self = shift;   
-    
-    my @sectors = $self->result_source->schema->resultset('Land')->search(
-        {
-            'claimed_by_id' => $self->id,
-            'claimed_by_type' => 'town',   
-        },
-    );
-    
-    foreach my $sector (@sectors) {
-        $sector->claimed_by_id(undef);
-        $sector->claimed_by_type(undef);
-        $sector->update;
-    }     
 }
 
 sub heal_cost_per_hp {

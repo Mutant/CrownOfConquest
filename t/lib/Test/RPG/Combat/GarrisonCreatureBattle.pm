@@ -66,14 +66,12 @@ sub test_check_for_flee : Tests(8) {
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 	my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
-	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, );
+	my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[4]->id, 
+	   character_count => 2, hit_points => 1, max_hit_point => 10 );
 	my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, garrison_id => $garrison->id );
 	
 	$character->garrison_id($garrison->id);
 	$character->update;
-	
-	$garrison = Test::MockObject::Extends->new($garrison);
-	$garrison->set_true('is_over_flee_threshold');
 	
 	my $config = {
 		base_flee_chance => 20,

@@ -11,6 +11,7 @@ use JSON;
 use List::Util qw(shuffle);
 use Set::Object qw(set);
 use HTML::Strip;
+use DateTime;
 
 sub auto : Private {
 	my ($self, $c) = @_;
@@ -102,6 +103,7 @@ sub add : Local {
 			creature_attack_mode => 'Attack Weaker Opponents',
 			party_attack_mode => 'Defensive Only',
 			name => $name || undef,
+			established => DateTime->now(),
 		}
 	);
 	
@@ -431,6 +433,7 @@ sub update_orders : Local {
 	$c->stash->{garrison}->flee_threshold($c->req->param('flee_threshold'));
 	$c->stash->{garrison}->attack_parties_from_kingdom($c->req->param('attack_parties_from_kingdom') ? 1 : 0);
 	$c->stash->{garrison}->attack_friendly_parties($c->req->param('attack_friendly_parties') ? 1 : 0);
+	$c->stash->{garrison}->claim_land_order($c->req->param('claim_land_order') ? 1 : 0);
 	$c->stash->{garrison}->update;
 	
 	$c->forward( '/panel/refresh', [[screen => 'garrison/manage?garrison_id=' . $c->stash->{garrison}->id . '&selected=orders']] );

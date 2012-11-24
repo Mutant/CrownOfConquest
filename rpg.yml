@@ -106,6 +106,9 @@ detonate_cron_string: "*/5 * * * *"
 # Do majesty calculations
 majesty_cron_string: "0 * * * *"
 
+# Garrison cron string
+garrison_cron_string: "40 */2 * * *"
+
 # ----- Character / Party Generation Params ----- #
 
 # Pool of points to add to stats for new character
@@ -659,6 +662,9 @@ garrison_min_spacing: 1
 
 # Minimum level a party must be before a garrison will attack
 min_party_level_for_garrison_attack: 6
+
+# Number of days garrison must be in a sector before they will begin claiming land
+garrison_time_to_claim_land: 2
 
 # ----- Enchantment Params ----- #
 

@@ -33,6 +33,17 @@
 	<tr>
 		<td colspan="2"><input type="checkbox" name="attack_friendly_parties" value="1">Attack parties, even if they're from kingdoms we're at peace with</td>
 	</tr>	
+	<tr>
+		<td colspan="2"><input type="checkbox" name="claim_land_order" value="1">Claim land for our kingdom <span id="claim-land">(?)</span></td>
+		<div dojoType="dijit.Tooltip"
+           		connectId="claim-land"
+           		id="claim-land-tooltip"
+				style="display: none">
+			If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the<br>
+			garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before<br>
+			the land will be claimed.
+		</div>			
+	</tr>	
 	<tr id="flee-threshold">
 		<td>Flee Threshold:</td>
 		<td><input type="text" name="flee_threshold" size="3">

@@ -15,6 +15,7 @@ sub garrison_flee {
 		$item->land_id($self->location->id);
 		$item->update;		
 	}
+	$self->garrison->unclaim_land;
 	$self->garrison->gold(0);
 	$self->garrison->update;		
 }
@@ -51,6 +52,8 @@ sub wipe_out_garrison {
    		$character->status_context($self->location->id);
    		$character->update;
    	}
+   	
+   	$garrison->unclaim_land;
     	
    	$garrison->land_id(undef);
    	$garrison->update;

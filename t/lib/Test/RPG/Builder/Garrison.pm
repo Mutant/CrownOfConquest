@@ -27,7 +27,9 @@ sub build_garrison {
         {
             land_id => $params{land_id},
             party_id => $params{party_id},
-            party_attack_mode => $params{party_attack_mode} || 'Attack Stronger Opponents',   
+            party_attack_mode => $params{party_attack_mode} || 'Attack Stronger Opponents',
+            established => $params{established} // DateTime->now(),   
+            flee_threshold => $params{flee_threshold} // 70,
         }
     );
     
@@ -38,6 +40,7 @@ sub build_garrison {
                 party_id   => $params{party_id},
                 garrison_id => $garrison->id,
                 level      => $params{character_level} || 1,
+                %params,
             );
         }
     }    

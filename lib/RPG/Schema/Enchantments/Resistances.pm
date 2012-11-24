@@ -6,15 +6,24 @@ with 'RPG::Schema::Enchantments::Interface';
 
 use RPG::Maths;
 use List::Util qw(shuffle);
+use Games::Dice::Advanced;
 
 my @types = qw/fire ice poison/;
 
 sub init_enchantment {
 	my $self = shift;
 	
-	my $bonus = RPG::Maths->weighted_random_number(1..20);
+	my $bonus;	
+	my $type;
 	
-	my $type = (shuffle @types)[0];
+	if (Games::Dice::Advanced->roll('1d100') <= 5) {
+	   $type = 'all';
+	   $bonus = RPG::Maths->weighted_random_number(1..10);   
+	}
+	else {
+	   $type = (shuffle @types)[0];
+	   $bonus = RPG::Maths->weighted_random_number(1..20);
+	}
 	
 	$self->add_to_variables(
 		{
@@ -44,13 +53,26 @@ sub must_be_equipped {
 sub tooltip {
 	my $self = shift;
 	
-	return '+' . $self->variable('Resistance Bonus') . '% to Resist ' . ucfirst $self->variable('Resistance Type') ;	
+	my $label = '';
+	if ($self->variable('Resistance Type') eq 'all') {
+	    $label = ' All Resistances';
+	}
+	else {
+	    $label = 'Resist ' . ucfirst $self->variable('Resistance Type');
+	}
+	
+	return '+' . $self->variable('Resistance Bonus') . "% to $label";	
 }
 
 sub sell_price_adjustment {
 	my $self = shift;
 	
-	return $self->variable('Resistance Bonus') * 120;	
+	if ($self->variable('Resistance Type') eq 'all') {
+	   return $self->variable('Resistance Bonus') * 310; 
+	}
+	else {
+	   return $self->variable('Resistance Bonus') * 120;
+	}	
 }
 
 1;

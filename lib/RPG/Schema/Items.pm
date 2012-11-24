@@ -476,12 +476,22 @@ sub _resistance_bonus_trigger {
 	
 	foreach my $enchantment (@enchantments) {
 		my $bonus = $enchantment->variable('Resistance Bonus');
-		my $type = $enchantment->variable('Resistance Type');
+		
+		my @types;
+		if ($enchantment->variable('Resistance Type') eq 'all') {
+		    @types = @RPG::Schema::Character::RESISTANCES;
+		}
+		else {
+		    @types = ($enchantment->variable('Resistance Type'));
+		}
+		
 		$bonus = -$bonus unless defined $new_equip_place_id;
 		
-		my $method = "adjust_resist_${type}_bonus";
+		foreach my $type (@types) {
+            my $method = "adjust_resist_${type}_bonus";
 		
-		$character->$method($bonus);
+            $character->$method($bonus);
+		}
 	}    
 }
 

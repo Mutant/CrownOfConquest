@@ -113,7 +113,7 @@ with qw/RPG::Schema::Role::Item_Grid/;
 our @STATS = qw(str con int div agl);
 my @LONG_STATS = qw(strength constitution intelligence divinity agility);
 
-my @RESISTANCES = qw/fire ice poison/;
+our @RESISTANCES = qw/fire ice poison/;
 
 sub inflate_result {
     my $pkg = shift;
@@ -826,7 +826,14 @@ sub calculate_resistance_bonuses {
 	
 	foreach my $item (@enchanted_items) {
         foreach my $item_enchantment ($item->item_enchantments) {
-            $bonuses{$item_enchantment->variable('Resistance Type')} += $item_enchantment->variable('Resistance Bonus');
+            if ($item_enchantment->variable('Resistance Type') eq 'all') {
+                foreach my $resistance (@RESISTANCES) {
+                    $bonuses{$resistance} += $item_enchantment->variable('Resistance Bonus');
+                }    
+            }
+            else {            
+                $bonuses{$item_enchantment->variable('Resistance Type')} += $item_enchantment->variable('Resistance Bonus');
+            }
         }   
 	}
 	

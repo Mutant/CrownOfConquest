@@ -9,6 +9,21 @@ use Data::Dumper;
 
 #__PACKAGE__->config->{DEBUG} = 'all';
 
+use Template::Provider::Preload;
+ 
+__PACKAGE__->config(
+    (RPG->config->{dev} ? () : (
+        LOAD_TEMPLATES => [        
+            Template::Provider::Preload->new(
+                PRECACHE     => 1,
+                PREFETCH     => '*.html',
+                INCLUDE_PATH => RPG->path_to('root'),
+                COMPILE_DIR  => "/tmp/template_cache",
+            ),
+        ],
+    )),
+);
+
 sub process {
     my ($self, $c, $params) = @_;
 

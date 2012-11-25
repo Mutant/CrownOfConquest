@@ -72,8 +72,7 @@ BEGIN {
     
 }
 
-__PACKAGE__->setup(
-    qw/
+my @plugins = qw/
         -Debug
         -Stats
         ConfigLoader
@@ -83,8 +82,13 @@ __PACKAGE__->setup(
         DBIC::Schema::Profiler
         Captcha
         Log::Dispatch
-        Static::Simple
-        /
-);
+/;
+  
+if ($ENV{RPG_DEV}) {
+    push @plugins, 'MemoryUsage';
+    push @plugins, 'Static::Simple';
+}
+
+__PACKAGE__->setup(@plugins);
 
 1;

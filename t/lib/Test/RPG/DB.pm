@@ -53,7 +53,8 @@ sub aa_setup_context : Test(setup) {
         }
     );
     
-    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema});
+    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema})
+        unless $self->{dont_create_today};
 }
 
 sub roll_back : Test(teardown) {

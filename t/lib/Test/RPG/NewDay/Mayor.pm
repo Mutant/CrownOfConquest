@@ -1041,4 +1041,64 @@ sub test_alert_parties_about_exceeding_mayor_limit : Tests(4) {
     
 }
 
+sub test_check_if_election_needed_warning_given_to_party : Tests(2) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, last_election => 88 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});        
+	my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id, party_id => $party->id );
+	
+	$self->{dont_create_today} = 1;
+	
+	my $today = Test::RPG::Builder::Day->build_day($self->{schema}, day_number => 100);
+	
+	$self->{mock_context}->set_always( 'current_day', $today );
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->check_if_election_needed($town);
+	
+	# THEN
+	my @messages = $party->messages;
+	is(scalar @messages, 1, "1 message created for party");
+	is($messages[0]->message, "The town of Test Town hasn't had an election for 12 days. The towns people expect one soon!",
+	   "Correct message");
+}
+
+sub test_check_if_election_needed_overdue : Tests(5) {
+    my $self = shift;
+    
+    # GIVEN    
+	my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, last_election => 85, mayor_rating => 30 );
+	my $party = Test::RPG::Builder::Party->build_party($self->{schema});        
+	my $mayor = Test::RPG::Builder::Character->build_character( $self->{schema}, mayor_of => $town->id, party_id => $party->id );
+	
+	$self->{dont_create_today} = 1;
+	
+	my $today = Test::RPG::Builder::Day->build_day($self->{schema}, day_number => 100);
+	
+	$self->{mock_context}->set_always( 'current_day', $today );
+	
+	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
+	
+	# WHEN
+	$action->check_if_election_needed($town);
+	
+	# THEN
+	$town->discard_changes;
+	is($town->mayor_rating, 10, "Mayor's rating reduced");
+	
+	my @history = $town->history;
+	is(scalar @history, 1, "1 Messaged added to town's history");
+	is($history[0]->message, "There hasn't been an election in 15 days! The peasants demand their right to vote be honoured",
+	   "Correct history message");
+	
+	my @messages = $party->messages;
+	is(scalar @messages, 1, "1 message created for party");
+	is($messages[0]->message, "The town of Test Town hasn't had an election for 15 days. The towns people are extremely upset that one hasn't been called!",
+	   "Correct message");
+}
+
 1;

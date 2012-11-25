@@ -28,6 +28,7 @@ sub build_town {
             peasant_state => '' ||  $params{peasant_state},
             peasant_tax => $params{peasant_tax} || 0,
             character_heal_budget => $params{character_heal_budget} || 0,
+            last_election => $params{last_election} // undef,
         }   
     );
     

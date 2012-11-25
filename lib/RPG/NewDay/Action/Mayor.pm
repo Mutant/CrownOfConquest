@@ -658,6 +658,23 @@ sub check_if_election_needed {
 	
 	my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
 	
+	if ($days_since_last_election == 12) {
+        # Give party a warning
+        my $mayor = $town->mayor;
+        return if $mayor->is_npc;
+        
+        my $party = $mayor->party;
+        $party->add_to_messages(
+            {
+                day_id  => $self->context->current_day->id,
+                alert_party => 1,
+                message => "The town of " . $town->town_name . " hasn't had an election for $days_since_last_election days. The towns people expect one soon!",
+            }
+        );
+        
+        return;
+	}
+	
 	if ($days_since_last_election >= 15 && $days_since_last_election % 3 == 0) {
 		$town->decrease_mayor_rating(20);
 		$town->update;
@@ -667,7 +684,19 @@ sub check_if_election_needed {
 				day_id  => $self->context->current_day->id,
 	            message => "There hasn't been an election in $days_since_last_election days! The peasants demand their right to vote be honoured",
     		}
-    	);		
+    	);
+    	
+    	my $mayor = $town->mayor;
+        return if $mayor->is_npc;
+        
+        my $party = $mayor->party;
+        $party->add_to_messages(
+            {
+                day_id  => $self->context->current_day->id,
+                alert_party => 1,
+                message => "The town of " . $town->town_name . " hasn't had an election for $days_since_last_election days. The towns people are extremely upset that one hasn't been called!",
+            }
+        );    	
 	}	
 }
 
@@ -1097,7 +1126,6 @@ sub alert_parties_about_exceeding_mayor_limit {
 					message => "We have $mayor_count mayors, which exceeds our maximum of $count_allowed. We should relinquish " .
 					   "the mayoralties of some of our towns, or risk revolts!",
 					alert_party => 1,
-					party_id => $party->party_id,
 					day_id => $c->current_day->id,
                 }
             );                                   

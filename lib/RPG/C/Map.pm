@@ -648,6 +648,7 @@ sub generate_sectors {
                             template      => 'map/single_sector.html',
                             params        => {
                                 position => $location,
+                                current_position => $c->stash->{party_location},
                                 click_to_move => 1,
                                 x => $x,
                                 y => $y,

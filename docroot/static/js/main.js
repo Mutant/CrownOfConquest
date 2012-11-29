@@ -65,9 +65,8 @@ function shiftMapCallback(data) {
 	
 	moveLinks(data);
 	
-	var newSector = dojo.byId('sector_' + data.newSector.x + '_' + data.newSector.y); 
-	
-	newSector.appendChild(dojo.byId('herecircle'));	
+	var newSector = dojo.byId('sector_' + data.newSector.x + '_' + data.newSector.y);
+	newSector.appendChild(dojo.byId('herecircle'));
 	
 	loadNewSectors(sectorsAdded);
 }
@@ -288,8 +287,6 @@ function updateSectors(responseObject) {
 			}
 		}
 	}
-	
-	var newSector = dojo.byId('sector_' + responseObject.loc.x + '_' + responseObject.loc.y);
 }
 
 function refreshSectorCallback(data) {

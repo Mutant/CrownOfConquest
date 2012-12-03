@@ -46,7 +46,7 @@ with qw/
 	RPG::Schema::Role::Land_Claim
 /;
 
-sub claim_type { 'town' }
+sub claim_type { 'garrison' }
 
 sub rank_separator_position {
 	return 0;

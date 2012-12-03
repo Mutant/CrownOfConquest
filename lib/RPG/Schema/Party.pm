@@ -1194,7 +1194,7 @@ sub mayor_count_allowed {
 
     my $count = 0;
 
-    $count = 1 if $self->level < RPG::Schema->config->{min_party_level_for_mayors};
+    $count = 1 if $self->level >= RPG::Schema->config->{min_party_level_for_mayors};
 
     my $high_level_char_count = $self->search_related(
         'characters',
@@ -1204,8 +1204,8 @@ sub mayor_count_allowed {
             hit_points => { '>', 0 },
         }
     )->count;
-
-    $count += 1 + int ($high_level_char_count / 3);
+    
+    $count += int ($high_level_char_count / 3);
 
     return $count;
 }

@@ -16,7 +16,7 @@ sub process {
             INCLUDE_PATH       => $config->{home} . '/root',
             EVAL_PERL          => 0,
             TEMPLATE_EXTENSION => '',
-            COMPILE_DIR => "/tmp/template_cache",
+            #COMPILE_DIR => "/tmp/template_cache",
         }
     ) || die $Template::ERROR, "\n";
 

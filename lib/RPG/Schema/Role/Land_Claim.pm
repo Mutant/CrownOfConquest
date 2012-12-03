@@ -7,6 +7,7 @@ use Scalar::Util qw(blessed);
 requires qw/kingdom location result_source id land_claim_range/;
 
 my %CLAIM_TYPE = (
+    'RPG::Model::DBIC::Building' => 'building',
     'RPG::Schema::Building' => 'building',
     'RPG::Schema::Garrison' => 'garrison',
     'RPG::Schema::Town' => 'town',

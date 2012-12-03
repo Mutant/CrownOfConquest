@@ -108,7 +108,7 @@ sub relinquish : Local {
     my ($self, $c) = @_;
     
     croak "Cannot relinquish mayoralry while election is scheduled" 
-        if $c->stash->{town}->current_election->count >= 1; 
+        if $c->stash->{town}->current_election; 
     
     my $mayor = $c->stash->{town}->mayor;
     $mayor->lose_mayoralty(0);
@@ -125,7 +125,7 @@ sub change : Local {
     croak "Not in town" unless $c->stash->{in_town};
     
     croak "Cannot change mayoralry while election is scheduled" 
-        if $c->stash->{town}->current_election->count >= 1;    
+        if $c->stash->{town}->current_election;    
     
     my $mayor = $c->stash->{town}->mayor;
     

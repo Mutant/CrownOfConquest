@@ -109,8 +109,8 @@ a:visited {
 
 #body {
         background-color: black;
-	background-image: url(/static/images/cocbg.jpg);
-        background-size: cover;
+		background-image: url(/static/images/cocbg.jpg);
+        background-repeat:repeat-x;
 }
 
 h2 {margin: 0; padding: 0}

@@ -103,6 +103,8 @@ __PACKAGE__->has_many( 'raids', 'RPG::Schema::Town_Raid', 'town_id', );
 
 with 'RPG::Schema::Role::Land_Claim';
 
+sub claim_type { 'town' }
+
 sub label {
     my $self = shift;
     

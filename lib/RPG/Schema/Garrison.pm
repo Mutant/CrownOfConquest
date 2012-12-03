@@ -46,6 +46,8 @@ with qw/
 	RPG::Schema::Role::Land_Claim
 /;
 
+sub claim_type { 'town' }
+
 sub rank_separator_position {
 	return 0;
 }

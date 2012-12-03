@@ -34,6 +34,8 @@ __PACKAGE__->has_many( 'upgrades', 'RPG::Schema::Building_Upgrade', 'building_id
 
 with 'RPG::Schema::Role::Land_Claim';
 
+sub claim_type { 'building' };
+
 #  Get owner_name.  TODO: this is inefficient, should be joined but owner_id / owner_type needs a special join.
 sub owner_name {
 	my $self = shift;

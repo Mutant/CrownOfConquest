@@ -1036,7 +1036,7 @@ sub claim_land : Local {
 	
 	my $message = "You claim this sector for the Kingdom of " . $c->stash->{party}->kingdom->name;
 	
-	$message .= " You've claimed " . ($day_stats->message+1) . " land today, out of your maximum allowed of " . $c->config->{max_land_claimed_per_day};
+	$message .= " You've claimed " . $day_stats->message . " land today, out of your maximum allowed of " . $c->config->{max_land_claimed_per_day};
 	
 	$c->stash->{messages} = [$message];
 	

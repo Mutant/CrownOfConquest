@@ -725,7 +725,7 @@ kingdom_co_op_grace: 7
 capital_move_cost_per_sector: 6
 
 # Chance sectors not claimed by town or building go neutral
-chance_free_claimed_sector_becomes_neutral: 15
+chance_free_claimed_sector_becomes_neutral: 5
 
 # Number of days a claim for the throne takes
 claim_wait_period: 7

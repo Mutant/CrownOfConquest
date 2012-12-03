@@ -1191,9 +1191,11 @@ sub has_effect {
 
 sub mayor_count_allowed {
     my $self = shift;
-    
-    return 0 if $self->level < RPG::Schema->config->{min_party_level_for_mayors};
-    
+
+    my $count = 0;
+
+    $count = 1 if $self->level < RPG::Schema->config->{min_party_level_for_mayors};
+
     my $high_level_char_count = $self->search_related(
         'characters',
         {
@@ -1201,9 +1203,11 @@ sub mayor_count_allowed {
             status => [ undef, {'!=', 'inn'} ],
             hit_points => { '>', 0 },
         }
-    );
-    
-    return 1 + int ($high_level_char_count / 3);   
+    )->count;
+
+    $count += 1 + int ($high_level_char_count / 3);
+
+    return $count;
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

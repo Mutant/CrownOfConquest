@@ -157,14 +157,24 @@ sub execute_round {
     			push @combat_messages, $action_result;
     
        			$self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $action_result->damage );
-    
-    			if ( $action_result->defender_killed ) {
-    			    my $opp_number_of_killed_combatant = $self->opponent_number_of_being( $action_result->defender );
+       			
+       			my @defenders_killed;
+       			@defenders_killed = ($action_result->defender) if $action_result->defender_killed;
+;
+    			if ($action_result->magical_damage and my $other_damages = $action_result->magical_damage->other_damages) {    			    
+                    foreach my $other_action_result (@$other_damages) {
+                        push @defenders_killed, $other_action_result->defender if $other_action_result->defender_killed;    
+                        $self->combat_log->record_damage( $self->opponent_number_of_being( $action_result->attacker ), $other_action_result->damage );                       
+                    }  
+    			}
+    			
+    			foreach my $defender (@defenders_killed) {
+    			    my $opp_number_of_killed_combatant = $self->opponent_number_of_being( $defender );
     				$self->combat_log->record_death( $opp_number_of_killed_combatant );
     				$self->combatants_alive->{$opp_number_of_killed_combatant}--;
     
-    				my $type = $action_result->defender->is_character ? 'character' : 'creature';
-    				push @{ $self->session->{killed}{$type} }, $action_result->defender->id;
+    				my $type = $defender->is_character ? 'character' : 'creature';
+    				push @{ $self->session->{killed}{$type} }, $defender->id;
     			}
     			    
     			if ( my $losers = $self->check_for_end_of_combat ) {

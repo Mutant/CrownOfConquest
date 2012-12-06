@@ -1253,6 +1253,68 @@ sub test_characters_killed_during_round_are_not_healed : Tests(1) {
 	is(scalar @{$result->{messages}}, 2, "Only 2 combat messages");
 }
 
+sub test_execute_round_creature_killed_by_magical_damage : Tests(8) {
+	my $self = shift;
+
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+	my $char  = ( $party->characters )[0];
+	my $cg    = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 2 );
+	my $cret1  = ( $cg->creatures )[0];
+	my $cret2  = ( $cg->creatures )[0];
+
+	my $battle = RPG::Combat::CreatureWildernessBattle->new(
+		schema         => $self->{schema},
+		party          => $party,
+		creature_group => $cg,
+		config         => $self->{config},
+		log            => $self->{mock_logger},
+	);
+	$battle = Test::MockObject::Extends->new($battle);
+	$battle->set_always( 'check_for_flee', undef );
+	$battle->set_true('process_effects');
+
+	my $char_action_result = RPG::Combat::ActionResult->new(
+        attacker        => $char,
+		defender        => $cret1,
+		defender_killed => 0,
+		damage          => 1,		
+        magical_damage => RPG::Combat::MagicalDamageResult->new(
+                    		{                    
+                    			type            => 'fire',
+                    			other_damages    => [RPG::Combat::ActionResult->new(
+                                    defender => $cret2,
+                                    attacker => $char,
+                                    damage => 2,
+                                    defender_killed => 1,
+                    			)],
+                    		}
+	                     ),
+    );
+	$battle->set_always( 'character_action', $char_action_result );
+
+	$battle->mock( 'get_combatant_list', sub { ( $char ) } );
+
+	# WHEN
+	my $result = $battle->execute_round();
+
+	# THEN
+	is( $result->{combat_complete},                       undef,      "Combat not ended" );
+	is( scalar @{ $result->{messages} },                  1,          "1 Combat message returned" );
+	is( scalar @{ $battle->session->{killed}{creature} }, 1,          "One creature recorded as killed" );
+	is( $battle->session->{killed}{creature}[0],          $cret2->id, "Correct creature recorded as killed" );
+	is( $battle->combatants_alive->{2},                   1,          "Combatants alive count updated");
+
+	is( $battle->session->{damage_done}{ $char->id }, 1, "Damage recorded" );
+
+	undef $battle;    # Force combat log to be written
+
+	my $combat_log = $self->{schema}->resultset('Combat_Log')->search->first;
+
+	is( $combat_log->opponent_2_deaths,       1, "Creature death recorded in combat log" );
+	is( $combat_log->total_opponent_1_damage, 3, "Char Damage recorded in combat log" );
+}
+
 sub test_finish_creatures_lost : Tests(6) {
 	my $self = shift;
 

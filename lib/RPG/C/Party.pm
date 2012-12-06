@@ -577,10 +577,28 @@ sub camp : Local {
 		$c->stash->{messages} = "The party camps for a short period of time";
 	}
 	else {
-		$c->stash->{error} = "You don't have enough turns left today to camp";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['camp']);
 	}
 
 	$c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
+}
+
+sub not_enough_turns : Private {
+    my ($self, $c, $reason) = @_;
+    
+    return $c->forward(
+        'RPG::V::TT',
+		[
+			{
+				template => 'party/messages/not_enough_turns.html',
+				params   => {
+					reason => $reason,
+				},
+				return_output => 1,
+			}
+		]
+	);    
+       
 }
 
 sub select_action : Local {
@@ -725,7 +743,7 @@ sub scout : Local {
 	my $party = $c->stash->{party};
 
 	if ( $party->turns < 1 ) {
-		$c->stash->{error} = "You do not have enough turns to scout";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['scout']);
 		$c->forward( '/panel/refresh', ['messages'] );
 		return;
 	}
@@ -831,7 +849,7 @@ sub destroy_orb : Local {
 	my $party = $c->stash->{party};
 
 	if ( $party->turns < 1 ) {
-		$c->stash->{error} = "You do not have enough turns to destroy the orb";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['destory the orb']);
 		$c->forward( '/panel/refresh', ['messages'] );
 		return;
 	}
@@ -884,7 +902,7 @@ sub pickup_item : Local {
 	croak "Item not in sector" unless $item->land_id == $party->land_id;
 
 	if ( $party->turns < 1 ) {
-		$c->stash->{error} = "You do not have enough turns to pickup the item";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['pick up the item']);
 		$c->forward( '/panel/refresh', ['messages'] );
 		return;
 	}
@@ -914,7 +932,7 @@ sub pickup_corpse : Local {
     my $party = $c->stash->{party};
     
 	if ( $party->turns < 1 ) {
-		$c->stash->{error} = "You do not have enough turns to pickup the corpse";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['pick up the corpse']);
 		$c->forward( '/panel/refresh', ['messages'] );
 		return;
 	}
@@ -1005,7 +1023,7 @@ sub claim_land : Local {
 	die "Can't claim this land\n" unless $c->stash->{party}->can_claim_land($c->stash->{party_location});
 	
 	if ($c->stash->{party}->turns < 10) {
-        $c->stash->{error} = "You do not have enough turns left to claim more land";
+        $c->stash->{error} = $c->forward('/party/not_enough_turns',['claim land']);
 		$c->forward( '/panel/refresh', [ 'messages' ]);
 		return;
 	}

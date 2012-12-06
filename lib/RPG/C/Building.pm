@@ -130,7 +130,7 @@ sub build : Local {
     my @groups = $self->get_valid_groups($c, $town);
 
     if (! $building_type->enough_turns($c->stash->{party})) {
-        $c->stash->{error} = "You don't have enough turns to construct the building";
+        $c->stash->{error} = $c->forward('/party/not_enough_turns',['construct the building']);
         $c->detach('/panel/refresh');
     }
    
@@ -273,7 +273,7 @@ sub upgrade : Local {
 	croak "Building can't be upgraded\n" unless $upgradable_to_type;	
 	
     if (! $town && ! $upgradable_to_type->enough_turns($c->stash->{party})) {
-        $c->stash->{error} = "You don't have enough turns to upgrade the building";
+        $c->stash->{error} = $c->forward('/party/not_enough_turns',['upgrade the building']);
         $c->detach('/panel/refresh');
     }
     

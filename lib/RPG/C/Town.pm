@@ -551,7 +551,7 @@ sub pay_tax : Private {
 		else {
 			if ( $cost->{turns} > $c->stash->{party}->turns ) {
 			    $c->stash->{message_panel_size} = 'small';
-				$c->stash->{panel_messages} = ["You don't have enough turns to pay the tax"];
+				$c->stash->{panel_messages} = [$c->forward('/party/not_enough_turns',['pay the tax'])];
 				$c->detach( '/panel/refresh', ['messages'] );
 			}
 
@@ -787,7 +787,7 @@ sub work : Local {
     }
     else {
         if ($c->stash->{party}->turns < $c->req->param('turns')) {
-            $c->stash->{error} = "You do not have enough turns!";   
+            $c->stash->{error} = $c->forward('/party/not_enough_turns');   
         }
         else {        
             $c->stash->{party}->increase_gold($gold_per_turn*$c->req->param('turns'));
@@ -959,7 +959,7 @@ sub take_coach : Local {
     }
 
     if ($party->turns < $coach->{turns_cost}) {
-		$c->stash->{panel_messages} = ["You don't have enough turns to take the coach"];
+		$c->stash->{panel_messages} = [$c->forward('/party/not_enough_turns',['take the coach'])];
 		$c->detach( '/panel/refresh', ['messages'] );
     }
     

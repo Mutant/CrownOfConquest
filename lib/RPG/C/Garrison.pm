@@ -59,7 +59,7 @@ sub add : Local {
 	}
 	
 	if ( $c->stash->{party}->turns < $c->config->{garrison_creation_turn_cost} ) {
-		$c->stash->{error} = "You need at least " . $c->config->{garrison_creation_turn_cost} . " to create a garrison";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['create a garrison']);
 		$c->detach( '/panel/refresh' );
 	}
 	

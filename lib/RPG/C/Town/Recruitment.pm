@@ -162,7 +162,7 @@ sub create_trained : Local {
     croak "Can't train existing character" if $c->req->param('character_id');
     
     if ($c->stash->{party}->turns < $c->config->{train_turn_cost}) {
-        $c->stash->{error} = "You do not have enough turns to train a new character";
+        $c->stash->{error} = $c->forward('/party/not_enough_turns',['train a new character']);
         $c->forward( '/panel/refresh', [[screen => '/town/recruitment']] );
         return;
     }

@@ -566,7 +566,7 @@ sub move_to : Local {
 
 sub generate_sectors {
     my ( $self, $c, $sectors_passed ) = @_;
-    
+        
     my @results;
     
     my @lines;
@@ -789,7 +789,7 @@ sub can_move_to_sector : Private {
     # Check that the party has enough movement points    
     my $movement_cost = $new_land->movement_cost($movement_factor, undef, $c->stash->{party}->location);
     if ( $c->stash->{party}->turns < $movement_cost ) {
-        $c->stash->{error} = 'You do not have enough turns to move there';
+        $c->stash->{error} = $c->forward('/party/not_enough_turns',['move there']);
         return 0;
     }
   

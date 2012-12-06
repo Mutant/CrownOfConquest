@@ -49,7 +49,7 @@ sub execute_attack : Private {
 	my ( $self, $c, $creature_group ) = @_;
 	
 	if ($c->stash->{party}->turns <= 0) {
-		$c->stash->{error} = "You do not have enough turns to attack the creatures";
+		$c->stash->{error} = $c->forward('/party/not_enough_turns',['attack the creatures']);
 		$c->forward( '/panel/refresh', ['messages'] );
 		return;   
 	}

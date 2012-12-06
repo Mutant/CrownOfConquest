@@ -195,8 +195,8 @@ sub test_auto_heal_called_for_mayors_group_even_if_mayor_dead : Tests(4) {
     is($mayor->is_dead, 0, "Mayor no longer dead, as opponents fled");
     
     my @history = $town->history;
-    is(scalar @history, 2, "Two messages added to town's history");
-    is($history[1]->message, "test was slain in combat. However, as the raiders fled the town's healer resurrected him at no charge",
+    is(scalar @history, 3, "Two messages added to town's history");
+    is($history[2]->message, "test was slain in combat. However, as the raiders fled the town's healer resurrected him at no charge",
         "Correct message added to town's history");
 }
 

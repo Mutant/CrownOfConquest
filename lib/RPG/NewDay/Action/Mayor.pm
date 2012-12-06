@@ -616,6 +616,7 @@ sub refresh_mayor {
         $to_spend = $town->gold if $to_spend > $town->gold;
         
         my $spent = 0;
+    	my $res_count = 0;
     	
     	foreach my $char (@dead_garrison_chars) {
             my $cost = $char->resurrect_cost;
@@ -623,17 +624,28 @@ sub refresh_mayor {
                 $char->resurrect($town, 0);
                 $to_spend-=$cost;
                 $spent+=$cost;
+                $self->context->logger->debug("Resurrected town garrison char " . $char->id . " for the cost of $cost"); 
                 $town->decrease_gold($cost);
+                $res_count++;
             }
     	}
     	
     	$town->update;
+    	
+        $town->add_to_history(
+        	{
+    			type => 'mayor_news',
+    			message => "The town healer resurrected $res_count town garrison characters at the cost of $spent gold.",
+    			day_id => $self->context->current_day->id,
+    		}
+    	);    	
+    	
     	$hist_rec->increase_value($spent);
     	$hist_rec->update;
 	}
 	
 	# Auto-heal garrison & mayor if necessary
-	$cg->auto_heal if $cg;
+	$cg->auto_heal('new day') if $cg;
 }
 
 sub check_for_npc_election {

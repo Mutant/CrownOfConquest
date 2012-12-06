@@ -18,7 +18,7 @@ after 'execute_round' => sub {
         my $mayor_lost = $self->result->{creatures_fled} || ($self->result->{losers} && $self->result->{losers}->is($self->creature_group));
         
         if (! $mayor_lost) {
-            $self->creature_group->auto_heal;
+            $self->creature_group->auto_heal('combat');
             
             my $dungeon = $self->location->dungeon_room->dungeon;
             my $town = $self->schema->resultset('Town')->find(

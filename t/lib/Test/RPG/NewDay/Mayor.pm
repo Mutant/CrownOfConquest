@@ -188,7 +188,7 @@ sub test_process_revolt_party_over_limit : Tests(4) {
 	
 	my $party = Test::RPG::Builder::Party->build_party($self->{schema});
 	my $character = Test::RPG::Builder::Character->build_character($self->{schema}, mayor_of => $town->id, party_id => $party->id);
-
+	
     $self->{config}{level_hit_points_max}{test_class} = 6;
 
 	my $action = RPG::NewDay::Action::Mayor->new( context => $self->{mock_context} );
@@ -278,7 +278,7 @@ sub test_refresh_mayor : Tests(6) {
 	is($item->variable('Durability'), 100, "Weapon repaired");
 }
 
-sub test_refresh_mayor_dead_garrison_characters : Test(4) {
+sub test_refresh_mayor_dead_garrison_characters : Test(5) {
 	my $self = shift;
 	
 	# GIVEN
@@ -320,6 +320,14 @@ sub test_refresh_mayor_dead_garrison_characters : Test(4) {
 	
     $hist_rec->discard_changes;
     is($hist_rec->value, 310, "Cost of healing recorded");	
+    
+    my $town_message = $town->find_related(
+        'history',
+        {
+            type => 'mayor_news',
+        }
+    );
+    is($town_message->message, "The town healer resurrected 2 town garrison characters at the cost of 300 gold.", "Correct message added to mayor history");    
    
 }
 

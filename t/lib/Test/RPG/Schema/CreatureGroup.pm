@@ -155,7 +155,7 @@ sub test_party_within_level_range : Tests(5) {
     }
 }
 
-sub test_auto_heal_basic : Tests(3) {
+sub test_auto_heal_basic : Tests(4) {
     my $self = shift;
     
     # GIVEN
@@ -197,6 +197,14 @@ sub test_auto_heal_basic : Tests(3) {
         }
     );
     is($hist_rec->value, 20, "Cost of healing recorded");
+    
+    my $town_message = $town->find_related(
+        'history',
+        {
+            type => 'mayor_news',
+        }
+    );
+    is($town_message->message, "The town garrison was healed for the cost of 20 gold after combat", "Correct message added to mayor history");
 }
 
 sub test_auto_heal_not_enough_in_budget : Tests(4) {

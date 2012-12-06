@@ -225,6 +225,7 @@ sub has_mayor {
 #  (called at the end of combat)
 sub auto_heal {
     my $self = shift;
+    my $reason = shift // 'combat';
 
     my $mayor = $self->find_related('characters',
         {
@@ -277,6 +278,8 @@ sub auto_heal {
             $cost = $to_heal * $cost_per_hp;
         }
         
+        RPG::Schema->log->debug("Auto-Healing char " . $character->id . " for $to_heal hps, costing $cost gold"); 
+        
         $character->increase_hit_points($to_heal);
         $character->update;
         
@@ -285,6 +288,14 @@ sub auto_heal {
         
         $town->decrease_gold($cost);       
     }
+    
+    $town->add_to_history(
+    	{
+			type => 'mayor_news',
+			message => "The town garrison was healed for the cost of $spent gold " . ($reason eq 'combat' ? "after combat" : "overnight"),
+			day_id => $day->id,
+		}
+	);
     
     $town->update;
     $hist_rec->value($spent);

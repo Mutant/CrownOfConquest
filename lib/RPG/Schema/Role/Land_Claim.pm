@@ -8,9 +8,9 @@ sub claim_land {
     my $self = shift;
     
     my $kingdom = $self->kingdom;
-        
+
     return unless $kingdom;
-    
+
     my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset    => $self->result_source->schema->resultset('Land'),
         relationship => 'me',
@@ -24,7 +24,7 @@ sub claim_land {
     );
     
     foreach my $sector (@sectors) {
-        # Skip sectors already claimed
+        # Skip sectors already claimed by something else
         if (defined $sector->claimed_by_type && ($sector->claimed_by_type ne $self->claim_type || $sector->claimed_by_id != $self->id)) {
             next;   
         } 

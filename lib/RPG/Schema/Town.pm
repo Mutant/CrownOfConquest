@@ -284,9 +284,14 @@ sub change_allegiance {
     
     $location->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
     $location->update;
+    $self->discard_changes;
     
-    $self->unclaim_land;
-    $self->claim_land;
+    if (! $new_kingdom) {
+        $self->unclaim_land;
+    }
+    else {
+        $self->claim_land;
+    }
     $self->update;
 
     my $today = $self->result_source->schema->resultset('Day')->find_today;

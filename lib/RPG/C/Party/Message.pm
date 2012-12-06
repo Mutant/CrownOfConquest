@@ -136,7 +136,8 @@ sub send : Local {
         
         push @recip_ids, $party->id;
     }
-        my $hs = HTML::Strip->new();
+    
+    my $hs = HTML::Strip->new();
     
     my $clean_subject = $hs->parse( $c->req->param('subject') );    
     

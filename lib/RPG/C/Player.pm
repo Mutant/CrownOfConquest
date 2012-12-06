@@ -700,10 +700,15 @@ sub contact : Local {
 sub submit_email : Private {
     my ($self, $c, $type) = @_;   
     
-   my $logged_in = $c->session->{player} ? 1 : 0;
+    my $logged_in = $c->session->{player} ? 1 : 0;
     
     if ($c->req->param('submit') && $c->req->param('subject')) {
         my $email;
+        
+        my $hs = HTML::Strip->new();
+        
+        my $body = $hs->parse( $c->req->param('body') );
+        
         if (! $logged_in) {
             $email = $c->req->param('email');
             
@@ -721,7 +726,45 @@ sub submit_email : Private {
             }
         }
         else {
-            $email = $c->session->{player}->email;
+            $email = $c->session->{player}->email;               
+            
+            if ($c->stash->{party}) {
+                my $message = $c->model('DBIC::Party_Message')->create(
+                    {
+                        sender_id => $c->stash->{party}->id,
+                        day_id => $c->stash->{today}->id,
+                        subject => $c->req->param('subject'),
+                        message => $body,
+                        type => 'message',
+                    }
+                );
+                
+                my $flag = ($type eq 'submit_bug' ? 'bug_manager' : 'contact_manager');
+                
+                my @recips = $c->model('DBIC::Player')->search(
+                    {
+                        $flag => 1,   
+                    },
+                );
+                
+                foreach my $recip (@recips) {
+                    my $party = $recip->find_related(
+                        'parties',
+                        {
+                            defunct => undef,
+                        }
+                    );
+                    
+                    $c->model('DBIC::Party_Messages_Recipients')->create(
+                        {
+                            party_id => $party->id,
+                            message_id => $message->id,
+                        },
+                    );
+                }
+            }
+            
+            $body = "Player: " . $c->session->{player}->player_name . "<br><br>" . $body; 
         }        
         
     	my $msg = MIME::Lite->new(
@@ -729,7 +772,7 @@ sub submit_email : Private {
     		To      => $c->config->{send_email_from},
     		'Reply-To' => $email,
     		Subject => "[CrownOfConquest] ($type): " . $c->req->param('subject'),
-    		Data    => $c->req->param('body'),
+    		Data    => $body,
     	);
     	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );        
     	

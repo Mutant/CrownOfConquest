@@ -172,6 +172,42 @@ sub test_equip_item_with_non_exististant_equip_place : Tests(2) {
     is($item->equip_place_id, undef, "Item has not been moved into equip place");   
 }
 
+sub test_basic_equip_not_replacing_existing_item : Tests(8) {
+    my $self = shift;
+    
+    # GIVEN
+    my $item1 = $self->{item};
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema});
+    $character->create_item_grid;
+    $item1->character_id($character->id);
+    $item1->update;    
+    
+    my $item2 = $self->{schema}->resultset('Items')->create( { item_type_id => $self->{item_type}->id, } );
+    $item2->character_id($character->id);
+    $item2->update;    
+    
+    $character->add_item_to_grid($item1);
+    $character->add_item_to_grid($item2);
+    
+    # WHEN
+    my @extra_items_removed_first_equip  = $item1->equip_item($self->{equip_place}->equip_place_name);    
+    
+    # THEN
+    is(scalar @extra_items_removed_first_equip, 0, "no extra items removed in first equip");
+    is($item1->equip_place_id, $self->{equip_place}->equip_place_id, "Item1 has been moved into equip place");
+    is($item1->grid_sectors->count, 0, "Item 1 not in item grid");
+    is($item2->grid_sectors->count, 1, "Item 2 is in item grid");
+    
+    # WHEN 2
+    my @extra_items_removed_second_equip = $item2->equip_item($self->{equip_place}->equip_place_name, replace_existing_equipment => 0);
+        
+    # THEN 2
+    is(scalar @extra_items_removed_second_equip, 0, "no extra items removed in second equip");
+    is($item2->equip_place_id, undef, "Item2 was not equipped");
+    is($item1->grid_sectors->count, 0, "Item 1 still not in item grid");
+    is($item2->grid_sectors->count, 1, "Item 2 still in item grid");
+}
+
 sub test_repair_cost_basic : Tests(1) {
     my $self = shift;
     

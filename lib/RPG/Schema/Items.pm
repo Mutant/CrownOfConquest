@@ -641,15 +641,15 @@ sub equip_item {
     }
 
     # See if an item is already equipped there
-    my ($equipped_item) = $self->result_source->schema->resultset('Items')->search(
+    my $equipped_item = $self->result_source->schema->resultset('Items')->find(
         {
             character_id   => $self->character_id,
             equip_place_id => $equip_place->id,
         }
     );
     
-    my $character = $self->belongs_to_character;    
-    $character->remove_item_from_grid($self);
+    my $character = $self->belongs_to_character;
+    $character->remove_item_from_grid($self) if $replace_existing_equipment || ! $equipped_item;
 
     if ($equipped_item) {
         if ($replace_existing_equipment) {

@@ -276,6 +276,36 @@ sub inactive_players : Local {
     );     
 }
 
+sub reg_referers : Local {
+    my ( $self, $c ) = @_; 
+    
+    my @players = $c->model('DBIC::Player')->search(
+        {
+            'referer' => {'!=', [undef, 'unknown']},
+        },
+        {
+            select => ['referer', {count => '*', -as => 'count'}],
+            'as' => ['referer', 'count'],
+            group_by => 'referer',
+            order_by => 'count desc',
+        }
+    ); 
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/reg_referers.html',
+                params   => {
+                    players => \@players,
+                },
+            }
+        ]
+    );        
+    
+        
+}
+
 sub recent_stickiness : Local {
     my ( $self, $c ) = @_;
     

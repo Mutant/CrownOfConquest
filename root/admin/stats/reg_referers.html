@@ -1,0 +1,19 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Referers That Lead To Regs</h2>
+
+<table cellpadding=4>
+<tr>	
+	<th>Referer</th>
+	<th># Of Regs</th>	
+</tr>
+[% FOREACH player IN players %]
+	<tr>
+		<td>[% player.referer %]</td>
+		<td>[% player.get_column('count') %]</td>
+	</tr>
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

@@ -233,7 +233,7 @@ sub registrations : Local {
         push @res, $data;
     }
     
-    return $c->forward(
+    $c->forward(
         'RPG::V::TT',
         [
             {
@@ -245,6 +245,33 @@ sub registrations : Local {
         ]
     );    
     
+}
+
+sub inactive_players : Local {
+    my ( $self, $c ) = @_;    
+    
+    my @players = $c->model('DBIC::Player')->search(
+        {
+            'deleted' => 1,
+        },
+        {
+            order_by => 'deleted_date desc',
+            rows => 50,
+            preftch => 'logins',
+        }   
+    );
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/inactive_players.html',
+                params   => {
+                    players => \@players,
+                },
+            }
+        ]
+    );     
 }
 
 sub recent_stickiness : Local {

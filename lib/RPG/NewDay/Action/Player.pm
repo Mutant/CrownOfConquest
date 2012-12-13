@@ -17,6 +17,7 @@ sub run {
 
     foreach my $player (@players_to_delete) {
         $player->deleted(1);
+        $player->deleted_date(DateTime->now());
         $player->update;
 
         my @parties = $player->parties;

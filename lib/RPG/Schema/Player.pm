@@ -243,6 +243,16 @@ __PACKAGE__->add_columns(
         'is_nullable'       => 0,
         'size'              => '2000'
     },        
+    'deleted_date' => {
+        'data_type'         => 'datetime',
+        'is_auto_increment' => 0,
+        'default_value'     => 0,
+        'is_foreign_key'    => 0,
+        'name'              => 'deleted_date',
+        'is_nullable'       => 0,
+        'size'              => '11'
+    },     
+    
     
 );
 __PACKAGE__->set_primary_key('player_id');
@@ -253,7 +263,7 @@ __PACKAGE__->has_many( 'logins', 'RPG::Schema::Player_Login', 'player_id', );
 
 __PACKAGE__->belongs_to( 'referred_by_player', 'RPG::Schema::Player', {'foreign.player_id' => 'self.referred_by'} );
 
-__PACKAGE__->belongs_to( 'active_party', 'RPG::Schema::Party', 'player_id', { where => { defunct => undef } } );
+__PACKAGE__->might_have( 'active_party', 'RPG::Schema::Party', 'player_id', { where => { defunct => undef } } );
 
 sub time_since_last_login {
     my $self = shift;
@@ -301,8 +311,13 @@ sub total_turns_used {
         }
     );
     
-    return $rs->get_column('total_turns_used');
-               
+    return $rs->get_column('total_turns_used');               
+}
+
+sub login_count {
+    my $self = shift;
+    
+    return $self->logins->count;   
 }
 
 1;

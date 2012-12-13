@@ -1,0 +1,25 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Players Recently Gone Inactive</h2>
+
+<table cellpadding=4>
+<tr>	
+	<th>Player Name</th>
+	<th>Inactive Date</th>
+	<th>Registration Date</th>
+	<th># Of Logins</th>
+	<th># Turns Used</th>
+</tr>
+[% FOREACH player IN players %]
+	<tr>
+		<td>[% player.player_name %]</td>
+		<td>[% player.deleted_date %]</td>
+		<td>[% player.created %]</td>
+		<td>[% player.login_count %]</td>
+		<td>[% player.total_turns_used %]</td>
+	</tr>
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

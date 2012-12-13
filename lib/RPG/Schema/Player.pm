@@ -253,6 +253,8 @@ __PACKAGE__->has_many( 'logins', 'RPG::Schema::Player_Login', 'player_id', );
 
 __PACKAGE__->belongs_to( 'referred_by_player', 'RPG::Schema::Player', {'foreign.player_id' => 'self.referred_by'} );
 
+__PACKAGE__->belongs_to( 'active_party', 'RPG::Schema::Party', 'player_id', { where => { defunct => undef } } );
+
 sub time_since_last_login {
     my $self = shift;
     
@@ -287,5 +289,20 @@ sub has_ips_in_common_with {
     return $common_logins >= 1 ? 1 : 0;       
 }
 
+sub total_turns_used {
+    my $self = shift;
+    
+    my $rs = $self->find_related(
+        'parties',
+        {},
+        {
+            'select' => {sum => 'turns_used'},
+            'as' => 'total_turns_used',
+        }
+    );
+    
+    return $rs->get_column('total_turns_used');
+               
+}
 
 1;

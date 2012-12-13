@@ -1,0 +1,32 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Registrations</h2>
+
+
+<table>
+<tr>	
+	<th>Month</th>
+	<th>Registration<br>Count</th>
+	<th>Still Active</th>
+	<th>Logins<br>(Avg / Total)</th>
+	<th>Turns Used<br>(Avg / Total)</th>
+	<th>< 1000<br>Turns Used</th>
+	<th>< 2000<br>Turns Used</th>
+	<th>>= 2000<br>Turns Used</th>	
+</tr>
+[% FOREACH data IN regs %]
+	<tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+		<td>[% data.date %]</td>
+		<td>[% data.regs %]</td>
+		<td>[% data.active %]</td>
+		<td nowrap>[% data.avg_logins %] / [% data.logins %]</td>
+		<td nowrap>[% data.avg_turns_used %] / [% data.turns_used %]</td>
+		<td>[% data.less_than_1000_turns %]</td>
+		<td>[% data.less_than_2000_turns %]</td>
+		<td>[% data.more_than_2000_turns %]</td>
+	</tr>
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

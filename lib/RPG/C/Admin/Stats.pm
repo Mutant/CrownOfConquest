@@ -185,6 +185,68 @@ sub new_players : Local {
     );
 }
 
+sub registrations : Local {
+    my ( $self, $c ) = @_;
+    
+    my @players = $c->model('DBIC::Player')->search(
+        {
+            'created' => {'>=', DateTime->now()->subtract( months => 12 )},
+        },
+        {
+            prefetch => 'logins',
+        }   
+    );
+    
+    my %res;
+    foreach my $player (@players) {
+        my $month_str = $player->created->year . '/' . sprintf '%02d', $player->created->month; 
+        
+        my $month_stats = $res{$month_str} // {};
+        
+        my $total_turns_used = $player->total_turns_used // 0;
+        
+        $month_stats->{regs}++;
+        $month_stats->{logins} += $player->logins->count;
+        $month_stats->{turns_used} += $total_turns_used;
+        $month_stats->{active}++ if $player->active_party;
+        
+        if ($total_turns_used < 1000) {
+            $month_stats->{less_than_1000_turns}++;
+        }
+        elsif ($total_turns_used < 2000) {
+            $month_stats->{less_than_2000_turns}++;
+            next;
+        }
+        else {        
+            $month_stats->{more_than_2000_turns}++;
+        }
+        
+        $res{$month_str} = $month_stats;        
+    }
+    
+    my @res;
+    foreach my $date_string (reverse sort keys %res) {
+        my $data = $res{$date_string};
+        $data->{date} = $date_string;
+        $data->{avg_logins} = sprintf '%.2f', $data->{logins} / $data->{regs};
+        $data->{avg_turns_used} = sprintf '%.2f', $data->{turns_used} / $data->{regs};
+        push @res, $data;
+    }
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/registrations.html',
+                params   => {
+                    regs => \@res,
+                },
+            }
+        ]
+    );    
+    
+}
+
 sub recent_stickiness : Local {
     my ( $self, $c ) = @_;
     

@@ -42,6 +42,8 @@ sub auto : Private {
     
     $c->model('DBIC')->storage->txn_begin;
     
+    $c->session->{referer} //= $c->req->referer // 'unknown';
+    
     # If they have a 'partial' login, check they're accessing one of the allowed paths
     my $allowed_partial_login = 0;
     if ($c->session->{partial_login} && $c->action ~~ \@PARTIAL_LOGIN_ALLOWED_PATHS) {

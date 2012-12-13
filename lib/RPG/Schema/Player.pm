@@ -233,7 +233,16 @@ __PACKAGE__->add_columns(
         'name'              => 'contact_manager',
         'is_nullable'       => 0,
         'size'              => '11'
-    },       
+    },   
+    'referer' => {
+        'data_type'         => 'varchar',
+        'is_auto_increment' => 0,
+        'default_value'     => 1,
+        'is_foreign_key'    => 0,
+        'name'              => 'referer',
+        'is_nullable'       => 0,
+        'size'              => '2000'
+    },        
     
 );
 __PACKAGE__->set_primary_key('player_id');

@@ -1,0 +1,2 @@
+ALTER TABLE `Player` ADD COLUMN `referer` VARCHAR(2000);
+

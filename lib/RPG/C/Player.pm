@@ -301,6 +301,7 @@ sub register : Local {
                     last_login        => DateTime->now(),
                     screen_width      => 'auto',
                     screen_height     => 'auto',
+                    referer           => $c->session->{referer},
                 }
             );
             

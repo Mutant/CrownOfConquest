@@ -13,7 +13,8 @@
 	<th>Turns Used<br>(Avg / Total)</th>
 	<th>< 1000<br>Turns Used</th>
 	<th>< 2000<br>Turns Used</th>
-	<th>>= 2000<br>Turns Used</th>	
+	<th>< 5000<br>Turns Used</th>
+	<th>>= 5000<br>Turns Used</th>	
 </tr>
 [% FOREACH data IN regs %]
 	<tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
@@ -24,7 +25,8 @@
 		<td nowrap>[% data.avg_turns_used %] / [% data.turns_used %]</td>
 		<td>[% data.less_than_1000_turns %]</td>
 		<td>[% data.less_than_2000_turns %]</td>
-		<td>[% data.more_than_2000_turns %]</td>
+		<td>[% data.less_than_5000_turns %]</td>
+		<td>[% data.more_than_5000_turns %]</td>
 	</tr>
 [% END %]
 </table>

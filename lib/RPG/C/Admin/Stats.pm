@@ -215,11 +215,13 @@ sub registrations : Local {
         }
         elsif ($total_turns_used < 2000) {
             $month_stats->{less_than_2000_turns}++;
-            next;
         }
-        else {        
-            $month_stats->{more_than_2000_turns}++;
+        elsif ($total_turns_used < 5000) {       
+            $month_stats->{less_than_5000_turns}++;
         }
+        else {
+            $month_stats->{more_than_5000_turns}++;
+        }            
         
         $res{$month_str} = $month_stats;        
     }

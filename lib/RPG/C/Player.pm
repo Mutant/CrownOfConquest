@@ -265,25 +265,39 @@ sub register : Local {
             if ($c->req->param('promo_code')) {
             	$code = $c->model('DBIC::Promo_Code')->find(
             		{
-            			code => $c->req->param('promo_code'),
-            			used => 0,
+            			code => $c->req->param('promo_code'),            			
             		},
             		{
             			prefetch => 'promo_org',
             		},            	
             	);
             	
-            	if ($code) {            		
-            		$c->flash->{promo_org_message} = $c->forward(
-	                    'RPG::V::TT',
-	                    [
-	                        {
-	                            template      => 'player/promo_org_message.html',
-	                            params        => { code => $code, },
-	                            return_output => 1,
-	                        }
-	                    ]
-	                );
+            	if ($code) {
+            	    if ($code->uses_remaining > 0) {            		
+                		$c->flash->{promo_org_message} = $c->forward(
+    	                    'RPG::V::TT',
+    	                    [
+    	                        {
+    	                            template      => 'player/promo_org_message.html',
+    	                            params        => { code => $code, },
+    	                            return_output => 1,
+    	                        }
+    	                    ]
+    	                );
+            	    }
+            	    else {
+                		$c->flash->{promo_org_message} = $c->forward(
+    	                    'RPG::V::TT',
+    	                    [
+    	                        {
+    	                            template      => 'player/promo_used_up_message.html',
+    	                            params        => { code => $code, },
+    	                            return_output => 1,
+    	                        }
+    	                    ]
+    	                );
+                        undef $code;
+            	    }
             	}
             }
             

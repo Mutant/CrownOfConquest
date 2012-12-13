@@ -519,7 +519,7 @@ sub test_register_successful_with_promo_code : Tests(7) {
 
     # GIVEN
     my $promo_org = $self->{schema}->resultset('Promo_Org')->create( { name => 'promo', extra_start_turns => 100 } );
-    my $promo_code = $self->{schema}->resultset('Promo_Code')->create( { promo_org_id => $promo_org->id, code => 1234 } );
+    my $promo_code = $self->{schema}->resultset('Promo_Code')->create( { promo_org_id => $promo_org->id, code => 1234, uses_remaining => 1 } );
     $self->{config}->{max_number_of_players}   = 2;
     $self->{config}->{minimum_password_length} = 4;
 
@@ -551,7 +551,47 @@ sub test_register_successful_with_promo_code : Tests(7) {
     is($new_player->email, 'foo@bar.com', "Email set correctly");
     is($new_player->password, sha1_hex('pass'), "Password set correctly");
     isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->promo_code_id, $promo_code->id, "Promo code recorded");
+    is($new_player->promo_code_id, $promo_code->id, "Promo code recorded");    
+}
+
+sub test_register_successful_with_promo_code_used_up : Tests(7) {
+    my $self = shift;
+
+    # GIVEN
+    my $promo_org = $self->{schema}->resultset('Promo_Org')->create( { name => 'promo', extra_start_turns => 100 } );
+    my $promo_code = $self->{schema}->resultset('Promo_Code')->create( { promo_org_id => $promo_org->id, code => 1234, uses_remaining => 0 } );
+    $self->{config}->{max_number_of_players}   = 2;
+    $self->{config}->{minimum_password_length} = 4;
+
+    $self->{params} = {
+        email       => 'foo@bar.com',
+        player_name => 'name1',
+        password1   => 'pass',
+        password2   => 'pass',
+        promo_code => 1234,
+        submit => 1,
+    };
+
+    $self->{c}->set_always( 'validate_captcha', 1 );
+    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
+    
+    $self->{config}->{url_root} = 'url_root';
+
+    # WHEN
+    RPG::C::Player->register( $self->{c} );
+
+    # THEN
+    my ($method, $args) = $self->{mock_response}->next_call();
+    is($method, 'redirect', "Redirected");
+    is($args->[1], "url_root", "Correct redirect url");
+    is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
+    
+    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
+    is($new_player->email, 'foo@bar.com', "Email set correctly");
+    is($new_player->password, sha1_hex('pass'), "Password set correctly");
+    isnt($new_player->verification_code, undef, "Verification code set");
+    is($new_player->promo_code_id, undef, "Promo code not recorded");    
 }
 
 sub test_register_successful_with_promo_code_non_exist : Tests(7) {
@@ -569,46 +609,6 @@ sub test_register_successful_with_promo_code_non_exist : Tests(7) {
         password1   => 'pass',
         password2   => 'pass',
         promo_code => 1235,
-        submit => 1,
-    };
-
-    $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
-    $self->{config}->{url_root} = 'url_root';
-
-    # WHEN
-    RPG::C::Player->register( $self->{c} );
-
-    # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
-    is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->promo_code_id, undef, "No promo code recorded");
-}
-
-sub test_register_successful_with_promo_code_used : Tests(7) {
-    my $self = shift;
-
-    # GIVEN
-    my $promo_org = $self->{schema}->resultset('Promo_Org')->create( { name => 'promo', extra_start_turns => 100 } );
-    my $promo_code = $self->{schema}->resultset('Promo_Code')->create( { promo_org_id => $promo_org->id, code => 1234, used => 1 } );
-    $self->{config}->{max_number_of_players}   = 2;
-    $self->{config}->{minimum_password_length} = 4;
-
-    $self->{params} = {
-        email       => 'foo@bar.com',
-        player_name => 'name1',
-        password1   => 'pass',
-        password2   => 'pass',
-        promo_code => 1234,
         submit => 1,
     };
 

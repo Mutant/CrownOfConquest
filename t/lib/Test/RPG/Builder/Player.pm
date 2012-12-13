@@ -21,6 +21,7 @@ sub build_player {
             display_tip_of_the_day => $params{tip_of_the_day} || 1,
             referred_by => $params{referred_by} || undef,
             refer_reward_given => $params{refer_reward_given} // 0,
+            promo_code_id => $params{promo_code_id} // undef,
         } 
     );
     

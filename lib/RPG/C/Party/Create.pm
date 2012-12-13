@@ -97,17 +97,17 @@ sub save_party : Local {
 	my $code = $c->model('DBIC::Promo_Code')->find(
 		{
 			'player.player_id' => $c->session->{player}->id,
-			'used' => 0,
 		},
 		{
 			'prefetch' => 'promo_org',
 			'join' => 'player',
+			'for' => 'update',
 		},
 	);
 		
 	if ($code) {
 		$start_turns+=$code->promo_org->extra_start_turns;
-		$code->used(1);
+		$code->decrement_uses_remaining;
 		$code->update;
 	}
 

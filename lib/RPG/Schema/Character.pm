@@ -1401,8 +1401,10 @@ sub set_starting_equipment {
     foreach my $starting_item ( @{ $starting_equipment{ $self->class->class_name } } ) {
         my $item_type = $schema->resultset('Item_Type')->find( { item_type => $starting_item } );
 
-        my $item = $schema->resultset('Items')->create( { item_type_id => $item_type->id, } );
+        next unless $item_type;
 
+        my $item = $schema->resultset('Items')->create( { item_type_id => $item_type->id, } );
+        
         $item->add_to_characters_inventory($self);
 
         if ( $item->variable('Quantity') ) {

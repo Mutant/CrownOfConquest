@@ -208,7 +208,7 @@ sub registrations : Local {
         $month_stats->{regs}++;
         $month_stats->{logins} += $player->logins->count;
         $month_stats->{turns_used} += $total_turns_used;
-        $month_stats->{active}++ if $player->active_party;
+        $month_stats->{active}++ if ! $player->deleted;
         
         if ($total_turns_used < 1000) {
             $month_stats->{less_than_1000_turns}++;
@@ -248,6 +248,38 @@ sub registrations : Local {
     );    
     
 }
+
+sub registrations_month : Local {
+    my ( $self, $c ) = @_;
+    
+    my ($year,$month) = split m|/|, $c->req->param('month');
+    
+    my $start_dt = DateTime->new( month => $month, year => $year, day => 1 );
+    my $end_dt   = $start_dt->clone->add( months => 1 );
+    
+    my @players = $c->model('DBIC::Player')->search(
+        {
+            'created' => {'>=', $start_dt, '<', $end_dt},
+        },
+        {
+            prefetch => 'logins',
+        }   
+    );
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/players_list.html',
+                params   => {
+                    players => \@players,
+                },
+            }
+        ]
+    );     
+    
+}
+
 
 sub inactive_players : Local {
     my ( $self, $c ) = @_;    

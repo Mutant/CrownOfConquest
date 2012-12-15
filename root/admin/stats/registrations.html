@@ -17,7 +17,8 @@
 	<th>>= 5000<br>Turns Used</th>	
 </tr>
 [% FOREACH data IN regs %]
-	<tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+	<tr onclick="javacscript:window.location = '[% base %]/admin/stats/registrations_month?month=[% data.date %]'" 
+		style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
 		<td>[% data.date %]</td>
 		<td>[% data.regs %]</td>
 		<td>[% data.active %]</td>

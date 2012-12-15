@@ -294,6 +294,8 @@ function refreshSectorCallback(data) {
 }
 
 /* Panels */
+var lastAction;
+
 var originalContent;
 function getPanels(url) {    
 	originalContent = dojo.byId('messages-pane').innerHTML;
@@ -307,6 +309,7 @@ function getPanels(url) {
     }
     
     _gaq.push(['_trackPageview', url]);
+    lastAction = url;
     
 	dojo.xhrGet( {
         url: urlBase + url + no_cache,
@@ -590,6 +593,7 @@ function loadScreen(url, noOnClose) {
 	
 	screenHistory.push(url);
 	currentUrl = url;
+	lastAction = url;
 
 	dojo.xhrGet( {
         url: urlBase + url,

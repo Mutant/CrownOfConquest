@@ -197,15 +197,36 @@ sub registrations : Local {
         }   
     );
     
+    my @res = $self->build_player_stats('created', @players);
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/registrations.html',
+                params   => {
+                    regs => \@res,
+                },
+            }
+        ]
+    );    
+    
+}
+
+sub build_player_stats {
+    my $self = shift;
+    my $date_field = shift;
+    my @players = @_;
+    
     my %res;
     foreach my $player (@players) {
-        my $month_str = $player->created->year . '/' . sprintf '%02d', $player->created->month; 
+        my $month_str = $player->$date_field->year . '/' . sprintf '%02d', $player->$date_field->month; 
         
         my $month_stats = $res{$month_str} // {};
         
         my $total_turns_used = $player->total_turns_used // 0;
         
-        $month_stats->{regs}++;
+        $month_stats->{count}++;
         $month_stats->{logins} += $player->logins->count;
         $month_stats->{turns_used} += $total_turns_used;
         $month_stats->{active}++ if ! $player->deleted;
@@ -238,25 +259,14 @@ sub registrations : Local {
         my $data = $res{$date_string};
         $data->{date} = $date_string;
         
-        if ($data->{regs} > 0) {
-            $data->{avg_logins} = sprintf '%.2f', $data->{logins} / $data->{regs};
-            $data->{avg_turns_used} = sprintf '%.2f', $data->{turns_used} / $data->{regs};            
+        if ($data->{count} > 0) {
+            $data->{avg_logins} = sprintf '%.2f', $data->{logins} / $data->{count};
+            $data->{avg_turns_used} = sprintf '%.2f', $data->{turns_used} / $data->{count};            
         }
         push @res, $data;
     }
     
-    $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'admin/stats/registrations.html',
-                params   => {
-                    regs => \@res,
-                },
-            }
-        ]
-    );    
-    
+    return @res;
 }
 
 sub registrations_month : Local {
@@ -297,11 +307,42 @@ sub inactive_players : Local {
     my @players = $c->model('DBIC::Player')->search(
         {
             'deleted' => 1,
+            'deleted_date' => {'>=', DateTime->now()->subtract( months => 12 )},
         },
         {
-            order_by => 'deleted_date desc',
-            rows => 50,
             preftch => 'logins',
+        }   
+    );
+    
+    my @res = $self->build_player_stats('deleted_date', @players);
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/inactive_players.html',
+                params   => {
+                    regs => \@res,
+                },
+            }
+        ]
+    );  
+}
+
+sub inactives_month : Local {
+    my ( $self, $c ) = @_;
+    
+    my ($year,$month) = split m|/|, $c->req->param('month');
+    
+    my $start_dt = DateTime->new( month => $month, year => $year, day => 1 );
+    my $end_dt   = $start_dt->clone->add( months => 1 );
+    
+    my @players = $c->model('DBIC::Player')->search(
+        {
+            'deleted_date' => {'>=', $start_dt, '<', $end_dt},
+        },
+        {
+            prefetch => 'logins',
         }   
     );
     
@@ -309,13 +350,14 @@ sub inactive_players : Local {
         'RPG::V::TT',
         [
             {
-                template => 'admin/stats/inactive_players.html',
+                template => 'admin/stats/players_list.html',
                 params   => {
                     players => \@players,
                 },
             }
         ]
     );     
+    
 }
 
 sub reg_referers : Local {

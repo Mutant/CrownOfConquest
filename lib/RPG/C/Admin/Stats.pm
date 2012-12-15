@@ -210,18 +210,25 @@ sub registrations : Local {
         $month_stats->{turns_used} += $total_turns_used;
         $month_stats->{active}++ if ! $player->deleted;
         
-        if ($total_turns_used < 1000) {
+        
+        if ($total_turns_used < 100) {
+            $month_stats->{less_than_100_turns}++;
+        }
+        elsif ($total_turns_used < 500) {
+            $month_stats->{less_than_500_turns}++;
+        }
+        elsif ($total_turns_used < 1000) {
             $month_stats->{less_than_1000_turns}++;
         }
         elsif ($total_turns_used < 2000) {
             $month_stats->{less_than_2000_turns}++;
         }
-        elsif ($total_turns_used < 5000) {       
+        elsif ($total_turns_used < 5000) {
             $month_stats->{less_than_5000_turns}++;
         }
         else {
             $month_stats->{more_than_5000_turns}++;
-        }            
+        } 
         
         $res{$month_str} = $month_stats;        
     }
@@ -230,8 +237,11 @@ sub registrations : Local {
     foreach my $date_string (reverse sort keys %res) {
         my $data = $res{$date_string};
         $data->{date} = $date_string;
-        $data->{avg_logins} = sprintf '%.2f', $data->{logins} / $data->{regs};
-        $data->{avg_turns_used} = sprintf '%.2f', $data->{turns_used} / $data->{regs};
+        
+        if ($data->{regs} > 0) {
+            $data->{avg_logins} = sprintf '%.2f', $data->{logins} / $data->{regs};
+            $data->{avg_turns_used} = sprintf '%.2f', $data->{turns_used} / $data->{regs};            
+        }
         push @res, $data;
     }
     

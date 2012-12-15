@@ -310,7 +310,7 @@ sub inactive_players : Local {
             'deleted_date' => {'>=', DateTime->now()->subtract( months => 12 )},
         },
         {
-            preftch => 'logins',
+            prefetch => 'logins',
         }   
     );
     
@@ -431,6 +431,54 @@ sub recent_stickiness : Local {
             }
         ]
     );    
+    
+}
+
+sub reward_votes : Local {
+    my ( $self, $c ) = @_;   
+    
+    my @votes = $c->model('DBIC::Player_Reward_Vote')->search(
+        {
+            'vote_date' => {'>=', DateTime->now()->subtract( months => 1 )},
+        },
+        {
+            'prefetch' => 'link',
+        },
+    );
+    
+    my %results;
+    my %links_used;
+    foreach my $vote (@votes) {
+        my $day = $vote->vote_date->ymd;
+        my $day_res = $results{$day} // {};
+        
+        my $link_used = $vote->link->name;
+        
+        $day_res->{$link_used}++;
+        $links_used{$link_used} = 1;
+        
+        $results{$day} = $day_res; 
+    }
+    
+    my @results;
+    foreach my $date (reverse sort keys %results) {
+        my $day_res = $results{$date};
+        $day_res->{date} = $date;
+        push @results, $day_res;
+    }    
+    
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'admin/stats/reward_votes.html',
+                params   => {
+                    results => \@results,
+                    links_used => [keys %links_used],
+                },
+            }
+        ]
+    );     
     
 }
 

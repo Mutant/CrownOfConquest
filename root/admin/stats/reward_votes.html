@@ -1,0 +1,23 @@
+[% INCLUDE top.html admin_screen=1 %]
+[% INCLUDE admin/stats/stats_subnav.html %]
+
+<h2>Reward Votes Summary</h2>
+
+<table cellpadding=4>
+<tr>	
+	<th>Date</th>
+	[% FOREACH link IN links_used %]
+		<th>[% link %]</th>
+	[% END %]	
+</tr>
+[% FOREACH result IN results %]
+	<tr>
+		<td>[% result.date %]</td>
+		[% FOREACH link IN links_used %]
+			<td>[% result.$link %]</td>
+		[% END %]
+	</tr>
+[% END %]
+</table>
+
+[% INCLUDE bottom.html %]

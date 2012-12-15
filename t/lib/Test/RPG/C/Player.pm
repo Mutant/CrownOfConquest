@@ -873,4 +873,49 @@ sub test_post_login_checks_tip_of_the_day : Tests(2) {
 	is($self->{flash}->{tip}->id, $tip->id, "Tip id matches");
 }
 
+sub test_reward_callback : Tests(3) {
+	my $self = shift;
+	
+	# GIVEN
+	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, turns => 100 );
+	my $player = $party->player;
+	my $reward_link = $self->{schema}->resultset('Reward_Links')->create(
+	   {
+	       name => 'test_link',
+	       turn_rewards => 55,
+	       activated => 1,
+	       user_field => 'player_id',
+	   }
+	);
+	
+	my $player_reward_link = $self->{schema}->resultset('Player_Reward_Links')->create(
+	   {
+	       player_id => $player->id,
+	       link_id => $reward_link->id,
+	   }
+	);
+	
+	$self->{params}{player_id} = $player->id;
+	
+	# WHEN
+	RPG::C::Player->reward_callback( $self->{c}, 'test_link' );
+	
+	# THEN
+	$party->discard_changes;
+	is($party->turns, 155, "Party turns has increased");
+	
+	$player_reward_link->discard_changes;
+	isa_ok($player_reward_link->last_vote_date, 'DateTime', "Player reward link last vote date recorded");
+	
+	my $player_reward_vote = $self->{schema}->resultset('Player_Reward_Vote')->find(
+	   {
+	       player_id => $player->id,
+	       link_id => $reward_link->id,
+	   }
+	);
+	is($player_reward_vote->vote_date, $player_reward_link->last_vote_date, "Player reward vote recorded created, and vote_date set correctly"); 
+	
+	
+}
+
 1;

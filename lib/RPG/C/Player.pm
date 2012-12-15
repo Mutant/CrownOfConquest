@@ -684,8 +684,18 @@ sub reward_callback : Local : Args(1) {
         $party->_turns($party->_turns + $link->turn_rewards);
         $party->update;
         
-        $player_reward_link->last_vote_date(DateTime->now());
+        my $vote_date = DateTime->now();
+        
+        $player_reward_link->last_vote_date($vote_date);
         $player_reward_link->update;
+        
+        $c->model('DBIC::Player_Reward_Vote')->create(
+            {
+                player_id => $params{player_id},
+                link_id => $link->id,
+                vote_date => $vote_date,
+            }
+        );
         
         my $today = $c->model('DBIC::Day')->find_today;
         
@@ -696,7 +706,7 @@ sub reward_callback : Local : Args(1) {
     			party_id => $party->id,
     			day_id => $today->id,
     		}
-    	);          
+    	);
     }    
 }
 

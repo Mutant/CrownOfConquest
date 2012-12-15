@@ -23,7 +23,7 @@ __PACKAGE__->load_classes(qw/
     Kingdom Kingdom_Messages Party_Kingdom Party_Mayor_History Trade Player_Login Capital_History Kingdom_Town
     Skill Character_Skill Building_Upgrade_Type Building_Upgrade Party_Messages_Recipients Kingdom_Relationship
     Bomb Kingdom_Claim Kingdom_Claim_Response Global_News Crown_History Conf Town_Raid Day_Stats
-    Item_Grid Party_Day_Stats
+    Item_Grid Party_Day_Stats Player_Reward_Vote
 /);
 
 my $config;

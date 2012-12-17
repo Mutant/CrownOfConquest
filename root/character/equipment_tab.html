@@ -15,13 +15,14 @@
 
 <script>
 [% IF item_change_allowed %]
-	function setupEquipSlotDrops() {
+	function setupEquipSlotDrops(charId) {
 	[% FOREACH slot_data IN equip_places %]
 		[% slot = slot_data.value %] 
+		console.log("Setting up equip slot drops for char " + charId);
 		$( "#equip_place_[% slot.id %]" ).droppable({
 			accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
 			drop: function( event, ui ) {
-				dropItemOnEquipSlot(event, ui, $(this), '[% character.id %]');
+				dropItemOnEquipSlot(event, ui, $(this), charId);
 			},
 			hoverClass: "item-droppable",			
 		});

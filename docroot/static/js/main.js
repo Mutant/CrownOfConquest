@@ -750,18 +750,20 @@ function miniMapMove(evt) {
 		dojo.byId('minimap-display').innerHTML = '';
 		return;
 	}
-	
-	var kingdom = kingdoms_data[coords.x][coords.y];
-	if (kingdom) {
-		kingdom = "Kingdom of " + kingdom;
-	}
-	else {
-		kingdom = "Neutral";
-	}
-	
-	kingdom += " (" + coords.x + ", " + coords.y + ")";
-	
-	dojo.byId('minimap-display').innerHTML = kingdom;
+
+	if (typeof kingdoms_data != 'undefined') {	
+		var kingdom = kingdoms_data[coords.x][coords.y];
+		if (kingdom) {
+			kingdom = "Kingdom of " + kingdom;
+		}
+		else {
+			kingdom = "Neutral";
+		}
+		
+		kingdom += " (" + coords.x + ", " + coords.y + ")";
+		
+		dojo.byId('minimap-display').innerHTML = kingdom;
+	}		
 
 }
 

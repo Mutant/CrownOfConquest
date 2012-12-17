@@ -301,20 +301,23 @@ sub sell_item : Local {
 	if ( $item->variable('Quantity') ) {
 	    my $quantity_for_shop = 0;
 	    
-	    if ($c->req->param('quantity') && $c->req->param('quantity') != $item->variable('Quantity')) {
-            if ($c->req->param('quantity') > $item->variable('Quantity')) {
+	    my $quantity_to_sell = $c->req->param('quantity');
+	    $quantity_to_sell = 0 if $quantity_to_sell !~ /^\d+/; 
+	    
+	    if (defined $quantity_to_sell && $quantity_to_sell != $item->variable('Quantity')) {
+            if ($quantity_to_sell > $item->variable('Quantity')) {
                 $c->res->body( to_json( { error => "You can't sell more than you have!" } ) );
                 return;
             }
             
-            if ($c->req->param('quantity') < 0) {
+            if ($quantity_to_sell <= 0) {
                 $c->res->body( to_json( { error => "Invalid quantity" } ) );
                 return;
             }
 
-            $sell_price = $item->individual_sell_price($shop) * $c->req->param('quantity');            
-            $item->variable('Quantity', $item->variable('Quantity') - $c->req->param('quantity'));
-            $quantity_for_shop = $c->req->param('quantity');
+            $sell_price = $item->individual_sell_price($shop) * $quantity_to_sell;            
+            $item->variable('Quantity', $item->variable('Quantity') - $quantity_to_sell);
+            $quantity_for_shop = $quantity_to_sell;
 	    }
 	    else {
     		# Selling the whole thing, just delete it.

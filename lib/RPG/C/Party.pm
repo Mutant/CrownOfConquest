@@ -646,7 +646,37 @@ sub select_action : Local {
 			    return $action->use($target);
 			}			
 		}
-	}		
+	}
+	
+	if ($action->can('requires_confirmation') && $action->requires_confirmation && ! $c->req->param('confirmed')) {
+    	my $message = $c->forward(
+    		'RPG::V::TT',
+    		[
+    			{
+    				template => 'magic/select/confirmation.html',
+    				params   => {
+    					action => $c->req->param('action') // '',
+    					character_id => $c->req->param('character_id') // '',
+    					action_param => $c->req->param('action_param') // '',
+    					confirmation_text => $action->confirmation_message,
+    				},
+    				return_output => 1,
+    			}
+    		]
+    	);	    
+	    
+    	$c->forward('/panel/create_submit_dialog', 
+    		[
+    			{
+    				content => $message,
+    				submit_url => 'party/select_action',
+    				dialog_title => 'Confirmation',
+    			}
+    		],
+    	);
+    	
+    	$c->detach( '/panel/refresh', [ 'messages' ] );        
+	}
 
     given ( $action->target ) {
         when ('character') {

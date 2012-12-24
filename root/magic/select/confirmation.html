@@ -1,0 +1,10 @@
+[% PROCESS layout/diag_buttons.html %]
+
+<input type="hidden" dojoType=dijit.form.TextBox name="character_id" value="[% character_id %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="action" value="[% action %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="action_param" value="[% action_param %]">
+<input type="hidden" dojoType=dijit.form.TextBox name="confirmed" value="1">
+
+[% confirmation_text %] 
+
+[% dialog_buttons('dialog') %]

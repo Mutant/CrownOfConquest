@@ -808,7 +808,7 @@ sub building_upgrade : Local {
     
     $c->visit('/building/upgrade');    
     
-    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings'], 'party_status'] );
     
 }
 
@@ -819,7 +819,7 @@ sub building_build_upgrade : Local {
     
     $c->visit('/building/build_upgrade');    
     
-    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings']] );
+    $c->visit( '/panel/refresh', [[screen => '/town/mayor?town_id=' . $c->stash->{town}->id . '&tab=buildings'], 'party_status'] );
     
 }
 

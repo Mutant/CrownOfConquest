@@ -957,15 +957,21 @@ sub check_for_allegiance_change {
     my $highest_loyalty_kingdom = (shuffle @highest_loyalty_kingdoms)[0];
     
     # Don't change if nothing is higher than current loyalty
-    return if $highest_loyalty_kingdom->loyalty == $current_loyalty;
-            
-    my $loyalty_diff = $highest_loyalty_kingdom->loyalty - $current_loyalty;
+    if ($highest_loyalty_kingdom->loyalty >= $current_loyalty) {            
+        my $loyalty_diff = $highest_loyalty_kingdom->loyalty - $current_loyalty;
     
-    my $change_chance = round($loyalty_diff / 3);
+        my $change_chance = round($loyalty_diff / 3);
     
-    return unless Games::Dice::Advanced->roll('1d100') <= $change_chance;
-            
-    $town->change_allegiance($highest_loyalty_kingdom->kingdom);
+        if (Games::Dice::Advanced->roll('1d100') <= $change_chance) {            
+            $town->change_allegiance($highest_loyalty_kingdom->kingdom);
+            return;
+        }
+    }
+    
+    # Also a chance they go neutral
+    if (Games::Dice::Advanced->roll('1d100') <= 8) {
+        $town->change_allegiance(undef);
+    }
 }
 
 sub pay_trap_maintenance {

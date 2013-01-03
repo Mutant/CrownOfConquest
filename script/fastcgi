@@ -16,7 +16,7 @@
 APPNAME=RPG
 APPDIR=/home/sam/kingdoms
 UNIXNAME=$(echo $APPNAME | perl -pe 's/::/_/;$_=lc')
-PROCS=5
+PROCS=6
 SOCKET=/tmp/rpg.socket
 # Leave these unset and we won't try to setuid/setgid.
 #USER=myapp
@@ -70,7 +70,7 @@ _start() {
     ${USER:+"--chuid"} $USER ${GROUP:+"--group"} $GROUP --background \
     --startas $APPDIR/script/${UNIXNAME}_fastcgi.pl -- \
     -n $PROCS -l $SOCKET -p $PIDFILE
-
+   
     for i in 1 2 3 4 5 6 7 8 9 10; do
 sleep 1
         if check_running ; then

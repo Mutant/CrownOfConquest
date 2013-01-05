@@ -1,7 +1,6 @@
 <h4>History Of All Kingdoms</h4>
 
 <script>
-console.log('hi');
 $(document).ready(function() 
     { 
         $("#kingdom-history-table").tablesorter(); 
@@ -25,7 +24,7 @@ $(document).ready(function()
 	<tbody>
 	
 [% FOREACH kingdom IN kingdoms %]
-	<tr style="border: 1px solid black">
+	<tr>
 		<td>[% kingdom.name %]</td>
 		<td>[% kingdom.inception_day.day_number %]</td>
 		<td>[% IF kingdom.fall_day %]

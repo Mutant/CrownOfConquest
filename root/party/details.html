@@ -1,14 +1,6 @@
 <h2>[% party.name %]</h2>
 
-<b>Characters:</b>
-[% FOREACH character IN party.characters %]	
-	<a href="#" onClick="loadScreen('character/view?character_id=[% character.id %]')">
-		[% character.character_name %]</a>
-	&nbsp;
-[% END %]
-<br><br>
-
-<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height: 500px">
 	
 <div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Details">
 	<table class="main">
@@ -92,6 +84,9 @@
 		[% END %]
 	</table>
 	[% END %]
+</div>
+
+<div class="kingdomsTabPane" dojoType="dojox.layout.ContentPane" title="Characters" href="[% base %]/party/details/characters" [% IF tab == 'characters' %]selected=true[% END %]>
 </div>
 
 <div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Description" href="[% base %]/party/details/description" [% IF tab == 'description' %]selected=true[% END %]>

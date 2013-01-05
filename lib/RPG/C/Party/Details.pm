@@ -40,6 +40,31 @@ sub default : Path {
     );
 }
 
+sub characters : Local {
+    my ( $self, $c ) = @_;   
+
+    my @characters = $c->stash->{party}->search_related(
+        'characters',
+        {},
+        {
+            prefetch => ['race','class'],
+            order_by => 'character_name',
+        },
+    );
+
+    $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/details/characters.html',
+                params   => {
+                    characters => \@characters,                    
+                },                
+            }
+        ]
+    );   
+}
+
 sub history : Local {
     my ( $self, $c ) = @_;
 

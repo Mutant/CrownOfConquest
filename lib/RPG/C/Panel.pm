@@ -135,14 +135,16 @@ sub find_panel_path : Private {
 sub day_logs_check : Private {
 	my ($self, $c) = @_;
 	
-	# Don't check if the party is currently in combat
-	return if $c->stash->{party}->in_combat;
-	
 	$c->session->{last_day_log_check} //= DateTime->now();
-	
+
 	if (DateTime->compare($c->session->{last_day_log_check}, DateTime->now->subtract( minutes => 15 ) ) == 1 ) {
 	   return;
 	}
+
+	# Don't check if the party is currently in combat
+	return if $c->stash->{party}->in_combat;
+	
+	$c->session->{last_day_log_check} = DateTime->now();
 	
     # Check if new day message should be displayed
     my ($day_log) = $c->model('DBIC::DayLog')->search(

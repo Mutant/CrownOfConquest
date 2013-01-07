@@ -175,23 +175,31 @@ sub sectors_allowed_to_move_to {
     
     my %extra_params;
     $extra_params{prefetch} = {'doors_in_path' => 'door'} if $consider_doors;
-    
-    my @paths = $self->search_related(
+        
+    my $paths_rs = $self->search_related(
     	'paths',
     	{
     		distance => {'<=', $max_moves},	
     	},
     	\%extra_params,
     );
+    $paths_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
     
     my %allowed;
-    foreach my $path (@paths) {
+    while (my $path = $paths_rs->next) {
     	# Skip path if a door in the path is not passable
-    	if ($consider_doors && grep { ! $_->door->can_be_passed } $path->doors_in_path) {
-    		next;    		
-    	}
     	
-    	$allowed{$path->has_path_to} = 1;
+    	if ($consider_doors) {
+    	    my $door_with_path = 1;
+    	    foreach my $door_path ( @{ $path->{doors_in_path} } ) {
+    	        my $door = $door_path->{door};    	            	        
+    	        $door_with_path = 0 if $door->{type} ne 'standard' && $door->{state} ne 'open';
+    	   } 
+    	   
+    	   next unless $door_with_path;
+    	}    	 
+    	
+    	$allowed{$path->{has_path_to}} = 1;
     }
 
     return \%allowed;

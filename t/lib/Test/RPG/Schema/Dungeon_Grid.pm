@@ -58,7 +58,7 @@ sub test_has_wall : Tests(4) {
     is($results{bottom}, 0, "Doesn't have a bottom wall");
 }
 
-sub test_sectors_allowed_to_move_to_1 : Tests(18) {
+sub test_sectors_allowed_to_move_to_1 : Tests(17) {
 	my $self = shift;	
 	
     # GIVEN
@@ -123,7 +123,7 @@ sub test_sectors_allowed_to_move_to_1 : Tests(18) {
     }    
 }
 
-sub test_sectors_allowed_to_move_to_door_blockages : Tests(11) {
+sub test_sectors_allowed_to_move_to_door_blockages : Tests(10) {
 	my $self = shift;	
 	
     # GIVEN

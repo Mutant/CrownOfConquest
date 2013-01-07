@@ -96,6 +96,7 @@ sub build_viewable_sector_grids : Private {
     $c->stats->profile("Built allowed to move to hash");
 	
     # Get cgs in viewable area
+    $c->log->debug("Building viewable CGs");
     my $cgs;
     my @cg_recs = $c->model('DBIC::Dungeon_Grid')->search(
         {
@@ -110,6 +111,7 @@ sub build_viewable_sector_grids : Private {
             join     => ['dungeon_room', {'creature_group' => 'in_combat_with'}],
         },
     );
+    $c->stats->profile("Queried CGs");	
     
     foreach my $cg_rec (@cg_recs) {
         my $cg = $cg_rec->creature_group;
@@ -204,6 +206,7 @@ sub build_viewable_sector_grids : Private {
     }
     
     $c->stats->profile("Got Objects");
+    $c->log->debug("Getting viewable sectors");
 	
     # Find viewable sectors, add newly discovered sectors to party's map
     my @viewable_sectors;
@@ -219,12 +222,15 @@ sub build_viewable_sector_grids : Private {
         push @viewable_sectors, $sector;
 
         # Save newly mapped sectors 
-        my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->find_or_create(
-	        {
-    	        party_id        => $c->stash->{party}->id,
-                dungeon_grid_id => $sector->{dungeon_grid_id},
-            }
-        );
+        if (! $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}}) {
+            my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->find_or_create(
+    	        {
+        	        party_id        => $c->stash->{party}->id,
+                    dungeon_grid_id => $sector->{dungeon_grid_id},
+                }
+            );
+            $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
+        } 
     }
     
     my $viewable_sectors_by_coord;
@@ -232,7 +238,7 @@ sub build_viewable_sector_grids : Private {
         $viewable_sectors_by_coord->[ $viewable_sector->{x} ][ $viewable_sector->{y} ] = 1;
     }    
     
-    $c->stats->profile("Got viewable sectors");	
+    $c->stats->profile("Got viewable sectors");
 
     return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties, $objects];		
 }

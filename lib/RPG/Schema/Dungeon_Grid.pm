@@ -210,13 +210,13 @@ sub has_path_to {
     my $sector_id     = shift;
     my $max_moves     = shift || 3;
     
-    my $path = $self->find_related(
+    my $path = $self->search_related(
     	'paths',
     	{
     		distance => {'<=', $max_moves},
     		has_path_to => $sector_id,
     	},
-    );
+    )->count;
     
     return $path ? 1 : 0;
 }

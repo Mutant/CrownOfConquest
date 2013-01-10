@@ -490,26 +490,50 @@ function setMessagePanelSize(size) {
 
 function dungeonCallback(data) {
 	var updatedSectors = data.sectors;
+	
+	$('.sector-shroud').css("display","inline");
+	$('.sector-move-dot').css("display","none");
+	$('.sector-link').css("cursor","default");
+	$('.sector-contents').html('');
+	
+	var newSector = dojo.byId('sector_' + data.new_location.x + '_' + data.new_location.y);
+	newSector.appendChild(dojo.byId('herecircle'));
+	
 	for (var x in updatedSectors) {
 		for (var y in updatedSectors[x]) {
 			if (updatedSectors[x][y]) {
 				sector = updatedSectors[x][y];
 			
 				var sector_id = "sector_" + x + "_" + y;
-			
-				if (! dojo.byId(sector_id)) {
-					// Create sector
-					newSector = document.createElement("div");
-					newSector.setAttribute('id', sector_id);
-					newSector.style.position = 'absolute';					
-					newSector.style.top = (y - data.boundaries.min_y) * 40;
-					newSector.style.left = (x - data.boundaries.min_x) * 40; 
-					newSector.style.width = '40px';
-					newSector.style.height = '40px';
-					dojo.byId('dungeon_outer').appendChild(newSector); 
+				
+				if (sector.sector) {			
+					if (! dojo.byId(sector_id)) {
+						// Create sector
+						newSector = document.createElement("div");
+						newSector.setAttribute('id', sector_id);
+						newSector.style.position = 'absolute';					
+						newSector.style.top = (y - data.boundaries.min_y) * 40;
+						newSector.style.left = (x - data.boundaries.min_x) * 40; 
+						newSector.style.width = '40px';
+						newSector.style.height = '40px';
+						dojo.byId('dungeon_outer').appendChild(newSector); 
+					}
+	
+					dojo.byId(sector_id).innerHTML = sector.sector;
 				}
-
-				dojo.byId(sector_id).innerHTML = sector.sector;
+				
+				if (sector.viewable) {
+					dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
+				}					
+				
+				if (sector.allowed_to_move_to) {
+					dojo.byId("sector_move_dot_" + x + "_" + y).style.display = "inline";
+					dojo.byId("sector_link_" + x + "_" + y).style.cursor = "pointer";
+				}
+				
+				if (sector.contents) {
+					dojo.byId("sector_contents_" + x + "_" + y).innerHTML = sector.contents;
+				}
 				
 				if (dijit.byId('cgtt_' + x + '_' + y)) {
 					dijit.byId('cgtt_' + x + '_' + y).destroyRecursive();

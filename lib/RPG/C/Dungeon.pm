@@ -229,8 +229,7 @@ sub build_viewable_sector_grids : Private {
         	        party_id        => $c->stash->{party}->id,
                     dungeon_grid_id => $sector->{dungeon_grid_id},
                 }
-            );
-            $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
+            );            
         } 
     }
         
@@ -482,6 +481,7 @@ sub build_updated_sectors_data : Private {
 	my $cg_descs;
 
 	my ( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $new_location->x, $new_location->y, 3 );
+	
 	for my $y ($top_corner->{y} .. $bottom_corner->{y}) {
 		for my $x ($top_corner->{x} .. $bottom_corner->{x}) {	
 			my $current_sector = $sectors_to_update_grid->[$x][$y];
@@ -494,6 +494,7 @@ sub build_updated_sectors_data : Private {
 				
 			# If sector is not viewable, but is moveable, check if sector is mapped by party. Only display mapped
 			#  sectors (viewable sectors are always mapped)
+			# TODO: should be optimised
 			unless ($viewable_sector_grid->[$x][$y] || $c->model('DBIC::Mapped_Dungeon_Grid')->find(
 				{
 					dungeon_grid_id => $current_sector->{dungeon_grid_id},
@@ -504,32 +505,60 @@ sub build_updated_sectors_data : Private {
 			}							
 
 			my %sector_data;
+			
+			$sector_data{viewable} = 1 if $viewable_sector_grid->[$x][$y];
+			$sector_data{allowed_to_move_to} = 1 if $allowed_to_move_to->{$current_sector->{dungeon_grid_id}};
+			
 				
-			$sector_data{sector} = $c->forward(
-		        'RPG::V::TT',
-		        [
-		            {
-		                template => 'dungeon/map_sector.html',
-		                params   => {
-		                	sector => $current_sector,
-		                	cgs => $cgs,
-		                	parties => $parties,
-		                	objects => $objects,
-		                	allowed_to_move_to => $allowed_to_move_to,
-		                	viewable_sectors => $viewable_sector_grid,
-		                	x => $x,
-		                	y => $y,
-		                	current_location => $new_location,
-		                	zoom_level => $c->session->{zoom_level} || 2,
-		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
-		                	positions => \@positions,      
-		                	dungeon_type => $c->stash->{dungeon_type},
-		                	tileset => $c->stash->{dungeon}->tileset,
-		                },
-		                return_output => 1,
-		            }
-		        ]
-    		);				
+            if (! $c->session->{dungeon_mapped}{$current_sector->{dungeon_grid_id}}) {
+    			$sector_data{sector} = $c->forward(
+    		        'RPG::V::TT',
+    		        [
+    		            {
+    		                template => 'dungeon/map_sector.html',
+    		                params   => {
+    		                	sector => $current_sector,
+    		                	cgs => $cgs,
+    		                	parties => $parties,
+    		                	objects => $objects,
+    		                	allowed_to_move_to => $allowed_to_move_to,
+    		                	viewable_sectors => $viewable_sector_grid,
+    		                	x => $x,
+    		                	y => $y,
+    		                	current_location => $new_location,
+    		                	zoom_level => $c->session->{zoom_level} || 2,
+    		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
+    		                	positions => \@positions,      
+    		                	dungeon_type => $c->stash->{dungeon_type},
+    		                	tileset => $c->stash->{dungeon}->tileset,
+    		                },
+    		                return_output => 1,
+    		            }
+    		        ]
+        		);
+        		$c->session->{dungeon_mapped}{$current_sector->{dungeon_grid_id}} = 1;
+            }
+            
+            elsif ($cgs->[$x][$y] || $parties->[$x][$y] || $objects->[$x][$y]) {
+                $sector_data{contents} = $c->forward(
+    		        'RPG::V::TT',
+    		        [
+    		            {
+    		                template => 'dungeon/sector_contents.html',
+    		                params   => {
+    		                	sector => $current_sector,
+    		                	cgs => $cgs,
+    		                	parties => $parties,
+    		                	objects => $objects,    		                	
+    		                	x => $x,
+    		                	y => $y,
+    		                	zoom_level => $c->session->{zoom_level} || 2,    		                	
+    		                },
+    		                return_output => 1,
+    		            }
+    		        ]
+        		); 
+            }
     		
     		# Get description if there's a CG here.
     		if (my $cg = $cgs->[$x][$y]) {
@@ -568,63 +597,6 @@ sub build_updated_sectors_data : Private {
     		
 		}		
 	}
-	
-	# Clear any other sectors that were previously in the viewable area.
-	( $top_corner, $bottom_corner ) = RPG::Map->surrounds_by_range( $current_location->x, $current_location->y, 3 );
-    my @old_sectors = $c->model('DBIC::Dungeon_Grid')->search(
-        {
-            x                         => { '>=', $top_corner->{x}, '<=', $bottom_corner->{x} },
-            y                         => { '>=', $top_corner->{y}, '<=', $bottom_corner->{y} },
-            'dungeon_room.dungeon_id' => $current_location->dungeon_room->dungeon_id,
-            'dungeon_room.floor'      => $current_location->dungeon_room->floor,
-            party_id                  => $c->stash->{party}->id,
-        },
-        {
-            join     => [ 'dungeon_room', 'mapped_dungeon_grid' ],
-        },
-    );
-	my $old_sectors_grid;
-	foreach my $sector (@old_sectors) {
-		$old_sectors_grid->[$sector->x][$sector->y] = $sector;		
-	}    
-	
-	for my $y ($top_corner->{y} .. $bottom_corner->{y}) {
-		for my $x ($top_corner->{x} .. $bottom_corner->{x}) {
-						
-			# If we've already added something in the sector, leave it as is.
-			next if $sectors->[$x][$y];
-			
-			# If the sector doesn't exist, we can skip it
-			next unless $old_sectors_grid->[$x][$y];
-			
-			$sectors->[$x][$y]{sector} = $c->forward(
-		        'RPG::V::TT',
-		        [
-		            {
-		                template => 'dungeon/map_sector.html',
-		                params   => {
-		                	sector => $old_sectors_grid->[$x][$y],
-		                	cgs => $cgs,
-		                	parties => $parties,
-		                	allowed_to_move_to => $allowed_to_move_to,
-		                	viewable_sector_grid => $viewable_sector_grid,
-		                	x => $x,
-		                	y => $y,
-		                	current_location => $new_location,
-		                	zoom_level => $c->session->{zoom_level} || 2,
-		                	allowed_move_hashes => $c->flash->{allowed_move_hashes},
-		                	positions => \@positions,
-		                	create_tooltips => 0,
-		                	dungeon_type => $c->stash->{dungeon_type},
-		                	tileset => $c->stash->{dungeon}->tileset,
-		                	
-		                },
-		                return_output => 1,
-		            }
-		        ]
-    		);			
-		}
-	}
 		
 	my $scroll_to = $c->forward('calculate_scroll_to', [$new_location, $current_location]);
 		
@@ -632,6 +604,10 @@ sub build_updated_sectors_data : Private {
 		sectors => $sectors,
 		scroll_to => $scroll_to,
 		boundaries => $c->session->{mapped_dungeon_boundaries},
+		new_location => {
+		    x => $new_location->x,
+		    y => $new_location->y,
+		},
 	};
 	
 }

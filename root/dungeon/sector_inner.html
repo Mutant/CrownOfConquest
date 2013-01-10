@@ -16,12 +16,12 @@
 		[% can_move_to_sector = 0 %]
 		[% IF allowed_to_move_to.${sector.dungeon_grid_id} && ! in_combat %]
 			[% can_move_to_sector =  1 %]
-		[% END %]
+		[% END %]		
 		
-		[% IF can_move_to_sector %]
-			<a href = "javascript:getPanels('/[% dungeon_type %]/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
-				style="text-decoration: none;">
-		[% END %]
+		<a href = "javascript:getPanels('/[% dungeon_type %]/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
+			style="text-decoration: none; cursor: [% IF can_move_to_sector %]pointer[% ELSE %]default[% END %]"
+			class="sector-link" id="sector_link_[% x %]_[% y %]"
+		>
 		
 		[% IF sector.dungeon_room.tileset %][% tileset = sector.dungeon_room.tileset %][% END %]
 		[% IF sector.stairs_up %]
@@ -42,59 +42,30 @@
 			text-align: center;			
 			"
 			>
-									
-			[% IF ! viewable_sectors.$x.$y && current_location.id != sector.dungeon_grid_id %]
-				<span style="z-index: 60; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]></span>
-			[% END %]
+		
+			<span style="z-index: 60; position: absolute; top: 0px; left: 0px;
+				[% IF viewable_sectors.$x.$y %]display: none; [% END %]"				
+				class="sector-shroud" id="sector_shroud_[% x %]_[% y %]">
+				<img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]>
+			</span>
 									
 
-			[% IF ! objects.$x.$y && sector.overlay == 'skeleton' %]
-				<img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
-			[% END %]
+			[% INCLUDE dungeon/sector_contents.html %]				
 			
-			[% IF cgs.$x.$y %]
-				[% group_img = cgs.$x.$y.group_img %]
-				<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %][% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
-			    [% IF create_tooltips %]
-			    <div 
-					dojoType="dijit.Tooltip" 
-					connectId="m_[% x _ y %]">
-					[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
-				</div>
-				[% END %]
-			[% ELSIF objects.$x.$y %]
-				[% sector_objects = objects.$x.$y %]
-				[% IF sector_objects.bomb %]
-					<span id="b_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/bombrune.png" border=0 width=[% size %] height=[% size %]></span>
-				[% ELSIF sector_objects.treasure_chest %]
-					<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-				[% ELSIF sector_objects.teleporter && ! sector_objects.teleporter.invisible %]
-					<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>	
-				[% END %]
-			[% ELSIF parties.$x.$y.0 %]
-				[%# TODO: handle multiple parties in a sector %]
-			    [% other_party = parties.$x.$y.0 %]
-				<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/dungeon/humanoid[% other_party.portrait %].png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
-			    [% IF create_tooltips %]
-			    <div 
-					dojoType="dijit.Tooltip" 
-					connectId="p_[% x _ y %]">
-					[% INCLUDE party/summary.html party=other_party %]
-				</div>
-				[% END %]
-			[% ELSIF can_move_to_sector %]
-			    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto">
-			    		<img src="[% c.config.static_path %]/images/dungeon/movedot.png" border=0  width=[% size %] height=[% size %]>
-			    </span>
-			[% END %]
+		    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto;
+		    	[% IF ! can_move_to_sector %]display: none; [% END %]"
+		    	id="sector_move_dot_[% x %]_[% y %]" class="sector-move-dot">
+		    		<img src="[% c.config.static_path %]/images/dungeon/movedot.png" border=0  width=[% size %] height=[% size %]>
+		    </span>
+			
 			
 			[% IF current_location.id == sector.dungeon_grid_id %]
-				<span style="z-index: 50; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/herecircle.png" border=0  width=[% size %] height=[% size %]></span>
+				<span style="z-index: 50; position: absolute; top: 0px; left: 0px;" id="herecircle"><img src="[% c.config.static_path %]/images/dungeon/herecircle.png" border=0  width=[% size %] height=[% size %]></span>
 			[% END %]			
 			
 			</div>
 			
-			[% IF can_move_to_sector %]</a>[% END %]	
+			</a>	
 			
 			[% FOREACH door IN sector.doors %]
 				[% IF door.type != 'secret' || door.state == 'open' %]

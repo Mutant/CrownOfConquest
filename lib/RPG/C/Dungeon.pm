@@ -45,6 +45,7 @@ sub view : Local {
 
     my $mapped_sectors_by_coord;
     foreach my $sector (@mapped_sectors) {
+        $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
     }
 	
@@ -232,7 +233,7 @@ sub build_viewable_sector_grids : Private {
             $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
         } 
     }
-    
+        
     my $viewable_sectors_by_coord;
     foreach my $viewable_sector (@viewable_sectors) {
         $viewable_sectors_by_coord->[ $viewable_sector->{x} ][ $viewable_sector->{y} ] = 1;

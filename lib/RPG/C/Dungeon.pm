@@ -41,19 +41,29 @@ sub view : Local {
     $c->stats->profile("Queried map sectors");
 
 	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
-	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
+	my ($viewable_sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 
     my $mapped_sectors_by_coord;
+    my $grid;
+    my ( $min_x, $min_y, $max_x, $max_y ) = ( $mapped_sectors[0]->{x}, $mapped_sectors[0]->{y}, 0, 0 );    
+    
     foreach my $sector (@mapped_sectors) {
-        $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
-        $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector;
+        #$c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
+        $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector; 
+        
+        $grid->[ $sector->{x} ][ $sector->{y} ] = $sector;
+
+        $max_x = $sector->{x} if $max_x < $sector->{x};
+        $max_y = $sector->{y} if $max_y < $sector->{y};
+        $min_x = $sector->{x} if $min_x > $sector->{x};
+        $min_y = $sector->{y} if $min_y > $sector->{y};
     }
 	
 	# Add any sectors from viewable grid into mapped sectors, if they're not there already
-	$c->log->debug("Raw viewable sectors: " . scalar @$sectors);
-	foreach my $sector (@$sectors) {
+	foreach my $sector (@$viewable_sectors) {
 		if (! $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] && $viewable_sector_grid->[ $sector->{x} ][ $sector->{y} ]) {
 			push @mapped_sectors, $sector;
+			#$c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
 		}	
 	}
 	
@@ -61,10 +71,54 @@ sub view : Local {
         name => 'setMinimapVisibility',
         data => 0,
     };	
+  
+    my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 
-    $c->stats->profile("Finshed /dungeon/view");
+    $c->session->{mapped_dungeon_boundaries} = {
+    	min_x => $min_x,
+    	max_x => $max_x,
+    	min_y => $min_y,
+    	max_y => $max_y,	
+    };
 
-    return $c->forward( 'render_dungeon_grid', [ $viewable_sector_grid, \@mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ] );
+    my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
+   
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'dungeonRefresh',
+        data => $scroll_to,
+    };
+    
+    my $buffer = 0;
+    
+    return $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'dungeon/view.html',
+                params   => {
+                    grid                => $grid,
+                    viewable_sectors    => $viewable_sectors,
+                    max_x               => $max_x + $buffer,
+                    max_y               => $max_y + $buffer,
+                    min_x               => $min_x - $buffer,
+                    min_y               => $min_y - $buffer,
+                    positions           => \@positions,
+                    current_location    => $current_location,
+                    allowed_to_move_to  => $allowed_to_move_to,
+                    cgs                 => $cgs,
+                    parties             => $parties,
+                    objects             => $objects,
+                    in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
+                    zoom_level => $c->session->{zoom_level} || 2,
+                    scroll_to => $scroll_to,
+                    create_tooltips => 1,
+                    dungeon_type => $c->stash->{dungeon_type},
+                    tileset => $c->stash->{dungeon}->tileset,
+                },
+                return_output => 1,
+            }
+        ]
+    );
 }
 
 sub build_viewable_sector_grids : Private {
@@ -150,7 +204,7 @@ sub build_viewable_sector_grids : Private {
  
     $c->stats->profile("Got CGs");	
 
-	# Get parties in viewbale area
+	# Get parties in viewable area
     my $parties;
     my @party_recs = $c->model('DBIC::Dungeon_Grid')->search(
         {
@@ -214,6 +268,8 @@ sub build_viewable_sector_grids : Private {
     foreach my $sector (@sectors) {
         next unless $sector->{dungeon_room}{dungeon_room_id} == $current_location->dungeon_room_id;
         
+        warn "in room";
+        
 	    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks 
 	    #  in the viewable area, avoids the problem of twisting corridors having two lighted sections)
 	    # TODO: prevent light going round corners (?)
@@ -223,7 +279,8 @@ sub build_viewable_sector_grids : Private {
         push @viewable_sectors, $sector;
 
         # Save newly mapped sectors 
-        if (! $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}}) {
+        if (1) { #! $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}}) {
+
             my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->find_or_create(
     	        {
         	        party_id        => $c->stash->{party}->id,
@@ -241,71 +298,6 @@ sub build_viewable_sector_grids : Private {
     $c->stats->profile("Got viewable sectors");
 
     return [\@sectors, $viewable_sectors_by_coord, $allowed_to_move_to, $cgs, $parties, $objects];		
-}
-
-sub render_dungeon_grid : Private {
-    my ( $self, $c, $viewable_sectors, $mapped_sectors, $allowed_to_move_to, $current_location, $cgs, $parties, $objects ) = @_;
-
-    my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
-
-    my $grid;
-    my ( $min_x, $min_y, $max_x, $max_y ) = ( $mapped_sectors->[0]->{x}, $mapped_sectors->[0]->{y}, 0, 0 );
-
-    foreach my $sector (@$mapped_sectors) {
-
-        $c->log->debug( "Rendering dungeon sector: " . $sector->{x} . ", " . $sector->{y} );
-        $grid->[ $sector->{x} ][ $sector->{y} ] = $sector;
-
-        $max_x = $sector->{x} if $max_x < $sector->{x};
-        $max_y = $sector->{y} if $max_y < $sector->{y};
-        $min_x = $sector->{x} if $min_x > $sector->{x};
-        $min_y = $sector->{y} if $min_y > $sector->{y};
-    }
-    
-    $c->session->{mapped_dungeon_boundaries} = {
-    	min_x => $min_x,
-    	max_x => $max_x,
-    	min_y => $min_y,
-    	max_y => $max_y,	
-    };
-
-    my $scroll_to = $c->forward('calculate_scroll_to', [$current_location]);
-   
-    push @{$c->stash->{panel_callbacks}}, {
-        name => 'dungeonRefresh',
-        data => $scroll_to,
-    };    
-    
-    return $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'dungeon/view.html',
-                params   => {
-                    grid                => $grid,
-                    viewable_sectors    => $viewable_sectors,
-                    max_x               => $max_x,
-                    max_y               => $max_y,
-                    min_x               => $min_x,
-                    min_y               => $min_y,
-                    positions           => \@positions,
-                    current_location    => $current_location,
-                    allowed_to_move_to  => $allowed_to_move_to,
-                    cgs                 => $cgs,
-                    parties             => $parties,
-                    objects             => $objects,
-                    allowed_move_hashes => $c->flash->{allowed_move_hashes},
-                    in_combat           => $c->stash->{party} ? $c->stash->{party}->in_combat_with : undef,
-                    zoom_level => $c->session->{zoom_level} || 2,
-                    scroll_to => $scroll_to,
-                    create_tooltips => 1,
-                    dungeon_type => $c->stash->{dungeon_type},
-                    tileset => $c->stash->{dungeon}->tileset,
-                },
-                return_output => 1,
-            }
-        ]
-    );
 }
 
 sub move_to : Local {
@@ -443,38 +435,56 @@ sub build_updated_sectors_data : Private {
 		$sectors_to_update_grid->[$sector->{x}][$sector->{y}] = $sector;		
 	}
 	
-	# Check for a sector to update outside of the original map boundaries. If we find one, we give up and just refresh
-	#  the panel. Haven't figured out a way to add sectors outside the boundary and have them displaybale (they can
-	#  be created, but can't be scrolled to). If I could find a way to do it, it'd be better not to use this bail out
-	#  option, since it's a lot slower to redraw the whole map (that's the whole point of updating the sectors individually)
-	my $bail_out = 0;
-	my $boundary_tl = {
-		x => $c->session->{mapped_dungeon_boundaries}{min_x},
-		y => $c->session->{mapped_dungeon_boundaries}{min_y},
-	};
-	my $boundary_br = {
-		x => $c->session->{mapped_dungeon_boundaries}{max_x},
-		y => $c->session->{mapped_dungeon_boundaries}{max_y},
-	};	
+	use Data::Dumper;
+	warn Dumper $c->session->{mapped_dungeon_boundaries};
 	
+	# Check if we've gone beyond the displayed boundaries	
+	my ($min_x_change, $max_x_change) = (0,0);
+	my ($min_y_change, $max_y_change) = (0,0);	
+	my ($new_min_x, $new_max_x, $new_min_y, $new_max_y);
 	foreach my $sector (@$sectors_to_update) {
-		# Don't let sectors out of the viewable area cause us to bail out. If you can't see it, you don't need to
-		#  update it
 		next unless $viewable_sector_grid->[$sector->{x}][$sector->{y}];
 		
-		if (! RPG::Map->is_in_range($sector, $boundary_tl, $boundary_br)) {
-			$c->log->info( $sector->{x} . ", " . $sector->{y} . " out of range, bailing out of quick sector update");
-			$c->stash->{saved_grid} = $grids; # Can use these later
-			$bail_out = 1;
-			last;				
+		if ($sector->{x} < $c->session->{mapped_dungeon_boundaries}{min_x}) {
+		    if (! defined $new_min_x || $sector->{x} < $new_min_x) {
+                $new_min_x = $sector->{x};
+                $min_x_change = $c->session->{mapped_dungeon_boundaries}{min_x} - $new_min_x;
+		    }
 		}
+		
+		if ($sector->{x} > $c->session->{mapped_dungeon_boundaries}{max_x}) {
+		    if (! defined $new_max_x || $sector->{x} > $new_max_x) {
+		        $new_max_x = $sector->{x};
+		        $max_x_change = $new_max_x - $c->session->{mapped_dungeon_boundaries}{max_x};
+		    }
+		}
+		
+		if ($sector->{y} < $c->session->{mapped_dungeon_boundaries}{min_y}) {
+		    if (! defined $new_min_y || $sector->{y} < $new_min_y) {
+                $new_min_y = $sector->{y};
+                $min_y_change = $c->session->{mapped_dungeon_boundaries}{min_y} - $new_min_y;
+		    }
+		    
+		}
+		
+		if ($sector->{y} > $c->session->{mapped_dungeon_boundaries}{max_y}) {
+		    if (! defined $new_max_y || $sector->{y} > $new_max_y) {
+		        $new_max_y = $sector->{y};
+		        $max_y_change = $new_max_y - $c->session->{mapped_dungeon_boundaries}{max_y};                
+		    }
+		}						
 	}
 	
-	if ($bail_out) {
-		push @{ $c->stash->{refresh_panels} }, 'map';
-		return;
-	}
+	$c->session->{mapped_dungeon_boundaries}{min_x} = $new_min_x if defined $new_min_x;
+	$c->session->{mapped_dungeon_boundaries}{max_x} = $new_max_x if defined $new_max_x;
+	$c->session->{mapped_dungeon_boundaries}{min_y} = $new_min_y if defined $new_min_y;
+	$c->session->{mapped_dungeon_boundaries}{max_y} = $new_max_y if defined $new_max_y;
 	
+	warn Dumper $c->session->{mapped_dungeon_boundaries};
+
+	$c->stats->profile("Calculated boundary changes");
+
+    # TODO: cache me
 	my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
 	
 	my $sectors;
@@ -509,7 +519,6 @@ sub build_updated_sectors_data : Private {
 			$sector_data{viewable} = 1 if $viewable_sector_grid->[$x][$y];
 			$sector_data{allowed_to_move_to} = 1 if $allowed_to_move_to->{$current_sector->{dungeon_grid_id}};
 			
-				
             if (! $c->session->{dungeon_mapped}{$current_sector->{dungeon_grid_id}}) {
     			$sector_data{sector} = $c->forward(
     		        'RPG::V::TT',
@@ -597,17 +606,23 @@ sub build_updated_sectors_data : Private {
     		
 		}		
 	}
+	
+	$c->stats->profile("Calculated sector data");
 		
 	my $scroll_to = $c->forward('calculate_scroll_to', [$new_location, $current_location]);
 		
 	return {
 		sectors => $sectors,
 		scroll_to => $scroll_to,
-		boundaries => $c->session->{mapped_dungeon_boundaries},
 		new_location => {
 		    x => $new_location->x,
 		    y => $new_location->y,
 		},
+		min_x_change => $min_x_change,
+		max_x_change => $max_x_change,
+		min_y_change => $min_y_change,
+		max_y_change => $max_y_change,
+		dungeon_boundaries => $c->session->{mapped_dungeon_boundaries}
 	};
 	
 }

@@ -54,7 +54,14 @@ br {
 	text-align: center;
 	display: inline;					
 	font-size: 1px;
-	position: relative;
+	position: relative;	
+}
+
+.dungeon-sector {
+	float: none; 
+	display: inline-block; 
+	margin-right: -4px; 
+	margin-top: -4px;
 }
 
 /* Main Layout */

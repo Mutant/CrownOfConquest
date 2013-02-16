@@ -86,15 +86,24 @@ function removeNonTextNode(parent, property) {
 
 function getNonTextNode(parent, property) {
 	var node = parent[property];
+	
+	var count = 0;
+	
 	while (node.nodeName == '#text') {
 		parent.removeChild(node);
 		node = parent[property];
+		count++;
+		
+		if (count > 200) {
+			node = null;
+			break;
+		}
 	}
-	
+			
 	return node;
 }
 
-function addEmptyRow(rowSize, position) {
+function addEmptyRow(rowSize, position, idPrefix, extraClasses) {
 	var newRow = document.createElement('div');
 	newRow.setAttribute('class', 'map-row');
 
@@ -102,6 +111,10 @@ function addEmptyRow(rowSize, position) {
 
 	var adjacentRow;
 	var adjustment;
+	
+	if (! idPrefix) {
+		idPrefix = 'outer_sector_'; 
+	}	
 
 	if (position == 'prepend') {
 		adjacentRow = getNonTextNode(map, 'firstChild');	
@@ -135,7 +148,7 @@ function addEmptyRow(rowSize, position) {
 		
 		sectorsAdded.push(newCoords);
 			
-		var newSpan = newSector(newCoords.x, newCoords.y);
+		var newSpan = newSector(newCoords.x, newCoords.y, idPrefix, extraClasses);
 		
 		newRow.appendChild(newSpan);
 	}
@@ -143,12 +156,16 @@ function addEmptyRow(rowSize, position) {
 	return sectorsAdded;
 }
 
-function addEmptyColumn(colSize, position) {
+function addEmptyColumn(colSize, position, idPrefix, extraClasses) {
 	var map = dojo.byId('map-holder');
 	
 	var rowsList = map.childNodes;
 	
 	var sectorsAdded = [];
+	
+	if (! idPrefix) {
+		idPrefix = 'outer_sector_'; 
+	}
 	
 	for (i=0; i<rowsList.length; i++) {
 		var row = rowsList.item(i);
@@ -166,7 +183,7 @@ function addEmptyColumn(colSize, position) {
 			
 			sectorsAdded.push(newCoords);
 		
-			var newSpan = newSector(newCoords.x, newCoords.y);
+			var newSpan = newSector(newCoords.x, newCoords.y, idPrefix, extraClasses);
 			
 			if (position == 'prepend') {
 				row.insertBefore(newSpan, row.firstChild);
@@ -180,10 +197,19 @@ function addEmptyColumn(colSize, position) {
 	return sectorsAdded;
 }
 
-function newSector(x, y) {
+function newSector(x, y, idPrefix, extraClasses) {
 	var newSpan = document.createElement('span');
-	newSpan.setAttribute('class','sector-outer');
-	newSpan.id="outer_sector_" + x + "_" + y;
+	
+	newSpan.setAttribute('x',x);
+	newSpan.setAttribute('y',y);
+	newSpan.id=idPrefix + x + "_" + y;
+	
+	var classes = "sector-outer ";
+	for (var i = 0; i < extraClasses.length; i++) {
+		classes += extraClasses[i] + " ";
+	} 
+ 		
+	newSpan.setAttribute('class',classes);
 	
 	return newSpan;
 }
@@ -241,11 +267,9 @@ function disableLink(link) {
 }
 
 function getSectorsCoords(sector) {
-	var parts = sector.id.split(/_/);
-	
 	return {
-		x: parseInt(parts[2]),
-		y: parseInt(parts[3]),
+		x: parseInt(sector.getAttribute('x')),
+		y: parseInt(sector.getAttribute('y')),
 	}
 }
 
@@ -495,7 +519,9 @@ function dungeonCallback(data) {
 	$('.sector-move-dot').css("display","none");
 	$('.sector-link').css("cursor","default");
 	$('.sector-contents').html('');
-	
+
+	adjustDungeonBoundaries(data);
+
 	var newSector = dojo.byId('sector_' + data.new_location.x + '_' + data.new_location.y);
 	newSector.appendChild(dojo.byId('herecircle'));
 	
@@ -506,34 +532,31 @@ function dungeonCallback(data) {
 			
 				var sector_id = "sector_" + x + "_" + y;
 				
-				if (sector.sector) {			
-					if (! dojo.byId(sector_id)) {
-						// Create sector
-						newSector = document.createElement("div");
-						newSector.setAttribute('id', sector_id);
-						newSector.style.position = 'absolute';					
-						newSector.style.top = (y - data.boundaries.min_y) * 40;
-						newSector.style.left = (x - data.boundaries.min_x) * 40; 
-						newSector.style.width = '40px';
-						newSector.style.height = '40px';
-						dojo.byId('dungeon_outer').appendChild(newSector); 
+				if (! dojo.byId(sector_id) ) {
+					throw "Sector container: " + sector_id + " does not exist!"; 
+				}
+				
+				try {								
+					if (sector.sector) {				
+						dojo.byId(sector_id).innerHTML = sector.sector;
 					}
 	
-					dojo.byId(sector_id).innerHTML = sector.sector;
+					if (sector.viewable) {
+						dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
+					}					
+					
+					if (sector.allowed_to_move_to) {
+						dojo.byId("sector_move_dot_" + x + "_" + y).style.display = "inline";
+						dojo.byId("sector_link_" + x + "_" + y).style.cursor = "pointer";
+					}
+					
+					if (sector.contents) {
+						dojo.byId("sector_contents_" + x + "_" + y).innerHTML = sector.contents;
+					}
 				}
-				
-				if (sector.viewable) {
-					dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
-				}					
-				
-				if (sector.allowed_to_move_to) {
-					dojo.byId("sector_move_dot_" + x + "_" + y).style.display = "inline";
-					dojo.byId("sector_link_" + x + "_" + y).style.cursor = "pointer";
-				}
-				
-				if (sector.contents) {
-					dojo.byId("sector_contents_" + x + "_" + y).innerHTML = sector.contents;
-				}
+				catch (err) {
+					throw "Error updating sector: " + sector_id + ": " + err; 
+				}				
 				
 				if (dijit.byId('cgtt_' + x + '_' + y)) {
 					dijit.byId('cgtt_' + x + '_' + y).destroyRecursive();
@@ -563,6 +586,37 @@ function dungeonCallback(data) {
 	}
 	
 	dungeonScroll(data.scroll_to); 
+}
+
+function adjustDungeonBoundaries(data) {
+	var x_size = data.dungeon_boundaries.max_y - data.dungeon_boundaries.min_y + 1;
+	var y_size = data.dungeon_boundaries.max_x - data.dungeon_boundaries.min_x + 1;
+
+	if (data.min_x_change) {
+		for (var i = 0; i < data.min_x_change; i++) {
+			console.debug("Prepend column: " + i + ", size:" + x_size); 
+			addEmptyColumn(x_size, 'prepend', 'sector_', ['dungeon-sector']);
+		}
+	}
+	if (data.max_x_change) {
+		for (var i = 0; i < data.max_x_change; i++) {
+			console.debug("Append column: " + i + ", size:" + x_size);
+			addEmptyColumn(x_size, 'append', 'sector_', ['dungeon-sector']);
+		}
+	}
+	
+	if (data.min_y_change) {
+		for (var i = 0; i < data.min_y_change; i++) {
+			console.debug("Prepend row: " + i + ", size:" + y_size);
+			addEmptyRow(y_size, 'prepend', 'sector_', ['dungeon-sector']);
+		}
+	}
+	if (data.max_y_change) {
+		for (var i = 0; i < data.max_y_change; i++) {
+			console.debug("Append row: " + i + ", size:" + y_size);
+			addEmptyRow(y_size, 'append', 'sector_', ['dungeon-sector']);
+		}
+	}		
 }
 
 function dungeonRefreshCallback(scroll_to) {

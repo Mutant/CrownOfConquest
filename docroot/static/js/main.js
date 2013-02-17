@@ -637,6 +637,21 @@ function dungeonRefreshCallback(scroll_to) {
 	dungeonScroll(scroll_to); 
 }
 
+function dungeonSetViewableCallback(viewable) {
+	for (var i = 0; i < viewable.length; i++) {
+		coords = viewable[i];
+
+		var x = coords[0];
+		var y = coords[1];
+
+		var sector = dojo.byId("sector_" + x + "_" + y);
+		
+		if (sector) {
+			dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
+		}		
+	}
+}
+
 function dialogCallback(data) {
 	dojo.byId('dialog-content').innerHTML = data.content;
 	

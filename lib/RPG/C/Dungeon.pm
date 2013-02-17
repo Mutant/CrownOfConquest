@@ -88,6 +88,16 @@ sub view : Local {
         data => $scroll_to,
     };
     
+    my @viewable_sector_list;
+    foreach my $viewable_sector (@$viewable_sectors) {
+        push @viewable_sector_list, [$viewable_sector->{x}, $viewable_sector->{y}];   
+    }
+    
+    push @{$c->stash->{panel_callbacks}}, {
+        name => 'dungeonSetViewable',
+        data => \@viewable_sector_list,
+    };    
+    
     my $buffer = 0;
     
     return $c->forward(
@@ -97,7 +107,6 @@ sub view : Local {
                 template => 'dungeon/view.html',
                 params   => {
                     grid                => $grid,
-                    viewable_sectors    => $viewable_sectors,
                     max_x               => $max_x + $buffer,
                     max_y               => $max_y + $buffer,
                     min_x               => $min_x - $buffer,
@@ -267,9 +276,7 @@ sub build_viewable_sector_grids : Private {
     my @viewable_sectors;
     foreach my $sector (@sectors) {
         next unless $sector->{dungeon_room}{dungeon_room_id} == $current_location->dungeon_room_id;
-        
-        warn "in room";
-        
+                
 	    # Make sure all the viewable sectors have a path back to the starting square (i.e. there's no breaks 
 	    #  in the viewable area, avoids the problem of twisting corridors having two lighted sections)
 	    # TODO: prevent light going round corners (?)

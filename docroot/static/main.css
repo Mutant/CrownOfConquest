@@ -59,9 +59,12 @@ br {
 
 .dungeon-sector {
 	float: none; 
-	display: inline-block; 
-	margin-right: -4px; 
-	margin-top: -4px;
+	display: inline-block;
+}
+
+.dungeon-row {
+	white-space: nowrap;
+	font-size: 0px;
 }
 
 /* Main Layout */

@@ -103,9 +103,19 @@ function getNonTextNode(parent, property) {
 	return node;
 }
 
-function addEmptyRow(rowSize, position, idPrefix, extraClasses) {
+function addEmptyRow(rowSize, position, idPrefix, extraClasses, extraRowClasses) {
 	var newRow = document.createElement('div');
-	newRow.setAttribute('class', 'map-row');
+	
+	var rowClass = 'map-row ';
+	if (typeof extraRowClasses == 'undefined') {
+		extraRowClasses = [];
+	}
+	
+	for (var i = 0; i < extraRowClasses.length; i++) {
+		rowClass += extraRowClasses[i] + " ";
+	}	
+	
+	newRow.setAttribute('class', rowClass);
 
 	var map = dojo.byId('map-holder');
 
@@ -203,6 +213,10 @@ function newSector(x, y, idPrefix, extraClasses) {
 	newSpan.setAttribute('x',x);
 	newSpan.setAttribute('y',y);
 	newSpan.id=idPrefix + x + "_" + y;
+	
+	if (typeof extraClasses == 'undefined') {
+		extraClasses = [];
+	}
 	
 	var classes = "sector-outer ";
 	for (var i = 0; i < extraClasses.length; i++) {
@@ -536,11 +550,11 @@ function dungeonCallback(data) {
 					throw "Sector container: " + sector_id + " does not exist!"; 
 				}
 				
-				try {								
+				try {
 					if (sector.sector) {				
 						dojo.byId(sector_id).innerHTML = sector.sector;
 					}
-	
+					
 					if (sector.viewable) {
 						dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
 					}					
@@ -608,13 +622,13 @@ function adjustDungeonBoundaries(data) {
 	if (data.min_y_change) {
 		for (var i = 0; i < data.min_y_change; i++) {
 			console.debug("Prepend row: " + i + ", size:" + y_size);
-			addEmptyRow(y_size, 'prepend', 'sector_', ['dungeon-sector']);
+			addEmptyRow(y_size, 'prepend', 'sector_', ['dungeon-sector'], ['dungeon-row']);
 		}
 	}
 	if (data.max_y_change) {
 		for (var i = 0; i < data.max_y_change; i++) {
 			console.debug("Append row: " + i + ", size:" + y_size);
-			addEmptyRow(y_size, 'append', 'sector_', ['dungeon-sector']);
+			addEmptyRow(y_size, 'append', 'sector_', ['dungeon-sector'], ['dungeon-row']);
 		}
 	}		
 }

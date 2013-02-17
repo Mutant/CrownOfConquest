@@ -6,7 +6,7 @@
 
 [% SWITCH c.session.screen_height %]
 [% CASE 'large' %]
-	[% min_height = '800px' %]
+	[% min_height = '650px' %]
 [% CASE 'medium' %]
 	[% min_height = '500px' %]
 [% CASE %]
@@ -24,24 +24,18 @@
 
 <div style="width: 60px; height: 100%; float: left; border:">&nbsp;</div>
 <div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
-<div id="map-holder" style="left: 80px; min-width: [% min_width %]; min-height: [% min_height %]; max-height: 800px; max-width: 850px; overflow: auto;">
+<div id="map-holder" style="left: 80px; min-width: [% min_width %]; min-height: [% min_height %]; max-height: [% min_height %]; max-width: [% min_width %]; overflow: auto; margin: 2px">
 [% WHILE y < max_y %]
 	[% y = y+1 %]
 	[% x = min_x - 1 %]
-	<div class="map-row" style="white-space: nowrap;">
-	[% WHILE x < max_x %]
-		[% x = x+1 %]
-		[% sector = grid.$x.$y %]
-		
-		[% FILTER collapse %]
-		<span class="sector-outer dungeon-sector" id="sector_[% x %]_[% y %]" x="[% x %]" y="[% y %]">	
-		
-		[% INCLUDE dungeon/sector_inner.html %]
-		
-		</span>
-		[% END %]
-		
-	[% END %]
-	</div>	
+	[% FILTER collapse ~%]
+	<div class="map-row dungeon-row">
+	[% WHILE x < max_x ~%]
+		[% x = x+1 ~%]
+		[% sector = grid.$x.$y ~%]		
+		<span class="sector-outer dungeon-sector" id="sector_[% x %]_[% y %]" x="[% x %]" y="[% y %]">[% INCLUDE dungeon/sector_inner.html ~%]</span>		
+	[% END ~%]
+	</div>
+	[% END ~%]
 [% END %]
 </div>

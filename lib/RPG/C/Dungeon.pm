@@ -40,15 +40,24 @@ sub view : Local {
 
     $c->stats->profile("Queried map sectors");
 
-	my $grids = $c->stash->{saved_grid} || $c->forward('build_viewable_sector_grids', [$current_location]);
-	my ($viewable_sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
+	my $grids = $c->forward('build_viewable_sector_grids', [$current_location]);
+	my ($sectors, $viewable_sector_grid, $allowed_to_move_to, $cgs, $parties, $objects) = @$grids;
 
     my $mapped_sectors_by_coord;
     my $grid;
-    my ( $min_x, $min_y, $max_x, $max_y ) = ( $mapped_sectors[0]->{x}, $mapped_sectors[0]->{y}, 0, 0 );    
     
+	# Add any sectors from viewable grid into mapped sectors, if they're not there already
+	foreach my $sector (@$sectors) {
+		if (! $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] && $viewable_sector_grid->[ $sector->{x} ][ $sector->{y} ]) {
+			push @mapped_sectors, $sector;
+		}	
+	}
+	
+	my ( $min_x, $min_y, $max_x, $max_y ) = ( $mapped_sectors[0]->{x}, $mapped_sectors[0]->{y}, 0, 0 );
+    
+    # Build $gird to pass to the template, and calculate min/max x & y
     foreach my $sector (@mapped_sectors) {
-        #$c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
+        $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
         $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] = $sector; 
         
         $grid->[ $sector->{x} ][ $sector->{y} ] = $sector;
@@ -58,15 +67,7 @@ sub view : Local {
         $min_x = $sector->{x} if $min_x > $sector->{x};
         $min_y = $sector->{y} if $min_y > $sector->{y};
     }
-	
-	# Add any sectors from viewable grid into mapped sectors, if they're not there already
-	foreach my $sector (@$viewable_sectors) {
-		if (! $mapped_sectors_by_coord->[ $sector->{x} ][ $sector->{y} ] && $viewable_sector_grid->[ $sector->{x} ][ $sector->{y} ]) {
-			push @mapped_sectors, $sector;
-			#$c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}} = 1;
-		}	
-	}
-	
+
     push @{$c->stash->{panel_callbacks}}, {
         name => 'setMinimapVisibility',
         data => 0,
@@ -89,17 +90,16 @@ sub view : Local {
     };
     
     my @viewable_sector_list;
-    foreach my $viewable_sector (@$viewable_sectors) {
-        push @viewable_sector_list, [$viewable_sector->{x}, $viewable_sector->{y}];   
+    foreach my $sector (@$sectors) {
+        push @viewable_sector_list, [$sector->{x}, $sector->{y}]
+            if $viewable_sector_grid->[ $sector->{x} ][ $sector->{y} ];   
     }
     
     push @{$c->stash->{panel_callbacks}}, {
         name => 'dungeonSetViewable',
         data => \@viewable_sector_list,
-    };    
-    
-    my $buffer = 0;
-    
+    };
+            
     return $c->forward(
         'RPG::V::TT',
         [
@@ -107,10 +107,10 @@ sub view : Local {
                 template => 'dungeon/view.html',
                 params   => {
                     grid                => $grid,
-                    max_x               => $max_x + $buffer,
-                    max_y               => $max_y + $buffer,
-                    min_x               => $min_x - $buffer,
-                    min_y               => $min_y - $buffer,
+                    max_x               => $max_x,
+                    max_y               => $max_y,
+                    min_x               => $min_x,
+                    min_y               => $min_y,
                     positions           => \@positions,
                     current_location    => $current_location,
                     allowed_to_move_to  => $allowed_to_move_to,
@@ -286,7 +286,7 @@ sub build_viewable_sector_grids : Private {
         push @viewable_sectors, $sector;
 
         # Save newly mapped sectors 
-        if (1) { #! $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}}) {
+        if (! $c->session->{dungeon_mapped}{$sector->{dungeon_grid_id}}) {
 
             my $mapped = $c->model('DBIC::Mapped_Dungeon_Grid')->find_or_create(
     	        {
@@ -380,16 +380,23 @@ sub move_to : Local {
     	    $c->session->{special_room_alerts}{$sector->dungeon_room_id} = 1;
     	}        
         
+        my $quick_refresh = 1;
         
     	# If there's a teleporter here, they actually get moved to the destination of the teleporter
     	if (my $teleporter = $sector->teleporter) {
-    		$sector_id = $teleporter->destination_id;
+    	    my $teleporter_dest = $teleporter->destination;    		
     		
-    		unless ($sector_id) {
+    		unless ($teleporter_dest) {
     			# Random teleporter - find a destination
-    			my $random_dest = $c->model('DBIC::Dungeon_Grid')->find_random_sector( $sector->dungeon_room->dungeon_id );
-    			$sector_id = $random_dest->id;
-    		}
+    			$teleporter_dest = $c->model('DBIC::Dungeon_Grid')->find_random_sector( $sector->dungeon_room->dungeon_id );    			
+    		}    		
+    		
+    		$sector_id = $teleporter_dest->dungeon_grid_id;
+    		
+    		if ($teleporter_dest->dungeon_room->floor != $sector->dungeon_room->floor) {
+                push @{$c->stash->{refresh_panels}}, 'map';
+                $quick_refresh = 0;            
+    		} 
     		
     		push @{$c->stash->{messages}}, "You are teleported to elsewhere in the dungeon....";
     	}
@@ -412,15 +419,17 @@ sub move_to : Local {
         $c->stash->{party}->update;
         $c->stash->{party}->discard_changes;
         
-        my $sectors = $c->forward('build_updated_sectors_data', [$current_location, $sector_id]);
+        if ($quick_refresh) {
+            my $sectors = $c->forward('build_updated_sectors_data', [$current_location, $sector_id]);
         
-        if ($sectors) {
-	        $c->stash->{panel_callbacks} = [
-	        	{
-	        		name => 'dungeon',
-	        		data => $sectors,
-	        	}
-	        ];
+            if ($sectors) {
+    	        $c->stash->{panel_callbacks} = [
+    	        	{
+    	        		name => 'dungeon',
+    	        		data => $sectors,
+    	        	}
+    	        ];
+            }
         }
     }
 
@@ -441,10 +450,7 @@ sub build_updated_sectors_data : Private {
 	foreach my $sector (@$sectors_to_update) {
 		$sectors_to_update_grid->[$sector->{x}][$sector->{y}] = $sector;		
 	}
-	
-	use Data::Dumper;
-	warn Dumper $c->session->{mapped_dungeon_boundaries};
-	
+		
 	# Check if we've gone beyond the displayed boundaries	
 	my ($min_x_change, $max_x_change) = (0,0);
 	my ($min_y_change, $max_y_change) = (0,0);	
@@ -487,8 +493,6 @@ sub build_updated_sectors_data : Private {
 	$c->session->{mapped_dungeon_boundaries}{min_y} = $new_min_y if defined $new_min_y;
 	$c->session->{mapped_dungeon_boundaries}{max_y} = $new_max_y if defined $new_max_y;
 	
-	warn Dumper $c->session->{mapped_dungeon_boundaries};
-
 	$c->stats->profile("Calculated boundary changes");
 
     # TODO: cache me

@@ -607,27 +607,23 @@ function adjustDungeonBoundaries(data) {
 	var y_size = data.dungeon_boundaries.max_x - data.dungeon_boundaries.min_x + 1;
 
 	if (data.min_x_change) {
-		for (var i = 0; i < data.min_x_change; i++) {
-			console.debug("Prepend column: " + i + ", size:" + x_size); 
+		for (var i = 0; i < data.min_x_change; i++) {			 
 			addEmptyColumn(x_size, 'prepend', 'sector_', ['dungeon-sector']);
 		}
 	}
 	if (data.max_x_change) {
 		for (var i = 0; i < data.max_x_change; i++) {
-			console.debug("Append column: " + i + ", size:" + x_size);
 			addEmptyColumn(x_size, 'append', 'sector_', ['dungeon-sector']);
 		}
 	}
 	
 	if (data.min_y_change) {
 		for (var i = 0; i < data.min_y_change; i++) {
-			console.debug("Prepend row: " + i + ", size:" + y_size);
 			addEmptyRow(y_size, 'prepend', 'sector_', ['dungeon-sector'], ['dungeon-row']);
 		}
 	}
 	if (data.max_y_change) {
 		for (var i = 0; i < data.max_y_change; i++) {
-			console.debug("Append row: " + i + ", size:" + y_size);
 			addEmptyRow(y_size, 'append', 'sector_', ['dungeon-sector'], ['dungeon-row']);
 		}
 	}		
@@ -646,7 +642,7 @@ function dungeonSetViewableCallback(viewable) {
 
 		var sector = dojo.byId("sector_" + x + "_" + y);
 		
-		if (sector) {
+		if (sector && dojo.byId("sector_shroud_" + x + "_" + y)) {
 			dojo.byId("sector_shroud_" + x + "_" + y).style.display = "none";
 		}		
 	}

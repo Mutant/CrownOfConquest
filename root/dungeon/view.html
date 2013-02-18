@@ -6,11 +6,11 @@
 
 [% SWITCH c.session.screen_height %]
 [% CASE 'large' %]
-	[% min_height = '650px' %]
+	[% min_height = '610px' %]
 [% CASE 'medium' %]
-	[% min_height = '500px' %]
+	[% min_height = '460px' %]
 [% CASE %]
-	[% min_height = '420px' %]
+	[% min_height = '380px' %]
 [% END %]
 
 [% SWITCH c.session.screen_width %]
@@ -22,9 +22,8 @@
 	[% min_width = '480px' %]
 [% END %]
 
-<div style="width: 60px; height: 100%; float: left; border:">&nbsp;</div>
 <div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
-<div id="map-holder" style="left: 80px; min-width: [% min_width %]; min-height: [% min_height %]; max-height: [% min_height %]; max-width: [% min_width %]; overflow: auto; margin: 2px">
+<div id="map-holder" style="left: 80px; min-width: [% min_width %]; min-height: [% min_height %]; max-height: [% min_height %]; max-width: [% min_width %]; overflow: auto; margin: 20px">
 [% WHILE y < max_y %]
 	[% y = y+1 %]
 	[% x = min_x - 1 %]

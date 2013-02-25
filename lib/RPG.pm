@@ -85,7 +85,6 @@ my @plugins = qw/
 /;
   
 if ($ENV{RPG_DEV}) {
-    push @plugins, 'MemoryUsage';
     push @plugins, 'Static::Simple';
 }
 

@@ -13,7 +13,7 @@ sub use {
     my $self = shift;
     
     return unless $self->is_usable;
-    
+        
     my $character = $self->belongs_to_character;
     
     return unless $character;
@@ -39,8 +39,8 @@ sub label {
 
 sub is_usable {
     my $self = shift;
-    
-    my $character = $self->belongs_to_character;
+    my $combat = shift;
+    my $character = shift;
     
     return 0 unless $character;
 

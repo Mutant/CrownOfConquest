@@ -22,6 +22,7 @@ after 'use' => sub {
     }      
 };
 
+# This is bad majick :/
 around 'is_usable' => sub {
     my $orig = shift;
     my $self = shift;

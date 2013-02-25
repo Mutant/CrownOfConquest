@@ -172,7 +172,7 @@ sub add_creature {
 	
 	# Extra HPs for rare monsters
 	if ($type->rare) {
-	   $hps += $type->level * 10;
+	   $hps += $type->level * 15;
 	}
 	
 	my $melee_weapons = $self->melee_weapons;

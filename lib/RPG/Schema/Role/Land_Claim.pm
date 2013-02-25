@@ -10,13 +10,15 @@ sub claim_land {
     my $kingdom = $self->kingdom;
 
     return unless $kingdom;
+    
+    my $base_point = $self->location;
 
     my @sectors = RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset    => $self->result_source->schema->resultset('Land'),
         relationship => 'me',
         base_point   => {
-            x => $self->location->x,
-            y => $self->location->y,
+            x => $base_point->x,
+            y => $base_point->y,
         },
         search_range        => $self->land_claim_range * 2 + 1,
         increment_search_by => 0,
@@ -25,7 +27,9 @@ sub claim_land {
     
     foreach my $sector (@sectors) {
         # Skip sectors already claimed by something else
-        if (defined $sector->claimed_by_type && ($sector->claimed_by_type ne $self->claim_type || $sector->claimed_by_id != $self->id)) {
+        # (except the base point)
+        if ($sector->id != $base_point->id && defined $sector->claimed_by_type && 
+            ($sector->claimed_by_type ne $self->claim_type || $sector->claimed_by_id != $self->id)) {
             next;   
         } 
         

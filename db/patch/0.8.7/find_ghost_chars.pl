@@ -31,6 +31,7 @@ foreach my $town (@towns) {
             warn "from party.. " . $char->party->id;
             $char->status(undef);
             $char->status_context(undef);
+            $char->creature_group_id(undef);
             $char->update;
         }
                

@@ -101,12 +101,21 @@ sub execute_round {
 	$self->result->{messages} = undef;
 	
     my @combat_messages;
+    
+    # Check if encounter marked as ended
+    if ($self->combat_log->encounter_ended) {
+        $self->log->debug("Combat marked as complete (as at " . $self->combat_log->encounter_ended . "), not executing round");
+        
+        $self->result->{combat_complete} = 1;
+    
+    	return;        
+    }
 
 	eval {
     	# Check for stalemates, fleeing or no one alive in one of the groups
     	#  The latter should be caught from the end of the previous round, but we also check it here to be defensive
     	my $dead_group = $self->check_for_end_of_combat;
-    	if ( $self->stalemate_check || $self->check_for_flee || $dead_group ) {
+    	if ( $dead_group || $self->stalemate_check || $self->check_for_flee ) {
     
     		# One opponent has fled, end of the battle
     		$self->end_of_combat_cleanup;
@@ -1160,6 +1169,9 @@ sub _build_combat_log {
 			opponent_2_type => $opp2->group_type,
 			encounter_ended => undef,
 		},
+        { 
+	       for => 'update', 
+	    },
 	);
 
 	if ( !$combat_log ) {

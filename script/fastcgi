@@ -16,7 +16,7 @@
 APPNAME=RPG
 APPDIR=/home/sam/kingdoms
 UNIXNAME=$(echo $APPNAME | perl -pe 's/::/_/;$_=lc')
-PROCS=6
+PROCS=8
 SOCKET=/tmp/rpg.socket
 # Leave these unset and we won't try to setuid/setgid.
 #USER=myapp

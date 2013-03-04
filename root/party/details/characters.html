@@ -46,7 +46,7 @@ $(document).ready(function()
 
 [% FOREACH character IN characters %]
 	<tr>
-		<td><a href="#" onClick="loadScreen('character/view?character_id=[% character.id %]')">[% character.character_name %]</a></td>
+		<td><a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank">[% character.character_name %]</a></td>
 		<td>[% character.level %]</td>
 		<td>[% character.race.race_name %]</td>
 		<td>[% character.class.class_name %]</td>

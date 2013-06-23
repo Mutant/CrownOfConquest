@@ -59,7 +59,7 @@ sub run {
 	    $conf_info = [$conf_info->{dsn}, $conf_info->{user}, $conf_info->{password}];
 	}
 	
-	my $schema = RPG::Schema->connect( $config, $conf_info, );
+	my $schema = RPG::Schema->connect( $config, @$conf_info, );
 	$schema->log($logger);	
 
 	while (1) {

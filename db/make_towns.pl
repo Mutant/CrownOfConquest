@@ -12,10 +12,10 @@ use RPG::Maths;
 use Math::Round qw(round);
 use List::Util qw(shuffle);
 
-my $dbh = DBI->connect("dbi:mysql:game-copy","root","");
+my $dbh = DBI->connect("dbi:mysql:game2","root","root");
 $dbh->{RaiseError} = 1;
 
-my $towns = 50;
+my $towns = 80;
 
 # Min distance a town can be from another one
 my $town_dist_x = 11;
@@ -40,15 +40,6 @@ my %prosp_limits = (
 );
 
 my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain where terrain_name = "town"');
-
-#$dbh->do("update Land set terrain_id = 1 where terrain_id = $town_terrain_id");
-#$dbh->do('delete from Town');
-#$dbh->do('delete from Shop');
-#$dbh->do('delete from Items where shop_id is not null');
-#$dbh->do('delete from Items_Made');
-#$dbh->do('delete from `Character` where town_id is not null');
-#$dbh->do('delete from Quest');
-#$dbh->do('delete from Quest_Param');
 
 print "\nCreating $towns towns\n";
 
@@ -96,7 +87,7 @@ for (1 .. $towns) {
 	$dbh->do("delete from Creature_Group where land_id = $land_id");
 	$dbh->do("delete from Creature_Orb where land_id = $land_id");	
 	
-	my $prosp = RPG::Maths->weighted_random_number(1..100);
+	my $prosp = generate_prosperity();
 	
 	$dbh->do(
 		'insert into Town(town_name, land_id, prosperity) values (?,?,?)',
@@ -108,7 +99,8 @@ for (1 .. $towns) {
 }
 
 sub generate_name {
-	open(my $names_fh, '<', 'town_names.txt') || die "Couldn't open names file ($!)\n";
+    my $town_names = $ENV{RPG_HOME} . '/db/town_names.txt';
+	open(my $names_fh, '<', $town_names) || die "Couldn't open names file ($!)\n";
 	my @names = <$names_fh>;
 	close ($names_fh);
 	

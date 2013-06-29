@@ -10,9 +10,9 @@ use Data::Dumper;
 use DBI;
 use Games::Dice::Advanced;
 use RPG::Map;
+use List::Util qw(shuffle);
 
-my $dbh = DBI->connect("dbi:mysql:scrawley_game:mutant.dj","scrawley_user","***REMOVED***");
-#my $dbh = DBI->connect("dbi:mysql:game_test","root","root");
+my $dbh = DBI->connect("dbi:mysql:game2","root","root");
 $dbh->{RaiseError} = 1;
 
 my $min_x = 1;
@@ -20,96 +20,98 @@ my $min_y = 1;
 my $max_x = 100;
 my $max_y = 100;
 
-my ($max_terrain) = $dbh->selectrow_array('select max(terrain_id) from Terrain');
+my %tileset = (
+    1 => 2,
+    38 => 3,
+    39 => 1,
+);
+
 my ($town_terrain_id) = $dbh->selectrow_array('select terrain_id from Terrain where terrain_name = "town"');
 
-#$dbh->do('delete from Land');
+my $tilesets = $dbh->selectall_arrayref('select * from Map_Tileset');
+
+my %tileset_data = get_tileset_data($tilesets);
+
+$dbh->do('delete from Land');
 
 my $map;
 my %terrain_count;
+my $current_tileset = 0;
 
-print "Creating a $max_x x $max_y world";
+print "Creating a $max_x x $max_y world\n";
 
-my $previous_ctr;
-
-for my $x ($min_x .. $max_x) {
-    for my $y ($min_y .. $max_y) {
-        my ($land_id) = $dbh->selectrow_array("select land_id from Land where x=$x and y=$y");
+for my $y ($min_y .. $max_y) {
+    for my $x ($min_x .. $max_x) {    
+	   if (defined $tileset{$y} && $tileset{$y} != $current_tileset) {
+	       $current_tileset = $tileset{$y};
+	       warn "\nTileset now: $current_tileset\n";
+	   }
         
-        next if $land_id;
-        
-        my $terrain_id = get_terrain_id($x, $y);        
+        my ($terrain_id, $variation) = get_terrain_id($x, $y);        
         
         $map->[$x][$y] = $terrain_id;
         $terrain_count{$terrain_id}++;
         
-        my $creature_threat;
-        if (defined $previous_ctr) {
-        	my $rand = (int rand 20) - 10;
-        	
-        	$creature_threat = $previous_ctr + $rand;
-        	$creature_threat = 0 if $creature_threat < 0;
-        	$creature_threat = 100 if $creature_threat > 100;
-        }
-        else {
-        	$creature_threat = 50;	
-        }
-        
-        $previous_ctr = $creature_threat;
+        my $creature_threat = 50;
         
         $dbh->do(
-            'insert into Land(x, y, terrain_id, creature_threat) values (?,?,?,?)',
+            'insert into Land(x, y, terrain_id, variation, tileset_id, creature_threat) values (?,?,?,?,?,?)',
             {},
-            $x, $y, $terrain_id, $creature_threat,
+            $x, $y, $terrain_id, $variation, $current_tileset, $creature_threat,
         );
     }
     print ".";
 }
-#exit;
 print "Done!\n";
+
+
 
 sub get_terrain_id {
 	my ($x, $y) = @_;
+
+    my @possible = @{$tileset_data{$current_tileset}->{terrain}};
+    
+    my $terrain_id = (shuffle @possible)[0];
+    
+    my $variations = $tileset_data{$current_tileset}->{variation}{$terrain_id};
+    
+    my $variation = (shuffle (1..$variations))[0];
 	
-	my @adjacent;
-	
-	# Find adjacent squares
-	foreach my $test_x ($x-1 .. $x+1) {
-		foreach my $test_y ($y-1 .. $y+1) {
-			push @adjacent, $map->[$test_x][$test_y] if defined $map->[$test_x][$test_y];
-		}
-	}
-	
-	# Find probabilities of each terrain type
-	my %probs;
-	my $total_prob;
-	foreach my $adj (@adjacent) {
-		my $percent = int (100 - ($terrain_count{$adj} / ($max_x*$max_y) * 100)) / 4;
-		
-		$probs{$adj}+=$percent;
-		$total_prob+=$percent;
-	}
-	
-	# Roll dice, and see if one of ours matches
-	my $terrain_id;
-	my $roll = Games::Dice::Advanced->roll("1d100");
-	foreach my $terrain_type (keys %probs) {
-		if ($probs{$terrain_type} <= $roll) {
-			$terrain_id = $terrain_type;
-			last;
-		}
-		else {
-			$roll-= $probs{$terrain_type};
-		}		
-	}
-	
-	# Didn't find a terrain, so generate a random one. 
-	unless ($terrain_id) {
-		do {
-	    	$terrain_id = (int rand $max_terrain) +1;
-	    } while ($terrain_id == $town_terrain_id);
-	}
-	
-	return $terrain_id;
-	
+	return $terrain_id, $variation;
+}
+
+sub get_tileset_data {
+    my $tilesets = shift;
+    
+    my %tileset_data;
+    
+    my @terrain;
+    my $sth = $dbh->prepare("select * from Terrain");
+    $sth->execute;
+    
+    while (my $rec = $sth->fetchrow_hashref) {
+        push @terrain, $rec;   
+    }
+    
+    foreach my $tileset (@$tilesets) {
+        my ($id, $name, $prefix) = @$tileset;
+        
+        $prefix //= '';
+        
+        foreach my $terrain (@terrain) {
+            next if $terrain->{terrain_id} == $town_terrain_id;
+            
+            my $name = $terrain->{terrain_name};
+            $name =~ s/ /_/g;
+            
+            my @imgs = glob($ENV{RPG_HOME} . "/docroot/static/images/map/$prefix$name*");
+            
+            if (@imgs) {
+                push @{$tileset_data{$id}->{terrain}}, $terrain->{terrain_id};
+                $tileset_data{$id}->{variation}{$terrain->{terrain_id}} = scalar @imgs;
+            }
+        }
+    }
+    
+    return %tileset_data;
 }

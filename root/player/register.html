@@ -4,6 +4,14 @@
 
 <p>To register to play Crown Of Conquest, fill in the form below. It's free!</p>
 
+[% IF c.config.alt_server %]
+<div style="text-align: center; font-size: 14px">
+<br>
+Or Register on the <a href="[% c.config.alt_server.url %]/player/register">[% c.config.alt_server.name %] Server</a>
+<br><br>		
+</div>
+[% END %]
+
 <div align="center">
 <form method="POST" action="[% base %]/player/register" onSubmit="setBrowserSize(); return true;">
 <input type="hidden" id="login-width"  name="width"/>

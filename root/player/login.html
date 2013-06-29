@@ -105,6 +105,14 @@ function closeShotScreen() {
 		</table>
 		</form>
 		
+		[% IF c.config.alt_server %]
+		<div style="text-align: center; font-size: 14px">
+		<br>
+		Or Login to the <a href="[% c.config.alt_server.url %]">[% c.config.alt_server.name %] Server</a>
+		<br><br>		
+		</div>
+		[% END %]
+		
 		<table class="main" align="center">
 			<tr>
 				<td align="right">Don't have an account?<br><strong><a href="[% base %]/player/register">Register</a></strong></td>

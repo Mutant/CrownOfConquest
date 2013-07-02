@@ -79,7 +79,6 @@ Player_Reward_Vote
 Player_Login 
 Quest
 Quest_Param
-Quest_Param_Name
 Response_Time
 Road
 sessions

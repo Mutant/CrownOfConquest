@@ -185,7 +185,7 @@ sub inbox : Local {
         },
         {
             prefetch => 'recipients',
-            order_by => \'day_id desc, me.message_id desc',
+            order_by => { -desc => [qw/day_id me.message_id/] },
             page => 1,
             rows => 20,
         }
@@ -220,7 +220,7 @@ sub outbox : Local {
         },
         {
             prefetch => 'recipients',
-            order_by => \'day_id desc, me.message_id desc',
+            order_by =>  { -desc => [qw/day_id me.message_id/] },
             page => 1,
             rows => 20,            
         }

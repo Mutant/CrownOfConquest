@@ -71,16 +71,16 @@ sub daily_stats : Local {
     );
     
     my @counts;
-    for my $visitor_stats (@visitors) {
-        my $date = $visitor_stats->get_column('date');
+    for my $login_counts (@total_login_counts) {
+        my $date = $login_counts->get_column('date');
         
         my %stats = (
             date => $date,
-            visitor_count => $visitor_stats->get_column('visitors'),
+            total_login_count => $login_counts->get_column('count') // 0,
         );
 
-        my ($total_login_count_rec) = grep { $_->get_column('date') eq $date } @total_login_counts;
-        $stats{total_login_count} = $total_login_count_rec && $total_login_count_rec->get_column('count') // 0;
+        my ($vistor_count_rec) = grep { $_->get_column('date') eq $date } @visitors;
+        $stats{visitor_count} = $vistor_count_rec && $vistor_count_rec->get_column('count') // 0;
         
         my ($unique_login_count_rec) = grep { $_->{date} eq $date } @$unique_login_counts;
         $stats{unique_login_count} = $unique_login_count_rec && $unique_login_count_rec->{count} // 0;

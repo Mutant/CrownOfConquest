@@ -441,6 +441,12 @@ sub select_capital {
     
     return unless $highest_prosp_town;
     
+    if ($kingdom->gold < $kingdom->move_capital_cost) {
+        # Give them enough gold to move it
+        $kingdom->gold($kingdom->move_capital_cost);
+        $kingdom->update;   
+    }
+    
     try {
         $kingdom->change_capital($highest_prosp_town->id);
     }

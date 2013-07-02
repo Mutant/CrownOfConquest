@@ -33,7 +33,7 @@ sub game : Local {
     my $class_rs = $c->model('DBIC::Character')->search(
         \%character_count_clause,
         {
-            'select'   => [ 'class_name', \'count(*) as count' ],
+            'select'   => [ 'class.class_name', { count => '*', -as => 'count' } ],
             'as'       => [ 'class_name', 'count' ],
             'join'     => [ 'class',      'party' ],
             'group_by' => 'class_name',
@@ -44,7 +44,7 @@ sub game : Local {
     my $race_rs = $c->model('DBIC::Character')->search(
         \%character_count_clause,
         {
-            'select'   => [ 'race_name', \'count(*) as count' ],
+            'select'   => [ 'race.race_name',  { count => '*', -as => 'count' } ],
             'as'       => [ 'race_name', 'count' ],
             'join'     => [ 'race',      'party' ],
             'group_by' => 'race_name',
@@ -52,7 +52,8 @@ sub game : Local {
         },
     );
 
-    my $cg_count = $c->model('DBIC::CreatureGroup')->search( land_id => { '!=', undef } )->count();
+    my $cg_count = $c->model('DBIC::CreatureGroup')->search( land_id => { '!=', undef } )->count() || 1;
+    
 
     my $creature_count_rs = $c->model('DBIC::Creature')->find(
         {

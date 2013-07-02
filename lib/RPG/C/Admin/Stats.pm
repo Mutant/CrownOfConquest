@@ -56,7 +56,7 @@ sub daily_stats : Local {
         {
             order_by => 'date desc',
         },
-    );     
+    );
            
     my @turns_used = $c->model('DBIC::Party_Day_Stats')->search(
         {
@@ -132,7 +132,7 @@ sub regular : Local {
             },
         },
         {
-            'select' => ['player_name', {count => '*', -as => 'count'}],
+            'select' => ['player.player_name', {count => '*', -as => 'count'}],
             'as' => ['player_name', 'count'],
             join => 'player',            
             having => { 'count' => {'>=', $c->req->param('min_logins') // 20} },
@@ -163,7 +163,7 @@ sub new_players : Local {
             'player.created' => {'>=', DateTime->now()->subtract( months => 1 )},
         },
         {
-            'select' => ['player_name', {count => '*', -as => 'count'}],
+            'select' => ['player.player_name', {count => '*', -as => 'count'}],
             'as' => ['player_name', 'count'],
             join => 'player',
             group_by => 'player_name',

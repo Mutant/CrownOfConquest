@@ -359,7 +359,7 @@ sub balance_sheet : Local {
 				day_id => $day->id,
 			},
 			{
-				'select' => ['message', 'sum(value)'],
+				'select' => ['message', {sum => 'value'}],
 				'as' => ['label', 'amount'],
 				'group_by' => 'message',
 			},

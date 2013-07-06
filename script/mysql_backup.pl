@@ -16,4 +16,4 @@ system("mkdir -p $backup_dir");
 my $password = read_file('/home/sam/dumppw');
 chomp $password;
 
-system("mysqldump -u dump -p$password --single-transaction game | gzip -9 > $backup_dir/game.sql");
+system("mysqldump -u dump -p$password --single-transaction game | gzip -9 > $backup_dir/game.sql.gz");

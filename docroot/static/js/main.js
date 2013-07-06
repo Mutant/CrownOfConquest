@@ -291,14 +291,10 @@ function loadNewSectors(sectorsAdded) {
 	var qString = "";
 	for (var val in sectorsAdded) { 
 		for(var i=0; i<sectorsAdded[val].length; i++) {
-			if (sectorsAdded[val][i].x >= mapDimensions.min_x && sectorsAdded[val][i].x <= mapDimensions.max_x &&
-			    sectorsAdded[val][i].y >= mapDimensions.min_y && sectorsAdded[val][i].y <= mapDimensions.max_y) {
-		
-				qString += val + '=' + sectorsAdded[val][i].x + "," + sectorsAdded[val][i].y + "&"
-			} 
+			qString += val + '=' + sectorsAdded[val][i].x + "," + sectorsAdded[val][i].y + "&";
 		}
 	}
-	
+		
 	if (qString != '') {
 		dojo.xhrGet( {
 	        url: urlBase + "map/load_sectors?" + qString,

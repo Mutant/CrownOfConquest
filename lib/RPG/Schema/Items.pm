@@ -802,7 +802,7 @@ sub add_to_characters_inventory {
                         no warnings;
                         last LOOP;
                     }
-                };
+                }
                 catch {
                     if ( $_ !~ /Can't equip an item of that type there/ ) {
                         croak $_;

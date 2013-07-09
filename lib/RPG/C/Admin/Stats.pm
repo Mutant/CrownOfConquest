@@ -80,7 +80,7 @@ sub daily_stats : Local {
         );
 
         my ($vistor_count_rec) = grep { $_->get_column('date') eq $date } @visitors;
-        $stats{visitor_count} = $vistor_count_rec && $vistor_count_rec->get_column('count') // 0;
+        $stats{visitor_count} = $vistor_count_rec && $vistor_count_rec->visitors // 0;
         
         my ($unique_login_count_rec) = grep { $_->{date} eq $date } @$unique_login_counts;
         $stats{unique_login_count} = $unique_login_count_rec && $unique_login_count_rec->{count} // 0;

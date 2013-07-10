@@ -883,4 +883,20 @@ sub changelog : Local {
     );	    
 }
 
+sub chat : Local {
+	my ($self, $c) = @_;
+	
+	$c->stash->{message_panel_size} = 'large';
+	
+    $c->forward(
+        '/panel/refresh_with_template',
+        [{
+            template => 'player/chat.html',
+            params => {
+                player_name => $c->session->{player}->player_name,  
+            },
+        }]
+    );	    
+} 
+
 1;

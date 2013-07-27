@@ -236,6 +236,8 @@ sub cancel_quests_awaiting_acceptance {
         }
     );
     
+    return unless $day_rec;
+    
     my @quests_to_cancel = $self->context->schema->resultset('Quest')->search(
         {
             kingdom_id => $kingdom->id,

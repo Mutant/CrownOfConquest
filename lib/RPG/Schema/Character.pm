@@ -460,7 +460,9 @@ sub status_description {
 	}
 	elsif ($self->status eq 'corpse') {
 	   my $land = $self->result_source->schema->resultset('Land')->find(
-	       land_id => $self->status_context,
+	       {
+	           land_id => $self->status_context,
+	       },
 	   );
 	   return "A corpse in the sector " . $land->x . ', ' . $land->y;
 	}

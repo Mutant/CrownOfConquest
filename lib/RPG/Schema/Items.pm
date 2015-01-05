@@ -765,7 +765,7 @@ sub add_to_characters_inventory {
     $self->treasure_chest_id(undef);
     $self->garrison_id(undef);
 	$self->land_id(undef);
-        
+	        
     if ($self->variable('Quantity')) {
         # Stack quantity items
         my $item = $character->search_related(
@@ -787,21 +787,16 @@ sub add_to_characters_inventory {
     }
 
     my $category = $self->item_type->category;
-    
+        
     if ($auto_eqip && $category->equip_place_categories->count > 0 ) {
     
         my %equipped_items = %{ $character->equipped_items() };
     
         # Try equipping the item in each empty equip place (without removing any existing items)
-        LOOP: foreach my $equip_place (keys %equipped_items) {
+        foreach my $equip_place (keys %equipped_items) {         
             if ( !$equipped_items{$equip_place} ) {
                 try {
-                    if ( $self->equip_item( $equip_place, replace_existing_equipment => 0 ) )
-                    {
-                        # Equip was successful, so don't try to equip again
-                        no warnings;
-                        last LOOP;
-                    }
+                    $self->equip_item( $equip_place, replace_existing_equipment => 0 );
                 }
                 catch {
                     if ( $_ !~ /Can't equip an item of that type there/ ) {
@@ -809,6 +804,10 @@ sub add_to_characters_inventory {
                     }
                 };
             }
+            
+            # Don't try another equip if it was successful
+            last if $self->equip_place_id;
+            
         }
     }
     

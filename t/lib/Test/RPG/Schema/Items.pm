@@ -1022,6 +1022,40 @@ sub test_add_to_characters_inventory_not_stacked : Tests(2) {
        
 }
 
+sub test_add_to_characters_inventory_finger : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character1 = Test::RPG::Builder::Character->build_character($self->{schema});
+    my $character2 = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10);
+    $character2->create_item_grid;
+    
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, 
+    	category_name => 'Ring',
+    	equip_places_allowed => ['Left Ring Finger', 'Right Ring Finger'],
+    );    
+    
+    my $item = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_id => $item_type->id,
+        enchantments => ['stat_bonus'],
+        character_id => $character1->id,       
+    );
+    $item->variable('Stat Bonus', 'strength');
+    $item->variable('Bonus', 2);
+    $item->update;
+   
+    # WHEN
+    $item->add_to_characters_inventory($character2);
+    
+    # THEN
+    is($item->character_id, $character2->id, "Item added to inventory");
+    is($item->equip_place_id, 7, "Item equipped in correct place");
+    
+    $character2->discard_changes;
+    is($character2->strength, 12, "Character's strength increased");
+}
+
 sub test_role_applied_if_exists : Tests(1) {
     my $self = shift;
     

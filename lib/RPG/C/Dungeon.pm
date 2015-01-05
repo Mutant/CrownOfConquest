@@ -715,6 +715,9 @@ sub move_creatures : Private {
 
     foreach my $cg (@$creatures_in_room) {
         next if $cg->in_combat_with;
+        
+        # Don't move creatures if party is in sector
+        next if $cg->dungeon_grid_id == $current_location->id;
 
         next if Games::Dice::Advanced->roll('1d100') > $move_chance;
 

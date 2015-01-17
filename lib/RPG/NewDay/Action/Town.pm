@@ -91,12 +91,13 @@ sub calculate_prosperity {
     );
     
     my $items_value = 0;
-    foreach my $item (@items) {
-        $items_value += $item->sell_price;
-    }
+    # Removed as it's slow
+    #foreach my $item (@items) {
+    #    $items_value += $item->sell_price;
+    #}
     
-    $items_value = $items_value / 50000;
-    $items_value = 2 if $items_value > 2;
+    #$items_value = $items_value / 50000;
+    #$items_value = 2 if $items_value > 2;
     
     my $capital_bonus = 0;
     if ($town->capital_of) {

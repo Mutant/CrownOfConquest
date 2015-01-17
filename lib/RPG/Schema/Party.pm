@@ -1217,7 +1217,10 @@ sub mayor_count_allowed {
         }
     )->count;
     
-    $count += int ($high_level_char_count / 3);
+    my $divisor1 = RPG::Schema->config->{mayor_count_divisor_1};
+    my $divisor2 = RPG::Schema->config->{mayor_count_divisor_2};
+    
+    $count += int ($high_level_char_count / ($divisor1 + $high_level_char_count / $divisor2));
 
     return $count;
 }

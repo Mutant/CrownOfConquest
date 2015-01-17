@@ -267,6 +267,10 @@ mayor_limit_char_min_level: 20
 # Maximum number of land that can be claimed per game day
 max_land_claimed_per_day: 10
 
+# Parameters to control number of mayors allowed
+mayor_count_divisor_1: 2.8
+mayor_count_divisor_2: 100
+
 # ----- Combat Params ----- #
 
 # Chance creatures will notice a party in their sector, and decide to attack

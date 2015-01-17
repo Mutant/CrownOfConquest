@@ -36,6 +36,14 @@ foreach my $char (@chars) {
 		$equip_places_used{$item->equip_place_id} = 1;
 		
 		$item->_stat_bonus_trigger($item->equip_place_id, $char);
+		my $character = $char;
+		my $new_equip_place_id = $item->equip_place_id;
+		my @stats_with_bonuses = $item->_stat_bonus_trigger($new_equip_place_id, $character);
+		
+		$item->_movement_factor_bonus_trigger($new_equip_place_id, $character);
+		$item->_factors_trigger($new_equip_place_id, $character, @stats_with_bonuses);		    
+		$item->_resistance_bonus_trigger($new_equip_place_id, $character);
+		$item->_usable_actions_trigger($new_equip_place_id, $character);		
 	}
 	
 	$char->update;

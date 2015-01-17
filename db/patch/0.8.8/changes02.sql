@@ -1,0 +1,33 @@
+DELETE FROM `Levels`;
+
+INSERT INTO `Levels` (level_number, xp_needed) values('1','0');
+INSERT INTO `Levels` (level_number, xp_needed) values('2','250');
+INSERT INTO `Levels` (level_number, xp_needed) values('3','800');
+INSERT INTO `Levels` (level_number, xp_needed) values('4','1600');
+INSERT INTO `Levels` (level_number, xp_needed) values('5','3000');
+INSERT INTO `Levels` (level_number, xp_needed) values('6','5000');
+INSERT INTO `Levels` (level_number, xp_needed) values('7','7000');
+INSERT INTO `Levels` (level_number, xp_needed) values('8','9200');
+INSERT INTO `Levels` (level_number, xp_needed) values('9','11400');
+INSERT INTO `Levels` (level_number, xp_needed) values('10','13600');
+INSERT INTO `Levels` (level_number, xp_needed) values('11','16000');
+INSERT INTO `Levels` (level_number, xp_needed) values('12','18500');
+INSERT INTO `Levels` (level_number, xp_needed) values('13','21000');
+INSERT INTO `Levels` (level_number, xp_needed) values('14','23500');
+INSERT INTO `Levels` (level_number, xp_needed) values('15','26000');
+INSERT INTO `Levels` (level_number, xp_needed) values('16','29000');
+INSERT INTO `Levels` (level_number, xp_needed) values('17','32000');
+INSERT INTO `Levels` (level_number, xp_needed) values('18','36000');
+INSERT INTO `Levels` (level_number, xp_needed) values('19','40000');
+INSERT INTO `Levels` (level_number, xp_needed) values('20','45000');
+INSERT INTO `Levels` (level_number, xp_needed) values('21','50000');
+INSERT INTO `Levels` (level_number, xp_needed) values('22','57500');
+INSERT INTO `Levels` (level_number, xp_needed) values('23','65000');
+INSERT INTO `Levels` (level_number, xp_needed) values('24','75000');
+INSERT INTO `Levels` (level_number, xp_needed) values('25','100000');
+INSERT INTO `Levels` (level_number, xp_needed) values('26','125000');
+INSERT INTO `Levels` (level_number, xp_needed) values('27','150000');
+INSERT INTO `Levels` (level_number, xp_needed) values('28','200000');
+INSERT INTO `Levels` (level_number, xp_needed) values('29','400000');
+INSERT INTO `Levels` (level_number, xp_needed) values('30','1000000');
+

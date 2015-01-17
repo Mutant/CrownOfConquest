@@ -393,7 +393,7 @@ sub test_refresh_mayor_dead_garrison_characters_not_enough_gold : Test(2) {
    
 }
 
-sub test_generate_advice : Tests(2) {
+sub test_generate_advice : Tests(3) {
 	my $self = shift;
 	
 	# GIVEN
@@ -404,7 +404,7 @@ sub test_generate_advice : Tests(2) {
 	undef $self->{roll_result};
 	
 	# WHEN
-	$action->generate_advice($town);
+	$action->generate_advice($town, 'garrison');
 	
 	# THEN
 	my $advice = $self->{schema}->resultset('Town_History')->find(
@@ -414,6 +414,8 @@ sub test_generate_advice : Tests(2) {
 	   }
 	);
 	is(defined $advice, 1, "Advice generated");
+	is($advice->message, "You could use some more protection. Adding more characters to the town's garrison will give you an edge",
+	   "correct advice");
 	
 	$town->discard_changes;
 	is($town->gold, 0, "Town gold reduced");

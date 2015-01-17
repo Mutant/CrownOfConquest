@@ -208,7 +208,7 @@ sub calculate_approval {
 		},
 		{
 			join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
-			select => 'sum(type.maint_cost)',
+			select => {sum => 'type.maint_cost'},
 			as => 'cost_aggregate',			
 		}
 	);
@@ -715,6 +715,8 @@ sub check_if_election_needed {
 sub generate_advice {
 	my $self = shift;
 	my $town = shift;
+	my $check = shift;
+	
 		
 	my $advisor_fee = $town->advisor_fee;
 	$self->context->logger->debug("gold: " . $town->gold);
@@ -742,10 +744,17 @@ sub generate_advice {
 		return;	
 	}
 	
-	my @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty runes/;
+	my @checks;
+	if (defined $check) {
+	    @checks = ($check);
+	}
+	else {
+	     @checks = qw/guards peasant_tax sales_tax garrison election approval revolt kingdom_loyalty runes/;
+	     @checks = shuffle @checks;
+	}
 
 	my $advice;	
-	for (shuffle @checks) {
+	for (@checks) {
 		# Do they need more guards?
 		when ('guards') {
 		    my $castle = $town->castle;
@@ -757,7 +766,7 @@ sub generate_advice {
 				},
 				{
 					join => ['type', {'creature_group' => {'dungeon_grid' => 'dungeon_room'}}],
-					select => 'sum(type.level)',
+					select => {sum => 'type.level'},
 					as => 'level_aggregate',			
 				}
 			);
@@ -794,7 +803,7 @@ sub generate_advice {
 					status_context => $town->id,
 				},
 				{
-					select => 'sum(level)',
+					select => {sum => 'level'},
 					as => 'level_aggregate',	
 				}					
 			);

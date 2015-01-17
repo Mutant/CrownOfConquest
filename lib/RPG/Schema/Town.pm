@@ -259,10 +259,10 @@ sub expected_garrison_chars_level {
 	my $self = shift;
 	
 	my $expected_garrison_chars_level = 0;
-	$expected_garrison_chars_level = 30  if $self->prosperity > 25;
-	$expected_garrison_chars_level = 50  if $self->prosperity > 45;
-	$expected_garrison_chars_level = 80  if $self->prosperity > 65;
-	$expected_garrison_chars_level = 100 if $self->prosperity > 85;
+	$expected_garrison_chars_level = 30   if $self->prosperity > 25;
+	$expected_garrison_chars_level = 100  if $self->prosperity > 45;
+	$expected_garrison_chars_level = 150  if $self->prosperity > 65;
+	$expected_garrison_chars_level = 200  if $self->prosperity > 85;
 	
 	return $expected_garrison_chars_level;
 }

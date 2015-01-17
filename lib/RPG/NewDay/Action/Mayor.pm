@@ -215,7 +215,7 @@ sub calculate_approval {
 
 	my $creature_level = $creature_rec->get_column('cost_aggregate') || 0;	
 	#$self->context->logger->debug("Level aggregate: " . $creature_level);
-	my $guards_hired_adjustment = int ($creature_level / ($town->prosperity * 5));
+	my $guards_hired_adjustment = int ($creature_level / ($town->prosperity * 10));
 	
 	my $garrison_chars_adjustment = 0;
 	
@@ -238,12 +238,14 @@ sub calculate_approval {
 		#$self->context->logger->debug("Garrison expected: " . $expected_garrison_chars_level . "; actual: $actual_garrison_chars_level");
 		
 		$garrison_chars_adjustment = round(($actual_garrison_chars_level - $expected_garrison_chars_level) / 10);
+		
+		$garrison_chars_adjustment = 0 if $actual_garrison_chars_level >= 200;
 	}
 	
 	my $charisma_adjustment = $mayor->execute_skill('Charisma', 'mayor_approval') // 0;
 	
 	# Runes adjustment
-	my $expected_rune_level = $town->prosperity < 45 ? 0 : round $town->prosperity / 8;
+	my $expected_rune_level = $town->prosperity < 45 ? 0 : round $town->prosperity / 3;
 	my $building = $town->building;
 	my $rune_level = 0;
 	if ($building) {
@@ -860,7 +862,10 @@ sub generate_advice {
                 next unless $upgrade->type =~ /^Rune/;
                 $rune_level += $upgrade->level;
     	    }
-    	    if ($rune_level < round ($town->prosperity / 8)) {
+    	    
+    	    next if $rune_level >= 30;
+    	       	    
+    	    if ($rune_level < round ($town->prosperity / 3)) {
     	       $advice = "The town does not have enough Rune add-ons to its building. Building more of these will greating improve the town's defences.";
     	       last;
     	    }

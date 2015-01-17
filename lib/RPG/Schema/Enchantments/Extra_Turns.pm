@@ -60,17 +60,27 @@ sub new_day {
 	my $context = shift;
 
 	my $item = $self->item;
-
+	
 	if ( my $char = $item->belongs_to_character ) {
 		return if !$item->equipped && $self->must_be_equipped;
 		
-		return if $char->is_dead || $char->status eq 'inn';
+		return if $char->is_dead || defined $char->status && $char->status eq 'inn';
 
 		my $party = $char->party;
 
 		return if ! $party || $party->turns >= $context->config->{maximum_turns};
+		
+		return if $party->bonus_turns_today >= $context->config->{maximum_bonus_turns};
+		
+		my $turns_to_add = $self->variable('Extra Turns');
+		
+		if ($party->bonus_turns_today + $turns_to_add >= $context->config->{maximum_bonus_turns}) {
+		    $turns_to_add = $context->config->{maximum_bonus_turns} - $party->bonus_turns_today;
+		}
 
-		$party->increase_turns( $self->variable('Extra Turns') + $party->turns );
+		$party->increase_turns( $turns_to_add + $party->turns );
+		$party->increase_bonus_turns_today($turns_to_add);
+		
 		$party->update;
 
 		$party->add_to_day_logs(

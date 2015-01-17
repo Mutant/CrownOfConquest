@@ -49,6 +49,7 @@ sub build_party {
             name                    => $params{name } // 'test',
             last_action => $params{last_action} || DateTime->now(),
             warned_for_kingdom_co_op => $params{warned_for_kingdom_co_op} || undef,
+            bonus_turns_today        => 0,
 
         }
     );

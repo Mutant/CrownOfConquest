@@ -201,7 +201,16 @@ __PACKAGE__->add_columns(
         'name'              => 'description',
         'is_nullable'       => 1,
         'size'              => '5000'
-    },     
+    },
+    'bonus_turns_today' => {
+        'data_type'         => 'int',
+        'is_auto_increment' => 0,
+        'default_value'     => '0',
+        'is_foreign_key'    => 0,
+        'name'              => 'bonus_turns_today',
+        'is_nullable'       => 1,
+        'size'              => 0,
+    },    
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -245,7 +254,8 @@ __PACKAGE__->numeric_columns(qw/gold/,
     rank_separator_position => {
         min_value => 1,
         max_value => 8,   
-    }
+    },
+    'bonus_turns_today',
 ); 
 
 with qw/
@@ -512,6 +522,8 @@ sub new_day {
 
         $character->update;
     }
+    
+    $self->bonus_turns_today(0);
 
     # They're no longer rested
     $self->rest(0);

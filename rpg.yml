@@ -7,7 +7,7 @@ Model::DBIC:
   connect_info: 
     - dbi:mysql:game
     - root
-    - ''
+    - root
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
 TestModel::DBIC:
@@ -204,7 +204,10 @@ party_viewing_range: 3
 turns_per_hour: 25
 
 # Maximum number of turns a party is allowed to have
-maximum_turns: 1000
+maximum_turns: 2000
+
+# Maximum bonus turns (from equipment) a party is allowed to gain per day
+maximum_bonus_turns: 250
 
 # Min / Max percentage amount to heal characters each day (based on rest)
 min_heal_percentage: 2

@@ -346,7 +346,17 @@ sub equip_place_id {
 		
 		no warnings 'uninitialized';
 
-		if ($trigger_params->{force_triggers} || $new_equip_place_id != $self->_equip_place_id) {
+        # Only want to run the triggers if forced, or if item is changing from 
+        #  equipped to not equipped (or back)
+        my $run_triggers = 0;
+        if (defined $new_equip_place_id && ! defined $self->_equip_place_id || 
+            ! defined $new_equip_place_id && defined $self->_equip_place_id ||
+            $trigger_params->{force_triggers}) {
+                
+            $run_triggers = 1;
+        }
+
+		if ($run_triggers) {
 			if ($self->_character_id) {
 				my $character = $self->result_source->schema->resultset('Character')->find(
 					{
@@ -399,7 +409,7 @@ sub _stat_bonus_trigger {
 		my $method = "adjust_" . $stat . "_bonus";
 		
 		$bonus = -$bonus unless defined $new_equip_place_id; 
-		
+				
 		$character->$method($bonus);		
 	}
 	
@@ -616,7 +626,7 @@ sub equip_item {
     my $self                       = shift;
     my $equipment_slot_name        = shift;
     my %params = @_;
-        
+            
     my $replace_existing_equipment = $params{replace_existing_equipment} // 1;
 
     my ($equip_place) = $self->result_source->schema->resultset('Equip_Places')->search(
@@ -650,7 +660,7 @@ sub equip_item {
     
     my $character = $self->belongs_to_character;
     $character->remove_item_from_grid($self) if $replace_existing_equipment || ! $equipped_item;
-
+    
     if ($equipped_item) {
         if ($replace_existing_equipment) {
             $equipped_item->equip_place_id(undef);
@@ -746,7 +756,7 @@ sub equip_item {
     
     $self->equip_place_id( $equip_place->id );
     $self->update;
-
+    
     return @extra_items;
 }
 

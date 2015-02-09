@@ -1056,6 +1056,66 @@ sub test_add_to_characters_inventory_finger : Tests(3) {
     is($character2->strength, 12, "Character's strength increased");
 }
 
+sub equip_item_finger_swap : Tests(3) {
+    my $self = shift;
+    
+    # GIVEN
+    my $character = Test::RPG::Builder::Character->build_character($self->{schema}, strength => 10);
+    $character->create_item_grid;
+    
+    my $item_type = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, 
+    	category_name => 'Ring',
+    	equip_places_allowed => ['Left Ring Finger', 'Right Ring Finger'],
+    );    
+    
+    my $item1 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_id => $item_type->id,
+        enchantments => ['stat_bonus'],     
+    );
+    $item1->variable('Stat Bonus', 'strength');
+    $item1->variable('Bonus', 2);
+    $item1->update;
+    
+    $item1->add_to_characters_inventory($character, undef, 0);
+    
+    diag "Item 1: " . $item1->id;
+    
+    my $item2 = Test::RPG::Builder::Item->build_item(
+        $self->{schema},
+        item_type_id => $item_type->id,
+        enchantments => ['stat_bonus'],
+    );
+    $item2->variable('Stat Bonus', 'strength');
+    $item2->variable('Bonus', 2);
+    $item2->update;
+    
+    diag "Item 2: " . $item2->id;
+    
+    $item2->add_to_characters_inventory($character, undef, 0);
+   
+    # WHEN
+    # Equip first item
+    $item1->equip_item('Left Ring Finger');
+
+    # Equip second item
+    $item2->equip_item('Right Ring Finger');    
+    
+    # Move first into second's slot
+    $item1->equip_item('Right Ring Finger', existing_item_x => 1, existing_item_y => 1);    
+        
+    # THEN
+    $item1->discard_changes;
+    
+    is($item1->equip_place_id, 6, "First item equipped in correct slot");
+    
+    $item2->discard_changes;
+    is($item2->equip_place_id, undef, "Second item no longer equipped");
+    
+    $character->discard_changes;
+    is($character->strength, 12, "Character's strength increased");
+}
+
 sub test_role_applied_if_exists : Tests(1) {
     my $self = shift;
     

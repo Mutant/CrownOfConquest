@@ -404,6 +404,9 @@ sage_find_orb_level_step: 200
 # Range from the town where a dungeon can be found
 sage_dungeon_find_range: 40
 
+# Modifer cost for books of past lives from the sage
+sage_book_cost_modifier: 2
+
 # Number of characters per prosperity point (ideally) for recruitment
 characters_per_prosperity: 10
 
@@ -756,6 +759,13 @@ crown_majesty_wait_period: 8
 
 # Maximum level allowed for a particular skill
 max_skill_level: 10
+
+# Cost modifiers for book of past lives with different max levels (to base cost)
+# (Needs to be configured here as item_types don't usually have different costs)
+book_of_past_live_cost_modifiers:
+  10: 1
+  20: 5
+  30: 10
 
 # ----- Debug ----- #
 

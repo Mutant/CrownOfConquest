@@ -55,7 +55,7 @@ sub main : Local {
             item_type => 'Vial of Dragons Blood',
         }
     );
-
+    
     my $panel = $c->forward(
         'RPG::V::TT',
         [
@@ -99,6 +99,20 @@ sub calculate_costs : Private {
         }
     }
 
+    my $book = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Book of Past Lives',
+        }
+    );    
+    
+    my %book_costs;
+    for my $book_max_level (keys %{$c->config->{book_of_past_live_cost_modifiers}}) {
+        $book_costs{$book_max_level} = $book->base_cost * $c->config->{book_of_past_live_cost_modifiers}{$book_max_level} 
+            * $c->config->{sage_book_cost_modifier};   
+    }
+    
+    $costs{book_costs} = \%book_costs;
+    
     return \%costs;
 }
 
@@ -469,6 +483,56 @@ sub buy_vial : Local {
     }
     
     push @{ $c->stash->{refresh_panels} }, ('party_status');
+
+    $c->forward('/town/sage/main');    
+}
+
+sub buy_book : Local {
+    my ( $self, $c ) = @_;
+    
+    my ($character) = grep { $_->id == $c->req->param('character_id') } $c->stash->{party}->characters_in_party;
+    
+    croak "Invalid character" unless $character;
+    
+    my $book = $c->model('DBIC::Item_Type')->find(
+        {
+            item_type => 'Book of Past Lives',
+        }
+    );
+    
+    my $required_max_level = 30;
+    if ($character->level <= 10) {
+        $required_max_level = 10;
+    }
+    elsif ($character->level <= 20) {
+        $required_max_level = 20;
+    }
+    
+    my $costs = $c->forward( 'calculate_costs', [ $c->stash->{party_location}->town ] );
+    
+    my $cost = $costs->{book_costs}{$required_max_level};
+    
+    if ($c->stash->{party}->gold < $cost) {
+        $c->stash->{messages} = "You do not have enough gold to buy the book";
+    }
+    else {
+        $c->stash->{party}->decrease_gold($cost);
+        $c->stash->{party}->update;
+        
+        my $book_item = $c->model('DBIC::Items')->create(
+            {
+                item_type_id => $book->id,
+            }
+        );
+        $book_item->variable('Max Level', $required_max_level);
+        $book_item->add_to_characters_inventory($character);
+    }
+    
+    $c->stash->{party}->discard_changes;
+    
+    push @{ $c->stash->{refresh_panels} }, ('party_status', 'party');
+    
+    $c->stash->{messages} = 'The book has been purchased';
 
     $c->forward('/town/sage/main');    
 }

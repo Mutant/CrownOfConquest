@@ -5,6 +5,7 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 	<li><a href="#" onClick="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-orb-diag').show()">Find an orb</a></li>
+	<li><a href="#" onClick="javascript:dijit.byId('sage-buy-book-diag').show()">Buy a Book of Past Lives</a></li>
 	<li><a href="#" onClick="javascript:dijit.byId('sage-buy-vial-diag').show()">Buy a Vial of Dragons Blood</a></li>
 </ul>
 
@@ -104,6 +105,35 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 				style="width: 80px"
 		        />
 		     </td>
+		</tr>
+	</table>
+	<div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
+	</form>
+</div>
+
+<div dojoType="dijit.Dialog" id="sage-buy-book-diag" style="display: none" title="Buy A Book of Past Lives">
+	<form method="post" action="[% base %]town/sage/buy_book" onSubmit="postPanels(this); return false">
+	A Book of Past Lives is a rare item that will reset the skills of a character who reads it.
+	<br>The Book has a cost which depends on the level of the character you buy it for.
+	<table>
+	    <tr>
+		    <td>Which character would you like to purchase a Book of Past Lives for?</td>
+		    <td>		    	
+		    	<select dojoType="dijit.form.Select" style="width: 200px" name="character_id" autocomplete="false">
+		    		[% FOREACH character IN party.characters_in_party %]
+	                	<option value="[% character.id %]">[% character.name %] (Cost: 
+	                	[% IF character.level <= 10 %]
+	                		[% book_costs.10 %]
+	                	[% ELSIF character.level <= 20 %]
+	                		[% book_costs.20 %]
+	                	[% ELSE %]
+	                		[% book_costs.30 %]
+	                	[% END %]
+	                	gold)
+	                	</option>
+					[% END %]
+				</select>
+			</td>
 		</tr>
 	</table>
 	<div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>

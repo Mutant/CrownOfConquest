@@ -11,7 +11,7 @@ use MIME::Lite;
 
 my $config = RPG::LoadConf->load();
 
-my $schema = RPG::Schema->connect( $config, @{$config->{'Model::DBIC'}{connect_info}} );
+my $schema = RPG::Schema->connect( $config, $config->{'Model::DBIC'}{connect_info} );
 
 my $conf_val = $schema->resultset('Conf')->find(
    {

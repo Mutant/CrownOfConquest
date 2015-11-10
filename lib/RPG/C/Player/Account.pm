@@ -75,8 +75,8 @@ sub delete_account_confirmed : Local {
 	
 	my @parties = $player->parties;
 	foreach my $party (@parties) {
-		$party->defunct(DateTime->now());
-		$party->update;	
+        next if $party->defunct;
+        $party->deactivate;
 	}
 	
 	$player->delete;

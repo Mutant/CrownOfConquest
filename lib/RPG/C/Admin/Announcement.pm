@@ -88,19 +88,26 @@ sub send : Private {
 	    	);
     	}
     }
-
-    my @players_to_email = grep { $_->email && $_->send_email_announcements } @players;
     
-    $c->log->info("Sending mail to " . scalar @players_to_email . " players");
-
-	RPG::Email->send(
-		$c->config,
-		{
-			players => \@players_to_email,
-			subject => $c->req->param('title'),
-			body => $c->req->param('announcement'),
-		}
-	);
+    if ($c->req->param('email_to') eq 'active' || $c->req->param('email_to') eq 'all') {
+    
+        my @players_to_email = grep { $_->email && $_->send_email_announcements } @players;
+        
+        if ($c->req->param('email_to') eq 'active') {
+            @players_to_email = grep { ! $_->deleted } @players_to_email;
+        }
+        
+        $c->log->info("Sending mail to " . scalar @players_to_email . " players");
+    
+    	RPG::Email->send(
+    		$c->config,
+    		{
+    			players => \@players_to_email,
+    			subject => $c->req->param('title'),
+    			body => $c->req->param('announcement'),
+    		}
+    	);
+    }
 
     $c->forward(
         'RPG::V::TT',

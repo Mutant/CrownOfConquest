@@ -500,13 +500,9 @@ sub buy_book : Local {
         }
     );
     
-    my $required_max_level = 30;
-    if ($character->level <= 10) {
-        $required_max_level = 10;
-    }
-    elsif ($character->level <= 20) {
-        $required_max_level = 20;
-    }
+    my $required_max_level = $c->req->param('max_level');
+    
+    croak "Invalid max_level" if ! ($required_max_level == 10 || $required_max_level == 20 || $required_max_level == 30);
     
     my $costs = $c->forward( 'calculate_costs', [ $c->stash->{party_location}->town ] );
     
@@ -526,14 +522,14 @@ sub buy_book : Local {
         );
         $book_item->variable('Max Level', $required_max_level);
         $book_item->add_to_characters_inventory($character);
+        
+        $c->stash->{messages} = 'The book has been purchased';
     }
     
     $c->stash->{party}->discard_changes;
     
     push @{ $c->stash->{refresh_panels} }, ('party_status', 'party');
     
-    $c->stash->{messages} = 'The book has been purchased';
-
     $c->forward('/town/sage/main');    
 }
 

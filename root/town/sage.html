@@ -114,23 +114,26 @@ The Sage of [% town.town_name %] welcomes you. He offers the following services:
 <div dojoType="dijit.Dialog" id="sage-buy-book-diag" style="display: none" title="Buy A Book of Past Lives">
 	<form method="post" action="[% base %]town/sage/buy_book" onSubmit="postPanels(this); return false">
 	A Book of Past Lives is a rare item that will reset the skills of a character who reads it.
-	<br>The Book has a cost which depends on the level of the character you buy it for.
+	<br>The Book has a cost which depends on the maximum level of the character that can use it.
 	<table>
+		<tr>
+		    <td>What is the maximum character level of the Book you require?</td>
+		    <td>		    	
+		    	<select dojoType="dijit.form.Select" name="max_level" autocomplete="false">
+		    		[% FOREACH cost IN book_costs %]
+	                	<option value="[% cost.key %]">[% cost.key %] (Cost: [% cost.value %] )
+	                	</option>
+					[% END %]
+				</select>
+			</td>
+		</tr>	
+	
 	    <tr>
 		    <td>Which character would you like to purchase a Book of Past Lives for?</td>
 		    <td>		    	
-		    	<select dojoType="dijit.form.Select" style="width: 200px" name="character_id" autocomplete="false">
+		    	<select dojoType="dijit.form.Select" name="character_id" autocomplete="false">
 		    		[% FOREACH character IN party.characters_in_party %]
-	                	<option value="[% character.id %]">[% character.name %] (Cost: 
-	                	[% IF character.level <= 10 %]
-	                		[% book_costs.10 %]
-	                	[% ELSIF character.level <= 20 %]
-	                		[% book_costs.20 %]
-	                	[% ELSE %]
-	                		[% book_costs.30 %]
-	                	[% END %]
-	                	gold)
-	                	</option>
+	                	<option value="[% character.id %]">[% character.name %]</option>
 					[% END %]
 				</select>
 			</td>

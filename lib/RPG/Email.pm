@@ -63,8 +63,14 @@ sub send {
             Type    => 'text/html',
         );
 
-        if (! $config->{no_email}) {            
-            $msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );	
+        if (! $config->{no_email}) {       
+            my %auth_params;
+            if ($config->{email_user}) {
+                $auth_params{AuthUser} = $config->{email_user};
+                $auth_params{AuthPass} = $config->{email_pass};
+            }   
+                 
+            $msg->send( 'smtp', $config->{smtp_server}, Debug => 0, %auth_params );	
         }
     
     	#  If debug logging of emails enabled.

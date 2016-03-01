@@ -44,7 +44,10 @@
 			[% claim_land_tooltip_text = BLOCK ~%][% FILTER collapse %]
 			If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the
 			garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before
-			the land will be claimed. Beware, this will open your garrison up to attacks from high level parties!"
+			the land will be claimed. Beware, this will open your garrison up to attacks from high level parties!
+			
+			Note: this will have no effect if the garrison is in a sector with a building owned by a kingdom, as the building will claim
+			the land.
 			[% END %][% END %]
 			[% wrap(claim_land_tooltip_text, 80, '', '<br>') %]
 		</div>			

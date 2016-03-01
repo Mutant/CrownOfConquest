@@ -251,6 +251,24 @@ sub organise_equipment {
     
     $self->organise_items_in_tabs({ owner_type => 'garrison', width => 8, height => 8, max_tabs => 5, allow_empty_tabs => 1}, @items);
 }
+
+sub is_claiming_land {
+    my $self = shift;
+    
+    # Not claiming if not ordered to
+    return 0 if ! $self->claim_land_order;
+    
+    my $building = $self->location->building;
+    
+    # Claiming if ordered to and no building in sector
+    return 1 if ! $building;
+    
+    # Not claiming if in sector with a building owned by a kingdom
+    return 0 if $building->owner_type eq 'kingdom';
+    
+    # Otherwise claiming
+    return 1;
+}
 	
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 	

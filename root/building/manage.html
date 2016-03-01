@@ -153,7 +153,7 @@ to a garrison in the same sector.
 		[% IF ! garrison_in_sector %]
 			<button id="raze-building" onClick="getPanels('[% url_prefix %]raze'); return false;">Raze Building</button>
 		[% END %]
-		[% IF party.kingdom_id %]
+		[% IF building_owner_type != 'kingdom' && party.kingdom_id %]
 			<button id="cede-building" onClick="getPanels('[% url_prefix %]cede'); return false;">Cede Building</button>
 		[% END %]
 		<div dojoType="dijit.Tooltip"

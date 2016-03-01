@@ -23,8 +23,8 @@ sub run {
         }
     );    
     
-    foreach my $garrison (@garrison) {
-        if ($garrison->claim_land_order) {
+    foreach my $garrison (@garrison) {        
+        if ($garrison->is_claiming_land) {
             $garrison->claim_land;
         }
         else {

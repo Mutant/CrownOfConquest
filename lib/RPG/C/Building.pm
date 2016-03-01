@@ -246,6 +246,7 @@ sub manage : Local {
                 upgrade_types => \@upgrade_types,
                 upgrades_by_type_id => \%upgrades_by_type_id,
                 building_url_prefix => $c->stash->{building_url_prefix},
+                building_owner_type => $building->owner_type,
             },
         }]
     );     
@@ -569,6 +570,13 @@ sub cede : Local {
     $building->owner_type('kingdom');
     $building->owner_id($c->stash->{party}->kingdom_id);
     $building->update;
+    
+    # If there's a garrison in this sector, and they're claiming land for the kingdom,
+    #  cancel this, as the building will now claim the land.
+    my $garrison = $building->location->garrison;
+    if ($garrison->claim_land_order) {
+        $garrison->unclaim_land;    
+    }
 	   
     $c->forward('change_building_ownership', [$building]);
 	   

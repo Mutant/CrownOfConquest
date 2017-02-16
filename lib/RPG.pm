@@ -17,14 +17,14 @@ use Data::Dumper;
 #
 use Catalyst;
 
-$ENV{DBIC_TRACE} = 1;
-
 our $VERSION = '0.01';
 
 #
 # Start the application
 #
 BEGIN {
+	die "RPG_HOME not set" unless $ENV{RPG_HOME};
+
     __PACKAGE__->config->{captcha} = {
         session_name => 'captcha_string',
         new          => {
@@ -40,9 +40,7 @@ BEGIN {
     };
 
     # Needs to be set here or the config won't be loaded in time, and DBIC will complain it doesn't have a schema
-    #  You would think it would just be found automatically... oh well...
-    #  For a dev environment, set RPG_HOME environment var
-    __PACKAGE__->config->{home} = $ENV{RPG_HOME} || '/home/sam/RPG';
+    __PACKAGE__->config->{home} = $ENV{RPG_HOME};
 
     __PACKAGE__->config->{session} = {
         session => {
@@ -54,36 +52,35 @@ BEGIN {
     __PACKAGE__->config(
         root       => __PACKAGE__->path_to('root'),
         'View::TT' => { INCLUDE_PATH => [ __PACKAGE__->path_to('root'), ] },
-    );    
-    
+    );
+
     __PACKAGE__->config( 'Plugin::Session' => {
        cookie_expires  => 60 * 60 * 48,
     });
-  
+
     __PACKAGE__->config(
         static => {
             include_path => [
                 __PACKAGE__->config->{home} . '/docroot',
             ],
         },
-    );  
-    
+    );
+
     #__PACKAGE__->config->{static}->{logging} = 1;
-    
+
 }
 
 my @plugins = qw/
         -Debug
         -Stats
         ConfigLoader
-        Session 
+        Session
         Session::Store::DBIC
         Session::State::Cookie
-        DBIC::Schema::Profiler
         Captcha
         Log::Dispatch
 /;
-  
+
 if ($ENV{RPG_DEV}) {
     push @plugins, 'Static::Simple';
 }

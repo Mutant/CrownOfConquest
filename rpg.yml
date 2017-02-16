@@ -7,7 +7,7 @@ Model::DBIC:
   connect_info: 
     - dbi:mysql:game
     - root
-    - root
+    - password
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
 TestModel::DBIC:
@@ -17,9 +17,6 @@ TestModel::DBIC:
     - root
     - 'megalmadic'
     - { AutoCommit: 0 }
-
-DBIC::Schema::Profiler:
-  MODEL_NAME: DBIC
 
 map_image_path: /images/map/
 
@@ -32,11 +29,9 @@ static_path: http://crownofconquest.com/static
 dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.6.1
 dojo_path: /dojo/dojo.xd.js
 
-home: /home/sam/RPG/
+log_file_dir: __path_to(log)__
 
-log_file_dir: /home/sam/RPG/log/
-
-data_file_path: /home/sam/RPG/script/data/
+data_file_path: __path_to(script/data/)__
 
 smtp_server: localhost
 send_email_from: mutant.nz@gmail.com

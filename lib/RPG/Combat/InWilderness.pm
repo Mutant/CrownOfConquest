@@ -55,7 +55,7 @@ sub _build_nearby_towns {
 after 'end_of_combat_cleanup' => sub {
     my $self = shift;
 
-    if (defined @{$self->nearby_towns}) {
+    if (@{$self->nearby_towns}) {
         my $message = RPG::Template->process( $self->config, 'combat/town_news_message.html', { log => $self->combat_log, }, );
 
         my $day_id = $self->schema->resultset('Day')->find_today->id;

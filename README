@@ -1,0 +1,21 @@
+Installation
+------------
+
+This has been tested on Ubuntu 16.04, but should work on most flavours of Linux.
+
+* checkout source code into some dir (e.g. 'crown')
+* install some packages:
+  * libgd
+  * cpanminus
+  * gcc
+  * mysql-server
+  * libdbd-mysql-perl
+* From the crown directory, run:
+  cpanm --instaldeps .
+* Create the DB:
+  mysqladmin create database crown
+  mysql crown < crown/db/schema.sql
+* Create a config file for your instance by copying rpg_template.yml to rpg_$instance.yml (e.g. rpg_main.yml)
+  Check configuration settings look correct (particularly DB settings)
+* Make sure STRICT_TRANS_TABLES and ONLY_FULL_GROUP_BY mysql sql modes are turned off
+* Create a cron job with the 'new_day' script

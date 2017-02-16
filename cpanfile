@@ -3,9 +3,9 @@ requires 'Catalyst', '5.90042';
 requires 'DBIx::Class', '0.08250';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Plugin::Log::Dispatch';
+requires 'Catalyst::Model::DBIC::Schema';
 requires 'Log::Dispatch::Config';
 requires 'Catalyst::Plugin::Captcha';
-requires 'Catalyst::Plugin::DBIC::Schema::Profiler';
 requires 'Catalyst::Plugin::Session::State::Cookie';
 requires 'Catalyst::Plugin::Session::Store::DBIC';
 requires 'Catalyst::Plugin::ConfigLoader';
@@ -38,3 +38,14 @@ requires 'DateTime::Cron::Simple';
 requires 'DateTime::Format::DateParse';
 requires 'Proc::PID::File';
 requires 'Module::Pluggable::Dependency';
+requires 'Tree::DAG_Node';
+requires 'Text::Autoformat';
+requires 'Email::Valid';
+
+on 'develop' => sub {
+	requires 'Test::Class::Load';
+	requires 'Test::MockObject::Extra';
+	requires 'Sub::Override';
+	requires 'Test::Resub';
+	requires 'Test::MockModule';
+};

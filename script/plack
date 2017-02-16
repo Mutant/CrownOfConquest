@@ -3,16 +3,19 @@
 # Start a Plack daemon.
 
 RPG_HOME=/home/sam/crown/
-RPG_CONFIG_LOCAL_SUFFIX=main
+export RPG_HOME
+export RPG_CONFIG_LOCAL_SUFFIX=main
+LOG_DIR=$RPG_HOME/log
 PATH=$PATH:$HOME/perl5/bin
 DAEMON=`/usr/bin/which plackup`
 NAME="CrownOfConquest"
 CWD=`pwd`
 # Defaults
 RUN="no"
-OPTIONS="--app $RPG_HOME/app.psgi --port 8080"
+OPTIONS="--app $RPG_HOME/app.psgi --listen 127.0.0.1:8080 --server Starman --error-log $LOG_DIR/starman.err --preload-app --workers 10 "
+OPTIONS="$OPTIONS --access-log $LOG_DIR/access.log"
 
-PIDFILE="$NAME.pid"
+PIDFILE="$RPG_HOME/var/$NAME.pid"
 
 #
 # These compatibility funcs are here just for sarge backports.

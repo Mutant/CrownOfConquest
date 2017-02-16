@@ -41,6 +41,7 @@ requires 'Module::Pluggable::Dependency';
 requires 'Tree::DAG_Node';
 requires 'Text::Autoformat';
 requires 'Email::Valid';
+requires 'Starman';
 
 on 'develop' => sub {
 	requires 'Test::Class::Load';

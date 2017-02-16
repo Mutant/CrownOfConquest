@@ -2,9 +2,10 @@
 
 # Start a Plack daemon.
 
-RPG_HOME=/home/sam/crown
-PATH=/bin:/usr/bin:/sbin:/usr/sbin:$HOME/perl5/bin
-DAEMON="$HOME/perl5/bin/plackup"
+RPG_HOME=/home/sam/crown/
+RPG_CONFIG_LOCAL_SUFFIX=main
+PATH=$PATH:$HOME/perl5/bin
+DAEMON=`/usr/bin/which plackup`
 NAME="CrownOfConquest"
 CWD=`pwd`
 # Defaults

@@ -4,8 +4,6 @@ use Moose::Role;
 
 requires qw/context/;
 
-use feature 'switch';
-
 use RPG::Combat::GarrisonCreatureBattle;
 use RPG::Combat::GarrisonPartyBattle;
 
@@ -25,17 +23,15 @@ sub execute_garrison_battle {
 	);
 
 	my $package;
-	given ( $opponent->group_type ) {
-		when ('creature_group') {
-			$package = 'RPG::Combat::GarrisonCreatureBattle';
-			$params{creature_group} = $opponent;
-			$params{creatures_initiated} = $opp_initiated;
-		}
-		when ('party') {
-			$package = 'RPG::Combat::GarrisonPartyBattle';
-			$params{party} = $opponent;
-			$params{initiated_by_opp_number} = $opp_initiated ? 1 : 2;
-		}
+	if ($opponent->group_type eq 'creature_group') {
+		$package = 'RPG::Combat::GarrisonCreatureBattle';
+		$params{creature_group} = $opponent;
+		$params{creatures_initiated} = $opp_initiated;
+	}
+	elsif ($opponent->group_type eq 'party') {
+		$package = 'RPG::Combat::GarrisonPartyBattle';
+		$params{party} = $opponent;
+		$params{initiated_by_opp_number} = $opp_initiated ? 1 : 2;
 	}
 
 	my $battle = $package->new(

@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature qw(switch);
-
 use Math::Round qw(round);
 use JSON;
 use List::Util qw(shuffle);
@@ -679,22 +677,20 @@ sub raid : Local {
             }           
         );	
     		
-        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
-            when ('peace') {
-                # Add a kingdom message saying they raided a town the kingdom was at peace with
-                $c->stash->{party}->kingdom->add_to_messages(
-                    {
-                        day_id => $c->stash->{today}->id,
-                        message => "The party " . $c->stash->{party}->name . " raided the town of " . $town->town_name . ", even though the town is loyal to" .
+        if ( $town->kingdom_relationship_between_party( $c->stash->{party} ) eq 'peace' ) {
+			# Add a kingdom message saying they raided a town the kingdom was at peace with
+            $c->stash->{party}->kingdom->add_to_messages(
+            	{
+                	day_id => $c->stash->{today}->id,
+					message => "The party " . $c->stash->{party}->name . " raided the town of " . $town->town_name . ", even though the town is loyal to" .
                             " the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
-                    }                    
-                );
+				}                    
+			);
                 
-                $party_kingdom->decrease_loyalty(15);
-            }
-            when ('war') {
-                $party_kingdom->increase_loyalty(15);
-            }
+            $party_kingdom->decrease_loyalty(15);
+		}
+		elsif ( $town->kingdom_relationship_between_party( $c->stash->{party} ) eq 'war' ) {
+			$party_kingdom->increase_loyalty(15);
     	}
     	
     	$party_kingdom->update;
@@ -870,25 +866,23 @@ sub become_mayor : Local {
             }           
         );	
     		
-        given ( $town->kingdom_relationship_between_party( $c->stash->{party} ) ) {
-            when ('peace') {
-                # Add a kingdom message saying they raided a town the kingdom was at peace with
-                $c->stash->{party}->kingdom->add_to_messages(
-                    {
-                        day_id => $c->stash->{today}->id,
-                        message => "The party " . $c->stash->{party}->name . " installed a mayor in the town of " . $town->town_name . 
+        if ( $town->kingdom_relationship_between_party( $c->stash->{party} ) eq 'peace' ) {
+			# Add a kingdom message saying they raided a town the kingdom was at peace with
+            $c->stash->{party}->kingdom->add_to_messages(
+            	{
+                	day_id => $c->stash->{today}->id,
+                    message => "The party " . $c->stash->{party}->name . " installed a mayor in the town of " . $town->town_name . 
                             ", even though the town is loyal to the Kingdom of " . $town->location->kingdom->name . ", which we are at peace with.",
-                    }                    
-                );
+				}                    
+			);
                 
-                $party_kingdom->decrease_loyalty(20);
-            }
-            when ('war') {
-                $party_kingdom->increase_loyalty(20);
-            }
-    	}
-    	
-    	$party_kingdom->update;
+            $party_kingdom->decrease_loyalty(20);
+		}
+        elsif ( $town->kingdom_relationship_between_party( $c->stash->{party} ) eq 'war' )  {
+        	$party_kingdom->increase_loyalty(20);
+		}
+		
+		$party_kingdom->update;
 	}	
 
     $c->stash->{panel_messages} = [ $character->character_name . ' is now the mayor of ' . $town->town_name . '!' ];

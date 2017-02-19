@@ -5,7 +5,6 @@ package RPG::Combat::MessageDisplayer;
 
 use RPG::Template;
 
-use feature 'switch';
 use Carp;
 
 sub display {
@@ -85,24 +84,24 @@ sub display {
                 push @messages, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name(1) . "\n";
             }
 
-            given ( $opponent->group_type ) {
-            	when ('creature_group') { 
+            for ( $opponent->group_type ) {
+            	if ($_ eq 'creature_group') { 
                 	push @messages, "You've killed the creatures\n";
             	}
-            	when ('party') {
+            	elsif ($_ eq 'party') {
                 	push @messages, "You've wiped out the party\n";
             	}
-            	when ('garrison') {
+            	elsif ($_ eq 'garrison') {
             		push @messages, "You've wiped out the garrison\n";
             	}
             }
         }
         else {
-        	given ( $group->group_type ) {
-        		when ('party') {
+        	for ( $group->group_type ) {
+        		if ($_ eq 'party') {
             		push @messages, "Your party has been wiped out!\n";
         		}
-        		when ('garrison') {
+        		elsif ($_ eq 'garrison') {
         			push @messages, "Your garrison has been wiped out!\n";
         		}
         	}

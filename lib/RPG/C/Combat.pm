@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature 'switch';
-
 use Data::Dumper;
 use Carp;
 
@@ -106,13 +104,11 @@ sub switch : Private {
 	
 	return unless $party->in_combat_with;
 	
-	given ($party->combat_type) {
-		when ('creature_group') {
-			return $c->forward('/combat/main');
-		}
-		when ('garrison') {
-			return $c->forward('/garrison/combat/main');
-		}
+	if ($party->combat_type eq 'creature_group') {
+		return $c->forward('/combat/main');
+	}
+	elsif ($party->combat_type eq 'garrison') {
+		return $c->forward('/garrison/combat/main');
 	}
 }
 
@@ -423,14 +419,14 @@ sub build_target_list : Private {
 	
 	my @targets;
     my @target_data;
-	given ($spell->target) {
-		when ('creature') {
+	for ($spell->target) {
+		if ($_ eq 'creature') {
 			@targets = $c->stash->{party}->opponents->members;
 		}	
-		when ('character') {
+		if ($_ eq 'character') {
 			@targets = $c->stash->{party}->members;
 		}
-		when ('special') {
+		if ($_ eq 'special') {
             @target_data = $item->target_list;   
 		}
 	}

@@ -1,6 +1,5 @@
 package RPG::NewDay::Action::Detonate;
 
-use feature 'switch';
 use Moose;
 
 extends 'RPG::NewDay::Base';
@@ -71,16 +70,16 @@ sub run {
         my $owner = $building_damage{$building_id}->{building}->owner;
         my $group_to_alert;
         
-        given ($building_damage{$building_id}->{building}->owner_type) {
-            when ('party') {
+        for ($building_damage{$building_id}->{building}->owner_type) {
+            if ($_ eq 'party') {
                 $group_to_alert = $owner;
             }
-            when ('town') {
+            elsif ($_ eq 'town') {
                 if ($owner->mayor && ! $owner->mayor->is_npc) {
                     $group_to_alert = $owner->mayor->party;   
                 }
             }
-            when ('kingdom') {
+            elsif ($_ eq 'kingdom') {
                 if ($owner->king && ! $owner->king->is_npc) {
                     $group_to_alert = $owner->king->party;   
                 }   

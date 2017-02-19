@@ -17,8 +17,6 @@ use Data::Dumper;
 use HTML::Strip;
 use Email::Valid;
 
-use feature 'switch';
-
 sub login : Local {
     my ( $self, $c ) = @_;
 
@@ -148,14 +146,14 @@ sub set_screen_size : Private {
     # Set screen size in session
     $c->session->{screen_width} = $player->screen_width;
     if ($player->screen_width eq 'auto') {
-        given ($c->req->param('width')) {
-            when ($_ >= 1200) {
+        for ($c->req->param('width')) {
+            if ($_ >= 1200) {
                 $c->session->{screen_width} = 'large';
             }
-            when ($_ >= 1100) {
+            elsif ($_ >= 1100) {
                 $c->session->{screen_width} = 'medium';
             }
-            default {                
+            else {                
                 $c->session->{screen_width} = 'small';
             }
         }    
@@ -163,14 +161,14 @@ sub set_screen_size : Private {
     
     $c->session->{screen_height} = $player->screen_height;
     if ($player->screen_height eq 'auto') {
-        given ($c->req->param('height')) {
-            when ($_ >= 750) {
+        for ($c->req->param('height')) {
+            if ($_ >= 750) {
                 $c->session->{screen_height} = 'large';
             }
-            when ($_ >= 650) {
+            elsif ($_ >= 650) {
                 $c->session->{screen_height} = 'medium';
             }
-            default {                
+            else {                
                 $c->session->{screen_height} = 'small';
             }
         }    

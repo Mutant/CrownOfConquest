@@ -2,8 +2,6 @@ package RPG::Schema::Skill::Tactics;
 
 use Moose::Role;
 
-use feature 'switch';
-
 use Math::Round qw(round);
 
 sub execute {
@@ -12,14 +10,11 @@ sub execute {
 
     my $character = $self->char_with_skill;
     
-    given ($event) {
-        when ('opponent_flee') {
-            return round $self->level + ($character->intelligence / 8);
-        }
-        
-        when ('guard_af') {
-            return $self->level;   
-        }
+    if ($event eq 'opponent_flee') {
+		return round $self->level + ($character->intelligence / 8);
+	}
+    elsif ('guard_af') {
+		return $self->level;
     }    
 }
 

@@ -8,8 +8,6 @@ extends 'DBIx::Class';
 
 use RPG::ResultSet::RowsInSectorRange;
 
-use feature 'switch';
-
 __PACKAGE__->load_components(qw/Core Numeric/);
 __PACKAGE__->table('Building');
 
@@ -40,22 +38,18 @@ sub claim_type { 'building' };
 sub owner_name {
 	my $self = shift;
 	if (!defined $self->{owner_name}) {
-	    given ($self->owner_type) {
-	        when ('party') {
-                my $party = $self->result_source->schema->resultset('Party')->find(
-	        	  { 'party_id' => $self->owner_id, }
-		        );
-		        $self->{owner_name} = $party->name;
-	        }
-	        when ('kingdom') {
-	            my $kingdom = $self->result_source->schema->resultset('Kingdom')->find(
-	        	  { 'kingdom_id' => $self->owner_id, }
-		        );
-		        $self->{owner_name} = "The Kingdom of " . $kingdom->name;
-	        }
-	        default {
-                $self->{owner_name} = "No one";
-	        }
+		$self->{owner_name} = "No one";
+	    if ($self->owner_type eq 'party') {
+			my $party = $self->result_source->schema->resultset('Party')->find(
+	        	{ 'party_id' => $self->owner_id, }
+			);
+		    $self->{owner_name} = $party->name;
+	    }
+	    elsif ($self->owner_type eq 'kingdom') {
+			my $kingdom = $self->result_source->schema->resultset('Kingdom')->find(
+				{ 'kingdom_id' => $self->owner_id, }
+		    );
+			$self->{owner_name} = "The Kingdom of " . $kingdom->name;
 		}
 	}
 	return $self->{owner_name};
@@ -64,38 +58,36 @@ sub owner_name {
 sub owner {
     my $self = shift;
     
-    given ($self->owner_type) {
-        when ('party') {
-            # If there's a garrison in the sector, the garrison is considered owner
-            my $garrison = $self->result_source->schema->resultset('Garrison')->find(
-                {
-                    land_id => $self->land_id,
-                }
-            );
+    if ($self->owner_type eq 'party') {
+		# If there's a garrison in the sector, the garrison is considered owner
+        my $garrison = $self->result_source->schema->resultset('Garrison')->find(
+        	{
+            	land_id => $self->land_id,
+			}
+		);
             
-            return $garrison if $garrison;            
+        return $garrison if $garrison;            
             
-            return $self->result_source->schema->resultset('Party')->find(
-	           { 
-	               'party_id' => $self->owner_id, 
-	           }
-            );
-        }
-        when ('kingdom') {
-            return $self->result_source->schema->resultset('Kingdom')->find(
-                { 
-                    'kingdom_id' => $self->owner_id, 
-                }
-            );           
-        }
-        when ('town') {
-            return $self->result_source->schema->resultset('Town')->find(
-                { 
-                    'town_id' => $self->owner_id, 
-                }
-            );            
-        }
-    }
+        return $self->result_source->schema->resultset('Party')->find(
+	    	{ 
+	        	'party_id' => $self->owner_id, 
+	        }
+		);
+	}
+    elsif ($self->owner_type eq 'kingdom') {
+    	return $self->result_source->schema->resultset('Kingdom')->find(
+        	{ 
+            	'kingdom_id' => $self->owner_id, 
+			}
+		);           
+	}
+	elsif ($self->owner_type eq 'town') {
+    	return $self->result_source->schema->resultset('Town')->find(
+        	{ 
+            	'town_id' => $self->owner_id, 
+			}
+		);            
+	}
 }
 
 # Returns true if the entity passed in owns the building

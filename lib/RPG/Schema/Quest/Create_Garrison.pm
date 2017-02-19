@@ -83,7 +83,7 @@ sub check_action {
     my $action = shift;
     my $garrison = shift;
     
-    return 0 unless $action ~~ [qw(garrison_created garrison_removed new_day)]; 
+    return 0 unless grep { $_ eq $action } qw(garrison_created garrison_removed new_day); 
     
     # New day action doesn't populate garrison
     $garrison //= $self->sector_to_create_in->garrison;

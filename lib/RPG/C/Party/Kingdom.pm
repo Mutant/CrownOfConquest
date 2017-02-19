@@ -6,8 +6,6 @@ use base 'Catalyst::Controller';
 
 use Data::Dumper;
 
-use feature 'switch';
-
 use JSON;
 use Carp;
 use HTML::Strip;
@@ -409,43 +407,40 @@ sub quest_param_list : Local {
 	
 	my @data;
 	
-	given ($quest_param->variable_type) {
-	    when ('Town') {	
-	       my @towns = $c->model('DBIC::Town')->search(
-                { 
-                    'mapped_sector.party_id' => $c->stash->{party}->id,
-                    'location.kingdom_id' => {'!=', $c->stash->{kingdom}->id},
-                },
-                {
-                    prefetch => { 'location' => 'mapped_sector' },
-                    order_by => 'town_name',
-                },
-           );
-    
+	if ($quest_param->variable_type eq 'Town') {	
+		my @towns = $c->model('DBIC::Town')->search(
+			{ 
+                'mapped_sector.party_id' => $c->stash->{party}->id,
+            	'location.kingdom_id' => {'!=', $c->stash->{kingdom}->id},
+            },
+			{
+				prefetch => { 'location' => 'mapped_sector' },
+            	order_by => 'town_name',
+        	},
+        );
 
-           foreach my $town (@towns) {
-               push @data, {
-                   id => $town->id,
-                   name => $town->label,
-               }
-            }
-	    }
-        
-        when ('Building_Type') {
-            my $building_type = $c->model('DBIC::Building_Type')->find(
-               {
-                    name => 'Tower',
-                }
-            );
-            
-            
-            push @data, {
-                id => $building_type->id,
-                name => $building_type->name,
-            }
-        }
+		foreach my $town (@towns) {
+			push @data, {
+                id => $town->id,
+            	name => $town->label,
+        	}
+    	}
 	}
-	
+        
+	elsif ($quest_param->variable_type eq 'Building_Type') {
+		my $building_type = $c->model('DBIC::Building_Type')->find(
+			{
+            	name => 'Tower',
+        	}
+        );
+            
+            
+		push @data, {
+            id => $building_type->id,
+        	name => $building_type->name,
+    	}
+	}
+        	
 	$c->res->body(
 		to_json(
 			{

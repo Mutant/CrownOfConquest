@@ -8,8 +8,6 @@ use Games::Dice::Advanced;
 use List::Util qw(sum shuffle);
 use Math::Round qw(round);
 
-use feature 'switch';
-
 with 'RPG::NewDay::Role::CastleGuardGenerator';
 
 sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Town RPG::NewDay::Action::Player RPG::NewDay::Action::Town_Loyalty/ }
@@ -758,7 +756,7 @@ sub generate_advice {
 	my $advice;	
 	for (@checks) {
 		# Do they need more guards?
-		when ('guards') {
+		if ($_ eq 'guards') {
 		    my $castle = $town->castle;
 		    next unless $castle;
 		    
@@ -782,7 +780,7 @@ sub generate_advice {
 		}
 		
 		# Is peasant tax too high?
-		when ('peasant_tax') {
+		elsif ($_ eq 'peasant_tax') {
 			if ($town->peasant_tax > 25) {
 				$advice = "The taxes seem very high, the peasants are not happy.";
 				last;	
@@ -790,7 +788,7 @@ sub generate_advice {
 		}
 		
 		# Is sales tax too high?
-		when ('sales_tax') {
+		elsif ($_ eq 'sales_tax') {
 			if ($town->sales_tax > 25) {
 				$advice = "The local merchants are complaining that the sales tax is putting them out of business. Perhaps you should reduce it. ";
 				last; 	
@@ -798,7 +796,7 @@ sub generate_advice {
 		}
 		
 		# Do they need more garrison chars
-		when ('garrison') {
+		elsif ($_ eq 'garrison') {
 			my $garrison_char_rec = $self->context->schema->resultset('Character')->find(
 				{
 					status => 'mayor_garrison',
@@ -819,7 +817,7 @@ sub generate_advice {
 		}
 		
 		# Does an election need to be scheduled
-		when ('election') {
+		elsif ($_ eq 'election') {
 			next unless $town->last_election;
 			my $days_since_last_election = $self->context->current_day->day_number - $town->last_election;
 			if ($days_since_last_election >= 12) {
@@ -828,28 +826,28 @@ sub generate_advice {
 			}
 		}
 		
-		when ('approval') {
+		elsif ($_ eq 'approval') {
 			if ($town->mayor_rating < -50) {
 				$advice = "Your approval rating is very low. Hire more guards, lower the taxes or schedule an election to help appease the peasants";
 				last;	
 			}	
 		}
 		
-		when ('revolt') {
+		elsif ($_ eq 'revolt') {
 			if ($town->peasant_state eq 'revolt') {
 				$advice = "The peasants are in revolt - it must be crushed! Garrison more characters and hire more guards";
 				last; 
 			}					
 		}
 		
-		when ('kingdom_loyalty') {
+		elsif ($_ eq 'kingdom_loyalty') {
             if ($town->location->kingdom_id && $town->kingdom_loyalty < 0) {
                 $advice = "The towns people are not very loyal to the town's kingdom. Make sure the town is joined to the kingdom's capital by claimed land";
                 last;
             }   
 		}
 		
-		when ('runes') {
+		elsif ($_ eq 'runes') {
 		    last if $town->prosperity < 35;
             my $building = $town->building;
             if (! $building) {

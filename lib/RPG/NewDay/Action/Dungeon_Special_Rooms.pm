@@ -10,8 +10,6 @@ use Games::Dice::Advanced;
 
 use RPG::Map;
 
-use feature 'switch';
-
 sub depends { qw/RPG::NewDay::Action::Dungeon/ };
 
 sub run {

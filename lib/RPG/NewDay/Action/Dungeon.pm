@@ -13,8 +13,6 @@ use List::Util qw(shuffle);
 use Carp qw(confess croak);
 use Data::Dumper;
 
-use feature 'switch';
-
 sub run {
     my $self = shift;
 

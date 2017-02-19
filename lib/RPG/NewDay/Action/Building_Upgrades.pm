@@ -6,8 +6,6 @@ extends 'RPG::NewDay::Base';
 use Games::Dice::Advanced;
 use RPG::Template;
 
-use feature 'switch';
-
 sub depends { qw/RPG::NewDay::Action::CreateDay/ }
 
 sub run {
@@ -25,14 +23,12 @@ sub run {
     );
         
     foreach my $upgrade (@upgrades) {
-        given ($upgrade->type->name) {
-            when ('Market') {
-                $self->process_market($upgrade);
-            }
-            when ('Barracks') {
-                $self->process_barracks($upgrade);
-            }
-        }
+        if ($upgrade->type->name eq 'Market') {
+			$self->process_market($upgrade);
+		}
+		elsif ($upgrade->type->name eq 'Barracks') {
+			$self->process_barracks($upgrade);
+		}
     }
 }
 

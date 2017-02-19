@@ -46,7 +46,7 @@ sub auto : Private {
     
     # If they have a 'partial' login, check they're accessing one of the allowed paths
     my $allowed_partial_login = 0;
-    if ($c->session->{partial_login} && $c->action ~~ \@PARTIAL_LOGIN_ALLOWED_PATHS) {
+    if ($c->session->{partial_login} && grep { $_ eq $c->action } @PARTIAL_LOGIN_ALLOWED_PATHS) {
         $allowed_partial_login = 1;   
     }    
 
@@ -95,7 +95,7 @@ sub check_for_deleted_player : Private {
 	my ($self, $c) = @_;
 		
 	if ($c->session->{player}->deleted) {
-	    return if $c->action ~~ \@ACTIVATION_NOT_REQUIRED_PATHS;
+	    return if grep { $_ eq $c->action } @ACTIVATION_NOT_REQUIRED_PATHS;
 	    
 		# Check for a full game
 		my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );

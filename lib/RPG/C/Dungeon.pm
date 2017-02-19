@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature "switch";
-
 use Data::Dumper;
 use Carp;
 use List::Util qw(shuffle);
@@ -1263,8 +1261,8 @@ sub execute_trap : Private {
 	my $target = (shuffle(grep { ! $_->is_dead } $c->stash->{party}->characters))[0];
 	my $trap_variable;
     
-	given($trap_type) {
-		when ("Curse") {
+	for ($trap_type) {
+		if ($_ eq "Curse") {
 			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
 				effect_name => 'Cursed',
@@ -1276,7 +1274,7 @@ sub execute_trap : Private {
 			});	
 		}
 		
-		when ("Hypnotise") {
+		elsif ($_ eq "Hypnotise") {
 			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
 				effect_name => 'Hypnotised',
@@ -1288,7 +1286,7 @@ sub execute_trap : Private {
 			});	
 		}	
 		
-		when ("Mute") {
+		elsif ($_ eq "Mute") {
 			$trap_variable = Games::Dice::Advanced->roll('2d3') * $level;
 			$c->model('DBIC::Effect')->create_effect({
 				effect_name => 'Muted',
@@ -1300,7 +1298,7 @@ sub execute_trap : Private {
 			});	
 		}			
 		
-		when ("Detonate") {
+		elsif ($_ eq "Detonate") {
 			$trap_variable = Games::Dice::Advanced->roll('2d4') * $level;
 			$target->hit($trap_variable, undef, 'an explosion');
 		}				

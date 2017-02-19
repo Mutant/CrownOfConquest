@@ -3,7 +3,6 @@ package RPG::NewDay::Role::DungeonGenerator;
 use Moose::Role;
 use warnings;
 use Carp;
-use feature 'switch';
 
 use List::Util qw(shuffle);
 use Clone qw(clone);
@@ -386,17 +385,17 @@ sub _find_next_corridor_direction {
 	foreach my $next_direction ( $current_direction, @directions ) {
 		my ( $test_x, $test_y ) = ( $next_x, $next_y );
 
-		given ($next_direction) {
-			when ('left') {
+		for ($next_direction) {
+			if ($_ eq 'left') {
 				$test_x--;
 			}
-			when ('right') {
+			elsif ($_ eq 'right') {
 				$test_x++;
 			}
-			when ('top') {
+			elsif ($_ eq 'top') {
 				$test_y++;
 			}
-			when ('bottom') {
+			elsif ($_ eq 'bottom') {
 				$test_y++;
 			}
 		}

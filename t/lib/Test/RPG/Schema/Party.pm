@@ -683,12 +683,12 @@ sub test_mayor_count_allowed : Tests(6) {
         my $char_count = 0;
         foreach my $char_level (@{$test->{char_levels}}) {            
             my $status = '';
-            if ($char_count ~~ $test->{chars_in_inn}) {
+            if (grep { $_ == $char_count } @{$test->{chars_in_inn}}) {
                $status = 'inn';
             }
             
             my $hit_points = 100;
-            if ($char_count ~~ $test->{dead_chars}) {
+            if (grep { $_ == $char_count } @{$test->{dead_chars}}) {
                $hit_points = 0;
             }
             

@@ -5,8 +5,6 @@ use Moose;
 
 with 'RPG::Schema::Role::ResourceConsumer';
 
-use feature 'switch';
-
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Building_Upgrade_Type');
 
@@ -37,13 +35,11 @@ sub bonus_label {
         return "+" . $self->modifier_per_level * $level . " to " . $self->modifier_label; 
     }
     
-    given ($self->name) {
-        when ('Market') {
-            return ($level*10) . ' - ' . ($level*100) . ' gold per day';
-        }
-        when ('Barracks') {
-            return ($level*5) . ' - ' . ($level*50) . ' xp per day';
-        }        
+    if ($self->name eq 'Market') {
+		return ($level*10) . ' - ' . ($level*100) . ' gold per day';
+    }
+	elsif ($self->name eq 'Barracks') {
+		return ($level*5) . ' - ' . ($level*50) . ' xp per day';
     }
     
     return '';

@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature 'switch';
-
 sub default : Path {
 	my ($self, $c) = @_;
 	
@@ -24,40 +22,38 @@ sub default : Path {
 	}
 	
 	if ($c->req->param('confirmed')) {
-	   my $player = $c->model('DBIC::Player')->find(
-	       {
-	           player_name => $c->session->{player_name},
-	       }
-	   );
+	    my $player = $c->model('DBIC::Player')->find(
+	        {
+	            player_name => $c->session->{player_name},
+	        }
+	    );
 	   
-	   if (! $player) {	   
+	    if (! $player) {	   
 	       $params{error} = "No such player: " . $c->session->{player_name};
-	   }
-	   else {
-	       my ($party) = $player->search_related('parties', {defunct => undef});
+		}
+		else {
+	    	my ($party) = $player->search_related('parties', {defunct => undef});
 	       
-	       given ($c->session->{type}) {
-	           when ('Turns') {
-	               # Use hidden accessor to allow exceeding max turns
-	               $party->_turns($party->_turns + $c->session->{amount});
-	           }
-	           when ('Gold') {
-	               $party->increase_gold($c->session->{amount});
-	           }
-	       }
-	       $party->update;
+	        if ($c->session->{type} eq 'Turns') {
+				# Use hidden accessor to allow exceeding max turns
+	            $party->_turns($party->_turns + $c->session->{amount});
+		    }
+	        elsif ($c->session->{type} eq 'Gold') {
+				$party->increase_gold($c->session->{amount});
+	        }
+	        $party->update;
 	       
-	       $party->add_to_messages(
-	           {
-	               message => "You were awarded " . $c->session->{amount} . ' ' . $c->session->{type} . ' by the Administrators.',
-	               day_id => $c->model('DBIC::Day')->find_today->id,
-	               alert_party => 1,
-	           }
-	       );
+	        $party->add_to_messages(
+	            {
+	                message => "You were awarded " . $c->session->{amount} . ' ' . $c->session->{type} . ' by the Administrators.',
+	                day_id => $c->model('DBIC::Day')->find_today->id,
+	                alert_party => 1,
+	            }
+	        );
 	       
-	       $c->log->debug("Rewarded party ". $party->id . " with " . $c->session->{amount} . ' ' . $c->session->{type});
+	        $c->log->debug("Rewarded party ". $party->id . " with " . $c->session->{amount} . ' ' . $c->session->{type});
 	       
-	       $params{message} = "Reward given to party: " . $party->name;
+	        $params{message} = "Reward given to party: " . $party->name;
 	   }
 	   
 	   undef $c->session->{player_name};

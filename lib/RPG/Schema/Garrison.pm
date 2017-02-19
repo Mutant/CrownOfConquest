@@ -2,8 +2,6 @@ package RPG::Schema::Garrison;
 
 use Moose;
 
-use feature 'switch';
-
 extends 'DBIx::Class';
 
 __PACKAGE__->load_components(qw/Numeric Core/);
@@ -203,17 +201,9 @@ sub check_for_fight {
 
 	my $factor = $opponent->compare_to_party($self);
 
-	given ($attack_mode) {
-		when ( 'Attack Weaker Opponents' ) {		     
-			return 1 if $factor > 20;
-		}
-		when ( 'Attack Similar Opponents' ) {
-			return 1 if $factor > 5;
-		}
-		when ( 'Attack Stronger Opponents' ) {
-			return 1 if $factor > -20;
-		}
-	}
+	return 1 if $attack_mode eq 'Attack Weaker Opponents'   && $factor > 20;
+	return 1 if $attack_mode eq 'Attack Similar Opponents'  && $factor > 5;
+	return 1 if $attack_mode eq 'Attack Stronger Opponents' && $factor > -20;
 
 	return 0;
 }

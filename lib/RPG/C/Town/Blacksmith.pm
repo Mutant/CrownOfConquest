@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature 'switch';
-
 use Carp;
 
 use Games::Dice::Advanced;
@@ -170,17 +168,17 @@ sub upgrade : Local {
 
 	my $random_factor = Games::Dice::Advanced->roll('1d100');
 
-	given ($random_factor) {
-		when ( $_ <= 10 ) {
+	for ($random_factor) {
+		if ( $_ <= 10 ) {
 			$upgrade_increase -= 2;
 		}
-		when ( $_ <= 30 ) {
+		elsif ( $_ <= 30 ) {
 			$upgrade_increase--;
 		}
-		when ( $_ >= 70 ) {
+		elsif ( $_ >= 70 ) {
 			$upgrade_increase++;
 		}
-		when ( $_ >= 90 ) {
+		elsif ( $_ >= 90 ) {
 			$upgrade_increase += 2;
 		}
 	}

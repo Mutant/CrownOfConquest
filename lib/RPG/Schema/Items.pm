@@ -454,7 +454,7 @@ sub _factors_trigger {
 	}
 	# If we're not equipping something with AF, but the item changes str or agl, 
 	#  we need to calculate attack factor
-	elsif (grep { $_ ~~ [qw/strength agility/] } @stats_with_bonuses) {
+	elsif (grep { $_ eq 'strength' || $_ eq 'agility' } @stats_with_bonuses) {
 	   $character->calculate_attack_factor;
 	}
 	

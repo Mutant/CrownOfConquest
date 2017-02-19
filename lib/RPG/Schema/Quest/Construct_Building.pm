@@ -8,8 +8,6 @@ use base 'RPG::Schema::Quest';
 use List::Util qw(shuffle);
 use RPG::Map;
 
-use feature 'switch';
-
 sub set_quest_params {
     my $self = shift;
     
@@ -109,33 +107,31 @@ sub check_action {
     my $action = shift;
     my $building = shift;
     
-    return 0 unless $action ~~ [qw(constructed_building ceded_building)];
+    return 0 unless grep { $_ eq $action } qw(constructed_building ceded_building);
     
     my $land = $building->location;
 
-    given ($action) {
-        when ('constructed_building') {
-            if ($land->id eq $self->param_current_value('Building Location')) {
-                my $quest_param = $self->param_record('Built');
+    if ($action eq 'constructed_building') {
+        if ($land->id eq $self->param_current_value('Building Location')) {
+            my $quest_param = $self->param_record('Built');
                 
-                return 0 if $quest_param->current_value == 1;
+            return 0 if $quest_param->current_value == 1;
                 
-                $quest_param->current_value(1);
-                $quest_param->update;
+            $quest_param->current_value(1);
+            $quest_param->update;
 
-                return 1;
-            }
-        }
-        when ('ceded_building') {
-            if ($land->id == $self->param_current_value('Building Location') && $building->owner_id == $party->kingdom_id && $building->owner_type eq 'kingdom') {
-           
-                $self->status('Awaiting Reward');
-                $self->update; 
-                
-                return 1;
-            }
+            return 1;
         }
     }
+	elsif ($action eq 'ceded_building') {
+        if ($land->id == $self->param_current_value('Building Location') && $building->owner_id == $party->kingdom_id && $building->owner_type eq 'kingdom') {
+           
+            $self->status('Awaiting Reward');
+            $self->update; 
+                
+            return 1;
+        }
+	}
     
     return 0;
 }

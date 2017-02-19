@@ -11,8 +11,6 @@ with qw /
 	RPG::NewDay::Role::GarrisonCombat
 /;
 
-use feature 'switch';
-
 sub cron_string {
     my $self = shift;
      

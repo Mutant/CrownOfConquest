@@ -8,8 +8,6 @@ use Data::Dumper;
 use Carp;
 use List::Util qw(shuffle);
 
-use feature 'switch';
-
 has 'garrison' => ( is => 'rw', isa => 'RPG::Schema::Garrison', required => 1 );
 has 'party'    => ( is => 'rw', isa => 'RPG::Schema::Party',    required => 1 );
 has 'party_flee_attempt'      => ( is => 'ro', isa => 'Bool',       default => 0 );
@@ -45,14 +43,12 @@ sub check_for_flee {
 
 	# Check for offline flee attempt
 	if ( my $group = $self->check_for_offline_flee ) {
-		given ($group->group_type) {
-			when ('party') {
-				$self->result->{party_fled} = 1;
-			}
-			when ('garrison') {
-				$self->{result}->{garrison_fled} = 1;
-				$self->garrison_flee;				
-			}
+		if ($group->group_type eq 'party') {
+			$self->result->{party_fled} = 1;
+		}
+		elsif ($group->group_type eq 'garrison') {
+			$self->{result}->{garrison_fled} = 1;
+			$self->garrison_flee;				
 		}
 				
 		return 1;

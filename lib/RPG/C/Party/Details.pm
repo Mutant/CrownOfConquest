@@ -8,8 +8,6 @@ use Data::Dumper;
 use Carp;
 use HTML::Strip;
 
-use feature "switch";
-
 sub default : Path {
     my ( $self, $c ) = @_;
     
@@ -161,29 +159,24 @@ sub combat_messages : Local {
     my $type = $combat_log->get_column("opponent_${opp_num}_type");
     my $id = $combat_log->get_column("opponent_${opp_num}_id");
     
-    given ($type) {
-    	when ('party') {
-    	    if ($id != $c->stash->{party}->id) {
-                my $old_party = $c->model('DBIC::Party')->find(
-                    {
-                        party_id => $id,
-                        player_id => $c->session->{player}->id,
-                    }
-                );
-                
-                croak "Invalid combat log" unless $old_party;
-    	    } 	
-    	}
-    	when ('garrison') {
-    		my $garrison = $c->model('DBIC::Garrison')->find(
-    			{
-    				garrison_id => $id,
-    				party_id => $c->stash->{party}->id,
-    			},
-    		);
-    		croak "Invalid combat log" unless $garrison;
-    	}
-    }
+	if ($type eq 'party' && $id != $c->stash->{party}->id) {
+    	my $old_party = $c->model('DBIC::Party')->find(
+        	{
+            	party_id => $id,
+                player_id => $c->session->{player}->id,
+			}
+		);
+        croak "Invalid combat log" unless $old_party;
+	}
+    elsif ($type eq 'garrison') {
+    	my $garrison = $c->model('DBIC::Garrison')->find(
+    		{
+    			garrison_id => $id,
+    			party_id => $c->stash->{party}->id,
+			},
+		);
+    	croak "Invalid combat log" unless $garrison;
+	}
 
     my @messages = $c->model('DBIC::Combat_Log_Messages')->search(
     	{

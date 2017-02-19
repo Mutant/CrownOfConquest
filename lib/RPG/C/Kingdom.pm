@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature 'switch';
-
 use Carp;
 use JSON;
 use HTML::Strip;

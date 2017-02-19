@@ -5,8 +5,6 @@ use warnings;
 
 use Carp;
 
-use feature "switch";
-
 __PACKAGE__->load_components(qw/InflateColumn::DateTime Numeric Core/);
 __PACKAGE__->table('Combat_Log');
 
@@ -124,12 +122,12 @@ sub opponent {
     my $opp_number = shift;
     
     my $id = $self->get_column("opponent_${opp_number}_id");
+    
+    my $opp_type = $self->get_column("opponent_${opp_number}_type");
         
-    given($self->get_column("opponent_${opp_number}_type")) {
-    	when('party') { return $self->_get_party($id) };
-    	when('creature_group') { return $self->_get_cg($id) };
-    	when('garrison') { return $self->_get_garrison($id) };
-    }
+    return $self->_get_party($id)    if $opp_type eq 'party';
+    return $self->_get_cg($id)       if $opp_type eq 'creature_group';
+    return $self->_get_garrison($id) if $opp_type eq 'garrison';
 }
 
 sub _get_party {

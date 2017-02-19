@@ -4,8 +4,6 @@ use Moose::Role;
 
 with 'RPG::Schema::Enchantments::Interface';
 
-use feature 'switch';
-
 use RPG::Maths;
 
 sub init_enchantment {
@@ -69,22 +67,17 @@ sub label {
 
 sub tooltip {
 	my $self = shift;
-		
-	my $times;
+
 	my $casts_var = $self->variable_row('Casts Per Day');
 	
 	confess "Can't find casts per day var" unless $casts_var;
 	
-	given ($casts_var->max_value) {
-		when (1) {
-			$times = 'once';
-		}
-		when (2) {
-			$times = 'twice';
-		}
-		default {
-			$times = $_ . ' times';
-		}
+	my $times = $casts_var->max_value . ' times';
+	if ($casts_var->max_value == 1) {
+		$times = 'once';
+	}
+	elsif ($casts_var->max_value == 2) {
+		$times = 'twice';
 	}
 	
 	return "Cast " . $self->variable('Spell') . ' (level ' . $self->variable('Spell Level') . ') ' .

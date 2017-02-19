@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base 'Catalyst::Controller';
 
-use feature 'switch';
-
 use Data::Dumper;
 use DateTime;
 use JSON;
@@ -352,12 +350,12 @@ sub list : Private {
 			%opponents_by_id = map { $_->id => $_ } $party->opponents->members unless %opponents_by_id;
 			%chars_by_id = map { $_->id => $_ } @characters unless %chars_by_id; 
 						
-			given ($character->last_combat_action) {
-				when ('Attack') {
+			for ($character->last_combat_action) {
+				if ($_ eq 'Attack') {
 					$combat_params{$character->id} = [$opponents_by_id{$character->last_combat_param1}->name]
 						if $opponents_by_id{$character->last_combat_param1};
 				}
-				when ('Cast') {
+				elsif ($_ eq 'Cast') {
 				    if ($character->last_combat_param1 eq 'autocast') {
 				        $combat_params{$character->id} = ['(Auto)'];
 				        next;   
@@ -373,7 +371,7 @@ sub list : Private {
 						
 					$combat_params{$character->id} = [$target->name, $spell->spell_name];
 				}
-				when ('Use') {
+				elsif ($_ eq 'Use') {
 					my $action = $character->get_item_action( $character->last_combat_param1 );
 					my $target = $action->target eq 'character' ? 
 						$chars_by_id{$character->last_combat_param2} :
@@ -623,8 +621,8 @@ sub select_action : Local {
 	my $execute;
 	my $spell;
 	
-	given ( $c->req->param('action') ) {
-		when ('Cast') {
+	for ( $c->req->param('action') ) {
+		if ($_ eq 'Cast') {
 		    my $spell_id;
 			( $spell_id, $target_id ) = $c->req->param('action_param');
 			$action = $c->model('DBIC::Spell')->find($spell_id);
@@ -635,7 +633,7 @@ sub select_action : Local {
 			    return $action->cast( $character, $target );
 			}
 		}
-		when ('Use') {
+		elsif ($_ eq 'Use') {
 		    my $action_id;
 			( $action_id, $target_id ) = $c->req->param('action_param');
 			$action = $character->get_item_action($action_id);
@@ -678,8 +676,8 @@ sub select_action : Local {
     	$c->detach( '/panel/refresh', [ 'messages' ] );        
 	}
 
-    given ( $action->target ) {
-        when ('character') {
+    for ( $action->target ) {
+        if ($_ eq 'character') {
             $target = $c->model('DBIC::Character')->find(
     			{
     				character_id => $target_id,
@@ -688,11 +686,11 @@ sub select_action : Local {
     		);
         }
      
-        when ('special') {
+        elsif ($_ eq 'special') {
             $target = $target_id;    
         }
         
-        when ('sector') {
+        elsif ($_ eq 'sector') {
             if ($c->req->param('x') && $c->req->param('y')) {                
                 $target = $c->model('DBIC::Land')->find(
                     {
@@ -731,7 +729,7 @@ sub select_action : Local {
             }
         }
      
-        default {
+        else {
             $target = $c->stash->{party};    
         }
 	}

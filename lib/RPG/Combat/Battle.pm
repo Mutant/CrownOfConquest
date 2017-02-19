@@ -18,8 +18,6 @@ use RPG::Combat::MagicalDamage::Fire;
 use RPG::Combat::MagicalDamage::Ice;
 use RPG::Combat::MagicalDamage::Poison;
 
-use feature 'switch';
-
 requires qw/process_effects opponents_of opponents check_for_flee finish opponent_of_by_id initiated_by is_online/;
 
 has 'schema' => ( is => 'ro', isa => 'RPG::Schema', required => 1 );
@@ -676,23 +674,23 @@ sub check_for_auto_cast {
             my $target;
     
     		# Randomly select a target		
-    		given ( $spell->target ) {
-    			when ('creature') {
+    		for ( $spell->target ) {
+    			if ($_ eq 'creature') {
                 	my @opponents = grep { !$_->is_dead } $self->opposing_combatants_of($caster);
                 	
                 	$target = $spell->select_target(@opponents);
     			}
-    			when ('character') {
+    			elsif ($_ eq 'character') {
     			    my $group = $caster->group;
     				my @chars = grep { !$_->is_dead && $group->has_being($_) } $self->combatants;
     				
     				$target = $spell->select_target(@chars);
     			}
-    			when ('party') {
+    			elsif ($_ eq 'party') {
     			    my $opp_num = $self->opponent_number_of_being($caster);
                     $target = ( $self->opponents )[$opp_num-1];			
     			}
-    			default {
+    			else {
     				# Currently only combat spells with creature/character target are implemented
     				confess "Auto-cast can't handle spell target: $_";
     			}

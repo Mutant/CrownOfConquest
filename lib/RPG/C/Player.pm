@@ -12,7 +12,6 @@ use String::Random;
 use DateTime;
 use List::Util qw(shuffle);
 use Digest::SHA1 qw(sha1_hex);
-use MIME::Lite;
 use Data::Dumper;
 use HTML::Strip;
 use Email::Valid;
@@ -596,13 +595,11 @@ sub survey : Local {
 		$survey,
 	);
 	
-	my $msg = MIME::Lite->new(
-		From    => $c->config->{send_email_from},
-		To      => $c->config->{send_email_from},
-		Subject => '[CrownOfConquest] Survey Response',
-		Data    => "A survey was completed. The response was:\n\n" . Dumper $survey,
-	);
-	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );	
+	RPG::Email->send(
+		email      => $c->config->{send_email_from},
+		subject => 'Survey Response',
+		body    => "A survey was completed. The response was:\n\n" . Dumper $survey,
+	);		
 	
 	$c->forward( 'RPG::V::TT', [ { template => 'player/survey_thanks.html', } ] );
 	
@@ -790,14 +787,12 @@ sub submit_email : Private {
             $body = "Player: " . $c->session->{player}->player_name . "<br><br>" . $body; 
         }        
         
-    	my $msg = MIME::Lite->new(
-    		From    => $c->config->{send_email_from},
-    		To      => $c->config->{send_email_from},
-    		'Reply-To' => $email,
-    		Subject => "[CrownOfConquest] ($type): " . $c->req->param('subject'),
-    		Data    => $body,
-    	);
-    	$msg->send( 'smtp', $c->config->{smtp_server}, Debug => 0, );        
+    	RPG::Email->send(
+    		email      => $c->config->{send_email_from},
+    		reply_to => $email,
+    		subject => "($type): " . $c->req->param('subject'),
+    		body    => $body,
+    	);        
     	
     	$c->forward( 'RPG::V::TT', [ 
     		{ 

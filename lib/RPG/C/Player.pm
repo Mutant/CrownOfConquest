@@ -596,9 +596,12 @@ sub survey : Local {
 	);
 	
 	RPG::Email->send(
-		email      => $c->config->{send_email_from},
-		subject => 'Survey Response',
-		body    => "A survey was completed. The response was:\n\n" . Dumper $survey,
+		$c->config,
+		{
+			email      => $c->config->{send_email_from},
+			subject => 'Survey Response',
+			body    => "A survey was completed. The response was:\n\n" . Dumper $survey,
+		}
 	);		
 	
 	$c->forward( 'RPG::V::TT', [ { template => 'player/survey_thanks.html', } ] );
@@ -788,10 +791,13 @@ sub submit_email : Private {
         }        
         
     	RPG::Email->send(
-    		email      => $c->config->{send_email_from},
-    		reply_to => $email,
-    		subject => "($type): " . $c->req->param('subject'),
-    		body    => $body,
+    		$c->config,
+    		{
+	    		email      => $c->config->{send_email_from},
+	    		reply_to => $email,
+	    		subject => "($type): " . $c->req->param('subject'),
+	    		body    => $body,
+    		},
     	);        
     	
     	$c->forward( 'RPG::V::TT', [ 

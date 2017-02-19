@@ -76,9 +76,12 @@ sub run {
 			}
 
 			RPG::Email->send(
-				email   => $config->{send_email_from},
-				subject => 'Error running new day script',
-				body    => "Error was: $error_str",
+				$config,
+				{
+					email   => $config->{send_email_from},
+					subject => 'Error running new day script',
+					body    => "Error was: $error_str",
+				},
 			);
 
 			return $error_str;

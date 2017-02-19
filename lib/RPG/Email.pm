@@ -59,6 +59,7 @@ sub send {
             From    => $config->{send_email_from},
             To => $email_rec->{email},
             Subject => '[CrownOfConquest] ' . $params->{subject},
+            ($params->{reply_to} ? ('Reply-To' => $params->{reply_to}) : ()),
             Data    => $params->{body} . $email_footer,
             Type    => 'text/html',
         );

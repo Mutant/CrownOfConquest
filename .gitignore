@@ -6,3 +6,4 @@ patch/*
 script/data/kingdoms.json
 docroot/static/minimap/*
 dev/*
+var/*

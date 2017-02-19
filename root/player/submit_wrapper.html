@@ -43,6 +43,6 @@
 </table>
 </form>
 
-<p>If you have trouble with this form, you can email us directly at: support AT kingdoms-game DOT com.</p>
+<p>If you have trouble with this form, you can email us directly at: [% c.config.send_email_from | replace('\@', ' AT ') | replace('\.', ' DOT ') %]</p>
 
 [% INCLUDE bottom.html %] 

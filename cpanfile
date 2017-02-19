@@ -43,6 +43,8 @@ requires 'Tree::DAG_Node';
 requires 'Text::Autoformat';
 requires 'Email::Valid';
 requires 'Starman';
+requires 'MIME::Base64';
+requires 'Authen::SASL';
 
 on 'develop' => sub {
 	requires 'Test::Class::Load';

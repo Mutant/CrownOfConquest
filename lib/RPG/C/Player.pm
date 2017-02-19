@@ -749,7 +749,7 @@ sub submit_email : Private {
             $email = $c->session->{player}->email;               
             
             if ($c->stash->{party}) {
-                my $message = $c->model('DBIC::Party_Message')->create(
+                my $message = $c->model('DBIC::Party_Messages')->create(
                     {
                         sender_id => $c->stash->{party}->id,
                         day_id => $c->stash->{today}->id,

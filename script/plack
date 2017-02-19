@@ -4,7 +4,6 @@
 
 RPG_HOME=/home/sam/crown/
 export RPG_HOME
-export RPG_CONFIG_LOCAL_SUFFIX=main
 LOG_DIR=$RPG_HOME/log
 PATH=$PATH:$HOME/perl5/bin
 DAEMON=`/usr/bin/which plackup`
@@ -12,8 +11,8 @@ NAME="CrownOfConquest"
 CWD=`pwd`
 # Defaults
 RUN="no"
-OPTIONS="--app $RPG_HOME/app.psgi --listen 127.0.0.1:8080 --server Starman --error-log $LOG_DIR/starman.err --preload-app --workers 10 "
-OPTIONS="$OPTIONS --access-log $LOG_DIR/access.log"
+OPTIONS="--app $RPG_HOME/app.psgi --listen 127.0.0.1:8080 --server Starman --error-log $LOG_DIR/starman.err --workers 10 --preload-app "
+OPTIONS="$OPTIONS --max-requests 100 "
 
 PIDFILE="$RPG_HOME/var/$NAME.pid"
 

@@ -5,6 +5,7 @@ requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Plugin::Log::Dispatch';
 requires 'Catalyst::Model::DBIC::Schema';
 requires 'Log::Dispatch::Config';
+requires 'Log::Dispatch::File::Stamped';
 requires 'Catalyst::Plugin::Captcha';
 requires 'Catalyst::Plugin::Session::State::Cookie';
 requires 'Catalyst::Plugin::Session::Store::DBIC';

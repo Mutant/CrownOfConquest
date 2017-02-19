@@ -29,7 +29,7 @@ static_path: http://crownofconquest.com/static
 dojo_url: https://ajax.googleapis.com/ajax/libs/dojo/1.6.1
 dojo_path: /dojo/dojo.xd.js
 
-log_file_dir: __path_to(log)__
+log_file_dir: __path_to(log/)__
 
 data_file_path: __path_to(script/data/)__
 
@@ -40,13 +40,13 @@ send_email_from: mutant.nz@gmail.com
 #email_log_file: /home/sam/RPG/log/email_log.html
 
 Log::Dispatch:
-  - class: File
+  - class: File::Stamped
     name: file1
     min_level: debug
     filename: __path_to(log/debug.log)__
     mode: append
     format: '[%d] [%p] (%P:%L) %m %n'
-  - class: File
+  - class: File::Stamped
     name: file2
     min_level: error
     filename: __path_to(log/error.log)__

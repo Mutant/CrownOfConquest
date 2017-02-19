@@ -5,15 +5,15 @@ use Moose;
 use RPG::Schema;
 use RPG::NewDay::Context;
 use RPG::LoadConf;
+use RPG::Email;
 
 use YAML;
 use DateTime;
 use DateTime::Cron::Simple;
 use DateTime::Format::DateParse;
 use Log::Dispatch;
-use Log::Dispatch::File;
+use Log::Dispatch::File::Stamped;
 use Proc::PID::File;
-use MIME::Lite;
 
 use Module::Pluggable::Dependency search_path => ['RPG::NewDay::Action'], instantiate => 'new';
 
@@ -39,7 +39,7 @@ sub run {
 
 	my $logger = Log::Dispatch->new( callbacks => sub { return '[' . localtime() . "] [$$] " . $_[1] . "\n" } );
 	$logger->add(
-		Log::Dispatch::File->new(
+		Log::Dispatch::File::Stamped->new(
 			name      => 'file1',
 			min_level => 'debug',
 			filename  => $config->{log_file_dir} . 'new_day.log',
@@ -48,7 +48,7 @@ sub run {
 		),
 	);
 
-	if ( Proc::PID::File->running( dir => $home . '/proc' ) ) {
+	if ( Proc::PID::File->running( dir => $home . '/var' ) ) {
 		my $message = 'Another process is already running. Not executing';
 		$logger->warning($message);
 		exit 0;
@@ -75,13 +75,11 @@ sub run {
 				}
 			}
 
-			my $msg = MIME::Lite->new(
-				From    => $config->{send_email_from},
-				To      => $config->{send_email_from},
-				Subject => '[CrownOfConquest] Error running new day script',
-				Data    => "Error was: $error_str",
+			RPG::Email->send(
+				email   => $config->{send_email_from},
+				subject => 'Error running new day script',
+				body    => "Error was: $error_str",
 			);
-			$msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );
 
 			return $error_str;
 		}

@@ -19,6 +19,8 @@ sub load {
 		my $local_config = YAML::LoadFile("$home/rpg_$suffix.yml");
 		$config = { %$config, %$local_config };
 	}
+	
+	$config->{home} = $home;
 
     my $v = Data::Visitor::Callback->new(
         plain_value => sub {

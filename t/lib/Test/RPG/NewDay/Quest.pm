@@ -38,7 +38,6 @@ sub test_update_days_left : Tests(6) {
     $self->{config}{quest_type_vars}{destroy_orb}{max_search_range}     = 3;
     $self->{config}{quest_type_vars}{destroy_orb}{xp_per_distance}      = 1;
     $self->{config}{quest_type_vars}{destroy_orb}{gold_per_distance}    = 1;
-    $self->{config}{home}                                               = '/home/sam/RPG/';
 
     my $quest1 = Test::RPG::Builder::Quest::Destroy_Orb->build_quest( $self->{schema} );
     my $quest2 = Test::RPG::Builder::Quest::Destroy_Orb->build_quest( $self->{schema} );

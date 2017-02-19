@@ -50,7 +50,7 @@ sub test_init : Tests(3) {
 	cmp_ok($item->variable('Resistance Bonus'), '>=', 1, "Resistance bonus >= 1");
 	cmp_ok($item->variable('Resistance Bonus'), '<=', 20, "Resistance bonus <= 20");
 	
-	is(grep { $_ eq $item->variable('Resistance Type')} qw/fire ice poison/, 1, "Resistance type in allowed set");
+	is(grep({ $_ eq $item->variable('Resistance Type') } qw/fire ice poison/), 1, "Resistance type in allowed set");
 		
 	$self->unmock_dice;
 }

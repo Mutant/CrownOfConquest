@@ -986,8 +986,6 @@ sub test_execute_round_party_flees_successfully : Tests(5) {
 	# GIVEN
 	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
 	my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
-	$cg = Test::MockObject::Extends->new($cg);
-	$cg->set_always( 'number_alive', 0 );
 
 	my $home = $ENV{RPG_HOME};
 	$self->{config} = {

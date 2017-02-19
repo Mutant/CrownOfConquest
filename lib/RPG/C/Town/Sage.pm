@@ -105,13 +105,15 @@ sub calculate_costs : Private {
         }
     );    
     
-    my %book_costs;
-    for my $book_max_level (keys %{$c->config->{book_of_past_live_cost_modifiers}}) {
-        $book_costs{$book_max_level} = $book->base_cost * $c->config->{book_of_past_live_cost_modifiers}{$book_max_level} 
-            * $c->config->{sage_book_cost_modifier};   
+    if ($book) {
+	    my %book_costs;
+	    for my $book_max_level (keys %{$c->config->{book_of_past_live_cost_modifiers}}) {
+	        $book_costs{$book_max_level} = $book->base_cost * $c->config->{book_of_past_live_cost_modifiers}{$book_max_level} 
+	            * $c->config->{sage_book_cost_modifier};   
+	    }
+	    
+	    $costs{book_costs} = \%book_costs;
     }
-    
-    $costs{book_costs} = \%book_costs;
     
     return \%costs;
 }

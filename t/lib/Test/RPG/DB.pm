@@ -13,6 +13,7 @@ sub db_startup : Test(startup) {
     my $self = shift;
 
     return if $ENV{TEST_NO_DB};
+    $ENV{DBIC_UNSAFE_AUTOCOMMIT_OK} = 1;
 
 	my $schema = RPG::Schema->connect( $self->{config}, @{$self->{config}->{'TestModel::DBIC'}{connect_info}}, );
 
@@ -48,7 +49,7 @@ sub aa_setup_context : Test(setup) {
         }
     );
 
-    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema})
+    $self->{stash}{today} = Test::RPG::Builder::Day->build_day($self->{schema}, day_number => 1000)
         unless $self->{dont_create_today};
 }
 

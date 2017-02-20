@@ -80,9 +80,22 @@ sub auto : Private {
         $c->stash->{party_location} = $c->stash->{party}->location;
 
     }
-    elsif ( $c->action !~ m|^party/create| && $c->action !~ m{^(help|error)} && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
-       	$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
-       	return 0;
+    else {
+    	# If they are already logged in, re-read player record. This handles case where player has been
+    	#  deleted in another session
+    	if ($c->session->{player}) {
+	    	my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id } );
+	    	if (! $player) {
+				$c->res->redirect( $c->config->{url_root} );
+				delete $c->session->{player};
+	       		return 0;    		
+	    	}
+    	}	    	
+    
+    	if ( $c->action !~ m|^party/create| && $c->action !~ m{^(help|error)} && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {   	
+       		$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
+       		return 0;
+    	}
     }
     
     $c->log->debug("End of /auto");

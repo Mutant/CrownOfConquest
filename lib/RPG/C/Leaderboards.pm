@@ -80,8 +80,8 @@ sub kingdoms : Local {
         },
         {
             join => [
-                {'sectors' => 'town'},
                 'parties',
+                {'sectors' => 'town'},
             ],
             '+select' => [
                 { count => 'distinct sectors.land_id', -as => 'total_land' },

@@ -717,6 +717,9 @@ sub calculate_attack_factor {
 
     my @items = $self->get_equipped_item('Weapon');
 
+	# If a weapon is getting added or removed, it won't have been read above
+	#  (as it's not yet equipped), but it will have been passed in the $extra
+	#  hashref
     if ($extra->{add}) {
         push @items, @{$extra->{add}};
     }
@@ -725,7 +728,7 @@ sub calculate_attack_factor {
             @items = grep { $_->id != $remove->id } @items;
         }
     }
-
+    
     # Assume only one weapon equipped.
     # TODO needs to change to support multiple weapons
     my $item = shift @items;
@@ -1475,7 +1478,7 @@ sub get_item_actions {
 	
 	my @items = $self->search_related('items',
 		{
-			-nest => [
+			-or => [
                 {'item_enchantments.enchantment_id' => {'!=', undef}},
                 {'item_type.usable' => 1},
             ],
@@ -1485,6 +1488,7 @@ sub get_item_actions {
                 {'item_enchantments' => 'enchantment'},
                 'item_type',
             ],
+            order_by => 'item_type',
 		}			
 	);
 

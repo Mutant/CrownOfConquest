@@ -27,7 +27,7 @@ sub startup : Tests(startup=>1) {
 sub teardown : Tests(shutdown) {
 	my $self = shift;
 	
-	$self->{dice}->unfake_module;
+	$self->unmock_dice;
 }
 
 sub setup_data : Tests(setup) {

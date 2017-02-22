@@ -1039,7 +1039,7 @@ sub test_add_to_characters_inventory_finger : Tests(3) {
         $self->{schema},
         item_type_id => $item_type->id,
         enchantments => ['stat_bonus'],
-        character_id => $character1->id,       
+        character_id => $character1->id,
     );
     $item->variable('Stat Bonus', 'strength');
     $item->variable('Bonus', 2);
@@ -1050,7 +1050,7 @@ sub test_add_to_characters_inventory_finger : Tests(3) {
     
     # THEN
     is($item->character_id, $character2->id, "Item added to inventory");
-    is($item->equip_place_id, 7, "Item equipped in correct place");
+    ok($item->equip_place_id == 5 || $item->equip_place_id == 6, "Item equipped in correct place");
     
     $character2->discard_changes;
     is($character2->strength, 12, "Character's strength increased");

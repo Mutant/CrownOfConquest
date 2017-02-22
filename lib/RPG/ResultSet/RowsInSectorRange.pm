@@ -65,7 +65,7 @@ sub find_in_range {
         my %exclude_criteria;
         unless ($include_base_point) {
             %exclude_criteria = (
-                -nest => [
+                -or => [
                     $relationship . '.x' => { '!=', $base_point->{x} },
                     $relationship . '.y' => { '!=', $base_point->{y} },
                 ],

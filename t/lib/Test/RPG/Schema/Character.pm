@@ -237,11 +237,16 @@ sub test_attack_factor_ranged_weapon_with_upgrade : Tests(1) {
     my $self = shift;
 
     # GIVEN
-    my $char = $self->{schema}->resultset('Character')->create( { strength => 5, agility => 3 } );
+    my $char = Test::RPG::Builder::Character->build_character( 
+    	$self->{schema},
+    	strength => 5,
+    	agility => 3
+	);
 
     my $item = Test::RPG::Builder::Item->build_item(
         $self->{schema},
         char_id             => $char->id,
+        no_equip_place      => 1,
         super_category_name => 'Weapon',
         category_name       => 'Ranged Weapon',
         variables           => [
@@ -256,9 +261,10 @@ sub test_attack_factor_ranged_weapon_with_upgrade : Tests(1) {
                 item_attribute_value => 2,
             }
         ],
-    );
-    $item->equip_place_id(2);
+    );    
+    $item->equip_place_id(3);
     $item->update;
+
 
     # WHEN
     $char->discard_changes;

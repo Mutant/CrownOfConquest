@@ -39,7 +39,7 @@ sub setup : Test(setup => 1) {
     $self->{action} = RPG::NewDay::Action::Detonate->new( context => $self->{mock_context} );  
 }
 
-sub test_detonate_single_bomb_wilderness_building : Tests(5) {
+sub test_detonate_single_bomb_wilderness_building : Tests(7) {
     my $self = shift;
     
     # GIVEN
@@ -81,8 +81,9 @@ sub test_detonate_single_bomb_wilderness_building : Tests(5) {
 
     @messages = $party2->messages;
     is(scalar @messages, 1, "Message created for building owner");
-    is($messages[0]->message, 'The Tower at 1, 2 suffered damage to its upgrades as the result of a magical bomb. The Rune of Attack upgrade lost 1 levels permanently. The Rune of Protection upgrade lost 1 levels temporarily.',
-         "Correct message text");
+    like($messages[0]->message, qr{^The Tower at 1, 2 suffered damage to its upgrades as the result of a magical bomb.}, "Correct message text");
+    like($messages[0]->message, qr{The Rune of Attack upgrade lost 1 level (?:temporarily|permanently).}, "Correct message text");
+    like($messages[0]->message, qr{The Rune of Protection upgrade lost 1 level (?:temporarily|permanently).}, "Correct message text");
 }
 
 sub test_detonate_multiple_bombs_town_building : Tests(6) {
@@ -155,7 +156,7 @@ sub test_detonate_multiple_bombs_town_building : Tests(6) {
 
     @messages = $party2->messages;
     is(scalar @messages, 1, "Message created for building owner");
-    is($messages[0]->message, 'The Tower in the town of Test Town suffered damage to its upgrades as the result of a magical bomb. The Rune of Protection upgrade lost 1 levels permanently, and 3 levels temporarily.',
+    is($messages[0]->message, 'The Tower in the town of Test Town suffered damage to its upgrades as the result of a magical bomb. The Rune of Protection upgrade lost 1 level permanently, and 3 levels temporarily.',
          "Correct message text");
 }
 

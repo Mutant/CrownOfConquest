@@ -165,7 +165,7 @@ sub test_detonate_reduces_residents_bonuses : Tests(18) {
     
     my $building1 = Test::RPG::Builder::Building->build_building($self->{schema}, 
         upgrades => { 
-            'Rune Of Defence' => 2,
+            'Rune of Defence' => 2,
             'Rune of Attack' => 3,
         },
         land_id => $land[1]->id
@@ -188,21 +188,27 @@ sub test_detonate_reduces_residents_bonuses : Tests(18) {
     
     is(scalar @damaged_upgrades, 2, "2 upgrades damaged");
     
+    my $first_damaged_rune  = $damaged_upgrades[0]->{upgrade}->type->name;
+    my $second_damaged_rune = $damaged_upgrades[1]->{upgrade}->type->name;
+    my $first_level_reduction  = $first_damaged_rune eq 'Rune of Defence' ? 1 : 2;
+    my $second_level_reduction = $first_damaged_rune eq 'Rune of Defence' ? 3 : 2;
     
+    like($first_damaged_rune,  qr{^Rune of (Defence|Attack)$}, "First rune name is correct");
+    like($second_damaged_rune, qr{^Rune of (Defence|Attack)$}, "Second rune name is correct");
+       
     is($damaged_upgrades[0]->{damage_done}{temp}, undef, "Upgrade not damaged temporarily");
     is($damaged_upgrades[0]->{damage_done}{perm}, 1, "Upgrade damaged permanently");    
-    is($damaged_upgrades[0]->{upgrade}->type->name, 'Rune of Defence', "Correct first upgrade");
-    is($damaged_upgrades[0]->{upgrade}->level, 1, "Upgrade level reduced");
+    is($damaged_upgrades[0]->{upgrade}->level, $first_level_reduction, "Upgrade level reduced");
     is($damaged_upgrades[0]->{upgrade}->damage, 0, "No damage done to upgrade");
     is($damaged_upgrades[0]->{upgrade}->damage_last_done, undef, "Damage last done not set");
-    
+        
     is($damaged_upgrades[1]->{damage_done}{temp}, 1, "Upgrade damaged temporarily");
     is($damaged_upgrades[1]->{damage_done}{perm}, undef, "Upgrade not damaged permanently");    
-    is($damaged_upgrades[1]->{upgrade}->type->name, 'Rune of Attack', "Correct first upgrade");
-    is($damaged_upgrades[1]->{upgrade}->level, 3, "Upgrade level not reduced");
+    is($damaged_upgrades[1]->{upgrade}->level, $second_level_reduction, "Upgrade level not reduced");
     is($damaged_upgrades[1]->{upgrade}->damage, 1, "Damage done to upgrade");
     isnt($damaged_upgrades[1]->{upgrade}->damage_last_done, undef, "Damage last done set");    
     
+   
     $character1->discard_changes;
     is($character1->defence_factor, 19, "Character in garrison has correct DF after detonation");
     is($character1->attack_factor, 20, "Character in garrison has correct AF after detonation");

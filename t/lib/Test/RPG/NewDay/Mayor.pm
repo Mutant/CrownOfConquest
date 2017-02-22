@@ -679,7 +679,7 @@ sub test_caclulate_approval_with_charisma : Tests(1) {
     
     # THEN
     $town->discard_changes;
-    is($town->mayor_rating, -8, "Mayor rating reduced");
+    is($town->mayor_rating, -10, "Mayor rating reduced");
            
 }
 
@@ -711,7 +711,7 @@ sub test_caclulate_approval_rune_adjustment : Tests(1) {
     
     # THEN
     $town->discard_changes;
-    is($town->mayor_rating, -6, "Mayor rating reduced");           
+    is($town->mayor_rating, -10, "Mayor rating reduced");           
 }
 
 sub test_collect_tax : Tests(6) {

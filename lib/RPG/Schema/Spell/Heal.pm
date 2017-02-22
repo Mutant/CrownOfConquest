@@ -25,10 +25,10 @@ sub _cast {
 }
 
 sub can_be_cast_on {
-	my $self = shift;
-	my $target = shift;
-	
-	return ! $target->is_dead && $target->hit_points_current < $target->hit_points_max;	
+    my $self   = shift;
+    my $target = shift;
+
+    return !$target->is_dead && $target->hit_points_current < $target->hit_points_max;
 }
 
 1;

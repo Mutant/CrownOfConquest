@@ -10,23 +10,23 @@ use File::Slurp qw(read_file);
 
 sub cron_string {
     my $self = shift;
-     
-    return $self->context->config->{creature_orb_cron_string};   
+
+    return $self->context->config->{creature_orb_cron_string};
 }
 
 sub run {
     my $self = shift;
-    
+
     $self->spawn_orbs;
-    
+
     $self->spawn_town_orbs;
 }
 
 # Every town has at least one level 1 orb nearby
 sub spawn_town_orbs {
     my $self = shift;
-    
-    my $c    = $self->context;
+
+    my $c = $self->context;
 
     $c->logger->info("Creating Orbs near towns");
 
@@ -103,20 +103,20 @@ sub _create_orb_in_land {
 
     my @sectors = $c->land_grid->get_sectors_within_range( $start_point, $end_point );
 
-    OUTER: foreach my $land ( shuffle @sectors ) {
+  OUTER: foreach my $land ( shuffle @sectors ) {
 
         #warn Dumper $land;
         my ( $x, $y ) = ( $land->{x}, $land->{y} );
 
         next if $land->{orb} || $land->{town} || $land->{garrison};
-        
-        next if $land->{ctr} < ($level * 50) - 125;
+
+        next if $land->{ctr} < ( $level * 50 ) - 125;
 
         # Search for towns and orbs in this sector to see if it will block us spawning the orb.
         # The two searches are different sizes, so we have to find the largest one
 
         my @town_range = RPG::Map->surrounds_by_range( $x, $y, $c->config->{orb_distance_from_town_per_level} );
-        my @orb_range  = RPG::Map->surrounds_by_range( $x, $y, $c->config->{orb_distance_from_other_orb} );
+        my @orb_range = RPG::Map->surrounds_by_range( $x, $y, $c->config->{orb_distance_from_other_orb} );
 
         my @range;
         if ( $c->config->{orb_distance_from_town_per_level} > $c->config->{orb_distance_from_other_orb} ) {
@@ -135,7 +135,7 @@ sub _create_orb_in_land {
                 next unless $sector_to_check;
 
                 # Orb must be minium range from town
-                if (   $x_to_check >= $town_range[0]->{x}
+                if ( $x_to_check >= $town_range[0]->{x}
                     && $x_to_check <= $town_range[1]->{x}
                     && $y_to_check >= $town_range[0]->{y}
                     && $y_to_check <= $town_range[1]->{y} )
@@ -144,7 +144,7 @@ sub _create_orb_in_land {
                 }
 
                 # Check for orbs
-                if (   $x_to_check >= $orb_range[0]->{x}
+                if ( $x_to_check >= $orb_range[0]->{x}
                     && $x_to_check <= $orb_range[1]->{x}
                     && $y_to_check >= $orb_range[0]->{y}
                     && $y_to_check <= $orb_range[1]->{y} )
@@ -160,7 +160,7 @@ sub _create_orb_in_land {
         $c->land_grid->set_land_object( 'orb', $x, $y, );
 
         $created = 1;
-        
+
         last;
     }
 
@@ -170,25 +170,26 @@ sub _create_orb_in_land {
 my @names;
 
 sub _spawn_orb {
-    my $self = shift;
-    my $c       = $self->context;
-    my $land    = shift;
-    my $level   = shift;
+    my $self  = shift;
+    my $c     = $self->context;
+    my $land  = shift;
+    my $level = shift;
 
     unless (@names) {
         @names = read_file( $ENV{RPG_HOME} . '/script/data/orb_names.txt' );
         chomp @names;
     }
-    
+
     $c->logger->debug("Spawning Orb at $land->{x}, $land->{y}");
 
     my $name;
+
     # Choose an Orb name (so long as they don't already exist)
-    foreach my $name_to_check (shuffle @names) {
+    foreach my $name_to_check ( shuffle @names ) {
         my $existing_orb = $c->schema->resultset('Creature_Orb')->find( { name => $name_to_check, land_id => { '!=', undef } } );
-        
+
         next if $existing_orb;
-        
+
         $name = $name_to_check;
     }
 
@@ -208,13 +209,12 @@ sub _spawn_orb {
         }
     );
 
-    # Create creature group at orb    
+    # Create creature group at orb
     $c->schema->resultset('CreatureGroup')->create_in_wilderness( $land_record, $level * 3, $level * 3 );
-    
+
     $c->land_grid->set_land_object( 'creature_group', $land->{x}, $land->{y} );
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

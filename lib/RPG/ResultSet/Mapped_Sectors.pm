@@ -24,7 +24,7 @@ sub find_in_range {
         rows_as_hashrefs    => 1,
         criteria            => {
             'me.party_id' => $party_id,
-        }
+          }
     );
 }
 

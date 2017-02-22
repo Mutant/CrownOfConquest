@@ -14,11 +14,11 @@ use RPG::Maths;
 
 sub test : Tests(10000) {
     my $self = shift;
-    
-    for (1..5000) {
-        my $num = RPG::Maths->weighted_random_number(1..20);
-        cmp_ok($num, '>=', 1, "Number within lower bound");
-        cmp_ok($num, '<=', 20, "Number within upper bound");   
+
+    for ( 1 .. 5000 ) {
+        my $num = RPG::Maths->weighted_random_number( 1 .. 20 );
+        cmp_ok( $num, '>=', 1,  "Number within lower bound" );
+        cmp_ok( $num, '<=', 20, "Number within upper bound" );
     }
 }
 

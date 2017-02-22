@@ -13,40 +13,40 @@ sub _cast {
 
     my @effects = $target->character_effects;
     foreach my $effect (@effects) {
-        if ($effect->effect->modifier < 0) {
-            $effect->effect->delete;   
-        }   
+        if ( $effect->effect->modifier < 0 ) {
+            $effect->effect->delete;
+        }
     }
 
     return {
-        type   => 'cleanse',
+        type => 'cleanse',
     };
 
 }
 
 sub select_target {
-    my $self = shift;
+    my $self    = shift;
     my @targets = @_;
-    
+
     my @possible_targets;
     foreach my $target (@targets) {
         next if $target->is_dead;
-        
-        my $debuff_count = $target->search_related('character_effects',
+
+        my $debuff_count = $target->search_related( 'character_effects',
             {
-                'effect.modifier' => {'<', 0},
+                'effect.modifier' => { '<', 0 },
             },
             {
                 join => 'effect',
             },
         )->count;
-        
+
         push @possible_targets, $target if $debuff_count > 0;
     }
-    
+
     return unless @possible_targets;
-    
-    return (shuffle @possible_targets)[0];
+
+    return ( shuffle @possible_targets )[0];
 }
 
 1;

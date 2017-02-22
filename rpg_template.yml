@@ -8,16 +8,9 @@ Model::DBIC:
     - ''
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
-url_root: http://sam-pc:3000/
+url_root: http://localhost:3000/
 
 static_path: /static/
 
-home: /home/sam/RPG/
-
-log_file_dir: /home/sam/RPG/log/
-
-data_file_path: /home/sam/RPG/script/data/
-
-online_threshold: 1
-
+# Turned on to avoid accidental spam. Turn off if you want mail to be sent
 no_email: 1

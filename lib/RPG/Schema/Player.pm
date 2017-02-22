@@ -134,7 +134,7 @@ __PACKAGE__->add_columns(
         'name'              => 'display_tip_of_the_day',
         'is_nullable'       => 0,
         'size'              => '11'
-    },    
+    },
     'send_email' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -143,7 +143,7 @@ __PACKAGE__->add_columns(
         'name'              => 'send_email',
         'is_nullable'       => 0,
         'size'              => '11'
-    },       
+    },
     'promo_code_id' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -161,7 +161,7 @@ __PACKAGE__->add_columns(
         'name'              => 'email_hash',
         'is_nullable'       => 0,
         'size'              => '255'
-    },  
+    },
     'referred_by' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -170,7 +170,7 @@ __PACKAGE__->add_columns(
         'name'              => 'referred_by',
         'is_nullable'       => 1,
         'size'              => '11'
-    },     
+    },
     'refer_reward_given' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -179,7 +179,7 @@ __PACKAGE__->add_columns(
         'name'              => 'refer_reward_given',
         'is_nullable'       => 1,
         'size'              => '11'
-    },      
+    },
     'screen_height' => {
         'data_type'         => 'varchar',
         'is_auto_increment' => 0,
@@ -206,7 +206,7 @@ __PACKAGE__->add_columns(
         'name'              => 'created',
         'is_nullable'       => 0,
         'size'              => '11'
-    },        
+    },
     'display_town_leave_warning' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -215,7 +215,7 @@ __PACKAGE__->add_columns(
         'name'              => 'display_town_leave_warning',
         'is_nullable'       => 0,
         'size'              => '11'
-    },     
+    },
     'bug_manager' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -224,7 +224,7 @@ __PACKAGE__->add_columns(
         'name'              => 'bug_manager',
         'is_nullable'       => 0,
         'size'              => '11'
-    },    
+    },
     'contact_manager' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -233,7 +233,7 @@ __PACKAGE__->add_columns(
         'name'              => 'contact_manager',
         'is_nullable'       => 0,
         'size'              => '11'
-    },   
+    },
     'referer' => {
         'data_type'         => 'varchar',
         'is_auto_increment' => 0,
@@ -242,7 +242,7 @@ __PACKAGE__->add_columns(
         'name'              => 'referer',
         'is_nullable'       => 0,
         'size'              => '2000'
-    },        
+    },
     'deleted_date' => {
         'data_type'         => 'datetime',
         'is_auto_increment' => 0,
@@ -251,9 +251,8 @@ __PACKAGE__->add_columns(
         'name'              => 'deleted_date',
         'is_nullable'       => 0,
         'size'              => '11'
-    },     
-    
-    
+    },
+
 );
 __PACKAGE__->set_primary_key('player_id');
 
@@ -261,63 +260,63 @@ __PACKAGE__->has_many( 'parties', 'RPG::Schema::Party', 'player_id', { cascade_d
 
 __PACKAGE__->has_many( 'logins', 'RPG::Schema::Player_Login', 'player_id', );
 
-__PACKAGE__->belongs_to( 'referred_by_player', 'RPG::Schema::Player', {'foreign.player_id' => 'self.referred_by'} );
+__PACKAGE__->belongs_to( 'referred_by_player', 'RPG::Schema::Player', { 'foreign.player_id' => 'self.referred_by' } );
 
 __PACKAGE__->might_have( 'active_party', 'RPG::Schema::Party', 'player_id', { where => { defunct => undef } } );
 
 sub time_since_last_login {
     my $self = shift;
-    
-    return RPG::DateTime->time_since_datetime($self->last_login);   
+
+    return RPG::DateTime->time_since_datetime( $self->last_login );
 }
 
 sub has_ips_in_common_with {
-    my $self = shift;
+    my $self         = shift;
     my $other_player = shift;
-    
+
     return if $self->id == $other_player->id;
-    
+
     return if RPG::Schema->config->{check_for_coop} == 0;
-    
+
     my @logins = $self->search_related(
         'logins',
         {
-            login_date => {'>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} )},
+            login_date => { '>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} ) },
         }
     );
-    
+
     my @ips = map { $_->ip } @logins;
-    
+
     my $common_logins = $other_player->search_related(
         'logins',
         {
             ip => \@ips,
-            login_date => {'>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} )},
+            login_date => { '>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} ) },
         }
     )->count;
-    
-    return $common_logins >= 1 ? 1 : 0;       
+
+    return $common_logins >= 1 ? 1 : 0;
 }
 
 sub total_turns_used {
     my $self = shift;
-    
+
     my $rs = $self->find_related(
         'parties',
         {},
         {
-            'select' => {sum => 'turns_used'},
+            'select' => { sum => 'turns_used' },
             'as' => 'total_turns_used',
         }
     );
-    
-    return $rs->get_column('total_turns_used');               
+
+    return $rs->get_column('total_turns_used');
 }
 
 sub login_count {
     my $self = shift;
-    
-    return $self->logins->count;   
+
+    return $self->logins->count;
 }
 
 1;

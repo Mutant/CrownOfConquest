@@ -18,7 +18,7 @@ sub get_x_y_range {
         {},
         {
             select => [ { min => 'x' }, { min => 'y' }, { max => 'x' }, { max => 'y' }, ],
-            as     => [qw/min_x min_y max_x max_y/],
+            as => [qw/min_x min_y max_x max_y/],
         },
     );
 
@@ -36,7 +36,7 @@ sub search_for_adjacent_sectors {
     my $y                     = shift;
     my $search_range          = shift;
     my $max_range             = shift;
-    my $exclude_cgs_and_towns = shift // 0; #/
+    my $exclude_cgs_and_towns = shift // 0;    #/
 
     my %params;
     my %attrs;
@@ -86,8 +86,8 @@ SQL
 
     my @query_params = (
         $params{centre_point}->{x} - 1, $params{centre_point}->{x} + 1, $params{centre_point}->{y} - 1, $params{centre_point}->{y} + 1,
-        $params{centre_point}->{x},     $params{centre_point}->{y},     $params{party_id},              $params{start_point}->{x},
-        $params{end_point}->{x},        $params{start_point}->{y},      $params{end_point}->{y},
+        $params{centre_point}->{x}, $params{centre_point}->{y}, $params{party_id}, $params{start_point}->{x},
+        $params{end_point}->{x}, $params{start_point}->{y}, $params{end_point}->{y},
     );
 
     #warn "get_party_grid: $sql\n";

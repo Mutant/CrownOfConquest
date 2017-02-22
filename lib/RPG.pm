@@ -23,7 +23,7 @@ our $VERSION = '0.01';
 # Start the application
 #
 BEGIN {
-	die "RPG_HOME not set" unless $ENV{RPG_HOME};
+    die "RPG_HOME not set" unless $ENV{RPG_HOME};
 
     __PACKAGE__->config->{captcha} = {
         session_name => 'captcha_string',
@@ -50,13 +50,13 @@ BEGIN {
     };
 
     __PACKAGE__->config(
-        root       => __PACKAGE__->path_to('root'),
+        root => __PACKAGE__->path_to('root'),
         'View::TT' => { INCLUDE_PATH => [ __PACKAGE__->path_to('root'), ] },
     );
 
     __PACKAGE__->config( 'Plugin::Session' => {
-       cookie_expires  => 60 * 60 * 48,
-    });
+            cookie_expires => 60 * 60 * 48,
+    } );
 
     __PACKAGE__->config(
         static => {
@@ -71,17 +71,17 @@ BEGIN {
 }
 
 my @plugins = qw/
-        -Debug
-        -Stats
-        ConfigLoader
-        Session
-        Session::Store::DBIC
-        Session::State::Cookie
-        Captcha
-        Log::Dispatch
-/;
+  -Debug
+  -Stats
+  ConfigLoader
+  Session
+  Session::Store::DBIC
+  Session::State::Cookie
+  Captcha
+  Log::Dispatch
+  /;
 
-if ($ENV{RPG_DEV}) {
+if ( $ENV{RPG_DEV} ) {
     push @plugins, 'Static::Simple';
 }
 

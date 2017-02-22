@@ -20,5 +20,4 @@ __PACKAGE__->set_primary_key(qw/vote_id/);
 
 __PACKAGE__->belongs_to( 'link', 'RPG::Schema::Reward_Links', 'link_id' );
 
-
 1;

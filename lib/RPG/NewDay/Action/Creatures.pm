@@ -8,13 +8,13 @@ use Data::Dumper;
 use Try::Tiny;
 
 with qw /
-	RPG::NewDay::Role::GarrisonCombat
-/;
+  RPG::NewDay::Role::GarrisonCombat
+  /;
 
 sub cron_string {
     my $self = shift;
-     
-    return $self->context->config->{creatures_cron_string};   
+
+    return $self->context->config->{creatures_cron_string};
 }
 
 sub run {
@@ -31,10 +31,10 @@ sub run {
 
     # Spawn sewer monsters
     $self->spawn_sewer_monsters();
-    
+
     # Move dungeon monsters
     #$self->move_dungeon_monsters();
-    
+
     # Refresh rare monsters
     $self->refresh_rare_monsters();
 }
@@ -60,8 +60,8 @@ sub spawn_monsters {
     my $level_rs = $c->schema->resultset('CreatureType')->find(
         {},
         {
-            select => [              { max => 'level' }, { min => 'level' }, ],
-            as     => [ 'max_level', 'min_level' ],
+            select => [ { max => 'level' }, { min => 'level' }, ],
+            as => [ 'max_level', 'min_level' ],
         }
     );
 
@@ -113,9 +113,9 @@ sub spawn_monsters {
                 { prefetch => 'creature_group', },
             );
 
-			my $min_level = ($creature_orb->{level} - 1) * 2 + 1;
-			my $max_level = $creature_orb->{level} * 3;
-			
+            my $min_level = ( $creature_orb->{level} - 1 ) * 2 + 1;
+            my $max_level = $creature_orb->{level} * 3;
+
             $c->schema->resultset('CreatureGroup')->create_in_wilderness( $land_record, $min_level, $max_level );
 
             $c->land_grid->set_land_object( 'creature_group', $land->{x}, $land->{y} );
@@ -133,48 +133,48 @@ sub spawn_monsters {
 sub spawn_dungeon_monsters {
     my $self = shift;
     my $c    = $self->context;
-    
+
     my $dungeon_rs = $c->schema->resultset('Dungeon')->search(
-    	{
-    		type => 'dungeon',
-    	}
+        {
+            type => 'dungeon',
+        }
     );
     while ( my $dungeon = $dungeon_rs->next ) {
-		$self->_spawn_in_dungeon($c, $dungeon, $c->config->{dungeon_sectors_per_creature});
+        $self->_spawn_in_dungeon( $c, $dungeon, $c->config->{dungeon_sectors_per_creature} );
     }
 }
 
 sub spawn_sewer_monsters {
-     my $self = shift;
+    my $self = shift;
     my $c    = $self->context;
-    
+
     my $dungeon_rs = $c->schema->resultset('Dungeon')->search(
-    	{
-    		type => 'sewer',
-    	}
+        {
+            type => 'sewer',
+        }
     );
-    
+
     while ( my $dungeon = $dungeon_rs->next ) {
-		$self->_spawn_in_dungeon($c, $dungeon, $c->config->{sewer_sectors_per_creature}, ['Rodent']);
-    }   
+        $self->_spawn_in_dungeon( $c, $dungeon, $c->config->{sewer_sectors_per_creature}, ['Rodent'] );
+    }
 }
 
 sub _spawn_in_dungeon {
-	my $self = shift;
-	my $c = shift;
-	my $dungeon = shift;
-	my $sectors_per_creature = shift;
-	my $categories = shift;
-	
+    my $self                 = shift;
+    my $c                    = shift;
+    my $dungeon              = shift;
+    my $sectors_per_creature = shift;
+    my $categories           = shift;
+
     $c->logger->info( "Spawning groups for dungeon id: " . $dungeon->dungeon_id );
 
     my $creature_count =
-        $c->schema->resultset('CreatureGroup')
-        ->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => { 'dungeon_grid' => 'dungeon_room' }, } )->count;
+      $c->schema->resultset('CreatureGroup')
+      ->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => { 'dungeon_grid' => 'dungeon_room' }, } )->count;
 
     my $sector_count =
-        $c->schema->resultset('Dungeon_Grid')->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => 'dungeon_room', } )
-        ->count;
+      $c->schema->resultset('Dungeon_Grid')->search( { 'dungeon_room.dungeon_id' => $dungeon->dungeon_id, }, { join => 'dungeon_room', } )
+      ->count;
 
     $c->logger->debug("Current count: $creature_count, Number of sectors: $sector_count");
 
@@ -197,33 +197,35 @@ sub _spawn_in_dungeon {
         my $sector_to_spawn = $c->schema->resultset('Dungeon_Grid')->find_random_sector( $dungeon->dungeon_id );
 
         my $cg;
-		try {
-		    return if $sector_to_spawn->teleporter;
-           	$cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end, $categories );
-		}
-		catch {
-			if (ref $_ && $_->isa('RPG::Exception')) {
-				if ($_->type eq 'creature_type_error') {
-					# Couldn't find a creature type.. just skip this group
-					return;
-				}
-			}
-				
-			die $_;	
-		};
-		
-		unless ($cg) {
-            # CG wasn't created for some reasons, try again   
+        try {
+            return if $sector_to_spawn->teleporter;
+            $cg = $c->schema->resultset('CreatureGroup')->create_in_dungeon( $sector_to_spawn, $level_range_start, $level_range_end, $categories );
+        }
+        catch {
+            if ( ref $_ && $_->isa('RPG::Exception') ) {
+                if ( $_->type eq 'creature_type_error' ) {
+
+                    # Couldn't find a creature type.. just skip this group
+                    return;
+                }
+            }
+
+            die $_;
+        };
+
+        unless ($cg) {
+
+            # CG wasn't created for some reasons, try again
             $redo_count++;
-            if ($redo_count <= 50) {
+            if ( $redo_count <= 50 ) {
                 redo;
             }
-		}
+        }
 
         if ( $group_number % 50 == 0 ) {
             $c->logger->info("Spawned $group_number groups...");
         }
-    }		
+    }
 }
 
 sub _calculate_number_of_groups_to_spawn {
@@ -263,8 +265,8 @@ sub move_monsters {
     my $c    = $self->context;
 
     my $cg_rs =
-        $c->schema->resultset('CreatureGroup')
-        ->search( {}, { prefetch => [ { 'location' => 'orb', }, { 'creatures' => 'type' }, 'in_combat_with' ], }, );
+      $c->schema->resultset('CreatureGroup')
+      ->search( {}, { prefetch => [ { 'location' => 'orb', }, { 'creatures' => 'type' }, 'in_combat_with' ], }, );
 
     my $cg_count = $cg_rs->count;
 
@@ -300,10 +302,10 @@ sub move_monsters {
 
             if ($new_sector) {
                 $moved++;
-                
+
                 # If there's a garrison, see if it wants to start a fight...
-                if (my $garrison = $new_sector->garrison) {
-                	$self->_check_for_fight($cg, $garrison);
+                if ( my $garrison = $new_sector->garrison ) {
+                    $self->_check_for_fight( $cg, $garrison );
                 }
 
                 if ( $moved % 100 == 0 ) {
@@ -328,13 +330,13 @@ sub move_monsters {
 
 sub move_dungeon_monsters {
     my $self = shift;
-    my $c    = $self->context;    
+    my $c    = $self->context;
 
-    my $cg_rs = $c->schema->resultset('CreatureGroup')->search( 
+    my $cg_rs = $c->schema->resultset('CreatureGroup')->search(
         {
-            'dungeon_grid.dungeon_grid_id' => {'!=', undef },            
-        }, 
-        { prefetch => [ { 'dungeon_grid' => 'dungeon_room' }, 'in_combat_with' ], }, 
+            'dungeon_grid.dungeon_grid_id' => { '!=', undef },
+        },
+        { prefetch => [ { 'dungeon_grid' => 'dungeon_room' }, 'in_combat_with' ], },
     );
 
     my $cg_count = $cg_rs->count;
@@ -351,32 +353,32 @@ sub move_dungeon_monsters {
         next if $cg->in_combat_with;
 
         next if Games::Dice::Advanced->roll('1d100') > $c->config->{creature_move_chance};
-        
+
         # Don't move the mayor's group
         next if $cg->has_mayor;
 
         # Find sector to move to (if we can)
         my $allowed_sectors = $cg->dungeon_grid->sectors_allowed_to_move_to( 3, 0 );
-        foreach my $sector_id (shuffle keys %$allowed_sectors) {
+        foreach my $sector_id ( shuffle keys %$allowed_sectors ) {
             next unless $allowed_sectors->{$sector_id};
 
-            my $sector = $c->schema->resultset('Dungeon_Grid')->find({ dungeon_grid_id => $sector_id });
+            my $sector = $c->schema->resultset('Dungeon_Grid')->find( { dungeon_grid_id => $sector_id } );
             next unless $sector;
-            
+
             # Don't move onto teleporters
             next if $sector->teleporter;
-            
+
             # CGs with rare monsters not allowed to move out of the room
             next if $cg->has_rare_monster && $sector->dungeon_room_id != $cg->dungeon_grid->dungeon_room_id;
 
-            if ( ! $sector->creature_group ) {
-                $cg->dungeon_grid_id( $sector_id );
+            if ( !$sector->creature_group ) {
+                $cg->dungeon_grid_id($sector_id);
                 $cg->update;
 
                 $moved++;
                 if ( $moved % 100 == 0 ) {
                     $c->logger->info("Moved $moved so far...");
-                }                
+                }
 
                 last;
             }
@@ -388,57 +390,57 @@ sub move_dungeon_monsters {
 
 sub refresh_rare_monsters {
     my $self = shift;
-    
+
     my $c = $self->context;
-    
+
     my @rare_creatures = $c->schema->resultset('Creature')->search(
         {
             'type.rare' => 1,
-            'hit_points_current' => {'>',0},
+            'hit_points_current' => { '>', 0 },
         },
         {
             'join' => 'type',
         },
     );
-    
+
     foreach my $rare_creature (@rare_creatures) {
         my $cg = $rare_creature->creature_group;
-        
-        next if ! $cg || $cg->in_combat_with;
-                
-        $rare_creature->hit_points_current($rare_creature->hit_points_max);
+
+        next if !$cg || $cg->in_combat_with;
+
+        $rare_creature->hit_points_current( $rare_creature->hit_points_max );
         $rare_creature->update;
-        
+
         my $number_alive = $cg->number_alive - 1;
-        
-        if ($number_alive < 8) {
-            $c->logger->debug("Rare creature " . $rare_creature->id . " only has $number_alive guards, adding more..");
-            
+
+        if ( $number_alive < 8 ) {
+            $c->logger->debug( "Rare creature " . $rare_creature->id . " only has $number_alive guards, adding more.." );
+
             # Add some more guards.
-            my $rare_ct = $rare_creature->type;
+            my $rare_ct     = $rare_creature->type;
             my @guard_types = $c->schema->resultset('CreatureType')->search(
                 {
                     'level' => {
                         '<', $rare_ct->level,
-                        '>', $rare_ct->level-5,
+                        '>', $rare_ct->level - 5,
                     },
                     'creature_category_id' => $rare_ct->creature_category_id,
                 },
             );
-    
-            my $guard_type = (shuffle @guard_types)[0];
-            for my $count (1..(8-$number_alive)) {
-                $cg->add_creature($guard_type, $count);   
-            }               
-        }   
+
+            my $guard_type = ( shuffle @guard_types )[0];
+            for my $count ( 1 .. ( 8 - $number_alive ) ) {
+                $cg->add_creature( $guard_type, $count );
+            }
+        }
     }
 }
 
 sub _move_cg {
     my $self = shift;
-    my $c       = $self->context;
-    my $size    = shift;
-    my $cg      = shift;
+    my $c    = $self->context;
+    my $size = shift;
+    my $cg   = shift;
 
     my $new_sector;
 
@@ -453,15 +455,15 @@ sub _move_cg {
 
         #warn Dumper $sector;
         # Can't move to a town or sector that already has a creature group
-        if ( !$sector->{town} && !$sector->{creature_group}) {
-        	
-        	my $ctr_roll = ($cg->level * 20) - Games::Dice::Advanced->roll('1d20') - 140;
-        	$ctr_roll = 90 if $ctr_roll > 90;
-        	if ($sector->{ctr} < $ctr_roll) {
-				$cant_move_reason{ctr}++;
-				next;
-        	}
-        	
+        if ( !$sector->{town} && !$sector->{creature_group} ) {
+
+            my $ctr_roll = ( $cg->level * 20 ) - Games::Dice::Advanced->roll('1d20') - 140;
+            $ctr_roll = 90 if $ctr_roll > 90;
+            if ( $sector->{ctr} < $ctr_roll ) {
+                $cant_move_reason{ctr}++;
+                next;
+            }
+
             my ( $orig_x, $orig_y ) = ( $cg->location->x, $cg->location->y );
 
             my $sector_record = $c->schema->resultset('Land')->find(
@@ -470,20 +472,20 @@ sub _move_cg {
                     y => $sector->{y},
                 },
                 {
-                	prefetch => 'garrison',
+                    prefetch => 'garrison',
                 }
             );
-            
+
             $cg->land_id( $sector_record->id );
             $cg->update;
 
-			# Chance of CG increasing CTR is CG level * 2
-			my $chance = $cg->level * 5;
+            # Chance of CG increasing CTR is CG level * 2
+            my $chance = $cg->level * 5;
 
-			if (Games::Dice::Advanced->roll('1d100') <= $chance) {
-            	$sector_record->creature_threat( $sector_record->creature_threat + 1 );
-            	$sector_record->update;
-			}
+            if ( Games::Dice::Advanced->roll('1d100') <= $chance ) {
+                $sector_record->creature_threat( $sector_record->creature_threat + 1 );
+                $sector_record->update;
+            }
 
             $c->land_grid->set_land_object( 'creature_group', $sector->{x}, $sector->{y} );
             $c->land_grid->clear_land_object( 'creature_group', $orig_x, $orig_y );
@@ -502,13 +504,13 @@ sub _move_cg {
 }
 
 sub _check_for_fight {
-	my $self = shift;
-	my $cg = shift;
-	my $garrison = shift;
-		
-	if ($garrison->check_for_fight($cg)) {
-		$self->execute_garrison_battle($garrison, $cg, 0);
-	}
+    my $self     = shift;
+    my $cg       = shift;
+    my $garrison = shift;
+
+    if ( $garrison->check_for_fight($cg) ) {
+        $self->execute_garrison_battle( $garrison, $cg, 0 );
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

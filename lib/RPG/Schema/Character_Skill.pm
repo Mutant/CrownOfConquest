@@ -18,11 +18,11 @@ __PACKAGE__->belongs_to( 'skill', 'RPG::Schema::Skill', 'skill_id' );
 __PACKAGE__->belongs_to( 'char_with_skill', 'RPG::Schema::Character', 'character_id' );
 
 sub insert {
-	my ( $self, @args ) = @_;
-	
-	$self->next::method(@args);
-	
-	$self->_apply_role;
+    my ( $self, @args ) = @_;
+
+    $self->next::method(@args);
+
+    $self->_apply_role;
 }
 
 sub inflate_result {
@@ -36,21 +36,21 @@ sub inflate_result {
 }
 
 sub _apply_role {
-	my $self = shift;
-	
-	my $role = $self->get_role_name;
-	$self->ensure_class_loaded($role);	
-	$role->meta->apply($self);	
+    my $self = shift;
+
+    my $role = $self->get_role_name;
+    $self->ensure_class_loaded($role);
+    $role->meta->apply($self);
 }
 
 sub get_role_name {
-	my $self = shift;
-	
-	my $name = $self->skill->skill_name;
-	
-    $name =~ s/ /_/g;	
-	
-	return 'RPG::Schema::Skill::' . $name;
+    my $self = shift;
+
+    my $name = $self->skill->skill_name;
+
+    $name =~ s/ /_/g;
+
+    return 'RPG::Schema::Skill::' . $name;
 }
 
 1;

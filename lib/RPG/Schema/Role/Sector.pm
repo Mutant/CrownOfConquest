@@ -10,12 +10,12 @@ sub available_creature_group {
 
     my $creature_group = $self->search_related(
         'creature_group',
-        { 
-        	'in_combat_with.party_id' => undef,
+        {
+            'in_combat_with.party_id' => undef,
         },
         {
             prefetch => { 'creatures' => [ 'type', 'creature_effects' ] },
-            join     => 'in_combat_with',
+            join => 'in_combat_with',
             order_by => 'type.creature_type, group_order',
         },
     )->first;

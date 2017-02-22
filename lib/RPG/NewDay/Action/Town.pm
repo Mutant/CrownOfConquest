@@ -23,7 +23,7 @@ sub run {
         {},
         {
             'select' => { avg => 'creature_threat' },
-            'as'     => 'avg_ctr',
+            'as' => 'avg_ctr',
         },
     )->get_column('avg_ctr');
 
@@ -32,18 +32,18 @@ sub run {
     foreach my $town (@towns) {
         $prosp_changes->{ $town->id }{town}           = $town;
         $prosp_changes->{ $town->id }{original_prosp} = $town->prosperity;
-        $prosp_changes->{ $town->id }{prosp_change}   = $self->calculate_prosperity( $town, $ctr_avg );
+        $prosp_changes->{ $town->id }{prosp_change} = $self->calculate_prosperity( $town, $ctr_avg );
     }
 
     $self->scale_prosperity( $prosp_changes, @towns );
 
     $self->record_prosp_changes($prosp_changes);
-    
+
     # Update prestige ratings
     $self->update_prestige;
 
     $self->set_discount(@towns);
-    
+
     $self->decay_ctr(@towns);
 }
 
@@ -58,61 +58,62 @@ sub calculate_prosperity {
         { town_id => $town->id, },
         {
             select => [ { sum => 'tax_amount_paid_today' }, ],
-            as     => [ 'tax_collected', ],
+            as => [ 'tax_collected', ],
         }
     );
-    
+
     my $raids_today = $context->schema->resultset('Town_Raid')->search(
-        { 
+        {
             town_id => $town->id,
-            day_id =>  $context->yesterday->id,            
+            day_id  => $context->yesterday->id,
         },
     )->count;
 
     my $ctr_avg = $town->location->get_surrounding_ctr_average( $context->config->{prosperity_calc_ctr_range} );
 
     my $ctr_diff = $global_avg_ctr - $ctr_avg;
-    
+
     my $tax_collected = 0;
-    
+
     if ($party_town_rec) {
-    	$tax_collected = $party_town_rec->get_column('tax_collected') // 0;
+        $tax_collected = $party_town_rec->get_column('tax_collected') // 0;
     }
-    
-    my $approval_change = round (($town->mayor_rating // 0) / 20);
-    
+
+    my $approval_change = round( ( $town->mayor_rating // 0 ) / 20 );
+
     my @items = $context->schema->resultset('Items')->search(
         {
-            'in_shop.town_id' => $town->id, 
+            'in_shop.town_id' => $town->id,
         },
         {
             join => 'in_shop',
         }
     );
-    
+
     my $items_value = 0;
+
     # Removed as it's slow
     #foreach my $item (@items) {
     #    $items_value += $item->sell_price;
     #}
-    
+
     #$items_value = $items_value / 50000;
     #$items_value = 2 if $items_value > 2;
-    
+
     my $capital_bonus = 0;
-    if ($town->capital_of) {
+    if ( $town->capital_of ) {
         $capital_bonus = 3;
     }
 
     my $prosp_change =
-        ( ( $tax_collected || 0 ) / 100 ) +
-        ( $ctr_diff / 20 ) -
-        ( $raids_today || 0 ) +
-        $approval_change +
-        $items_value +
-        $capital_bonus;
+      ( ( $tax_collected || 0 ) / 100 ) +
+      ( $ctr_diff / 20 ) -
+      ( $raids_today || 0 ) +
+      $approval_change +
+      $items_value +
+      $capital_bonus;
 
-    $prosp_change = $context->config->{max_prosp_change}  if $prosp_change > $context->config->{max_prosp_change};
+    $prosp_change = $context->config->{max_prosp_change} if $prosp_change > $context->config->{max_prosp_change};
     $prosp_change = -$context->config->{max_prosp_change} if $prosp_change < -$context->config->{max_prosp_change};
 
     if ( $prosp_change == 0 ) {
@@ -123,10 +124,10 @@ sub calculate_prosperity {
 
     $prosp_change = round $prosp_change;
 
-    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')'. 
-    	" [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value, capital_bonus: $capital_bonus]");
+    $context->logger->info( "Changing town " . $town->id . " prosperity by $prosp_change (currently : " . $town->prosperity . ')' .
+          " [Tax: $tax_collected, Ctr Avg: $ctr_avg, Ctr Diff: $ctr_diff, Raid: $raids_today, Approval chg: $approval_change, Items Value: $items_value, capital_bonus: $capital_bonus]" );
 
-    $town->adjust_prosperity( $prosp_change );
+    $town->adjust_prosperity($prosp_change);
     $town->update;
 
     return $prosp_change;
@@ -151,7 +152,7 @@ sub scale_prosperity {
         50 => 5,
         45 => 6,
         40 => 5,
-        35 => 6, 
+        35 => 6,
         30 => 7,
         25 => 5,
         20 => 5,
@@ -160,31 +161,31 @@ sub scale_prosperity {
         5  => 5,
         0  => 3,
     );
-    
-    die "Target prosp %'s don't add up to 100" unless sum(values %target_prosp) == 100;
 
-	my $logged;
-	
-	my @categories = reverse sort { $a <=> $b } keys %target_prosp;
+    die "Target prosp %'s don't add up to 100" unless sum( values %target_prosp ) == 100;
 
-	for my $category (@categories) {
-    	my %actual_prosp = $self->_get_prosperity_percentages(\%target_prosp, @towns);
+    my $logged;
 
-    	$self->context->logger->info( "Current Prosperity percentages: " . Dumper \%actual_prosp )
-    		unless $logged;
+    my @categories = reverse sort { $a <=> $b } keys %target_prosp;
 
-    	my %changes_needed = $self->_calculate_changes_needed( \%target_prosp, \%actual_prosp, scalar @towns );
+    for my $category (@categories) {
+        my %actual_prosp = $self->_get_prosperity_percentages( \%target_prosp, @towns );
 
-	    $self->context->logger->info( "Changes required: " . Dumper \%changes_needed )
-	    	unless $logged;	    
-	    
-	    $logged = 1;
-    	
-    	$self->_make_scaling_changes( $category, $changes_needed{$category}, \@categories, $prosp_changes, @towns );	    	
-	}
-	
-	my %actual_prosp = $self->_get_prosperity_percentages(\%target_prosp, @towns);
-	$self->context->logger->info( "Percentages post scaling: " . Dumper \%actual_prosp )
+        $self->context->logger->info( "Current Prosperity percentages: " . Dumper \%actual_prosp )
+          unless $logged;
+
+        my %changes_needed = $self->_calculate_changes_needed( \%target_prosp, \%actual_prosp, scalar @towns );
+
+        $self->context->logger->info( "Changes required: " . Dumper \%changes_needed )
+          unless $logged;
+
+        $logged = 1;
+
+        $self->_make_scaling_changes( $category, $changes_needed{$category}, \@categories, $prosp_changes, @towns );
+    }
+
+    my %actual_prosp = $self->_get_prosperity_percentages( \%target_prosp, @towns );
+    $self->context->logger->info( "Percentages post scaling: " . Dumper \%actual_prosp )
 }
 
 sub _calculate_changes_needed {
@@ -193,7 +194,7 @@ sub _calculate_changes_needed {
     my $actual_prosp = shift;
     my $town_count   = shift;
 
-    my %changes_needed;    
+    my %changes_needed;
     foreach my $category ( keys %$target_prosp ) {
         $actual_prosp->{$category} ||= 0;
         if ( $target_prosp->{$category} < $actual_prosp->{$category} - 2 ) {
@@ -210,94 +211,94 @@ sub _calculate_changes_needed {
 }
 
 sub _make_scaling_changes {
-	my $self = shift;
-	my $category = shift;
-	my $changes_needed = shift // 0;
-	my $categories = shift;
-	my $prosp_changes = shift;
-	my @towns = @_;
+    my $self           = shift;
+    my $category       = shift;
+    my $changes_needed = shift // 0;
+    my $categories     = shift;
+    my $prosp_changes  = shift;
+    my @towns          = @_;
 
-	# Scaling involves adding or removing from lower category. Can't do that if category is 0
-	return if $category == 0;
-	
-	# Check there are actually some changes to make
-	return if $changes_needed == 0;
+    # Scaling involves adding or removing from lower category. Can't do that if category is 0
+    return if $category == 0;
 
-	my $cat_idx = first_index { $_ == $category } @$categories;
-	my $lower_category = $categories->[$cat_idx+1];
-		
-	# If changes needed is less than 0, we push towns from this category into the next one
-	#  Otherwise we pull towns up from the lower category
-	my $category_to_move_from = $changes_needed < 0 ? $category : $lower_category;
+    # Check there are actually some changes to make
+    return if $changes_needed == 0;
 
-	# Get all the towns from this category, sorted by the adjustments they've made today (least adjusted first)
-	my $cat_to_move_from_idx = first_index { $_ == $category_to_move_from } @$categories;
-	my $upper_category = $categories->[$cat_to_move_from_idx-1];
-	my $category_upper_bound = $upper_category ? $upper_category-1 : 100;
-	
-	#$self->context->logger->debug("Category: $category; changes needed: $changes_needed; lower: $lower_category; upper: $upper_category; moving from: $category_to_move_from; bound: $category_upper_bound");
-	
-	my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
+    my $cat_idx = first_index { $_ == $category } @$categories;
+    my $lower_category = $categories->[ $cat_idx + 1 ];
 
-	# Scale towns based on the prosp change they've had today (the bigger the movement, the less likely to scale),
-	#  then on mayor approval rating, and finally on prosperity
-	@towns_to_move = sort {
-			abs $prosp_changes->{$a->id}->{prosp_change} <=> abs $prosp_changes->{$b->id}->{prosp_change} ||
-			$a->mayor_rating <=> $b->mayor_rating ||
-			($changes_needed < 0 ?
-				$a->prosperity <=> $b->prosperity :
-				$b->prosperity <=> $a->prosperity)
-	} @towns_to_move;
-	
-	# See if there are more changes needed than towns in this category
-	# TODO: if we're moving up from the category below, should we get more from the category below that?
-	$changes_needed = scalar @towns_to_move if $changes_needed > scalar @towns_to_move;
+    # If changes needed is less than 0, we push towns from this category into the next one
+    #  Otherwise we pull towns up from the lower category
+    my $category_to_move_from = $changes_needed < 0 ? $category : $lower_category;
 
-	for (1..abs $changes_needed) {
-		my $town = shift @towns_to_move;
-		my $prosperity = $town->prosperity;
-		
-		# Random component ensure we don't get a huge cluster of towns around the edge of the category
-		my $random = Games::Dice::Advanced->roll('1d2');
+    # Get all the towns from this category, sorted by the adjustments they've made today (least adjusted first)
+    my $cat_to_move_from_idx = first_index { $_ == $category_to_move_from } @$categories;
+    my $upper_category = $categories->[ $cat_to_move_from_idx - 1 ];
+    my $category_upper_bound = $upper_category ? $upper_category - 1 : 100;
 
-		my $new_prosperity;
-		
-		if ($changes_needed < 0) {
-			$new_prosperity = $category - $random;		
-		}
-		else {
-			$new_prosperity = $category + $random - 1;
-		}
-		
-		my $change = $new_prosperity - $prosperity;
+    #$self->context->logger->debug("Category: $category; changes needed: $changes_needed; lower: $lower_category; upper: $upper_category; moving from: $category_to_move_from; bound: $category_upper_bound");
 
-		$self->context->logger->debug("Scaling town " . $town->id . " from $prosperity to $new_prosperity");
-		
-		$prosp_changes->{$town->id}{prosp_change} += $change;
-		
-		$town->prosperity($new_prosperity);
-		$town->update;
-	} 
+    my @towns_to_move = grep { $_->prosperity >= $category_to_move_from && $_->prosperity <= $category_upper_bound } @towns;
+
+    # Scale towns based on the prosp change they've had today (the bigger the movement, the less likely to scale),
+    #  then on mayor approval rating, and finally on prosperity
+    @towns_to_move = sort {
+        abs $prosp_changes->{ $a->id }->{prosp_change} <=> abs $prosp_changes->{ $b->id }->{prosp_change} ||
+          $a->mayor_rating <=> $b->mayor_rating ||
+          ( $changes_needed < 0 ?
+            $a->prosperity <=> $b->prosperity :
+            $b->prosperity <=> $a->prosperity )
+    } @towns_to_move;
+
+    # See if there are more changes needed than towns in this category
+    # TODO: if we're moving up from the category below, should we get more from the category below that?
+    $changes_needed = scalar @towns_to_move if $changes_needed > scalar @towns_to_move;
+
+    for ( 1 .. abs $changes_needed ) {
+        my $town       = shift @towns_to_move;
+        my $prosperity = $town->prosperity;
+
+        # Random component ensure we don't get a huge cluster of towns around the edge of the category
+        my $random = Games::Dice::Advanced->roll('1d2');
+
+        my $new_prosperity;
+
+        if ( $changes_needed < 0 ) {
+            $new_prosperity = $category - $random;
+        }
+        else {
+            $new_prosperity = $category + $random - 1;
+        }
+
+        my $change = $new_prosperity - $prosperity;
+
+        $self->context->logger->debug( "Scaling town " . $town->id . " from $prosperity to $new_prosperity" );
+
+        $prosp_changes->{ $town->id }{prosp_change} += $change;
+
+        $town->prosperity($new_prosperity);
+        $town->update;
+    }
 }
 
 sub _get_prosperity_percentages {
-    my $self  = shift;
+    my $self         = shift;
     my $target_prosp = shift;
-    my @towns = @_;
-    
+    my @towns        = @_;
+
     my @categories = reverse sort { $a <=> $b } keys %$target_prosp;
-    
-    #$self->context->logger->debug("Categories: " . Dumper \@categories); 
+
+    #$self->context->logger->debug("Categories: " . Dumper \@categories);
 
     my %actual_prosp;
     foreach my $town (@towns) {
         my ($category) = grep { $town->prosperity >= $_ } @categories;
 
-		#$self->context->logger->debug("Prosp: " . $town->prosperity . ", Category: " . $category); 
+        #$self->context->logger->debug("Prosp: " . $town->prosperity . ", Category: " . $category);
 
         $actual_prosp{$category}++;
     }
-        
+
     map { $actual_prosp{$_} = round( $actual_prosp{$_} / scalar(@towns) * 100 ) } keys %actual_prosp;
 
     return %actual_prosp;
@@ -331,7 +332,7 @@ sub update_prestige {
 
     my $party_town_rs = $c->schema->resultset('Party_Town')->search(
         {
-            prestige        => { '!=', 0 },
+            prestige => { '!=', 0 },
             'party.defunct' => undef,
         },
         { join => 'party', },
@@ -366,16 +367,17 @@ sub set_discount {
         $chance_for_discount = 20 if $chance_for_discount < 20;
 
         my $discount_roll = Games::Dice::Advanced->roll('1d100');
-        
+
         my @available_discount_types = @discount_types;
-        if ($town->blacksmith_age == 0) {
+        if ( $town->blacksmith_age == 0 ) {
+
             # Get rid of blacksmith type if there's no blacksmith
             @available_discount_types = grep { $_ ne 'blacksmith' } @available_discount_types;
         }
 
         if ( $chance_for_discount <= $discount_roll ) {
-            my $discount_type      = ( shuffle @available_discount_types )[0];
-            my $discount_value     = ( Games::Dice::Advanced->roll( '1d' . $discount_steps ) - 1 ) * 5 + $c->config->{min_discount_value};
+            my $discount_type = ( shuffle @available_discount_types )[0];
+            my $discount_value = ( Games::Dice::Advanced->roll( '1d' . $discount_steps ) - 1 ) * 5 + $c->config->{min_discount_value};
             my $discount_threshold = Games::Dice::Advanced->roll('1d5') * 5 + 70;
 
             $town->discount_type($discount_type);
@@ -393,46 +395,45 @@ sub set_discount {
 # Randomly reduce CTR around a town, based on prosperity.
 #  Eventually will be replaced by a 'town watch' to fight monsters
 sub decay_ctr {
-	my $self = shift;
-	my @towns = @_;
-	
-	my $c = $self->context;
-	
-	foreach my $town (@towns) {
-		my ($town_x, $town_y) = ($town->location->x, $town->location->y);
-		my $range = int $town->prosperity / $c->config->{decay_ctr_ratio};
-		$range = 1 if $range < 1;
-		my ($top_left, $bottom_right) = RPG::Map->surrounds_by_range(
-			$town_x, $town_y, $range,
-		);
-		
-		for my $x ($top_left->{x} .. $bottom_right->{x}) {
-			for my $y ($top_left->{y} .. $bottom_right->{y}) {
-				next if $x == $town_x && $y == $town_y;
-						
-				my $land = $c->schema->resultset('Land')->find(
-					{
-						x => $x,
-						y => $y,
-					}
-				);
-				
-				next unless $land;
-				
-				# Any sectors with a ctr above town's prosperity are not change
-				# (i.e. can't get safer)
-				next if $land->creature_threat > $town->prosperity;
-				
-				if (Games::Dice::Advanced->roll('1d100') > 10) {
-					$land->decrease_creature_threat(Games::Dice::Advanced->roll('1d4'));
-					$land->update;	
-				}	
-			}	
-		}
-	}
+    my $self  = shift;
+    my @towns = @_;
+
+    my $c = $self->context;
+
+    foreach my $town (@towns) {
+        my ( $town_x, $town_y ) = ( $town->location->x, $town->location->y );
+        my $range = int $town->prosperity / $c->config->{decay_ctr_ratio};
+        $range = 1 if $range < 1;
+        my ( $top_left, $bottom_right ) = RPG::Map->surrounds_by_range(
+            $town_x, $town_y, $range,
+        );
+
+        for my $x ( $top_left->{x} .. $bottom_right->{x} ) {
+            for my $y ( $top_left->{y} .. $bottom_right->{y} ) {
+                next if $x == $town_x && $y == $town_y;
+
+                my $land = $c->schema->resultset('Land')->find(
+                    {
+                        x => $x,
+                        y => $y,
+                    }
+                );
+
+                next unless $land;
+
+                # Any sectors with a ctr above town's prosperity are not change
+                # (i.e. can't get safer)
+                next if $land->creature_threat > $town->prosperity;
+
+                if ( Games::Dice::Advanced->roll('1d100') > 10 ) {
+                    $land->decrease_creature_threat( Games::Dice::Advanced->roll('1d4') );
+                    $land->update;
+                }
+            }
+        }
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

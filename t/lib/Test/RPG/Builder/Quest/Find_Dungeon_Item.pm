@@ -16,33 +16,33 @@ sub build_quest {
     my $schema = shift;
     my %params = @_;
 
-    my @land   = Test::RPG::Builder::Land->build_land($schema);
+    my @land = Test::RPG::Builder::Land->build_land($schema);
 
     my $town = $schema->resultset('Town')->create( { land_id => $land[4]->id, town_name => 'test town' } );
-    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon($schema, land_id => $land[8]->id, level => 2);
-    
+    my $dungeon = Test::RPG::Builder::Dungeon->build_dungeon( $schema, land_id => $land[8]->id, level => 2 );
+
     my $quest_type = $schema->resultset('Quest_Type')->find( { 'quest_type' => 'find_dungeon_item' } );
-    
+
     my $dungeon_room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room(
-    	$schema, 
-    	dungeon_id => $dungeon->id,
-    	top_left => { x=> 1, y=> 1 },
-    	bottom_right => { x=> 5, y => 5 },
+        $schema,
+        dungeon_id   => $dungeon->id,
+        top_left     => { x => 1, y => 1 },
+        bottom_right => { x => 5, y => 5 },
     );
-    
-    my $chest_sector = (shuffle $dungeon_room->sectors)[0];
-    
-    my $chest = Test::RPG::Builder::Treasure_Chest->build_chest($schema, dungeon_grid_id => $chest_sector->id);
-    
-	my $item_type = $schema->resultset('Item_Type')->find(
-    	{
-    		item_type => 'Artifact',
-    	}
-   	);
-   	
-   	if (! $item_type) {    
-    	$item_type = Test::RPG::Builder::Item_Type->build_item_type($schema, item_type => 'Artifact');
-   	}    
+
+    my $chest_sector = ( shuffle $dungeon_room->sectors )[0];
+
+    my $chest = Test::RPG::Builder::Treasure_Chest->build_chest( $schema, dungeon_grid_id => $chest_sector->id );
+
+    my $item_type = $schema->resultset('Item_Type')->find(
+        {
+            item_type => 'Artifact',
+        }
+    );
+
+    if ( !$item_type ) {
+        $item_type = Test::RPG::Builder::Item_Type->build_item_type( $schema, item_type => 'Artifact' );
+    }
 
     my %create_params;
     if ( $params{party_id} ) {
@@ -50,26 +50,25 @@ sub build_quest {
     }
 
     my $quest = eval {
-    	$schema->resultset('Quest')->create(
-	        {
-	            town_id       => $town->id,
-	            quest_type_id => $quest_type->id,
-	            status        => $params{status} || 'Not Started',
-	            %create_params,
-	        }
-	    );
+        $schema->resultset('Quest')->create(
+            {
+                town_id       => $town->id,
+                quest_type_id => $quest_type->id,
+                status        => $params{status} || 'Not Started',
+                %create_params,
+            }
+        );
     };
-    
+
     my $error = $@;
     if ($error) {
-    	die $error->message if $error->isa('RPG::Exception');
-    	die $error;    		
+        die $error->message if $error->isa('RPG::Exception');
+        die $error;
     }
-    
+
     my $item = $quest->item;
-    $item->treasure_chest_id($chest->id);
+    $item->treasure_chest_id( $chest->id );
     $item->update;
-    
 
     return $quest;
 

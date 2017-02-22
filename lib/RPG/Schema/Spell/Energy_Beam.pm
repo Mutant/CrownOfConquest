@@ -13,7 +13,7 @@ sub _cast {
     my $dice_count = int $level / 5 + 1;
 
     my $beam = Games::Dice::Advanced->roll( $dice_count . "d6" );
-    
+
     $target_creature->hit( $beam, $character );
     $target_creature->update;
 

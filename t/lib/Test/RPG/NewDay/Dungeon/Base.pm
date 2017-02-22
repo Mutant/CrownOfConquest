@@ -31,7 +31,7 @@ sub dungeon_startup : Test(startup => 1) {
             else {
                 return $self->{roll_result} || 0;
             }
-        }
+          }
     );
 
     use_ok 'RPG::NewDay::Action::Dungeon';

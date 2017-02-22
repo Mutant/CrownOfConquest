@@ -22,35 +22,36 @@ __PACKAGE__->belongs_to(
 );
 
 sub value {
-	my $self = shift;
-	
-	return $self->item_attribute_value;	
+    my $self = shift;
+
+    return $self->item_attribute_value;
 }
 
 sub formatted_value {
-	my $self = shift;
-	
-	my $item_attribute_name = $self->item_attribute_name;
+    my $self = shift;
 
-	if ($item_attribute_name->value_type eq 'boolean') {
-		return $self->value ? 'Yes' : 'No';
-	}
-	if ($item_attribute_name->value_type eq 'percent') {
-		return $self->value . "%";
-	}
-	elsif ($item_attribute_name->value_type eq 'item_type') {
-		# TODO: maybe pass in a list of item types?
-		my $item_type = $self->result_source->schema->resultset('Item_Type')->find(
-			{
-				item_type_id => $self->value,
-			}
-		);
-		
-		return $item_type->item_type;
-	}
-	else {
-		return $self->value;
-	}
+    my $item_attribute_name = $self->item_attribute_name;
+
+    if ( $item_attribute_name->value_type eq 'boolean' ) {
+        return $self->value ? 'Yes' : 'No';
+    }
+    if ( $item_attribute_name->value_type eq 'percent' ) {
+        return $self->value . "%";
+    }
+    elsif ( $item_attribute_name->value_type eq 'item_type' ) {
+
+        # TODO: maybe pass in a list of item types?
+        my $item_type = $self->result_source->schema->resultset('Item_Type')->find(
+            {
+                item_type_id => $self->value,
+            }
+        );
+
+        return $item_type->item_type;
+    }
+    else {
+        return $self->value;
+    }
 }
 
 1;

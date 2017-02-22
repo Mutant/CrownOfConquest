@@ -18,13 +18,13 @@ sub run {
     my $self = shift;
 
     my $c = $self->context;
-    
+
     $self->run_new_day_action;
-    
+
     $self->randomly_delete_quests;
 
     $self->create_quests;
-    
+
     $self->complete_quests;
 
     $self->update_days_left;
@@ -54,9 +54,9 @@ sub create_quests {
             my $prevalence_roll = Games::Dice::Advanced->roll('1d100');
 
             my $quest_type = $c->schema->resultset('Quest_Type')->find(
-                { 
+                {
                     prevalence => { '>=', $prevalence_roll },
-                    owner_type => 'town', 
+                    owner_type => 'town',
                 },
                 {
                     order_by => 'rand()',
@@ -82,57 +82,57 @@ sub create_quests {
 #  This is mostly kingdom quests
 sub complete_quests {
     my $self = shift;
-    
+
     my $c = $self->context;
-    
+
     my @quests = $c->schema->resultset('Quest')->search(
         {
             party_id => { '!=', undef },
-            status   => 'Awaiting Reward',
+            status => 'Awaiting Reward',
         },
     );
-    
+
     foreach my $quest (@quests) {
         my @details = $quest->set_complete;
-        
+
         my $party = $quest->party;
-        
+
         my @messages;
         foreach my $details (@details) {
-    		push @messages,
-            my $xp_info = RPG::Template->process(
+            push @messages,
+              my $xp_info = RPG::Template->process(
                 $c->config,
                 'party/xp_gain.html',
                 $details,
-            );
+              );
         }
-        
+
         my $template;
         my %params = (
-            quest => $quest,
+            quest       => $quest,
             xp_messages => \@messages,
         );
-        
-        if ($quest->town_id) {
+
+        if ( $quest->town_id ) {
             $template = 'quest/town/completed.html';
         }
         else {
             $template = 'quest/kingdom/completed.html';
-        }   
-        
+        }
+
         my $message = RPG::Template->process(
             $c->config,
             $template,
             \%params,
         );
-        
+
         $party->add_to_messages(
             {
-                day_id => $c->current_day->id,
-                message => $message,
+                day_id      => $c->current_day->id,
+                message     => $message,
                 alert_party => 1,
             }
-        );         
+        );
     }
 }
 
@@ -144,9 +144,9 @@ sub update_days_left {
     my @quests = $c->schema->resultset('Quest')->search(
         {
             party_id => { '!=', undef },
-            status   => 'In Progress',
+            status => 'In Progress',
         },
-        { prefetch => [ 'type' ] },
+        { prefetch => ['type'] },
     );
 
     foreach my $quest (@quests) {
@@ -158,20 +158,20 @@ sub update_days_left {
 
             # Time's up!
             my $message = RPG::Template->process( $c->config, 'newday/quest/time_run_out.html', { quest => $quest, }, );
-            
+
             my $kingdom_message;
-            if ($quest->kingdom_id) {
+            if ( $quest->kingdom_id ) {
                 $kingdom_message = RPG::Template->process( $c->config,
                     'quest/kingdom/terminated.html',
                     {
-                        quest => $quest,
+                        quest  => $quest,
                         reason => 'the party ran out of time to complete it',
                     }
                 );
             }
-            
-			$quest->terminate(
-                party_message => $message,
+
+            $quest->terminate(
+                party_message   => $message,
                 kingdom_message => $kingdom_message,
             );
         }
@@ -186,37 +186,36 @@ sub randomly_delete_quests {
     my $c = $self->context;
 
     my $quest_rs = $c->schema->resultset('Quest')->search( { party_id => undef, kingdom_id => undef }, { order_by => 'rand()' }, );
-    
+
     my $number_of_quests = $quest_rs->count;
-    
-    my $quests_to_delete = int ($number_of_quests * 0.2);
-    
+
+    my $quests_to_delete = int( $number_of_quests * 0.2 );
+
     $c->logger->info("Deleting $quests_to_delete quests");
-    
-    for (1 .. $quests_to_delete) {
-        my $quest= $quest_rs->next;
-        $quest->delete;   
+
+    for ( 1 .. $quests_to_delete ) {
+        my $quest = $quest_rs->next;
+        $quest->delete;
     }
 }
 
 # Run the 'new_day' action on quests
 sub run_new_day_action {
     my $self = shift;
-    
-     my $c = $self->context;
-    
+
+    my $c = $self->context;
+
     my @quests = $c->schema->resultset('Quest')->search(
         {
             status => 'In Progress',
         }
     );
-    
+
     foreach my $quest (@quests) {
-        $quest->check_quest_action( 'new_day' );   
+        $quest->check_quest_action('new_day');
     }
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

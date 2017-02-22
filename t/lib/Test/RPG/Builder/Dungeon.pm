@@ -7,27 +7,27 @@ use Test::RPG::Builder::Dungeon_Room;
 
 sub build_dungeon {
     my $package = shift;
-    my $schema = shift;
-    my %params = @_;
-    
-    unless ($params{land_id}) {
+    my $schema  = shift;
+    my %params  = @_;
+
+    unless ( $params{land_id} ) {
         my $location = $schema->resultset('Land')->create( {} );
         $params{land_id} = $location->id;
     }
-    
+
     my $dungeon = $schema->resultset('Dungeon')->create(
         {
             land_id => $params{land_id},
-            level => $params{level} || 1,
-            type => $params{type} || 'dungeon',            
-        }   
+            level   => $params{level} || 1,
+            type    => $params{type} || 'dungeon',
+        }
     );
-    
-    if ($params{rooms}) {
-        for my $count (1..$params{rooms}) {
-            my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room($schema,
+
+    if ( $params{rooms} ) {
+        for my $count ( 1 .. $params{rooms} ) {
+            my $room = Test::RPG::Builder::Dungeon_Room->build_dungeon_room( $schema,
                 dungeon_id => $dungeon->id,
-                top_left => {
+                top_left   => {
                     x => $count,
                     y => $count,
                 },
@@ -36,11 +36,11 @@ sub build_dungeon {
                     y => $count,
                 },
                 create_walls => 1,
-            )
-        }   
+              )
+        }
     }
-    
-    return $dungeon;    	
+
+    return $dungeon;
 }
 
 1;

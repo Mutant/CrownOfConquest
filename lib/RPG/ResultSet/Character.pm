@@ -12,25 +12,25 @@ use Games::Dice::Advanced;
 use RPG::Maths;
 
 sub generate_character {
-    my $self        = shift;
-    my %params      = @_;
-    
-    my $race        = $params{race}  || $self->result_source->schema->resultset('Race')->random;
-    my $class       = $params{class} || $self->result_source->schema->resultset('Class')->random;
-    my $level       = $params{level} // 1;
-    my $roll_points = $params{roll_points} // 1;
+    my $self   = shift;
+    my %params = @_;
+
+    my $race = $params{race} || $self->result_source->schema->resultset('Race')->random;
+    my $class = $params{class} || $self->result_source->schema->resultset('Class')->random;
+    my $level              = $params{level}              // 1;
+    my $roll_points        = $params{roll_points}        // 1;
     my $allocate_equipment = $params{allocate_equipment} // 0;
-    
-    if ($level > 1 && $roll_points == 0) {
-        croak "Can only turn off rolling points for level 1 characters";   
+
+    if ( $level > 1 && $roll_points == 0 ) {
+        croak "Can only turn off rolling points for level 1 characters";
     }
-    
+
     my %levels = map { $_->level_number => $_->xp_needed } $self->result_source->schema->resultset('Levels')->search();
     my $max_level = max keys %levels;
-    
+
     my $xp = 0;
-    if ($level != 1) {
-    	$xp = $self->_calculate_xp($level, $max_level, %levels);	
+    if ( $level != 1 ) {
+        $xp = $self->_calculate_xp( $level, $max_level, %levels );
     }
 
     my %stats = (
@@ -80,16 +80,16 @@ sub generate_character {
 
         $character->update;
     }
-    
+
     $self->_assign_skill_points($character);
 
     if ($roll_points) {
         $character->hit_points( $character->max_hit_points );
         $character->update;
     }
-    
+
     if ($allocate_equipment) {
-    	$self->_allocate_equipment($character);	
+        $self->_allocate_equipment($character);
     }
 
     return $character;
@@ -102,17 +102,18 @@ sub _allocate_stat_points {
     my $primary_stat = shift;
     my $weight       = shift;
     my $stats        = shift;
-    
+
     confess "Too much weight: $weight" if $weight > 30;
 
     my @stats = keys %$stats;
+
     # Primary stat goes in multiple times to make it more likely to get added
-    if (defined $primary_stat) {
-        push @stats, $primary_stat for (1..$weight);    
+    if ( defined $primary_stat ) {
+        push @stats, $primary_stat for ( 1 .. $weight );
     }
-    
+
     # Also add constitution multiple times
-    push @stats, 'constitution' for (1..($weight > 3 ? $weight - 3 : 1));
+    push @stats, 'constitution' for ( 1 .. ( $weight > 3 ? $weight - 3 : 1 ) );
 
     # Allocate 1 point to a random stat until the pool is used
     while ( $stat_pool > 0 ) {
@@ -134,14 +135,14 @@ my %names;
 
 sub _generate_name {
     my $gender = shift;
-    
+
     my $file_prefix = $gender eq 'male' ? '' : 'female_';
-    
-    unless ($names{$gender}) {
-        @{$names{$gender}} = read_file( RPG::Schema->config->{data_file_path} . "/${file_prefix}character_names.txt" );
+
+    unless ( $names{$gender} ) {
+        @{ $names{$gender} } = read_file( RPG::Schema->config->{data_file_path} . "/${file_prefix}character_names.txt" );
     }
-    
-    my @names = @{$names{$gender}};
+
+    my @names = @{ $names{$gender} };
 
     chomp @names;
     @names = shuffle @names;
@@ -150,18 +151,18 @@ sub _generate_name {
 }
 
 sub _calculate_xp {
-	my $self = shift;
-	my $level = shift;
-	my $max_level = shift;
-	my %levels = @_;
-	
-	my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
-	
-	my $dice_size = $xp_for_next_level - $levels{$level};
-	$dice_size = $levels{$level} if $level == $max_level;
-	
+    my $self      = shift;
+    my $level     = shift;
+    my $max_level = shift;
+    my %levels    = @_;
+
+    my $xp_for_next_level = ( $levels{ $level + 1 } || 0 );
+
+    my $dice_size = $xp_for_next_level - $levels{$level};
+    $dice_size = $levels{$level} if $level == $max_level;
+
     my $xp = $levels{$level} + Games::Dice::Advanced->roll( '1d' . $dice_size );
-    
+
     return $xp;
 }
 
@@ -182,11 +183,11 @@ sub _allocate_equipment {
     $max_primary_prevalance = $min_primary_prevalance if $max_primary_prevalance < $min_primary_prevalance;
     $max_primary_prevalance = 40 if $max_primary_prevalance < 40;
 
-    my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search( 
-    	{}, 
-    	{ 
-    		prefetch => { 'equip_place_categories' => 'item_category'}, 
-    	}, 
+    my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search(
+        {},
+        {
+            prefetch => { 'equip_place_categories' => 'item_category' },
+        },
     );
 
     foreach my $equip_place (@equip_places) {
@@ -201,9 +202,9 @@ sub _allocate_equipment {
 
         my @item_types = $self->result_source->schema->resultset('Item_Type')->search(
             {
-                prevalence               => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
+                prevalence => { '>=', $min_primary_prevalance, '<=', $max_primary_prevalance },
                 'category.always_enchanted' => 0,
-                'category.item_category' => \@categories,
+                'category.item_category'    => \@categories,
             },
             { join => 'category', },
         );
@@ -212,7 +213,7 @@ sub _allocate_equipment {
 
         @item_types = shuffle @item_types;
 
-		# TODO: generate enchanted items
+        # TODO: generate enchanted items
         my $item = $self->result_source->schema->resultset('Items')->create( { item_type_id => $item_types[0]->id, } );
 
         $item->character_id( $character->id );
@@ -223,44 +224,43 @@ sub _allocate_equipment {
 }
 
 sub _assign_skill_points {
-    my $self = shift;
+    my $self      = shift;
     my $character = shift;
-    
+
     my $skill_points = $character->level - 1;
-    
+
     return if $skill_points <= 0;
-    
+
     my $unassigned_skill_points = 0;
-    
-    if ($skill_points >= 8) {
-        my $unassigned_skill_points = RPG::Maths->weighted_random_number(1..10);
-        $unassigned_skill_points = $skill_points-2 if $unassigned_skill_points > $skill_points-2;
+
+    if ( $skill_points >= 8 ) {
+        my $unassigned_skill_points = RPG::Maths->weighted_random_number( 1 .. 10 );
+        $unassigned_skill_points = $skill_points - 2 if $unassigned_skill_points > $skill_points - 2;
     }
-    
+
     my @skills = shuffle $self->result_source->schema->resultset('Skill')->search();
-    
+
     foreach my $skill (@skills) {
-        if ($skill->skill_name eq 'Recall' && ! $character->is_spell_caster) {
+        if ( $skill->skill_name eq 'Recall' && !$character->is_spell_caster ) {
             next;
         }
-        
+
         my $level = Games::Dice::Advanced->roll('1d10');
-        
+
         $level = $skill_points if $level > $skill_points;
-        
+
         $character->add_to_character_skills(
             {
                 skill_id => $skill->id,
-                level => $level,
+                level    => $level,
             }
         );
-        
+
         $skill_points -= $level;
-        
+
         last if $skill_points <= $unassigned_skill_points;
     }
-    
-       
+
 }
 
 1;

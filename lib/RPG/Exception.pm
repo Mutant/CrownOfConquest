@@ -7,5 +7,4 @@ has 'type'    => ( isa => 'Str', is => 'ro', required => 0 );
 
 __PACKAGE__->meta->make_immutable;
 
-
 1;

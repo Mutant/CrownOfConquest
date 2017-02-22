@@ -17,7 +17,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Shield',
             duration       => $duration,
             modifier       => $shield_modifier,

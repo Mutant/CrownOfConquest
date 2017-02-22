@@ -6,8 +6,8 @@ use File::Copy;
 extends 'RPG::NewDay::Base';
 
 sub continue_on_error {
-	return 0;	
-} 
+    return 0;
+}
 
 sub run {
     my $self = shift;
@@ -19,7 +19,7 @@ sub run {
         {},
         {
             'select' => { max => 'day_number' },
-            'as'     => 'day_number'
+            'as' => 'day_number'
         },
     )->day_number || 1;
 
@@ -31,16 +31,16 @@ sub run {
 
     my $new_day = $c->schema->resultset('Day')->create(
         {
-            'day_number'   => $yesterday_day_num + 1,
-            'game_year'    => 100, # TODO: generate game year as well
+            'day_number' => $yesterday_day_num + 1,
+            'game_year'    => 100,            # TODO: generate game year as well
             'date_started' => $c->datetime,
         },
     );
 
     $c->yesterday($yesterday);
     $c->current_day($new_day);
-    
-    copy($c->config->{home} . '/docroot/static/minimap/kingdoms.png', $c->config->{home} . '/docroot/static/minimap/' . $new_day->day_number . '.png');
+
+    copy( $c->config->{home} . '/docroot/static/minimap/kingdoms.png', $c->config->{home} . '/docroot/static/minimap/' . $new_day->day_number . '.png' );
 
     $c->logger->info( "Beginning new day script for day: " . $new_day->day_number );
 }

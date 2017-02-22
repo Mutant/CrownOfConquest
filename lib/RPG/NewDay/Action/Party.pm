@@ -4,26 +4,25 @@ use Moose;
 
 extends 'RPG::NewDay::Base';
 
-sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Enchantment/ };
+sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Enchantment/ }
 
 sub run {
-    my $self = shift;
+    my $self    = shift;
     my $context = $self->context;
 
     my $party_rs = $context->schema->resultset('Party')->search(
         {
-            created => {'!=',undef},
+            created => { '!=', undef },
             defunct => undef,
         },
         { prefetch => 'characters' }
     );
 
     while ( my $party = $party_rs->next ) {
-        $party->new_day($context->current_day);
+        $party->new_day( $context->current_day );
     }
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

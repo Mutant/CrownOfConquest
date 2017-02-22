@@ -6,18 +6,18 @@ extends 'RPG::NewDay::Base';
 
 sub cron_string {
     my $self = shift;
-     
+
     return $self->context->config->{new_turns_cron_string};
 }
 
 sub run {
     my $self = shift;
-    
+
     my $context = $self->context;
-    
+
     my $party_rs = $context->schema->resultset('Party')->search(
         {
-            created => {'!=',undef},
+            created => { '!=', undef },
             defunct => undef,
         },
     );

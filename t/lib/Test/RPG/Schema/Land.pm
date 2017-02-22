@@ -26,28 +26,28 @@ sub test_next_to : Tests(5) {
     my @tests = (
         {
             sectors => [ { x => 1, y => 2 }, { x => 3, y => 4 }, ],
-            result  => 0,
-            desc    => 'Sectors not next to each other',
+            result => 0,
+            desc => 'Sectors not next to each other',
         },
         {
             sectors => [ { x => 1, y => 1 }, { x => 1, y => 2 }, ],
-            result  => 1,
-            desc    => 'Sector to the right',
+            result => 1,
+            desc => 'Sector to the right',
         },
         {
             sectors => [ { x => 100, y => 100 }, { x => 101, y => 100 }, ],
-            result  => 1,
-            desc    => 'Sector below',
+            result => 1,
+            desc => 'Sector below',
         },
         {
             sectors => [ { x => 1, y => 1 }, { x => 2, y => 2 }, ],
-            result  => 1,
-            desc    => 'Sector on the diagonal',
+            result => 1,
+            desc => 'Sector on the diagonal',
         },
         {
             sectors => [ { x => 5, y => 5 }, { x => 5, y => 5 }, ],
-            result  => 0,
-            desc    => 'Sectors the same, not next to',
+            result => 0,
+            desc => 'Sectors the same, not next to',
         },
     );
 
@@ -108,20 +108,20 @@ sub test_movement_cost : Tests(5) {
 
 sub test_movement_cost_with_roads_with_hashes : Tests(1) {
     my $self = shift;
-    
+
     # GIVEN
     my $source_land = {
-        x => 1,
-        y => 1,
-        roads => [{position => 'bottom right'}],   
+        x     => 1,
+        y     => 1,
+        roads => [ { position => 'bottom right' } ],
     };
-    
+
     my $dest_land = {
-        x => 2,
-        y => 2,
-        roads => [{position => 'top left'}],   
+        x     => 2,
+        y     => 2,
+        roads => [ { position => 'top left' } ],
     };
-    
+
 =comment
     my @land = Test::RPG::Builder::Land->build_land($self->{schema});
     
@@ -142,43 +142,43 @@ sub test_movement_cost_with_roads_with_hashes : Tests(1) {
         },
     );
 =cut
-    
+
     # WHEN
-    my $movement_cost = RPG::Schema::Land::movement_cost($source_land, 4, 8, $dest_land);
-    
+    my $movement_cost = RPG::Schema::Land::movement_cost( $source_land, 4, 8, $dest_land );
+
     # THEN
-    is($movement_cost, 2, "Movement cost calculated correctly");
-       
+    is( $movement_cost, 2, "Movement cost calculated correctly" );
+
 }
 
 sub test_movement_cost_with_roads_objects : Tests(1) {
     my $self = shift;
 
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     my $terrain = $self->{schema}->resultset('Terrain')->create(
         {
             terrain_name => 'test1',
-            modifier => 8,
+            modifier     => 8,
         },
     );
-    
-    $land[0]->terrain_id($terrain->id);
+
+    $land[0]->terrain_id( $terrain->id );
     $land[0]->update;
-    
+
     $self->{schema}->resultset('Road')->create(
         {
-            position => 'bottom right',  
-            land_id => $land[0]->id,
+            position => 'bottom right',
+            land_id  => $land[0]->id,
         },
     );
-    
+
     # WHEN
-    my $movement_cost = $land[0]->movement_cost(5, undef, $land[4]);
-    
+    my $movement_cost = $land[0]->movement_cost( 5, undef, $land[4] );
+
     # THEN
-    is($movement_cost, 1, "Movement cost calculated correctly");
-       
+    is( $movement_cost, 1, "Movement cost calculated correctly" );
+
 }
 
 sub test_available_creature_group : Tests(1) {
@@ -217,167 +217,167 @@ sub test_available_creature_group_cg_in_combat : Tests(1) {
 
 sub test_get_adjacent_towns_none_nearby : Tests(9) {
     my $self = shift;
-    
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     foreach my $land (@land) {
-        is($land->get_adjacent_towns, 0, "No towns near by");   
-    }   
+        is( $land->get_adjacent_towns, 0, "No towns near by" );
+    }
 }
 
 sub test_get_adjacent_towns_one_nearby : Tests(12) {
     my $self = shift;
-    
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
-    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
-    
-    foreach my $idx (0,2,5,6,7,8) {
-        is($land[$idx]->get_adjacent_towns, 0, "No towns near by (idx: $idx)");   
+
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[0]->id );
+
+    foreach my $idx ( 0, 2, 5, 6, 7, 8 ) {
+        is( $land[$idx]->get_adjacent_towns, 0, "No towns near by (idx: $idx)" );
     }
 
-    foreach my $idx (1,3,4) {
+    foreach my $idx ( 1, 3, 4 ) {
         my @towns = $land[$idx]->get_adjacent_towns;
-        is(scalar @towns, 1, "Correct number of towns");
-        is($towns[0]->id, $town->id, "Town near by (idx: $idx)");   
+        is( scalar @towns, 1,         "Correct number of towns" );
+        is( $towns[0]->id, $town->id, "Town near by (idx: $idx)" );
     }
 }
 
 sub test_has_road_joining_to_not_adjacent : Tests(1) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
 
     # WHEN
-    my $result = $land[0]->has_road_joining_to($land[8]);
-    
+    my $result = $land[0]->has_road_joining_to( $land[8] );
+
     # THEN
-    is($result, 0, "Roads do not join sectors");
-    
+    is( $result, 0, "Roads do not join sectors" );
+
 }
 
 sub test_has_road_joining_to_roads_join : Tests(1) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     $self->{schema}->resultset('Road')->create(
         {
-            position => 'bottom right',  
-            land_id => $land[0]->id,
+            position => 'bottom right',
+            land_id  => $land[0]->id,
         },
     );
 
     $self->{schema}->resultset('Road')->create(
         {
-            position => 'top left',  
-            land_id => $land[4]->id,
+            position => 'top left',
+            land_id  => $land[4]->id,
         },
     );
 
     # WHEN
-    my $result = $land[0]->has_road_joining_to($land[4]);
-    
+    my $result = $land[0]->has_road_joining_to( $land[4] );
+
     # THEN
-    is($result, 1, "Roads join sectors");
-    
+    is( $result, 1, "Roads join sectors" );
+
 }
 
 sub test_has_road_joining_to_only_one_joins : Tests(1) {
-    my $self = shift;   
-    
+    my $self = shift;
+
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     $self->{schema}->resultset('Road')->create(
         {
-            position => 'bottom right',  
-            land_id => $land[0]->id,
+            position => 'bottom right',
+            land_id  => $land[0]->id,
         },
     );
 
     # WHEN
-    my $result = $land[0]->has_road_joining_to($land[4]);
-    
+    my $result = $land[0]->has_road_joining_to( $land[4] );
+
     # THEN
-    is($result, 0, "Roads don't join sectors");
-    
+    is( $result, 0, "Roads don't join sectors" );
+
 }
 
 sub test_creature_threat_restrictions : Tests(2) {
-	my $self = shift;
-	
-	# GIVEN
-	my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-	
-	# WHEN
-	$land[0]->creature_threat(-200);
-	$land[1]->creature_threat(101);
-	
-	# THEN
-	is($land[0]->creature_threat, '-100', "Creature threat restricted to no less than -100");
-	is($land[1]->creature_threat, '100', "Creature threat restricted to no more than 100");
-		
+    my $self = shift;
+
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
+    # WHEN
+    $land[0]->creature_threat(-200);
+    $land[1]->creature_threat(101);
+
+    # THEN
+    is( $land[0]->creature_threat, '-100', "Creature threat restricted to no less than -100" );
+    is( $land[1]->creature_threat, '100', "Creature threat restricted to no more than 100" );
+
 }
 
 sub test_can_be_claimed_near_town : Tests(3) {
     my $self = shift;
-    
-	# GIVEN
-    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-	my @land = Test::RPG::Builder::Land->build_land($self->{schema}, x_size => 5, 'y_size' => 5, kingdom_id => $kingdom->id);
-	my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[0]->id);
 
-	$land[1]->claimed_by_id($kingdom->id);
-	$land[1]->update;
-	
-	$land[11]->kingdom_id(undef);
-	$land[11]->update;
-	
-	# WHEN
-	my $first_land = $land[1]->can_be_claimed($kingdom->id);
-	my $second_land = $land[10]->can_be_claimed($kingdom->id);
-	my $third_land = $land[11]->can_be_claimed($kingdom->id);
-	
-	# THEN
-	is($first_land, 0, "First land can't be claimed as it's too close to a town");
-	is($second_land, 0, "Second land can't be claimed, as it's already claimed by kingdom");
-	is($third_land, 1, "Second land can be claimed");
-       
+    # GIVEN
+    my $kingdom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema}, x_size => 5, 'y_size' => 5, kingdom_id => $kingdom->id );
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[0]->id );
+
+    $land[1]->claimed_by_id( $kingdom->id );
+    $land[1]->update;
+
+    $land[11]->kingdom_id(undef);
+    $land[11]->update;
+
+    # WHEN
+    my $first_land  = $land[1]->can_be_claimed( $kingdom->id );
+    my $second_land = $land[10]->can_be_claimed( $kingdom->id );
+    my $third_land  = $land[11]->can_be_claimed( $kingdom->id );
+
+    # THEN
+    is( $first_land, 0, "First land can't be claimed as it's too close to a town" );
+    is( $second_land, 0, "Second land can't be claimed, as it's already claimed by kingdom" );
+    is( $third_land, 1, "Second land can be claimed" );
+
 }
 
 sub test_garrison_allowed : Tests(1) {
     my $self = shift;
-    
+
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, land_id => $land[0]->id );
-    
+    my @land  = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, land_id => $land[0]->id );
+
     # WHEN
     my $result = $land[4]->garrison_allowed($party);
-    
+
     # THEN
-    is($result, 1, "Garrison allowed here");
-       
+    is( $result, 1, "Garrison allowed here" );
+
 }
 
 sub test_garrison_allowed_too_close_to_garrison_owned_by_party : Tests(1) {
     my $self = shift;
-    
+
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $garrison = Test::RPG::Builder::Garrison->build_garrison($self->{schema}, party_id => $party->id, land_id => $land[0]->id );
-    
+    my @land  = Test::RPG::Builder::Land->build_land( $self->{schema} );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, land_id => $land[0]->id );
+
     # WHEN
     my $result = $land[4]->garrison_allowed($party);
-    
+
     # THEN
-    is($result, 0, "Garrison not allowed as too close to garrison owned by party");
-       
+    is( $result, 0, "Garrison not allowed as too close to garrison owned by party" );
+
 }
 
 1;

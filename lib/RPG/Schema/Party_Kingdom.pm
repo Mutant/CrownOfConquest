@@ -11,11 +11,11 @@ __PACKAGE__->add_columns(qw/party_id kingdom_id loyalty banished_for/);
 __PACKAGE__->set_primary_key(qw/party_id kingdom_id/);
 
 __PACKAGE__->numeric_columns(
-	loyalty => {
-		min_value => -100,
-		max_value => 100,
-	},
-	'banished_for',
+    loyalty => {
+        min_value => -100,
+        max_value => 100,
+    },
+    'banished_for',
 );
 
 __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id' );

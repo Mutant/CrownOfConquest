@@ -23,10 +23,10 @@ __PACKAGE__->belongs_to( 'position', 'RPG::Schema::Dungeon_Position', { 'foreign
 __PACKAGE__->belongs_to( 'dungeon_grid', 'RPG::Schema::Dungeon_Grid', { 'foreign.dungeon_grid_id' => 'self.dungeon_grid_id' } );
 
 my %position_map = (
-	bottom => 'south',
-	top => 'north',
-	left => 'west',
-	right => 'east',
+    bottom => 'south',
+    top    => 'north',
+    left   => 'west',
+    right  => 'east',
 );
 
 sub opposite_position {
@@ -49,28 +49,28 @@ sub can_be_passed {
 
 sub opposite_door {
     my $self = shift;
-    
+
     confess "No room for sector " . $self->dungeon_grid->id unless $self->dungeon_grid->dungeon_room;
-    
+
     my ( $opp_x, $opp_y ) = $self->opposite_sector;
     my $opp_door = $self->result_source->schema->resultset('Door')->find(
         {
-            'dungeon_grid.x'          => $opp_x,
-            'dungeon_grid.y'          => $opp_y,
-            'dungeon_room.floor'      => $self->dungeon_grid->dungeon_room->floor,
+            'dungeon_grid.x'     => $opp_x,
+            'dungeon_grid.y'     => $opp_y,
+            'dungeon_room.floor' => $self->dungeon_grid->dungeon_room->floor,
             'dungeon_room.dungeon_id' => $self->dungeon_grid->dungeon_room->dungeon_id,
-            'position.position'       => $self->opposite_position,
+            'position.position' => $self->opposite_position,
         },
         { join => [ { 'dungeon_grid' => 'dungeon_room' }, 'position' ] }
     );
-    
+
     return $opp_door;
 }
 
 sub display_position {
     my $self = shift;
-    
-    return $position_map{$self->position->position};   
+
+    return $position_map{ $self->position->position };
 }
 
 1;

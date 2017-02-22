@@ -19,44 +19,44 @@ has 'battle_record' => ( is => 'ro', isa => 'RPG::Schema::Party_Battle', require
 with qw/RPG::Combat::CharactersVsCharacters/;
 
 around BUILDARGS => sub {
-	my $orig  = shift;
-	my $class = shift;
-	my %params = @_;
-	
-	$params{character_group_1} = $params{party_1};
-	$params{character_group_2} = $params{party_2};	
-	
-	return $class->$orig(%params);
+    my $orig   = shift;
+    my $class  = shift;
+    my %params = @_;
+
+    $params{character_group_1} = $params{party_1};
+    $params{character_group_2} = $params{party_2};
+
+    return $class->$orig(%params);
 };
 
 after 'finish' => sub {
-	my $self = shift;
+    my $self = shift;
 
-	$self->battle_record->complete( DateTime->now() );
-	$self->battle_record->update;
+    $self->battle_record->complete( DateTime->now() );
+    $self->battle_record->update;
 };
 
 sub check_for_flee {
-	my $self = shift;
+    my $self = shift;
 
-	# Check for only party flee
-	if ( $self->party_1_flee_attempt && $self->party_flee(1) ) {
-		$self->result->{party_fled} = 1;
-	}
-	elsif ( $self->party_2_flee_attempt && $self->party_flee(2) ) {
-		$self->result->{party_fled} = 1;
-	}
+    # Check for only party flee
+    if ( $self->party_1_flee_attempt && $self->party_flee(1) ) {
+        $self->result->{party_fled} = 1;
+    }
+    elsif ( $self->party_2_flee_attempt && $self->party_flee(2) ) {
+        $self->result->{party_fled} = 1;
+    }
 
-	if ( $self->result->{party_fled} ) {
+    if ( $self->result->{party_fled} ) {
 
-		return 1;
-	}
+        return 1;
+    }
 
-	# Check for offline flee attempt
-	if ( $self->check_for_offline_flee ) {
-		$self->result->{offline_party_fled} = 1;
-		return 1;
-	}
+    # Check for offline flee attempt
+    if ( $self->check_for_offline_flee ) {
+        $self->result->{offline_party_fled} = 1;
+        return 1;
+    }
 }
 
 1;

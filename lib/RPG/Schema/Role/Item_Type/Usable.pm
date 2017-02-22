@@ -9,28 +9,28 @@ requires qw/use label is_usable target/;
 
 after 'use' => sub {
     my $self = shift;
-    
+
     my $quantity = $self->variable('Quantity');
     $quantity--;
-    if ($quantity <= 0) {
+    if ( $quantity <= 0 ) {
         my $character = $self->belongs_to_character;
         $character->remove_item_from_grid($self);
-        $self->delete;   
+        $self->delete;
     }
     else {
-        $self->variable_row('Quantity', $quantity);
-    }      
+        $self->variable_row( 'Quantity', $quantity );
+    }
 };
 
 # This is bad majick :/
 around 'is_usable' => sub {
     my $orig = shift;
     my $self = shift;
-    
+
     my $combat = shift;
     my $character = shift // $self->belongs_to_character;
-    
-    return $self->$orig($combat, $character);
+
+    return $self->$orig( $combat, $character );
 };
 
 1;

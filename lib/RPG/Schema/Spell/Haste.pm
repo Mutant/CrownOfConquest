@@ -14,7 +14,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Haste',
             duration       => $duration,
             modifier       => 0.5,
@@ -27,14 +27,14 @@ sub _cast {
     return {
         type     => 'effect',
         duration => $duration,
-        effect   => 'speeding ' . $target->pronoun('posessive-subjective') . ' attack',
+        effect => 'speeding ' . $target->pronoun('posessive-subjective') . ' attack',
     };
 }
 
 sub select_target {
-    my $self = shift;
+    my $self    = shift;
     my @targets = @_;
-    
+
     return $self->_select_buff_target(@targets);
 }
 

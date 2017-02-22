@@ -17,9 +17,9 @@ sub _cast {
     $target->update;
 
     return {
-        type   => 'damage',
-        damage => $flame,
-        effect => 'frying',
+        type     => 'damage',
+        damage   => $flame,
+        effect   => 'frying',
         resisted => $resisted,
     };
 }

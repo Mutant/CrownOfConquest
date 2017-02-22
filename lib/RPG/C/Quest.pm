@@ -20,11 +20,11 @@ sub offer : Local {
             party_id => undef,
         },
     );
-    
-    my $party_below_min_level = $c->stash->{party}->level < $quest->min_level ? 1 :0;
-    
+
+    my $party_below_min_level = $c->stash->{party}->level < $quest->min_level ? 1 : 0;
+
     if ($party_below_min_level) {
-        push @{$c->stash->{panel_messages}}, "Your party's level isn't high enough to accept this quest!";   
+        push @{ $c->stash->{panel_messages} }, "Your party's level isn't high enough to accept this quest!";
     }
 
     my $panel = $c->forward(
@@ -33,20 +33,20 @@ sub offer : Local {
             {
                 template => 'quest/offer.html',
                 params   => {
-                    town  => $c->stash->{party_location}->town,
-                    quest => $quest,
+                    town                  => $c->stash->{party_location}->town,
+                    quest                 => $quest,
                     party_below_min_level => $party_below_min_level,
                 },
                 return_output => 1,
             }
         ]
     );
-    
-    $c->stash->{message_panel_size} = 'large';
-    
-	push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
 
-	$c->forward('/panel/refresh');    
+    $c->stash->{message_panel_size} = 'large';
+
+    push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
+
+    $c->forward('/panel/refresh');
 }
 
 sub accept : Local {
@@ -55,44 +55,44 @@ sub accept : Local {
     my $quest = $c->model('DBIC::Quest')->find(
         {
             quest_id => $c->req->param('quest_id'),
-            status => 'Not Started',
+            status   => 'Not Started',
         },
     );
-    
+
     croak "Quest not found" unless $quest;
-    
-    if ($quest->town_id) {
-        unless ($c->stash->{party}->allowed_more_quests) {
-    		croak "Not allowed any more quests";	
-    	}
-    	
-    	if (! $quest->party_can_accept_quest($c->stash->{party})) {
+
+    if ( $quest->town_id ) {
+        unless ( $c->stash->{party}->allowed_more_quests ) {
+            croak "Not allowed any more quests";
+        }
+
+        if ( !$quest->party_can_accept_quest( $c->stash->{party} ) ) {
             my $reason = $quest->cant_accept_quest_reason;
-            
+
             $c->res->body(
                 to_json {
-                    message => $reason,
+                    message  => $reason,
                     accepted => 0,
-                }
+                  }
             );
-             
+
             return;
-    	}
-        
+        }
+
         my $town = $c->stash->{party_location}->town;
-        
+
         croak "Accepting a quest from another town" unless $town->id == $quest->town_id;
-        
+
         croak "Accepting a quest for another party" if defined $quest->party_id;
     }
-    elsif ($quest->kingdom_id) {
+    elsif ( $quest->kingdom_id ) {
         croak "Accepting a quest for another kingdom" unless $quest->kingdom_id == $c->stash->{party}->kingdom_id;
-        
+
         croak "Accepting a quest for another party" unless $quest->party_id == $c->stash->{party}->party_id;
     }
-    
-    if ($c->stash->{party}->level < $quest->min_level) {
-    	croak "Too low level to accept quest";	
+
+    if ( $c->stash->{party}->level < $quest->min_level ) {
+        croak "Too low level to accept quest";
     }
 
     $quest->party_id( $c->stash->{party}->id );
@@ -101,106 +101,106 @@ sub accept : Local {
 
     my $message;
     my $accept_template = 'quest/accept_message/' . $quest->type->quest_type . '.html';
-    if (-f $c->path_to('root') . '/' . $accept_template) {
-	    $message = $c->forward(
-	        'RPG::V::TT',
-	        [
-	            {
-	                template => $accept_template,
-	                params   => { quest => $quest, },
-	                return_output => 1,
-	            }
-	        ]
-	    );
-    };
-    
+    if ( -f $c->path_to('root') . '/' . $accept_template ) {
+        $message = $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => $accept_template,
+                    params        => { quest => $quest, },
+                    return_output => 1,
+                }
+            ]
+        );
+    }
+
     $c->res->body(
         to_json {
-            message => $message,
+            message  => $message,
             accepted => 1,
-        }
+          }
     );
-    
-    if ($quest->kingdom_id) {
-        $c->forward('/quest/list');  
+
+    if ( $quest->kingdom_id ) {
+        $c->forward('/quest/list');
     }
 }
 
 sub decline : Local {
     my ( $self, $c ) = @_;
-    
+
     my $quest = $c->model('DBIC::Quest')->find(
         {
-            quest_id => $c->req->param('quest_id'),
-            status => 'Not Started',
+            quest_id   => $c->req->param('quest_id'),
+            status     => 'Not Started',
             kingdom_id => $c->stash->{party}->kingdom_id,
-            party_id => $c->stash->{party}->party_id,
+            party_id   => $c->stash->{party}->party_id,
         },
     );
-    
+
     croak "Invalid quest" unless $quest;
-    
+
     my $kingdom_message = $c->forward(
         'RPG::V::TT',
         [
             {
                 template => 'quest/kingdom/terminated.html',
-                params   => { 
-                       quest => $quest,
-                       reason => 'the party declined it',  
+                params   => {
+                    quest  => $quest,
+                    reason => 'the party declined it',
                 },
                 return_output => 1,
             }
         ]
     );
-    
+
     $quest->terminate(
         kingdom_message => $kingdom_message,
     );
     $quest->update;
-    
-    $c->forward('/quest/list'); 
-    
+
+    $c->forward('/quest/list');
+
 }
 
 sub negotiate : Local {
     my ( $self, $c ) = @_;
-    
+
     my $quest = $c->model('DBIC::Quest')->find(
         {
-            quest_id => $c->req->param('quest_id'),
-            status => 'Not Started',
+            quest_id   => $c->req->param('quest_id'),
+            status     => 'Not Started',
             kingdom_id => $c->stash->{party}->kingdom_id,
-            party_id => $c->stash->{party}->party_id,
+            party_id   => $c->stash->{party}->party_id,
         },
     );
-    
-    croak "Invalid quest" unless $quest;    
-    
+
+    croak "Invalid quest" unless $quest;
+
     $quest->status('Negotiating');
-    $quest->gold_value($c->req->param('gold_value'));
+    $quest->gold_value( $c->req->param('gold_value') );
     $quest->update;
-    
-    push @{$c->stash->{panel_messages}}, "Negotiation request sent to the King";
-    
-    $c->forward('/quest/list'); 
+
+    push @{ $c->stash->{panel_messages} }, "Negotiation request sent to the King";
+
+    $c->forward('/quest/list');
 }
 
 sub list : Local {
     my ( $self, $c ) = @_;
-    
+
     $c->stash->{message_panel_size} = 'large';
 
     my @quests = $c->model('DBIC::Quest')->search(
         {
             party_id => $c->stash->{party}->id,
-            status   => ['Not Started', 'In Progress', 'Awaiting Reward', 'Requested'],
+            status => [ 'Not Started', 'In Progress', 'Awaiting Reward', 'Requested' ],
         },
-        { 
+        {
             prefetch => [ 'quest_params', { 'type' => 'quest_param_names' }, ],
-            
+
             # Order by kingdom id to sort them by town/kingdom quests
-            order_by => 'kingdom_id', 
+            order_by => 'kingdom_id',
         }
     );
 
@@ -208,17 +208,17 @@ sub list : Local {
         'RPG::V::TT',
         [
             {
-                template => 'quest/list.html',
-                params   => { quests => \@quests, },
+                template      => 'quest/list.html',
+                params        => { quests => \@quests, },
                 return_output => 1,
             },
-            
+
         ]
     );
-    
+
     push @{ $c->stash->{refresh_panels} }, [ 'messages', $panel ];
 
-    $c->forward( '/panel/refresh', [] );    
+    $c->forward( '/panel/refresh', [] );
 }
 
 # Check the party's quests to see if any progress has been made for the particular action just taken
@@ -232,14 +232,14 @@ sub check_action : Private {
             push @messages, $message if $message;
         }
     }
-    
-    # Check if this action affects any other quests    
+
+    # Check if this action affects any other quests
     my @quests = $c->model('DBIC::Quest')->find_quests_by_interested_action($action);
-    
+
     foreach my $quest (@quests) {
         $quest->check_action_from_another_party( $c->stash->{party}, $action, @params );
-    }    
-    
+    }
+
     return \@messages;
 }
 
@@ -248,23 +248,23 @@ sub complete_quest : Private {
 
     my @details = $party_quest->set_complete();
 
-	my @messages;
+    my @messages;
 
-	foreach my $details (@details) {
-		push @messages,
-			$c->forward(
-    			'RPG::V::TT',
-    			[
-    				{
-    					template      => 'party/xp_gain.html',
-    					params        => $details,
-    					return_output => 1,
-    				}
-    			]
-            );
-	}
-	
-	$c->stash->{party}->discard_changes;
+    foreach my $details (@details) {
+        push @messages,
+          $c->forward(
+            'RPG::V::TT',
+            [
+                {
+                    template      => 'party/xp_gain.html',
+                    params        => $details,
+                    return_output => 1,
+                }
+            ]
+          );
+    }
+
+    $c->stash->{party}->discard_changes;
 
     push @{ $c->stash->{refresh_panels} }, 'party_status', 'party';
 
@@ -272,10 +272,10 @@ sub complete_quest : Private {
         'RPG::V::TT',
         [
             {
-                template      => 'quest/completed_quest.html',
-                params        => { 
+                template => 'quest/completed_quest.html',
+                params   => {
                     xp_messages => \@messages,
-                    quest => $party_quest,
+                    quest       => $party_quest,
                 },
                 return_output => 1,
             }

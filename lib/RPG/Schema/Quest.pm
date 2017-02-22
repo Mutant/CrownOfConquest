@@ -28,9 +28,9 @@ __PACKAGE__->belongs_to( 'day_offered_rec', 'RPG::Schema::Day', { 'foreign.day_i
 __PACKAGE__->has_many( 'quest_params', 'RPG::Schema::Quest_Param', { 'foreign.quest_id' => 'self.quest_id' } );
 
 __PACKAGE__->numeric_columns(
-	gold_value => {
-		min_value => 0,
-	},
+    gold_value => {
+        min_value => 0,
+    },
 );
 
 my %QUEST_TYPE_TO_CLASS_MAP = (
@@ -59,11 +59,11 @@ sub inflate_result {
 
 sub new {
     my ( $pkg, @args ) = @_;
-    
+
     my $params = delete $args[0]->{params};
 
     my $self = $pkg->next::method(@args);
-    
+
     $self->{_params} = $params;
 
     return $self;
@@ -71,48 +71,48 @@ sub new {
 
 sub insert {
     my ( $self, @args ) = @_;
-    
+
     my $ret = $self->next::method(@args);
 
     $ret->_bless_into_type_class;
 
-    if (! $self->{_params}) {
+    if ( !$self->{_params} ) {
         $self->set_quest_params;
     }
     else {
-        $self->insert_params($self->{_params});
+        $self->insert_params( $self->{_params} );
     }
     return $ret;
 }
 
 sub create_party_offer_message {
     my $self = shift;
-    
-    if ($self->kingdom_id && $self->party_id) {    
+
+    if ( $self->kingdom_id && $self->party_id ) {
         my $message = RPG::Template->process(
             RPG::Schema->config,
             'quest/kingdom/offered.html',
             {
-                king => $self->kingdom->king,
+                king  => $self->kingdom->king,
                 quest => $self,
-            }                
+            }
         );
-        
+
         $self->party->add_to_messages(
             {
-                day_id => $self->day_offered,
-                message => $message,
+                day_id      => $self->day_offered,
+                message     => $message,
                 alert_party => 1,
             }
-        );      
-    }    
+        );
+    }
 }
 
 sub delete {
     my ( $self, @args ) = @_;
 
-	$self->cleanup;
-	
+    $self->cleanup;
+
     my $ret = $self->next::method(@args);
 
     return $ret;
@@ -120,11 +120,11 @@ sub delete {
 
 sub _bless_into_type_class {
     my $self = shift;
-    
+
     confess "Quest has no type!" unless $self->type;
 
     my $class = $QUEST_TYPE_TO_CLASS_MAP{ $self->type->quest_type };
-    
+
     croak "Class not found for quest type: " . $self->type->quest_type unless $class;
 
     $self->ensure_class_loaded($class);
@@ -136,42 +136,42 @@ sub _bless_into_type_class {
 }
 
 sub insert_params {
-    my $self = shift;
+    my $self   = shift;
     my $params = shift;
-    
+
     my @quest_params = $self->result_source->schema->resultset('Quest_Param_Name')->search(
         {
             quest_type_id => $self->quest_type_id,
         }
-    );       
-    
+    );
+
     foreach my $param (@quest_params) {
-        my $value = $params->{$param->quest_param_name};
-        
-        unless (defined $value) {
-            if (defined $param->default_val) {
-                $value = $param->default_val;   
+        my $value = $params->{ $param->quest_param_name };
+
+        unless ( defined $value ) {
+            if ( defined $param->default_val ) {
+                $value = $param->default_val;
             }
             else {
                 croak "No value for " . $param->quest_param_name . " when creating quest\n";
             }
-        } 
-        
+        }
+
         # Bit of validation
-        if ($param->variable_type) {
-            if ($param->variable_type ne 'int') {
-                my $obj = $self->result_source->schema->resultset($param->variable_type)->find($value);
+        if ( $param->variable_type ) {
+            if ( $param->variable_type ne 'int' ) {
+                my $obj = $self->result_source->schema->resultset( $param->variable_type )->find($value);
                 croak "Invalid id for entity type " . $param->variable_type . " for quest param " . $param->quest_param_name . "\n"
-                    unless $obj;
+                  unless $obj;
             }
             else {
-                if ($param->min_val && $value < $param->min_val || $param->max_val && $value > $param->max_val) {
-                    croak "Value " . $param->quest_param_name . " out of range of min/max\n";   
-                }  
+                if ( $param->min_val && $value < $param->min_val || $param->max_val && $value > $param->max_val ) {
+                    croak "Value " . $param->quest_param_name . " out of range of min/max\n";
+                }
             }
         }
-        
-        $self->define_quest_param($param->quest_param_name, $value); 
+
+        $self->define_quest_param( $param->quest_param_name, $value );
     }
 }
 
@@ -186,7 +186,7 @@ sub define_quest_param {
     my %quest_param_names = $self->quest_params_by_name;
 
     croak "Couldn't find param name " . $param_name . " for quest type " . $self->type->quest_type . "\n"
-        unless $quest_param_names{$param_name};
+      unless $quest_param_names{$param_name};
 
     $self->add_to_quest_params(
         {
@@ -223,18 +223,18 @@ sub param_current_value {
 sub param_display_value {
     my $self = shift;
     my $param_name = shift || croak "Param name not supplied";
-    
+
     my $rec = $self->param_record($param_name);
-    
+
     my $value = $rec->current_value;
-    
+
     my $param_name_rec = $rec->quest_param_name;
-    
-    if ($param_name_rec->variable_type && $param_name_rec->variable_type ne 'int') {
-        my $obj = $self->result_source->schema->resultset($param_name_rec->variable_type)->find($rec->current_value);
+
+    if ( $param_name_rec->variable_type && $param_name_rec->variable_type ne 'int' ) {
+        my $obj = $self->result_source->schema->resultset( $param_name_rec->variable_type )->find( $rec->current_value );
         $value = $obj->label;
     }
-    
+
     return $value;
 }
 
@@ -268,79 +268,80 @@ sub quest_params_by_name {
 }
 
 # This is called when an action from another party happens. Specfic quest types can define an action if they need to
-sub check_action_from_another_party {}
+sub check_action_from_another_party { }
 
 # This returns which actions a quest is interested in, for the 'check_action_from_another_party' method. Should be overriden to return
 #  a list of the actions a quest type is interested in (if any)
-sub interested_in_actions {}
+sub interested_in_actions { }
 
 # Class method to get hash of quest types to a list of interested actions
 sub interested_actions_by_quest_type {
     my $self = shift;
-    
+
     my %actions_by_quest_type;
-    while (my ($type, $class) = each %QUEST_TYPE_TO_CLASS_MAP) {
+    while ( my ( $type, $class ) = each %QUEST_TYPE_TO_CLASS_MAP ) {
         $self->ensure_class_loaded($class);
-        
+
         my @actions = $class->interested_in_actions;
-        
+
         $actions_by_quest_type{$type} = \@actions;
     }
-    
+
     return %actions_by_quest_type;
 }
 
 # Called when a quest is terminated
 sub terminate {
-	my $self = shift;
-	my %params = @_;
-	
-	my $message = $params{party_message};
-	
+    my $self   = shift;
+    my %params = @_;
+
+    my $message = $params{party_message};
+
     $self->status('Terminated');
-	$self->cleanup;
+    $self->cleanup;
 
-	my $day = $self->result_source->schema->resultset('Day')->find_today;
+    my $day = $self->result_source->schema->resultset('Day')->find_today;
 
-	if ($message) {
-	    $self->result_source->schema->resultset('Party_Messages')->create(
-			{
-				party_id    => $self->party_id,
-	            message     => $message,
-				alert_party => 1,
-	            day_id      => $day->id,
-	        }
-		);
-	}
-
-    if ($self->town_id) {
-    	my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
-        	{
-    			town_id  => $self->town_id,
-    			party_id => $self->party_id,
-    		},
-    	);
-    	
-    	if (! $params{amicably}) {
-    	   $party_town->decrease_prestige(3);
-    	   $party_town->update;
-    	}
+    if ($message) {
+        $self->result_source->schema->resultset('Party_Messages')->create(
+            {
+                party_id    => $self->party_id,
+                message     => $message,
+                alert_party => 1,
+                day_id      => $day->id,
+            }
+        );
     }
-    
-    if ($self->kingdom_id) {
+
+    if ( $self->town_id ) {
+        my $party_town = $self->result_source->schema->resultset('Party_Town')->find_or_create(
+            {
+                town_id  => $self->town_id,
+                party_id => $self->party_id,
+            },
+        );
+
+        if ( !$params{amicably} ) {
+            $party_town->decrease_prestige(3);
+            $party_town->update;
+        }
+    }
+
+    if ( $self->kingdom_id ) {
+
         # Kingdom gets gold back
         my $kingdom = $self->kingdom;
-        $kingdom->increase_gold($self->gold_value);
+        $kingdom->increase_gold( $self->gold_value );
         $kingdom->update;
-        
+
         my $kingdom_message = $params{kingdom_message};
-        
+
         my $king = $kingdom->king;
-        
-        if ($kingdom_message && $king && ! $king->is_npc) {        
+
+        if ( $kingdom_message && $king && !$king->is_npc ) {
             $kingdom->add_to_messages(
                 {
-                    day_id => $day->id,
+                    day_id  => $day->id,
                     message => $kingdom_message,
                 }
             );
@@ -348,135 +349,134 @@ sub terminate {
 
         my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
             {
-                kingdom_id  => $self->kingdom_id,
-                party_id => $self->party_id,
+                kingdom_id => $self->kingdom_id,
+                party_id   => $self->party_id,
             },
         );
-        
-        if (! $params{amicably}) {
+
+        if ( !$params{amicably} ) {
             $party_kingdom->decrease_loyalty(1);
             $party_kingdom->update;
-        }          
-        
+        }
+
     }
 }
 
-
-# Called when the quest is completed (i.e. in set_complete() below) 
-sub finish_quest {}
+# Called when the quest is completed (i.e. in set_complete() below)
+sub finish_quest { }
 
 # Returns the character group xp should be award to.
 #  By default, it's the party, but a quest type can override thar
 sub xp_awarded_to {
     my $self = shift;
-    
+
     return $self->party;
-    
+
 }
 
 sub set_complete {
     my $self = shift;
 
     my $party = $self->party;
-    
+
     $self->finish_quest;
-    
+
     $self->status('Complete');
     $self->update;
-    
-    $party->increase_gold($self->gold_value);
+
+    $party->increase_gold( $self->gold_value );
     $party->update;
-    
+
     my $group = $self->xp_awarded_to;
-    
-    my $awarded_xp = 0;    
+
+    my $awarded_xp = 0;
     $awarded_xp = int $self->xp_value / $group->number_alive if $group->number_alive > 0;
-        
+
     my @details = $group->xp_gain($awarded_xp);
-    
-    if ($self->town_id) {
+
+    if ( $self->town_id ) {
         my $party_town = $party->find_related(
             'party_towns',
             {
-                town_id  => $self->town_id,
+                town_id => $self->town_id,
             },
         );
-        
+
         unless ($party_town) {
             $party_town = $party->add_to_party_towns(
                 {
                     town_id => $self->town_id,
                 }
-            );   
+            );
         }
-        
+
         $party_town->increase_prestige(3);
-        $party_town->update;        
-        
+        $party_town->update;
+
         $self->town->increase_mayor_rating(3);
         $self->town->update;
-        
+
         my $news_message = RPG::Template->process(
             RPG::Schema->config,
             'quest/completed_quest_news_message.html',
-            { 
+            {
                 party => $party,
-                quest => $self, 
+                quest => $self,
             }
         );
-        
+
         $self->town->add_to_history(
             {
-                day_id  => $self->result_source->schema->resultset('Day')->find_today->id,
+                day_id => $self->result_source->schema->resultset('Day')->find_today->id,
                 message => $news_message,
             }
-        );    
-        
+        );
+
     }
-    elsif ($self->kingdom_id) {
+    elsif ( $self->kingdom_id ) {
         my $message = RPG::Template->process(
             RPG::Schema->config,
             'quest/kingdom/kingdom_completed.html',
-            { 
+            {
                 party => $party,
-                quest => $self, 
+                quest => $self,
             }
-        );   
-        
+        );
+
         $self->kingdom->add_to_messages(
             {
-                day_id  => $self->result_source->schema->resultset('Day')->find_today->id,
+                day_id => $self->result_source->schema->resultset('Day')->find_today->id,
                 message => $message,
             }
         );
-        
+
         my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
             {
-                kingdom_id  => $self->kingdom_id,
-                party_id => $party->id,
+                kingdom_id => $self->kingdom_id,
+                party_id   => $party->id,
             },
         );
-        
+
         $party_kingdom->increase_loyalty(5);
-        $party_kingdom->update;       
+        $party_kingdom->update;
     }
-    
+
     return @details;
 }
 
 # Called before deleting a quest
-sub cleanup {}
+sub cleanup { }
 
 # Entry point for calling quest actions
 #  (Call rather than calling check_action on subclass)
 sub check_quest_action {
-    my $self = shift;
-    my $action = shift;
+    my $self            = shift;
+    my $action          = shift;
     my $actioning_party = shift;
-    my @params = @_; 
-    
+    my @params          = @_;
+
     my $message;
-    if ($self->party_id && (! $actioning_party || $actioning_party->id == $self->party_id) && $self->check_action( $actioning_party, $action, @params )) {    
+    if ( $self->party_id && ( !$actioning_party || $actioning_party->id == $self->party_id ) && $self->check_action( $actioning_party, $action, @params ) ) {
         $message = RPG::Template->process(
             RPG::Schema->config,
             'quest/action_message.html',
@@ -484,9 +484,9 @@ sub check_quest_action {
                 quest  => $self,
                 action => $action,
             },
-        );   
+        );
     }
-   
+
     return $message;
 }
 
@@ -494,17 +494,17 @@ sub check_quest_action {
 #  Should be overridden, as default is always to allow quest to be accepted
 #  Should store the reason for failure to accept in $self->{_cant_accept_quest_reason}
 sub party_can_accept_quest {
-    my $self = shift;
+    my $self  = shift;
     my $party = shift;
-    
-    return 1;   
+
+    return 1;
 }
 
 # Returns the reason a quest couldn't be accepted (if
 #  party_can_accept_quest() was previously called)
 sub cant_accept_quest_reason {
     my $self = shift;
-    
+
     return $self->{_cant_accept_quest_reason};
 }
 

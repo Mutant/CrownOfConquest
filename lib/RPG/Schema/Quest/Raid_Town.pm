@@ -29,7 +29,7 @@ sub set_quest_params {
         $self->delete;
         die RPG::Exception->new(
             message => "Can't create raid town quest - no suitable towns to raid within range of town",
-            type    => 'quest_creation_error',
+            type => 'quest_creation_error',
         );
     }
 
@@ -70,7 +70,7 @@ sub set_quest_params {
 
     # Best not to make the gold value based purely on distance, or people will be able to guess how far away the town is
     my $gold_variant = Games::Dice::Advanced->roll('1d100') - 50;
-    my $gold_value   = $self->{_config}{gold_per_distance} * $distance - $gold_variant;
+    my $gold_value = $self->{_config}{gold_per_distance} * $distance - $gold_variant;
     $gold_value = 20 if $gold_value < 20;
 
     $self->gold_value($gold_value);

@@ -6,7 +6,7 @@ use warnings;
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Character_History');
 
-__PACKAGE__->add_columns( qw/history_id character_id day_id event/ );
+__PACKAGE__->add_columns(qw/history_id character_id day_id event/);
 
 __PACKAGE__->set_primary_key('history_id');
 

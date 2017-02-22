@@ -15,7 +15,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Confused',
             duration       => $duration,
             modifier       => $defence_modifier,

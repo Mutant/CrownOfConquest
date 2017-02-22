@@ -14,34 +14,34 @@ sub build_item {
 
     my $item_cat = $schema->resultset('Item_Category')->find_or_create(
         {
-            item_category     => $params{category_name} || 'SubCat1',
+            item_category => $params{category_name} || 'SubCat1',
             super_category_id => $super_cat->id,
         }
     );
-	
-	my $item_type_id = $params{item_type_id} || '';
 
-	unless ($item_type_id) {
-	    my $item_type = $schema->resultset('Item_Type')->find_or_create(
-	        {
-	            item_type        => $params{item_type_name} || 'Test1',
-	            item_category_id => $item_cat->id,
-	            base_cost => $params{base_cost} // 1,
-	            weight => $params{weight} // 100,
-	            usable => $params{usable} // 0,
-	            width => $params{width} // 1,
-	            height => $params{height} // 1,
-	        }
-	    );
-	    
-	    $item_type_id = $item_type->id;
-	}
+    my $item_type_id = $params{item_type_id} || '';
+
+    unless ($item_type_id) {
+        my $item_type = $schema->resultset('Item_Type')->find_or_create(
+            {
+                item_type => $params{item_type_name} || 'Test1',
+                item_category_id => $item_cat->id,
+                base_cost        => $params{base_cost} // 1,
+                weight           => $params{weight} // 100,
+                usable           => $params{usable} // 0,
+                width            => $params{width} // 1,
+                height           => $params{height} // 1,
+            }
+        );
+
+        $item_type_id = $item_type->id;
+    }
 
     my $eq_place_id = $params{equip_place_id};
     $eq_place_id //= $params{no_equip_place} ? undef : $schema->resultset('Equip_Places')->find(1)->id;
-    
-    $params{attributes} = [$params{attributes}] if $params{attributes} && ref $params{attributes} ne 'ARRAY';
-    
+
+    $params{attributes} = [ $params{attributes} ] if $params{attributes} && ref $params{attributes} ne 'ARRAY';
+
     foreach my $attribute ( @{ $params{attributes} } ) {
         my $ian = $schema->resultset('Item_Attribute_Name')->find_or_create(
             {
@@ -57,21 +57,21 @@ sub build_item {
                 item_attribute_value   => $attribute->{item_attribute_value},
             }
         );
-    }    
+    }
 
     my $item = $schema->resultset('Items')->create(
         {
-            item_type_id   => $item_type_id,
-            character_id   => $params{char_id} || $params{character_id} || undef,
+            item_type_id => $item_type_id,
+            character_id => $params{char_id} || $params{character_id} || undef,
             treasure_chest_id => $params{treasure_chest_id} || undef,
-            equip_place_id => $eq_place_id,
-            name => $params{name} || '',
-            shop_id => $params{shop_id} || undef,
-            garrison_id => $params{garrison_id} || undef,
+            equip_place_id    => $eq_place_id,
+            name              => $params{name}              || '',
+            shop_id           => $params{shop_id}           || undef,
+            garrison_id       => $params{garrison_id}       || undef,
         }
     );
-    
-    $params{variables} = [$params{variables}] if $params{variables} && ref $params{variables} ne 'ARRAY';
+
+    $params{variables} = [ $params{variables} ] if $params{variables} && ref $params{variables} ne 'ARRAY';
 
     foreach my $variable ( @{ $params{variables} } ) {
         my $ivn = $schema->resultset('Item_Variable_Name')->find_or_create(
@@ -85,27 +85,27 @@ sub build_item {
             {
                 item_variable_name_id => $ivn->id,
                 item_variable_value   => $variable->{item_variable_value},
-                max_value             => $variable->{max_value} || $variable->{item_variable_value},
-                item_id               => $item->id,
+                max_value => $variable->{max_value} || $variable->{item_variable_value},
+                item_id => $item->id,
             }
         );
     }
-   
+
     foreach my $enchantment ( @{ $params{enchantments} } ) {
-    	my $enchantment_rec = $schema->resultset('Enchantments')->find(
-    		{
-    			enchantment_name => $enchantment,
-    		}
-    	);
-    	
-    	confess "Enchantment $enchantment not found!" unless $enchantment_rec;
-    	
-    	$schema->resultset('Item_Enchantments')->create(
-    		{
-    			enchantment_id => $enchantment_rec->id,
-    			item_id => $item->id,
-    		}
-    	);
+        my $enchantment_rec = $schema->resultset('Enchantments')->find(
+            {
+                enchantment_name => $enchantment,
+            }
+        );
+
+        confess "Enchantment $enchantment not found!" unless $enchantment_rec;
+
+        $schema->resultset('Item_Enchantments')->create(
+            {
+                enchantment_id => $enchantment_rec->id,
+                item_id        => $item->id,
+            }
+        );
     }
 
     return $item;

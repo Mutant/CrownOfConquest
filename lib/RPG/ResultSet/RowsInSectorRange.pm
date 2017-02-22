@@ -28,38 +28,38 @@ sub find_in_range {
 
     my %params = @_;
 
-    my $resultset    = $params{resultset}    || confess "Resultset not supplied";
+    my $resultset = $params{resultset} || confess "Resultset not supplied";
     my $relationship = $params{relationship} || confess "Relationship not supplied";
-    my $base_point   = $params{base_point}   || confess "Base point not supplied";
-    my $search_range        = $params{search_range}        // confess "Search range not supplied";
+    my $base_point = $params{base_point} || confess "Base point not supplied";
+    my $search_range = $params{search_range} // confess "Search range not supplied";
     my $increment_search_by = $params{increment_search_by} // confess "Increment search by not supplied";
-    my $max_range           = $params{max_range};
-    my $criteria            = $params{criteria}            // {};
-    my $attrs               = $params{attrs}               // {};
-    my $include_base_point  = $params{include_base_point}  // 0;
-    my $rows_as_hashrefs    = $params{rows_as_hashrefs}    // 0;
+    my $max_range          = $params{max_range};
+    my $criteria           = $params{criteria} // {};
+    my $attrs              = $params{attrs} // {};
+    my $include_base_point = $params{include_base_point} // 0;
+    my $rows_as_hashrefs   = $params{rows_as_hashrefs} // 0;
 
     my @rows_in_range;
 
     # If prefetch is set, add relationship if supplied.
-    if (%$attrs && defined $attrs->{prefetch}) {
-        if ($relationship ne 'me') {
-            push @{$attrs->{prefetch}}, $relationship;
+    if ( %$attrs && defined $attrs->{prefetch} ) {
+        if ( $relationship ne 'me' ) {
+            push @{ $attrs->{prefetch} }, $relationship;
         }
-   }
-   else {
-    	$attrs->{prefetch} = $relationship unless $relationship eq 'me';
-   }
+    }
+    else {
+        $attrs->{prefetch} = $relationship unless $relationship eq 'me';
+    }
 
     while ( !@rows_in_range ) {
-        my ($x_range, $y_range);
-        if (! ref $search_range) {
-            ($x_range, $y_range) = ($search_range, $search_range);   
+        my ( $x_range, $y_range );
+        if ( !ref $search_range ) {
+            ( $x_range, $y_range ) = ( $search_range, $search_range );
         }
         else {
-            ($x_range, $y_range) = ($search_range->{x}, $search_range->{y});
+            ( $x_range, $y_range ) = ( $search_range->{x}, $search_range->{y} );
         }
-        
+
         my ( $start_point, $end_point ) = RPG::Map->surrounds( $base_point->{x}, $base_point->{y}, $search_range, $search_range, );
 
         my %exclude_criteria;
@@ -81,11 +81,11 @@ sub find_in_range {
             },
             {%$attrs},
         );
-        
+
         if ($rows_as_hashrefs) {
-            $rows_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');   
+            $rows_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
         }
-        
+
         @rows_in_range = $rows_rs->all;
 
         last if $increment_search_by == 0;

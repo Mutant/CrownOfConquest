@@ -22,8 +22,8 @@ __PACKAGE__->belongs_to( 'link', 'RPG::Schema::Reward_Links', 'link_id' );
 
 sub time_since_last_vote {
     my $self = shift;
-    
-    return RPG::DateTime->time_since_datetime_detailed($self->last_vote_date);
+
+    return RPG::DateTime->time_since_datetime_detailed( $self->last_vote_date );
 }
 
 1;

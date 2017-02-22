@@ -65,8 +65,8 @@ sub test_finish : Tests(4) {
     my $self = shift;
 
     # GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[0]->id );
     my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $party1->land_id );
 
@@ -132,8 +132,8 @@ sub test_party_flee : Tests(5) {
     $land->set_always( 'id', 999 );
     $land->set_isa('RPG::Schema::Land');
     $land->set_always( 'movement_cost', 1 );
-    $land->set_always( 'x', 1 );
-    $land->set_always( 'y', 1 );    
+    $land->set_always( 'x',             1 );
+    $land->set_always( 'y',             1 );
 
     $battle = Test::MockObject::Extends->new($battle);
     $battle->set_always( 'get_sector_to_flee_to', $land );
@@ -149,8 +149,8 @@ sub test_party_flee : Tests(5) {
     $party2->discard_changes;
     is( $party2->land_id, 999, "Land id updated" );
 
-    is( $battle->combat_log->outcome,                 'opp2_fled', "Combat log outcome set correctly" );
-    is( defined $battle->combat_log->encounter_ended, 1,           "Combat log encounter ended set" );
+    is( $battle->combat_log->outcome, 'opp2_fled', "Combat log outcome set correctly" );
+    is( defined $battle->combat_log->encounter_ended, 1, "Combat log encounter ended set" );
 }
 
 sub test_offline_party_flee : Tests(6) {
@@ -159,7 +159,7 @@ sub test_offline_party_flee : Tests(6) {
     # GIVEN
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    
+
     my $char = ( $party1->characters )[0];
 
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
@@ -188,8 +188,8 @@ sub test_offline_party_flee : Tests(6) {
     $land->set_always( 'id', 999 );
     $land->set_isa('RPG::Schema::Land');
     $land->set_always( 'movement_cost', 1 );
-    $land->set_always( 'x', 1 );
-    $land->set_always( 'y', 1 );
+    $land->set_always( 'x',             1 );
+    $land->set_always( 'y',             1 );
 
     $battle = Test::MockObject::Extends->new($battle);
     $battle->set_always( 'get_sector_to_flee_to', $land );
@@ -206,23 +206,23 @@ sub test_offline_party_flee : Tests(6) {
     $party1->discard_changes;
     is( $party1->land_id, 999, "Land id updated" );
 
-    is( $battle->combat_log->outcome,                 'opp1_fled', "Combat log outcome set correctly" );
-    is( defined $battle->combat_log->encounter_ended, 1,           "Combat log encounter ended set" );
+    is( $battle->combat_log->outcome, 'opp1_fled', "Combat log outcome set correctly" );
+    is( defined $battle->combat_log->encounter_ended, 1, "Combat log encounter ended set" );
 
     ok( $battle->combat_log->xp_awarded > 0, "Xp awarded" );
 }
 
 sub test_characters_in_garrison_not_included_in_defenders : Tests(3) {
-	my $self = shift;
-	
-	# GIVEN
+    my $self = shift;
+
+    # GIVEN
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );	
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id );
-    
+
     my $char1 = ( $party1->characters )[0];
-    $char1->garrison_id($garrison->id);
-    $char1->update;    
+    $char1->garrison_id( $garrison->id );
+    $char1->update;
 
     my $char2 = ( $party1->characters )[1];
 
@@ -251,23 +251,23 @@ sub test_characters_in_garrison_not_included_in_defenders : Tests(3) {
     my $action_result = $battle->character_action($char3);
 
     # THEN
-	isa_ok($action_result, 'RPG::Combat::ActionResult', "Action result object returned");
-	is($action_result->attacker->id, $char3->id, "Correct attacker");
-	is($action_result->defender->id, $char2->id, "Correct defender");
+    isa_ok( $action_result, 'RPG::Combat::ActionResult', "Action result object returned" );
+    is( $action_result->attacker->id, $char3->id, "Correct attacker" );
+    is( $action_result->defender->id, $char2->id, "Correct defender" );
 }
 
 sub test_characters_in_garrison_not_included_in_attackers : Tests(3) {
-	my $self = shift;
-	
-	# GIVEN
+    my $self = shift;
+
+    # GIVEN
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
-    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );	
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
     my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party1->id );
-    
+
     my $char1 = ( $party1->characters )[0];
-    $char1->garrison_id($garrison->id);
+    $char1->garrison_id( $garrison->id );
     $char1->last_combat_action('Attack');
-    $char1->update;    
+    $char1->update;
 
     my $char2 = ( $party1->characters )[1];
     $char2->last_combat_action('Defend');
@@ -302,22 +302,22 @@ sub test_characters_in_garrison_not_included_in_attackers : Tests(3) {
 
     # THEN
     my @combat_messages = @{ $result->{messages} };
-	is(scalar @combat_messages, 1, "One combat message");
-	is($combat_messages[0]->attacker->id, $char3->id, "Correct attacker");
-	is($combat_messages[0]->defender->id, $char2->id, "Correct defender");
+    is( scalar @combat_messages,           1,          "One combat message" );
+    is( $combat_messages[0]->attacker->id, $char3->id, "Correct attacker" );
+    is( $combat_messages[0]->defender->id, $char2->id, "Correct defender" );
 
 }
 
 sub test_end_of_combat_cleanup_creates_news : Tests(1) {
-	my $self = shift;
-	
-	# GIVEN
-    my @land = Test::RPG::Builder::Land->build_land($self->{schema});
-    
+    my $self = shift;
+
+    # GIVEN
+    my @land = Test::RPG::Builder::Land->build_land( $self->{schema} );
+
     my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $land[0]->id );
     my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, land_id => $party1->land_id );
-    my $town = Test::RPG::Builder::Town->build_town($self->{schema}, land_id => $land[1]->id );
-    
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema}, land_id => $land[1]->id );
+
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
         $self->{schema},
         party_1 => $party1,
@@ -331,48 +331,48 @@ sub test_end_of_combat_cleanup_creates_news : Tests(1) {
         log           => $self->{mock_logger},
         battle_record => $battle_record,
         config        => $self->{config},
-    );   
+    );
 
     # WHEN
     $battle->end_of_combat_cleanup();
-    
+
     # THEN
     my @history = $town->history;
-    is(scalar @history, 1, "History created in town");
+    is( scalar @history, 1, "History created in town" );
 }
 
 sub test_characters_killed_by_spell_during_round_are_skipped : Tests(1) {
-	my $self = shift;
-	
-	# GIVEN
-	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, character_level => 5 );
-	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
-	
-	my ($character1) = $party1->characters;
-	$character1->hit_points(1);
-	$character1->update;
-	
-	my ($character2) = $party2->characters;
-	
-	my $spell = $self->{schema}->resultset('Spell')->find(
-	   {
-	       spell_name => 'Flame',
-	   }
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, character_level => 5 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1, );
+
+    my ($character1) = $party1->characters;
+    $character1->hit_points(1);
+    $character1->update;
+
+    my ($character2) = $party2->characters;
+
+    my $spell = $self->{schema}->resultset('Spell')->find(
+        {
+            spell_name => 'Flame',
+        }
     );
-    
+
     $self->{schema}->resultset('Memorised_Spells')->create(
-	   {
-	       spell_id => $spell->id,
-	       character_id => $character2->id,
-	       memorised_today => 1,
-	       memorise_count => 2,
-	   }
-    );    
-	
-	$character2->last_combat_action('Cast');
-	$character2->last_combat_param1($spell->id);
-	$character2->last_combat_param2($character1->id);
-	$character2->update;
+        {
+            spell_id        => $spell->id,
+            character_id    => $character2->id,
+            memorised_today => 1,
+            memorise_count  => 2,
+        }
+    );
+
+    $character2->last_combat_action('Cast');
+    $character2->last_combat_param1( $spell->id );
+    $character2->last_combat_param2( $character1->id );
+    $character2->update;
 
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
         $self->{schema},
@@ -387,55 +387,54 @@ sub test_characters_killed_by_spell_during_round_are_skipped : Tests(1) {
         log           => $self->{mock_logger},
         battle_record => $battle_record,
         config        => $self->{config},
-    );   
-	$battle = Test::MockObject::Extends->new($battle);
-	$battle->set_always( 'check_for_flee', undef );
-	$battle->set_true('process_effects');
-	$battle->mock( 'get_combatant_list', sub { ($character2, $character1) });
-	$battle->set_false('check_for_end_of_combat');
+    );
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_true('process_effects');
+    $battle->mock( 'get_combatant_list', sub { ( $character2, $character1 ) } );
+    $battle->set_false('check_for_end_of_combat');
 
-	# WHEN
-	my $result = $battle->execute_round();
+    # WHEN
+    my $result = $battle->execute_round();
 
-	# THEN
-	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+    # THEN
+    is( scalar @{ $result->{messages} }, 1, "Only 1 combat message" );
 }
 
-
 sub test_cant_cast_spell_on_dead_character : Tests(1) {
-	my $self = shift;
-	
-	# GIVEN
-	my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
-	my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, character_level => 5 );
-	
-	my ($character1) = $party1->characters;
-	$character1->character_name('loser');
-	$character1->hit_points(1);
-	$character1->update;
-	
-	my @party2_chars = $party2->characters;
-	
-	my $spell = $self->{schema}->resultset('Spell')->find(
-	   {
-	       spell_name => 'Flame',
-	   }
+    my $self = shift;
+
+    # GIVEN
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 1 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2, character_level => 5 );
+
+    my ($character1) = $party1->characters;
+    $character1->character_name('loser');
+    $character1->hit_points(1);
+    $character1->update;
+
+    my @party2_chars = $party2->characters;
+
+    my $spell = $self->{schema}->resultset('Spell')->find(
+        {
+            spell_name => 'Flame',
+        }
     );
-    
+
     foreach my $char (@party2_chars) {
         $self->{schema}->resultset('Memorised_Spells')->create(
-    	   {
-    	       spell_id => $spell->id,
-    	       character_id => $char->id,
-    	       memorised_today => 1,
-    	       memorise_count => 2,
-    	   }
-        );    
-    	
-    	$char->last_combat_action('Cast');
-    	$char->last_combat_param1($spell->id);
-    	$char->last_combat_param2($character1->id);
-    	$char->update;
+            {
+                spell_id        => $spell->id,
+                character_id    => $char->id,
+                memorised_today => 1,
+                memorise_count  => 2,
+            }
+        );
+
+        $char->last_combat_action('Cast');
+        $char->last_combat_param1( $spell->id );
+        $char->last_combat_param2( $character1->id );
+        $char->update;
     }
 
     my $battle_record = Test::RPG::Builder::Party_Battle->build_battle(
@@ -451,18 +450,18 @@ sub test_cant_cast_spell_on_dead_character : Tests(1) {
         log           => $self->{mock_logger},
         battle_record => $battle_record,
         config        => $self->{config},
-    );   
-	$battle = Test::MockObject::Extends->new($battle);
-	$battle->set_always( 'check_for_flee', undef );
-	$battle->set_true('process_effects');
-	$battle->mock( 'get_combatant_list', sub { (@party2_chars, $character1) });
-	$battle->set_false('check_for_end_of_combat');
+    );
+    $battle = Test::MockObject::Extends->new($battle);
+    $battle->set_always( 'check_for_flee', undef );
+    $battle->set_true('process_effects');
+    $battle->mock( 'get_combatant_list', sub { ( @party2_chars, $character1 ) } );
+    $battle->set_false('check_for_end_of_combat');
 
-	# WHEN
-	my $result = $battle->execute_round();
+    # WHEN
+    my $result = $battle->execute_round();
 
-	# THEN
-	is(scalar @{$result->{messages}}, 1, "Only 1 combat message");
+    # THEN
+    is( scalar @{ $result->{messages} }, 1, "Only 1 combat message" );
 }
 1;
 

@@ -12,7 +12,7 @@ use HTML::Strip;
 
 sub auto : Private {
     my ( $self, $c ) = @_;
-    
+
     return 1 if $c->req->action eq 'party/create/calculate_values';
 
     unless ( $c->stash->{party} ) {
@@ -44,11 +44,11 @@ sub create : Local {
             {
                 template => 'party/create.html',
                 params   => {
-                    player                   => $c->session->{player},
-                    party                    => $party,
-                    characters               => \@characters,
+                    player     => $c->session->{player},
+                    party      => $party,
+                    characters => \@characters,
                     num_characters_to_create => $c->config->{new_party_characters},
-                    message                  => $c->flash->{promo_org_message},
+                    message => $c->flash->{promo_org_message},
                 },
             }
         ]
@@ -57,18 +57,18 @@ sub create : Local {
 
 sub save_party : Local {
     my ( $self, $c ) = @_;
-    
+
     my $hs = HTML::Strip->new();
-    
+
     if ( $c->req->param('add_character') ) {
         $c->stash->{party}->update;
         $c->res->redirect( $c->config->{url_root} . '/party/create/new_character' );
         return;
-    }    
-    
-    my $name = $hs->parse($c->req->param('name'));
+    }
 
-    unless ( $name ) {
+    my $name = $hs->parse( $c->req->param('name') );
+
+    unless ($name) {
         $c->stash->{error} = "You must enter a party name!";
         $c->detach('create');
     }
@@ -86,38 +86,38 @@ sub save_party : Local {
         $c->detach('create');
     }
 
-    $c->stash->{party}->name( $name );
+    $c->stash->{party}->name($name);
 
     if ( $c->stash->{party}->characters->count < $c->config->{new_party_characters} ) {
-		$c->stash->{error} = "You still have more character's to create!";
-		$c->detach('create');
-	}
+        $c->stash->{error} = "You still have more character's to create!";
+        $c->detach('create');
+    }
 
-	my $start_turns = $c->config->{starting_turns};
-	my $code = $c->model('DBIC::Promo_Code')->find(
-		{
-			'player.player_id' => $c->session->{player}->id,
-		},
-		{
-			'prefetch' => 'promo_org',
-			'join' => 'player',
-			'for' => 'update',
-		},
-	);
-		
-	if ($code) {
-		$start_turns+=$code->promo_org->extra_start_turns;
-		$code->decrement_uses_remaining;
-		$code->update;
-	}
+    my $start_turns = $c->config->{starting_turns};
+    my $code        = $c->model('DBIC::Promo_Code')->find(
+        {
+            'player.player_id' => $c->session->{player}->id,
+        },
+        {
+            'prefetch' => 'promo_org',
+            'join'     => 'player',
+            'for'      => 'update',
+        },
+    );
 
-    $c->stash->{party}->_turns( $start_turns );
+    if ($code) {
+        $start_turns += $code->promo_org->extra_start_turns;
+        $code->decrement_uses_remaining;
+        $code->update;
+    }
+
+    $c->stash->{party}->_turns($start_turns);
     $c->stash->{party}->gold( $c->config->{start_gold} );
     $c->stash->{party}->created( DateTime->now() );
 
     foreach my $character ( $c->stash->{party}->characters ) {
         $character->roll_all;
-        
+
         $character->create_item_grid;
 
         $character->set_default_spells;
@@ -129,22 +129,22 @@ sub save_party : Local {
                 character_id => $character->id,
                 day_id       => $c->stash->{today}->id,
                 event        => $character->character_name
-                    . " joined "
-                    . $c->stash->{party}->name
-                    . " as a fresh-faced level 1 "
-                    . $character->class->class_name,
+                  . " joined "
+                  . $c->stash->{party}->name
+                  . " as a fresh-faced level 1 "
+                  . $character->class->class_name,
             },
         );
     }
 
     # Find starting town
-    my @towns = shuffle $c->model('DBIC::Town')->search( 
-        { 
-            prosperity => { 
+    my @towns = shuffle $c->model('DBIC::Town')->search(
+        {
+            prosperity => {
                 '<=', $c->config->{max_starting_prosperity},
                 '>=', $c->config->{min_starting_prosperity},
-            }, 
-        } 
+            },
+        }
     );
 
     my $town = shift @towns;
@@ -181,7 +181,7 @@ sub new_character : Local {
             [
                 {
                     template => 'party/max_characters.html',
-                    params   => { max_allowed => $c->config->{new_party_characters} },
+                    params => { max_allowed => $c->config->{new_party_characters} },
                 }
             ]
         );
@@ -243,8 +243,8 @@ sub create_new_character : Private {
     my ( $self, $c ) = @_;
 
     my $hs = HTML::Strip->new();
-    
-    my $name = $hs->parse($c->req->param('name'));
+
+    my $name = $hs->parse( $c->req->param('name') );
 
     unless ( $name && $c->req->param('race') && $c->req->param('class') ) {
         $c->stash->{error} = 'Please choose a name, race and class';
@@ -309,30 +309,30 @@ sub create_new_character : Private {
                 party_id => $c->stash->{party}->id,
             },
             {
-                select => {max => 'party_order'},
+                select => { max => 'party_order' },
                 as => 'order',
             }
         );
         my $max_order = $max_order_rec->get_column('order') // 0;
-        
-        $character = $c->model('DBIC::Character')->create( { %char_params, party_order => $max_order + 1, }, );  
-         
+
+        $character = $c->model('DBIC::Character')->create( { %char_params, party_order => $max_order + 1, }, );
+
     }
-    
+
     return $character;
 }
 
 sub create_character : Local {
-    my ($self, $c) = @_;
-    
+    my ( $self, $c ) = @_;
+
     my $char_count = $c->model('DBIC::Character')->count( { party_id => $c->stash->{party}->id } );
     if ( !$c->req->param('character_id') && $char_count >= $c->config->{new_party_characters} ) {
         croak 'You already have ' . $c->config->{new_party_characters} . ' characters in your party';
-    }    
-    
+    }
+
     $c->forward('create_new_character');
-    
-    if ($c->stash->{error}) {
+
+    if ( $c->stash->{error} ) {
         $c->detach('new_character_form');
     }
 
@@ -371,10 +371,10 @@ sub calculate_values : Local {
         my %points = ( hit_points => RPG::Schema::Character->roll_hit_points( $c->req->param('class'), 1, $c->req->param('total_con') ) );
 
         $points{magic_points} = RPG::Schema::Character->roll_spell_points( 1, $c->req->param('total_int') )
-            if $class->class_name eq 'Mage';
+          if $class->class_name eq 'Mage';
 
         $points{faith_points} = RPG::Schema::Character->roll_spell_points( 1, $c->req->param('total_div') )
-            if $class->class_name eq 'Priest';
+          if $class->class_name eq 'Priest';
 
         $return = to_json( \%points );
 
@@ -396,12 +396,12 @@ sub autogenerate : Local {
         my $class = $c->model('DBIC::Class')->find( { 'class_name' => $class_name } );
         my $race = $c->model('DBIC::Race')->random;
 
-        my $character = $c->model('DBIC::Character')->generate_character( 
-        	race => $race, 
-        	class => $class, 
-        	level => 1,
-        	roll_points => 0,
-        	stat_weight => 8,
+        my $character = $c->model('DBIC::Character')->generate_character(
+            race        => $race,
+            class       => $class,
+            level       => 1,
+            roll_points => 0,
+            stat_weight => 8,
         );
         $character->party_id( $c->stash->{party}->id );
         $character->party_order($order);

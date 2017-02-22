@@ -10,5 +10,4 @@ __PACKAGE__->add_columns(qw/conf_name conf_value/);
 
 __PACKAGE__->set_primary_key(qw/conf_name/);
 
-
 1;

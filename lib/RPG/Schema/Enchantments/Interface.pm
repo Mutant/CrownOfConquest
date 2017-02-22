@@ -1,4 +1,5 @@
 package RPG::Schema::Enchantments::Interface;
+
 # Interface for enchantment roles
 
 use Moose::Role;

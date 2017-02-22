@@ -12,8 +12,8 @@ __PACKAGE__->set_primary_key('code_id');
 __PACKAGE__->numeric_columns(
     uses_remaining => {
         min_value => 0,
-    }
-); 
+      }
+);
 
 __PACKAGE__->belongs_to( 'promo_org', 'RPG::Schema::Promo_Org', 'promo_org_id' );
 

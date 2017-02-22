@@ -165,7 +165,7 @@ sub test_cast_effect_spells : Tests(130) {
             effect_name => 'Poisoned',
             target      => 'Creature',
             effect      => 'poisoning it',
-        },        
+        },
     );
 
     # GIVEN
@@ -213,10 +213,10 @@ sub test_cast_effect_spells : Tests(130) {
         is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
 
         my @effects = $test->{target} eq 'Character' ? $target->character_effects : $target->creature_effects;
-        is( scalar @effects,                    1,                    "Target has an effect" );
-        is( $effects[0]->effect->effect_name,   $test->{effect_name}, "Effect name set correctly" );
-        is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
-        is( $effects[0]->effect->combat,        1,                    "combat set correctly" );
+        is( scalar @effects, 1, "Target has an effect" );
+        is( $effects[0]->effect->effect_name, $test->{effect_name}, "Effect name set correctly" );
+        is( $effects[0]->effect->time_left > 0, 1, "time left set correctly" );
+        is( $effects[0]->effect->combat,        1, "combat set correctly" );
     }
 
 }
@@ -270,18 +270,18 @@ sub test_cast_party_effect_spells : Tests(14) {
         is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
 
         my @effects = $target->party_effects;
-        is( scalar @effects,                    1,                    "Target has an effect" );
-        is( $effects[0]->effect->effect_name,   $test->{effect_name}, "Effect name set correctly" );
-        is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
-        is( $effects[0]->effect->combat,        $test->{combat},      "combat set correctly" );
-        is( $effects[0]->effect->time_type,     $test->{time_type},   "time type set correctly" );
+        is( scalar @effects, 1, "Target has an effect" );
+        is( $effects[0]->effect->effect_name, $test->{effect_name}, "Effect name set correctly" );
+        is( $effects[0]->effect->time_left > 0, 1, "time left set correctly" );
+        is( $effects[0]->effect->combat, $test->{combat}, "combat set correctly" );
+        is( $effects[0]->effect->time_type, $test->{time_type}, "time type set correctly" );
     }
 
 }
 
 sub test_ice_bolt : Test(12) {
     my $self = shift;
-    
+
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Ice Bolt', } );
     my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
@@ -294,9 +294,9 @@ sub test_ice_bolt : Test(12) {
             number_cast_today => 0,
         }
     );
-    
+
     $self->mock_dice;
-    $self->{roll_result} = 3;    
+    $self->{roll_result} = 3;
 
     # WHEN
     my $result = $spell->cast( $character, $target );
@@ -307,46 +307,46 @@ sub test_ice_bolt : Test(12) {
 
     is( $result->defender->id, $target->id, 'Target set correctly in result' );
 
-    is( $result->damage, 3,               "Damage set in result" );
+    is( $result->damage, 3,          "Damage set in result" );
     is( $result->effect, 'freezing', "Effect set correctly" );
-    is( $result->type,   'damage',        "Type set correctly" );
+    is( $result->type,   'damage',   "Type set correctly" );
 
     $mem_spell->discard_changes;
     is( $mem_spell->casts_left_today, 0, "Memorised spell count decremented" );
 
     $target->discard_changes;
-    is( $target->hit_points, 2, "Target has sustained damage" );   
-    
+    is( $target->hit_points, 2, "Target has sustained damage" );
+
     my @effects = $target->character_effects;
-    is( scalar @effects,                    1,                    "Target has an effect" );
-    is( $effects[0]->effect->effect_name,   'Frozen', "Effect name set correctly" );
-    is( $effects[0]->effect->time_left > 0, 1,                    "time left set correctly" );
-    is( $effects[0]->effect->combat,        1,                    "combat set correctly" );
-    
-    $self->unmock_dice;     
-} 
+    is( scalar @effects, 1, "Target has an effect" );
+    is( $effects[0]->effect->effect_name, 'Frozen', "Effect name set correctly" );
+    is( $effects[0]->effect->time_left > 0, 1, "time left set correctly" );
+    is( $effects[0]->effect->combat,        1, "combat set correctly" );
+
+    $self->unmock_dice;
+}
 
 sub test_recalled_spell : Test(2) {
     my $self = shift;
-    
-    # GIVEN    
+
+    # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
-    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );    
+    my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
-    
+
     my $skill = $self->{schema}->resultset('Skill')->find(
         {
             skill_name => 'Recall',
         }
-    );        
-    
+    );
+
     my $char_skill = $self->{schema}->resultset('Character_Skill')->create(
         {
-            skill_id => $skill->id,
+            skill_id     => $skill->id,
             character_id => $character->id,
-            level => 100,
+            level        => 100,
         }
-    );    
+    );
 
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
@@ -355,27 +355,27 @@ sub test_recalled_spell : Test(2) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    );   
-    
+    );
+
     # WHEN
     my $result = $spell->cast( $character, $target );
-    
+
     # THEN
-    is($result->recalled, 1, "Spell was recalled");
-    
+    is( $result->recalled, 1, "Spell was recalled" );
+
     $mem_spell->discard_changes;
-    is( $mem_spell->casts_left_today, 1, "Memorised spell count not decremented" );    
+    is( $mem_spell->casts_left_today, 1, "Memorised spell count not decremented" );
 }
 
 sub test_cast_flame_resisted : Tests(2) {
     my $self = shift;
-    
-    # GIVEN    
+
+    # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Flame', } );
     my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, hit_points => 5, hit_points_max => 8 );
     $target->resist_fire(100);
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $character->id,
@@ -384,25 +384,25 @@ sub test_cast_flame_resisted : Tests(2) {
             number_cast_today => 0,
         }
     );
-    
+
     # WHEN
     my $result = $spell->cast( $character, $target );
-    
+
     # THEN
-    is($result->resisted, 1, "Spell was resisted");
-    
+    is( $result->resisted, 1, "Spell was resisted" );
+
     $target->discard_changes;
-    is($target->hit_points, 5, "Target wasn't damaged");
+    is( $target->hit_points, 5, "Target wasn't damaged" );
 }
 
 sub test_cast_detonate_no_vial : Tests(2) {
     my $self = shift;
-    
+
     # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $character->id,
@@ -410,24 +410,24 @@ sub test_cast_detonate_no_vial : Tests(2) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    );    
-    
+    );
+
     # WHEN
     my $result = $spell->cast( $character, $party );
-    
+
     # THEN
-    is($result->didnt_cast, 1, "Spell wasn't cast");
-    is($result->custom->{no_vial}, 1, "Not cast as caster had no vial");
+    is( $result->didnt_cast,        1, "Spell wasn't cast" );
+    is( $result->custom->{no_vial}, 1, "Not cast as caster had no vial" );
 }
 
 sub test_cast_detonate_with_single_vial : Tests(5) {
     my $self = shift;
-    
+
     # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $character->id,
@@ -435,47 +435,47 @@ sub test_cast_detonate_with_single_vial : Tests(5) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    );    
-    
-    my $vial = Test::RPG::Builder::Item->build_item($self->{schema}, 
-        item_type_name => 'Vial of Dragons Blood', 
-        character_id => $character->id,
-        variables => [
+    );
+
+    my $vial = Test::RPG::Builder::Item->build_item( $self->{schema},
+        item_type_name => 'Vial of Dragons Blood',
+        character_id   => $character->id,
+        variables      => [
             {
-                item_variable_name => 'Quantity',
+                item_variable_name  => 'Quantity',
                 item_variable_value => 1,
             },
         ],
     );
-    
+
     # WHEN
     my $result = $spell->cast( $character, $party );
-    
+
     # THEN
-    is($result->didnt_cast, 0, "Spell was cast");
-    is($result->custom->{planted}, 1, "Bomb was planted");
-    
+    is( $result->didnt_cast,        0, "Spell was cast" );
+    is( $result->custom->{planted}, 1, "Bomb was planted" );
+
     my $bomb = $self->{schema}->resultset('Bomb')->find(
         {
             party_id => $party->id,
         }
     );
-    
-    is($bomb->level, $character->level, "Bomb created with caster's level");
-    is($bomb->land_id, $party->land_id, "Bomb created in correct location");
-    
+
+    is( $bomb->level,   $character->level, "Bomb created with caster's level" );
+    is( $bomb->land_id, $party->land_id,   "Bomb created in correct location" );
+
     $vial->discard_changes;
-    is($vial->in_storage, 0, "Vial was deleted");
+    is( $vial->in_storage, 0, "Vial was deleted" );
 }
 
 sub test_cast_detonate_with_stacked_vial : Tests(5) {
     my $self = shift;
-    
+
     # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Detonate', } );
     my $character = Test::RPG::Builder::Character->build_character( $self->{schema} );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $character->id,
@@ -483,48 +483,48 @@ sub test_cast_detonate_with_stacked_vial : Tests(5) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    );    
-    
-    my $vial = Test::RPG::Builder::Item->build_item($self->{schema}, 
-        item_type_name => 'Vial of Dragons Blood', 
-        character_id => $character->id,
-        variables => [
+    );
+
+    my $vial = Test::RPG::Builder::Item->build_item( $self->{schema},
+        item_type_name => 'Vial of Dragons Blood',
+        character_id   => $character->id,
+        variables      => [
             {
-                item_variable_name => 'Quantity',
+                item_variable_name  => 'Quantity',
                 item_variable_value => 3,
             },
         ],
     );
-    
+
     # WHEN
     my $result = $spell->cast( $character, $party );
-    
+
     # THEN
-    is($result->didnt_cast, 0, "Spell was cast");
-    is($result->custom->{planted}, 1, "Bomb was planted");
-    
+    is( $result->didnt_cast,        0, "Spell was cast" );
+    is( $result->custom->{planted}, 1, "Bomb was planted" );
+
     my $bomb = $self->{schema}->resultset('Bomb')->find(
         {
             party_id => $party->id,
         }
     );
-    
-    is($bomb->level, $character->level, "Bomb created with caster's level");
-    is($bomb->land_id, $party->land_id, "Bomb created in correct location");
-    
+
+    is( $bomb->level,   $character->level, "Bomb created with caster's level" );
+    is( $bomb->land_id, $party->land_id,   "Bomb created in correct location" );
+
     $vial->discard_changes;
-    is($vial->variable('Quantity'), 2, "Vial was used");
+    is( $vial->variable('Quantity'), 2, "Vial was used" );
 }
 
 sub test_cleanse : Tests(3) {
     my $self = shift;
-    
-    # GIVEN    
+
+    # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Cleanse', } );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
     my $caster = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
     my $target = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $caster->id,
@@ -532,44 +532,43 @@ sub test_cleanse : Tests(3) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    ); 
-    
+    );
+
     my $effect1 = Test::RPG::Builder::Effect->build_effect(
         $self->{schema},
-        effect_name => 'effect1',
-        modifier => 1,
+        effect_name  => 'effect1',
+        modifier     => 1,
         character_id => $target->id,
     );
 
     my $effect2 = Test::RPG::Builder::Effect->build_effect(
         $self->{schema},
-        effect_name => 'effect2',
-        modifier => -1,
+        effect_name  => 'effect2',
+        modifier     => -1,
         character_id => $target->id,
     );
-    
+
     # WHEN
-    my $result = $spell->cast( $caster, $target );    
-        
+    my $result = $spell->cast( $caster, $target );
+
     # THEN
     my @effects = $target->character_effects;
-    is(scalar @effects, 1, "Only 1 effect left on target character");
-    is($effects[0]->effect->effect_name, 'effect1', "Correct effect is left");
-        
-    is($result->type, 'cleanse', "Correct type returned");    
-    
+    is( scalar @effects, 1, "Only 1 effect left on target character" );
+    is( $effects[0]->effect->effect_name, 'effect1', "Correct effect is left" );
+
+    is( $result->type, 'cleanse', "Correct type returned" );
+
 }
 
 sub test_cleanse_select_target : Tests(1) {
     my $self = shift;
-    
-    # GIVEN    
+
+    # GIVEN
     my $spell = $self->{schema}->resultset('Spell')->find( { spell_name => 'Cleanse', } );
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 3 );
     my @chars = $party->characters;
     my $caster = Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id );
-    
-    
+
     my $mem_spell = $self->{schema}->resultset('Memorised_Spells')->create(
         {
             character_id      => $caster->id,
@@ -577,28 +576,28 @@ sub test_cleanse_select_target : Tests(1) {
             memorise_count    => 1,
             number_cast_today => 0,
         }
-    ); 
-    
+    );
+
     my $effect1 = Test::RPG::Builder::Effect->build_effect(
         $self->{schema},
-        effect_name => 'effect1',
-        modifier => 1,
+        effect_name  => 'effect1',
+        modifier     => 1,
         character_id => $chars[0]->id,
     );
 
     my $effect2 = Test::RPG::Builder::Effect->build_effect(
         $self->{schema},
-        effect_name => 'effect2',
-        modifier => -1,
+        effect_name  => 'effect2',
+        modifier     => -1,
         character_id => $chars[1]->id,
     );
-    
+
     # WHEN
-    my $target = $spell->select_target( $party->characters );    
-        
+    my $target = $spell->select_target( $party->characters );
+
     # THEN
-    is($target->id, $chars[1]->id, "Correct character targetted");   
-    
+    is( $target->id, $chars[1]->id, "Correct character targetted" );
+
 }
 
 1;

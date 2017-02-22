@@ -18,19 +18,19 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Frozen',
             duration       => $dice_count,
             modifier       => -0.5,
             combat         => 1,
             modified_state => 'attack_frequency',
         }
-    ) if ! $resisted;
+    ) if !$resisted;
 
     return {
-        type   => 'damage',
-        damage => $bolt,
-        effect => 'freezing',
+        type     => 'damage',
+        damage   => $bolt,
+        effect   => 'freezing',
         resisted => $resisted,
     };
 }

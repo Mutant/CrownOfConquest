@@ -15,7 +15,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Weakened',
             duration       => $duration,
             modifier       => $modifier,

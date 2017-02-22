@@ -3,7 +3,6 @@ use base 'DBIx::Class';
 use strict;
 use warnings;
 
-
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('Kingdom_Relationship');
 
@@ -16,7 +15,7 @@ __PACKAGE__->belongs_to( 'begun', 'RPG::Schema::Day', { 'foreign.day_id' => 'sel
 
 sub reciprocal_type {
     my $self = shift;
-    
+
     my $recip_relationship = $self->result_source->schema->resultset('Kingdom_Relationship')->find(
         {
             kingdom_id => $self->with_id,
@@ -24,8 +23,8 @@ sub reciprocal_type {
             ended      => undef,
         }
     );
-    
-    return $recip_relationship ? $recip_relationship->type : 'neutral';   
+
+    return $recip_relationship ? $recip_relationship->type : 'neutral';
 }
 
 1;

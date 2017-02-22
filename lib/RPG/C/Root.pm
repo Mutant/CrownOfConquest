@@ -21,14 +21,14 @@ __PACKAGE__->config->{namespace} = '';
 #  Also skips reactivation check
 # Mostly used so they can log in, change some settings, and log out, without having to worry about playing the game
 my @PARTIAL_LOGIN_ALLOWED_PATHS = (
-	'player/account/email_unsubscribe',
-	'player/account/disable_emails',
+    'player/account/email_unsubscribe',
+    'player/account/disable_emails',
 );
 
 # These paths skip the check for an activated party (but still require a login)
 my @ACTIVATION_NOT_REQUIRED_PATHS = qw(
-	player/account/delete_account
-	player/account/delete_account_confirmed
+  player/account/delete_account
+  player/account/delete_account_confirmed
 );
 
 sub auto : Private {
@@ -37,67 +37,67 @@ sub auto : Private {
     $c->req->base( $c->config->{url_root} );
 
     $c->model('DBIC')->schema->config( RPG->config );
-    
+
     $c->model('DBIC')->schema->log( $c->log );
-    
+
     $c->model('DBIC')->storage->txn_begin;
-    
+
     $c->session->{referer} //= $c->req->referer // 'unknown';
-    
+
     # If they have a 'partial' login, check they're accessing one of the allowed paths
     my $allowed_partial_login = 0;
-    if ($c->session->{partial_login} && grep { $_ eq $c->action } @PARTIAL_LOGIN_ALLOWED_PATHS) {
-        $allowed_partial_login = 1;   
-    }    
+    if ( $c->session->{partial_login} && grep { $_ eq $c->action } @PARTIAL_LOGIN_ALLOWED_PATHS ) {
+        $allowed_partial_login = 1;
+    }
 
     $c->stash->{today} //= $c->model('DBIC::Day')->find_today;
 
-    if ( !$c->session->{player} || ($c->session->{partial_login} && ! $allowed_partial_login) ) {
+    if ( !$c->session->{player} || ( $c->session->{partial_login} && !$allowed_partial_login ) ) {
         if ( $c->action !~ m|^player(?!/account)| && $c->action !~ m|^donate| ) {
             $c->detach('/player/login');
         }
         return 1;
     }
-        
+
     return 1 if $c->action =~ m/^admin/;
-    
+
     $c->forward('check_for_deleted_player') unless $allowed_partial_login;
 
     $c->stash->{party} //= $c->model('DBIC::Party')->get_by_player_id( $c->session->{player}->id );
 
     if ( $c->stash->{party} && $c->stash->{party}->created ) {
-        
+
         # Display announcements if relevant
-        if ($c->session->{announcements}) {
-        	$c->forward('display_announcements');	
+        if ( $c->session->{announcements} ) {
+            $c->forward('display_announcements');
         }
-        
+
         # Display tip of the day, if necessary
-        if ($c->flash->{tip} && ! $c->stash->{party}->in_combat_with) {
-        	$c->forward('display_tip_of_the_day');
+        if ( $c->flash->{tip} && !$c->stash->{party}->in_combat_with ) {
+            $c->forward('display_tip_of_the_day');
         }
 
         $c->stash->{party_location} = $c->stash->{party}->location;
 
     }
     else {
-    	# If they are already logged in, re-read player record. This handles case where player has been
-    	#  deleted in another session
-    	if ($c->session->{player}) {
-	    	my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id } );
-	    	if (! $player) {
-				$c->res->redirect( $c->config->{url_root} );
-				delete $c->session->{player};
-	       		return 0;    		
-	    	}
-    	}	    	
-    
-    	if ( $c->action !~ m|^party/create| && $c->action !~ m{^(help|error)} && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {   	
-       		$c->res->redirect( $c->config->{url_root} . '/party/create/create' );
-       		return 0;
-    	}
+        # If they are already logged in, re-read player record. This handles case where player has been
+        #  deleted in another session
+        if ( $c->session->{player} ) {
+            my $player = $c->model('DBIC::Player')->find( { player_id => $c->session->{player}->id } );
+            if ( !$player ) {
+                $c->res->redirect( $c->config->{url_root} );
+                delete $c->session->{player};
+                return 0;
+            }
+        }
+
+        if ( $c->action !~ m|^party/create| && $c->action !~ m{^(help|error)} && $c->action ne 'player/logout' && $c->action ne 'player/reactivate' ) {
+            $c->res->redirect( $c->config->{url_root} . '/party/create/create' );
+            return 0;
+        }
     }
-    
+
     $c->log->debug("End of /auto");
 
     return 1;
@@ -105,92 +105,92 @@ sub auto : Private {
 }
 
 sub check_for_deleted_player : Private {
-	my ($self, $c) = @_;
-		
-	if ($c->session->{player}->deleted) {
-	    return if grep { $_ eq $c->action } @ACTIVATION_NOT_REQUIRED_PATHS;
-	    
-		# Check for a full game
-		my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );
-		if ( $players_in_game_rs->count > $c->config->{max_number_of_players} ) {
-			
-			$c->log->debug("Player deleted, but game is full");
+    my ( $self, $c ) = @_;
 
-            $c->detach( 'RPG::V::TT', [ 
-            	{
-                    template => 'player/full.html', 
-                    params => { inactive => 1 } 
-                } 
-             ]);
+    if ( $c->session->{player}->deleted ) {
+        return if grep { $_ eq $c->action } @ACTIVATION_NOT_REQUIRED_PATHS;
+
+        # Check for a full game
+        my $players_in_game_rs = $c->model('DBIC::Player')->search( { deleted => 0 } );
+        if ( $players_in_game_rs->count > $c->config->{max_number_of_players} ) {
+
+            $c->log->debug("Player deleted, but game is full");
+
+            $c->detach( 'RPG::V::TT', [
+                    {
+                        template => 'player/full.html',
+                        params => { inactive => 1 }
+                    }
+            ] );
         }
-        
-        $c->log->debug("Undeleting player: " . $c->session->{player}->id);
-        
-        my $player = $c->model('DBIC::Player')->find($c->session->{player}->id);
-                
+
+        $c->log->debug( "Undeleting player: " . $c->session->{player}->id );
+
+        my $player = $c->model('DBIC::Player')->find( $c->session->{player}->id );
+
         $player->deleted(0);
         $player->warned_for_deletion(0);
         $player->update;
-        
+
         $c->session->{player} = $player;
-         
-        $c->detach( "/player/reactivate" );
-	}	
+
+        $c->detach("/player/reactivate");
+    }
 }
 
 sub display_announcements : Private {
     my ( $self, $c ) = @_;
-    
+
     my $announcement_to_display = $c->session->{announcements}->[0];
-    
+
     # Mark announcements as viewed by this player
-    foreach my $announcement (@{ $c->session->{announcements}}) {
-    	$c->model('DBIC::Announcement_Player')->find(
-			{
-    		   	announcement_id => $announcement->id,
-    			player_id => $c->session->{player}->id,
-    		},
-    	)->update(
-    		{
-    			viewed => 1,
-    		},
-    	);
+    foreach my $announcement ( @{ $c->session->{announcements} } ) {
+        $c->model('DBIC::Announcement_Player')->find(
+            {
+                announcement_id => $announcement->id,
+                player_id       => $c->session->{player}->id,
+            },
+          )->update(
+            {
+                viewed => 1,
+            },
+          );
     }
-    
+
     push @{ $c->stash->{panel_messages} }, $c->forward(
-	    'RPG::V::TT',
+        'RPG::V::TT',
         [
-    	    {
-        	    template      => 'player/announcement/login_message.html',
-                params        => { 
-                	announcement => $announcement_to_display,
-                	announcement_count => scalar @{ $c->session->{announcements}},
+            {
+                template => 'player/announcement/login_message.html',
+                params   => {
+                    announcement => $announcement_to_display,
+                    announcement_count => scalar @{ $c->session->{announcements} },
                 },
                 return_output => 1,
             }
         ]
-   );
-   
-   $c->session->{announcements} = undef;
+    );
+
+    $c->session->{announcements} = undef;
 }
 
 sub display_tip_of_the_day : Private {
-    my ( $self, $c ) = @_;	
-    
+    my ( $self, $c ) = @_;
+
     my $tip = $c->flash->{tip};
-    
+
     push @{ $c->stash->{panel_messages} }, $c->forward(
-	    'RPG::V::TT',
+        'RPG::V::TT',
         [
-    	    {
-        	    template      => 'player/tip_of_the_day.html',
-                params        => { 
-                	tip => $tip,
+            {
+                template => 'player/tip_of_the_day.html',
+                params   => {
+                    tip => $tip,
                 },
                 return_output => 1,
             }
         ]
-   );    
+    );
 }
 
 sub default : Private {
@@ -203,29 +203,29 @@ sub end : Private {
     my ( $self, $c ) = @_;
 
     eval {
-        if ( $c->stash->{party} && ! $c->stash->{dont_update_last_action} ) {
+        if ( $c->stash->{party} && !$c->stash->{dont_update_last_action} ) {
             $c->stash->{party}->last_action( DateTime->now() );
             $c->stash->{party}->update;
         }
-    
-        $c->response->headers->header( 'Expires'       => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
+
+        $c->response->headers->header( 'Expires' => DateTime::Format::HTTP->format_datetime( DateTime->now() ) );
         $c->response->headers->header( 'Cache-Control' => 'max-age=0, must-revalidate' );
-    
+
         if ( scalar @{ $c->error } ) {
-    
+
             # Log error message
             $c->log->error('An error occured...');
             $c->log->error( "Action: " . $c->action );
             $c->log->error( "Path: " . $c->req->path );
             $c->log->error( "Params: " . Dumper $c->req->params );
             $c->log->error( "Player: " . $c->session->{player}->id ) if $c->session->{player};
-            $c->log->error( "Party: " . $c->stash->{party}->id )     if $c->stash->{party};
+            $c->log->error( "Party: " . $c->stash->{party}->id ) if $c->stash->{party};
             foreach my $err_str ( @{ $c->error } ) {
                 $c->log->error($err_str);
             }
-    
+
             $c->model('DBIC')->storage->txn_rollback;
-    
+
             # Display error page
             $c->forward(
                 'RPG::V::TT',
@@ -235,19 +235,20 @@ sub end : Private {
                     }
                 ]
             );
-    
+
             $c->error(0);
         }
         else {
             $c->model('DBIC')->storage->txn_commit;
         }
     };
-    if ($@) {        
-        # Make really sure we don't crash, and rollback cleanly 
+    if ($@) {
+
+        # Make really sure we don't crash, and rollback cleanly
         $c->log->error("Error when finishing up request: $@");
-        
+
         $c->model('DBIC')->storage->txn_rollback;
-        
+
         $c->forward(
             'RPG::V::TT',
             [

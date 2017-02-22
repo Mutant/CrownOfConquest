@@ -13,10 +13,10 @@ __PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 
 __PACKAGE__->set_primary_key(qw/party_id town_id/);
 
 __PACKAGE__->numeric_columns(
-	prestige => {
-		min_value => -100,
-		max_value => 100,
-	},
+    prestige => {
+        min_value => -100,
+        max_value => 100,
+    },
 );
 
 1;

@@ -7,7 +7,7 @@ use base 'DBIx::Class::ResultSet';
 
 sub find_today {
     my $self = shift;
-    
+
     return $self->find(
         {},
         {
@@ -19,7 +19,7 @@ sub find_today {
 
 sub find_yesterday {
     my $self = shift;
-    
+
     return $self->find(
         {},
         {

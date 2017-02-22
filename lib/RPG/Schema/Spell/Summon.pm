@@ -15,28 +15,28 @@ sub _cast {
     my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
         {
             'level' => {
-                 '<=', $level,
-                 '>', $level - 6,
+                '<=', $level,
+                '>',  $level - 6,
             },
             'rare' => 0,
-            'category.name' => {'!=', 'Guard'},
+            'category.name' => { '!=', 'Guard' },
         },
         {
             join => 'category',
-        },        
+        },
     );
-    
-    my $creature_type = (shuffle @creature_types)[0];
-    
+
+    my $creature_type = ( shuffle @creature_types )[0];
+
     my $number = Games::Dice::Advanced->roll('1d3');
-    
-    for (1..$number) {
+
+    for ( 1 .. $number ) {
         $group->add_creature($creature_type);
     }
- 
+
     return {
-        type   => 'summon',
-        effect => "$number " . ($number == 1 ? $creature_type->creature_type : PL_N($creature_type->creature_type)),
+        type => 'summon',
+        effect => "$number " . ( $number == 1 ? $creature_type->creature_type : PL_N( $creature_type->creature_type ) ),
     };
 }
 

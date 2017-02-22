@@ -47,36 +47,36 @@ sub setup_orb_config : Test(setup) {
         max_orb_level                    => 1,
         orb_distance_from_other_orb      => 1,
     };
-    
+
     $self->{cret_category} = $self->{schema}->resultset('Creature_Category')->create(
-    	{
-    		name => 'Test',
-    	},
-    );        
-    
+        {
+            name => 'Test',
+        },
+    );
+
     $self->{creature_type_1} = $self->{schema}->resultset('CreatureType')->create(
         {
-            creature_type => 'creature type',
-            level         => 1,
-            creature_category_id   => $self->{cret_category}->id,
+            creature_type        => 'creature type',
+            level                => 1,
+            creature_category_id => $self->{cret_category}->id,
         }
     );
 
     $self->{creature_type_2} = $self->{schema}->resultset('CreatureType')->create(
         {
-            creature_type => 'creature type',
-            level         => 2,
-            creature_category_id   => $self->{cret_category}->id,
+            creature_type        => 'creature type',
+            level                => 2,
+            creature_category_id => $self->{cret_category}->id,
         }
     );
 
     $self->{creature_type_3} = $self->{schema}->resultset('CreatureType')->create(
         {
-            creature_type => 'creature type',
-            level         => 3,
-            creature_category_id   => $self->{cret_category}->id,
+            creature_type        => 'creature type',
+            level                => 3,
+            creature_category_id => $self->{cret_category}->id,
         }
-    );    
+    );
 }
 
 sub test_spawn_orbs_successful_run : Tests(7) {
@@ -101,13 +101,13 @@ sub test_spawn_orbs_successful_run : Tests(7) {
         }
     );
 
-    is( scalar @orbs,                           2, "Should be two orbs" );
-    is( $orbs[0]->land->x,                      1, "First orb should be at x=1" );
-    is( $orbs[0]->land->y,                      3, "First orb should be at y=3" );
+    is( scalar @orbs,      2, "Should be two orbs" );
+    is( $orbs[0]->land->x, 1, "First orb should be at x=1" );
+    is( $orbs[0]->land->y, 3, "First orb should be at y=3" );
     is( defined $orbs[0]->land->creature_group, 1, "Creature group spawned at first orb" );
 
-    is( $orbs[1]->land->x,                      3, "Second orb should be at x=3" );
-    is( $orbs[1]->land->y,                      1, "Second orb should be at y=1" );
+    is( $orbs[1]->land->x, 3, "Second orb should be at x=3" );
+    is( $orbs[1]->land->y, 1, "Second orb should be at y=1" );
     is( defined $orbs[1]->land->creature_group, 1, "Creature group spawned at second orb" );
 }
 

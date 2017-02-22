@@ -17,7 +17,7 @@ sub run {
 
     foreach my $player (@players_to_delete) {
         $player->deleted(1);
-        $player->deleted_date(DateTime->now());
+        $player->deleted_date( DateTime->now() );
         $player->update;
 
         my @parties = $player->parties;
@@ -30,7 +30,7 @@ sub run {
 
     my $warning_date = DateTime->now()->subtract( days => $context->config->{inactivity_warning_days} );
     my @players_to_warn =
-        $context->schema->resultset('Player')->search( { last_login => { '<=', $warning_date }, warned_for_deletion => 0, deleted => 0 }, );
+      $context->schema->resultset('Player')->search( { last_login => { '<=', $warning_date }, warned_for_deletion => 0, deleted => 0 }, );
 
     my $grace = $context->config->{inactivity_deletion_days} - $context->config->{inactivity_warning_days};
 
@@ -48,12 +48,12 @@ sub run {
         );
 
         RPG::Email->send(
-        	$context->config,
-        	{
-            	players => [$player],
-            	subject => 'Game Inactivity',
-            	body    => $message,
-        	}
+            $context->config,
+            {
+                players => [$player],
+                subject => 'Game Inactivity',
+                body    => $message,
+            }
         );
 
         $player->warned_for_deletion(1);
@@ -61,7 +61,7 @@ sub run {
     }
 
     $self->verification_reminder();
-    
+
     $self->refer_a_friend_rewards();
 
     $self->cleanup_sessions();
@@ -79,11 +79,11 @@ sub verification_reminder {
         second => 59,
     );
 
-    my $reminder_date_start = $reminder_date_end->clone()->truncate(to => 'day');
-    
+    my $reminder_date_start = $reminder_date_end->clone()->truncate( to => 'day' );
+
     my @players_to_remind = $c->schema->resultset('Player')->search(
         {
-            last_login          => { '>=', $reminder_date_start, '<=', $reminder_date_end },
+            last_login => { '>=', $reminder_date_start, '<=', $reminder_date_end },
             warned_for_deletion => 0,
             deleted             => 0,
             verified            => 0,
@@ -102,66 +102,67 @@ sub verification_reminder {
         );
 
         RPG::Email->send(
-        	$c->config,
-        	{
-            	email      => $player->email,
-            	subject => 'Verification Reminder',
-            	body    => $message,
-        	}
+            $c->config,
+            {
+                email   => $player->email,
+                subject => 'Verification Reminder',
+                body    => $message,
+            }
         );
     }
 }
 
 sub refer_a_friend_rewards {
-    my $self = shift;   
-    
+    my $self = shift;
+
     my $c = $self->context;
-    
+
     my @referred_players = $c->schema->resultset('Player')->search(
         {
-            referred_by => {'!=', undef},
+            referred_by => { '!=', undef },
             refer_reward_given => 0,
         }
     );
-    
+
     foreach my $player (@referred_players) {
         my $rs = $player->find_related(
             'parties',
             {},
             {
-                'select' => [{'sum' => 'turns_used'}],
+                'select' => [ { 'sum' => 'turns_used' } ],
                 'as' => ['total_turns_used'],
             }
-       );
-       my $turns_used = $rs->get_column('total_turns_used');
-       
-       if ($turns_used >= $c->config->{referring_player_turn_threshold}) {
+        );
+        my $turns_used = $rs->get_column('total_turns_used');
+
+        if ( $turns_used >= $c->config->{referring_player_turn_threshold} ) {
+
             # Referring player gets reward
             my $referring_player = $player->referred_by_player;
             next unless $referring_player;
-            
+
             my $party = $referring_player->find_related(
                 'parties',
                 {
                     defunct => undef,
                 }
             );
-            
+
             next unless $party;
-            
-            $party->_turns($party->_turns + $c->config->{refer_a_friend_turn_reward});
+
+            $party->_turns( $party->_turns + $c->config->{refer_a_friend_turn_reward} );
             $party->update;
-            
+
             $party->add_to_messages(
                 {
                     alert_party => 1,
-                    day_id => $c->current_day->id,
+                    day_id      => $c->current_day->id,
                     message => "You received " . $c->config->{refer_a_friend_turn_reward} . " turns for referring the player " . $player->player_name,
                 }
             );
-            
-            $player->update( {refer_reward_given => 1});
-       }
+
+            $player->update( { refer_reward_given => 1 } );
+        }
     }
 }
 
@@ -174,6 +175,5 @@ sub cleanup_sessions {
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

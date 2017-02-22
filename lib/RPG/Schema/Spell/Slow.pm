@@ -14,7 +14,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Slowed',
             duration       => $duration,
             modifier       => -0.5,
@@ -22,11 +22,11 @@ sub _cast {
             modified_state => 'attack_frequency',
         }
     );
-    
+
     return {
-        type => 'effect',
-        duration   => $duration,
-        effect     => 'slowing ' . $target->pronoun('objective'),
+        type     => 'effect',
+        duration => $duration,
+        effect   => 'slowing ' . $target->pronoun('objective'),
     };
 }
 

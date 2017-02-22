@@ -12,11 +12,11 @@ sub _cast {
 
     # Check if they're pending mayor, and clear it if they are
     my $dungeon = $target->dungeon_grid->dungeon_room->dungeon;
-    
-    if ($dungeon->type eq 'castle') {
+
+    if ( $dungeon->type eq 'castle' ) {
         my $town = $dungeon->town;
-        
-        if ($town->pending_mayor == $target->id) {
+
+        if ( $town->pending_mayor == $target->id ) {
             $town->decline_mayoralty;
             $town->update;
         }
@@ -24,7 +24,7 @@ sub _cast {
 
     $target->dungeon_grid_id(undef);
     $target->update;
-    
+
     return {
         type   => 'portal',
         custom => {
@@ -35,10 +35,10 @@ sub _cast {
 }
 
 sub can_cast {
-	my $self = shift;
-	my $character = shift;
-	
-	return $character->party->dungeon_grid_id ? 1 : 0;
+    my $self      = shift;
+    my $character = shift;
+
+    return $character->party->dungeon_grid_id ? 1 : 0;
 }
 
 1;

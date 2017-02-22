@@ -21,5 +21,4 @@ __PACKAGE__->belongs_to(
     { 'foreign.item_category_id' => 'self.item_category_id' }
 );
 
-
 1;

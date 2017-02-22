@@ -13,12 +13,12 @@ sub find_in_range {
     my $base_point   = shift;
     my $search_range = shift;
     my $party_id     = shift;
-    
+
     my %criteria;
     if ($party_id) {
-        $criteria{party_id} = $party_id;   
+        $criteria{party_id} = $party_id;
     }
-    
+
     return RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset           => $self,
         relationship        => 'land',

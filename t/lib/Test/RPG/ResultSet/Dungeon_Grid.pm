@@ -18,7 +18,7 @@ sub dungeon_setup : Tests(setup) {
     my $self = shift;
 
     # Query Dungeon_Positions
-    my %positions = map { $_->position => $_->id} $self->{schema}->resultset('Dungeon_Position')->search();
+    my %positions = map { $_->position => $_->id } $self->{schema}->resultset('Dungeon_Position')->search();
 
     $self->{positions} = \%positions;
 }
@@ -46,7 +46,7 @@ sub test_get_party_grid_simple : Tests(5) {
         dungeon_room_id => $room->id,
     );
 
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
 
     $self->{schema}->resultset('Mapped_Dungeon_Grid')->create(
         {
@@ -56,21 +56,21 @@ sub test_get_party_grid_simple : Tests(5) {
     );
 
     # WHEN
-    my @sectors = $self->{schema}->resultset('Dungeon_Grid')->get_party_grid($party->id, $dungeon->id, $room->floor );
+    my @sectors = $self->{schema}->resultset('Dungeon_Grid')->get_party_grid( $party->id, $dungeon->id, $room->floor );
 
     # THEN
     is( scalar @sectors, 1, "1 sector returned" );
     my $sector = shift @sectors;
-    is ( $sector->{x}, 1, "Returned sector has correct x");
-    is ( $sector->{y}, 1, "Returned sector has correct y");
-    is_deeply( [sort @{$sector->{sides_with_walls}}], ['right','top'], "Walls returned correctly");
-    
+    is( $sector->{x}, 1, "Returned sector has correct x" );
+    is( $sector->{y}, 1, "Returned sector has correct y" );
+    is_deeply( [ sort @{ $sector->{sides_with_walls} } ], [ 'right', 'top' ], "Walls returned correctly" );
+
     my @doors;
-    foreach my $door (@{$sector->{doors}}) {
-       push @doors, $door->{position}{position};
+    foreach my $door ( @{ $sector->{doors} } ) {
+        push @doors, $door->{position}{position};
     }
-    
-    is_deeply( \@doors, ['top'], "Doors returned correctly");
+
+    is_deeply( \@doors, ['top'], "Doors returned correctly" );
 }
 
 1;

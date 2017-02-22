@@ -19,7 +19,7 @@ sub get_secret_doors_in_room {
             'dungeon_room.dungeon_room_id' => $dungeon_room_id,
         },
         {
-            join     => { 'dungeon_grid' => 'dungeon_room' },
+            join => { 'dungeon_grid' => 'dungeon_room' },
             prefetch => 'position',
         },
     );

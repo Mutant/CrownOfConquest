@@ -20,10 +20,10 @@ __PACKAGE__->belongs_to(
 
 # Returns true if the party level supplied is high enough to destroy the orb
 sub can_destroy {
-    my $self = shift;
-    my $party_level = shift;   
-    
-    return 1 if $party_level >= $self->level * RPG::Schema->config->{orb_level_multiplier_to_destroy_orb};    
+    my $self        = shift;
+    my $party_level = shift;
+
+    return 1 if $party_level >= $self->level * RPG::Schema->config->{orb_level_multiplier_to_destroy_orb};
 }
 
 1;

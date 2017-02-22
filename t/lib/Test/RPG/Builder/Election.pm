@@ -12,29 +12,29 @@ sub build_election {
 
     my $election = $schema->resultset('Election')->create(
         {
-			scheduled_day => $params{scheduled_day} || 100,			
-			status => 'Open',
-			town_id => $params{town_id},
+            scheduled_day => $params{scheduled_day} || 100,
+            status        => 'Open',
+            town_id       => $params{town_id},
         }
     );
-    
-    if ($params{candidate_count}) {
-    	for (1..$params{candidate_count}) {
-			my $character = Test::RPG::Builder::Character->build_character(
+
+    if ( $params{candidate_count} ) {
+        for ( 1 .. $params{candidate_count} ) {
+            my $character = Test::RPG::Builder::Character->build_character(
                 $schema,
-                level      => $params{character_level} || 1,
+                level => $params{character_level} || 1,
                 %params,
             );
-            
+
             $schema->resultset('Election_Candidate')->create(
-            	{
-            		character_id => $character->id,
-            		election_id => $election->id,
-            	},
+                {
+                    character_id => $character->id,
+                    election_id  => $election->id,
+                },
             );
-    	}
+        }
     }
-    
+
     return $election;
 }
 

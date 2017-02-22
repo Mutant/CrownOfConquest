@@ -14,7 +14,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Entangled',
             duration       => $duration,
             modifier       => -10000,

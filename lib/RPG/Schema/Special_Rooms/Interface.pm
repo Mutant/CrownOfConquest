@@ -1,4 +1,5 @@
 package RPG::Schema::Special_Rooms::Interface;
+
 # Interface for special room roles
 
 use Moose::Role;
@@ -8,9 +9,9 @@ requires qw/generate_special remove_special is_active/;
 
 after 'remove_special' => sub {
     my $self = shift;
-    
+
     $self->special_room_id(undef);
-    $self->update;   
+    $self->update;
 };
 
 1;

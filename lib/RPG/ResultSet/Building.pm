@@ -14,8 +14,8 @@ sub find_in_range {
     my $search_range = shift;
 
     my %attrs;
-    $attrs{prefetch} = [ 'building_type'];
-    
+    $attrs{prefetch} = ['building_type'];
+
     return RPG::ResultSet::RowsInSectorRange->find_in_range(
         resultset           => $self,
         relationship        => 'location',

@@ -47,7 +47,7 @@ sub test_party_relationships : Tests(4) {
 }
 
 sub test_record_damage : Tests(2) {
-	my $self = shift;
+    my $self = shift;
 
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
@@ -61,19 +61,19 @@ sub test_record_damage : Tests(2) {
             opponent_2_type => 'creature_group',
         },
     );
-    
+
     # WHEN
-    $combat_log->record_damage(1, 10);
-    $combat_log->record_damage(2, 15);
-    $combat_log->record_damage(2, 10);
-    
+    $combat_log->record_damage( 1, 10 );
+    $combat_log->record_damage( 2, 15 );
+    $combat_log->record_damage( 2, 10 );
+
     # THEN
-    is($combat_log->total_opponent_1_damage, 10, "Opponent 1 damage set correctly");
-    is($combat_log->total_opponent_2_damage, 25, "Opponent 2 damage set correctly");	
+    is( $combat_log->total_opponent_1_damage, 10, "Opponent 1 damage set correctly" );
+    is( $combat_log->total_opponent_2_damage, 25, "Opponent 2 damage set correctly" );
 }
 
 sub test_record_death : Tests(2) {
-	my $self = shift;
+    my $self = shift;
 
     # GIVEN
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
@@ -87,15 +87,15 @@ sub test_record_death : Tests(2) {
             opponent_2_type => 'creature_group',
         },
     );
-    
+
     # WHEN
     $combat_log->record_death(1);
     $combat_log->record_death(2);
     $combat_log->record_death(2);
-    
+
     # THEN
-    is($combat_log->opponent_1_deaths, 1, "Opponent 1 deaths set correctly");
-    is($combat_log->opponent_2_deaths, 2, "Opponent 2 deaths set correctly");	
+    is( $combat_log->opponent_1_deaths, 1, "Opponent 1 deaths set correctly" );
+    is( $combat_log->opponent_2_deaths, 2, "Opponent 2 deaths set correctly" );
 }
 
 1;

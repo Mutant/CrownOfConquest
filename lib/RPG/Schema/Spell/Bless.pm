@@ -15,7 +15,7 @@ sub _cast {
 
     $self->create_effect(
         {
-            target      => $target,
+            target         => $target,
             effect_name    => 'Bless',
             duration       => $duration,
             modifier       => $modifier,
@@ -32,9 +32,9 @@ sub _cast {
 }
 
 sub select_target {
-    my $self = shift;
+    my $self    = shift;
     my @targets = @_;
-    
+
     return $self->_select_buff_target(@targets);
 }
 

@@ -15,9 +15,9 @@ __PACKAGE__->set_primary_key(qw/town_id creature_type_id/);
 __PACKAGE__->belongs_to( 'creature_type', 'RPG::Schema::CreatureType', 'creature_type_id' );
 
 __PACKAGE__->numeric_columns(
-	amount => {
-		min_value => 0,
-	},
+    amount => {
+        min_value => 0,
+    },
 );
 
 1;

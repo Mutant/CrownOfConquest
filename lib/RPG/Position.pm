@@ -11,17 +11,17 @@ my %opposites = (
 );
 
 sub opposite {
-    my $self = shift;
+    my $self     = shift;
     my $position = shift;
-    
+
     return $opposites{$position};
 }
 
 sub opposite_sector {
-    my $self = shift;
+    my $self     = shift;
     my $position = shift;
-    my $x = shift;
-    my $y = shift;
+    my $x        = shift;
+    my $y        = shift;
 
     my %position_modifier = (
         'top'    => { y => -1 },
@@ -30,8 +30,8 @@ sub opposite_sector {
         'right'  => { x => 1 },
     );
 
-    my $opp_x = $x + ( $position_modifier{ $position }{x} || 0 );
-    my $opp_y = $y + ( $position_modifier{ $position }{y} || 0 );
+    my $opp_x = $x + ( $position_modifier{$position}{x} || 0 );
+    my $opp_y = $y + ( $position_modifier{$position}{y} || 0 );
 
     return ( $opp_x, $opp_y );
 }

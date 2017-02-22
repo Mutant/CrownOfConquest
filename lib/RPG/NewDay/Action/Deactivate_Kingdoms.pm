@@ -15,26 +15,26 @@ sub cron_string {
 
 sub run {
     my $self = shift;
-    
+
     my $c = $self->context;
-    
+
     my @kingdoms = $c->schema->resultset('Kingdom')->search(
         {
             active => 1,
         }
-    );    
-    
+    );
+
     foreach my $kingdom (@kingdoms) {
         $self->check_for_inactive($kingdom);
     }
 }
 
 sub check_for_inactive {
-    my $self = shift;
+    my $self    = shift;
     my $kingdom = shift;
-    
-    my $c = $self->context;    
-    
+
+    my $c = $self->context;
+
     my $town_count = $c->schema->resultset('Town')->search(
         {
             'location.kingdom_id' => $kingdom->id
@@ -43,18 +43,18 @@ sub check_for_inactive {
             'join' => 'location',
         }
     )->count;
-    
+
     return 0 if $town_count > 0;
-  
+
     $kingdom->active(0);
-    $kingdom->fall_day_id($c->current_day->day_id);
+    $kingdom->fall_day_id( $c->current_day->day_id );
     $kingdom->update;
-    
+
     $kingdom->search_related('sectors')->update( { kingdom_id => undef } );
     $kingdom->town_loyalty->delete;
-    
+
     my $king = $kingdom->king;
-    
+
     # Make sure we include defunct parties
     my @parties = $c->schema->resultset('Party')->search(
         {
@@ -66,27 +66,27 @@ sub check_for_inactive {
         $party->change_allegiance(undef);
         $party->last_allegiance_change(undef);
         $party->cancel_kingdom_quests($kingdom);
-        
-        if ($king->is_npc || $party->id != $king->party_id) {
+
+        if ( $king->is_npc || $party->id != $king->party_id ) {
             $party->add_to_messages(
                 {
-                    day_id => $c->current_day->id,
+                    day_id      => $c->current_day->id,
                     alert_party => 1,
                     message => "The Kingdom of " . $kingdom->name . " has fallen. We are now free citizens",
                 }
             );
         }
-        
+
         $party->update;
     }
-    
+
     # Buildings get given to the former king's party, or destroyed for NPC parties
     my @buildings = $kingdom->buildings;
     foreach my $building (@buildings) {
         $building->unclaim_land;
-        
-        if (! $king->is_npc) {
-            $building->owner_id($king->party_id);
+
+        if ( !$king->is_npc ) {
+            $building->owner_id( $king->party_id );
             $building->owner_type('party');
             $building->update;
         }
@@ -98,25 +98,25 @@ sub check_for_inactive {
     $king->status(undef);
     $king->status_context(undef);
     $king->update;
-    
-    if (! $king->is_npc) {
+
+    if ( !$king->is_npc ) {
         my $party = $king->party;
         $party->add_to_messages(
             {
-                day_id => $c->current_day->id,
+                day_id      => $c->current_day->id,
                 alert_party => 1,
                 message => "Our mighty Kingdom of " . $kingdom->name . " has fallen, as we no longer own any towns. A sad day indeed.",
             },
         );
     }
-    
+
     $c->schema->resultset('Global_News')->create(
         {
             day_id => $c->current_day->id,
             message => "The Kingdom of " . $kingdom->name . " has fallen, as it no longer has any towns.",
         },
-    );    
-    
+    );
+
     return 1;
 }
 

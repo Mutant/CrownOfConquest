@@ -17,16 +17,16 @@ __PACKAGE__->has_many(
 
 sub min_level {
     my $package = shift;
-    
+
     my $type = ref $package ? $package->quest_type : shift;
-    
+
     my %minimum_levels = (
-        claim_land => RPG::Schema->config->{minimum_land_claim_level},
+        claim_land         => RPG::Schema->config->{minimum_land_claim_level},
         construct_building => RPG::Schema->config->{minimum_building_level},
-        take_over_town => RPG::Schema->config->{minimum_raid_level},
-        create_garrison => RPG::Schema->config->{minimum_garrison_level},
+        take_over_town     => RPG::Schema->config->{minimum_raid_level},
+        create_garrison    => RPG::Schema->config->{minimum_garrison_level},
     );
-    
+
     return $minimum_levels{$type} || 1;
 }
 

@@ -9,9 +9,9 @@ use List::Util qw(shuffle);
 
 sub random {
     my $self = shift;
-    
-    my @races = shuffle ($self->search());
-    
+
+    my @races = shuffle( $self->search() );
+
     return $races[0];
 }
 

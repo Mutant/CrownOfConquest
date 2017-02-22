@@ -12,14 +12,14 @@ sub build_dungeon_grid {
 
     my $sector = $schema->resultset('Dungeon_Grid')->create(
         {
-            x => $params{x} || 1,
-            y => $params{y} || 1,
+            x               => $params{x}               || 1,
+            y               => $params{y}               || 1,
             dungeon_room_id => $params{dungeon_room_id} || 1,
-            stairs_up => $params{stairs_up} || 0,
+            stairs_up       => $params{stairs_up}       || 0,
         }
     );
 
-    my %positions = map { $_->position => $_->position_id  } $schema->resultset('Dungeon_Position')->search();
+    my %positions = map { $_->position => $_->position_id } $schema->resultset('Dungeon_Position')->search();
 
     if ( ref $params{walls} eq 'ARRAY' ) {
         foreach my $wall ( @{ $params{walls} } ) {
@@ -35,18 +35,18 @@ sub build_dungeon_grid {
     if ( ref $params{doors} eq 'ARRAY' ) {
         foreach my $door ( @{ $params{doors} } ) {
             my %door_params;
-            
-            if (ref $door eq 'HASH') {
+
+            if ( ref $door eq 'HASH' ) {
                 %door_params = (
-                    type => $door->{type},
-                    state => $door->{state},
-                    position_id => $positions{$door->{position}},
-                );   
+                    type        => $door->{type},
+                    state       => $door->{state},
+                    position_id => $positions{ $door->{position} },
+                );
             }
             else {
                 $door_params{position_id} = $positions{$door};
-            }            
-            
+            }
+
             $schema->resultset('Door')->create(
                 {
                     dungeon_grid_id => $sector->id,

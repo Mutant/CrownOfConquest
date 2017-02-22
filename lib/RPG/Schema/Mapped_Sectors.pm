@@ -11,7 +11,7 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Mapped_Sectors');
 __PACKAGE__->add_columns(qw/mapped_sector_id storage_type land_id party_id known_dungeon/);
 
 __PACKAGE__->add_columns(
-	date_stored => { data_type => 'datetime' }
+    date_stored => { data_type => 'datetime' }
 );
 
 __PACKAGE__->belongs_to( 'location', 'RPG::Schema::Land', { 'foreign.land_id' => 'self.land_id' } );

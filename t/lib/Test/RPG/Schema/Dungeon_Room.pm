@@ -23,14 +23,14 @@ sub dungeon_setup : Tests(setup) {
     my $self = shift;
 
     # Query Dungeon_Positions
-    my %positions = map { $_->position => $_->id} $self->{schema}->resultset('Dungeon_Position')->search();
+    my %positions = map { $_->position => $_->id } $self->{schema}->resultset('Dungeon_Position')->search();
 
     $self->{positions} = \%positions;
 }
 
 sub dungeon_shutdown : Tests(shutdown) {
-	my $self = shift;
-	$self->{mock_rpg_schema}->unfake_module();	
+    my $self = shift;
+    $self->{mock_rpg_schema}->unfake_module();
 }
 
 sub test_connected_to_room : Tests(2) {
@@ -38,12 +38,12 @@ sub test_connected_to_room : Tests(2) {
 
     # GIVEN
     my $dungeon = $self->{schema}->resultset('Dungeon')->create( {} );
-    
-    my $room1 = $self->{schema}->resultset('Dungeon_Room')->create( 
+
+    my $room1 = $self->{schema}->resultset('Dungeon_Room')->create(
         {
             dungeon_id => $dungeon->id,
-            floor => 1,
-        } 
+            floor      => 1,
+        }
     );
 
     for my $x ( 1 .. 2 ) {
@@ -67,10 +67,10 @@ sub test_connected_to_room : Tests(2) {
         }
     }
 
-    my $room2 = $self->{schema}->resultset('Dungeon_Room')->create( 
+    my $room2 = $self->{schema}->resultset('Dungeon_Room')->create(
         {
             dungeon_id => $dungeon->id,
-        } 
+        }
     );
 
     my $sector = $self->{schema}->resultset('Dungeon_Grid')->create(
@@ -86,7 +86,7 @@ sub test_connected_to_room : Tests(2) {
 
     # THEN
     is( $rooms_connected, 1, "Rooms are connected" );
-    
+
     is( $rooms_connected, 1, "Rooms are connected (second time uses cache)" );
 
 }

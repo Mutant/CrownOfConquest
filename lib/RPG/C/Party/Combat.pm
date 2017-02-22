@@ -15,10 +15,10 @@ sub attack : Local {
 
     croak "Opponent party not found" unless defined $party_attacked;
 
-    if ($party_attacked->land_id != $c->stash->{party}->land_id) {
-		c->stash->{error} = "Can't attack a party in a different sector";
+    if ( $party_attacked->land_id != $c->stash->{party}->land_id ) {
+        c->stash->{error} = "Can't attack a party in a different sector";
     }
-    elsif ($party_attacked->dungeon_grid_id) {
+    elsif ( $party_attacked->dungeon_grid_id ) {
         $c->stash->{error} = "Can't attack a party in a dungeon";
     }
     elsif ( $party_attacked->in_combat ) {
@@ -28,10 +28,10 @@ sub attack : Local {
         $c->stash->{error} = 'The party is too low level to attack';
     }
     elsif ( $c->model('DBIC::Combat_Log')->get_offline_log_count( $party_attacked, undef, 1 ) > $c->config->{max_party_offline_attacks} ) {
-    	$c->stash->{error} = 'This party has been attacked too many times recently';
+        $c->stash->{error} = 'This party has been attacked too many times recently';
     }
     elsif ( $c->stash->{party}->is_suspected_of_coop_with($party_attacked) ) {
-        $c->stash->{error} = 'Cannot attack this party as it has IP addresses in common with your account'; 
+        $c->stash->{error} = 'Cannot attack this party as it has IP addresses in common with your account';
     }
     else {
 
@@ -40,10 +40,10 @@ sub attack : Local {
         $battle->add_to_participants( { party_id => $c->stash->{party}->id, online => 1 } );
 
         $battle->add_to_participants( { party_id => $c->req->param('party_id'), } );
-        
+
         $c->stash->{creature_group} = $party_attacked;
     }
-    
+
     $c->forward( '/panel/refresh', [ 'messages', 'map', 'party', 'creatures' ] );
 }
 
@@ -70,7 +70,7 @@ sub main : Private {
             ],
         );
     }
-    
+
     $c->stash->{creature_group} = $c->stash->{party}->in_party_battle_with;
 
     $c->stash->{message_panel_size} = 'large';
@@ -82,7 +82,7 @@ sub main : Private {
                 template => 'combat/main.html',
                 params   => {
                     combat_messages => $c->stash->{combat_messages},
-                    type => 'party',
+                    type            => 'party',
                 },
                 return_output => 1,
             },
@@ -96,12 +96,12 @@ sub fight : Local {
     my ( $party_battle, $party1, $party2, $active_participant ) = _get_participants($c);
 
     my $battle = RPG::Combat::PartyWildernessBattle->new(
-        party_1                 => $party1,
-        party_2                 => $party2,
-        schema                  => $c->model('DBIC')->schema,
-        config                  => $c->config,
-        log                     => $c->log,
-        battle_record           => $party_battle,
+        party_1       => $party1,
+        party_2       => $party2,
+        schema        => $c->model('DBIC')->schema,
+        config        => $c->config,
+        log           => $c->log,
+        battle_record => $party_battle,
         initiated_by_opp_number => $active_participant, # Assume it's the active party who initiated (for now)
     );
 

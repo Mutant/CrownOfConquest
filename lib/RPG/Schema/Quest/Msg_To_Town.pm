@@ -26,7 +26,7 @@ sub set_quest_params {
     );
 
     @towns_in_range = shuffle @towns_in_range;
-    
+
     # Check for existing quests in this town to raid or send a message to the target town
     my $existing_quest_count = $self->result_source->schema->resultset('Quest')->search(
         {
@@ -43,7 +43,7 @@ sub set_quest_params {
             message => "Target town is already targetted in another quest",
             type    => 'quest_creation_error',
         );
-    }    
+    }
 
     $self->define_quest_param( 'Town To Take Msg To', $towns_in_range[0]->id );
     $self->define_quest_param( 'Been To Town',        0 );
@@ -61,7 +61,7 @@ sub set_quest_params {
 
     # Best not to make the gold value based purely on distance, or people will be able to guess how far away the town is
     my $gold_variant = Games::Dice::Advanced->roll('1d100') - 50;
-    my $gold_value   = $self->{_config}{gold_per_distance} * $distance - $gold_variant;
+    my $gold_value = $self->{_config}{gold_per_distance} * $distance - $gold_variant;
     $gold_value = 20 if $gold_value < 20;
 
     $self->gold_value($gold_value);
@@ -91,7 +91,7 @@ sub check_action {
     my $quest_param = $self->param_record('Been To Town');
     $quest_param->current_value(1);
     $quest_param->update;
-    
+
     $self->status('Awaiting Reward');
     $self->update;
 
@@ -111,14 +111,14 @@ sub town_to_take_msg_to {
 }
 
 sub party_can_accept_quest {
-    my $self = shift;
+    my $self  = shift;
     my $party = shift;
-    
-    my ($can_enter, $reason) = $self->town_to_take_msg_to->party_can_enter($party);
-    
+
+    my ( $can_enter, $reason ) = $self->town_to_take_msg_to->party_can_enter($party);
+
     $self->{_cant_accept_quest_reason} = $reason if $reason;
-    
-    return $can_enter;       
+
+    return $can_enter;
 }
 
 1;

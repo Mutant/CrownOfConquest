@@ -36,7 +36,7 @@ sub opposite_hand {
     return unless $OPPOSITE_HANDS{ $self->equip_place_name };
 
     my ($opposite_hand) =
-        $self->result_source->schema->resultset('Equip_Places')->find( { equip_place_name => $OPPOSITE_HANDS{ $self->equip_place_name }, }, );
+      $self->result_source->schema->resultset('Equip_Places')->find( { equip_place_name => $OPPOSITE_HANDS{ $self->equip_place_name }, }, );
 
     return $opposite_hand;
 }

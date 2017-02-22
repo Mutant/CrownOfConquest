@@ -23,58 +23,58 @@ __PACKAGE__->resultset_class('RPG::ResultSet::Character');
 
 __PACKAGE__->add_columns(
     qw/character_id character_name class_id race_id hit_points
-        level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
-        last_combat_param1 last_combat_param2 gender offline_cast_chance online_cast_chance
-        creature_group_id status_context encumbrance back_rank_penalty
-        strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-        movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
-        resist_poison resist_poison_bonus has_usable_actions_combat has_usable_actions_non_combat/
+      level spell_points max_hit_points party_id party_order last_combat_action stat_points town_id
+      last_combat_param1 last_combat_param2 gender offline_cast_chance online_cast_chance
+      creature_group_id status_context encumbrance back_rank_penalty
+      strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
+      movement_factor_bonus skill_points resist_fire resist_fire_bonus resist_ice resist_ice_bonus
+      resist_poison resist_poison_bonus has_usable_actions_combat has_usable_actions_non_combat/
 );
 
-__PACKAGE__->numeric_columns(qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
-								movement_factor_bonus skill_points resist_fire_bonus resist_ice_bonus resist_poison_bonus/,
-								hit_points => {
-							 		upper_bound_col => 'max_hit_points',
-							 	},
-							 	online_cast_chance => {
-							 	    min_value => 0, 
-                                    max_value => 100,
-							 	},
-							 	offline_cast_chance => {
-							 	    min_value => 0, 
-                                    max_value => 100,
-							 	},
-							 	resist_fire => {
-							 	    min_value => 0,
-							 	    max_value => 90,
-							 	},
-							 	resist_ice => {
-							 	    min_value => 0,
-							 	    max_value => 90,
-							 	},
-							 	resist_poison => {
-							 	    min_value => 0,
-							 	    max_value => 90,
-							 	},
+__PACKAGE__->numeric_columns( qw/spell_points strength_bonus intelligence_bonus agility_bonus divinity_bonus constitution_bonus
+      movement_factor_bonus skill_points resist_fire_bonus resist_ice_bonus resist_poison_bonus/,
+    hit_points => {
+        upper_bound_col => 'max_hit_points',
+    },
+    online_cast_chance => {
+        min_value => 0,
+        max_value => 100,
+    },
+    offline_cast_chance => {
+        min_value => 0,
+        max_value => 100,
+    },
+    resist_fire => {
+        min_value => 0,
+        max_value => 90,
+    },
+    resist_ice => {
+        min_value => 0,
+        max_value => 90,
+    },
+    resist_poison => {
+        min_value => 0,
+        max_value => 90,
+    },
 );
 
-__PACKAGE__->add_columns( 
-	xp => { accessor => '_xp' },
-	strength => { accessor => '_strength'}, 
-	intelligence  => { accessor => '_intelligence'}, 
-	agility  => { accessor => '_agility'}, 
-	divinity  => { accessor => '_divinity'}, 
-	constitution => { accessor => '_constitution'}, 
-	attack_factor => { accessor => '_attack_factor'},
-	defence_factor => { accessor => '_defence_factor'},
-	status => { accessor => '_status' },
-	garrison_id => { accessor => '_garrison_id' },
-	mayor_of => { accessor => '_mayor_of' },
+__PACKAGE__->add_columns(
+    xp             => { accessor => '_xp' },
+    strength       => { accessor => '_strength' },
+    intelligence   => { accessor => '_intelligence' },
+    agility        => { accessor => '_agility' },
+    divinity       => { accessor => '_divinity' },
+    constitution   => { accessor => '_constitution' },
+    attack_factor  => { accessor => '_attack_factor' },
+    defence_factor => { accessor => '_defence_factor' },
+    status         => { accessor => '_status' },
+    garrison_id    => { accessor => '_garrison_id' },
+    mayor_of       => { accessor => '_mayor_of' },
 );
 
 __PACKAGE__->set_primary_key('character_id');
 
-__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' }, {cascade_delete => 0, join_type => 'LEFT'} );
+__PACKAGE__->belongs_to( 'party', 'RPG::Schema::Party', { 'foreign.party_id' => 'self.party_id' }, { cascade_delete => 0, join_type => 'LEFT' } );
 
 __PACKAGE__->belongs_to( 'class', 'RPG::Schema::Class', { 'foreign.class_id' => 'self.class_id' } );
 
@@ -83,7 +83,7 @@ __PACKAGE__->belongs_to( 'race', 'RPG::Schema::Race', { 'foreign.race_id' => 'se
 __PACKAGE__->has_many(
     'items', 'RPG::Schema::Items',
     { 'foreign.character_id' => 'self.character_id' },
-    { prefetch               => [ 'item_type' ], },
+    { prefetch               => ['item_type'], },
 );
 
 __PACKAGE__->has_many( 'memorised_spells', 'RPG::Schema::Memorised_Spells', { 'foreign.character_id' => 'self.character_id' }, );
@@ -96,17 +96,17 @@ __PACKAGE__->has_many( 'history', 'RPG::Schema::Character_History', 'character_i
 
 __PACKAGE__->belongs_to( 'garrison', 'RPG::Schema::Garrison', 'garrison_id' );
 
-__PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.mayor_of' }, {cascade_delete => 0} );
+__PACKAGE__->might_have( 'mayor_of_town', 'RPG::Schema::Town', { 'foreign.town_id' => 'self.mayor_of' }, { cascade_delete => 0 } );
 
-__PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id', {cascade_delete => 0} );
+__PACKAGE__->belongs_to( 'creature_group', 'RPG::Schema::CreatureGroup', 'creature_group_id', { cascade_delete => 0 } );
 
-__PACKAGE__->might_have( 'mayoral_candidacy', 'RPG::Schema::Election_Candidate', 'character_id', {cascade_delete => 0} );
+__PACKAGE__->might_have( 'mayoral_candidacy', 'RPG::Schema::Election_Candidate', 'character_id', { cascade_delete => 0 } );
 
 __PACKAGE__->has_many( 'character_skills', 'RPG::Schema::Character_Skill', 'character_id', );
 
 __PACKAGE__->many_to_many( 'skills' => 'character_skills', 'skill' );
 
-__PACKAGE__->has_many('item_sectors', 'RPG::Schema::Item_Grid', {'foreign.owner_id' => 'self.character_id'}, { where => { owner_type => 'character' } });
+__PACKAGE__->has_many( 'item_sectors', 'RPG::Schema::Item_Grid', { 'foreign.owner_id' => 'self.character_id' }, { where => { owner_type => 'character' } } );
 
 with qw/RPG::Schema::Role::Item_Grid/;
 
@@ -127,148 +127,148 @@ sub inflate_result {
 
 sub apply_roles {
     my $self = shift;
-    
-    if ($self->mayor_of) {
-    	$self->ensure_class_loaded('RPG::Schema::Role::Character::Mayor');
-    	RPG::Schema::Role::Character::Mayor->meta->apply($self);		
-    }    
+
+    if ( $self->mayor_of ) {
+        $self->ensure_class_loaded('RPG::Schema::Role::Character::Mayor');
+        RPG::Schema::Role::Character::Mayor->meta->apply($self);
+    }
 }
 
 sub strength {
-	my $self = shift;
-	
-	return $self->_stat_accessor('strength', @_);	
+    my $self = shift;
+
+    return $self->_stat_accessor( 'strength', @_ );
 }
 
 sub constitution {
-	my $self = shift;
-	
-	return $self->_stat_accessor('constitution', @_);	
+    my $self = shift;
+
+    return $self->_stat_accessor( 'constitution', @_ );
 }
 
 sub intelligence {
-	my $self = shift;
-	
-	return $self->_stat_accessor('intelligence', @_);	
+    my $self = shift;
+
+    return $self->_stat_accessor( 'intelligence', @_ );
 }
 
 sub divinity {
-	my $self = shift;
-	
-	return $self->_stat_accessor('divinity', @_);	
+    my $self = shift;
+
+    return $self->_stat_accessor( 'divinity', @_ );
 }
 
 sub agility {
-	my $self = shift;
-	
-	return $self->_stat_accessor('agility', @_);	
+    my $self = shift;
+
+    return $self->_stat_accessor( 'agility', @_ );
 }
 
 sub portrait {
-	my $self = shift;
-	
-	return lc($self->race->race_name) . lc(substr $self->class->class_name, 0, 3) 
-		. ($self->gender eq 'female' ? 'f' : '');
+    my $self = shift;
+
+    return lc( $self->race->race_name ) . lc( substr $self->class->class_name, 0, 3 )
+      . ( $self->gender eq 'female' ? 'f' : '' );
 }
 
 sub insert {
     my ( $self, @args ) = @_;
-    
+
     $self->next::method(@args);
-    
-    # Calculate df/af if they're 0 (they normally should be higher than that, so maybe there's no item equipped, 
+
+    # Calculate df/af if they're 0 (they normally should be higher than that, so maybe there's no item equipped,
     #  and the trigger hasn't fired
-    $self->calculate_attack_factor if $self->attack_factor == 0;
+    $self->calculate_attack_factor  if $self->attack_factor == 0;
     $self->calculate_defence_factor if $self->defence_factor == 0;
-    
+
     # Clear any cached equipped items. The above calls could have set this, and an item may be added later.
     #  Possibly only an issue for tests?
     undef $self->{equipped_item};
-    
+
     return $self;
-    
+
 }
 
 sub _stat_accessor {
-	my $self = shift;
-	my $stat = shift;
+    my $self = shift;
+    my $stat = shift;
 
-	my $accessor = '_' . $stat; 
-	my $value = $self->$accessor(@_) // 0;
-	
-	$accessor = $stat . '_bonus';
-	my $bonus = $self->$accessor || 0;
-			
-	return $value + $bonus;
+    my $accessor = '_' . $stat;
+    my $value = $self->$accessor(@_) // 0;
+
+    $accessor = $stat . '_bonus';
+    my $bonus = $self->$accessor || 0;
+
+    return $value + $bonus;
 }
 
 sub status {
     my $self = shift;
-   
-    return $self->_move_character_trigger('status', @_);
+
+    return $self->_move_character_trigger( 'status', @_ );
 }
 
 sub garrison_id {
     my $self = shift;
-  
-    return $self->_move_character_trigger('garrison_id', @_);    
+
+    return $self->_move_character_trigger( 'garrison_id', @_ );
 }
 
 sub mayor_of {
     my $self = shift;
-    
-    return $self->_move_character_trigger('mayor_of', @_);        
+
+    return $self->_move_character_trigger( 'mayor_of', @_ );
 }
 
 sub update {
-	my ( $self, $attr ) = @_;
+    my ( $self, $attr ) = @_;
 
-	for my $stat (qw/status garrison_id mayor_of/) {
-		$self->_move_character_trigger($stat, $attr->{$stat})
-		  if exists $attr->{$stat};	
-	}
-	
+    for my $stat (qw/status garrison_id mayor_of/) {
+        $self->_move_character_trigger( $stat, $attr->{$stat} )
+          if exists $attr->{$stat};
+    }
+
     my $ret = $self->next::method($attr);
-    
-    if ($self->{adjust_order_needed}) {
+
+    if ( $self->{adjust_order_needed} ) {
         my $party = $self->{adjust_order_needed};
         confess "No party!" unless $party;
         $party->adjust_order;
         undef $self->{adjust_order_needed};
-    }    
+    }
 
-    return $ret;	
+    return $ret;
 }
 
 # Called when a character "moves", i.e. changes status, etc.
 sub _move_character_trigger {
     my $self = shift;
-    
+
     my $col = shift;
 
-    my $accessor = '_' . $col; 
+    my $accessor = '_' . $col;
 
-    my $setting = scalar @_;
+    my $setting   = scalar @_;
     my $new_value = shift;
-    
+
     my $old_value = $self->$accessor;
-    
+
     if ($setting) {
         $self->$accessor($new_value);
 
         $self->calculate_attack_factor();
         $self->calculate_defence_factor();
         $self->calculate_resistance_bonuses;
-        
+
         $self->{adjust_order_needed} = $self->party
-            if $self->party_id;            
+          if $self->party_id;
     }
-    
-    return $self->$accessor;   
+
+    return $self->$accessor;
 }
 
 sub long_stats {
-	return @LONG_STATS;	
+    return @LONG_STATS;
 }
 
 # These allow us to use the 'Being' role
@@ -286,18 +286,18 @@ sub hit_points_max {
 
 sub name {
     my $self = shift;
-    
+
     my $name = $self->character_name;
-    
-    if ($self->mayor_of) {   
-        $name .= ', Mayor of ' . $self->mayor_of_town->town_name;    
+
+    if ( $self->mayor_of ) {
+        $name .= ', Mayor of ' . $self->mayor_of_town->town_name;
     }
-    elsif ($self->status && $self->status eq 'king') {
+    elsif ( $self->status && $self->status eq 'king' ) {
         my $kingdom = $self->king_of;
-        
-        $name .= ', ' . ($self->gender eq 'male' ? 'King' : 'Queen') . ' of ' . $kingdom->name;
+
+        $name .= ', ' . ( $self->gender eq 'male' ? 'King' : 'Queen' ) . ' of ' . $kingdom->name;
     }
-    
+
     return $name;
 }
 
@@ -308,229 +308,231 @@ sub group_id {
 }
 
 sub group {
-	my $self = shift;
-	
-	if ($self->garrison_id) {
-		return $self->garrison;
-	}
-	elsif ($self->creature_group_id) {
-		return $self->creature_group;	
-	}
-	else {
-		return $self->party;
-	}
+    my $self = shift;
+
+    if ( $self->garrison_id ) {
+        return $self->garrison;
+    }
+    elsif ( $self->creature_group_id ) {
+        return $self->creature_group;
+    }
+    else {
+        return $self->party;
+    }
 }
 
 sub king_of {
     my $self = shift;
-    
+
     return unless $self->status eq 'king';
-    
+
     my $kingdom = $self->result_source->schema->resultset('Kingdom')->find(
         {
             kingdom_id => $self->status_context,
         }
     );
-    
+
     return $kingdom;
 }
 
 sub is_spell_caster {
-	my $self = shift;
-	
-	return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
+    my $self = shift;
+
+    return $self->class->class_name eq 'Priest' || $self->class->class_name eq 'Mage' ? 1 : 0;
 }
 
 sub has_unallocated_spell_points {
     my $self = shift;
-    
-    return $self->spell_points > $self->spell_points_used ? 1 : 0;   
+
+    return $self->spell_points > $self->spell_points_used ? 1 : 0;
 }
 
 sub has_castable_spells {
-	my $self = shift;
-	my $in_combat = shift;
-	
-	return $self->castable_spells($in_combat)->count >= 1;
+    my $self      = shift;
+    my $in_combat = shift;
+
+    return $self->castable_spells($in_combat)->count >= 1;
 }
 
 sub castable_spells {
-	my $self = shift;
-	my $in_combat = shift;
-	
-	my %args;
-	if (defined $in_combat) {
-	    if ($in_combat) {
-	        $args{'spell.combat'} = 1;
-	    }
-	    else {
-	       $args{'spell.non_combat'} = 1;
-	    }
-	}
-	
-	return $self->search_related('memorised_spells',
-		{
-			memorised_today   => 1,
-			number_cast_today => \'< memorise_count',
-			%args,
-		},
-		{
-			prefetch => 'spell',
-		}
-	);	
+    my $self      = shift;
+    my $in_combat = shift;
+
+    my %args;
+    if ( defined $in_combat ) {
+        if ($in_combat) {
+            $args{'spell.combat'} = 1;
+        }
+        else {
+            $args{'spell.non_combat'} = 1;
+        }
+    }
+
+    return $self->search_related( 'memorised_spells',
+        {
+            memorised_today   => 1,
+            number_cast_today => \'< memorise_count',
+            %args,
+        },
+        {
+            prefetch => 'spell',
+        }
+    );
 }
 
 # Returns true if character is in a party (any party), and not a garrison
 sub is_in_party {
-	my $self = shift;
-	
-	return 0 unless $self->party_id;
-	
-	return 1 if ! $self->garrison_id && ! $self->mayor_of && ! $self->status;
+    my $self = shift;
 
-	if ($self->garrison_id) {	
-		# They're in a garrison.. if the party is currently in the garrison's sector, consider the char to be in the party
-		return 1 if $self->garrison->land_id == $self->party->land_id;
-	}
-	
-	if ($self->mayor_of) {
-		# See if they're in the town this mayor runs
-		return 1 if $self->mayor_of_town->land_id == $self->party->land_id;	
-	}
-	
-	if (my $town = $self->party->location->town) {	    
-	    return 1 if $self->status eq 'mayor_garrison' && $self->status_context == $town->id;
-	}
-	
-	return 0;
+    return 0 unless $self->party_id;
+
+    return 1 if !$self->garrison_id && !$self->mayor_of && !$self->status;
+
+    if ( $self->garrison_id ) {
+
+        # They're in a garrison.. if the party is currently in the garrison's sector, consider the char to be in the party
+        return 1 if $self->garrison->land_id == $self->party->land_id;
+    }
+
+    if ( $self->mayor_of ) {
+
+        # See if they're in the town this mayor runs
+        return 1 if $self->mayor_of_town->land_id == $self->party->land_id;
+    }
+
+    if ( my $town = $self->party->location->town ) {
+        return 1 if $self->status eq 'mayor_garrison' && $self->status_context == $town->id;
+    }
+
+    return 0;
 }
 
-# Returns a list of columns that, if null, indicate the character is in the party 
+# Returns a list of columns that, if null, indicate the character is in the party
 sub in_party_columns {
-	return qw/garrison_id mayor_of status/;
+    return qw/garrison_id mayor_of status/;
 }
 
 # Returns true if character isn't owned by a player
 sub is_npc {
-	my $self = shift;
-	
-	return 0 if $self->party_id;
-	
-	return 1;
+    my $self = shift;
+
+    return 0 if $self->party_id;
+
+    return 1;
 }
 
 sub status_description {
-	my $self = shift;
+    my $self = shift;
 
-	if ($self->garrison_id) {
-		my $garrison = $self->garrison;
-		return "In the garrison at " . $garrison->land->x . ", " . $garrison->land->y;	
-	}
-	elsif ($self->mayor_of) {
-		my $town = $self->mayor_of_town;
-		return "Mayor of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
-	}
-	elsif ($self->town_id) {
-		return "Awaiting recruitment";	
-	}
-	elsif (! defined $self->status) {
-		return "With the party";	
-	}
-	elsif ($self->status eq 'morgue' || $self->status eq 'inn' || $self->status eq 'street') {
-		my $town = $self->result_source->schema->resultset('Town')->find(
-			{
-				town_id => $self->status_context,
-			}
-		);
-		
-		return "In the " . $self->status . " of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
-	}
-	elsif ($self->status eq 'mayor_garrison') {
-		my $town = $self->result_source->schema->resultset('Town')->find(
-			{
-				town_id => $self->status_context,
-			}
-		);
-		
-		return "Garrisoned in the town of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
-	}
-	elsif ($self->status eq 'king') {
-	   my $kingdom = $self->party->kingdom;
-	   return ($self->gender eq 'male' ? 'King' : 'Queen') . " of " . $kingdom->name;   
-	}
-	elsif ($self->status eq 'corpse') {
-	   my $land = $self->result_source->schema->resultset('Land')->find(
-	       {
-	           land_id => $self->status_context,
-	       },
-	   );
-	   return "A corpse in the sector " . $land->x . ', ' . $land->y;
-	}
-	else {
-		return "Unknown";	
-	}		
+    if ( $self->garrison_id ) {
+        my $garrison = $self->garrison;
+        return "In the garrison at " . $garrison->land->x . ", " . $garrison->land->y;
+    }
+    elsif ( $self->mayor_of ) {
+        my $town = $self->mayor_of_town;
+        return "Mayor of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+    }
+    elsif ( $self->town_id ) {
+        return "Awaiting recruitment";
+    }
+    elsif ( !defined $self->status ) {
+        return "With the party";
+    }
+    elsif ( $self->status eq 'morgue' || $self->status eq 'inn' || $self->status eq 'street' ) {
+        my $town = $self->result_source->schema->resultset('Town')->find(
+            {
+                town_id => $self->status_context,
+            }
+        );
+
+        return "In the " . $self->status . " of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+    }
+    elsif ( $self->status eq 'mayor_garrison' ) {
+        my $town = $self->result_source->schema->resultset('Town')->find(
+            {
+                town_id => $self->status_context,
+            }
+        );
+
+        return "Garrisoned in the town of " . $town->town_name . " (" . $town->location->x . ", " . $town->location->y . ")";
+    }
+    elsif ( $self->status eq 'king' ) {
+        my $kingdom = $self->party->kingdom;
+        return ( $self->gender eq 'male' ? 'King' : 'Queen' ) . " of " . $kingdom->name;
+    }
+    elsif ( $self->status eq 'corpse' ) {
+        my $land = $self->result_source->schema->resultset('Land')->find(
+            {
+                land_id => $self->status_context,
+            },
+        );
+        return "A corpse in the sector " . $land->x . ', ' . $land->y;
+    }
+    else {
+        return "Unknown";
+    }
 }
 
 sub natural_movement_factor {
-	my $self = shift;
-	
-	return round ($self->constitution / 4) + $self->movement_factor_bonus;
-} 
+    my $self = shift;
+
+    return round( $self->constitution / 4 ) + $self->movement_factor_bonus;
+}
 
 sub movement_factor {
-	my $self = shift;
-	
-	my $base = $self->natural_movement_factor;
-	
-	my $enc_ratio = ($self->encumbrance / $self->encumbrance_allowance);
-	
-	my $enc_penalty = 0;
-	if ($enc_ratio > 0.2) {
-		$enc_penalty = round($base * $enc_ratio);	
-	}
-	
-	my $modified = $base - $enc_penalty;
-	
-	$modified = 0 if $modified < 0;
-	
-	# Always have a movement factor of 1 if not compeltely overencumbered
-	$modified = 1 if $modified < 1 && ! $self->is_overencumbered;
-	
-	return $modified;
+    my $self = shift;
+
+    my $base = $self->natural_movement_factor;
+
+    my $enc_ratio = ( $self->encumbrance / $self->encumbrance_allowance );
+
+    my $enc_penalty = 0;
+    if ( $enc_ratio > 0.2 ) {
+        $enc_penalty = round( $base * $enc_ratio );
+    }
+
+    my $modified = $base - $enc_penalty;
+
+    $modified = 0 if $modified < 0;
+
+    # Always have a movement factor of 1 if not compeltely overencumbered
+    $modified = 1 if $modified < 1 && !$self->is_overencumbered;
+
+    return $modified;
 }
 
 sub calculate_encumbrance {
-	my $self = shift;
-	my $weight_change = shift // 0;
-			
-	my $weight = 0;
-	foreach my $item ($self->items) {
-		$weight += $item->weight;	
-	}
-	
-	# Modify by weight change occuring on the trigger (if any)
-	$weight += $weight_change;
-		
-	$self->encumbrance($weight);
-	
-	return $weight;
+    my $self = shift;
+    my $weight_change = shift // 0;
+
+    my $weight = 0;
+    foreach my $item ( $self->items ) {
+        $weight += $item->weight;
+    }
+
+    # Modify by weight change occuring on the trigger (if any)
+    $weight += $weight_change;
+
+    $self->encumbrance($weight);
+
+    return $weight;
 }
 
 sub encumbrance_allowance {
-	my $self = shift;
-	
-	return ($self->strength + $self->constitution) * 10; 
+    my $self = shift;
+
+    return ( $self->strength + $self->constitution ) * 10;
 }
 
 sub is_overencumbered {
-	my $self = shift;
-	
-	return 1 if $self->encumbrance > $self->encumbrance_allowance;	
+    my $self = shift;
+
+    return 1 if $self->encumbrance > $self->encumbrance_allowance;
 }
 
 sub encumbrance_left {
     my $self = shift;
-    
+
     return $self->encumbrance_allowance - $self->encumbrance;
 }
 
@@ -547,13 +549,13 @@ sub roll_all {
     elsif ( $self->class->class_name eq 'Priest' ) {
         $rolls{faith_points} = $self->roll_spell_points;
     }
-    
+
     foreach my $resistance (@RESISTANCES) {
         my $increase = Games::Dice::Advanced->roll('1d3');
-        my $method = "increase_resist_${resistance}";
+        my $method   = "increase_resist_${resistance}";
         $self->$method($increase);
         $rolls{$resistance} = $increase;
-    }    
+    }
 
     $self->update;
 
@@ -574,7 +576,7 @@ sub roll_hit_points {
     }
 
     my $point_max = RPG::Schema->config->{level_hit_points_max}{$class};
-    
+
     confess "Couldn't find max hit points for $class" unless $point_max;
 
     if ( ref $self ) {
@@ -627,7 +629,7 @@ sub _roll_points {
     if ( ref $self ) {
         $level = $self->level;
         my $stat_name = shift;
-        $stat  = $self->get_column($stat_name);
+        $stat = $self->get_column($stat_name);
         confess "stat $stat_name not defined" unless defined $stat;
     }
     else {
@@ -652,7 +654,7 @@ sub _roll_points {
 
     my $points = $level == 1 ? $point_max : Games::Dice::Advanced->roll( '1d' . ( $point_max - $point_min ) ) + ( $point_min - 1 );
 
-    $points += int ($stat / RPG::Schema->config->{'point_dividend'});
+    $points += int( $stat / RPG::Schema->config->{'point_dividend'} );
 
     return $points;
 }
@@ -687,7 +689,7 @@ sub set_default_spells {
                 },
             );
 
-            $memorised_spell->memorise_count(          ( $memorised_spell->memorise_count          || 0 ) + 1 );
+            $memorised_spell->memorise_count( ( $memorised_spell->memorise_count || 0 ) + 1 );
             $memorised_spell->memorise_count_tomorrow( ( $memorised_spell->memorise_count_tomorrow || 0 ) + 1 );
             $memorised_spell->update;
 
@@ -697,17 +699,17 @@ sub set_default_spells {
 }
 
 sub attack_factor {
-    my $self = shift;   
-    
+    my $self = shift;
+
     my $attack_factor = $self->_attack_factor;
-    
+
     # Apply effects
     my $effect_df = 0;
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->character_effects;
     $attack_factor += $effect_df;
-    
-    $attack_factor -= ($self->back_rank_penalty // 0) if ! $self->in_front_rank;
-    
+
+    $attack_factor -= ( $self->back_rank_penalty // 0 ) if !$self->in_front_rank;
+
     return $attack_factor;
 }
 
@@ -717,18 +719,18 @@ sub calculate_attack_factor {
 
     my @items = $self->get_equipped_item('Weapon');
 
-	# If a weapon is getting added or removed, it won't have been read above
-	#  (as it's not yet equipped), but it will have been passed in the $extra
-	#  hashref
-    if ($extra->{add}) {
-        push @items, @{$extra->{add}};
+    # If a weapon is getting added or removed, it won't have been read above
+    #  (as it's not yet equipped), but it will have been passed in the $extra
+    #  hashref
+    if ( $extra->{add} ) {
+        push @items, @{ $extra->{add} };
     }
-    if ($extra->{remove}) {
-        foreach my $remove (@{$extra->{remove}}) {
+    if ( $extra->{remove} ) {
+        foreach my $remove ( @{ $extra->{remove} } ) {
             @items = grep { $_->id != $remove->id } @items;
         }
     }
-    
+
     # Assume only one weapon equipped.
     # TODO needs to change to support multiple weapons
     my $item = shift @items;
@@ -736,35 +738,37 @@ sub calculate_attack_factor {
     # TODO possibly should be in the DB
     my $af_attribute = 'strength';
     $af_attribute = $item->item_type->category->item_category eq 'Ranged Weapon' ? 'agility' : 'strength'
-        if $item;
+      if $item;
 
-    my $attack_factor = do {no strict 'refs'; $self->$af_attribute};
+    my $attack_factor = do { no strict 'refs'; $self->$af_attribute };
 
     if ($item) {
+
         # Add in item AF
         $attack_factor += $item->attribute('Attack Factor')->item_attribute_value || 0;
 
         # Add in upgrade bonus
         $attack_factor += $item->variable("Attack Factor Upgrade") || 0;
-        
+
         # Record rank penalty
-        if ($item->attribute('Back Rank Penalty')) {
-            $self->back_rank_penalty($item->attribute('Back Rank Penalty')->item_attribute_value || 0);
+        if ( $item->attribute('Back Rank Penalty') ) {
+            $self->back_rank_penalty( $item->attribute('Back Rank Penalty')->item_attribute_value || 0 );
         }
         else {
             $self->back_rank_penalty(0);
-        }     
+        }
     }
-    
+
     # See if they get a bonus for being in a building
-    $attack_factor += $self->_get_building_bonus('attack_factor', $extra);
-    
-    if ($self->level > 5 && $self->class->class_name eq 'Warrior') {
+    $attack_factor += $self->_get_building_bonus( 'attack_factor', $extra );
+
+    if ( $self->level > 5 && $self->class->class_name eq 'Warrior' ) {
+
         # Warriors get extra AF based on level
-        my $warrior_af_bonus = int($self->level / 5) * 7;
+        my $warrior_af_bonus = int( $self->level / 5 ) * 7;
         $attack_factor += $warrior_af_bonus;
     }
-    
+
     $self->_attack_factor($attack_factor);
 
     return $attack_factor;
@@ -772,29 +776,29 @@ sub calculate_attack_factor {
 
 sub defence_factor {
     my $self = shift;
-    
+
     # Apply effects
     my $effect_df = 0;
     map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->character_effects;
-        
-    return ($self->_defence_factor // 0) + $effect_df; 
+
+    return ( $self->_defence_factor // 0 ) + $effect_df;
 }
 
 sub calculate_defence_factor {
-    my $self = shift;
+    my $self  = shift;
     my $extra = shift;
 
     my @items = $self->get_equipped_item('Armour');
-    
-    if ($extra->{add}) {
-        push @items, @{$extra->{add}};
+
+    if ( $extra->{add} ) {
+        push @items, @{ $extra->{add} };
     }
-    if ($extra->{remove}) {
-        foreach my $remove (@{$extra->{remove}}) {
+    if ( $extra->{remove} ) {
+        foreach my $remove ( @{ $extra->{remove} } ) {
             @items = grep { $_->id != $remove->id } @items;
         }
     }
-    
+
     # Get rid of broken items (items without a durability (i.e. not defined) are ok)
     @items = grep { my $dur = $_->variable('Durability'); !defined $dur || $dur > 0 } @items;
 
@@ -804,75 +808,75 @@ sub calculate_defence_factor {
     my $defence_factor = $self->agility + $armour_df;
 
     # See if they get a bonus for being in a building
-    $defence_factor += $self->_get_building_bonus('defence_factor', $extra);    
+    $defence_factor += $self->_get_building_bonus( 'defence_factor', $extra );
 
     $self->_defence_factor($defence_factor);
-    
+
     return $defence_factor;
 }
 
 # Calculate bonuses to resistances
 sub calculate_resistance_bonuses {
-    my $self = shift;
+    my $self  = shift;
     my $extra = shift;
-        
-	my %bonuses;
-    
+
+    my %bonuses;
+
     # First, find items with bonuses
-	my @enchanted_items = $self->search_related(
-		'items',
-		{
-			'enchantment.enchantment_name' => 'resistances',
-		},
-		{
-			prefetch => { 'item_enchantments' => 'enchantment' },
-		}
-	);
-	
-	foreach my $item (@enchanted_items) {
-        foreach my $item_enchantment ($item->item_enchantments) {
-            if ($item_enchantment->variable('Resistance Type') eq 'all') {
+    my @enchanted_items = $self->search_related(
+        'items',
+        {
+            'enchantment.enchantment_name' => 'resistances',
+        },
+        {
+            prefetch => { 'item_enchantments' => 'enchantment' },
+        }
+    );
+
+    foreach my $item (@enchanted_items) {
+        foreach my $item_enchantment ( $item->item_enchantments ) {
+            if ( $item_enchantment->variable('Resistance Type') eq 'all' ) {
                 foreach my $resistance (@RESISTANCES) {
                     $bonuses{$resistance} += $item_enchantment->variable('Resistance Bonus');
-                }    
+                }
             }
-            else {            
-                $bonuses{$item_enchantment->variable('Resistance Type')} += $item_enchantment->variable('Resistance Bonus');
+            else {
+                $bonuses{ $item_enchantment->variable('Resistance Type') } += $item_enchantment->variable('Resistance Bonus');
             }
-        }   
-	}
-	
-	my $bonus_from_buildings = $self->_get_building_bonus('resistance_bonuses', $extra);
-	
-	for my $resistance_type (@RESISTANCES) {
+        }
+    }
+
+    my $bonus_from_buildings = $self->_get_building_bonus( 'resistance_bonuses', $extra );
+
+    for my $resistance_type (@RESISTANCES) {
         my $method = "resist_${resistance_type}_bonus";
-        
-        $self->$method(($bonuses{$resistance_type} // 0) + $bonus_from_buildings);
-	} 
-	
+
+        $self->$method( ( $bonuses{$resistance_type} // 0 ) + $bonus_from_buildings );
+    }
+
 }
 
 # Get AF/DF,etc bonus based on the buildng the character is in (if any)
 sub _get_building_bonus {
-    my $self = shift;
+    my $self       = shift;
     my $bonus_type = shift;
-    my $extra = shift;
-    
-    my $bonus = 0; 
-    
+    my $extra      = shift;
+
+    my $bonus = 0;
+
     my $building_land_id;
-    
-    if ($self->garrison_id) {
+
+    if ( $self->garrison_id ) {
         my $garrison = $self->garrison;
-        
-        return if ! $garrison || ! $garrison->land_id;
+
+        return if !$garrison || !$garrison->land_id;
 
         $building_land_id = $garrison->land_id;
     }
-    
-    if ($self->mayor_of || ($self->status && $self->status eq 'mayor_garrison')) {
+
+    if ( $self->mayor_of || ( $self->status && $self->status eq 'mayor_garrison' ) ) {
         my $town;
-        if ($self->mayor_of) {
+        if ( $self->mayor_of ) {
             $town = $self->mayor_of_town;
         }
         else {
@@ -882,11 +886,12 @@ sub _get_building_bonus {
                 }
             );
         }
-        
-        $building_land_id = $town->location->id if $town;         
+
+        $building_land_id = $town->location->id if $town;
     }
-    
+
     if ($building_land_id) {
+
         # Check if the garrison is in the same sector as a building. If so, add something to all their defence factors
         my $building = $self->result_source->schema->resultset('Building')->find(
             {
@@ -896,11 +901,11 @@ sub _get_building_bonus {
                 prefetch => 'building_type',
             },
         );
-        
-        $bonus += $building->get_bonus($bonus_type, $extra->{bonus_level}{$bonus_type}) if $building;           
+
+        $bonus += $building->get_bonus( $bonus_type, $extra->{bonus_level}{$bonus_type} ) if $building;
     }
 
-    return $bonus;    
+    return $bonus;
 }
 
 =head1 damage
@@ -921,7 +926,7 @@ sub damage {
     # Apply effects
     my $effect_dam = 0;
     map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->character_effects;
-    return 2 + $effect_dam unless $weapon;    # nothing equipped, assume bare hands
+    return 2 + $effect_dam unless $weapon; # nothing equipped, assume bare hands
 
     return $weapon->attribute('Damage')->item_attribute_value + ( $weapon->variable('Damage Upgrade') || 0 ) + $effect_dam;
 }
@@ -929,8 +934,8 @@ sub damage {
 sub weapon {
     my $self = shift;
     my $item = shift;
-    
-    if (! $item) {
+
+    if ( !$item ) {
         my @items = $self->get_equipped_item('Weapon');
 
         # Assume only one weapon equipped.
@@ -967,7 +972,7 @@ sub get_equipped_item {
             'equip_place_id'                     => { '!=', undef },
         },
         {
-            'join'     => [ { 'item_type' => { 'category' => 'super_category' }, }, ],
+            'join' => [ { 'item_type' => { 'category' => 'super_category' }, }, ],
             'prefetch' => $prefetch,
         },
     );
@@ -978,9 +983,9 @@ sub get_equipped_item {
 }
 
 sub hit {
-    my $self   = shift;
-    my $damage = shift;
-    my $attacker = shift;
+    my $self        = shift;
+    my $damage      = shift;
+    my $attacker    = shift;
     my $effect_type = shift;
 
     my $new_hp_total = $self->hit_points - $damage;
@@ -988,48 +993,49 @@ sub hit {
 
     $self->hit_points($new_hp_total);
     $self->update;
-    
-    if ($self->is_dead) {
-        my $message = $self->character_name . " was slain ";        
-        
+
+    if ( $self->is_dead ) {
+        my $message = $self->character_name . " was slain ";
+
         # Slightly messy, as $attacker may be a party instead of a specific character. This is because
         #  a hit may come from an effect (e.g. poison), which isn't directly related to a character. If that's
         #  the case, it should ideally pass the optional $effect_type param
-		my $attacker_type;
-		if ($effect_type) {
-		    $message .= "by $effect_type";
-		}
-		elsif ($attacker->is_character) {
-		    $message .= "by " . A( $attacker->class->class_name, 1 );
-		}
-		elsif ($attacker->isa('RPG::Schema::Creature')) { 
-		    $message .= "by " . A( $attacker->type->creature_type, 1 );
-		}
-		else {
+        my $attacker_type;
+        if ($effect_type) {
+            $message .= "by $effect_type";
+        }
+        elsif ( $attacker->is_character ) {
+            $message .= "by " . A( $attacker->class->class_name, 1 );
+        }
+        elsif ( $attacker->isa('RPG::Schema::Creature') ) {
+            $message .= "by " . A( $attacker->type->creature_type, 1 );
+        }
+        else {
             $message .= "during combat";
-		}
+        }
 
-		$self->add_to_history(
-			{
-				day_id       => $self->result_source->schema->resultset('Day')->find_today->id,
-				event        => $message,
-			},
-		);
-        
-    	if ($attacker and $self->mayor_of and my $town = $self->mayor_of_town) {
-    		# A mayor has died... 
-    		
-    		# The party that killed them is marked as 'pending mayor' of the town
-    		# .. Attacker might be a party or a character  		
-    		my $killing_party = $attacker->isa('RPG::Schema::Party') ? $attacker : $attacker->party; 
-    		
-    		# Only set them pending mayor if they're allowed more towns
-    		if ($killing_party->mayor_count_allowed > $killing_party->mayors->count) {
-                $town->pending_mayor($killing_party->id);
-                $town->pending_mayor_date(DateTime->now());        	
+        $self->add_to_history(
+            {
+                day_id => $self->result_source->schema->resultset('Day')->find_today->id,
+                event => $message,
+            },
+        );
+
+        if ( $attacker and $self->mayor_of and my $town = $self->mayor_of_town ) {
+
+            # A mayor has died...
+
+            # The party that killed them is marked as 'pending mayor' of the town
+            # .. Attacker might be a party or a character
+            my $killing_party = $attacker->isa('RPG::Schema::Party') ? $attacker : $attacker->party;
+
+            # Only set them pending mayor if they're allowed more towns
+            if ( $killing_party->mayor_count_allowed > $killing_party->mayors->count ) {
+                $town->pending_mayor( $killing_party->id );
+                $town->pending_mayor_date( DateTime->now() );
                 $town->update;
-    		}
-    	}	
+            }
+        }
     }
 }
 
@@ -1040,9 +1046,9 @@ sub is_dead {
 }
 
 sub is_alive {
-	my $self = shift;
-	
-	return ! $self->is_dead;	
+    my $self = shift;
+
+    return !$self->is_dead;
 }
 
 =head2 equipped_items(@items)
@@ -1059,14 +1065,14 @@ sub equipped_items {
 
     my @equip_places = $self->result_source->schema->resultset('Equip_Places')->search;
 
-	unless (@items) {
-	    @items = $self->search_related(
-	    	'items',
-	    	{
-	    		'equip_place_id' => {'!=', undef},
-	    	}
-	    );
-	}
+    unless (@items) {
+        @items = $self->search_related(
+            'items',
+            {
+                'equip_place_id' => { '!=', undef },
+            }
+        );
+    }
 
     my %equipped_items;
 
@@ -1117,10 +1123,10 @@ sub ammunition_for_item {
         my $quantity = $ammo_rec->{item_variables}[0]{item_variable_value};
 
         push @ammo,
-            {
+          {
             id       => $ammo_rec->{item_id},
             quantity => $quantity,
-            };
+          };
     }
 
     return wantarray ? @ammo : \@ammo;
@@ -1173,7 +1179,7 @@ sub xp {
         # Add stat points
         $self->stat_points( $self->stat_points + RPG::Schema->config->{stat_points_per_level} );
         $rolls{stat_points} = RPG::Schema->config->{stat_points_per_level};
-        
+
         $self->increment_skill_points;
 
         my $today = $self->result_source->schema->resultset('Day')->find_today;
@@ -1181,7 +1187,7 @@ sub xp {
         $self->add_to_history(
             {
                 day_id => $today->id,
-                event  => $self->character_name . " reached level " . $self->level,
+                event => $self->character_name . " reached level " . $self->level,
             },
         );
 
@@ -1191,9 +1197,9 @@ sub xp {
 
 sub xp_for_next_level {
     my $self = shift;
-    
+
     my $next_level = $self->result_source->schema->resultset('Levels')->find( { level_number => $self->level + 1, } );
-    
+
     return $next_level ? $next_level->xp_needed : '????';
 }
 
@@ -1206,41 +1212,41 @@ sub resurrect_cost {
 }
 
 sub resurrect {
-    my $self = shift;
-    my $town = shift;
+    my $self         = shift;
+    my $town         = shift;
     my $charge_party = shift // 1;
-    
+
     my $party = $self->party;
-    
-    if ($charge_party && $party) {    
+
+    if ( $charge_party && $party ) {
         $party->decrease_gold( $self->resurrect_cost );
         $party->update;
     }
 
-	$self->hit_points( round $self->max_hit_points * 0.1 );
-	$self->hit_points(1) if $self->hit_points < 1;
-	my $xp_to_lose = int( $self->xp * RPG::Schema->config->{ressurection_percent_xp_to_lose} / 100 );
-	$self->xp( $self->xp - $xp_to_lose );
-	$self->update;
+    $self->hit_points( round $self->max_hit_points * 0.1 );
+    $self->hit_points(1) if $self->hit_points < 1;
+    my $xp_to_lose = int( $self->xp * RPG::Schema->config->{ressurection_percent_xp_to_lose} / 100 );
+    $self->xp( $self->xp - $xp_to_lose );
+    $self->update;
 
-	my $message =
-		  $self->character_name
-		. " was ressurected by the healer in the town of "
-		. $town->town_name
-		. " and has risen from the dead. "
-		. ucfirst $self->pronoun('subjective')
-		. " lost $xp_to_lose xp.";
-		
+    my $message =
+      $self->character_name
+      . " was ressurected by the healer in the town of "
+      . $town->town_name
+      . " and has risen from the dead. "
+      . ucfirst $self->pronoun('subjective')
+      . " lost $xp_to_lose xp.";
+
     my $today = $self->result_source->schema->resultset('Day')->find_today;
 
-	$self->add_to_history(
-		{
-			day_id       => $today->id,
-			event        => $message,
-		},
-	);
-	
-	return $message;
+    $self->add_to_history(
+        {
+            day_id => $today->id,
+            event  => $message,
+        },
+    );
+
+    return $message;
 }
 
 # Number of prayer or magic points used for spells memorised tomorrow
@@ -1316,12 +1322,12 @@ sub change_hit_points {
 
 # Returns true if character is in the front rank
 sub in_front_rank {
-    my $self = shift;
+    my $self         = shift;
     my $rank_sep_pos = shift;
 
     # If character isn't in a party, say they're in the front rank
     return 1 unless $self->party_id;
-    
+
     $rank_sep_pos //= $self->party->rank_separator_position;
 
     return $rank_sep_pos >= $self->party_order ? 1 : 0;
@@ -1329,18 +1335,18 @@ sub in_front_rank {
 
 # Return the number of attacks allowed by this character
 around 'number_of_attacks' => sub {
-	my $orig = shift;
-    my $self = shift;
-    my $has_ranged_weapon = shift;      
-    my @attack_history = @_;	
-    
+    my $orig              = shift;
+    my $self              = shift;
+    my $has_ranged_weapon = shift;
+    my @attack_history    = @_;
+
     my $modifier = 0;
-    
+
     if ( $has_ranged_weapon && $self->class->class_name eq 'Archer' ) {
         $modifier = 0.5;
     }
-    
-    return $self->$orig($modifier, @attack_history);
+
+    return $self->$orig( $modifier, @attack_history );
 };
 
 sub effect_value {
@@ -1354,15 +1360,15 @@ sub effect_value {
 }
 
 sub resistances {
-	my $self = shift;
-	
-	my %resist = (
-		Fire => $self->resist_fire + $self->resist_fire_bonus,
-		Ice => $self->resist_ice + $self->resist_ice_bonus,
-		Poison => $self->resist_poison + $self->resist_poison_bonus,
-	);
-	
-	return %resist;
+    my $self = shift;
+
+    my %resist = (
+        Fire   => $self->resist_fire + $self->resist_fire_bonus,
+        Ice    => $self->resist_ice + $self->resist_ice_bonus,
+        Poison => $self->resist_poison + $self->resist_poison_bonus,
+    );
+
+    return %resist;
 }
 
 sub value {
@@ -1377,7 +1383,7 @@ sub value {
     foreach my $item ( $self->items ) {
         $value += int $item->sell_price(0);
     }
-    
+
     $value += $self->skill_points * 160;
 
     $self->{value} = $value;
@@ -1409,7 +1415,7 @@ sub set_starting_equipment {
         next unless $item_type;
 
         my $item = $schema->resultset('Items')->create( { item_type_id => $item_type->id, } );
-        
+
         $item->add_to_characters_inventory($self);
 
         if ( $item->variable('Quantity') ) {
@@ -1420,160 +1426,162 @@ sub set_starting_equipment {
 
 sub create_item_grid {
     my $self = shift;
-    
+
     if ( $self->item_sectors->count > 0 ) {
         return;
     }
 
-    $self->create_grid('character', 8, 8);       
+    $self->create_grid( 'character', 8, 8 );
 }
 
 # Returns the spell to cast if there is one, undef otherwise
 sub check_for_auto_cast {
-	my $self = shift;
-	my @exclude_spells = @_;
-	
-	my $online = 0;	
-	$online = 1 if ! $self->is_npc && $self->group->is_online;
-			
-	# Only do auto cast if they're offline, or explictly set to autocast
-	return unless ! $online || ($self->last_combat_action eq 'Cast' && $self->last_combat_param1 eq 'autocast');   
-	
-	my $chance = $online ? $self->online_cast_chance : $self->offline_cast_chance;
-	$chance //= 0;
-		
-	my $cast_roll = Games::Dice::Advanced->roll('1d100');
-	
-	if ($cast_roll <= $chance) {
-		my %params;
-		unless ($self->is_npc) {
-			# pc chars restricted to spells they've marked to cast offline
-			$params{cast_offline} = 1;
-		}
-		
-		if (@exclude_spells) {
-            $params{'spell.spell_id'} = {'-not_in', \@exclude_spells};
-		} 
-		
-		my @spells = $self->search_related(
-			'memorised_spells',
-			\%params,
-			{
-				prefetch => 'spell',
-			}
-		);
-		
-		@spells = grep { $_->casts_left_today > 0 } @spells;				
-		
-		return unless @spells;
-		
-		return (shuffle @spells)[0]->spell; 
-	}	
+    my $self           = shift;
+    my @exclude_spells = @_;
+
+    my $online = 0;
+    $online = 1 if !$self->is_npc && $self->group->is_online;
+
+    # Only do auto cast if they're offline, or explictly set to autocast
+    return unless !$online || ( $self->last_combat_action eq 'Cast' && $self->last_combat_param1 eq 'autocast' );
+
+    my $chance = $online ? $self->online_cast_chance : $self->offline_cast_chance;
+    $chance //= 0;
+
+    my $cast_roll = Games::Dice::Advanced->roll('1d100');
+
+    if ( $cast_roll <= $chance ) {
+        my %params;
+        unless ( $self->is_npc ) {
+
+            # pc chars restricted to spells they've marked to cast offline
+            $params{cast_offline} = 1;
+        }
+
+        if (@exclude_spells) {
+            $params{'spell.spell_id'} = { '-not_in', \@exclude_spells };
+        }
+
+        my @spells = $self->search_related(
+            'memorised_spells',
+            \%params,
+            {
+                prefetch => 'spell',
+            }
+        );
+
+        @spells = grep { $_->casts_left_today > 0 } @spells;
+
+        return unless @spells;
+
+        return ( shuffle @spells )[0]->spell;
+    }
 }
 
 # Get item actions (i.e. all items that can be used)
 sub get_item_actions {
-	my $self = shift;
-	my $combat = shift // 0;
-	
-	my @items = $self->search_related('items',
-		{
-			-or => [
-                {'item_enchantments.enchantment_id' => {'!=', undef}},
-                {'item_type.usable' => 1},
+    my $self = shift;
+    my $combat = shift // 0;
+
+    my @items = $self->search_related( 'items',
+        {
+            -or => [
+                { 'item_enchantments.enchantment_id' => { '!=', undef } },
+                { 'item_type.usable' => 1 },
             ],
-		},
-		{
-			prefetch => [
-                {'item_enchantments' => 'enchantment'},
+        },
+        {
+            prefetch => [
+                { 'item_enchantments' => 'enchantment' },
                 'item_type',
             ],
             order_by => 'item_type',
-		}			
-	);
+        }
+    );
 
-	my @actions;
-	foreach my $item (@items) {
-		push @actions, $item->usable_actions(combat => $combat);		
-	}
-	
-	return @actions;
+    my @actions;
+    foreach my $item (@items) {
+        push @actions, $item->usable_actions( combat => $combat );
+    }
+
+    return @actions;
 }
 
 # Get an item action by the id. The id could either be an item_enchantment or an item
 # TODO: Id clashes are possible... which is really a bug
 sub get_item_action {
-    my $self = shift;
+    my $self      = shift;
     my $action_id = shift;
-    
+
     my $action = $self->find_related(
         'items',
         {
             'item_id' => $action_id,
         },
     );
-    
-    if (! $action || ! $action->can('use')) {
+
+    if ( !$action || !$action->can('use') ) {
+
         # Try an item enchantment
         my $schema = $self->result_source->schema;
         $action = $schema->resultset('Item_Enchantments')->find($action_id);
-        
-        confess "Usable action belongs to another character" if $action && $action->item->character_id != $self->id;   
+
+        confess "Usable action belongs to another character" if $action && $action->item->character_id != $self->id;
     }
-    
+
     confess "No usable action found" unless $action;
-    
-    return $action; 
+
+    return $action;
 }
 
 sub critical_hit_chance {
     my $self = shift;
-    
-	my @items_with_bonus = $self->search_related(
-		'items',
-		{
-			'enchantment.enchantment_name' => 'critical_hit_bonus',
-		},
-		{
-			join => {'item_enchantments' => 'enchantment'},
-		}
-	);
-	
-	my $bonus = sum map { $_->variable('Critical Hit Bonus') } @items_with_bonus;
-	$bonus //= 0;
-	
-	my $skill_bonus = $self->execute_skill('Eagle Eye', 'critical_hit_chance') // 0;
-    
-    return int ($self->divinity / RPG::Schema->config->{character_divinity_points_per_chance_of_critical_hit}) +
-        int ($self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit}) +
-        $bonus +
-        $skill_bonus;
+
+    my @items_with_bonus = $self->search_related(
+        'items',
+        {
+            'enchantment.enchantment_name' => 'critical_hit_bonus',
+        },
+        {
+            join => { 'item_enchantments' => 'enchantment' },
+        }
+    );
+
+    my $bonus = sum map { $_->variable('Critical Hit Bonus') } @items_with_bonus;
+    $bonus //= 0;
+
+    my $skill_bonus = $self->execute_skill( 'Eagle Eye', 'critical_hit_chance' ) // 0;
+
+    return int( $self->divinity / RPG::Schema->config->{character_divinity_points_per_chance_of_critical_hit} ) +
+      int( $self->level / RPG::Schema->config->{character_level_per_bonus_point_to_critical_hit} ) +
+      $bonus +
+      $skill_bonus;
 }
 
 # Are they allowed to move their items around (drop, equip, etc)?
 sub item_change_allowed {
     my $self = shift;
     my $party = shift // $self->party;
-    
-	# Set whether items are allowed to be moved, dropped, etc.
-	my $item_change_allowed = 1;
-	if (! $self->is_in_party || $party->in_combat) {
-	   $item_change_allowed = 0;   
-	}
-	
-	if ($self->garrison_id && ! $self->garrison->in_combat) {
-	    $item_change_allowed = 1;
-	}
-	
-	$item_change_allowed = 1 if $self->garrison_id;
-	
-	return $item_change_allowed;
+
+    # Set whether items are allowed to be moved, dropped, etc.
+    my $item_change_allowed = 1;
+    if ( !$self->is_in_party || $party->in_combat ) {
+        $item_change_allowed = 0;
+    }
+
+    if ( $self->garrison_id && !$self->garrison->in_combat ) {
+        $item_change_allowed = 1;
+    }
+
+    $item_change_allowed = 1 if $self->garrison_id;
+
+    return $item_change_allowed;
 }
 
 sub get_skill {
     my $self = shift;
-    my $skill_name = shift // confess "Skill name not provided";   
-    
+    my $skill_name = shift // confess "Skill name not provided";
+
     my $character_skill = $self->find_related(
         'character_skills',
         {
@@ -1583,31 +1591,31 @@ sub get_skill {
             join => 'skill',
         }
     );
-    
-    return $character_skill;    
+
+    return $character_skill;
 }
 
 sub execute_skill {
-    my $self = shift;
+    my $self       = shift;
     my $skill_name = shift // confess "Skill name not provided";
-    my $event = shift;
-    
+    my $event      = shift;
+
     my $character_skill = $self->get_skill($skill_name);
-    
+
     return unless $character_skill;
-    
-    return $character_skill->execute($event);   
+
+    return $character_skill->execute($event);
 }
 
 sub has_usable_actions {
     my $self = shift;
     my $combat = shift // 0;
-    
-    my $col = 'has_usable_actions_' . ($combat ? 'combat' : 'non_combat');
+
+    my $col = 'has_usable_actions_' . ( $combat ? 'combat' : 'non_combat' );
     return $self->$col;
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0);
+__PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;
 

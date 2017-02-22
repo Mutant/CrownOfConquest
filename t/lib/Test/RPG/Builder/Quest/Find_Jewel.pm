@@ -13,12 +13,12 @@ sub build_quest {
     my @land = Test::RPG::Builder::Land->build_land($schema);
 
     my $town = $schema->resultset('Town')->create( { land_id => $land[4]->id, } );
-    
+
     my $other_town = $schema->resultset('Town')->create( { land_id => $land[1]->id, } );
 
     my $quest_type = $schema->resultset('Quest_Type')->find( { 'quest_type' => 'find_jewel' } );
 
-	my $jewel_type1 = Test::RPG::Builder::Item_Type->build_item_type($schema, category_name => 'Jewel', item_type => 'jewel1');
+    my $jewel_type1 = Test::RPG::Builder::Item_Type->build_item_type( $schema, category_name => 'Jewel', item_type => 'jewel1' );
 
     my %create_params;
     if ( $params{party_id} ) {

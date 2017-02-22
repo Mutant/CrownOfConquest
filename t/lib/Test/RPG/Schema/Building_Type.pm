@@ -16,151 +16,149 @@ use Test::RPG::Builder::Item_Type;
 
 sub test_cost_to_build : Tests(1) {
     my $self = shift;
-    
+
     # GIVEN
     my $building_type = $self->{schema}->resultset('Building_Type')->find(
         {
             name => 'Tower',
         }
     );
-    
+
     # WHEN
     my %costs = $building_type->cost_to_build;
-    
+
     # THEN
     my %expected = (
-        Clay => 16,
+        Clay  => 16,
         Stone => 6,
-        Wood => 15,
-        Iron => 8,
+        Wood  => 15,
+        Iron  => 8,
     );
-    is_deeply(\%costs, \%expected, "Cost to build returned correctly");
-    
+    is_deeply( \%costs, \%expected, "Cost to build returned correctly" );
+
 }
 
 sub test_cost_to_build_with_skilled_party : Tests(1) {
     my $self = shift;
-    
+
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my @chars = $party->characters;
     my $skill = $self->{schema}->resultset('Skill')->find(
         {
             skill_name => 'Construction',
         }
     );
-    
+
     my $char_skill1 = $self->{schema}->resultset('Character_Skill')->create(
         {
-            skill_id => $skill->id,
+            skill_id     => $skill->id,
             character_id => $chars[0]->id,
-            level => 10,
+            level        => 10,
         }
     );
-    
+
     my $char_skill2 = $self->{schema}->resultset('Character_Skill')->create(
         {
-            skill_id => $skill->id,
+            skill_id     => $skill->id,
             character_id => $chars[1]->id,
-            level => 5,
+            level        => 5,
         }
-    );    
-    
+    );
+
     my $building_type = $self->{schema}->resultset('Building_Type')->find(
         {
             name => 'Tower',
         }
     );
-    
+
     # WHEN
-    my %costs = $building_type->cost_to_build([$party]);
-    
+    my %costs = $building_type->cost_to_build( [$party] );
+
     # THEN
     my %expected = (
-        Clay => 11,
+        Clay  => 11,
         Stone => 4,
-        Wood => 10,
-        Iron => 5,
+        Wood  => 10,
+        Iron  => 5,
     );
-    is_deeply(\%costs, \%expected, "Cost to build returned correctly");
-    
-}
+    is_deeply( \%costs, \%expected, "Cost to build returned correctly" );
 
+}
 
 sub test_consume_items : Tests(4) {
     my $self = shift;
-    
+
     # GIVEN
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
     my @characters = $party->characters;
-    
-    my $item_type1 = Test::RPG::Builder::Item_Type->build_item_type($self->{schema}, category_name => 'Resource', item_type => 'Type1',
+
+    my $item_type1 = Test::RPG::Builder::Item_Type->build_item_type( $self->{schema}, category_name => 'Resource', item_type => 'Type1',
 
     );
-    
+
     my $building_type = $self->{schema}->resultset('Building_Type')->find(
         {
             name => 'Tower',
         }
-    );    
-    
-    my $item1 = Test::RPG::Builder::Item->build_item($self->{schema},  
+    );
+
+    my $item1 = Test::RPG::Builder::Item->build_item( $self->{schema},
         character_id => $characters[0]->id, item_type_id => $item_type1->id,
         variables => [
             {
-                item_variable_name => 'Quantity',
+                item_variable_name  => 'Quantity',
                 item_variable_value => 100,
             }
         ],
         no_equip_place => 1,
-        
+
     );
-    
-    my $item2 = Test::RPG::Builder::Item->build_item($self->{schema},  
+
+    my $item2 = Test::RPG::Builder::Item->build_item( $self->{schema},
         character_id => $characters[0]->id, item_type_id => $item_type1->id,
         variables => [
             {
-                item_variable_name => 'Quantity',
+                item_variable_name  => 'Quantity',
                 item_variable_value => 100,
             }
         ],
         no_equip_place => 1,
     );
-        
-    my $item3 = Test::RPG::Builder::Item->build_item($self->{schema}, category_name => 'Resource',
+
+    my $item3 = Test::RPG::Builder::Item->build_item( $self->{schema}, category_name => 'Resource',
         variables => [
             {
-                item_variable_name => 'Quantity',
+                item_variable_name  => 'Quantity',
                 item_variable_value => 200,
             }
-        ], character_id => $characters[1]->id, item_type_name => 'Type2', no_equip_place => 1,);
-
+        ], character_id => $characters[1]->id, item_type_name => 'Type2', no_equip_place => 1, );
 
     $characters[0]->create_item_grid;
     $characters[1]->create_item_grid;
-    
+
     $characters[0]->add_item_to_grid($item1);
     $characters[0]->add_item_to_grid($item2);
-    $characters[1]->add_item_to_grid($item3);        
-    
+    $characters[1]->add_item_to_grid($item3);
+
     # WHEN
     $building_type->consume_items(
         [$party],
         (
             'Type1' => 150,
             'Type2' => 150,
-        )
+          )
     );
-    
+
     # THEN
     $item1->discard_changes;
-    is($item1->variable('Quantity'), undef, "Item1 used up");
-    is($item1->start_sector, undef, "Item1 no longer in grid");
+    is( $item1->variable('Quantity'), undef, "Item1 used up" );
+    is( $item1->start_sector,         undef, "Item1 no longer in grid" );
 
     $item2->discard_changes;
-    is($item2->variable('Quantity'), 50, "Item2 used up");
+    is( $item2->variable('Quantity'), 50, "Item2 used up" );
 
     $item3->discard_changes;
-    is($item3->variable('Quantity'), 50, "Item3 used up");
-       
+    is( $item3->variable('Quantity'), 50, "Item3 used up" );
+
 }

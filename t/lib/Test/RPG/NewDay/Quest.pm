@@ -20,7 +20,7 @@ sub startup : Test(startup => 1) {
     my $self = shift;
 
     use_ok 'RPG::NewDay::Action::Quest';
-    
+
     $self->setup_context;
 }
 
@@ -60,20 +60,20 @@ sub test_update_days_left : Tests(6) {
     # THEN
     $quest1->discard_changes;
     is( $quest1->days_to_complete, $quest1_days_left - 1, "Quest 1 has days to complete reduced by 1" );
-    is( $quest1->status,           'In Progress',         "Quest 1 still in progress" );
+    is( $quest1->status, 'In Progress', "Quest 1 still in progress" );
 
     $quest2->discard_changes;
-    is( $quest2->days_to_complete, 0,            "Quest 2 days to complete is 0" );
-    is( $quest2->status,           'Terminated', "Quest 2 terminated" );
-    
+    is( $quest2->days_to_complete, 0, "Quest 2 days to complete is 0" );
+    is( $quest2->status, 'Terminated', "Quest 2 terminated" );
+
     my $party_town = $self->{schema}->resultset('Party_Town')->find(
         {
             party_id => $party->id,
             town_id  => $quest2->town->id,
         }
     );
-    is($party_town->prestige, -3, "Prestige reduced");
-    
+    is( $party_town->prestige, -3, "Prestige reduced" );
+
     my $message = $self->{schema}->resultset('Party_Messages')->find( { party_id => $party->id, } );
     is( $message->day_id, $mock_context->current_day->id, "Message created for party with correct day" );
 
@@ -81,31 +81,30 @@ sub test_update_days_left : Tests(6) {
 
 sub test_complete_quests : Tests(4) {
     my $self = shift;
-    
+
     # GIVEN
-    my $party1 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
-    my $party2 = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 2);
-    
-    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    
+    my $party1 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+    my $party2 = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 2 );
+
+    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+
     my $quest1 = Test::RPG::Builder::Quest::Destroy_Orb->build_quest( $self->{schema}, party_id => $party1->id, status => 'Awaiting Reward' );
-    my $quest2 = Test::RPG::Builder::Quest->build_quest( $self->{schema}, party_id => $party2->id, quest_type => 'claim_land', 
+    my $quest2 = Test::RPG::Builder::Quest->build_quest( $self->{schema}, party_id => $party2->id, quest_type => 'claim_land',
         kingdom_id => $kindgom->id, status => 'Awaiting Reward' );
-    
+
     my $action = RPG::NewDay::Action::Quest->new( context => $self->{mock_context} );
-    
+
     # WHEN
     $action->complete_quests;
-    
+
     # THEN
     $quest1->discard_changes;
-    is($quest1->status, 'Complete', "Quest 1 has status set correctly");
-    is(scalar $party1->messages, 1, "Message added to party 1");
-    
-    
+    is( $quest1->status, 'Complete', "Quest 1 has status set correctly" );
+    is( scalar $party1->messages, 1, "Message added to party 1" );
+
     $quest2->discard_changes;
-    is($quest2->status, 'Complete', "Quest 2 has status set correctly");
-    is(scalar $party2->messages, 1, "Message added to party 2");
+    is( $quest2->status, 'Complete', "Quest 2 has status set correctly" );
+    is( scalar $party2->messages, 1, "Message added to party 2" );
 }
 
 1;

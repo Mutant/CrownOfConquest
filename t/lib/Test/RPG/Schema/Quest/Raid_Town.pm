@@ -20,7 +20,7 @@ sub test_set_quest_params : Tests(8) {
     my $schema = $self->{schema};
     my @land   = Test::RPG::Builder::Land->build_land($schema);
 
-    my $town         = Test::RPG::Builder::Town->build_town( $schema, land_id => $land[0]->id );
+    my $town = Test::RPG::Builder::Town->build_town( $schema, land_id => $land[0]->id );
     my $town_to_raid = Test::RPG::Builder::Town->build_town( $schema, land_id => $land[8]->id );
 
     my $quest_type = $schema->resultset('Quest_Type')->find( { 'quest_type' => 'raid_town' } );
@@ -45,13 +45,13 @@ sub test_set_quest_params : Tests(8) {
     is( $quest->quest_type_id, $quest_type->id, "Quest is of the correct type" );
     isa_ok( $quest, 'RPG::Schema::Quest::Raid_Town', "Quest blessed into correct class" );
     is( $quest->param_start_value('Town To Raid'), $town_to_raid->id, "Town to raid param set correctly" );
-    is( $quest->param_start_value('Raided Town'),  0,                 "Raided Town param set correctly" );
-    is( $quest->min_level,                         6,                 "Minimum level set correctly" );
-    is( $quest->xp_value,                          2,                 "Xp value set correctly" );
-    is( $quest->gold_value,                        20,                "Gold value set correctly" );
-    is( $quest->days_to_complete,                  4,                 "Days to complete set correctly" );
+    is( $quest->param_start_value('Raided Town'), 0, "Raided Town param set correctly" );
+    is( $quest->min_level,        6,  "Minimum level set correctly" );
+    is( $quest->xp_value,         2,  "Xp value set correctly" );
+    is( $quest->gold_value,       20, "Gold value set correctly" );
+    is( $quest->days_to_complete, 4,  "Days to complete set correctly" );
 
- 	$self->unmock_dice;
+    $self->unmock_dice;
 
 }
 

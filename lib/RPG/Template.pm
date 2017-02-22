@@ -7,7 +7,7 @@ use Template;
 
 sub process {
     my $self     = shift;
-    my $config  = shift;
+    my $config   = shift;
     my $template = shift;
     my $params   = shift;
 
@@ -16,13 +16,14 @@ sub process {
             INCLUDE_PATH       => $config->{home} . '/root',
             EVAL_PERL          => 0,
             TEMPLATE_EXTENSION => '',
+
             #COMPILE_DIR => "/tmp/template_cache",
         }
     ) || die $Template::ERROR, "\n";
 
     my $result;
     $tt->process( $template, $params, \$result )
-        || die $tt->error(), "\n";
+      || die $tt->error(), "\n";
 
     return $result;
 }

@@ -60,16 +60,16 @@ sub _create_group {
         }
         else {
             $extra{'category.standard'} = 1;
-        }        
-        
+        }
+
         my @creature_types = $self->result_source->schema->resultset('CreatureType')->search(
-        	{
-        		%extra,
-        		'rare' => 0,
-        	},
-        	{
-        		join => 'category',
-        	},
+            {
+                %extra,
+                'rare' => 0,
+            },
+            {
+                join => 'category',
+            },
         );
 
         croak "No types found\n" unless @creature_types;
@@ -83,7 +83,7 @@ sub _create_group {
     }
 
     my $cg = $self->create( {
-    	creature_group_id => undef,
+            creature_group_id => undef,
     } );
 
     my $number_of_types = RPG::Maths->weighted_random_number( 1 .. 3 );
@@ -108,7 +108,7 @@ sub _create_group {
         my $number_of_type = round $number_in_group / $number_of_types;
 
         for my $creature ( 1 .. $number_of_type ) {
-			$cg->add_creature($type, $creature);
+            $cg->add_creature( $type, $creature );
         }
     }
 
@@ -116,7 +116,7 @@ sub _create_group {
     if ( $cg->creatures->count == 0 ) {
         die RPG::Exception->new(
             message => "Couldn't find any valid creature types for level range: $min_level .. $max_level",
-            type    => 'creature_type_error',
+            type => 'creature_type_error',
         );
     }
 
@@ -138,9 +138,9 @@ sub create_in_dungeon {
 
 # Find a CG in a dungeon room (ready for combat)
 sub find_in_dungeon_room_for_combat {
-    my $self = shift;
+    my $self   = shift;
     my %params = @_;
-    
+
     my @cgs = $self->search(
         {
             'dungeon_grid.dungeon_room_id' => $params{sector}->dungeon_room_id,
@@ -149,11 +149,11 @@ sub find_in_dungeon_room_for_combat {
             join => 'dungeon_grid',
         }
     );
-    
-    @cgs = grep { ! $_->in_combat } @cgs;
-   
-    my $cg = (shuffle @cgs)[0];
-  
+
+    @cgs = grep { !$_->in_combat } @cgs;
+
+    my $cg = ( shuffle @cgs )[0];
+
     return $cg;
 }
 

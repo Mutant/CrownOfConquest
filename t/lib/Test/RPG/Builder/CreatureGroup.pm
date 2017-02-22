@@ -11,16 +11,16 @@ sub build_cg {
     my %params  = @_;
 
     my %cg_params;
-    $cg_params{land_id}         = $params{land_id}         if defined $params{land_id};
+    $cg_params{land_id} = $params{land_id} if defined $params{land_id};
     $cg_params{dungeon_grid_id} = $params{dungeon_grid_id} if defined $params{dungeon_grid_id};
     $cg_params{creature_group_id} = $params{creature_group_id};
 
     my $cg = $schema->resultset('CreatureGroup')->create( {%cg_params} );
-    
-    unless ($params{type_id}) {
-    	my $type = $schema->resultset('CreatureType')->create( { creature_type => 'test_cret', level => $params{creature_level} || 1 } );
-    	
-    	$params{type_id} = $type->id;
+
+    unless ( $params{type_id} ) {
+        my $type = $schema->resultset('CreatureType')->create( { creature_type => 'test_cret', level => $params{creature_level} || 1 } );
+
+        $params{type_id} = $type->id;
     }
 
     my $creature_count = $params{creature_count} || 3;

@@ -6,10 +6,9 @@ use Moose;
 
 extends 'RPG::Combat::ActionResult';
 
-has 'skill' => ( is => 'ro', isa => 'Str', required => 1 );    # TODO: enforce allowed values
-has 'duration'   => ( is => 'ro', isa => 'Int' );
+has 'skill' => ( is => 'ro', isa => 'Str', required => 1 ); # TODO: enforce allowed values
+has 'duration' => ( is => 'ro', isa => 'Int' );
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

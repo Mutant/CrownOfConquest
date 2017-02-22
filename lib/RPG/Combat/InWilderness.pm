@@ -14,13 +14,13 @@ has 'nearby_towns' => ( is => 'ro', isa => 'ArrayRef', init_arg => undef, builde
 has 'location' => ( is => 'ro', isa => 'RPG::Schema::Land', required => 0, builder => '_build_location', lazy => 1, );
 
 sub get_sector_to_flee_to {
-    my $self = shift;
+    my $self          = shift;
     my $fleeing_group = shift;
-    
+
     my $exclude_towns_and_cgs = $fleeing_group->group_type eq 'creature_group' ? 1 : 0;
 
     my @sectors_to_flee_to =
-        $self->schema->resultset('Land')->search_for_adjacent_sectors( $self->location->x, $self->location->y, 3, 10, $exclude_towns_and_cgs, );
+      $self->schema->resultset('Land')->search_for_adjacent_sectors( $self->location->x, $self->location->y, 3, 10, $exclude_towns_and_cgs, );
 
     @sectors_to_flee_to = shuffle @sectors_to_flee_to;
     my $land = shift @sectors_to_flee_to;
@@ -34,13 +34,13 @@ sub _build_location {
     my $self = shift;
 
     foreach my $opponent ( $self->opponents ) {
-    	return $opponent->current_location;
+        return $opponent->current_location;
     }
 }
 
 sub _build_nearby_towns {
     my $self = shift;
-    
+
     my @towns = $self->schema->resultset('Town')->find_in_range(
         {
             x => $self->location->x,
@@ -48,19 +48,19 @@ sub _build_nearby_towns {
         },
         $self->config->{nearby_town_range},
     );
-    
+
     return \@towns;
 }
 
 after 'end_of_combat_cleanup' => sub {
     my $self = shift;
 
-    if (@{$self->nearby_towns}) {
+    if ( @{ $self->nearby_towns } ) {
         my $message = RPG::Template->process( $self->config, 'combat/town_news_message.html', { log => $self->combat_log, }, );
 
         my $day_id = $self->schema->resultset('Day')->find_today->id;
 
-        foreach my $town ($self->nearby_towns) {
+        foreach my $town ( $self->nearby_towns ) {
             $self->schema->resultset('Town_History')->create(
                 {
                     town_id => $town->id,
@@ -73,7 +73,7 @@ after 'end_of_combat_cleanup' => sub {
 };
 
 sub combat_log_location_attribute {
-    return 'land_id';   
+    return 'land_id';
 }
 
 1;

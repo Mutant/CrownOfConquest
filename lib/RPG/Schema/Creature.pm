@@ -20,239 +20,238 @@ __PACKAGE__->add_columns(qw/creature_id creature_group_id creature_type_id hit_p
 __PACKAGE__->set_primary_key('creature_id');
 
 __PACKAGE__->belongs_to(
-	'type',
-	'RPG::Schema::CreatureType',
-	{ 'foreign.creature_type_id' => 'self.creature_type_id' },
+    'type',
+    'RPG::Schema::CreatureType',
+    { 'foreign.creature_type_id' => 'self.creature_type_id' },
 );
 
 __PACKAGE__->belongs_to(
-	'creature_group',
-	'RPG::Schema::CreatureGroup',
-	{ 'foreign.creature_group_id' => 'self.creature_group_id' },
+    'creature_group',
+    'RPG::Schema::CreatureGroup',
+    { 'foreign.creature_group_id' => 'self.creature_group_id' },
 );
 
 __PACKAGE__->has_many(
-	'creature_effects',
-	'RPG::Schema::Creature_Effect',
-	{ 'foreign.creature_id' => 'self.creature_id' },
+    'creature_effects',
+    'RPG::Schema::Creature_Effect',
+    { 'foreign.creature_id' => 'self.creature_id' },
 );
 
 sub group_id {
-	my $self = shift;
+    my $self = shift;
 
-	return $self->creature_group_id;
+    return $self->creature_group_id;
 }
 
 sub group {
-	my $self = shift;
+    my $self = shift;
 
-	return $self->creature_group;
+    return $self->creature_group;
 }
 
 sub gender {
-	return 'neuter';
+    return 'neuter';
 }
 
 sub level {
-	my $self = shift;
-	
-	return $self->type->level;	
+    my $self = shift;
+
+    return $self->type->level;
 }
 
 sub effect_value {
-	my $self = shift;
-	my $effect = shift || croak "Effect not supplied";
+    my $self = shift;
+    my $effect = shift || croak "Effect not supplied";
 
-	my $modifier;
-	map { $modifier += $_->effect->modifier if $_->effect->modified_stat eq $effect } $self->creature_effects;
+    my $modifier;
+    map { $modifier += $_->effect->modifier if $_->effect->modified_stat eq $effect } $self->creature_effects;
 
-	return $modifier;
+    return $modifier;
 }
 
 sub hit {
-	my $self   = shift;
-	my $damage = shift;
+    my $self   = shift;
+    my $damage = shift;
 
-	my $new_hp_total = $self->hit_points_current - $damage;
-	$new_hp_total = 0 if $new_hp_total < 0;
+    my $new_hp_total = $self->hit_points_current - $damage;
+    $new_hp_total = 0 if $new_hp_total < 0;
 
-	$self->hit_points_current($new_hp_total);
-	$self->update;
+    $self->hit_points_current($new_hp_total);
+    $self->update;
 }
 
 sub attack_factor {
-	my $self  = shift;
-	my $level = shift;
+    my $self  = shift;
+    my $level = shift;
 
-	$level ||= $self->type->level;
+    $level ||= $self->type->level;
 
-	my $base = $self->_calculate_factor(
-		$level,
-		RPG::Schema->config->{creature_attack_base},
-		RPG::Schema->config->{create_attack_factor_increment},
-	);
+    my $base = $self->_calculate_factor(
+        $level,
+        RPG::Schema->config->{creature_attack_base},
+        RPG::Schema->config->{create_attack_factor_increment},
+    );
 
-	# Apply effects
-	my $effect_af = 0;
+    # Apply effects
+    my $effect_af = 0;
 
-	if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
-		map { $effect_af += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->creature_effects;
-	}
+    if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
+        map { $effect_af += $_->effect->modifier if $_->effect->modified_stat eq 'attack_factor' } $self->creature_effects;
+    }
 
-	return $base + $effect_af;
+    return $base + $effect_af;
 }
 
 sub defence_factor {
-	my $self  = shift;
-	my $level = shift;
+    my $self  = shift;
+    my $level = shift;
 
-	$level ||= $self->type->level;
+    $level ||= $self->type->level;
 
-	my $base = $self->_calculate_factor(
-		$level,
-		RPG::Schema->config->{creature_defence_base},
-		RPG::Schema->config->{create_defence_factor_increment},
-	);
+    my $base = $self->_calculate_factor(
+        $level,
+        RPG::Schema->config->{creature_defence_base},
+        RPG::Schema->config->{create_defence_factor_increment},
+    );
 
-	# Apply effects
-	my $effect_df = 0;
+    # Apply effects
+    my $effect_df = 0;
 
-	if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
-		map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->creature_effects;
-	}
+    if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
+        map { $effect_df += $_->effect->modifier if $_->effect->modified_stat eq 'defence_factor' } $self->creature_effects;
+    }
 
-	return $base + $effect_df;
+    return $base + $effect_df;
 }
 
 sub _calculate_factor {
-	my $self      = shift;
-	my $level     = shift;
-	my $base      = shift;
-	my $increment = shift;
+    my $self      = shift;
+    my $level     = shift;
+    my $base      = shift;
+    my $increment = shift;
 
-	my $additional = 0;
-	my $step = RPG::Schema->config->{creature_factor_level_increase_step} || 5;
+    my $additional = 0;
+    my $step = RPG::Schema->config->{creature_factor_level_increase_step} || 5;
 
-	my $step_counter = 0;
+    my $step_counter = 0;
 
-	while ( $level > ( $step_counter * $step ) ) {
-		my $levels_to_add = $level - ( $step_counter * $step );
-		$levels_to_add = $levels_to_add > $step ? $step : $levels_to_add;
-		$levels_to_add-- if $step_counter == 0;
+    while ( $level > ( $step_counter * $step ) ) {
+        my $levels_to_add = $level - ( $step_counter * $step );
+        $levels_to_add = $levels_to_add > $step ? $step : $levels_to_add;
+        $levels_to_add-- if $step_counter == 0;
 
-		$additional += int( $levels_to_add * ( $increment + $step_counter ) );
-		$step_counter++;
-	}
+        $additional += int( $levels_to_add * ( $increment + $step_counter ) );
+        $step_counter++;
+    }
 
-	return $base + $additional;
+    return $base + $additional;
 }
 
 sub name {
-	my $self = shift;
-	
-	my $type = $self->type;
-	
-	return $type->creature_type if $type->rare;
+    my $self = shift;
 
-	return $type->creature_type . ' #' . $self->group_order;
+    my $type = $self->type;
+
+    return $type->creature_type if $type->rare;
+
+    return $type->creature_type . ' #' . $self->group_order;
 }
 
 sub is_dead {
-	my $self = shift;
+    my $self = shift;
 
-	return $self->hit_points_current <= 0 ? 1 : 0;
+    return $self->hit_points_current <= 0 ? 1 : 0;
 }
 
 sub damage {
-	my $self  = shift;
-	my $level = shift;
+    my $self  = shift;
+    my $level = shift;
 
-	$level ||= $self->type->level;
+    $level ||= $self->type->level;
 
-	my $effect_dam = 0;
-	if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
-		map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
-	}
+    my $effect_dam = 0;
+    if ( ref $self && $self->isa('RPG::Schema::Creature') ) {
+        map { $effect_dam += $_->effect->modifier if $_->effect->modified_stat eq 'damage' } $self->creature_effects;
+    }
 
-	return int( $level * 1.5 + $effect_dam );
+    return int( $level * 1.5 + $effect_dam );
 }
 
 sub is_character {
-	return 0;
+    return 0;
 }
 
 sub execute_attack {
-	return;
+    return;
 }
 
 sub execute_defence {
-	return;
+    return;
 }
 
 sub change_hit_points {
-	my $self   = shift;
-	my $amount = shift;
+    my $self   = shift;
+    my $amount = shift;
 
-	$self->hit_points_current( $self->hit_points_current + $amount );
-	$self->hit_points_current( $self->hit_points_max )
-		if $self->hit_points_current > $self->hit_points_max;
+    $self->hit_points_current( $self->hit_points_current + $amount );
+    $self->hit_points_current( $self->hit_points_max )
+      if $self->hit_points_current > $self->hit_points_max;
 
-	$self->hit_points_current(0) if $self->hit_points_current < 0;
+    $self->hit_points_current(0) if $self->hit_points_current < 0;
 
-	return;
+    return;
 }
 
 around 'number_of_attacks' => sub {
-	my $orig           = shift;
-	my $self           = shift;
-	my $ranged_weapon  = shift;
-	my @attack_history = @_;
+    my $orig           = shift;
+    my $self           = shift;
+    my $ranged_weapon  = shift;
+    my @attack_history = @_;
 
-	return $self->$orig( 0, @attack_history );
+    return $self->$orig( 0, @attack_history );
 };
 
 sub resistances {
-	my $self = shift;
-	
-	my $type = $self->type;
-	
-	return (
-		Fire => $type->fire,
-		Ice => $type->ice,
-		Poison => $type->poison,
-	);
+    my $self = shift;
+
+    my $type = $self->type;
+
+    return (
+        Fire   => $type->fire,
+        Ice    => $type->ice,
+        Poison => $type->poison,
+    );
 }
 
 sub is_spell_caster {
     my $self = shift;
-    
+
     my $type = $self->type;
-    
+
     # Assume only rare monsters cast
     return unless $type->rare;
-    
-    return $type->search_related('spells')->count >= 1 ? 1 : 0;    
+
+    return $type->search_related('spells')->count >= 1 ? 1 : 0;
 }
 
 sub check_for_auto_cast {
     my $self = shift;
-    
+
     my $type = $self->type;
-    
+
     return unless Games::Dice::Advanced->roll('1d100') <= 70;
-    
-    my $spell = (shuffle $type->spells)[0];
-    
+
+    my $spell = ( shuffle $type->spells )[0];
+
     return $spell->spell;
 }
 
 sub critical_hit_chance {
     my $self = shift;
 
-    return int $self->level * RPG::Schema->config->{creature_critical_hit_chance_per_level};   
+    return int $self->level * RPG::Schema->config->{creature_critical_hit_chance_per_level};
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0);
-
+__PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;

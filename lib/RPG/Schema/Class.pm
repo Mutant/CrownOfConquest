@@ -42,8 +42,8 @@ my %PRIMARY_STATS = (
 
 sub primary_stat {
     my $self = shift;
-    
-    return $PRIMARY_STATS{$self->class_name};
+
+    return $PRIMARY_STATS{ $self->class_name };
 }
 
 1;

@@ -18,12 +18,12 @@ sub view : Local {
         { 'dungeon_room.dungeon_id' => $dungeon_id, },
         {
             prefetch => [ 'doors', 'walls' ],
-            join     => 'dungeon_room',
+            join => 'dungeon_room',
         }
     );
-    
+
     my @positions = map { $_->position } $c->model('DBIC::Dungeon_Position')->search;
-    
+
     my $grid;
     my $max_x;
     my $max_y;
@@ -47,12 +47,12 @@ sub view : Local {
             {
                 template => 'admin/dungeon/view.html',
                 params   => {
-                    grid               => $grid,
-                    max_x              => $max_x,
-                    max_y              => $max_y,
-                    min_x              => $min_x,
-                    min_y              => $min_y,
-                    positions          => \@positions,
+                    grid      => $grid,
+                    max_x     => $max_x,
+                    max_y     => $max_y,
+                    min_x     => $min_x,
+                    min_y     => $min_y,
+                    positions => \@positions,
                 },
             }
         ]

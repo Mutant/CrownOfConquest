@@ -10,9 +10,9 @@ sub build_orb {
 
     my $orb = $schema->resultset('Creature_Orb')->create(
         {
-           level => 1,
-           name => 'Test Orb',
-           land_id => $params{land_id},
+            level   => 1,
+            name    => 'Test Orb',
+            land_id => $params{land_id},
         }
     );
 

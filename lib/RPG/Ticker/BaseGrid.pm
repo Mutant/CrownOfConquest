@@ -6,7 +6,7 @@ use Games::Dice::Advanced;
 use Data::Dumper;
 use Math::Round qw(round);
 
-has 'schema'        => ( isa => 'RPG::Schema', is => 'ro', required  => 1 );
+has 'schema'        => ( isa => 'RPG::Schema', is => 'ro', required => 1 );
 has 'max_x'         => ( isa => 'Int',         is => 'rw', init_arg => undef );
 has 'max_y'         => ( isa => 'Int',         is => 'rw', init_arg => undef );
 has 'total_sectors' => ( isa => 'Int',         is => 'rw', init_arg => undef );
@@ -43,8 +43,8 @@ sub get_random_sector_within_range {
     my $start_point = shift;
     my $end_point   = shift;
 
-    my $x = Games::Dice::Advanced->roll( '1d' . ($end_point->{x} - $start_point->{x} + 1) ) + $start_point->{x} - 1;
-    my $y = Games::Dice::Advanced->roll( '1d' . ($end_point->{y} - $start_point->{y} + 1) ) + $start_point->{y} - 1;
+    my $x = Games::Dice::Advanced->roll( '1d' . ( $end_point->{x} - $start_point->{x} + 1 ) ) + $start_point->{x} - 1;
+    my $y = Games::Dice::Advanced->roll( '1d' . ( $end_point->{y} - $start_point->{y} + 1 ) ) + $start_point->{y} - 1;
 
     return $self->get_land_at_location( $x, $y );
 }
@@ -72,6 +72,5 @@ sub clear_land_object {
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

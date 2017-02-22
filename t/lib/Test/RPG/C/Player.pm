@@ -18,44 +18,44 @@ use Digest::SHA1 qw(sha1_hex);
 
 sub setup_player : Tests(startup => 1) {
     my $self = shift;
-    
+
     $self->{mock_mime_lite} = Test::MockObject::Extra->new();
-    $self->{mock_mime_lite}->fake_module('MIME::Lite',
-        send => sub {},
+    $self->{mock_mime_lite}->fake_module( 'MIME::Lite',
+        send  => sub { },
         'new' => sub { $self->{mock_mime_lite} },
     );
-    
+
     $self->{rpg_template} = Test::MockObject::Extra->new();
-    $self->{rpg_template}->fake_module('RPG::Template',
-        process => sub {},
+    $self->{rpg_template}->fake_module( 'RPG::Template',
+        process => sub { },
     );
-    
+
     $self->{config}{email_log_file} = 0;
-    
+
     $self->{mock_forward}{login_user} = sub {
-        RPG::C::Player->login_user($self->{c}, $_[0]->[0]);
+        RPG::C::Player->login_user( $self->{c}, $_[0]->[0] );
     };
 
     $self->{mock_forward}{check_email} = sub {
-        RPG::C::Player->check_email($self->{c}, $_[0]->[0]);
+        RPG::C::Player->check_email( $self->{c}, $_[0]->[0] );
     };
 
     $self->{mock_forward}{generate_and_send_verification_code} = sub {
-        RPG::C::Player->generate_and_send_verification_code($self->{c}, $_[0]->[0]);
+        RPG::C::Player->generate_and_send_verification_code( $self->{c}, $_[0]->[0] );
     };
-     
-    $self->{mock_forward}{set_screen_size} = sub {};     
-     
+
+    $self->{mock_forward}{set_screen_size} = sub { };
+
     use_ok 'RPG::C::Player';
 }
 
 sub teardown : Tests(shutdown) {
-	my $self = shift;
-	
-	$self->{mock_mime_lite}->unfake_module();
-	$self->{rpg_template}->unfake_module();
-	require RPG::Template;
-		
+    my $self = shift;
+
+    $self->{mock_mime_lite}->unfake_module();
+    $self->{rpg_template}->unfake_module();
+    require RPG::Template;
+
 }
 
 sub test_reactivate_form : Tests(1) {
@@ -121,9 +121,9 @@ sub test_reactivate_reform_party_dupe_name : Tests(2) {
 
     $self->{params}{reform_party} = 1;
     $self->{session}{player}      = $player;
-    
+
     my $template_args;
-    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
 
     # WHEN
     RPG::C::Player->reactivate( $self->{c} );
@@ -131,7 +131,7 @@ sub test_reactivate_reform_party_dupe_name : Tests(2) {
     # THEN
     $party1->discard_changes;
     isnt( $party1->defunct, undef, "Party1 still defunt" );
-    
+
     is( $template_args->[0][0]{template}, 'player/reactivate_dupe_name.html', "Forward to correct template" );
 
 }
@@ -150,11 +150,11 @@ sub test_reactivate_reform_party_dupe_name_even_when_changed : Tests(2) {
     $party1->update;
 
     $self->{params}{reform_party} = 1;
-    $self->{params}{new_name} = 'bar';
+    $self->{params}{new_name}     = 'bar';
     $self->{session}{player}      = $player;
-    
+
     my $template_args;
-    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
 
     # WHEN
     RPG::C::Player->reactivate( $self->{c} );
@@ -162,7 +162,7 @@ sub test_reactivate_reform_party_dupe_name_even_when_changed : Tests(2) {
     # THEN
     $party1->discard_changes;
     isnt( $party1->defunct, undef, "Party1 still defunt" );
-    
+
     is( $template_args->[0][0]{template}, 'player/reactivate_dupe_name.html', "Forward to correct template" );
 }
 
@@ -179,11 +179,11 @@ sub test_reactivate_reform_party_dupe_name_name_changed : Tests(2) {
     $party1->update;
 
     $self->{params}{reform_party} = 1;
-    $self->{params}{new_name} = 'bar';
+    $self->{params}{new_name}     = 'bar';
     $self->{session}{player}      = $player;
-    
+
     my $template_args;
-    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };    
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
 
     # WHEN
     RPG::C::Player->reactivate( $self->{c} );
@@ -191,7 +191,7 @@ sub test_reactivate_reform_party_dupe_name_name_changed : Tests(2) {
     # THEN
     $party1->discard_changes;
     is( $party1->defunct, undef, "Party1 no longer defunt" );
-    is( $party1->name, 'bar', "Party1 name changed" );
+    is( $party1->name,    'bar', "Party1 name changed" );
 }
 
 sub test_register_game_full : Tests(1) {
@@ -294,7 +294,7 @@ sub test_register_missing_params : Tests(8) {
 
         RPG::C::Player->register( $self->{c} );
 
-        $results{ $test->{desc} }{message}      = $template_args->[0][0]{params}{message};
+        $results{ $test->{desc} }{message} = $template_args->[0][0]{params}{message};
         $results{ $test->{desc} }{player_count} = $self->{schema}->resultset('Player')->count;
     }
 
@@ -317,7 +317,7 @@ sub test_register_password_too_short : Tests(3) {
         player_name => 'name',
         password1   => 'pas',
         password2   => 'pas',
-        submit => 1,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
@@ -351,7 +351,7 @@ sub test_register_duplicate_player_name : Tests(3) {
         player_name => 'name',
         password1   => 'pass',
         password2   => 'pass',
-        submit => 1,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
@@ -385,7 +385,7 @@ sub test_register_duplicate_email : Tests(3) {
         player_name => 'name2',
         password1   => 'pass',
         password2   => 'pass',
-        submit => 1,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
@@ -418,7 +418,7 @@ sub test_register_referring_player_does_not_exist : Tests(3) {
         player_name => 'name2',
         password1   => 'pass',
         password2   => 'pass',
-        submit => 1,
+        submit      => 1,
         referred_by => 'bob@bob.com',
     };
 
@@ -453,28 +453,28 @@ sub test_register_successful : Tests(6) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        submit => 1,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
+
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    'foo@bar.com',    "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    isnt( $new_player->verification_code, undef, "Verification code set" );
 }
 
 sub test_register_successful_no_email : Tests(6) {
@@ -489,30 +489,29 @@ sub test_register_successful_no_email : Tests(6) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        submit => 1,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, undef, "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    is($new_player->verification_code, undef, "Verification code not set");
-}
 
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    undef,            "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    is( $new_player->verification_code, undef, "Verification code not set" );
+}
 
 sub test_register_successful_with_promo_code : Tests(7) {
     my $self = shift;
@@ -528,30 +527,30 @@ sub test_register_successful_with_promo_code : Tests(7) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        promo_code => 1234,
-        submit => 1,
+        promo_code  => 1234,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->promo_code_id, $promo_code->id, "Promo code recorded");    
+
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    'foo@bar.com',    "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    isnt( $new_player->verification_code, undef, "Verification code set" );
+    is( $new_player->promo_code_id, $promo_code->id, "Promo code recorded" );
 }
 
 sub test_register_successful_with_promo_code_used_up : Tests(7) {
@@ -568,30 +567,30 @@ sub test_register_successful_with_promo_code_used_up : Tests(7) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        promo_code => 1234,
-        submit => 1,
+        promo_code  => 1234,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->promo_code_id, undef, "Promo code not recorded");    
+
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    'foo@bar.com',    "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    isnt( $new_player->verification_code, undef, "Verification code set" );
+    is( $new_player->promo_code_id, undef, "Promo code not recorded" );
 }
 
 sub test_register_successful_with_promo_code_non_exist : Tests(7) {
@@ -608,30 +607,30 @@ sub test_register_successful_with_promo_code_non_exist : Tests(7) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        promo_code => 1235,
-        submit => 1,
+        promo_code  => 1235,
+        submit      => 1,
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 1, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->promo_code_id, undef, "No promo code recorded");
+
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    'foo@bar.com',    "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    isnt( $new_player->verification_code, undef, "Verification code set" );
+    is( $new_player->promo_code_id, undef, "No promo code recorded" );
 }
 
 sub test_register_successful_with_referred_player : Tests(8) {
@@ -639,7 +638,7 @@ sub test_register_successful_with_referred_player : Tests(8) {
 
     # GIVEN
     my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'bob@bob.com' } );
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema}, player_id => $player->id );
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, player_id => $player->id );
     $self->{config}->{max_number_of_players}   = 2;
     $self->{config}->{minimum_password_length} = 4;
 
@@ -648,33 +647,33 @@ sub test_register_successful_with_referred_player : Tests(8) {
         player_name => 'name1',
         password1   => 'pass',
         password2   => 'pass',
-        promo_code => 1234,
-        submit => 1,
+        promo_code  => 1234,
+        submit      => 1,
         referred_by => 'name',
     };
 
     $self->{c}->set_always( 'validate_captcha', 1 );
-    
-    $self->{mock_forward}->{'RPG::V::TT'} = sub {};    
-    
+
+    $self->{mock_forward}->{'RPG::V::TT'} = sub { };
+
     $self->{config}->{url_root} = 'url_root';
 
     # WHEN
     RPG::C::Player->register( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Correct redirect url");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Correct redirect url" );
     is( $self->{schema}->resultset('Player')->count, 2, "New player created" );
-    
-    my $new_player = $self->{schema}->resultset('Player')->find({ player_name => 'name1' });
-    is($new_player->email, 'foo@bar.com', "Email set correctly");
-    is($new_player->password, sha1_hex('pass'), "Password set correctly");
-    isnt($new_player->verification_code, undef, "Verification code set");
-    is($new_player->referred_by, $player->id, "Referred by player recorded"); 
-    
-    is($party->messages->count, 1, "Message added to party");
+
+    my $new_player = $self->{schema}->resultset('Player')->find( { player_name => 'name1' } );
+    is( $new_player->email,    'foo@bar.com',    "Email set correctly" );
+    is( $new_player->password, sha1_hex('pass'), "Password set correctly" );
+    isnt( $new_player->verification_code, undef, "Verification code set" );
+    is( $new_player->referred_by, $player->id, "Referred by player recorded" );
+
+    is( $party->messages->count, 1, "Message added to party" );
 }
 
 sub test_login_form : Tests(2) {
@@ -689,7 +688,7 @@ sub test_login_form : Tests(2) {
 
     # THEN
     is( $template_args->[0][0]{template}, 'player/login.html', "Forward to correct template" );
-    is( $template_args->[0][0]{params}{message}, undef, "No message");
+    is( $template_args->[0][0]{params}{message}, undef, "No message" );
 }
 
 sub test_login_user_doesnt_exist : Tests(2) {
@@ -698,7 +697,7 @@ sub test_login_user_doesnt_exist : Tests(2) {
     # GIVEN
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
-    
+
     $self->{params}{login} = 'foo@bar.com';
 
     # WHEN
@@ -716,7 +715,7 @@ sub test_login_password_not_given : Tests(2) {
     my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass') } );
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
-    
+
     $self->{params}{login} = 'foo@bar.com';
 
     # WHEN
@@ -734,9 +733,9 @@ sub test_login_password_incorrect : Tests(2) {
     my $player = $self->{schema}->resultset('Player')->create( { player_name => 'name', email => 'foo@bar.com', password => sha1_hex('pass') } );
     my $template_args;
     $self->{mock_forward}->{'RPG::V::TT'} = sub { $template_args = \@_ };
-    
-    $self->{params}{login} = 'foo@bar.com';
-    $self->{params}{password} = 'pas'; 
+
+    $self->{params}{login}    = 'foo@bar.com';
+    $self->{params}{password} = 'pas';
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
@@ -750,172 +749,171 @@ sub test_login_successful : Tests(4) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( 
-        { 
-            player_name => 'name', 
-            email => 'foo@bar.com', 
-            password => sha1_hex('pass'), 
-            verified => 1,
+    my $player = $self->{schema}->resultset('Player')->create(
+        {
+            player_name         => 'name',
+            email               => 'foo@bar.com',
+            password            => sha1_hex('pass'),
+            verified            => 1,
             warned_for_deletion => 1,
-            deleted => 0, 
-        } 
+            deleted             => 0,
+        }
     );
-    
-    $self->{params}{login} = 'foo@bar.com';
-    $self->{params}{password} = 'pass'; 
+
+    $self->{params}{login}    = 'foo@bar.com';
+    $self->{params}{password} = 'pass';
 
     $self->{config}->{url_root} = 'url_root';
-    
-    $self->{mock_forward}{post_login_checks} = sub {};
+
+    $self->{mock_forward}{post_login_checks} = sub { };
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Redirected to main page");
-    is($self->{session}{player}->id, $player->id, "User now stored in session");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Redirected to main page" );
+    is( $self->{session}{player}->id, $player->id, "User now stored in session" );
     $player->discard_changes;
-    is($player->warned_for_deletion, 0, "Warned for deletion flag cleared");
+    is( $player->warned_for_deletion, 0, "Warned for deletion flag cleared" );
 }
 
 sub test_login_successful_with_name : Tests(4) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( 
-        { 
-            player_name => 'name', 
-            email => 'foo@bar.com', 
-            password => sha1_hex('pass'), 
-            verified => 1,
+    my $player = $self->{schema}->resultset('Player')->create(
+        {
+            player_name         => 'name',
+            email               => 'foo@bar.com',
+            password            => sha1_hex('pass'),
+            verified            => 1,
             warned_for_deletion => 1,
-            deleted => 0, 
-        } 
+            deleted             => 0,
+        }
     );
-    
-    $self->{params}{login} = 'name';
-    $self->{params}{password} = 'pass'; 
+
+    $self->{params}{login}    = 'name';
+    $self->{params}{password} = 'pass';
 
     $self->{config}->{url_root} = 'url_root';
-    
-    $self->{mock_forward}{post_login_checks} = sub {};
+
+    $self->{mock_forward}{post_login_checks} = sub { };
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Redirected to main page");
-    is($self->{session}{player}->id, $player->id, "User now stored in session");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Redirected to main page" );
+    is( $self->{session}{player}->id, $player->id, "User now stored in session" );
     $player->discard_changes;
-    is($player->warned_for_deletion, 0, "Warned for deletion flag cleared");
+    is( $player->warned_for_deletion, 0, "Warned for deletion flag cleared" );
 }
 
 sub test_login_was_deleted : Tests(5) {
     my $self = shift;
 
     # GIVEN
-    my $player = $self->{schema}->resultset('Player')->create( 
-        { 
-            player_name => 'name', 
-            email => 'foo@bar.com', 
-            password => sha1_hex('pass'), 
-            verified => 1,
+    my $player = $self->{schema}->resultset('Player')->create(
+        {
+            player_name         => 'name',
+            email               => 'foo@bar.com',
+            password            => sha1_hex('pass'),
+            verified            => 1,
             warned_for_deletion => 1,
-            deleted => 1, 
-        } 
+            deleted             => 1,
+        }
     );
-    
-    $self->{params}{login} = 'foo@bar.com';
-    $self->{params}{password} = 'pass'; 
+
+    $self->{params}{login}    = 'foo@bar.com';
+    $self->{params}{password} = 'pass';
 
     $self->{config}->{url_root} = 'url_root';
-    
+
     $self->{config}->{max_number_of_players} = 1;
-    
-    $self->{mock_forward}{post_login_checks} = sub {};
+
+    $self->{mock_forward}{post_login_checks} = sub { };
 
     # WHEN
     RPG::C::Player->login( $self->{c} );
 
     # THEN
-    my ($method, $args) = $self->{mock_response}->next_call();
-    is($method, 'redirect', "Redirected");
-    is($args->[1], "url_root", "Redirected to url_root");
-    is($self->{session}{player}->id, $player->id, "User now stored in session");
+    my ( $method, $args ) = $self->{mock_response}->next_call();
+    is( $method,    'redirect', "Redirected" );
+    is( $args->[1], "url_root", "Redirected to url_root" );
+    is( $self->{session}{player}->id, $player->id, "User now stored in session" );
     $player->discard_changes;
-    is($player->warned_for_deletion, 1, "Warned for deletion flag still set");
-    is($player->deleted, 1, "Deleted flag still set");
+    is( $player->warned_for_deletion, 1, "Warned for deletion flag still set" );
+    is( $player->deleted,             1, "Deleted flag still set" );
 }
 
 sub test_post_login_checks_tip_of_the_day : Tests(2) {
-	my $self = shift;
-	
-	# GIVEN
-	my $player = Test::RPG::Builder::Player->build_player($self->{schema}, display_tip_of_the_day => 1,);
-	my $tip = $self->{schema}->resultset('Tip')->create(
-		{
-			tip => 'tip',
-			title => 'title',
-		}
-	); 
-	
-	$self->{session}{player} = $player;
-	
-	# WHEN
-	RPG::C::Player->post_login_checks( $self->{c} );
-	
-	# THEN
-	isa_ok($self->{flash}->{tip}, "RPG::Schema::Tip", "Tip record set in flash");
-	is($self->{flash}->{tip}->id, $tip->id, "Tip id matches");
+    my $self = shift;
+
+    # GIVEN
+    my $player = Test::RPG::Builder::Player->build_player( $self->{schema}, display_tip_of_the_day => 1, );
+    my $tip = $self->{schema}->resultset('Tip')->create(
+        {
+            tip   => 'tip',
+            title => 'title',
+        }
+    );
+
+    $self->{session}{player} = $player;
+
+    # WHEN
+    RPG::C::Player->post_login_checks( $self->{c} );
+
+    # THEN
+    isa_ok( $self->{flash}->{tip}, "RPG::Schema::Tip", "Tip record set in flash" );
+    is( $self->{flash}->{tip}->id, $tip->id, "Tip id matches" );
 }
 
 sub test_reward_callback : Tests(3) {
-	my $self = shift;
-	
-	# GIVEN
-	my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, turns => 100 );
-	my $player = $party->player;
-	my $reward_link = $self->{schema}->resultset('Reward_Links')->create(
-	   {
-	       name => 'test_link',
-	       turn_rewards => 55,
-	       activated => 1,
-	       user_field => 'player_id',
-	   }
-	);
-	
-	my $player_reward_link = $self->{schema}->resultset('Player_Reward_Links')->create(
-	   {
-	       player_id => $player->id,
-	       link_id => $reward_link->id,
-	   }
-	);
-	
-	$self->{params}{player_id} = $player->id;
-	
-	# WHEN
-	RPG::C::Player->reward_callback( $self->{c}, 'test_link' );
-	
-	# THEN
-	$party->discard_changes;
-	is($party->turns, 155, "Party turns has increased");
-	
-	$player_reward_link->discard_changes;
-	isa_ok($player_reward_link->last_vote_date, 'DateTime', "Player reward link last vote date recorded");
-	
-	my $player_reward_vote = $self->{schema}->resultset('Player_Reward_Vote')->find(
-	   {
-	       player_id => $player->id,
-	       link_id => $reward_link->id,
-	   }
-	);
-	is($player_reward_vote->vote_date, $player_reward_link->last_vote_date, "Player reward vote recorded created, and vote_date set correctly"); 
-	
-	
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, turns => 100 );
+    my $player      = $party->player;
+    my $reward_link = $self->{schema}->resultset('Reward_Links')->create(
+        {
+            name         => 'test_link',
+            turn_rewards => 55,
+            activated    => 1,
+            user_field   => 'player_id',
+        }
+    );
+
+    my $player_reward_link = $self->{schema}->resultset('Player_Reward_Links')->create(
+        {
+            player_id => $player->id,
+            link_id   => $reward_link->id,
+        }
+    );
+
+    $self->{params}{player_id} = $player->id;
+
+    # WHEN
+    RPG::C::Player->reward_callback( $self->{c}, 'test_link' );
+
+    # THEN
+    $party->discard_changes;
+    is( $party->turns, 155, "Party turns has increased" );
+
+    $player_reward_link->discard_changes;
+    isa_ok( $player_reward_link->last_vote_date, 'DateTime', "Player reward link last vote date recorded" );
+
+    my $player_reward_vote = $self->{schema}->resultset('Player_Reward_Vote')->find(
+        {
+            player_id => $player->id,
+            link_id   => $reward_link->id,
+        }
+    );
+    is( $player_reward_vote->vote_date, $player_reward_link->last_vote_date, "Player reward vote recorded created, and vote_date set correctly" );
+
 }
 
 1;

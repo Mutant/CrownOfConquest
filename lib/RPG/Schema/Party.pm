@@ -165,7 +165,7 @@ __PACKAGE__->add_columns(
         'name'              => 'combat_type',
         'is_nullable'       => 0,
         'size'              => 255
-    },  
+    },
     'kingdom_id' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -174,7 +174,7 @@ __PACKAGE__->add_columns(
         'name'              => 'kingdom_id',
         'is_nullable'       => 1,
         'size'              => 0,
-    },   
+    },
     'last_allegiance_change' => {
         'data_type'         => 'int',
         'is_auto_increment' => 0,
@@ -183,7 +183,7 @@ __PACKAGE__->add_columns(
         'name'              => 'last_allegiance_change',
         'is_nullable'       => 1,
         'size'              => 0,
-    },          
+    },
     'warned_for_kingdom_co_op' => {
         'data_type'         => 'datetime',
         'is_auto_increment' => 0,
@@ -210,7 +210,7 @@ __PACKAGE__->add_columns(
         'name'              => 'bonus_turns_today',
         'is_nullable'       => 1,
         'size'              => 0,
-    },    
+    },
 );
 __PACKAGE__->set_primary_key('party_id');
 
@@ -240,9 +240,9 @@ __PACKAGE__->belongs_to( 'kingdom', 'RPG::Schema::Kingdom', 'kingdom_id', { join
 
 __PACKAGE__->belongs_to( 'last_allegiance_change_day', 'RPG::Schema::Day', { 'foreign.day_id' => 'self.last_allegiance_change' } );
 
-__PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison', 
-	{ 'foreign.party_id' => 'self.party_id' },
-	{ where => {'land_id' => {'!=', undef}} }, 
+__PACKAGE__->has_many( 'garrisons', 'RPG::Schema::Garrison',
+    { 'foreign.party_id' => 'self.party_id' },
+    { where => { 'land_id' => { '!=', undef } } },
 );
 
 __PACKAGE__->has_many( 'messages', 'RPG::Schema::Party_Messages', 'party_id', );
@@ -250,18 +250,18 @@ __PACKAGE__->has_many( 'messages', 'RPG::Schema::Party_Messages', 'party_id', );
 __PACKAGE__->has_many( 'mapped_sectors', 'RPG::Schema::Mapped_Sectors', 'party_id', );
 
 # Can't use this for turns..
-__PACKAGE__->numeric_columns(qw/gold/,
+__PACKAGE__->numeric_columns( qw/gold/,
     rank_separator_position => {
         min_value => 1,
-        max_value => 8,   
+        max_value => 8,
     },
     'bonus_turns_today',
-); 
+);
 
 with qw/
-	RPG::Schema::Role::BeingGroup
-	RPG::Schema::Role::CharacterGroup
-/;
+  RPG::Schema::Role::BeingGroup
+  RPG::Schema::Role::CharacterGroup
+  /;
 
 sub members {
     my $self = shift;
@@ -270,25 +270,25 @@ sub members {
 }
 
 sub group_type {
-	return 'party';	
+    return 'party';
 }
 
 sub display_name {
-	my $self = shift;
-	
-	return $self->name;	
+    my $self = shift;
+
+    return $self->name;
 }
 
 sub time_since_created {
     my $self = shift;
-    
-    return RPG::DateTime->time_since_datetime($self->created)
+
+    return RPG::DateTime->time_since_datetime( $self->created )
 }
 
 sub time_since_defunct {
     my $self = shift;
-    
-    return RPG::DateTime->time_since_datetime($self->defunct)
+
+    return RPG::DateTime->time_since_datetime( $self->defunct )
 }
 
 sub movement_factor {
@@ -297,19 +297,19 @@ sub movement_factor {
     my $base_mf;
     my @characters = $self->characters_in_party;
     foreach my $character (@characters) {
-    	$base_mf +=	$character->movement_factor;
+        $base_mf += $character->movement_factor;
     }
 
-    return round ($base_mf / scalar @characters);
+    return round( $base_mf / scalar @characters );
 }
 
 sub mayors {
     my $self = shift;
-    
+
     return $self->search_related(
         'characters',
         {
-            'mayor_of' => {'!=', undef},
+            'mayor_of' => { '!=', undef },
         }
     );
 }
@@ -318,33 +318,33 @@ around 'move_to' => sub {
     my $orig = shift;
     my $self = shift;
     my $land = shift;
-    
+
     return unless $land;
-    
+
     $self->$orig($land);
-    
+
     return unless ( $land->isa('RPG::Schema::Land') );
-    
+
     # Extra stuff for land move
     my @discovered = $self->discover_sectors($land);
 
     $self->turns( $self->turns - $land->movement_cost( $self->movement_factor, undef, $self->location ) );
-    
+
     return @discovered;
 };
 
 sub discover_sectors {
     my $self = shift;
     my $land = shift;
-    
+
     # Record any sectors party can now see
-    my ($start, $end) = RPG::Map->surrounds_by_range(
+    my ( $start, $end ) = RPG::Map->surrounds_by_range(
         $land->x, $land->y, RPG::Schema->config->{party_viewing_range},
     );
-    
+
     my $schema = $self->result_source->schema;
-    
-    my %mapped_sectors = map { $_->{location}{x} . ',' . $_->{location}{y} => 1} $schema->resultset('Mapped_Sectors')->find_in_range(
+
+    my %mapped_sectors = map { $_->{location}{x} . ',' . $_->{location}{y} => 1 } $schema->resultset('Mapped_Sectors')->find_in_range(
         $self->id,
         {
             x => $land->x,
@@ -354,83 +354,83 @@ sub discover_sectors {
     );
 
     my @discovered;
-    for my $x ($start->{x} .. $end->{x}) {
-        for my $y ($start->{y} .. $end->{y}) {
+    for my $x ( $start->{x} .. $end->{x} ) {
+        for my $y ( $start->{y} .. $end->{y} ) {
             my $sector = "$x,$y";
-            if (! $mapped_sectors{$sector}) {
+            if ( !$mapped_sectors{$sector} ) {
                 my $land = $schema->resultset('Land')->find(
                     {
                         x => $x,
                         y => $y,
                     }
                 );
-                
+
                 next unless $land;
-                
-	            $self->add_to_mapped_sectors(
-	                {
-	                    land_id  => $land->id,
-	                },
-	            );
-	            push @discovered, $sector;
+
+                $self->add_to_mapped_sectors(
+                    {
+                        land_id => $land->id,
+                    },
+                );
+                push @discovered, $sector;
             }
-        }   
-    }   
-    
+        }
+    }
+
     return @discovered;
 }
 
 sub current_location {
-	my $self = shift;
-	
-	return $self->location;
+    my $self = shift;
+
+    return $self->location;
 }
 
 sub characters_in_party {
-	my $self = shift;
-	
-	my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
-	
-	return $self->search_related('characters',
-		\%null_fields,
-		{
-			'order_by' => 'party_order',
-		},
-	);
+    my $self = shift;
+
+    my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
+
+    return $self->search_related( 'characters',
+        \%null_fields,
+        {
+            'order_by' => 'party_order',
+        },
+    );
 }
 
 sub is_full {
-	my $self = shift;
-	
-	return $self->characters_in_party->count >= RPG::Schema->config->{max_party_characters};	
+    my $self = shift;
+
+    return $self->characters_in_party->count >= RPG::Schema->config->{max_party_characters};
 }
 
 sub characters_in_sector {
-	my $self = shift;
-	
-	my @chars = $self->characters_in_party;
-	
-	my $garrison = $self->location->garrison;
-	if ($garrison && $garrison->party_id == $self->id) {
-		push @chars, $garrison->characters;
-	}
-	
-	my $town = $self->location->town;
-	my $mayor;
-	if ($town and $mayor = $town->mayor and $mayor->party_id == $self->id) {
-		push @chars, $mayor;
-		
-		my @garrison_chars = $self->search_related(
+    my $self = shift;
+
+    my @chars = $self->characters_in_party;
+
+    my $garrison = $self->location->garrison;
+    if ( $garrison && $garrison->party_id == $self->id ) {
+        push @chars, $garrison->characters;
+    }
+
+    my $town = $self->location->town;
+    my $mayor;
+    if ( $town and $mayor = $town->mayor and $mayor->party_id == $self->id ) {
+        push @chars, $mayor;
+
+        my @garrison_chars = $self->search_related(
             'characters',
             {
-                status => 'mayor_garrison',
+                status         => 'mayor_garrison',
                 status_context => $town->id,
             }
         );
-        push @chars, @garrison_chars;		
-	}
-	
-	return @chars;		
+        push @chars, @garrison_chars;
+    }
+
+    return @chars;
 }
 
 # Record turns used whenever number of turns are decreased
@@ -443,7 +443,7 @@ sub turns {
     if ( $new_turns > $self->_turns ) {
         die RPG::Exception->new(
             message => "Turns must be increased by calling increase_turns() method",
-            type    => 'increase_turns_error',
+            type => 'increase_turns_error',
         );
     }
 
@@ -452,11 +452,11 @@ sub turns {
 
     my $day_stats = $self->result_source->schema->resultset('Party_Day_Stats')->find_or_create(
         {
-            date => DateTime->now()->ymd(),
+            date     => DateTime->now()->ymd(),
             party_id => $self->id,
         },
     );
-    
+
     $day_stats->turns_used( ( $day_stats->turns_used || 0 ) + $turns_used );
     $day_stats->update;
 
@@ -478,12 +478,12 @@ sub increase_turns {
             type    => 'increase_turns_error',
         );
     }
-    
+
     my $original_turns = $self->_turns;
-    
+
     # If they've (somehow) gone above the max turns, they can keep those extra turns, but aren't allowed
     #  any more (via this method)
-    my $max_turns = $original_turns > RPG::Schema->config->{maximum_turns} ? $original_turns : RPG::Schema->config->{maximum_turns}; 
+    my $max_turns = $original_turns > RPG::Schema->config->{maximum_turns} ? $original_turns : RPG::Schema->config->{maximum_turns};
 
     $new_turns = $max_turns if $new_turns > $max_turns;
 
@@ -499,30 +499,30 @@ sub new_day {
     foreach my $character ( $self->characters ) {
         next if $character->is_dead;
 
-		my $rest = $character->garrison_id ? 3 : $self->rest;
+        my $rest = $character->garrison_id ? 3 : $self->rest;
 
         # Heal chars based on amount of rest they've had during the day
         if ( $rest != 0 ) {
-        	my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $rest * RPG::Schema->config->{max_heal_percentage} / 10;
-        	
+            my $percentage_to_heal = RPG::Schema->config->{min_heal_percentage} + $rest * RPG::Schema->config->{max_heal_percentage} / 10;
+
             my $hp_increase = round $character->max_hit_points * $percentage_to_heal / 100;
             $hp_increase = 1 if $hp_increase == 0;    # Always a min of 1
 
             my $actual_increase = $character->change_hit_points($hp_increase);
 
             push @log, $character->name . " was rested, and healed " . $actual_increase . " hit points"
-                if $actual_increase > 0;
+              if $actual_increase > 0;
         }
 
         # Memorise new spells for the day
         my $spell_count = $character->rememorise_spells();
 
         push @log, $character->name . " has $spell_count spells memorised"
-            if $spell_count > 0;
+          if $spell_count > 0;
 
         $character->update;
     }
-    
+
     $self->bonus_turns_today(0);
 
     # They're no longer rested
@@ -532,7 +532,7 @@ sub new_day {
     $self->add_to_day_logs(
         {
             day_id => $new_day->id,
-            log    => join( "\n", @log ),
+            log => join( "\n", @log ),
         }
     );
 
@@ -541,13 +541,13 @@ sub new_day {
 
 sub number_alive {
     my $self = shift;
-    
+
     my %null_fields = map { $_ => undef } RPG::Schema::Character->in_party_columns;
 
     return $self->result_source->schema->resultset('Character')->count(
         {
             hit_points => { '>', 0 },
-            party_id   => $self->id,
+            party_id => $self->id,
             %null_fields,
         }
     );
@@ -566,13 +566,13 @@ sub adjust_order {
         $character->party_order($count);
         $character->update;
     }
-    
+
     # Reset rank bar if it's gone off edge of party
-    if ($self->rank_separator_position >= $count) {    	
-    	my $new_pos = $count;
-    	$new_pos = 1 if $new_pos <= 0;
-    	$self->rank_separator_position($new_pos);
-    	$self->update;
+    if ( $self->rank_separator_position >= $count ) {
+        my $new_pos = $count;
+        $new_pos = 1 if $new_pos <= 0;
+        $self->rank_separator_position($new_pos);
+        $self->update;
     }
 }
 
@@ -604,36 +604,36 @@ sub in_party_battle {
 }
 
 sub initiate_combat {
-	my $self = shift;
-	my $opponent = shift;
-	
-	$self->in_combat_with($opponent->id);
-	$self->combat_type($opponent->group_type);
-	$self->update;	
+    my $self     = shift;
+    my $opponent = shift;
+
+    $self->in_combat_with( $opponent->id );
+    $self->combat_type( $opponent->group_type );
+    $self->update;
 }
 
 sub opponents {
-	my $self = shift;
-	
-	my $opponents;
-	
-	my $schema = $self->result_source->schema;
-	
-	if ( $self->combat_type eq 'creature_group' ) {
-		$opponents = $schema->resultset('CreatureGroup')->get_by_id( $self->in_combat_with );
-	}
-	elsif ( my $opponent_party = $self->in_party_battle_with ) {
-		$opponents = $opponent_party;
-	}
-	elsif ( $self->combat_type eq 'garrison' ) {
-		$opponents = $schema->resultset('Garrison')->find( 
-		  {
-		    garrison_id => $self->in_combat_with
-		  } 
-		);
-	}
-	
-	return $opponents;
+    my $self = shift;
+
+    my $opponents;
+
+    my $schema = $self->result_source->schema;
+
+    if ( $self->combat_type eq 'creature_group' ) {
+        $opponents = $schema->resultset('CreatureGroup')->get_by_id( $self->in_combat_with );
+    }
+    elsif ( my $opponent_party = $self->in_party_battle_with ) {
+        $opponents = $opponent_party;
+    }
+    elsif ( $self->combat_type eq 'garrison' ) {
+        $opponents = $schema->resultset('Garrison')->find(
+            {
+                garrison_id => $self->in_combat_with
+            }
+        );
+    }
+
+    return $opponents;
 }
 
 sub in_party_battle_with {
@@ -644,7 +644,7 @@ sub in_party_battle_with {
     if ($battle) {
         my $battle_participant = $self->result_source->schema->resultset('Battle_Participant')->find(
             {
-                party_id  => { '!=', $self->id },
+                party_id => { '!=', $self->id },
                 battle_id => $battle->battle->battle_id,
             },
             { prefetch => { 'party' => { 'characters' => 'character_effects' } }, },
@@ -672,8 +672,8 @@ sub end_combat {
     my $self = shift;
 
     $self->in_combat_with(undef);
-	$self->combat_type(undef);
-	$self->update;
+    $self->combat_type(undef);
+    $self->update;
 
     my $party_battle = $self->_get_party_battle;
 
@@ -685,7 +685,7 @@ sub end_combat {
 
 sub is_online {
     my $self = shift;
-    
+
     return $self->last_action >= DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) ? 1 : 0;
 }
 
@@ -698,35 +698,35 @@ sub quests_in_progress {
 sub prestige_for_town {
     my $self = shift;
     my $town = shift;
-    
+
     my $party_town = $self->find_related(
         'party_towns',
         {
 
-            town_id  => $town->id,
+            town_id => $town->id,
         },
     );
-    
-    return $party_town ? $party_town->prestige : 0;    
+
+    return $party_town ? $party_town->prestige : 0;
 }
 
 sub has_overencumbered_character {
-	my $self = shift;
-	
-	my @characters = $self->characters;
-		
-	my $over_encumbered_characters = grep { $_->is_overencumbered } @characters;
-	
-	return $over_encumbered_characters;	
+    my $self = shift;
+
+    my @characters = $self->characters;
+
+    my $over_encumbered_characters = grep { $_->is_overencumbered } @characters;
+
+    return $over_encumbered_characters;
 }
 
 sub allowed_more_quests {
-	my $self = shift;
-	
+    my $self = shift;
+
     my $party_quests_rs = $self->search_related(
-    	'quests',
+        'quests',
         {
-            status   => 'In Progress',
+            status => 'In Progress',
         },
     );
 
@@ -737,112 +737,113 @@ sub allowed_more_quests {
 
 # Called when party is disbanded or wiped out
 sub disband {
-	my $self = shift;
-	
-	$self->deactivate;
-	
-	# Remove any garrisons
-	$self->search_related(
-		'garrisons',
-		{},
-	)->update(
-		{
-			'land_id' => undef,
-		}
-	);
-	
-	# Remove any inn/morgue/street characters
-	$self->search_related(
-	   'characters',
-	   {
-	       status => ['inn','morgue','street'],
-	   }
-    )->update(
+    my $self = shift;
+
+    $self->deactivate;
+
+    # Remove any garrisons
+    $self->search_related(
+        'garrisons',
+        {},
+      )->update(
         {
-            status => undef,
+            'land_id' => undef,
+        }
+      );
+
+    # Remove any inn/morgue/street characters
+    $self->search_related(
+        'characters',
+        {
+            status => [ 'inn', 'morgue', 'street' ],
+        }
+      )->update(
+        {
+            status         => undef,
             status_context => undef,
         }
-    );
+      );
 }
 
 # Deactivate party. Could just be they've got inactive, or called via disband()
 sub deactivate {
     my $self = shift;
-    
+
     $self->defunct( DateTime->now() );
-    $self->in_combat_with( undef );
-    
+    $self->in_combat_with(undef);
+
     # They lose any mayoralties
-    my @mayors = $self->search_related('characters',
-    	{
-    		mayor_of => {'!=', undef},
-    	},
+    my @mayors = $self->search_related( 'characters',
+        {
+            mayor_of => { '!=', undef },
+        },
     );
-    
+
     foreach my $mayor (@mayors) {
         $mayor->lose_mayoralty;
     }
-    
-    if (my $kingdom = $self->kingdom) {
-        $self->cancel_kingdom_quests($kingdom, 'the party has been disbanded');
-        
-        if ($kingdom->king && $kingdom->king->party_id == $self->id) {
+
+    if ( my $kingdom = $self->kingdom ) {
+        $self->cancel_kingdom_quests( $kingdom, 'the party has been disbanded' );
+
+        if ( $kingdom->king && $kingdom->king->party_id == $self->id ) {
+
             # They have the king. Make him/her an NPC
             my $king = $kingdom->king;
-            $king->party_id(undef);   
+            $king->party_id(undef);
             $king->update;
         }
     }
-    
-    $self->update;           
+
+    $self->update;
 }
 
 # Party was wiped out during combat
 sub wiped_out {
     my $self = shift;
-    
+
     # Some characters get deleted, depending on party level
     my $del_char_count = round $self->level / 8;
     $del_char_count = 1 if $del_char_count < 1;
-    
+
     my @chars = shuffle $self->members;
-    
-    $del_char_count = scalar @chars-1 if $del_char_count >= scalar @chars;
-   
-    for (1..$del_char_count) {
+
+    $del_char_count = scalar @chars - 1 if $del_char_count >= scalar @chars;
+
+    for ( 1 .. $del_char_count ) {
         my $char = shift @chars;
         $char->status('wiped_out');
-        $char->status_context($self->id);
+        $char->status_context( $self->id );
         $char->party_id(undef);
         $char->update;
     }
 
     # If we couldn't delete any chars (due to party size of 1), they lose some equipment
-    if ($del_char_count <= 0) {
+    if ( $del_char_count <= 0 ) {
         my $char = $chars[0];
-        
-        my @items = shuffle $char->search_related('items',
+
+        my @items = shuffle $char->search_related( 'items',
             {
-                equip_place_id => {'!=', undef},
+                equip_place_id => { '!=', undef },
             }
         );
-        
+
         if (@items) {
-            $char->remove_item_from_grid($items[0]);
+            $char->remove_item_from_grid( $items[0] );
             $items[0]->delete;
         }
     }
-    
+
     # One char gets auto-ressed
     $chars[0]->hit_points(1);
     $chars[0]->update;
-    
+
     # Find a nearby town to respawn in
     my $party_loc = $self->location;
-    
+
     my $town = $party_loc->town;
-    
-    if (! $town) {
+
+    if ( !$town ) {
         my @towns = shuffle $self->result_source->schema->resultset('Town')->find_in_range(
             {
                 x => $party_loc->x,
@@ -853,64 +854,64 @@ sub wiped_out {
             1,
             31,
         );
-        $town = $towns[0]; 
+        $town = $towns[0];
     }
-    
-    $self->land_id($town->land_id);
+
+    $self->land_id( $town->land_id );
     $self->dungeon_grid_id(undef);
     $self->update;
 }
 
 #  Get an array of the buildings owned by this party.
 sub get_owned_buildings {
-	my $self = shift;
+    my $self = shift;
 
-	#  Get a list of the currently built buildings for this party.
-	my @existing_buildings = $self->result_source->schema->resultset('Building')->search(
-        	{
-	        	'owner_id' => $self->id,
-	        	'owner_type' => 'party'
-	        },
-	        {
-	            order_by => 'building_type.name',
-				join     => [ 'building_type' ],
-				prefetch => 'building_type',
-	        },
-	);
-	return @existing_buildings;
+    #  Get a list of the currently built buildings for this party.
+    my @existing_buildings = $self->result_source->schema->resultset('Building')->search(
+        {
+            'owner_id'   => $self->id,
+            'owner_type' => 'party'
+        },
+        {
+            order_by => 'building_type.name',
+            join     => ['building_type'],
+            prefetch => 'building_type',
+        },
+    );
+    return @existing_buildings;
 }
-	
+
 # Return a hash of characters with broken items
 sub broken_equipped_items_hash {
-	my $self = shift;
-	
-	# See if any chars have broken weapons equipped
-	my @broken_equipped_items = $self->result_source->schema->resultset('Items')->search(
-		{
-			'belongs_to_character.party_id' => $self->id,
-			'equip_place_id'                => { '!=', undef },
-			-and                            => [
-				'item_variables.item_variable_value'    => '0',
-				'item_variable_name.item_variable_name' => 'Durability',
-			],
-		},
-		{
-			join     => [ 'belongs_to_character', { 'item_variables' => 'item_variable_name', } ],
-			prefetch => 'item_type',
-		}
-	);
+    my $self = shift;
 
-	my %broken_items_by_char_id;
-	foreach my $broken_item (@broken_equipped_items) {
-		push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
-	}
-	
-	return %broken_items_by_char_id;
+    # See if any chars have broken weapons equipped
+    my @broken_equipped_items = $self->result_source->schema->resultset('Items')->search(
+        {
+            'belongs_to_character.party_id' => $self->id,
+            'equip_place_id'                => { '!=', undef },
+            -and                            => [
+                'item_variables.item_variable_value'    => '0',
+                'item_variable_name.item_variable_name' => 'Durability',
+            ],
+        },
+        {
+            join => [ 'belongs_to_character', { 'item_variables' => 'item_variable_name', } ],
+            prefetch => 'item_type',
+        }
+    );
+
+    my %broken_items_by_char_id;
+    foreach my $broken_item (@broken_equipped_items) {
+        push @{ $broken_items_by_char_id{ $broken_item->character_id } }, $broken_item;
+    }
+
+    return %broken_items_by_char_id;
 }
 
 sub land_claimed_today {
     my $self = shift;
-    
+
     my $claim_land_count = $self->find_related(
         'messages',
         {
@@ -918,84 +919,84 @@ sub land_claimed_today {
             day_id => $self->result_source->schema->resultset('Day')->find_today->id,
         }
     );
-    
+
     return $claim_land_count ? $claim_land_count->message : 0;
 }
 
 sub can_claim_land {
     my $self = shift;
     my $land = shift;
-    
+
     return 0 unless $self->kingdom_id;
-    
+
     return 0 unless $self->level >= RPG::Schema->config->{minimum_land_claim_level};
-    
-    return 0 if $self->land_claimed_today >= RPG::Schema->config->{max_land_claimed_per_day};        
-        
-    return $land->can_be_claimed($self->kingdom_id);
+
+    return 0 if $self->land_claimed_today >= RPG::Schema->config->{max_land_claimed_per_day};
+
+    return $land->can_be_claimed( $self->kingdom_id );
 }
 
 sub days_since_last_allegiance_change {
     my $self = shift;
-    
+
     my $change_day = $self->result_source->schema->resultset('Day')->find(
         {
             day_id => $self->last_allegiance_change,
         }
     );
-    
-    return $change_day->difference_to_today_str;   
+
+    return $change_day->difference_to_today_str;
 }
 
 sub change_allegiance {
-    my $self = shift;   
+    my $self        = shift;
     my $new_kingdom = shift;
-    
+
     my $old_kingdom = $self->kingdom;
-    
-    if ($old_kingdom && $old_kingdom->active && defined $old_kingdom->king->party_id && $old_kingdom->king->party_id == $self->id) {
-        croak "Cannot change allegiance if you already have your own kingdom\n";   
+
+    if ( $old_kingdom && $old_kingdom->active && defined $old_kingdom->king->party_id && $old_kingdom->king->party_id == $self->id ) {
+        croak "Cannot change allegiance if you already have your own kingdom\n";
     }
-    
+
     if ($new_kingdom) {
         my $party_kingdom = $new_kingdom->find_related(
             'party_kingdoms',
             {
                 party_id => $self->id,
-            }        
+            }
         );
-        
-        if ($party_kingdom && $party_kingdom->banished_for > 0) {
-            croak "Can't change allegiance to a kingdom you are banned from\n";            
+
+        if ( $party_kingdom && $party_kingdom->banished_for > 0 ) {
+            croak "Can't change allegiance to a kingdom you are banned from\n";
         }
     }
-    	
-    my $today = $self->result_source->schema->resultset('Day')->find_today;	
-    
-	$self->kingdom_id($new_kingdom ? $new_kingdom->id : undef);
-	$self->last_allegiance_change($today->id);
-	
-	my $own_kingdom = $new_kingdom && $new_kingdom->king->party_id == $self->id ? 1 : 0;
-	
-	if (! $own_kingdom) {
-    	my $message = RPG::Template->process(
-    	   RPG::Schema->config,
+
+    my $today = $self->result_source->schema->resultset('Day')->find_today;
+
+    $self->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
+    $self->last_allegiance_change( $today->id );
+
+    my $own_kingdom = $new_kingdom && $new_kingdom->king->party_id == $self->id ? 1 : 0;
+
+    if ( !$own_kingdom ) {
+        my $message = RPG::Template->process(
+            RPG::Schema->config,
             'party/allegiance_change.html',
             {
                 old_kingdom => $old_kingdom,
                 new_kingdom => $new_kingdom,
             },
         );
-    	
-    	$self->add_to_messages(
-    	   {
-    	       day_id => $today->id,
-    	       alert_party => 0,
-    	       message => $message,
-    	   }
-    	);
-	}
-	
+
+        $self->add_to_messages(
+            {
+                day_id      => $today->id,
+                alert_party => 0,
+                message     => $message,
+            }
+        );
+    }
+
     if ($old_kingdom) {
         $old_kingdom->add_to_messages(
             {
@@ -1004,24 +1005,25 @@ sub change_allegiance {
                 type => 'public_message',
             }
         );
-        
+
         # Cancel any kingdom quests
         $self->cancel_kingdom_quests($old_kingdom);
-	}
-	
-	if ($new_kingdom) {
-	    # Reset loyalty
-	    my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
-	       {
-	           party_id => $self->id,
-	           kingdom_id => $new_kingdom->id,
-	       }
-	    );
-	    
-	    $party_kingdom->loyalty(0);
-	    $party_kingdom->update;
-	    
-        if (! $own_kingdom) {	   
+    }
+
+    if ($new_kingdom) {
+
+        # Reset loyalty
+        my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
+            {
+                party_id   => $self->id,
+                kingdom_id => $new_kingdom->id,
+            }
+        );
+
+        $party_kingdom->loyalty(0);
+        $party_kingdom->update;
+
+        if ( !$own_kingdom ) {
             $new_kingdom->add_to_messages(
                 {
                     day_id => $today->id,
@@ -1030,175 +1032,175 @@ sub change_allegiance {
                 }
             );
         }
-        
-        if ($new_kingdom->highest_party_count < $new_kingdom->parties->count) {
-            $new_kingdom->highest_party_count($new_kingdom->parties->count);
-            $new_kingdom->highest_party_count_day_id($today->id);
+
+        if ( $new_kingdom->highest_party_count < $new_kingdom->parties->count ) {
+            $new_kingdom->highest_party_count( $new_kingdom->parties->count );
+            $new_kingdom->highest_party_count_day_id( $today->id );
             $new_kingdom->update;
-        } 
-	}	
+        }
+    }
 }
 
 sub cancel_kingdom_quests {
-    my $self = shift;
+    my $self    = shift;
     my $kingdom = shift;
-    my $reason = shift;
-    
+    my $reason  = shift;
+
     my @kingdom_quests = $self->search_related(
         'quests',
         {
             kingdom_id => $kingdom->id,
-            status => ['Not Started', 'In Progress', 'Requested'],
+            status => [ 'Not Started', 'In Progress', 'Requested' ],
         }
     );
-    
+
     foreach my $quest (@kingdom_quests) {
         my $kingdom_message = RPG::Template->process(
             RPG::Schema->config,
             'quest/kingdom/terminated.html',
-             { 
+            {
                 quest => $quest,
                 reason => $reason // 'the party is no longer loyal to our kingdom',
-             }
+            }
         );
-        
+
         $quest->terminate(
             kingdom_message => $kingdom_message,
         );
-        
+
         $quest->update;
-    }       
+    }
 }
 
 sub loyalty_for_kingdom {
-    my $self = shift;
+    my $self       = shift;
     my $kingdom_id = shift;
-    
+
     return $self->{_loyalty}{$kingdom_id} if defined $self->{_loyalty}{$kingdom_id};
-    
+
     my $party_kingdom = $self->find_related(
         'party_kingdoms',
         {
             kingdom_id => $kingdom_id,
         }
     );
-    
+
     unless ($party_kingdom) {
         $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->create(
             {
-                party_id => $self->id,
+                party_id   => $self->id,
                 kingdom_id => $kingdom_id,
             }
-        );   
+        );
     }
-    
+
     $self->{_loyalty}{$kingdom_id} = $party_kingdom->loyalty;
-    
-    return $self->{_loyalty}{$kingdom_id} // 0;   
+
+    return $self->{_loyalty}{$kingdom_id} // 0;
 }
 
 sub banish_from_kingdom {
-    my $self = shift;
-    my $kingdom = shift;
+    my $self     = shift;
+    my $kingdom  = shift;
     my $duration = shift;
-    
+
     $self->kingdom_id(undef);
     $self->update;
 
     my $today = $self->result_source->schema->resultset('Day')->find_today;
-    
+
     my $party_kingdom = $self->result_source->schema->resultset('Party_Kingdom')->find_or_create(
         {
-            party_id => $self->id,
+            party_id   => $self->id,
             kingdom_id => $kingdom->id,
         }
     );
     $party_kingdom->banished_for($duration);
     $party_kingdom->update;
-    
+
     $self->cancel_kingdom_quests($kingdom);
-   
+
     $self->add_to_messages(
         {
-	       day_id => $today->id,
-	       alert_party => 1,
-	       message => "We were banished from the Kingdom of " . $kingdom->name . " for $duration days!",
+            day_id      => $today->id,
+            alert_party => 1,
+            message => "We were banished from the Kingdom of " . $kingdom->name . " for $duration days!",
         }
-    );           
+    );
 }
 
 # Return a resultset of active quests of a given type
 sub active_quests_of_type {
-    my $self = shift;
+    my $self            = shift;
     my $quest_type_name = shift;
-    
+
     return $self->search_related(
-        'quests', 
-        { 
+        'quests',
+        {
             'type.quest_type' => $quest_type_name,
-            'status' => ['In Progress','Not Started','Requested'],
+            'status' => [ 'In Progress', 'Not Started', 'Requested' ],
         },
         {
             join => 'type',
         }
-   );
+    );
 }
 
 sub is_suspected_of_coop_with {
-    my $self = shift;
+    my $self  = shift;
     my $party = shift;
-    
+
     return 0 unless $party;
-    
+
     my $player1 = $self->player;
     my $player2 = $party->player;
-    
-    return 0 unless $player1 && $player2; 
-    
-    return $player1->has_ips_in_common_with($player2) ? 1 : 0;  
+
+    return 0 unless $player1 && $player2;
+
+    return $player1->has_ips_in_common_with($player2) ? 1 : 0;
 }
 
 # Returns true if party has the king of the specified kingdom,
-#  or their own kingdom, if it's not passed 
+#  or their own kingdom, if it's not passed
 sub has_king_of {
     my $self = shift;
     my $kingdom = shift // $self->kingdom;
-    
+
     return 0 unless $kingdom;
-    
+
     return 1 if $kingdom->king && $kingdom->king->party_id == $self->id;
-    
+
     return 0;
-    
+
 }
 
 # Return the % of the world the party has explored
 sub world_explored {
     my $self = shift;
-    
+
     my $world_size = $self->result_source->schema->resultset('Land')->search->count;
     my $explored = $self->search_related('mapped_sectors')->count;
-    
-    return ($explored / $world_size) * 100;   
+
+    return ( $explored / $world_size ) * 100;
 }
 
 sub has_effect {
-    my $self = shift;
+    my $self        = shift;
     my $effect_name = shift;
-    
+
     my $count = $self->search_related(
-        'party_effects',    
+        'party_effects',
         {
-            'party_id' => $self->id,
+            'party_id'           => $self->id,
             'effect.effect_name' => $effect_name,
-            'time_left' => {'>', 0},
+            'time_left'          => { '>', 0 },
         },
         {
             join => 'effect',
         }
-	)->count;
-	
-	return $count >= 1 ? 1 : 0;
+    )->count;
+
+    return $count >= 1 ? 1 : 0;
 }
 
 sub mayor_count_allowed {
@@ -1212,21 +1214,20 @@ sub mayor_count_allowed {
         'characters',
         {
             level => { '>=', RPG::Schema->config->{mayor_limit_char_min_level} },
-            status => [ undef, {'!=', 'inn'} ],
+            status => [ undef, { '!=', 'inn' } ],
             hit_points => { '>', 0 },
         }
     )->count;
-    
+
     my $divisor1 = RPG::Schema->config->{mayor_count_divisor_1};
     my $divisor2 = RPG::Schema->config->{mayor_count_divisor_2};
-    
-    $count += int ($high_level_char_count / ($divisor1 + $high_level_char_count / $divisor2));
+
+    $count += int( $high_level_char_count / ( $divisor1 + $high_level_char_count / $divisor2 ) );
 
     return $count;
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0);
-
+__PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 
 1;
 

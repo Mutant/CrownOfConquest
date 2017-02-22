@@ -27,27 +27,27 @@ sub test_update_spells : Tests(14) {
 
     my $spell1 = $self->{schema}->resultset('Spell')->create(
         {
-            points   => 1,
-            class_id => $character->class_id,
-            hidden   => 0,
-            spell_name => 'Energy Beam', 
+            points     => 1,
+            class_id   => $character->class_id,
+            hidden     => 0,
+            spell_name => 'Energy Beam',
         }
     );
 
     my $spell2 = $self->{schema}->resultset('Spell')->create(
         {
-            points   => 5,
-            class_id => $character->class_id,
-            hidden   => 0,
+            points     => 5,
+            class_id   => $character->class_id,
+            hidden     => 0,
             spell_name => 'Shield',
         }
     );
 
     my $spell3 = $self->{schema}->resultset('Spell')->create(
         {
-            points   => 3,
-            class_id => $character->class_id,
-            hidden   => 0,
+            points     => 3,
+            class_id   => $character->class_id,
+            hidden     => 0,
             spell_name => 'Bless',
         }
     );
@@ -113,51 +113,50 @@ sub test_update_spells : Tests(14) {
     is( $self->{stash}->{error}, undef, "No error occured" );
 
     $memorised_spell1 = $self->{schema}->resultset('Memorised_Spells')->find( $memorised_spell1->id );
-    is( $memorised_spell1->memorise_tomorrow,       1, "Spell 1 memorised tomorrow" );
+    is( $memorised_spell1->memorise_tomorrow, 1, "Spell 1 memorised tomorrow" );
     is( $memorised_spell1->memorise_count_tomorrow, 5, "Spell 1 memorised tomorrow count correct" );
-    is( $memorised_spell1->memorised_today,         1, "Spell 1 memorised today unaffected" );
-    is( $memorised_spell1->memorise_count,          2, "Spell 1 memorised count unaffected" );
+    is( $memorised_spell1->memorised_today, 1, "Spell 1 memorised today unaffected" );
+    is( $memorised_spell1->memorise_count, 2, "Spell 1 memorised count unaffected" );
 
     $memorised_spell2 = $self->{schema}->resultset('Memorised_Spells')->find( $memorised_spell2->id );
-    is( $memorised_spell2->memorise_tomorrow,       1, "Spell 2 memorised tomorrow" );
+    is( $memorised_spell2->memorise_tomorrow, 1, "Spell 2 memorised tomorrow" );
     is( $memorised_spell2->memorise_count_tomorrow, 1, "Spell 2 memorised tomorrow count correct" );
-    is( $memorised_spell2->memorised_today,         0, "Spell 2 memorised today unaffected" );
-    is( $memorised_spell2->memorise_count,          0, "Spell 2 memorised count unaffected" );
-
+    is( $memorised_spell2->memorised_today, 0, "Spell 2 memorised today unaffected" );
+    is( $memorised_spell2->memorise_count, 0, "Spell 2 memorised count unaffected" );
 
     $memorised_spell3 = $self->{schema}->resultset('Memorised_Spells')->find( $memorised_spell3->id );
-    is( $memorised_spell3->memorise_tomorrow,       0, "Spell 3 not memorised tomorrow" );
+    is( $memorised_spell3->memorise_tomorrow, 0, "Spell 3 not memorised tomorrow" );
     is( $memorised_spell3->memorise_count_tomorrow, 0, "Spell 3 memorised tomorrow count correct" );
-    is( $memorised_spell3->memorised_today,         1, "Spell 3 memorised today unaffected" );
-    is( $memorised_spell3->memorise_count,          1, "Spell 3 memorised count unaffected" );
+    is( $memorised_spell3->memorised_today, 1, "Spell 3 memorised today unaffected" );
+    is( $memorised_spell3->memorise_count, 1, "Spell 3 memorised count unaffected" );
 
 }
 
 sub test_bury : Tests(3) {
-	my $self = shift;
-	
-	# GIVEN
-	my $party = Test::RPG::Builder::Party->build_party($self->{schema}, character_count => 3);
-	$party->rank_separator_position(3);
-	my @characters = $party->characters;
-	
-	$self->{stash}{character} = $characters[2];
-	$self->{stash}{party_location} = $party->location;
-	$self->{params}{epitaph} = 'epitaph';
-	$self->{stash}{party} = $party;
-	
-	# WHEN
-	RPG::C::Character->bury( $self->{c} );
-	
-	# THEN
-	my @graves = $self->{schema}->resultset('Grave')->search;
-	is(scalar @graves, 1, "Grave created");
-	
-	is($characters[2]->in_storage, 0, "Character deleted");
-	
-	$party->discard_changes;
-	is($party->rank_separator_position, 2, "Rank separator moved");
-	
+    my $self = shift;
+
+    # GIVEN
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => 3 );
+    $party->rank_separator_position(3);
+    my @characters = $party->characters;
+
+    $self->{stash}{character}      = $characters[2];
+    $self->{stash}{party_location} = $party->location;
+    $self->{params}{epitaph}       = 'epitaph';
+    $self->{stash}{party}          = $party;
+
+    # WHEN
+    RPG::C::Character->bury( $self->{c} );
+
+    # THEN
+    my @graves = $self->{schema}->resultset('Grave')->search;
+    is( scalar @graves, 1, "Grave created" );
+
+    is( $characters[2]->in_storage, 0, "Character deleted" );
+
+    $party->discard_changes;
+    is( $party->rank_separator_position, 2, "Rank separator moved" );
+
 }
 
 1;

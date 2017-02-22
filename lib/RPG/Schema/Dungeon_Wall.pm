@@ -30,43 +30,43 @@ __PACKAGE__->belongs_to(
 
 sub opposite_position {
     my $self = shift;
-    
-    return RPG::Position->opposite($self->position->position);
+
+    return RPG::Position->opposite( $self->position->position );
 }
 
 sub opposite_sector {
     my $self = shift;
 
-    return RPG::Position->opposite_sector($self->position->position, $self->dungeon_grid->x, $self->dungeon_grid->y);
+    return RPG::Position->opposite_sector( $self->position->position, $self->dungeon_grid->x, $self->dungeon_grid->y );
 }
 
 # Get the wall record on the opposite sector (i.e. the other side of the wall)
 sub opposite_wall {
-	my $self = shift;
-	
-	my ($x, $y) = $self->opposite_sector;
-	
-	my $dungeon_id = $self->dungeon_grid->dungeon_room->dungeon_id;
-	
-	my $schema = $self->result_source->schema;
-	
-	my $opposite_sector_record = $schema->resultset('Dungeon_Grid')->find(
-		{
-			'x' => $x,
-			'y' => $y,
-			'dungeon_room.floor' => $self->dungeon_grid->dungeon_room->floor,
-			'dungeon_room.dungeon_id' => $dungeon_id,
-		},
-		{
-			join => 'dungeon_room',
-		},
-	);
-	
-	return unless $opposite_sector_record;
-	
-	my $opposite_position = $self->opposite_position;
-	
-	return $opposite_sector_record->get_wall_at($opposite_position);
+    my $self = shift;
+
+    my ( $x, $y ) = $self->opposite_sector;
+
+    my $dungeon_id = $self->dungeon_grid->dungeon_room->dungeon_id;
+
+    my $schema = $self->result_source->schema;
+
+    my $opposite_sector_record = $schema->resultset('Dungeon_Grid')->find(
+        {
+            'x'                  => $x,
+            'y'                  => $y,
+            'dungeon_room.floor' => $self->dungeon_grid->dungeon_room->floor,
+            'dungeon_room.dungeon_id' => $dungeon_id,
+        },
+        {
+            join => 'dungeon_room',
+        },
+    );
+
+    return unless $opposite_sector_record;
+
+    my $opposite_position = $self->opposite_position;
+
+    return $opposite_sector_record->get_wall_at($opposite_position);
 }
 
 1;

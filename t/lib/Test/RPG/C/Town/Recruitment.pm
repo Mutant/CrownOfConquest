@@ -36,43 +36,43 @@ sub test_sell_invalid_character : Tests(1) {
 sub test_sell : Tests(6) {
     my $self = shift;
 
-    my $party     = Test::RPG::Builder::Party->build_party( $self->{schema} );
-    
+    my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
+
     my @characters;
-    for my $count (1 .. 5) {
+    for my $count ( 1 .. 5 ) {
         push @characters, Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id, party_order => $count );
     }
-    
-    my $character_to_sell = $characters[2];
-    
-    my $town      = Test::RPG::Builder::Town->build_town( $self->{schema} );
-    my $day       = Test::RPG::Builder::Day->build_day( $self->{schema} );
 
-    $self->{params}{character_id}  = $character_to_sell->id;
-    $self->{stash}{party}          = $party;
-    $self->{stash}{party_location} = $town->location;
-    $self->{stash}{today}          = $day;
-    $self->{config}{url_root}      = '';
+    my $character_to_sell = $characters[2];
+
+    my $town = Test::RPG::Builder::Town->build_town( $self->{schema} );
+    my $day  = Test::RPG::Builder::Day->build_day( $self->{schema} );
+
+    $self->{params}{character_id}                   = $character_to_sell->id;
+    $self->{stash}{party}                           = $party;
+    $self->{stash}{party_location}                  = $town->location;
+    $self->{stash}{today}                           = $day;
+    $self->{config}{url_root}                       = '';
     $self->{config}{character_sell_deletion_chance} = 0;
 
     RPG::C::Town::Recruitment->sell( $self->{c} );
 
     $character_to_sell->discard_changes;
-    is( $character_to_sell->party_id,    undef,     "Character no longer in a party" );
-    is( $character_to_sell->status,      'recruitment_hold', "Character now in the recruitment hold" );
+    is( $character_to_sell->party_id, undef, "Character no longer in a party" );
+    is( $character_to_sell->status, 'recruitment_hold', "Character now in the recruitment hold" );
     is( $character_to_sell->status_context, $town->id, "Character now in the recruitment hold" );
-    is( $character_to_sell->party_order, undef,     "Character's party order cleared" );
-    
+    is( $character_to_sell->party_order, undef, "Character's party order cleared" );
+
     my @updated_characters = $party->characters;
-    is( scalar @updated_characters, 4, "4 chars left in the party");
-    
+    is( scalar @updated_characters, 4, "4 chars left in the party" );
+
     my @order_seen;
     foreach my $updated_char (@updated_characters) {
         push @order_seen, $updated_char->party_order;
     }
-    
-    is_deeply([sort { $a <=> $b } @order_seen], [1 .. scalar @updated_characters], "Party order is still contiguous");
-    
+
+    is_deeply( [ sort { $a <=> $b } @order_seen ], [ 1 .. scalar @updated_characters ], "Party order is still contiguous" );
+
 }
 
 1;

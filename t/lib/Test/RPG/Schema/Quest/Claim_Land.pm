@@ -16,75 +16,75 @@ use Test::MockObject;
 
 sub test_check_action_not_complete : Tests(2) {
     my $self = shift;
-    
+
     # GIVEN
-    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
-    
-    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
-    $quest->param_record( 'Amount To Claim' )->update;
-    
-    $quest->param_record( 'Amount Claimed' )->current_value( 0 );
-    $quest->param_record( 'Amount Claimed' )->update;    
-    
+    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my $party   = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $quest = Test::RPG::Builder::Quest->build_quest( $self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id );
+
+    $quest->param_record('Amount To Claim')->current_value(10);
+    $quest->param_record('Amount To Claim')->update;
+
+    $quest->param_record('Amount Claimed')->current_value(0);
+    $quest->param_record('Amount Claimed')->update;
+
     # WHEN
-    my $result = $quest->check_action($party, 'claimed_land');
-    
+    my $result = $quest->check_action( $party, 'claimed_land' );
+
     # THEN
-    is($result, 1, "Action accepted");
-    
+    is( $result, 1, "Action accepted" );
+
     $quest->discard_changes;
-    is($quest->param_current_value('Amount Claimed'), 1, "Amount claimed incremented");
+    is( $quest->param_current_value('Amount Claimed'), 1, "Amount claimed incremented" );
 }
 
 sub test_check_action_completed : Tests(3) {
     my $self = shift;
-    
+
     # GIVEN
-    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
-    
-    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
-    $quest->param_record( 'Amount To Claim' )->update;
-    
-    $quest->param_record( 'Amount Claimed' )->current_value( 9);
-    $quest->param_record( 'Amount Claimed' )->update;    
-    
+    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my $party   = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $quest = Test::RPG::Builder::Quest->build_quest( $self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id );
+
+    $quest->param_record('Amount To Claim')->current_value(10);
+    $quest->param_record('Amount To Claim')->update;
+
+    $quest->param_record('Amount Claimed')->current_value(9);
+    $quest->param_record('Amount Claimed')->update;
+
     # WHEN
-    my $result = $quest->check_action($party, 'claimed_land');
-    
+    my $result = $quest->check_action( $party, 'claimed_land' );
+
     # THEN
-    is($result, 1, "Action accepted");
-    
+    is( $result, 1, "Action accepted" );
+
     $quest->discard_changes;
-    is($quest->param_current_value('Amount Claimed'), 10, "Amount claimed incremented");
-    is($quest->status, "Awaiting Reward", "Quest status is now Awaiting Reward");
+    is( $quest->param_current_value('Amount Claimed'), 10, "Amount claimed incremented" );
+    is( $quest->status, "Awaiting Reward", "Quest status is now Awaiting Reward" );
 }
 
 sub test_check_action_already_completed : Tests(2) {
     my $self = shift;
-    
+
     # GIVEN
-    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom($self->{schema});
-    my $party = Test::RPG::Builder::Party->build_party($self->{schema});
-    my $quest = Test::RPG::Builder::Quest->build_quest($self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id);
-    
-    $quest->param_record( 'Amount To Claim' )->current_value( 10 );
-    $quest->param_record( 'Amount To Claim' )->update;
-    
-    $quest->param_record( 'Amount Claimed' )->current_value( 10 );
-    $quest->param_record( 'Amount Claimed' )->update;
-    
+    my $kindgom = Test::RPG::Builder::Kingdom->build_kingdom( $self->{schema} );
+    my $party   = Test::RPG::Builder::Party->build_party( $self->{schema} );
+    my $quest = Test::RPG::Builder::Quest->build_quest( $self->{schema}, quest_type => 'claim_land', kingdom_id => $kindgom->id, party_id => $party->id );
+
+    $quest->param_record('Amount To Claim')->current_value(10);
+    $quest->param_record('Amount To Claim')->update;
+
+    $quest->param_record('Amount Claimed')->current_value(10);
+    $quest->param_record('Amount Claimed')->update;
+
     # WHEN
-    my $result = $quest->check_action($party, 'claimed_land');
-    
+    my $result = $quest->check_action( $party, 'claimed_land' );
+
     # THEN
-    is($result, 0, "Action not accepted");
-    
+    is( $result, 0, "Action not accepted" );
+
     $quest->discard_changes;
-    is($quest->param_current_value('Amount Claimed'), 10, "Amount claimed still the same");
+    is( $quest->param_current_value('Amount Claimed'), 10, "Amount claimed still the same" );
 }
 
 1;

@@ -20,5 +20,4 @@ __PACKAGE__->belongs_to(
     { 'foreign.day_id' => 'self.day_id' }
 );
 
-
 1;

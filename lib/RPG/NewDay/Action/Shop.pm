@@ -27,7 +27,7 @@ sub run {
         },
         {
             prefetch => { 'item_variable_params' => 'item_variable_name' },
-            join     => 'category',
+            join => 'category',
         },
     );
     my %item_types_by_prevalence;
@@ -43,15 +43,16 @@ sub run {
             my $ideal_items_value = $shop->shop_size * 1000 + ( Games::Dice::Advanced->roll('2d40') - 20 );
             my $actual_items_value = 0;
             my @items_in_shop =
-                $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
-                
+              $c->schema->resultset('Items')->search( { 'in_shop.shop_id' => $shop->id, }, { prefetch => [qw/item_type in_shop/], }, );
+
             # Remove some random items. This lets new items, or changes in prevalence, etc. have a chance to take effect
-            my @removed = $self->_remove_random_items_from_shop($shop, @items_in_shop);
+            my @removed = $self->_remove_random_items_from_shop( $shop, @items_in_shop );
 
             # Calculate value of items
             foreach my $item (@items_in_shop) {
+
                 # Skip item if it's just been deleted
-                next if scalar (grep { $_->isa('RPG::Schema::Item') && $_->id == $item->id } @removed) > 1;
+                next if scalar( grep { $_->isa('RPG::Schema::Item') && $_->id == $item->id } @removed ) > 1;
                 $actual_items_value += $item->item_type->modified_cost($shop);
             }
 
@@ -60,12 +61,12 @@ sub run {
             $c->logger->info( "Shop: " . $shop->id . ". ideal_value: $ideal_items_value, actual_value: $actual_items_value, to add $item_value_to_add" );
 
             my $added_count = 0;
-            my $retries = 0;
+            my $retries     = 0;
 
             while ( $item_value_to_add > 0 ) {
-                my $min_prevalence = 100 - ($town->prosperity + Games::Dice::Advanced->roll('1d10') ) - 20;
+                my $min_prevalence = 100 - ( $town->prosperity + Games::Dice::Advanced->roll('1d10') ) - 20;
                 $min_prevalence = 80 if $min_prevalence > 100;
-                $min_prevalence = 1   if $min_prevalence < 1;
+                $min_prevalence = 1  if $min_prevalence < 1;
 
                 my $actual_prevalance = Games::Dice::Advanced->roll( '1d' . ( 100 - $min_prevalence ) ) + $min_prevalence;
                 $actual_prevalance = 100 if $actual_prevalance > 100;
@@ -83,14 +84,14 @@ sub run {
                 }
 
                 # We couldn't find a suitable item. Could've been a bad roll for min_prevalence. Try again
-                if (! $item_type) {
+                if ( !$item_type ) {
                     $retries++;
                     last if $retries > 50;
-                    next;   
+                    next;
                 }
-                
+
                 $added_count++;
-                
+
                 if ( my $variable_param = $item_type->variable_param('Quantity') ) {
                     my $item_rs = $shop->search_related(
                         'items_in_shop',
@@ -98,12 +99,12 @@ sub run {
                             item_type_id => $item_type->id,
                         }
                     );
-                    
+
                     my $item;
                     my $quantity = 1;
-                    if ($item_rs->count >= 1) {
+                    if ( $item_rs->count >= 1 ) {
                         $item = $item_rs->first;
-                        $item->variable_row('Quantity', $item->variable('Quantity') + 1);
+                        $item->variable_row( 'Quantity', $item->variable('Quantity') + 1 );
                     }
                     else {
                         $item = $c->schema->resultset('Items')->create(
@@ -113,39 +114,40 @@ sub run {
                             },
                         );
                     }
-                    
-                    if ($item_type->category->item_category eq 'Ammunition') {
+
+                    if ( $item_type->category->item_category eq 'Ammunition' ) {
+
                         # Special case for ammo & resources, add lots
                         $quantity += Games::Dice::Advanced->roll('1d2000') + 500;
-                        $item->variable_row('Quantity', $quantity);                        
+                        $item->variable_row( 'Quantity', $quantity );
                     }
-                                        
+
                     $item_value_to_add -= $item->individual_sell_price($shop) * $quantity;
                 }
                 else {
                     my $number_of_enchantments = 0;
-                	if ($item_type->category->always_enchanted || Games::Dice::Advanced->roll('1d100') <= $c->config->{shop_enchanted_item_chance}) {
-                		$number_of_enchantments = RPG::Maths->weighted_random_number(1..3);	
-                	}
-                	
+                    if ( $item_type->category->always_enchanted || Games::Dice::Advanced->roll('1d100') <= $c->config->{shop_enchanted_item_chance} ) {
+                        $number_of_enchantments = RPG::Maths->weighted_random_number( 1 .. 3 );
+                    }
+
                     my $item = $c->schema->resultset('Items')->create_enchanted(
                         {
                             item_type_id => $item_type->id,
                             shop_id      => $shop->id,
                         },
                         {
-                        	number_of_enchantments => $number_of_enchantments,
-                        }                        
+                            number_of_enchantments => $number_of_enchantments,
+                        }
                     );
-    
-                    $item_value_to_add -= $item->sell_price($shop, 0);
+
+                    $item_value_to_add -= $item->sell_price( $shop, 0 );
                 }
             }
-            
+
             $shop->organise;
-            
+
             $c->logger->info("Added $added_count items (value left to add: $item_value_to_add)");
-            
+
         }
     }
 }
@@ -184,7 +186,7 @@ sub _alter_statuses_of_shops {
         @order_to_check = qw/Closing Opening Open/;
     }
 
-    OUTER: foreach my $status_to_change (@order_to_check) {
+  OUTER: foreach my $status_to_change (@order_to_check) {
 
         #warn "Changing status from: $status_to_change to: $next_status{$status_to_change}";
 
@@ -247,7 +249,7 @@ sub _adjust_number_of_shops {
 
     # Adjust number of shops, if necessary
     my $ideal_number_of_shops = int( $town->prosperity / $c->config->{prosperity_per_shop} );
-    $ideal_number_of_shops = 1 if $ideal_number_of_shops < 1;    # Always at least one shop per town
+    $ideal_number_of_shops = 1 if $ideal_number_of_shops < 1; # Always at least one shop per town
 
     my @shops = $town->shops;
     my %shops_by_status;
@@ -299,14 +301,14 @@ sub _adjust_number_of_shops {
     else {
         # Closing shops should close, closed shops should be deleted
         foreach my $shop (@shops) {
-            if ($shop->status eq 'Closing') {
+            if ( $shop->status eq 'Closing' ) {
                 $shop->status('Closed');
-                $shop->update;   
+                $shop->update;
             }
-            elsif ($shop->status eq 'Closed') {
-            	$shop->delete;	
+            elsif ( $shop->status eq 'Closed' ) {
+                $shop->delete;
             }
-        } 
+        }
     }
 
     return @shops;
@@ -314,8 +316,8 @@ sub _adjust_number_of_shops {
 }
 
 sub _remove_random_items_from_shop {
-    my $self = shift;
-    my $shop = shift;
+    my $self          = shift;
+    my $shop          = shift;
     my @items_in_shop = @_;
 
     @items_in_shop = shuffle @items_in_shop;
@@ -323,15 +325,15 @@ sub _remove_random_items_from_shop {
     my $items_to_remove = Games::Dice::Advanced->roll('1d4') - 1;
 
     my @removed;
-    
+
     my $deleted_count = 0;
-    my $value = 0;
+    my $value         = 0;
 
     for my $item_index ( 1 .. $items_to_remove ) {
         my $item = shift @items_in_shop;
         next unless $item;
-        
-        if ($item->isa('RPG::Schema::Items')) {
+
+        if ( $item->isa('RPG::Schema::Items') ) {
             $value += $item->item_type->modified_cost($shop);
             $item->delete;
         }
@@ -340,15 +342,15 @@ sub _remove_random_items_from_shop {
             $self->context->schema->resultset('Items_Made')->find(
                 {
                     item_type_id => $item->id,
-                    shop_id => $shop->id,
+                    shop_id      => $shop->id,
                 }
             );
-            
+
         }
-        
+
         $deleted_count++;
         push @removed, $item;
-        
+
     }
 
     $self->context->logger->info("Deleted $deleted_count items (value: $value)");
@@ -358,6 +360,5 @@ sub _remove_random_items_from_shop {
 }
 
 __PACKAGE__->meta->make_immutable;
-
 
 1;

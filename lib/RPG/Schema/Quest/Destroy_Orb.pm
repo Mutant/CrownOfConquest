@@ -42,7 +42,7 @@ sub set_quest_params {
                 $self->delete;
                 die RPG::Exception->new(
                     message => "Can't create quest - no Orbs within range of town",
-                    type    => 'quest_creation_error',
+                    type => 'quest_creation_error',
                 );
             }
             else {
@@ -64,11 +64,11 @@ sub set_quest_params {
             },
             { join => { 'quest_params' => 'quest_param_name' }, }
         );
-        
+
         # A quest for this orb already exists in this town. Try increasing the initial search range.
         #  This makes sure we don't just get the same orb back. But it does mean we could keep searching forever,
         #   which we prevent by having a maximum number of times we'll try this before throwing an exception
-        if ($existing_quest) { 
+        if ($existing_quest) {
             $tries++;
             $search_range += 2;
 
@@ -76,10 +76,10 @@ sub set_quest_params {
                 $self->delete;
                 die RPG::Exception->new(
                     message => "Can't create quest - no suitable Orbs within range of town",
-                    type    => 'quest_creation_error',
+                    type => 'quest_creation_error',
                 );
             }
-                    
+
             undef $orb_to_destroy;
         }
     }
@@ -100,12 +100,12 @@ sub set_quest_params {
 
     # Best not to make the gold value based purely on distance, or people will be able to guess how far away the orb is
     my $gold_variant = Games::Dice::Advanced->roll('1d100') - 50;
-    my $gold_value   = ($self->{_config}{gold_per_distance} || 0) * $distance * $orb_to_destroy->level - $gold_variant;
+    my $gold_value = ( $self->{_config}{gold_per_distance} || 0 ) * $distance * $orb_to_destroy->level - $gold_variant;
     $gold_value = 20 if $gold_value < 20;
 
     $self->min_level( $orb_to_destroy->level * 3 );
     $self->gold_value($gold_value);
-    $self->xp_value( ($self->{_config}{xp_per_distance} || 0) * $distance * $orb_to_destroy->level );
+    $self->xp_value( ( $self->{_config}{xp_per_distance} || 0 ) * $distance * $orb_to_destroy->level );
 
     my $days_to_complete = $distance;
     $days_to_complete += Games::Dice::Advanced->roll('1d4') - 2;
@@ -168,12 +168,12 @@ sub check_action_from_another_party {
             {
                 party_id => $self->party->id,
                 message  => "The town of "
-                    . $self->town->town_name
-                    . " sends you a message that the party known as "
-                    . $party_that_triggered->name . " has "
-                    . "destroyed the Orb of "
-                    . $self->orb_to_destroy->name
-                    . ". Your quest has therefore been terminated amicably.",
+                  . $self->town->town_name
+                  . " sends you a message that the party known as "
+                  . $party_that_triggered->name . " has "
+                  . "destroyed the Orb of "
+                  . $self->orb_to_destroy->name
+                  . ". Your quest has therefore been terminated amicably.",
                 alert_party => 1,
                 day_id      => $today->id,
             }
@@ -202,8 +202,8 @@ sub direction_from_town_to_orb {
     my $self = shift;
 
     my $orb =
-        $self->result_source->schema->resultset('Creature_Orb')
-        ->find( { creature_orb_id => $self->param_start_value('Orb To Destroy'), }, { prefetch => 'land', } );
+      $self->result_source->schema->resultset('Creature_Orb')
+      ->find( { creature_orb_id => $self->param_start_value('Orb To Destroy'), }, { prefetch => 'land', } );
 
     return unless $orb;
 

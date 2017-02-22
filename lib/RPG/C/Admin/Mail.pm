@@ -42,7 +42,7 @@ sub send : Local {
         $c->stash->{error} = "Must select active or inactive players (or both)";
         $c->detach('create');
     }
-    
+
     if ( $c->req->param('active_players') && !$c->req->param('inactive_players') ) {
         $params{deleted} = 0;
     }
@@ -57,12 +57,12 @@ sub send : Local {
     my @players = $c->model('DBIC::Player')->search( \%params );
 
     RPG::Email->send(
-    	$c->config,
-    	{
-        	players => \@players,
-        	subject => $c->req->param('subject'),
-        	body    => $c->req->param('body'),
-    	}
+        $c->config,
+        {
+            players => \@players,
+            subject => $c->req->param('subject'),
+            body    => $c->req->param('body'),
+        }
     );
 
     $c->forward(
@@ -70,6 +70,7 @@ sub send : Local {
         [
             {
                 template => 'admin/mail/confirmation.html',
+
                 #params   => { emails => $emails, },
             }
         ]

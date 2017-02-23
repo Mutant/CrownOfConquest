@@ -20,20 +20,9 @@ dev: 1
 
 url_root: http://localhost:3000/
 
-static_path: /static/
-
-online_threshold: 5
-
 no_email: 1
 
-email_log_file: /home/sam/RPG/log/email_log.html
-
-dbg_free_buildings: 1
-
-town_count_for_kingdom_declaration: 3
-
-creature_attack_chance: 0
-
-max_party_level_diff_for_attack: 20
+# Use the following to log sent emails (i.e. for debugging)
+email_log_file: __path_to(log/email_log.html)__
 
 check_for_coop: 0

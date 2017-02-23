@@ -1,8 +1,8 @@
-#!/bin/sh 
+#!/bin/sh
 
 # Start a Plack daemon.
 
-RPG_HOME=/home/sam/crown/
+RPG_HOME=$HOME/crown/
 export RPG_HOME
 LOG_DIR=$RPG_HOME/log
 PATH=$PATH:$HOME/perl5/bin

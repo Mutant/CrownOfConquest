@@ -14,16 +14,8 @@ use Log::Dispatch;
 use FindBin;
 
 my @actions_to_run = qw(
-  Blacksmith
-  CreatureOrbs
-  Recruitment
-  Quest
-  Mayor
-  Shop
-  Castles
-  Sewers
-  Dungeon
-  Dungeon_Special_Room
+
+  Dungeon_Special_Rooms
   Kingdom
   Majesty
   MiniMap

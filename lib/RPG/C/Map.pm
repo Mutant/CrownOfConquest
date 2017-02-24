@@ -641,6 +641,8 @@ sub generate_sectors {
         for my $x ( $grid_params->{start_point}{x} .. $grid_params->{end_point}{x} ) {
             for my $y ( $grid_params->{start_point}{y} .. $grid_params->{end_point}{y} ) {
 
+                next if $x < 0 || $y < 0;
+
                 my $location = $grid_params->{grid}[$x][$y];
 
                 next unless $location;

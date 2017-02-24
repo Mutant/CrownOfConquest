@@ -255,7 +255,12 @@ sub _adjust_number_of_shops {
     my %shops_by_status;
     map { push @{ $shops_by_status{ $_->status } }, $_ } @shops;
 
-    my $open_shops_count = defined $shops_by_status{Open} ? scalar @{ $shops_by_status{Open} } : 0;
+    my $open_shops_count    = defined $shops_by_status{Open}    ? scalar @{ $shops_by_status{Open} } : 0;
+    my $opening_shops_count = defined $shops_by_status{Opening} ? scalar @{ $shops_by_status{Opening} } : 0;
+
+    # If there were no open or opening shops here, then any new shops should immediately 'Open'.
+    #  This ensures there's at least 1 shop open in the town
+    my $auto_open_shops = $open_shops_count == 0 && $opening_shops_count == 0 ? 1 : 0;
 
     #warn "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count";
     $c->logger->info( "Town_id: " . $town->id . ", Ideal: $ideal_number_of_shops, Open: $open_shops_count" );
@@ -281,7 +286,7 @@ sub _adjust_number_of_shops {
                 {
                     shop_owner_name => $shop_owner_name,
                     shop_suffix     => $suffix,
-                    status          => 'Opening',
+                    status          => $auto_open_shops ? 'Open' : 'Opening',
                     shop_size       => Games::Dice::Advanced->roll('1d10'),
                 }
             );

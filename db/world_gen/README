@@ -1,0 +1,7 @@
+These scripts are used to generate a new world. For convenience, they are separate scripts, but they should probably be run via crown/create_world.pl
+
+It will connect to the DB as specified in your config (e.g. rpg.yml/rpg_local.yml). create_world.pl will do some checks to make sure the DB looks 'new'
+(i.e. doesn't already have a world). However, the sub-scripts do  *not* do these checks, so be careful.
+
+Also in this directory is the config file to control the size of the world to be generated, and some other parameters. These settings can be overridden
+in your local config file (e.g. rpg_local.yml).

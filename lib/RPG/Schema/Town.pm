@@ -12,6 +12,7 @@ use Moose;
 use Math::Round qw(round);
 use RPG::ResultSet::RowsInSectorRange;
 use RPG::Maths;
+use List::Util qw(sum);
 
 __PACKAGE__->load_components(qw/Numeric InflateColumn::DateTime Core/);
 __PACKAGE__->table('Town');
@@ -104,6 +105,38 @@ __PACKAGE__->has_many( 'raids', 'RPG::Schema::Town_Raid', 'town_id', );
 with 'RPG::Schema::Role::Land_Claim';
 
 sub claim_type { 'town' }
+
+# Percentages of towns that should be in the given propsperity range
+#  Needs to add up to 100
+my %target_prosp = (
+    95 => 3,
+    90 => 4,
+    85 => 4,
+    80 => 5,
+    75 => 5,
+    70 => 6,
+    65 => 5,
+    60 => 6,
+    55 => 5,
+    50 => 5,
+    45 => 6,
+    40 => 5,
+    35 => 6,
+    30 => 7,
+    25 => 5,
+    20 => 5,
+    15 => 5,
+    10 => 5,
+    5  => 5,
+    0  => 3,
+);
+
+sub get_prosp_ranges {
+    die "Target prosp %'s don't add up to 100" unless sum( values %target_prosp ) == 100;
+
+    return %target_prosp;
+}
+
 
 sub label {
     my $self = shift;

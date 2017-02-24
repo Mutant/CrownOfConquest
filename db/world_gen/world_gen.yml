@@ -1,0 +1,28 @@
+---
+# Size of the map to generate
+x_size: 100
+y_size: 100
+
+# Which x co-ord (key) to start each tileset.
+#  The value is the tileset ID as per the Map_Tileset table
+tileset_x:
+  1:  2
+  38: 3
+  39: 1
+
+# Number of towns to generate
+towns: 100
+
+# Minimum distance a town can be from another
+town_min_distance: 11
+
+# Number of initial kingdoms to generate
+initial_kingdoms: 5
+
+# Min/Max size of initial kingdom
+initial_kingdom_min_size: 1000
+initial_kingdom_max_size: 2000
+
+# Range from town to find towns to connect with roads
+road_search_range: 15
+

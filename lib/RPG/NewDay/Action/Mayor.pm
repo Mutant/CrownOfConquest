@@ -152,7 +152,7 @@ sub calculate_approval {
 
     my $mayor = $town->mayor;
 
-    return unless $mayor;
+    return if ! $mayor || ! $self->context->yesterday;
 
     # Don't adjust approval if the mayoralty changed hands yesterday
     #  We do this by checking if there's a Party_Mayor_History record that
@@ -551,7 +551,7 @@ sub refresh_mayor {
     my $mayor = shift;
     my $town  = shift;
 
-    return unless $mayor;
+    return if ! $mayor || ! defined $mayor->creature_group_id;
 
     my $cg = $mayor->creature_group;
 

@@ -5,10 +5,11 @@ use Moose;
 extends 'RPG::NewDay::Base';
 
 use Math::Round qw(round);
-use List::Util qw(shuffle sum);
+use List::Util qw(shuffle);
 use List::MoreUtils qw(first_index);
 use Data::Dumper;
 use Carp;
+use RPG::Schema::Town;
 
 # Run after Inn, so calculations of inn costs are applied before prosperity changes
 sub depends { qw/RPG::NewDay::Action::CreateDay RPG::NewDay::Action::Inn/ }
@@ -138,31 +139,7 @@ sub scale_prosperity {
     my $prosp_changes = shift;
     my @towns         = @_;
 
-    # Needs to add up to 100
-    my %target_prosp = (
-        95 => 3,
-        90 => 4,
-        85 => 4,
-        80 => 5,
-        75 => 5,
-        70 => 6,
-        65 => 5,
-        60 => 6,
-        55 => 5,
-        50 => 5,
-        45 => 6,
-        40 => 5,
-        35 => 6,
-        30 => 7,
-        25 => 5,
-        20 => 5,
-        15 => 5,
-        10 => 5,
-        5  => 5,
-        0  => 3,
-    );
-
-    die "Target prosp %'s don't add up to 100" unless sum( values %target_prosp ) == 100;
+    my %target_prosp = RPG::Schema::Town->get_prosp_ranges();
 
     my $logged;
 

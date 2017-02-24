@@ -265,6 +265,8 @@ sub check_for_mayor_replacement {
         $town->peasant_state(undef);
         $town->update;
 
+        $c->logger->info("No mayor in " . $town->id . "; generating new one");
+
         $c->schema->resultset('Town_History')->create(
             {
                 town_id => $town->id,
@@ -272,6 +274,8 @@ sub check_for_mayor_replacement {
                 message => $town->town_name . " doesn't have a mayor! " . $mayor->character_name . " is appointed by the King",
             }
         );
+
+        $town->discard_changes;
     }
 
     return $mayor;

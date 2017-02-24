@@ -10,10 +10,19 @@ use Data::Visitor::Callback;
 
 sub load {
     my $package = shift;
+    my $extra_conf_file = shift;
+
+    die "Cannot find extra conf file $extra_conf_file" if defined $extra_conf_file && ! -f $extra_conf_file;
 
     my $home = $ENV{RPG_HOME};
 
     my $config = YAML::LoadFile("$home/rpg.yml");
+
+    if ( defined $extra_conf_file ) {
+        my $extra_config = YAML::LoadFile("$extra_conf_file");
+        $config = { %$config, %$extra_config };
+    }
+
     my $suffix = $ENV{RPG_CONFIG_LOCAL_SUFFIX} // $ENV{CATALYST_CONFIG_LOCAL_SUFFIX} // 'local';
     if ( -f "$home/rpg_$suffix.yml" ) {
         my $local_config = YAML::LoadFile("$home/rpg_$suffix.yml");

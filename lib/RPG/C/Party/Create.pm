@@ -169,7 +169,22 @@ sub save_party : Local {
         }
     );
 
-    $c->res->redirect( $c->config->{url_root} . '/party/new_party_message' );
+    $c->flash->{created_message} = $c->forward(
+        'RPG::V::TT',
+        [
+            {
+                template => 'party/complete.html',
+                params   => {
+                    party => $c->stash->{party},
+                    town  => $c->stash->{party}->location->town,
+                },
+                return_output => 1,
+            }
+        ]
+    );
+
+
+    $c->res->redirect( $c->config->{url_root} );
 }
 
 sub new_character : Local {

@@ -38,7 +38,7 @@ sub main : Local {
                 template => 'party/main.html',
                 params   => {
                     party           => $c->stash->{party},
-                    created_message => $c->stash->{created_message} || '',
+                    created_message => $c->flash->{created_message} || '',
                     load_panel      => $load_panel,
                     message         => $c->flash->{message},
                     error           => $c->flash->{error},
@@ -820,26 +820,6 @@ sub scout : Local {
     $party->update;
 
     $c->forward( '/panel/refresh', [ 'messages', 'party_status' ] );
-}
-
-sub new_party_message : Local {
-    my ( $self, $c ) = @_;
-
-    $c->stash->{created_message} = $c->forward(
-        'RPG::V::TT',
-        [
-            {
-                template => 'party/complete.html',
-                params   => {
-                    party => $c->stash->{party},
-                    town  => $c->stash->{party}->location->town,
-                },
-                return_output => 1,
-            }
-        ]
-    );
-
-    $c->forward('/party/main');
 }
 
 sub disband : Local {

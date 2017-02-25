@@ -15,16 +15,10 @@ use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
 use Test::RPG::Builder::Garrison;
 
-sub test_startup : Tests(startup) {
+sub test_setup : Tests(setup) {
     my $self = shift;
 
     $self->mock_dice;
-}
-
-sub test_shutdown : Tests(shutdown) {
-    my $self = shift;
-
-    $self->unmock_dice;
 }
 
 sub test_detonate_on_land_no_buildings : Tests(2) {

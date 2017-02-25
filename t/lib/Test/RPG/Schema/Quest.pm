@@ -19,8 +19,6 @@ use Test::MockObject;
 sub startup : Tests(startup=>1) {
     my $self = shift;
 
-    $self->mock_dice;
-
     use_ok('RPG::Schema::Quest');
 }
 
@@ -32,6 +30,8 @@ sub teardown : Tests(shutdown) {
 
 sub setup_data : Tests(setup) {
     my $self = shift;
+
+    $self->mock_dice;
 
     $self->{quest_type} = $self->{schema}->resultset('Quest_Type')->create(
         {

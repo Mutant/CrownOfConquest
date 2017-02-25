@@ -12,16 +12,10 @@ use Test::MockObject;
 
 use Test::RPG::Builder::Party;
 
-sub startup : Tests(startup) {
+sub setup : Tests(setup) {
     my $self = shift;
 
     $self->mock_dice;
-}
-
-sub shutdown : Tests(shutdown) {
-    my $self = shift;
-
-    $self->unmock_dice;
 }
 
 sub test_hit_with_resistance_char_didnt_resist : Tests(2) {

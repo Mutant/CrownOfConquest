@@ -15,8 +15,6 @@ use Test::RPG::Builder::Garrison;
 sub startup : Tests(startup) {
     my $self = shift;
 
-    $self->mock_dice;
-
     $self->{skill} = $self->{schema}->resultset('Skill')->find(
         {
             skill_name => 'Medicine',
@@ -24,10 +22,10 @@ sub startup : Tests(startup) {
     );
 }
 
-sub shutdown : Tests(shutdown) {
+sub setup : Tests(setup) {
     my $self = shift;
 
-    $self->unmock_dice;
+    $self->mock_dice;
 }
 
 sub test_execute_when_char_in_party : Tests(4) {

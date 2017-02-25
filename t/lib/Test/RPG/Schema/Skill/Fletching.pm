@@ -16,7 +16,6 @@ use Test::RPG::Builder::Item_Type;
 sub startup : Tests(startup) {
     my $self = shift;
 
-    $self->mock_dice;
 
     $self->{skill} = $self->{schema}->resultset('Skill')->find(
         {
@@ -25,10 +24,10 @@ sub startup : Tests(startup) {
     );
 }
 
-sub shutdown : Tests(shutdown) {
+sub setup : Tests(setup) {
     my $self = shift;
 
-    $self->unmock_dice;
+    $self->mock_dice;
 }
 
 sub test_execute_existing_ammo : Tests(3) {

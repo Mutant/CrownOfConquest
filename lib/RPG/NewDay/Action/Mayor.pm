@@ -551,12 +551,16 @@ sub refresh_mayor {
     my $mayor = shift;
     my $town  = shift;
 
-    return if ! $mayor || ! defined $mayor->creature_group_id;
+    return if ! $mayor;
 
-    my $cg = $mayor->creature_group;
+    my $cg;
 
-    # They miss out if they happen to be in combat
-    return if $cg && $cg->in_combat;
+    if (defined $mayor->creature_group_id) {
+        $cg = $mayor->creature_group;
+
+        # They miss out if they happen to be in combat
+        return if $cg && $cg->in_combat;
+    }
 
     # Heal NPC mayor to max hps if they're not dead, or they were killed, but no one took over
     if ( $mayor->is_npc && ( !$mayor->is_dead || !$town->pending_mayor ) ) {

@@ -14,8 +14,6 @@ use Test::RPG::Builder::Character;
 sub startup : Tests(startup) {
     my $self = shift;
 
-    $self->mock_dice;
-
     $self->{skill} = $self->{schema}->resultset('Skill')->find(
         {
             skill_name => 'War Cry',
@@ -23,10 +21,10 @@ sub startup : Tests(startup) {
     );
 }
 
-sub shutdown : Tests(shutdown) {
+sub setup : Tests(setup) {
     my $self = shift;
 
-    $self->unmock_dice;
+    $self->mock_dice;
 }
 
 sub test_execute : Tests(9) {

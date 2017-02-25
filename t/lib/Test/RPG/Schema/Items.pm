@@ -20,8 +20,6 @@ use Test::RPG::Builder::Character;
 sub startup : Tests(startup=>1) {
     my $self = shift;
 
-    $self->mock_dice;
-
     use_ok('RPG::Schema::Items');
 }
 

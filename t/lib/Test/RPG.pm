@@ -113,6 +113,8 @@ sub clear_data : Test(teardown) {
     undef $self->{config};
     undef $self->{params};
     undef $self->{counter};
+
+    $self->unmock_dice;
 }
 
 sub clear_dice_data : Tests(shutdown) {
@@ -153,7 +155,7 @@ sub mock_dice {
 sub unmock_dice {
     my $self = shift;
 
-    return unless $self->{dice} =~ /Test::MockObject::Extra/;
+    return if ! $self->{dice} || $self->{dice} !~ /Test::MockObject::Extra/;
     $self->{dice}->unfake_module if $self->{dice};
     $SIG{__WARN__} = sub {
         my ($msg) = @_;

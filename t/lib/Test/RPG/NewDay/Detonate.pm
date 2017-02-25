@@ -17,20 +17,10 @@ use Test::RPG::Builder::Building;
 use Test::RPG::Builder::Dungeon;
 use Test::RPG::Builder::Dungeon_Room;
 
-sub test_startup : Tests(startup) {
+sub setup : Test(setup => 1) {
     my $self = shift;
 
     $self->mock_dice;
-}
-
-sub test_shutdown : Tests(shutdown) {
-    my $self = shift;
-
-    $self->unmock_dice;
-}
-
-sub setup : Test(setup => 1) {
-    my $self = shift;
 
     use_ok 'RPG::NewDay::Action::Detonate';
 

@@ -17,6 +17,10 @@ sub startup : Tests(startup=>1) {
     my $self = shift;
 
     use_ok 'RPG::ResultSet::Character';
+}
+
+sub setup : Tests(setup) {
+    my $self = shift;
 
     $self->mock_dice;
 }

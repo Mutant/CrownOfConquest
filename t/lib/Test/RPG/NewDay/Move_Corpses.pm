@@ -16,15 +16,10 @@ use Test::RPG::Builder::Land;
 
 use Test::More;
 
-sub startup : Test(startup) {
-    my $self = shift;
-
-    $self->mock_dice;
-}
-
 sub setup : Test(setup) {
     my $self = shift;
 
+    $self->mock_dice;
     $self->setup_context;
 
     $self->{action} = RPG::NewDay::Action::Move_Corpses->new( context => $self->{mock_context} );

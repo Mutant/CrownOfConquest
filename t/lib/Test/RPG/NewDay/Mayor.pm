@@ -29,6 +29,8 @@ sub setup : Test(setup) {
 
     $self->setup_context;
 
+    $self->mock_dice;
+
     undef $self->{rolls};
 }
 
@@ -37,15 +39,6 @@ sub startup : Test(startup => 1) {
 
     use_ok('RPG::NewDay::Action::Mayor');
 
-    $self->mock_dice;
-
-}
-
-sub shutdown : Test(shutdown) {
-    my $self = shift;
-
-    undef $self->{roll_result};
-    $self->unmock_dice;
 }
 
 sub test_process_revolt_overthrow : Tests(7) {

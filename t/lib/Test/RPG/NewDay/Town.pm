@@ -27,8 +27,6 @@ sub startup : Test(startup => 1) {
 
     use_ok 'RPG::NewDay::Action::Town';
 
-    $self->mock_dice;
-
 }
 
 sub setup : Test(setup) {
@@ -44,6 +42,8 @@ sub setup : Test(setup) {
     $mock_context->set_isa('RPG::NewDay::Context');
 
     $self->{mock_context} = $mock_context;
+
+    $self->mock_dice;
 
     $self->{rolls}       = undef;
     $self->{roll_result} = undef;

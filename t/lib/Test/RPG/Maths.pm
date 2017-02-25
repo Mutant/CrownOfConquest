@@ -14,20 +14,10 @@ use Data::Dumper;
 
 use RPG::Maths;
 
-sub startup : Test(startup) {
+sub setup : Test(setup) {
     my $self = shift;
 
-    $self->{dice} = Test::MockObject::Extra->new();
-    $self->{dice}->fake_module(
-        'Games::Dice::Advanced',
-        roll => sub { $self->{roll_result} || 0 },
-    );
-}
-
-sub shutdown : Test(shutdown) {
-    my $self = shift;
-
-    $self->unmock_dice;
+    $self->{dice} = $self->mock_dice;
 }
 
 sub test_weighted_random_number : Tests(1) {

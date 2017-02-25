@@ -35,7 +35,6 @@ sub startup : Tests(startup) {
     );
     $self->{mock_maths} = $mock_maths;
 
-    $self->mock_dice;
 }
 
 sub shutdown : Tests(shutdown) {
@@ -43,8 +42,6 @@ sub shutdown : Tests(shutdown) {
 
     $self->{mock_maths}->unfake_module();
     require RPG::Maths;
-
-    $self->unmock_dice;
 }
 
 sub setup : Tests(setup) {
@@ -52,6 +49,8 @@ sub setup : Tests(setup) {
 
     undef $self->{rolls};
     undef $self->{roll_result};
+
+    $self->mock_dice;
 }
 
 sub test_fill : Tests(2) {

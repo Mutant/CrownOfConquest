@@ -37,7 +37,12 @@ sub setup : Tests(setup) {
     my $self = shift;
 
     Test::RPG::Builder::Day->build_day( $self->{schema} );
+}
 
+sub teardown : Tests(teardown) {
+    my $self = shift;
+
+    $self->clear_dice_data;
 }
 
 sub test_process_effects_one_char_effect : Tests(2) {
@@ -214,7 +219,6 @@ sub test_character_action_cast_spell_on_opponent_who_is_killed : Tests(4) {
 
     # GIVEN
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{roll_result} = 6;
 
@@ -261,8 +265,6 @@ sub test_character_action_cast_spell_on_opponent_who_is_killed : Tests(4) {
     is( $results->defender_killed, 1, "Defender marked as killed" );
     is( $results->damage,          6, "Damage recorded" );
     is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
-
-    $self->unmock_dice;
 }
 
 sub test_character_action_cast_spell_on_party_member : Tests(3) {
@@ -270,7 +272,6 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
 
     # GIVEN
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{roll_result} = 6;
 
@@ -320,8 +321,6 @@ sub test_character_action_cast_spell_on_party_member : Tests(3) {
     is( $battle->combat_log->spells_cast, 1, "Number of spells cast incremented in combat log" );
     $target->discard_changes;
     ok( $target->hit_points > 5, "Hit points have increased" );
-
-    $self->unmock_dice;
 }
 
 sub test_character_action_use_item : Tests(5) {
@@ -329,7 +328,6 @@ sub test_character_action_use_item : Tests(5) {
 
     # GIVEN
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{roll_result} = 6;
 
@@ -377,8 +375,6 @@ sub test_character_action_use_item : Tests(5) {
 
     $item->discard_changes;
     is( $item->variable('Casts Per Day'), 1, "Item's casts per day reduced" );
-
-    $self->unmock_dice;
 }
 
 sub test_character_action_autocast_cast_but_has_no_attack : Tests(1) {
@@ -1055,7 +1051,6 @@ sub test_execute_round_skills_checked : Tests(2) {
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema} );
 
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{rolls} = [ 4, 2 ];
 
@@ -1079,9 +1074,6 @@ sub test_execute_round_skills_checked : Tests(2) {
     like( $combat_log_message->message, qr/increasing his damage for 3 rounds/, "Message set correctly" );
 
     is( $character->character_effects->count, 1, "Effect added to character" );
-
-    $self->unmock_dice;
-    $self->clear_dice_data;
 }
 
 sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
@@ -1112,7 +1104,6 @@ sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
     my $cg = Test::RPG::Builder::CreatureGroup->build_cg( $self->{schema}, creature_count => 1, creature_hit_points_current => 3 );
 
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{rolls} = [ 4, 2 ];
     $self->{roll_result} = 10;
@@ -1138,9 +1129,6 @@ sub test_execute_round_skills_checked_opponents_wiped_out : Tests(4) {
     like( $messages[0]->message, qr/You've killed the creatures/, "Group wiped out" );
 
     is( $result->{combat_complete}, 1, "Combat ended" );
-
-    $self->unmock_dice;
-    $self->clear_dice_data;
 }
 
 sub test_characters_killed_during_round_are_skipped : Tests(1) {
@@ -1720,7 +1708,6 @@ sub test_check_skills : Tests(2) {
     my $item = Test::RPG::Builder::Item->build_item( $self->{schema}, category_name => 'Shield', character_id => $character->id );
 
     $self->mock_dice;
-    $self->clear_dice_data;
 
     $self->{rolls} = [ 4, 2 ];
 
@@ -1740,10 +1727,6 @@ sub test_check_skills : Tests(2) {
 
     $cret->discard_changes;
     is( $cret->hit_points_current, 2, "Creature hit points reduced" );
-
-    $self->unmock_dice;
-    $self->clear_dice_data;
-
 }
 
 sub test_refresh_combat_factor_called_before_cache_initialised : Tests(3) {

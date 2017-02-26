@@ -16,6 +16,13 @@ This has been tested on Ubuntu 16.04, but should work on most flavours of Linux.
   * gcc
   * mysql-server
   * libdbd-mysql-perl
+* Make sure STRICT_TRANS_TABLES and ONLY_FULL_GROUP_BY mysql sql modes are turned off in the mysqlconfig
+  On Ubuntu, this is best done by adding a file /etc/mysql/mysql.conf.d/custom.cnf
+  with the following contents:
+```
+[mysqld]
+sql_mode = "NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+```
 * From the crown directory, run:
 ```
   sudo cpanm --instaldeps .
@@ -25,25 +32,20 @@ This has been tested on Ubuntu 16.04, but should work on most flavours of Linux.
   mysqladmin create database crown
   mysql crown < crown/db/schema.sql
 ```
+* Create a config file for your instance by copying rpg_template.yml to rpg_local.yml
+  Check configuration settings look correct (particularly DB settings). This file shouldn't get checked in, as it likely contains private data (e.g. DB password).
 * Generate a new world (this takes a while)
 ```
 crown/db/create_world.pl
 ```
- See crown/db/world_gen/README for more details
-* Create a config file for your instance by copying rpg_template.yml to rpg_local.yml
-  Check configuration settings look correct (particularly DB settings). This file shouldn't get checked in, as it likely contains private data (e.g. DB password).
-* Make sure STRICT_TRANS_TABLES and ONLY_FULL_GROUP_BY mysql sql modes are turned off in the mysqlconfig
-  On Ubuntu, this is best done by adding a file /etc/mysql/mysql.conf.d/custom.cnf
-  with the following contents:
+  See crown/db/world_gen/README for more details
+* Initialize the world:
 ```
-[mysqld]
-sql_mode = "NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+crown/db/world_gen/init_world.pl
 ```
+  Note, this will take a *long* time to run. However, you can continue with the next steps. Some parts of the world will
+  just be "empty" until it's done (e.g. shops, dungeons, monsters)
 * Create log and var directories (by default, crown/log & crown/var) and make sure they're writeable by appropriate user
-* Create a cron job for the 'new_day' script, it needs to run every 5 minutes, e.g.
-```
-*/5 * * * * RPG_HOME=$HOME/crown/ $HOME/crown/script/new_day.pl
-```
 * Set some environment variables:
 ```
 RPG_HOME=$HOME/crown
@@ -57,7 +59,10 @@ perl crown/rpg_server.pl
   Make sure you set url_root in rpg_local.ymp to the appropriate base url
 * To get access to the admin panel, set the 'admin' flag on the Player record in the DB to true
   You'll then be able to nagivate to http://localhost:3000/admin
-
+* Once the init_world.pl script is done, create a cron job for the 'new_day' script, it needs to run every 5 minutes, e.g.
+```
+*/5 * * * * RPG_HOME=$HOME/crown/ $HOME/crown/script/new_day.pl
+```
 ### Using Plack/Starman
 
 Full details are beyond the scope of this README, but there is an init script called script/plack.

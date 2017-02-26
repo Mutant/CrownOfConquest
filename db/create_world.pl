@@ -45,6 +45,3 @@ system($FindBin::Bin . '/world_gen/make_first_day.pl');
 
 # Create kingdoms
 system($FindBin::Bin . '/world_gen/make_kingdoms.pl');
-
-# Init world
-system($FindBin::Bin . '/world_gen/init_world.pl');

@@ -3,14 +3,12 @@
 Model::DBIC:
   schema_class: RPG::Schema
   connect_info: 
-    - dbi:mysql:game
+    - dbi:mysql:crown
     - root
     - ''
     - { AutoCommit: 1, mysql_connect_timeout: 12000 }
 
 url_root: http://localhost:3000/
-
-static_path: /static/
 
 # Turned on to avoid accidental spam. Turn off if you want mail to be sent
 no_email: 1

@@ -1080,10 +1080,13 @@ sub online : Private {
     $c->stash->{party}->last_action( DateTime->now() );
     $c->stash->{party}->update;
 
+    my $dt = DateTime->now()->subtract( minutes => $c->config->{online_threshold} );
+    my $fdt = $c->model('DBIC')->storage->datetime_parser->format_datetime($dt);
+
     # Get parties online
     my @parties_online = $c->model('DBIC::Party')->search(
         {
-            last_action => { '>=', DateTime->now()->subtract( minutes => $c->config->{online_threshold} ) },
+            last_action => { '>=', $fdt },
             defunct => undef,
             name => { '!=', '' },
         },

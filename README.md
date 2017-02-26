@@ -104,6 +104,8 @@ The artwork & assets (including .png and .jpg files) in this application are dis
 license. Attribution should be given as per the 'about' page (it's sufficient just to keep this page unmodified).
 See https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
+For source code: https://github.com/Mutant/CrownOfConquest
+
 ### Contact
 
 Here are a few ways you can contact me:

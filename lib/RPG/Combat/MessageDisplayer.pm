@@ -82,6 +82,7 @@ sub display {
             push @messages, "You find $result->{gold} gold\n";
 
             foreach my $item_found ( @{ $result->{found_items} } ) {
+                next unless $item_found->{finder};
                 push @messages, $item_found->{finder}->character_name . " found a " . $item_found->{item}->display_name(1) . "\n";
             }
 

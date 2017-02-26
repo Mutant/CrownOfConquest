@@ -6,6 +6,9 @@ This README documents how to set up your own Crown server. Note, it's not trivia
 
 This is also a hobby project, so the docs are not comprehensive. I'm happy to answer questions if I can though (see Contact below).
 
+Also, things might not be as "generic" as they should be (e.g. currently the name is hard-coded). These problems can fairly easily be fixed if people are interested in
+running their own instance of the game. So please let me know if you are and we'll talk.
+
 ### Installation
 This has been tested on Ubuntu 16.04, but should work on most flavours of Linux.
 
@@ -73,6 +76,24 @@ a webserver to act as the frontend (e.g. apache or nginx) and proxy to Starman.
 Note, if RPG_DEV is set to true, the application server will serve all static content. For the Plack
 setup, you probably don't want this (you want the webserver to serve content) so make sure RPG_DEV is
 not set to true.
+
+### Technical Notes
+
+This application makes use of the following technologies:
+
+* Perl 5.x (5.22 and upwards recommended)
+* mysql 5.x
+* Catalyst framework
+* DBIx::Class
+* Template Toolkit
+* Dojo Toolkit
+* Jquery
+
+These were mostly chosen for reasons of convenience (i.e. mostly the fact that I knew them when the project started).
+They have mostly held up well over time, probably with the exception of Dojo Toolkit (which is used a lot for the UI).
+My preference would also be to move to Postgres, although the effort to do so is probably not worthwhile at this stage.
+
+Also see t/README.md for docs on the test suite.
 
 ### Contact
 

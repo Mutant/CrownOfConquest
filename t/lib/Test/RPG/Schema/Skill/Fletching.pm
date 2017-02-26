@@ -75,7 +75,7 @@ sub test_execute_existing_ammo : Tests(3) {
     is( $party->day_logs->count, 1, "Party day logs updated" );
     my ($log) = $party->day_logs;
 
-    is( $log->log, 'test used his Fletching skills to create 10 Arrows for his Long Bow.', "Message is correct" );
+    is( $log->log, "test used his Fletching skills to create 10 Arrows for his Long Bow.\n", "Message is correct" );
 
     $item1->discard_changes;
     is( $item1->variable('Quantity'), 15, "Ammo quantity increased" );
@@ -126,7 +126,7 @@ sub test_execute_new_ammo_item : Tests(5) {
     is( $party->day_logs->count, 1, "Party day logs updated" );
     my ($log) = $party->day_logs;
 
-    is( $log->log, 'test used his Fletching skills to create 10 Arrows for his Long Bow.', "Message is correct" );
+    is( $log->log, "test used his Fletching skills to create 10 Arrows for his Long Bow.\n", "Message is correct" );
 
     my ($new_item) = grep { $_->id != $item2->id } $char->items;
     is( $new_item->item_type_id, $item_type->id, "New item of ammunition type created" );

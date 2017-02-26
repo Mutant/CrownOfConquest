@@ -430,7 +430,7 @@ sub party_can_enter {
 
     # Check if they have really low prestige, and need to be refused.
     my $mayor = $self->mayor;
-    if ( !$mayor || $mayor->party_id != $party->id ) {
+    if ( !$mayor || !$mayor->party_id || $mayor->party_id != $party->id ) {
         my $prestige_threshold = -90 + round( $self->prosperity / 25 );
         if ( ( $party_town->prestige // 0 ) <= $prestige_threshold ) {
 

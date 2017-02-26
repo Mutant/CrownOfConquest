@@ -52,7 +52,7 @@ sub main : Local {
                     party_messages    => $c->stash->{party_messages},
                     messages          => $c->stash->{messages},
                     parties_in_sector => $parties_in_sector,
-                    prestige          => $party_town->prestige,
+                    prestige          => $party_town->prestige // 0,
                     allowed_discount => $town->discount_type && $party_town->prestige >= $town->discount_threshold ? 1 : 0,
                     mayor            => $mayor,
                     party            => $c->stash->{party},

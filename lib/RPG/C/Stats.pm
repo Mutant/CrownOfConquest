@@ -9,7 +9,7 @@ use Data::Dumper;
 sub game : Local {
     my ( $self, $c ) = @_;
 
-    my $players_count = $c->model('DBIC::Player')->search( deleted => 0 )->count;
+    my $players_count = $c->model('DBIC::Player')->search( { deleted => 0 } )->count;
 
     my @parties = $c->model('DBIC::Party')->search();
 
@@ -52,7 +52,7 @@ sub game : Local {
         },
     );
 
-    my $cg_count = $c->model('DBIC::CreatureGroup')->search( land_id => { '!=', undef } )->count() || 1;
+    my $cg_count = $c->model('DBIC::CreatureGroup')->search( { land_id => { '!=', undef } } )->count() || 1;
 
     my $creature_count_rs = $c->model('DBIC::Creature')->find(
         {

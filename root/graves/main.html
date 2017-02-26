@@ -1,9 +1,9 @@
 [% FOREACH grave IN graves %]
-	[% grave.character_name %] is buried here.
-	<br><br>
-	The epitaph reads:<br><br>
-	Here lies [% grave.character_name %], Buried on Day [% grave.day_created %]. 
-	[% IF grave.epitaph %][% grave.epitaph | html_line_break %][% END %]
-	R.I.P.
-	<br><br>
+    [% grave.character_name %] is buried here.
+    <br><br>
+    The epitaph reads:<br><br>
+    Here lies [% grave.character_name %], Buried on Day [% grave.day_created %].
+    [% IF grave.epitaph %][% grave.epitaph | html_line_break %][% END %]
+    R.I.P.
+    <br><br>
 [% END %]

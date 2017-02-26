@@ -1,11 +1,11 @@
 [% UNLESS c.session.player %]
-	[% guest = 1 %]
+    [% guest = 1 %]
 [% END %]
 
 [% IF guest %]
-	[% INCLUDE layout/box_top.html guest_screen=1 %]
+    [% INCLUDE layout/box_top.html guest_screen=1 %]
 [% ELSE %]
-	[% INCLUDE help/subnav.html %]
+    [% INCLUDE help/subnav.html %]
 [% END %]
 
 <h1>About Crown Of Conquest</h1>
@@ -26,13 +26,13 @@ to their ranks.</p>
 <p>As your party gains in stature, they'll begin to have a greater impact on the world around them, helping to improve (or hinder!) the prosperity of towns,
 form garrisons around the map, construct buildings, become involved in politics and many other actions you don't expect to find in a traditional RPG. For instance,
 there are ways for your party to overrun a town, and appoint one of your characters as mayor. The character will have to remain in the town, and can run the town
-as they see fit. Of course, if they do a bad job, the peasants may stir up a revolt.</p> 
+as they see fit. Of course, if they do a bad job, the peasants may stir up a revolt.</p>
 
 <p>After time, your party will probably declare allegiance for one of the kingdoms. These kingdoms are created and run by players, and the game allows many ways for
 players within a kingdom to interact. Of course, the kingdoms are dynamic, and skirmishes around the borders are frequent, sometimes leading to outright war.
-Who knows, perhaps your party will become powerful enough to declare their own kingdom, choosing one of their own for their monarch!</p>  
-	
-<p>Your actions within the game are limited by turns, which are refreshed each day. If you don't use your turns on a particular day, they'll accumulate for 
+Who knows, perhaps your party will become powerful enough to declare their own kingdom, choosing one of their own for their monarch!</p>
+
+<p>Your actions within the game are limited by turns, which are refreshed each day. If you don't use your turns on a particular day, they'll accumulate for
 a couple of days, meaning you don't have to log in every day.</p>
 
 <a name="credits"></a><h2>Credits</h2>
@@ -47,5 +47,5 @@ Kalle Haapaniemi<br>
 Shane Heres
 
 [% IF guest %]
-	[% INCLUDE layout/box_bottom.html %]
+    [% INCLUDE layout/box_bottom.html %]
 [% END %]

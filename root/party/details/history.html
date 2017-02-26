@@ -1,28 +1,28 @@
 <h4>Recent Messages</h4>
 <table class="main" border=0 width=70%>
 [% day_count = today.day_number %]
-[% counter = 1 %] 
+[% counter = 1 %]
 [% WHILE counter < history_length %]
-	[% IF message_logs.${day_count} || day_logs.${day_count} %]
-		<tr>
-			<td valign="top" nowrap><b>Day [% day_count %]</b></td>
-			<td valign="top">
-				[% IF day_logs.${day_count} %]					
-					[% FOREACH message IN day_logs.${day_count} %]
-						[% message | html_line_break %]<br>
-						<hr size=1>
-					[% END %]
-				[% END %]
-				[% IF message_logs.${day_count} %]					
-					[% FOREACH message IN message_logs.${day_count} %]
-						[% message %]<br>
-						<hr size=1>
-					[% END %]
-				[% END %]
-			</td>
-		</tr>
-	[% END %]
-	[% day_count = day_count - 1 %]
-	[% counter = counter + 1 %]
+    [% IF message_logs.${day_count} || day_logs.${day_count} %]
+        <tr>
+            <td valign="top" nowrap><b>Day [% day_count %]</b></td>
+            <td valign="top">
+                [% IF day_logs.${day_count} %]
+                    [% FOREACH message IN day_logs.${day_count} %]
+                        [% message | html_line_break %]<br>
+                        <hr size=1>
+                    [% END %]
+                [% END %]
+                [% IF message_logs.${day_count} %]
+                    [% FOREACH message IN message_logs.${day_count} %]
+                        [% message %]<br>
+                        <hr size=1>
+                    [% END %]
+                [% END %]
+            </td>
+        </tr>
+    [% END %]
+    [% day_count = day_count - 1 %]
+    [% counter = counter + 1 %]
 [% END %]
 </table>

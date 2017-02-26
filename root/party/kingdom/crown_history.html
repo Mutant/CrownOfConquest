@@ -3,16 +3,15 @@
 [% current_day = '' %]
 <table class="main">
 [% FOREACH item IN history %]
-	<tr>
-	[% IF item.day.day_number != current_day %]
-		[% current_day = item.day.day_number %]
-		<td><b>Day [% current_day %]</b></td>
-	[% ELSE %]
-		<td></td>	
-	[% END %]
-	
-	<td>[% item.message %]</td>
-	</tr>
+    <tr>
+    [% IF item.day.day_number != current_day %]
+        [% current_day = item.day.day_number %]
+        <td><b>Day [% current_day %]</b></td>
+    [% ELSE %]
+        <td></td>
+    [% END %]
+
+    <td>[% item.message %]</td>
+    </tr>
 [% END %]
 </table>
-	

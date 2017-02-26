@@ -6,88 +6,88 @@
 var base_cost = [% town.base_party_tax %];
 var level_step = [% town.party_tax_level_step %];
 function updateTaxPreviewBase(input) {
-	if (base_cost == input.value) { return }
-	base_cost = input.value;
-	refreshTaxPreview();
+    if (base_cost == input.value) { return }
+    base_cost = input.value;
+    refreshTaxPreview();
 }
 
 function updateTaxPreviewLevelStep(input) {
-	if (level_step == input.value) { return }
-	level_step = input.value;
-	refreshTaxPreview();
+    if (level_step == input.value) { return }
+    level_step = input.value;
+    refreshTaxPreview();
 }
 
 function refreshTaxPreview() {
-	url = '[% base %]/town/mayor/party_tax_preview?town_id=[% town_id %]';
+    url = '[% base %]/town/mayor/party_tax_preview?town_id=[% town_id %]';
 
-	if (typeof base_cost  !== 'undefined')  { url += '&base_cost=' + base_cost }
-	if (typeof level_step !== 'undefined')  { url += '&level_step=' + level_step };
-	
-	dijit.byId('party-tax-preview').href = url;
-	dijit.byId('party-tax-preview').refresh();
+    if (typeof base_cost  !== 'undefined')  { url += '&base_cost=' + base_cost }
+    if (typeof level_step !== 'undefined')  { url += '&level_step=' + level_step };
+
+    dijit.byId('party-tax-preview').href = url;
+    dijit.byId('party-tax-preview').refresh();
 }
 
 
 function confirmRelinquishMayoralty() {
-	dijit.byId('confirm-reliquish-mayorlty').show();
+    dijit.byId('confirm-reliquish-mayorlty').show();
 }
 
 function confirmChangeMayor() {
-	dijit.byId('select-new-mayor').show();
+    dijit.byId('select-new-mayor').show();
 }
 
 function adjustMayorGold(action) {
-	var textAction;
-	if (action == 'add') {
-		textAction = 'add to';
-	}
-	else {
-		textAction = 'take from';
-	}
+    var textAction;
+    if (action == 'add') {
+        textAction = 'add to';
+    }
+    else {
+        textAction = 'take from';
+    }
 
-	dojo.byId('mayor-adjust-gold-action').innerHTML = textAction;
-	dojo.byId('gold-action').value = action;
-	dijit.byId('mayor-adjust-gold').show();
+    dojo.byId('mayor-adjust-gold-action').innerHTML = textAction;
+    dojo.byId('gold-action').value = action;
+    dijit.byId('mayor-adjust-gold').show();
 }
 
 function saveCharacterOrder(select, char_id) {
-	dojo.xhrGet( {
+    dojo.xhrGet( {
         url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
-        handleAs: "text",        
+        handleAs: "text",
     });
 }
 
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-reliquish-mayorlty" style="display: none" title="Relinquish Mayoralty?">
-	<form method="POST" action="[% base %]town/mayor/relinquish" onSubmit="postPanels(this); return false">
-	<input type="hidden" name="town_id" value="[% town.id %]">
-	Are you sure you want to give up the mayoralty of [% town.town_name %]?<br>
-        
+    <form method="POST" action="[% base %]town/mayor/relinquish" onSubmit="postPanels(this); return false">
+    <input type="hidden" name="town_id" value="[% town.id %]">
+    Are you sure you want to give up the mayoralty of [% town.town_name %]?<br>
+
     [% dialog_buttons('confirm-reliquish-mayorlty') %]
-	</form>
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="select-new-mayor" style="display: none" title="Change Mayor?">
-	<form method="POST" action="[% base %]town/mayor/change" onSubmit="postPanels(this); return false">
-	<input type="hidden" name="town_id" value="[% town.id %]">
-	Select a character to become mayor of [% town.town_name %]:<br>
-	<select name="character_id" dojoType="dijit.form.FilteringSelect">
-		[% FOREACH character IN party.characters_in_party %]
-			[% UNLESS character.is_dead %]
-				<option value="[% character.id %]">[% character.name %]</option>
-			[% END %]
-		[% END %]
-	</select>
-        
+    <form method="POST" action="[% base %]town/mayor/change" onSubmit="postPanels(this); return false">
+    <input type="hidden" name="town_id" value="[% town.id %]">
+    Select a character to become mayor of [% town.town_name %]:<br>
+    <select name="character_id" dojoType="dijit.form.FilteringSelect">
+        [% FOREACH character IN party.characters_in_party %]
+            [% UNLESS character.is_dead %]
+                <option value="[% character.id %]">[% character.name %]</option>
+            [% END %]
+        [% END %]
+    </select>
+
     [% dialog_buttons('select-new-mayor') %]
-	</form>
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="mayor-adjust-gold" style="display: none" title="Gold">
-	<form method="POST" action="[% base %]town/mayor/adjust_gold" onSubmit="postPanels(this); return false">
-	<input type="hidden" name="town_id" value="[% town.id %]">
-	<input type="hidden" name="action" id="gold-action" />
+    <form method="POST" action="[% base %]town/mayor/adjust_gold" onSubmit="postPanels(this); return false">
+    <input type="hidden" name="town_id" value="[% town.id %]">
+    <input type="hidden" name="action" id="gold-action" />
     Amount of gold you want to <span id="mayor-adjust-gold-action"></span> the Town Coffers:
     <input type="text"
         dojoType="dijit.form.NumberTextBox"
@@ -96,43 +96,43 @@ function saveCharacterOrder(select, char_id) {
         constraints="{min:1,places:0}"
         required= "true"
         invalidMessage= "Invalid quantity."
-		style="width: 80px"
+        style="width: 80px"
         />
     [% dialog_buttons('mayor-adjust-gold') %]
-	</form>
+    </form>
 </div>
 
 <h2>[% town.town_name %] Mayor's Office</h2>
 
 [% IF ! party_in_town && mayors.size > 1 %]
-	[% FOREACH mayor IN mayors %]
-		<a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of %]')">[% mayor.name %]</a>
-		[% IF ! loop.last %] |[% END %]
-	[% END %]
-	<br><br>
+    [% FOREACH mayor IN mayors %]
+        <a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of %]')">[% mayor.name %]</a>
+        [% IF ! loop.last %] |[% END %]
+    [% END %]
+    <br><br>
 [% END %]
 
 Town Coffers: [% town.gold %] gold
 [% IF party_in_town %]
 <span style="font-size: 10px">
-	<a href="#" onClick="adjustMayorGold('add')">Add Gold</a>
-	<a href="#" onClick="adjustMayorGold('take')">Take Gold</a>
+    <a href="#" onClick="adjustMayorGold('add')">Add Gold</a>
+    <a href="#" onClick="adjustMayorGold('take')">Take Gold</a>
 </span>
 [% END %]
 <br><br>
 
 Approval Rating: [% display_rating(town.mayor_rating) %]<br><br>
 
-<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">	
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
 <div dojoType="dijit.layout.ContentPane" title="Mayor" href="[% base %]/town/mayor/select?town_id=[% town.id %]" [% IF tab == 'mayor' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Tax" href="[% base %]/town/mayor/tax?town_id=[% town.id %]" [% IF tab == 'tax' %]selected=true[% END %]></div>
-	
+
 <div dojoType="dijit.layout.ContentPane" title="Garrison" href="[% base %]/town/mayor/garrison?town_id=[% town.id %]" [% IF tab == 'garrison' %]selected=true[% END %]></div>
-	
+
 <div dojoType="dijit.layout.ContentPane" title="Traps" href="[% base %]/town/mayor/traps?town_id=[% town.id %]" [% IF tab == 'traps' %]selected=true[% END %]></div>
-	
+
 <div dojoType="dijit.layout.ContentPane" title="Guards" href="[% base %]/town/mayor/guards?town_id=[% town.id %]" [% IF tab == 'guards' %]selected=true[% END %]></div>
 
 <div dojoType="dijit.layout.ContentPane" title="Buildings" href="[% base %]/town/mayor/buildings?town_id=[% town.id %]" [% IF tab == 'buildings' %]selected=true[% END %]></div>

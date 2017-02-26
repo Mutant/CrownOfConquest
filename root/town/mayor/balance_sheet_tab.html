@@ -2,64 +2,64 @@
 
 See records for day: <a href="javascript:loadScreen('town/mayor?tab=balance_sheet&town_id=[% town_id %]')">Today</a>&nbsp;
 [% FOREACH recent_day IN recent_days %]
-	<a href="javascript:loadScreen('town/mayor?tab=balance_sheet&day_id=[% recent_day.day_id %]&town_id=[% town_id %]')">[% recent_day.day_number %]</a>&nbsp;
+    <a href="javascript:loadScreen('town/mayor?tab=balance_sheet&day_id=[% recent_day.day_id %]&town_id=[% town_id %]')">[% recent_day.day_number %]</a>&nbsp;
 [% END %]
 <br><br>
 
 [% IF ! income.0 && ! expense.0 %]
-	The town doesn't have balance sheet records for [% day.day_number %].
+    The town doesn't have balance sheet records for [% day.day_number %].
 [% ELSE %]
 
 <table class="main" cellspacing="2">
-<tr>	
-	<th></th>
-	<th>Expense</th>
-	<th>Income</th>
+<tr>
+    <th></th>
+    <th>Expense</th>
+    <th>Income</th>
 </tr>
 
 [% FOREACH income_line IN income %]
-	[% income_total = income_total + income_line.get_column('amount') %]
-	<tr>
-		<td>[% income_line.get_column('label') %]</td>
-		<td></td>
-		<td align="right">[% income_line.get_column('amount') %]</td>
-	</tr>
+    [% income_total = income_total + income_line.get_column('amount') %]
+    <tr>
+        <td>[% income_line.get_column('label') %]</td>
+        <td></td>
+        <td align="right">[% income_line.get_column('amount') %]</td>
+    </tr>
 [% END %]
 [% FOREACH expense_line IN expense %]
     [% expense_total = expense_total + expense_line.get_column('amount') %]
-	<tr>
-		<td>[% expense_line.get_column('label') %]</td>
-		<td align="right">[% expense_line.get_column('amount') %]</td>
-		<td></td>
-	</tr>
+    <tr>
+        <td>[% expense_line.get_column('label') %]</td>
+        <td align="right">[% expense_line.get_column('amount') %]</td>
+        <td></td>
+    </tr>
 [% END %]
-	<tr>
-		<td colspan = "3" style="height: 5px"><hr size="1" width="100%"></td>
-	</tr>
     <tr>
-    	<td><b>Total Income</b></td>
-    	<td></td>
-    	<td align="right">[% income_total %]</td>
+        <td colspan = "3" style="height: 5px"><hr size="1" width="100%"></td>
     </tr>
-	<tr style="height: 5px">
-		<td></td>
-		<td></td>
-		<td><hr size="1" width="100%"></td>
-	</tr>
     <tr>
-    	<td><b>Total Expenses</b></td>
-    	<td></td>
-    	<td align="right">([% expense_total %])</td>
+        <td><b>Total Income</b></td>
+        <td></td>
+        <td align="right">[% income_total %]</td>
     </tr>
-	<tr style="height: 5px">
-		<td></td>
-		<td></td>
-		<td><hr size="1" width="100%"></td>
-	</tr>
+    <tr style="height: 5px">
+        <td></td>
+        <td></td>
+        <td><hr size="1" width="100%"></td>
+    </tr>
     <tr>
-    	<td><b>Profit</b></td>
-    	<td></td>
-    	<td align="right">[% income_total - expense_total %]</td>
+        <td><b>Total Expenses</b></td>
+        <td></td>
+        <td align="right">([% expense_total %])</td>
+    </tr>
+    <tr style="height: 5px">
+        <td></td>
+        <td></td>
+        <td><hr size="1" width="100%"></td>
+    </tr>
+    <tr>
+        <td><b>Profit</b></td>
+        <td></td>
+        <td align="right">[% income_total - expense_total %]</td>
     </tr>
 </table>
 [% END %]

@@ -5,44 +5,44 @@
 Top Kingdoms By:
 
 [% sort_params = [
-	{ param => 'majesty'  label => 'Majesty' },
-	{ param => 'total_land'  label => 'Total Land' },
-	{ param => 'town_count'  label => '# Of Towns' },
-	{ param => 'party_count'  label => '# Of Parties' },
+    { param => 'majesty'  label => 'Majesty' },
+    { param => 'total_land'  label => 'Total Land' },
+    { param => 'town_count'  label => '# Of Towns' },
+    { param => 'party_count'  label => '# Of Parties' },
 ] %]
 
 [% FOREACH sort_param = sort_params %]
-	[% IF current_sort == sort_param.param %]
-		<span id="current-selection">[% sort_param.label %]</span>
-	[% ELSE %]
-		<a href="javascript:loadScreen('leaderboards/kingdoms?sort=[% sort_param.param %]')">[% sort_param.label %]</a>
-	[% END %]
+    [% IF current_sort == sort_param.param %]
+        <span id="current-selection">[% sort_param.label %]</span>
+    [% ELSE %]
+        <a href="javascript:loadScreen('leaderboards/kingdoms?sort=[% sort_param.param %]')">[% sort_param.label %]</a>
+    [% END %]
 [% END %]
 
 <table class="main" cellpadding=3 cellspacing=0>
-	<tr>
-		<th>Rank</th>
-		<th>Kingdom</th>
-		<th>King/Queen</th>
-		<th>Capital</th>
-		<th>Majesty</th>
-		<th>Total Land</th>
-		<th># Of Towns</th>
-		<th># Of Parties</th>
-	</tr>
+    <tr>
+        <th>Rank</th>
+        <th>Kingdom</th>
+        <th>King/Queen</th>
+        <th>Capital</th>
+        <th>Majesty</th>
+        <th>Total Land</th>
+        <th># Of Towns</th>
+        <th># Of Parties</th>
+    </tr>
 
 [% FOREACH kingdom IN kingdoms %]
-	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
-		<td>[% loop.count %]</td>		
-		<td>[% kingdom.name %] [% IF kingdom.has_crown %]<img src="[% base %]static/images/kingdom/smallcrown.png" title="The Crown of Conquest">[% END %]</td>
-		<td>[% king = kingdom.king %]
-		    [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% END %])
-		</td>
-		<td>[% kingdom.capital_city.town_name %]</td>
-		<td align="right">[% kingdom.majesty %]</td>
-		<td align="right">[% kingdom.get_column('total_land') %]</td>
-		<td align="right">[% kingdom.get_column('town_count') %]</td>
-		<td align="right">[% kingdom.get_column('party_count') %]</td>
-	</tr>	
+    <tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+        <td>[% loop.count %]</td>
+        <td>[% kingdom.name %] [% IF kingdom.has_crown %]<img src="[% base %]static/images/kingdom/smallcrown.png" title="The Crown of Conquest">[% END %]</td>
+        <td>[% king = kingdom.king %]
+            [% king.character_name %] ([% IF king.is_npc %]NPC[% ELSE %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% END %])
+        </td>
+        <td>[% kingdom.capital_city.town_name %]</td>
+        <td align="right">[% kingdom.majesty %]</td>
+        <td align="right">[% kingdom.get_column('total_land') %]</td>
+        <td align="right">[% kingdom.get_column('town_count') %]</td>
+        <td align="right">[% kingdom.get_column('party_count') %]</td>
+    </tr>
 [% END %]
 </table>

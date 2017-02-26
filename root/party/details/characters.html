@@ -2,59 +2,59 @@
 
 
 <script>
-$(document).ready(function() 
-    { 
+$(document).ready(function()
+    {
         $("#character-table").dataTable(
-        	{
-        		"bInfo": false,
-        		"bLengthChange": false,
-        		"bPaginate": false
-        	}
-        ); 
-    } 
-); 
+            {
+                "bInfo": false,
+                "bLengthChange": false,
+                "bPaginate": false
+            }
+        );
+    }
+);
 </script>
 
 <style>
-	table.dataTable tr.odd, table.dataTable tr.odd td.sorting_1 {
-		background-color: black;
-	}
-	
-	table.dataTable tr.even, table.dataTable tr.even td.sorting_1 {
-		background-color: #5F5F5F;
-	}
-	
-	.dataTables_filter {
-    	float: left;    
-	}	
-	
+    table.dataTable tr.odd, table.dataTable tr.odd td.sorting_1 {
+        background-color: black;
+    }
+
+    table.dataTable tr.even, table.dataTable tr.even td.sorting_1 {
+        background-color: #5F5F5F;
+    }
+
+    .dataTables_filter {
+        float: left;
+    }
+
 </style>
 
 <table cellpadding="2" class="tablesorter main" id="character-table">
-	<thead>
-	<tr>
-		<th>Name</th>
-		<th>Level</th>
-		<th>Race</th>
-		<th>Class</th>
-		<th>Status</th>
-		<th>Health</th>
-	</tr>
-	</thead>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Level</th>
+        <th>Race</th>
+        <th>Class</th>
+        <th>Status</th>
+        <th>Health</th>
+    </tr>
+    </thead>
 
-	<tbody>
+    <tbody>
 
 [% FOREACH character IN characters %]
-	<tr>
-		<td><a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank">[% character.character_name %]</a></td>
-		<td>[% character.level %]</td>
-		<td>[% character.race.race_name %]</td>
-		<td>[% character.class.class_name %]</td>
-		<td>[% character.status_description %]</td>
-		<td>[% IF character.is_dead %]Dead[% ELSE %]Alive[% END %]</td>
-	</tr>
+    <tr>
+        <td><a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank">[% character.character_name %]</a></td>
+        <td>[% character.level %]</td>
+        <td>[% character.race.race_name %]</td>
+        <td>[% character.class.class_name %]</td>
+        <td>[% character.status_description %]</td>
+        <td>[% IF character.is_dead %]Dead[% ELSE %]Alive[% END %]</td>
+    </tr>
 [% END %]
 
-	</tbody>
+    </tbody>
 
 </table>

@@ -6,33 +6,33 @@ landmarks, update their map of the world, etc.
 <br><br>
 
 <table class="main" cellpadding="2" cellspacing="0">
-	<tr>
-		<th>Destination</th>
-		<th style="text-align: center">Gold Cost</th>
-		<th style="text-align: center">Turn Cost</th>
-	</tr>
-	[% FOREACH coach IN coaches %]
-	
-	
-	<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
-		<td>[% coach.town.town_name %]</td>
-		[% IF coach.can_enter %]
-			<td style="text-align: center">[% coach.gold_cost + coach.tax.gold %]<br>
-				[% IF coach.tax.mayor %]
-					(Not required to pay tax)
-				[% ELSIF coach.tax.paid %]
-					(Already paid entrance tax today)
-				[% ELSE %]			
-					(Includes entry tax of [% coach.tax.gold %] gold)
-				[% END %]
-				</td>
-			<td style="text-align: center">[% coach.turn_cost %]</td>
-			<td><a href="javascript:getPanels('town/take_coach?destination=[% coach.town.town_id %]')">Take Coach</a></td>
-		[% ELSE %]
-			<td colspan="2" width="60">[% coach.reason %]</td>
-		[% END %]		
-	</tr>
-	[% END %]
+    <tr>
+        <th>Destination</th>
+        <th style="text-align: center">Gold Cost</th>
+        <th style="text-align: center">Turn Cost</th>
+    </tr>
+    [% FOREACH coach IN coaches %]
+
+
+    <tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
+        <td>[% coach.town.town_name %]</td>
+        [% IF coach.can_enter %]
+            <td style="text-align: center">[% coach.gold_cost + coach.tax.gold %]<br>
+                [% IF coach.tax.mayor %]
+                    (Not required to pay tax)
+                [% ELSIF coach.tax.paid %]
+                    (Already paid entrance tax today)
+                [% ELSE %]
+                    (Includes entry tax of [% coach.tax.gold %] gold)
+                [% END %]
+                </td>
+            <td style="text-align: center">[% coach.turn_cost %]</td>
+            <td><a href="javascript:getPanels('town/take_coach?destination=[% coach.town.town_id %]')">Take Coach</a></td>
+        [% ELSE %]
+            <td colspan="2" width="60">[% coach.reason %]</td>
+        [% END %]
+    </tr>
+    [% END %]
 </table>
 
 <br>

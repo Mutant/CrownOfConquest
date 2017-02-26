@@ -1,7 +1,7 @@
 [% FILTER collapse ~%]
-	[% IF quest.param_current_value('Created') == 0 ~%]
-		You need to create the garrison at [% quest.sector_to_create_in.x ~%], [% quest.sector_to_create_in.y ~%].
-	[% ELSIF quest.param_current_value('Days To Hold') > 0 ~%]
-		You've created the garrison. You must hold it for [% quest.param_current_value('Days To Hold') %] more days.
-	[% END ~%]
+    [% IF quest.param_current_value('Created') == 0 ~%]
+        You need to create the garrison at [% quest.sector_to_create_in.x ~%], [% quest.sector_to_create_in.y ~%].
+    [% ELSIF quest.param_current_value('Days To Hold') > 0 ~%]
+        You've created the garrison. You must hold it for [% quest.param_current_value('Days To Hold') %] more days.
+    [% END ~%]
 [% END ~%]

@@ -3,38 +3,38 @@
 
 
 <script>
-	[% IF characters.size == 0 %]
-	dojo.addOnLoad(function(){
-		dijit.byId('autogen-diag').show()
-	});
-	[% END %]
-	
-	function autogenerate() {
-		document.location = '[% base %]/party/create/autogenerate';
-	}
+    [% IF characters.size == 0 %]
+    dojo.addOnLoad(function(){
+        dijit.byId('autogen-diag').show()
+    });
+    [% END %]
+
+    function autogenerate() {
+        document.location = '[% base %]/party/create/autogenerate';
+    }
 </script>
 
 <div dojoType="dijit.Dialog" id="autogen-diag" style="display: none" title="Autogenerate Party" execute="autogenerate(arguments[0]);">
-	Do you want to auto-generate your party?
-	<br><br>
-	This will give you a reasonable starting party, which is useful if this is your first time playing Crown Of Conquest.
-	<br><br>
-	You'll still be able to tweak your party afterwards, or even start again.
-	[% dialog_buttons('autogen-diag') %]
+    Do you want to auto-generate your party?
+    <br><br>
+    This will give you a reasonable starting party, which is useful if this is your first time playing Crown Of Conquest.
+    <br><br>
+    You'll still be able to tweak your party afterwards, or even start again.
+    [% dialog_buttons('autogen-diag') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="regen-diag" style="display: none" title="Regenerate Party" execute="autogenerate(arguments[0]);">
-	This will delete any characters you currently have, and auto-generate a new party for you.
-	<br><br>
-	Are you sure you want to do this?
-	[% dialog_buttons('regen-diag') %]
+    This will delete any characters you currently have, and auto-generate a new party for you.
+    <br><br>
+    Are you sure you want to do this?
+    [% dialog_buttons('regen-diag') %]
 </div>
 
 <h1>Create Party</h1>
 
 <form name="form" method="post" action="[% base %]/party/create/save_party">
 
-Welcome, [% player.player_name %]. You've not yet completed creation of your party. Click 
+Welcome, [% player.player_name %]. You've not yet completed creation of your party. Click
 <a href="[% base %]help/reference/party_creation" target="_blank">here</a> to get some help on creating a party.
 
 <br><br>
@@ -52,42 +52,42 @@ You've created [% characters.size %] of [% num_characters_to_create %] character
 [% IF characters %]
 <br><br>
 <table class="main" cellspacing="0" cellpadding="5">
-	<tr>
-		<th></th>
-		<th>Name</th>
-		<th>Class</th>
-		<th>Race</th>
-		<th>Gender</th>		
-		<th>Str</th>
-		<th>Agl</th>
-		<th>Int</th>
-		<th>Div</th>
-		<th>Con</th>
-	</tr>
-	[% FOREACH char IN characters %]
-	<tr [% IF loop.count % 2 == 0 %]style="background: #5F5F5F"[% END %]>
-		<td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png"></td>
-		<td>[% char.character_name %]</td>
-	    <td>[% char.race.race_name %]</td>
-	    <td>[% char.class.class_name %]</td>
-		<td>[% char.gender | ucfirst %]</td>
-		<td align="right">[% char.strength %]</td>
-		<td align="right">[% char.agility %]</td>
-		<td align="right">[% char.intelligence %]</td>
-		<td align="right">[% char.divinity %]</td>
-		<td align="right">[% char.constitution %]</td>
-		<td><a href="[% base %]/party/create/edit_character?character_id=[% char.id %]">Edit</a></td>
-		<td><a href="[% base %]/party/create/delete_character?character_id=[% char.id %]">Delete</a></td>
-	</tr>
-	[% END %]
+    <tr>
+        <th></th>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Race</th>
+        <th>Gender</th>
+        <th>Str</th>
+        <th>Agl</th>
+        <th>Int</th>
+        <th>Div</th>
+        <th>Con</th>
+    </tr>
+    [% FOREACH char IN characters %]
+    <tr [% IF loop.count % 2 == 0 %]style="background: #5F5F5F"[% END %]>
+        <td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png"></td>
+        <td>[% char.character_name %]</td>
+        <td>[% char.race.race_name %]</td>
+        <td>[% char.class.class_name %]</td>
+        <td>[% char.gender | ucfirst %]</td>
+        <td align="right">[% char.strength %]</td>
+        <td align="right">[% char.agility %]</td>
+        <td align="right">[% char.intelligence %]</td>
+        <td align="right">[% char.divinity %]</td>
+        <td align="right">[% char.constitution %]</td>
+        <td><a href="[% base %]/party/create/edit_character?character_id=[% char.id %]">Edit</a></td>
+        <td><a href="[% base %]/party/create/delete_character?character_id=[% char.id %]">Delete</a></td>
+    </tr>
+    [% END %]
 </table>
 [% END %]
 
 <br><br>
 [% IF characters.size < num_characters_to_create %]
-	<input type="submit" value="Add Character" name="add_character">
+    <input type="submit" value="Add Character" name="add_character">
 [% ELSE %]
-	<input type="submit" value="Finish Party Setup" name="finish_setup">
+    <input type="submit" value="Finish Party Setup" name="finish_setup">
 [% END %]
 
 </form>

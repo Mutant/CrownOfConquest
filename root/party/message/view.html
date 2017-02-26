@@ -1,10 +1,10 @@
 <h3>[% IF message.subject %][% message.subject %][% ELSE %]<No Subject>[% END %]</h3>
 
-[% INCLUDE party/message/subnav.html %] 
+[% INCLUDE party/message/subnav.html %]
 
 [% INCLUDE party/message/message.html %]
 
 <div align="center">
 <a href="javascript:loadScreen('party/message/reply?message_id=[% message.id %]')">Reply</a> /
 <a href="javascript:loadScreen('party/message/reply?message_id=[% message.id %]&all=1')">Reply All</a>
-</div> 
+</div>

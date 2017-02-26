@@ -7,51 +7,51 @@ Any characters garrisoned in the town will fight alongside the mayor. You can ga
 <form action="[% base %]/town/mayor/set_character_heal_budget" method="POST" onSubmit="postPanels(this); return false">
 <input type="hidden" name="town_id" value="[% town.id %]">
 You can set a budget to have characters (including the mayor) automatically healed. This will be taken out of the town coffers, up to the maximum you specify
-below. Each night, any dead characters (<i>not</i> including the mayor) will also be resurrected. 
+below. Each night, any dead characters (<i>not</i> including the mayor) will also be resurrected.
 
 <br><br>
 
-Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="character_heal_budget" 
-				value="[% town.character_heal_budget %]" constraints="{min:0,places:0}" required="true">
+Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="character_heal_budget"
+                value="[% town.character_heal_budget %]" constraints="{min:0,places:0}" required="true">
 <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
-	Update
-</button>				
+    Update
+</button>
 </form>
 
 <br><br>
 
 [% IF garrison_chars.0 %]
-	Garrisoned characters:
-	
-	<table class="main">
-	<tr>
-	    [% INCLUDE party/party_list_header.html %]
-	</tr>
+    Garrisoned characters:
 
-	[% FOREACH char IN garrison_chars %]
-		<tr>
-		[% INCLUDE party/party_list_char_line.html %]
-		<td>
-			<select onChange="saveCharacterOrder(this, '[% char.id %]')">
-				[% options = ['Attack','Defend'] %]
-				[% FOREACH option IN options %]
-					<option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
-				[% END %]
-			</select>
-		</td>		
-		[% IF ! party.is_full && party_in_sector %]
-			<td><a href="javascript:getPanels('town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Remove</a></td>
-		[% END %]
-		</tr>		
-	[% END %]
+    <table class="main">
+    <tr>
+        [% INCLUDE party/party_list_header.html %]
+    </tr>
 
-	</table>
-	
-	[% IF party.is_full %]
-		(Note: you can't remove any characters at the moment, as your party is full)
-	[% END %]
+    [% FOREACH char IN garrison_chars %]
+        <tr>
+        [% INCLUDE party/party_list_char_line.html %]
+        <td>
+            <select onChange="saveCharacterOrder(this, '[% char.id %]')">
+                [% options = ['Attack','Defend'] %]
+                [% FOREACH option IN options %]
+                    <option [% IF char.last_combat_action == option %]selected[% END %]>[% option %]</option>
+                [% END %]
+            </select>
+        </td>
+        [% IF ! party.is_full && party_in_sector %]
+            <td><a href="javascript:getPanels('town/mayor/remove_from_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Remove</a></td>
+        [% END %]
+        </tr>
+    [% END %]
+
+    </table>
+
+    [% IF party.is_full %]
+        (Note: you can't remove any characters at the moment, as your party is full)
+    [% END %]
 [% ELSE %]
-	You don't have any characters garrisoned in this town.
+    You don't have any characters garrisoned in this town.
 [% END %]
 
 [% IF party_in_sector %]
@@ -59,20 +59,20 @@ Healing Budget: <input type="text" dojoType="dijit.form.NumberTextBox" name="cha
 
 Add characters to garrison:
 
-	<table class="main">
-	<tr>
-	    [% INCLUDE party/party_list_header.html %]
-	</tr>
+    <table class="main">
+    <tr>
+        [% INCLUDE party/party_list_header.html %]
+    </tr>
 
-	[% FOREACH char IN party.characters %]
-		<tr>
-		[% INCLUDE party/party_list_char_line.html %]
-		[% IF ! last_character && ! garrison_full %]
-			<td><a href="javascript:getPanels('town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Add</a></td>
-		[% END %]
-		</tr>		
-	[% END %]
+    [% FOREACH char IN party.characters %]
+        <tr>
+        [% INCLUDE party/party_list_char_line.html %]
+        [% IF ! last_character && ! garrison_full %]
+            <td><a href="javascript:getPanels('town/mayor/add_to_garrison?character_id=[% char.id %]&town_id=[% town.id %]')">Add</a></td>
+        [% END %]
+        </tr>
+    [% END %]
 
-	</table>
+    </table>
 
 [% END %]

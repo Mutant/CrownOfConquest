@@ -1,4 +1,4 @@
-[% FOREACH character IN garrison.characters %][% character.character_name %] 
+[% FOREACH character IN garrison.characters %][% character.character_name %]
 ( Level [% character.level %] - [% character.class.class_name %], HPs: [% character.hit_points_current %] / [% character.hit_points_max %])
 [% UNLESS loop.last %][% IF line_break %]<br>[% ELSE %], [% END %][% END %]
 [% END %]

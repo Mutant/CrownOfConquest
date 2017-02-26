@@ -1,30 +1,30 @@
 [% IF ! can_do_quests %]
-	Your party level is not high enough to complete Kingdom Quests.
+    Your party level is not high enough to complete Kingdom Quests.
 [% ELSE %]
-	[% PROCESS quest/description.html %]
-	
-	<h4>Petition for a Kingdom Quest</h4>
-	
-	[% IF has_existing_petition %]
-		You already have a petition for a Kingdom Quest. <a href="javascript:getPanels('party/kingdom/cancel_petition')">Cancel</a>
-	[% ELSE %]
-		<button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="loadScreen('party/kingdom/request_quest')">
-			Petition
-		</button>
-	[% END %]
-	
-	<br><br>
-	
-	<h4>Kingdom Quests</h4>
-	
-	[% IF quests.size > 0 %]
-	You currently have the following Kingdom quests:
-	
-		[% FOREACH quest IN quests %]
-			[% INCLUDE quest/list_item.html %]
-		[% END %]
-	[% ELSE %]
-	You do not currently have any active Kingdom quests.
-	[% END %]
+    [% PROCESS quest/description.html %]
+
+    <h4>Petition for a Kingdom Quest</h4>
+
+    [% IF has_existing_petition %]
+        You already have a petition for a Kingdom Quest. <a href="javascript:getPanels('party/kingdom/cancel_petition')">Cancel</a>
+    [% ELSE %]
+        <button dojoType="dijit.form.Button" type="submit" name="submitButton" onClick="loadScreen('party/kingdom/request_quest')">
+            Petition
+        </button>
+    [% END %]
+
+    <br><br>
+
+    <h4>Kingdom Quests</h4>
+
+    [% IF quests.size > 0 %]
+    You currently have the following Kingdom quests:
+
+        [% FOREACH quest IN quests %]
+            [% INCLUDE quest/list_item.html %]
+        [% END %]
+    [% ELSE %]
+    You do not currently have any active Kingdom quests.
+    [% END %]
 [% END %]
 

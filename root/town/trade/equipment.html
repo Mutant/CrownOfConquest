@@ -2,20 +2,20 @@
 <tr><td>
 Filter by Character:<br>
 <select dojoType="dijit.form.FilteringSelect" name="character_filter" id="character_filter" autocomplete="false" class="main" onChange="filterItems()">
-	<option></option>
-	[% FOREACH character IN characters %]
-	<option value="[% character.id %]" [% IF selected_character.id == character.id %]selected[% END %]>[% character.character_name %]</option>
-	[% END %]
+    <option></option>
+    [% FOREACH character IN characters %]
+    <option value="[% character.id %]" [% IF selected_character.id == character.id %]selected[% END %]>[% character.character_name %]</option>
+    [% END %]
 
 </select>
 </td>
 <td>
 Filter by Item Category:<br>
 <select dojoType="dijit.form.FilteringSelect" name="category_filter" id="category_filter"  autocomplete="false" class="main" onChange="filterItems()">
-	<option value="clear"></option>
-	[% FOREACH category IN categories %]
-	<option value="[% category.id %]" [% IF selected_category.id == category.id %]selected[% END %]>[% category.item_category %]</option>
-	[% END %]
+    <option value="clear"></option>
+    [% FOREACH category IN categories %]
+    <option value="[% category.id %]" [% IF selected_category.id == category.id %]selected[% END %]>[% category.item_category %]</option>
+    [% END %]
 </select>
 </td></tr>
 </table>
@@ -25,25 +25,25 @@ Filter by Item Category:<br>
 Click on an item to sell:
 <br>
 [% FOREACH item IN equipment %]
-	[%# Tab index on the span needed so that the dialog will display... bug in dojo 1.6.x ~%]
-	<span id="item-tooltip-[% item.id %]" onClick="tradeConfirmation(this)" tabindex="1" style="float: left;">
-		[% IF item.item_type.image %]
-			<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
-		[% ELSE %]
-		[% item.display_name %]
-		[% END %]
-		<span id="item_equip_[% item.id %]">
-		[% IF item.equip_place_id %]
-		<br>(Equipped)
-		[% END %]
-		</span>
+    [%# Tab index on the span needed so that the dialog will display... bug in dojo 1.6.x ~%]
+    <span id="item-tooltip-[% item.id %]" onClick="tradeConfirmation(this)" tabindex="1" style="float: left;">
+        [% IF item.item_type.image %]
+            <img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+        [% ELSE %]
+        [% item.display_name %]
+        [% END %]
+        <span id="item_equip_[% item.id %]">
+        [% IF item.equip_place_id %]
+        <br>(Equipped)
+        [% END %]
+        </span>
 
-	</span>
-	
-	<div dojoType="dijit.Tooltip"
-		connectId="item-tooltip-[% item.id %]"
-		id="item-dijit-[% item.id %]"
-		style="display: none">
-			[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
-	</div>
+    </span>
+
+    <div dojoType="dijit.Tooltip"
+        connectId="item-tooltip-[% item.id %]"
+        id="item-dijit-[% item.id %]"
+        style="display: none">
+            [% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %]
+    </div>
 [% END %]

@@ -8,84 +8,84 @@ Location: [% party.location.x %], [% party.location.y %]
 [% IF in_town %]
     (In the town of [% party.location.town.town_name %])
 [% ELSE %]
-	([% IF in_dungeon %]In a dungeon. [% END %]<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
+    ([% IF in_dungeon %]In a dungeon. [% END %]<b>Hint</b>: Stay in town when you're logged off to avoid offline combat).
 [% END %]<br>
 
 [% IF party_messages.0 %]
-	<h3>Recent Messages</h3>
-	
-	[% FOREACH message IN party_messages %]
-		<li>[% message.message %]</li>
-	[% END %]
+    <h3>Recent Messages</h3>
+
+    [% FOREACH message IN party_messages %]
+        <li>[% message.message %]</li>
+    [% END %]
 [% END %]
 
 [% MACRO character_status(character) BLOCK %]
-	[% IF character.run_out_of_ammo %]
-		<li>[% character.name %] has run out of ammo for [% character.pronoun('posessive-subjective') %] [% character.weapon %]</li>
-	[% END %]
-	[% IF broken_weapons.${character.id} %]
-		<li>[% character.name %] has equipped items that need to be repaired:
-				[% FOREACH item IN broken_weapons.${character.id} %]
-					[% item.display_name %]
-					[% UNLESS loop.last %],[% END %]
-				[% END %]</li>
-	[% END %]
+    [% IF character.run_out_of_ammo %]
+        <li>[% character.name %] has run out of ammo for [% character.pronoun('posessive-subjective') %] [% character.weapon %]</li>
+    [% END %]
+    [% IF broken_weapons.${character.id} %]
+        <li>[% character.name %] has equipped items that need to be repaired:
+                [% FOREACH item IN broken_weapons.${character.id} %]
+                    [% item.display_name %]
+                    [% UNLESS loop.last %],[% END %]
+                [% END %]</li>
+    [% END %]
 [% END %]
 
 
 <h3>Party Status</h3>
 
 [% FOREACH character IN party.members %]
-	[% character_status(character) %]
+    [% character_status(character) %]
 [% END %]
 
 <h3>Battles</h3>
 
 [% MACRO battle_result(battle, party_num, group_num) BLOCK %]
-	[% IF battle.outcome == 'opp' _ party_num _ '_won' || battle.outcome == 'opp' _ opp_num _ '_fled' %]
-		[% xp = battle.xp_awarded %]
-	[% END %]
-	<td>
-	[% IF battle.outcome == 'opp' _ party_num _ '_won' %]
-		Won
-		[% gold = battle.gold_found %]
-	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
-		Lost
-	[% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
-	    We Fled
-	[% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
-		They Fled
-	[% END %]
-	</td>
-	<td align="center">
-		[% xp %]
-	</td>
-	<td align="center">
-		[% gold %]
-	</td>
+    [% IF battle.outcome == 'opp' _ party_num _ '_won' || battle.outcome == 'opp' _ opp_num _ '_fled' %]
+        [% xp = battle.xp_awarded %]
+    [% END %]
+    <td>
+    [% IF battle.outcome == 'opp' _ party_num _ '_won' %]
+        Won
+        [% gold = battle.gold_found %]
+    [% ELSIF battle.outcome == 'opp' _ opp_num _ '_won' %]
+        Lost
+    [% ELSIF battle.outcome == 'opp' _ party_num _ '_fled' %]
+        We Fled
+    [% ELSIF battle.outcome == 'opp' _ opp_num _ '_fled' %]
+        They Fled
+    [% END %]
+    </td>
+    <td align="center">
+        [% xp %]
+    </td>
+    <td align="center">
+        [% gold %]
+    </td>
 [% END %]
 
 [% IF offline_combat_count == 0 %]
 <p>You were not involved in any battles.</p>
 [% ELSE %]
 <table>
-	<tr>
-		<th>Opponent</th>
-		<th>Outcome</th>
-		<th>XP Awarded</th>
-		<th>Gold Found</th>
-	</tr>
-	[% FOREACH battle IN combat_logs %]
-	<tr>
-		<td>
-			[% party_num = battle.party_opponent_number(party) %]
-			[% opp_num = party_num == 1 ? 2 : 1 %]
-		
-			[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
-		</td>
-			[% battle_result(battle, party_num, opp_num) %]
-	</tr>
-	[% END %]
+    <tr>
+        <th>Opponent</th>
+        <th>Outcome</th>
+        <th>XP Awarded</th>
+        <th>Gold Found</th>
+    </tr>
+    [% FOREACH battle IN combat_logs %]
+    <tr>
+        <td>
+            [% party_num = battle.party_opponent_number(party) %]
+            [% opp_num = party_num == 1 ? 2 : 1 %]
+
+            [% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+        </td>
+            [% battle_result(battle, party_num, opp_num) %]
+    </tr>
+    [% END %]
 </table>
 [% END %]
 
@@ -94,18 +94,18 @@ Location: [% party.location.x %], [% party.location.y %]
 [% IF quests.0 %]
 [% PROCESS quest/description.html %]
 <table cellspacing="3">
-	<tr>
-		<th>Quest</th>
-		<th>Town</th>
-		<th>Days Left</th>
-	</tr>
-	[% FOREACH quest IN quests %]
-	<tr>
-		<td>[% short_description(quest) %]</td>
-		<td>[% quest.town.town_name %]</td>
-		<td>[% quest.days_to_complete %]</td>
-	</tr>
-	[% END %]
+    <tr>
+        <th>Quest</th>
+        <th>Town</th>
+        <th>Days Left</th>
+    </tr>
+    [% FOREACH quest IN quests %]
+    <tr>
+        <td>[% short_description(quest) %]</td>
+        <td>[% quest.town.town_name %]</td>
+        <td>[% quest.days_to_complete %]</td>
+    </tr>
+    [% END %]
 </table>
 [% ELSE %]
 You don't current have any active quests.
@@ -114,79 +114,79 @@ You don't current have any active quests.
 <h3>Garrisons</h3>
 
 [% IF ! garrisons %]
-	You do not have any garrisons
+    You do not have any garrisons
 [% ELSE %]
-	You have [% garrisons.size %] garrisons.<br><br>	
+    You have [% garrisons.size %] garrisons.<br><br>
 
-	[% FOREACH garrison_log IN garrison_combat_logs %]
-		[% garrison = garrison_log.garrison %]
-		The Garrison at [% garrison_log.garrison.land.x %], [% garrison_log.garrison.land.y %] has the following characters: 
-		[% INCLUDE garrison/char_summary.html garrison = garrison %]<br><br>
-		
-		[% FOREACH character IN garrison.members %]
-			[% character_status(character) %]
-		[% END %]
-		
-		[% IF garrison_log.combat_logs.size != 0 %]
-			<br>
-			<table>
-				<tr>
-					<th>Opponent</th>
-					<th>Outcome</th>
-					<th>XP Awarded</th>
-					<th>Gold Found</th>
-				</tr>
-				[% FOREACH battle IN garrison_log.combat_logs %]
-				<tr>
-					<td>
-						[% garrison_num = battle.garrison_opponent_number(garrison_log.garrison) %]
-						[% opp_num = garrison_num == 1 ? 2 : 1 %]
-					
-						[% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
-					</td>
-   					[% battle_result(battle, garrison_num, opp_num) %]
-				</tr>
-				[% END %]
-			</table>
-			<br>
-		[% ELSE %]
-			No recent combat.<br><br>
-		[% END %]
-	[% END %]
+    [% FOREACH garrison_log IN garrison_combat_logs %]
+        [% garrison = garrison_log.garrison %]
+        The Garrison at [% garrison_log.garrison.land.x %], [% garrison_log.garrison.land.y %] has the following characters:
+        [% INCLUDE garrison/char_summary.html garrison = garrison %]<br><br>
+
+        [% FOREACH character IN garrison.members %]
+            [% character_status(character) %]
+        [% END %]
+
+        [% IF garrison_log.combat_logs.size != 0 %]
+            <br>
+            <table>
+                <tr>
+                    <th>Opponent</th>
+                    <th>Outcome</th>
+                    <th>XP Awarded</th>
+                    <th>Gold Found</th>
+                </tr>
+                [% FOREACH battle IN garrison_log.combat_logs %]
+                <tr>
+                    <td>
+                        [% garrison_num = battle.garrison_opponent_number(garrison_log.garrison) %]
+                        [% opp_num = garrison_num == 1 ? 2 : 1 %]
+
+                        [% INCLUDE combat/creature_group_summary.html creature_group=battle.opponent(opp_num) include_dead_creatures=1 %]
+                    </td>
+                       [% battle_result(battle, garrison_num, opp_num) %]
+                </tr>
+                [% END %]
+            </table>
+            <br>
+        [% ELSE %]
+            No recent combat.<br><br>
+        [% END %]
+    [% END %]
 [% END %]
 <br><br>
 
 <h3>Mayors</h3>
 
 [% IF ! mayors.0 %]
-	None of your characters are mayors of a town.
+    None of your characters are mayors of a town.
 [% ELSE %]
-	[% PROCESS town/mayor/display_approval.html %]
+    [% PROCESS town/mayor/display_approval.html %]
 
-	<table cellspacing="6">
-		<tr>
-			<th>Mayor</th>
-			<th>Town</th>
-			<th>Town Prosperity</th>
-			<th>Approval Rating</th>
-			<th>Coffers</th>
-			<th>Peasant's Mood</th>
-		</tr>
-		
-	[% FOREACH mayor IN mayors %]
-		<tr>
-			[% mayor_town = mayor.mayor_of_town %]
-			<td>[% mayor.character_name %]</td>
-			<td>[% mayor_town.town_name %] ([% mayor_town.location.x %], [% mayor_town.location.y %])</td>
-			<td>[% mayor_town.prosperity %]</td>
-			<td>[% display_rating(mayor_town.mayor_rating) %]</td>
-			<td>[% mayor_town.gold %]</td>
-			<td>[% IF mayor_town.peasant_state == 'revolt' %]In revolt[% ELSE %]Ok[% END %]</td>
-		</tr>
-	[% END %]
-	</table>
+    <table cellspacing="6">
+        <tr>
+            <th>Mayor</th>
+            <th>Town</th>
+            <th>Town Prosperity</th>
+            <th>Approval Rating</th>
+            <th>Coffers</th>
+            <th>Peasant's Mood</th>
+        </tr>
+
+    [% FOREACH mayor IN mayors %]
+        <tr>
+            [% mayor_town = mayor.mayor_of_town %]
+            <td>[% mayor.character_name %]</td>
+            <td>[% mayor_town.town_name %] ([% mayor_town.location.x %], [% mayor_town.location.y %])</td>
+            <td>[% mayor_town.prosperity %]</td>
+            <td>[% display_rating(mayor_town.mayor_rating) %]</td>
+            <td>[% mayor_town.gold %]</td>
+            <td>[% IF mayor_town.peasant_state == 'revolt' %]In revolt[% ELSE %]Ok[% END %]</td>
+        </tr>
+    [% END %]
+    </table>
 [% END %]
 
 <br><br>
-Note, you can disable this email by logging into Crown Of Conquest, clicking on "Tools", and un-checking the "Send a Daily Report" option.  
+Note, you can disable this email by logging into Crown Of Conquest, clicking on "Tools", and un-checking the "Send a Daily Report" option.
 

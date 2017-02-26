@@ -1,6 +1,6 @@
 [% INCLUDE top.html admin_screen=1 %]
 
-Board For Kingdom of: 
+Board For Kingdom of:
 [% FOREACH active_kingdom IN kingdoms %]
 <a href="?kingdom_id=[% active_kingdom.id %]">[% active_kingdom.name %]</a>
 [% END %]

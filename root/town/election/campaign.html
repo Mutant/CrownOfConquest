@@ -1,39 +1,39 @@
 <h3>Campaign</h3>
 
 [% IF candidate %]
-	Your candidate is: [% candidate.name %]
-	<br><br>
-	Amount spent on campaign so far: [% candidacy.campaign_spend || 0 %] gold
-	<br><br>
-	The maximum you can spend on this election is: [% candidacy.max_spend %] gold
-	<br><br>
-	<form action="[% base %]/town/election/add_to_spend" method="POST" onSubmit="postPanels(this); return false">
-	<input type="hidden" name="town_id" value="[% town.id %]">
-	Spend more on campaign: 
-		<input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 100px"
-				constraints="{min:0,places:0}" required="true"
-				invalidMessage="Enter a positive number of gold to spend on the campaign">
-	<button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
-		Update
-	</button>
-	</form>
+    Your candidate is: [% candidate.name %]
+    <br><br>
+    Amount spent on campaign so far: [% candidacy.campaign_spend || 0 %] gold
+    <br><br>
+    The maximum you can spend on this election is: [% candidacy.max_spend %] gold
+    <br><br>
+    <form action="[% base %]/town/election/add_to_spend" method="POST" onSubmit="postPanels(this); return false">
+    <input type="hidden" name="town_id" value="[% town.id %]">
+    Spend more on campaign:
+        <input type="text" dojoType="dijit.form.NumberTextBox" name="campaign_spend" style="width: 100px"
+                constraints="{min:0,places:0}" required="true"
+                invalidMessage="Enter a positive number of gold to spend on the campaign">
+    <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
+        Update
+    </button>
+    </form>
 [% ELSE %]
-	[% IF ! new_candidates_allowed %]
-		It's too late to register a candidate for this election.
-	[% ELSIF allowed_candidates.0 %]
-		You don't have a candidate in this election. Click one of your eligible characters to run for mayor. The candidate will have to stay at the town's inn until
-		the election.
-		
-		<table class="main">
-		[% FOREACH character IN allowed_candidates %]
-			<tr onClick="confirmCandidate('[% character.name %]', '[% character.id %]')" style="cursor:pointer">
-				<td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png" 
-	    			title="[% character.race.race_name %] [% character.class.class_name %]"></td>
-				<td>[% character.name %]</td>
-			</tr>
-		[% END %]
-		</table>
-	[% ELSE %]
-		None of your characters are eligible to run for mayor. (They must be at least level [% c.config.min_character_mayoral_candidate_level %] to qualify)
-	[% END %]
+    [% IF ! new_candidates_allowed %]
+        It's too late to register a candidate for this election.
+    [% ELSIF allowed_candidates.0 %]
+        You don't have a candidate in this election. Click one of your eligible characters to run for mayor. The candidate will have to stay at the town's inn until
+        the election.
+
+        <table class="main">
+        [% FOREACH character IN allowed_candidates %]
+            <tr onClick="confirmCandidate('[% character.name %]', '[% character.id %]')" style="cursor:pointer">
+                <td><img src="[% c.config.static_path %]/images/portraits/characters/[% character.portrait %]small.png"
+                    title="[% character.race.race_name %] [% character.class.class_name %]"></td>
+                <td>[% character.name %]</td>
+            </tr>
+        [% END %]
+        </table>
+    [% ELSE %]
+        None of your characters are eligible to run for mayor. (They must be at least level [% c.config.min_character_mayoral_candidate_level %] to qualify)
+    [% END %]
 [% END %]

@@ -4,76 +4,76 @@
 <h2>Blacksmith</h2>
 
 [% IF town.blacksmith_age == 0 %]
-	We don't have a blacksmith in the town of [% town.town_name %]. Our last one retired... if you know anyone looking for work.... drop us a line! 
-	The mayor could use some new shoes for his personal steed.
+    We don't have a blacksmith in the town of [% town.town_name %]. Our last one retired... if you know anyone looking for work.... drop us a line!
+    The mayor could use some new shoes for his personal steed.
 [% ELSE %]
-	<script>
-	function confirmUpgrade(variableId, variableName, itemId, itemName, cost, categoryName) {
-		dojo.byId('upgrade-name').innerHTML = variableName;
-		dojo.byId('upgrade-item-name').innerHTML = itemName;
-		dojo.byId('upgrade-cost').innerHTML = cost;
-		dojo.byId('upgrade-item-id').value = itemId;
-		dojo.byId('upgrade-variable-id').value = variableId;
-		dojo.byId('upgrade-category-name').value = categoryName;
-		
-		dijit.byId('upgrade-diag').show();
-	}
-	
-	function upgradeItem(args) {
-		getPanels('town/blacksmith/upgrade?item_id=' + args.item_id + "&variable_id=" + args.variable_id + "&current_tab=" + args.category_name);
-	}
-	
-	function confirmRepair(itemId, itemName, cost, categoryName) {
-		dojo.byId('repair-item-name').innerHTML = itemName;
-		dojo.byId('repair-cost').innerHTML = cost;
-		dojo.byId('repair-item-id').value = itemId;
-		dojo.byId('repair-category-name').value = categoryName;
-		
-		dijit.byId('repair-diag').show();
-	}
-	
-	function repairItem(args) {
-		getPanels('/town/blacksmith/repair?item_id=' + args.item_id + "&current_tab=" + args.category_name);
-	}	
-	</script>
+    <script>
+    function confirmUpgrade(variableId, variableName, itemId, itemName, cost, categoryName) {
+        dojo.byId('upgrade-name').innerHTML = variableName;
+        dojo.byId('upgrade-item-name').innerHTML = itemName;
+        dojo.byId('upgrade-cost').innerHTML = cost;
+        dojo.byId('upgrade-item-id').value = itemId;
+        dojo.byId('upgrade-variable-id').value = variableId;
+        dojo.byId('upgrade-category-name').value = categoryName;
 
-	The blacksmith of [% town.town_name %] proudly proclaims he's been working here for [% town.blacksmith_age %] days. Judging by the way he's hammering that
-	sword, you'd guess his skill to be: [% town.blacksmith_skill_label %].
+        dijit.byId('upgrade-diag').show();
+    }
 
-	<br><br>
-	[% IF full_repair_cost %]<a href="javascript:getPanels('town/blacksmith/full_repair')">Repair All Items</a> ([% full_repair_cost %] gold) 
-	[% IF equipped_repair_cost && equipped_repair_cost != full_repair_cost %]
-		| <a href="javascript:getPanels('town/blacksmith/full_repair?equipped_only=1')">Repair Equipped Items</a> ([% equipped_repair_cost %] gold)
-	[% END %]  
-	<br><br>
-	[% INCLUDE town/discount_message.html shop_type='blacksmith' %]
-	[% END %]
-	Select individual items to upgrade or repair:
-	
-	<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
-		[% FOREACH category IN categories %]
-			[% FILTER collapse %]
-      		<div dojoType="dijit.layout.ContentPane" title="[% category.item_category %]" style="height: 700px; min-height: 150px" 
-				href="[% base %]/town/blacksmith/category_tab?category_id=[% category.id %]"
-				[% IF current_tab == category.item_category %]selected=true[% END %]>
-      		</div>
-			[% END %]
-		[% END %]
-	</div>
+    function upgradeItem(args) {
+        getPanels('town/blacksmith/upgrade?item_id=' + args.item_id + "&variable_id=" + args.variable_id + "&current_tab=" + args.category_name);
+    }
+
+    function confirmRepair(itemId, itemName, cost, categoryName) {
+        dojo.byId('repair-item-name').innerHTML = itemName;
+        dojo.byId('repair-cost').innerHTML = cost;
+        dojo.byId('repair-item-id').value = itemId;
+        dojo.byId('repair-category-name').value = categoryName;
+
+        dijit.byId('repair-diag').show();
+    }
+
+    function repairItem(args) {
+        getPanels('/town/blacksmith/repair?item_id=' + args.item_id + "&current_tab=" + args.category_name);
+    }
+    </script>
+
+    The blacksmith of [% town.town_name %] proudly proclaims he's been working here for [% town.blacksmith_age %] days. Judging by the way he's hammering that
+    sword, you'd guess his skill to be: [% town.blacksmith_skill_label %].
+
+    <br><br>
+    [% IF full_repair_cost %]<a href="javascript:getPanels('town/blacksmith/full_repair')">Repair All Items</a> ([% full_repair_cost %] gold)
+    [% IF equipped_repair_cost && equipped_repair_cost != full_repair_cost %]
+        | <a href="javascript:getPanels('town/blacksmith/full_repair?equipped_only=1')">Repair Equipped Items</a> ([% equipped_repair_cost %] gold)
+    [% END %]
+    <br><br>
+    [% INCLUDE town/discount_message.html shop_type='blacksmith' %]
+    [% END %]
+    Select individual items to upgrade or repair:
+
+    <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+        [% FOREACH category IN categories %]
+            [% FILTER collapse %]
+              <div dojoType="dijit.layout.ContentPane" title="[% category.item_category %]" style="height: 700px; min-height: 150px"
+                href="[% base %]/town/blacksmith/category_tab?category_id=[% category.id %]"
+                [% IF current_tab == category.item_category %]selected=true[% END %]>
+              </div>
+            [% END %]
+        [% END %]
+    </div>
 
 <div dojoType="dijit.Dialog" id="upgrade-diag" style="display: none" title="Upgrade Item" execute="upgradeItem(arguments[0]);">
-	Are you sure you want to buy <span id="upgrade-name"></span> on <span id="upgrade-item-name"></span> for <span id="upgrade-cost"></span> gold?
-	<input id="upgrade-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<input id="upgrade-variable-id" name="variable_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<input id="upgrade-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('upgrade-diag') %]
+    Are you sure you want to buy <span id="upgrade-name"></span> on <span id="upgrade-item-name"></span> for <span id="upgrade-cost"></span> gold?
+    <input id="upgrade-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="upgrade-variable-id" name="variable_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="upgrade-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    [% dialog_buttons('upgrade-diag') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="repair-diag" style="display: none" title="Repair Item" execute="repairItem(arguments[0]);">
-	Are you sure you want to repair <span id="repair-item-name"></span> for <span id="repair-cost"></span> gold?
-	<input id="repair-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<input id="repair-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('repair-diag') %]
+    Are you sure you want to repair <span id="repair-item-name"></span> for <span id="repair-cost"></span> gold?
+    <input id="repair-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="repair-category-name" name="category_name" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    [% dialog_buttons('repair-diag') %]
 </div>
-		
+
 [% END %]

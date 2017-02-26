@@ -5,37 +5,37 @@
 var loaded = {};
 
 function loadFightMenu(charId) {
-	if (! loaded.fightMenu) loaded.fightMenu = {};
-	
-	if (loaded.fightMenu[charId]) return;
-	
-	loaded.fightMenu[charId] = true;
+    if (! loaded.fightMenu) loaded.fightMenu = {};
 
-	var menu = dijit.byId('fightMenu_' + charId);
+    if (loaded.fightMenu[charId]) return;
 
-	dojo.xhrGet( {
+    loaded.fightMenu[charId] = true;
+
+    var menu = dijit.byId('fightMenu_' + charId);
+
+    dojo.xhrGet( {
         url: "[% base %]combat/target_list",
         handleAs: "json",
-        
-        load: function(responseObject, ioArgs){     	
-        		
-        	dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: none;');
-        
-			for (var i in responseObject.opponents) {
-				itemId = "fightOpponent_" + charId + "_" + responseObject.opponents[i].id;
-				
-				menuItem = new dijit.MenuItem({
-			        label: responseObject.opponents[i].name,
-			        onClick: dojo.partial(window["selectActionCombat"], 'Attack', charId, responseObject.opponents[i].id, null, responseObject.opponents[i].name, null),
-			        id: itemId
-			    });
-			    menu.addChild(menuItem);
-			}		
-			
-		},
-        
-	    timeout: 15000 // Time in milliseconds	
-    });	
+
+        load: function(responseObject, ioArgs){
+
+            dijit.byId("fightMenuLoading_" + charId).attr('style', 'display: none;');
+
+            for (var i in responseObject.opponents) {
+                itemId = "fightOpponent_" + charId + "_" + responseObject.opponents[i].id;
+
+                menuItem = new dijit.MenuItem({
+                    label: responseObject.opponents[i].name,
+                    onClick: dojo.partial(window["selectActionCombat"], 'Attack', charId, responseObject.opponents[i].id, null, responseObject.opponents[i].name, null),
+                    id: itemId
+                });
+                menu.addChild(menuItem);
+            }
+
+        },
+
+        timeout: 15000 // Time in milliseconds
+    });
 }
 
 
@@ -45,76 +45,76 @@ function ucFirst(string)
 }
 
 function loadCastMenu(charId) {
-	loadTargetBasedMenu(charId, 'cast');
+    loadTargetBasedMenu(charId, 'cast');
 }
 
 function loadUseMenu(charId) {
-	loadTargetBasedMenu(charId, 'use');
+    loadTargetBasedMenu(charId, 'use');
 }
 
 function loadTargetBasedMenu(charId, type) {
-	if (! loaded[type + "Menu"]) loaded[type + "Menu"] = {};
-	
-	if (loaded[type + "Menu"][charId]) return;
-	
-	loaded[type + "Menu"][charId] = true;
+    if (! loaded[type + "Menu"]) loaded[type + "Menu"] = {};
 
-	var menu = dijit.byId(type + 'Menu_' + charId);
+    if (loaded[type + "Menu"][charId]) return;
 
-	dojo.xhrGet( {
+    loaded[type + "Menu"][charId] = true;
+
+    var menu = dijit.byId(type + 'Menu_' + charId);
+
+    dojo.xhrGet( {
         url: "[% base %]combat/" + type +  "_list?character_id=" + charId,
         handleAs: "json",
-        
-        load: function(responseObject, ioArgs){
-        	dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: none');
-        	
-        	if (responseObject.autocast) {
-        	 	menuItem = new dijit.MenuItem({
-			        label: "Auto Cast",
-			        onClick: function() { selectActionCombat('Cast', charId, 'autocast', null, '(Auto)') }
-			    });
-			    menu.addChild(menuItem);  
-        	}
-			
-			for (var i in responseObject.list) {
-				listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
-				menuItem = dijit.byId(listId);
 
-				if (responseObject.list[i].target != 'creature' && responseObject.list[i].target != 'character' && responseObject.list[i].target != 'special') {		
-					menuItem = new dijit.MenuItem({
-				        label: responseObject.list[i].label,
-				        onClick: function() { selectAction(this, ucFirst(type)) },
-				        id: listId
-				    });
-				    menu.addChild(menuItem);
-				}
-				else {
-					var subMenuId = type + "SubMenu_" + charId + "_" + responseObject.list[i].id;
-					var listSubMenu = new dijit.Menu({id: subMenuId});	
-					
-					var loadingItem = new dijit.MenuItem({
-				        label: "Loading...",
-				        id: type + "SubMenuLoading_" + charId + "_" + responseObject.list[i].id
-				    });
-				    listSubMenu.addChild(loadingItem); 								
-	
-					var popupItem = new dijit.PopupMenuItem(
-						{
-							label: responseObject.list[i].label,
-							popup: listSubMenu, 
-							id: listId,
-							iconClass: "menuExpandIcon"
-						}
-					);
-												
-				    menu.addChild(popupItem);
-				    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
-				}
-			}			
-		},
-        
-	    timeout: 15000 // Time in milliseconds	
-    });	
+        load: function(responseObject, ioArgs){
+            dijit.byId(type + "MenuLoading_" + charId).attr('style', 'display: none');
+
+            if (responseObject.autocast) {
+                 menuItem = new dijit.MenuItem({
+                    label: "Auto Cast",
+                    onClick: function() { selectActionCombat('Cast', charId, 'autocast', null, '(Auto)') }
+                });
+                menu.addChild(menuItem);
+            }
+
+            for (var i in responseObject.list) {
+                listId = type + "spell_" + charId + "_" + responseObject.list[i].id;
+                menuItem = dijit.byId(listId);
+
+                if (responseObject.list[i].target != 'creature' && responseObject.list[i].target != 'character' && responseObject.list[i].target != 'special') {
+                    menuItem = new dijit.MenuItem({
+                        label: responseObject.list[i].label,
+                        onClick: function() { selectAction(this, ucFirst(type)) },
+                        id: listId
+                    });
+                    menu.addChild(menuItem);
+                }
+                else {
+                    var subMenuId = type + "SubMenu_" + charId + "_" + responseObject.list[i].id;
+                    var listSubMenu = new dijit.Menu({id: subMenuId});
+
+                    var loadingItem = new dijit.MenuItem({
+                        label: "Loading...",
+                        id: type + "SubMenuLoading_" + charId + "_" + responseObject.list[i].id
+                    });
+                    listSubMenu.addChild(loadingItem);
+
+                    var popupItem = new dijit.PopupMenuItem(
+                        {
+                            label: responseObject.list[i].label,
+                            popup: listSubMenu,
+                            id: listId,
+                            iconClass: "menuExpandIcon"
+                        }
+                    );
+
+                    menu.addChild(popupItem);
+                    dojo.connect(dijit.byId(subMenuId), 'onOpen', null, window["load" + ucFirst(type) + "SubMenu"]);
+                }
+            }
+        },
+
+        timeout: 15000 // Time in milliseconds
+    });
 }
 
 function loadCastSubMenu(subMenuId) {
@@ -122,47 +122,47 @@ function loadCastSubMenu(subMenuId) {
     var charId = parts[1];
     var spellId = parts[2];
 
-	if (! loaded.castSubMenu) loaded.castSubMenu = {};
-	if (! loaded.castSubMenu[charId]) loaded.castSubMenu[charId] = {};
-	
-	if (loaded.castSubMenu[charId][spellId]) return;
-	
-	loaded.castSubMenu[charId][spellId] = true;
+    if (! loaded.castSubMenu) loaded.castSubMenu = {};
+    if (! loaded.castSubMenu[charId]) loaded.castSubMenu[charId] = {};
 
-    menu = this;	
-	
-	dojo.xhrGet( {
+    if (loaded.castSubMenu[charId][spellId]) return;
+
+    loaded.castSubMenu[charId][spellId] = true;
+
+    menu = this;
+
+    dojo.xhrGet( {
         url: "[% base %]combat/spell_target_list?character_id=" + charId + "&spell_id=" + spellId,
         handleAs: "json",
-        
+
         load: function(responseObject, ioArgs){
-        	dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: none');
-        	
-        	if (responseObject.spell_targets.length == 0) {
- 				menuItem = new dijit.MenuItem({
-			        label: "<em>(No-one)</em>"
-			    });
-			    menu.addChild(menuItem);       	
-        	}
-        	
-        	for (var i in responseObject.spell_targets) {
-			
-				targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;			
-		
-				var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
-		
-				menuItem = new dijit.MenuItem({
-			        label: responseObject.spell_targets[i].name,
-			        onClick: dojo.partial(window[method], 'Cast', charId, spellId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name), 
-			        id: targetId
-			    });
-			    menu.addChild(menuItem);			    
-			}		
-			
-		},
-        
-	    timeout: 15000 // Time in milliseconds	
-    });	
+            dijit.byId("castSubMenuLoading_" + charId + "_" + spellId).attr('style', 'display: none');
+
+            if (responseObject.spell_targets.length == 0) {
+                 menuItem = new dijit.MenuItem({
+                    label: "<em>(No-one)</em>"
+                });
+                menu.addChild(menuItem);
+            }
+
+            for (var i in responseObject.spell_targets) {
+
+                targetId = "spellTarget_" + charId + "_" + spellId + "_" + responseObject.spell_targets[i].id;
+
+                var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
+
+                menuItem = new dijit.MenuItem({
+                    label: responseObject.spell_targets[i].name,
+                    onClick: dojo.partial(window[method], 'Cast', charId, spellId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name),
+                    id: targetId
+                });
+                menu.addChild(menuItem);
+            }
+
+        },
+
+        timeout: 15000 // Time in milliseconds
+    });
 }
 
 function loadUseSubMenu(subMenuId) {
@@ -171,119 +171,119 @@ function loadUseSubMenu(subMenuId) {
     var actionId = parts[2];
 
     menu = this;
-    
-	if (! loaded.useSubMenu) loaded.useSubMenu = {};
-	if (! loaded.useSubMenu[charId]) loaded.useSubMenu[charId] = {};
-	
-	if (loaded.useSubMenu[charId][actionId]) return;    
-	
-	loaded.useSubMenu[charId][actionId] = true;
-    
-	dojo.xhrGet( {
+
+    if (! loaded.useSubMenu) loaded.useSubMenu = {};
+    if (! loaded.useSubMenu[charId]) loaded.useSubMenu[charId] = {};
+
+    if (loaded.useSubMenu[charId][actionId]) return;
+
+    loaded.useSubMenu[charId][actionId] = true;
+
+    dojo.xhrGet( {
         url: "[% base %]combat/use_target_list?character_id=" + charId + "&action_id=" + actionId,
         handleAs: "json",
-        
+
         load: function(responseObject, ioArgs){
-        	dijit.byId("useSubMenuLoading_" + charId + "_" + actionId).attr('style', 'display: none;');
-        	
-        	for (var i in responseObject.spell_targets) {
-			
-				targetId = "useTarget_" + charId + "_" + actionId + "_" + responseObject.spell_targets[i].id;
-		
-				var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
-		
-				menuItem = new dijit.MenuItem({
-			        label: responseObject.spell_targets[i].name,
-			        onClick: dojo.partial(window[method], 'Use', charId, actionId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name), 
-			        id: targetId
-			    });
-			    menu.addChild(menuItem);
-			}			
-		},
-        
-	    timeout: 15000 // Time in milliseconds	
-    });	
+            dijit.byId("useSubMenuLoading_" + charId + "_" + actionId).attr('style', 'display: none;');
+
+            for (var i in responseObject.spell_targets) {
+
+                targetId = "useTarget_" + charId + "_" + actionId + "_" + responseObject.spell_targets[i].id;
+
+                var method = "[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %]";
+
+                menuItem = new dijit.MenuItem({
+                    label: responseObject.spell_targets[i].name,
+                    onClick: dojo.partial(window[method], 'Use', charId, actionId, responseObject.spell_targets[i].id, responseObject.spell_targets[i].name, responseObject.spell_name),
+                    id: targetId
+                });
+                menu.addChild(menuItem);
+            }
+        },
+
+        timeout: 15000 // Time in milliseconds
+    });
 }
 
 function selectAction(menuItem, action, target, name) {
-	var parts = menuItem.id.split('_');
-	[% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3], target, name);
+    var parts = menuItem.id.split('_');
+    [% in_combat ? 'selectActionCombat' : 'selectActionNonCombat' %](action, parts[1], parts[2], parts[3], target, name);
 }
 
 function selectActionCombat(action, char_id, action_param, action_param2, target, name) {
-	var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
-		        "&action_param=" + (action_param2 || '')
-	
-	highlightAction(char_id, action, target, name);
-	
-	dojo.xhrGet( {
-        url: "[% base %]" + url,
-        handleAs: "json",        
+    var url = "/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+                "&action_param=" + (action_param2 || '')
 
-	    timeout: 15000 // Time in milliseconds	
+    highlightAction(char_id, action, target, name);
+
+    dojo.xhrGet( {
+        url: "[% base %]" + url,
+        handleAs: "json",
+
+        timeout: 15000 // Time in milliseconds
     });
 }
 
 function selectActionNonCombat(action, char_id, action_param, action_param2) {
-	if (! action_param) {
-		action_param = '';
-	}
+    if (! action_param) {
+        action_param = '';
+    }
 
-	getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
-		        "&action_param=" + (action_param2 || ''));
-	        
-	return false;
+    getPanels("/party/select_action?action=" + action + "&character_id=" + char_id + "&action_param=" + (action_param || '') +
+                "&action_param=" + (action_param2 || ''));
+
+    return false;
 }
 
 var buttons = Array('attack', 'defend', 'cast', 'use');
 function highlightAction(char_id, action, target, name) {
-	for (x in buttons) {
-	    var button = buttons[x];
-		var display = (button == action.toLowerCase() ? 'On' : 'Off');
-		var hide = (display == 'On' ? 'Off' : 'On'); 
-		
-		var imgDisplay = dojo.byId(button + display + "_" + char_id);
-		if (imgDisplay) imgDisplay.style.display = 'inline'; 
+    for (x in buttons) {
+        var button = buttons[x];
+        var display = (button == action.toLowerCase() ? 'On' : 'Off');
+        var hide = (display == 'On' ? 'Off' : 'On');
 
-		var imgHide = dojo.byId(button + hide + "_" + char_id);
-		if (imgHide) imgHide.style.display = 'none';
-		
-		var tooltip = dijit.byId(button + "Tooltip_" + char_id);
-		if (tooltip) tooltip.label = ucFirst(button);
-	}
-	
-	var gerund = ucFirst(action);
-	if (gerund == 'Use') gerund = 'Us';
-	
-	var tooltip_label = gerund + "ing";
-	if (name) {
-		tooltip_label += " " + ucFirst(name) + " on";  
-	}
-	if (target) {
-		tooltip_label += " " + target;
-	}
-		
-	var tooltip = dijit.byId(action.toLowerCase() + "Tooltip_" + char_id);
-	if (tooltip) tooltip.label = tooltip_label;
+        var imgDisplay = dojo.byId(button + display + "_" + char_id);
+        if (imgDisplay) imgDisplay.style.display = 'inline';
+
+        var imgHide = dojo.byId(button + hide + "_" + char_id);
+        if (imgHide) imgHide.style.display = 'none';
+
+        var tooltip = dijit.byId(button + "Tooltip_" + char_id);
+        if (tooltip) tooltip.label = ucFirst(button);
+    }
+
+    var gerund = ucFirst(action);
+    if (gerund == 'Use') gerund = 'Us';
+
+    var tooltip_label = gerund + "ing";
+    if (name) {
+        tooltip_label += " " + ucFirst(name) + " on";
+    }
+    if (target) {
+        tooltip_label += " " + target;
+    }
+
+    var tooltip = dijit.byId(action.toLowerCase() + "Tooltip_" + char_id);
+    if (tooltip) tooltip.label = tooltip_label;
 }
 
 function createMenus() {
-   [% FOREACH character IN characters %]    
+   [% FOREACH character IN characters %]
 
    [% IF character.is_dead %]
       [% NEXT %]
    [% END %]
 
    [% IF in_combat %]
-   	if (dijit.byId("fightMenu_[% character.id %]")) {
-		dijit.byId("fightMenu_[% character.id %]").destroyRecursive();
-	}
-   
-	var params = {id:"fightMenu_[% character.id %]" };
+       if (dijit.byId("fightMenu_[% character.id %]")) {
+        dijit.byId("fightMenu_[% character.id %]").destroyRecursive();
+    }
 
-	var menu = new dijit.Menu(params,document.createElement("div"));
+    var params = {id:"fightMenu_[% character.id %]" };
 
-	var menuItem = new dijit.MenuItem({
+    var menu = new dijit.Menu(params,document.createElement("div"));
+
+    var menuItem = new dijit.MenuItem({
         label: "Loading...",
         id: "fightMenuLoading_[% character.id %]"
     });
@@ -295,68 +295,68 @@ function createMenus() {
     dojo.connect(dijit.byId("fightMenu_[% character.id %]"), 'onOpen', null, function() { loadFightMenu('[% character.id %]') });
 
     [% END %]
-    
+
     [% IF character.is_spell_caster && character.has_castable_spells(in_combat) %]
-    	if (dijit.byId("castMenu_[% character.id %]")) {
-    		dijit.byId("castMenu_[% character.id %]").destroyRecursive();
-    	}
+        if (dijit.byId("castMenu_[% character.id %]")) {
+            dijit.byId("castMenu_[% character.id %]").destroyRecursive();
+        }
 
-    	var params = {id:"castMenu_[% character.id %]" };
-    	var menu = new dijit.Menu(params,document.createElement("div"));
-    	
-		var menuItem = new dijit.MenuItem({
-	        label: "Loading...",
-	        id: "castMenuLoading_[% character.id %]"
-	    });
-	    menu.addChild(menuItem);   
-	    
-	    var button[% character.id %] = createButton(menu, 'cast', '[% character.id %]');
+        var params = {id:"castMenu_[% character.id %]" };
+        var menu = new dijit.Menu(params,document.createElement("div"));
 
-		dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
-    	dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
-	
+        var menuItem = new dijit.MenuItem({
+            label: "Loading...",
+            id: "castMenuLoading_[% character.id %]"
+        });
+        menu.addChild(menuItem);
+
+        var button[% character.id %] = createButton(menu, 'cast', '[% character.id %]');
+
+        dojo.byId("castSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
+        dojo.connect(dijit.byId("castMenu_[% character.id %]"), 'onOpen', null, function() { loadCastMenu('[% character.id %]') });
+
     [% END %]
-    
+
     [% IF character.has_usable_actions(in_combat) %]
-    
-       	if (dijit.byId("useMenu_[% character.id %]")) {
-			dijit.byId("useMenu_[% character.id %]").destroyRecursive();
-		}
-    
 
-    	params = {id:"useMenu_[% character.id %]" };
-    	var menu = new dijit.Menu(params,document.createElement("div"));
-    	
-		var menuItem = new dijit.MenuItem({
-	        label: "Loading...",
-	        id: "useMenuLoading_[% character.id %]"
-	    });
-	    menu.addChild(menuItem);   
-	    
-	    var button[% character.id %] = createButton(menu, 'use', '[% character.id %]');
-	    		
-		dojo.byId("useSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
-    	dojo.connect(dijit.byId("useMenu_[% character.id %]"), 'onOpen', null, function() { loadUseMenu('[% character.id %]') });
+           if (dijit.byId("useMenu_[% character.id %]")) {
+            dijit.byId("useMenu_[% character.id %]").destroyRecursive();
+        }
+
+
+        params = {id:"useMenu_[% character.id %]" };
+        var menu = new dijit.Menu(params,document.createElement("div"));
+
+        var menuItem = new dijit.MenuItem({
+            label: "Loading...",
+            id: "useMenuLoading_[% character.id %]"
+        });
+        menu.addChild(menuItem);
+
+        var button[% character.id %] = createButton(menu, 'use', '[% character.id %]');
+
+        dojo.byId("useSpan_[% character.id %]").appendChild(button[% character.id %].domNode);
+        dojo.connect(dijit.byId("useMenu_[% character.id %]"), 'onOpen', null, function() { loadUseMenu('[% character.id %]') });
 
     [% END %]
-    
+
     highlightAction('[% character.id %]', '[% character.last_combat_action %]', '[% combat_params.${character.id}.0 | html_entity %]', '[% combat_params.${character.id}.1 | html_entity %]');
-    
+
     [% END %]
 }
 
 function createButton(menu, name, characterId) {
-	if (dijit.byId(name + "Button_" + characterId)) {
-		dijit.byId(name + "Button_" + characterId).destroyRecursive();
-	}
+    if (dijit.byId(name + "Button_" + characterId)) {
+        dijit.byId(name + "Button_" + characterId).destroyRecursive();
+    }
 
     var params = {
-		label: '<img id="' + name + 'Off_' + characterId + '" src="[% c.config.static_path %]/images/actions/' + name + '.png">' +
-        	   '<img id="' + name + 'On_' + characterId + '" style="display: none" src="[% c.config.static_path %]/images/actions/' + name + '_glow.png">',
+        label: '<img id="' + name + 'Off_' + characterId + '" src="[% c.config.static_path %]/images/actions/' + name + '.png">' +
+               '<img id="' + name + 'On_' + characterId + '" style="display: none" src="[% c.config.static_path %]/images/actions/' + name + '_glow.png">',
         dropDown: menu,
-        id: name + "Button_" + characterId   
+        id: name + "Button_" + characterId
     };
-   	params['class'] = "actionButton";
+       params['class'] = "actionButton";
 
     return new dijit.form.DropDownButton(params);
 }
@@ -365,91 +365,91 @@ function createButton(menu, name, characterId) {
 
 <table class="main" align="center" cellspacing=0 cellpadding=2 border=0>
 
-	<tr>
-		<td colspan="8">
-		[% IF party.party_effects %]
-		Party Effects: 
-			[% FOREACH effect IN party.party_effects %]
-				[% effect.effect.effect_name %] ([% FILTER inflect %]NO([% effect.effect.time_type %], [% effect.effect.time_left %])[% END %] left )
-				[% UNLESS loop.last %],[% END %]
-			[% END %]
-		<br>
-		[% END %] 
-		<br>
-		</td>
-	</tr>
+    <tr>
+        <td colspan="8">
+        [% IF party.party_effects %]
+        Party Effects:
+            [% FOREACH effect IN party.party_effects %]
+                [% effect.effect.effect_name %] ([% FILTER inflect %]NO([% effect.effect.time_type %], [% effect.effect.time_left %])[% END %] left )
+                [% UNLESS loop.last %],[% END %]
+            [% END %]
+        <br>
+        [% END %]
+        <br>
+        </td>
+    </tr>
 </table>
-		
+
 <div [% UNLESS in_combat %]dojoType="dojo.dnd.Source"[% END %] id="party-table" accept="character" moveOnly="true">
 
 [% FOREACH char IN characters %]
 [% char_id = char.id %]
 
-<div 
-	[% IF ! in_combat %]class="dojoDndItem"[% END %] 
-	id="char-[% char.id %]" 
-	jsId="char-[% char.id %]"
-	style="height: 56px; width: 90%;"
+<div
+    [% IF ! in_combat %]class="dojoDndItem"[% END %]
+    id="char-[% char.id %]"
+    jsId="char-[% char.id %]"
+    style="height: 56px; width: 90%;"
 >
-	<div id="char-inner-[% char.id %]" style="height: 90%">	
+    <div id="char-inner-[% char.id %]" style="height: 90%">
 
-		<span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
-			<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')"><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0"></a>
-		</span>
-		
-		<div style="width: 3px; height: 100%; float: left; margin-right: 1px; position: relative" 
-			title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">	
-			[% INCLUDE combat/hp_bar.html being=char %]
-		</div>
-	
-		<div style="float: left">
-			<span id="char_info_[% char.id %]" style="padding-left: 6px; font-size: 8pt">
-				<a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">[% char.character_name | truncate(25) %]</a>
-			</span>
-			<div dojoType="dijit.Tooltip"
-	           connectId="char_info_[% char.id %],char_portrait_[% char.id %]" style="display: none">
-					[% INCLUDE character/list_details.html character=char %]   	
-	           </div>			
-			[% INCLUDE party/party_char_alerts.html %]
-			[% FOREACH effect IN effects_by_character.${char.id} ~%]
-				<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | replace(' ', '') | lower %]effect.png" 
-					title="[% effect.effect_name %] ([% effect.time_left - 1 %])">
-			[% END ~%]
-			<br>
-			
-			[% IF char.is_dead %]
-				[% IF ! in_combat %] 
-					<div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
-				[% END %]
-			[% ELSE %]
-			
-	        	<span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
-	        	<div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
-	        
-	        	[% IF in_combat  %]    	
-	    		<span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
-	    			<img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
-	    			<img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
-	    		</span>
-	    		<div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
-	    		[% END %]
-	    	
-	    		<span id="castSpan_[% char.id %]" [% IF in_combat %]onDblClick="selectActionCombat('Cast', '[% char.id %]', 'autocast')"[% END %]></span>
-	    		<div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
-	    	
-	    		<span id="useSpan_[% char.id %]"></span>
-	    		<div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
-    		
-    		[% END %]
-	    </div>
-	</div>
+        <span id="char_portrait_[% char.id %]" style="height: 96%; float: left; margin-right: 1px; [% IF char.is_dead %]opacity: 0.35[% END %];">
+            <a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')"><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" border="0"></a>
+        </span>
 
-	<br style="clear: right"/>
+        <div style="width: 3px; height: 100%; float: left; margin-right: 1px; position: relative"
+            title="HP: [% char.hit_points_current %] / [% char.hit_points_max %]">
+            [% INCLUDE combat/hp_bar.html being=char %]
+        </div>
+
+        <div style="float: left">
+            <span id="char_info_[% char.id %]" style="padding-left: 6px; font-size: 8pt">
+                <a href="javascript:loadScreen('/character/view?character_id=[% char.character_id %]')">[% char.character_name | truncate(25) %]</a>
+            </span>
+            <div dojoType="dijit.Tooltip"
+               connectId="char_info_[% char.id %],char_portrait_[% char.id %]" style="display: none">
+                    [% INCLUDE character/list_details.html character=char %]
+               </div>
+            [% INCLUDE party/party_char_alerts.html %]
+            [% FOREACH effect IN effects_by_character.${char.id} ~%]
+                <img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | replace(' ', '') | lower %]effect.png"
+                    title="[% effect.effect_name %] ([% effect.time_left - 1 %])">
+            [% END ~%]
+            <br>
+
+            [% IF char.is_dead %]
+                [% IF ! in_combat %]
+                    <div style="margin-left: 5px" dojoType="dijit.form.Button" onClick="buryDiag('[% char.character_name %]', '[% char.id %]')">Bury</div>
+                [% END %]
+            [% ELSE %]
+
+                <span id="fightSpan_[% char.id %]" onDblClick="selectActionCombat('Attack', '[% char.id %]')" ></span>
+                <div dojoType="dijit.Tooltip" connectId="fightSpan_[% char.id %]" id="attackTooltip_[% char.id %]">Attack</div>
+
+                [% IF in_combat  %]
+                <span id="defendSpan_[% char.id %]" onClick="selectActionCombat('Defend', '[% char.id %]')" style="cursor: pointer;">
+                    <img id="defendOff_[% char.id %]" style="padding-top: 2px" src="[% c.config.static_path %]/images/actions/defend.png">
+                    <img id="defendOn_[% char.id %]" style="padding-top: 2px; display: none" src="[% c.config.static_path %]/images/actions/defend_glow.png">
+                </span>
+                <div dojoType="dijit.Tooltip" connectId="defendSpan_[% char.id %]" id="defendTooltip_[% char.id %]">Defend</div>
+                [% END %]
+
+                <span id="castSpan_[% char.id %]" [% IF in_combat %]onDblClick="selectActionCombat('Cast', '[% char.id %]', 'autocast')"[% END %]></span>
+                <div dojoType="dijit.Tooltip" connectId="castSpan_[% char.id %]" id="castTooltip_[% char.id %]">Cast</div>
+
+                <span id="useSpan_[% char.id %]"></span>
+                <div dojoType="dijit.Tooltip" connectId="useSpan_[% char.id %]" id="useTooltip_[% char.id %]">Use</div>
+
+            [% END %]
+        </div>
+    </div>
+
+    <br style="clear: right"/>
     [% IF party.rank_separator_position == char.party_order %]
-		</div><div id="rank_separator" style="margin-bottom: 15px;" [% IF ! in_combat %]class="dojoDndItem"[% END %] jsId="rank_separator">
-			<img src="[% c.config.static_path %]/images/layout/lineseparator.png">
+        </div><div id="rank_separator" style="margin-bottom: 15px;" [% IF ! in_combat %]class="dojoDndItem"[% END %] jsId="rank_separator">
+            <img src="[% c.config.static_path %]/images/layout/lineseparator.png">
     [% END %]
-	
+
 </div>
 
 [% END %]

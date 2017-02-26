@@ -1,6 +1,6 @@
 [% IF ! quest.param_current_value('Item Found') %]
-	Find the [% quest.item.name %] in the dungeon located at [% quest.dungeon.location.x %], [% quest.dungeon.location.y %] and 
-	 return it to the town of [% quest.town.town_name %].  
+    Find the [% quest.item.name %] in the dungeon located at [% quest.dungeon.location.x %], [% quest.dungeon.location.y %] and
+     return it to the town of [% quest.town.town_name %].
 [% ELSE %]
-	You've found the [% quest.item.name %]. Return it to [% quest.town.town_name %] to collect your reward.
+    You've found the [% quest.item.name %]. Return it to [% quest.town.town_name %] to collect your reward.
 [% END %]

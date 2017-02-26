@@ -1,8 +1,8 @@
 [% PROCESS map/map_common.html %]
 
 [%
-	height = sector_height * y_size + 2;
-	width =  sector_width * x_size + 2;
+    height = sector_height * y_size + 2;
+    width =  sector_width * x_size + 2;
 %]
 
 <style>
@@ -18,20 +18,20 @@
 <div class="holder2" id="map-holder">
 
 [% FOREACH y IN y_range %]
-	<div class="map-row">
-	[% FOREACH x IN x_range %]
-		[% position = undef %]
-		[% IF x > 0 && y > 0 %]
-			[% position = grid.$x.$y %]
-		[% END %] 
-		
-		<span id="outer_sector_[% x %]_[% y %]" class="sector-outer" x="[% x %]" y="[% y %]">
-			[% INCLUDE map/sector_inner.html %]
-		</span>					
+    <div class="map-row">
+    [% FOREACH x IN x_range %]
+        [% position = undef %]
+        [% IF x > 0 && y > 0 %]
+            [% position = grid.$x.$y %]
+        [% END %]
+
+        <span id="outer_sector_[% x %]_[% y %]" class="sector-outer" x="[% x %]" y="[% y %]">
+            [% INCLUDE map/sector_inner.html %]
+        </span>
 
 
-	[% END %]
-	</div>
+    [% END %]
+    </div>
 [% END %]
 </div>
 </div>

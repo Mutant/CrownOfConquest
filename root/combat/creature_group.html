@@ -1,30 +1,30 @@
 <div style="overflow: visible; width: 39px;">
 [% FOREACH creature IN creature_group.members %]
-	<div style="height: 50px; margin: 0px; [% IF ! loop.last %]margin-bottom: 2px;[% END %] padding: 0px; clear: right; position: relative;">
-		[% type = creature.is_character ? 'character' : 'creature' %]
+    <div style="height: 50px; margin: 0px; [% IF ! loop.last %]margin-bottom: 2px;[% END %] padding: 0px; clear: right; position: relative;">
+        [% type = creature.is_character ? 'character' : 'creature' %]
 
-		[% FOREACH effect IN effects_by_id.$type.${creature.id} ~%]
-			[% left = loop.count div 4 * 12 %]
-			<div style="position: absolute; left: [% left %]px; top: [% (loop.count - 1) * 18 %]px; background: black;">  
-			<img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | lower %]effect.png" 
-				title="[% effect.effect_name %] ([% effect.time_left %])">
-			</div>
-		[% END ~%]
-	
-	
-		<span style="float: left; margin-right: 1px; [% IF creature.is_dead %]opacity: 0.35[% END %];">
-		[% IF creature.is_character %]
-			<img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png" 
-    				title="[% creature.name %] ([% creature.race.race_name %] [% creature.class.class_name %])">
-		[% ELSE %]
-	    	<img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]" title="[% creature.name %]">
-	    [% END %]
-	    </span>
-	    	    
-		<div style="width: 3px; height: 100%; float: left; margin-right: 2px; position: relative"">	
-			[% INCLUDE combat/hp_bar.html being=creature %]
-		</div>
+        [% FOREACH effect IN effects_by_id.$type.${creature.id} ~%]
+            [% left = loop.count div 4 * 12 %]
+            <div style="position: absolute; left: [% left %]px; top: [% (loop.count - 1) * 18 %]px; background: black;">
+            <img src="[% c.config.static_path %]/images/effects/[% effect.effect_name | lower %]effect.png"
+                title="[% effect.effect_name %] ([% effect.time_left %])">
+            </div>
+        [% END ~%]
 
-	</div>
+
+        <span style="float: left; margin-right: 1px; [% IF creature.is_dead %]opacity: 0.35[% END %];">
+        [% IF creature.is_character %]
+            <img src="[% c.config.static_path %]/images/portraits/characters/[% creature.portrait %]small.png"
+                    title="[% creature.name %] ([% creature.race.race_name %] [% creature.class.class_name %])">
+        [% ELSE %]
+            <img src="[% c.config.static_path %]/images/creatures/[% creature.type.image %]" title="[% creature.name %]">
+        [% END %]
+        </span>
+
+        <div style="width: 3px; height: 100%; float: left; margin-right: 2px; position: relative"">
+            [% INCLUDE combat/hp_bar.html being=creature %]
+        </div>
+
+    </div>
 [% END %]
 </div>

@@ -1,13 +1,13 @@
 [% FILTER collapse %]
 <div style="position: absolute; left: 25px; top: 40%; text-align: center; border: 3px inset black; z-index: 5">
-	[% INCLUDE map/zoom.html max_zoom=6 %]
-		
-	<br>
-	<span id="party_center"><a href="javascript:refreshMap('','',[% zoom_level %])"><img src="[% c.config.static_path %]/images/center.gif" border=0></a></span>
-	<div 
-		dojoType="dijit.Tooltip" 
-		connectId="party_center"
-		label="Centre on Party"></div>
+    [% INCLUDE map/zoom.html max_zoom=6 %]
+
+    <br>
+    <span id="party_center"><a href="javascript:refreshMap('','',[% zoom_level %])"><img src="[% c.config.static_path %]/images/center.gif" border=0></a></span>
+    <div
+        dojoType="dijit.Tooltip"
+        connectId="party_center"
+        label="Centre on Party"></div>
 </div>
 [% END %]
 

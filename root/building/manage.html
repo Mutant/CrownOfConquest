@@ -12,47 +12,47 @@ to a garrison in the same sector.
 
 [% url_prefix = '' %]
 [% IF town %]
-	[% url_prefix = 'town/mayor/building_' %]
+    [% url_prefix = 'town/mayor/building_' %]
 [% ELSIF building_url_prefix %]
-	[% url_prefix = building_url_prefix %]
+    [% url_prefix = building_url_prefix %]
 [% ELSE %]
-	[% url_prefix = 'building/' %]
+    [% url_prefix = 'building/' %]
 [% END %]
 
 <form method="POST" id="create" action="[% base %]/[% url_prefix %]upgrade"  onSubmit="postPanels(this); return false">
-[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %] 
+[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %]
 <div style=" padding:10px; height:125px;">
-	<div id="building_types" style="float:left;width:300px;">
-		<div class="enlargedTitle" style="text-align: center; margin:10px;">
-			<span>[% building_type.name %]</span>
-		</div>
-		<div align="center">
-			<span>+[% building_type.defense_factor %] defence factor</span><br>				
-			Max Upgrade Level: [% building_type.max_upgrade_level %]<br>
-		</div>		
-		<div style="text-align: center; margin:10px;">
-			<img height=40 width=40 src="[% c.config.static_path %]/images/map/building/[% building_type.image %]">
-		</div>
-		
-		[% IF upgradable_to_type %]
-		<div style="text-align: center;">Upgrade [% building_type.name %] to [% upgradable_to_type.name %]</div>
-		
-		<div style="text-align: center; margin:10px;">
-			[% IF ! upgradable_to_type.enough_turns(party) %]
-				<input type="button" disabled="disabled" value="Not enough turns to build"></input>
-			[% ELSIF ! enough_resources %]
-				<input type="button" disabled="disabled" value="Not enough resources"></input>
-			[% ELSE %]
-				<input type="submit" value="Upgrade Base Building"></input>
-			[% END %]
-		</div>
-		[% ELSE %]
-			No further base building upgrades available.
-		[% END %]
-	</div>
+    <div id="building_types" style="float:left;width:300px;">
+        <div class="enlargedTitle" style="text-align: center; margin:10px;">
+            <span>[% building_type.name %]</span>
+        </div>
+        <div align="center">
+            <span>+[% building_type.defense_factor %] defence factor</span><br>
+            Max Upgrade Level: [% building_type.max_upgrade_level %]<br>
+        </div>
+        <div style="text-align: center; margin:10px;">
+            <img height=40 width=40 src="[% c.config.static_path %]/images/map/building/[% building_type.image %]">
+        </div>
 
-	[% INCLUDE building/building_details.html upgrade=1, building_type=upgradable_to_type %]
-		
+        [% IF upgradable_to_type %]
+        <div style="text-align: center;">Upgrade [% building_type.name %] to [% upgradable_to_type.name %]</div>
+
+        <div style="text-align: center; margin:10px;">
+            [% IF ! upgradable_to_type.enough_turns(party) %]
+                <input type="button" disabled="disabled" value="Not enough turns to build"></input>
+            [% ELSIF ! enough_resources %]
+                <input type="button" disabled="disabled" value="Not enough resources"></input>
+            [% ELSE %]
+                <input type="submit" value="Upgrade Base Building"></input>
+            [% END %]
+        </div>
+        [% ELSE %]
+            No further base building upgrades available.
+        [% END %]
+    </div>
+
+    [% INCLUDE building/building_details.html upgrade=1, building_type=upgradable_to_type %]
+
 </div>
 </form>
 
@@ -63,83 +63,83 @@ to a garrison in the same sector.
 
 <h2>Available Add-ons</h2>
 <div dojoType="dijit.Tooltip"
-   		connectId="upgrade-current-level"
-		style="display: none">
-		The current level of the upgrade, minus any temporary damage done by magical bombs.		 
+           connectId="upgrade-current-level"
+        style="display: none">
+        The current level of the upgrade, minus any temporary damage done by magical bombs.
 </div>
 <table class="main" cellspacing="3">
-	<tr>
-		<th>Add-on</th>
-		<th>Current Level <span id="upgrade-current-level">(?)</span></th>
-		<th>Current Bonus</th>
-		<th>Bonus Next Level</th>
-		<th>Cost To Build</th>
-	</tr>
+    <tr>
+        <th>Add-on</th>
+        <th>Current Level <span id="upgrade-current-level">(?)</span></th>
+        <th>Current Bonus</th>
+        <th>Bonus Next Level</th>
+        <th>Cost To Build</th>
+    </tr>
 [% FOREACH upgrade_type IN upgrade_types %]
-	<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
-		<td>[% upgrade_type.name %] <span id="upgrade_type_desc_[% upgrade_type.type_id %]">(?)</span>
-			<div dojoType="dijit.Tooltip" connectId="upgrade_type_desc_[% upgrade_type.type_id %]">
-				[% upgrade_type.description | wrap(50, '', '<br>') %]
-			</div>
-		</td>
-		[% level = upgrades_by_type_id.${upgrade_type.type_id}.effective_level || 0 %]
-		<td align="center">[% level %] 
-			[% IF upgrades_by_type_id.${upgrade_type.type_id}.damage %](Dmg: [% upgrades_by_type_id.${upgrade_type.type_id}.damage %])[% END %]
-		</td>
-		
-		<td align="center">
-			[% IF level %]
-				[% upgrade_type.bonus_label(level) %]
-			[% END %]
-		</td>
-		<td align="center">
-			[% upgrade_type.bonus_label(level+1) %]
-		</td>
-			
-		
-		[% costs = upgrade_type.cost_to_upgrade(level+1) %]
-		<td align="center">
-			[% FOREACH cost IN costs %]
-				[% IF ! cost.value %][% costs.delete(cost.key) %][% END %]
-			[% END %]
-			
-			[% turn_cost = costs.Turns %]
-			[% IF turn_cost %]
-				[% turn_cost %] turns[% IF costs %],[% END %]
-				<span [% IF party.turns < turn_cost %]style="color: red"[% END %]>
-				[% costs.delete('Turns') %]
-				</span>
-			[% END %]
-			
-			[% enough_res = 1 %]
-			[% FOREACH cost IN costs %]
-				[% IF cost.key == 'Gold' %]
-					[% amount_has = party.gold %]
-				[% ELSE %]
-					[% amount_has = party_resources.${cost.key} %]
-				[% END %]
-				
-				<span [% IF amount_has < cost.value %][% enough_res = 0 %]style="color: red"[% END %]>
-				[% cost.value %] [% cost.key %][% IF ! loop.last %],[% END %]
-				</span>
-			[% END %]
-		</td>
-		<td align="center">
-			[% IF party.turns < costs.Turns %]
-				<input type="button" disabled="disabled" value="Not enough turns"></input>
-			[% ELSIF ! enough_res %]
-				<input type="button" disabled="disabled" value="Not enough resources"></input>
-			[% ELSIF level >= building_type.max_upgrade_level %]
-				<input type="button" disabled="disabled" value="Upgrade Base Building"></input>
-			[% ELSE %]
-				<form method="POST" action="[% base %][% url_prefix %]build_upgrade" onSubmit="postPanels(this); return false">
-				<input type="hidden" name="upgrade_type_id" value="[% upgrade_type.id %]">
-				[% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %] 
-				<input type="submit" value="Build"></input>
-				</form>
-			[% END %]
-		</td>
-	</tr>
+    <tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
+        <td>[% upgrade_type.name %] <span id="upgrade_type_desc_[% upgrade_type.type_id %]">(?)</span>
+            <div dojoType="dijit.Tooltip" connectId="upgrade_type_desc_[% upgrade_type.type_id %]">
+                [% upgrade_type.description | wrap(50, '', '<br>') %]
+            </div>
+        </td>
+        [% level = upgrades_by_type_id.${upgrade_type.type_id}.effective_level || 0 %]
+        <td align="center">[% level %]
+            [% IF upgrades_by_type_id.${upgrade_type.type_id}.damage %](Dmg: [% upgrades_by_type_id.${upgrade_type.type_id}.damage %])[% END %]
+        </td>
+
+        <td align="center">
+            [% IF level %]
+                [% upgrade_type.bonus_label(level) %]
+            [% END %]
+        </td>
+        <td align="center">
+            [% upgrade_type.bonus_label(level+1) %]
+        </td>
+
+
+        [% costs = upgrade_type.cost_to_upgrade(level+1) %]
+        <td align="center">
+            [% FOREACH cost IN costs %]
+                [% IF ! cost.value %][% costs.delete(cost.key) %][% END %]
+            [% END %]
+
+            [% turn_cost = costs.Turns %]
+            [% IF turn_cost %]
+                [% turn_cost %] turns[% IF costs %],[% END %]
+                <span [% IF party.turns < turn_cost %]style="color: red"[% END %]>
+                [% costs.delete('Turns') %]
+                </span>
+            [% END %]
+
+            [% enough_res = 1 %]
+            [% FOREACH cost IN costs %]
+                [% IF cost.key == 'Gold' %]
+                    [% amount_has = party.gold %]
+                [% ELSE %]
+                    [% amount_has = party_resources.${cost.key} %]
+                [% END %]
+
+                <span [% IF amount_has < cost.value %][% enough_res = 0 %]style="color: red"[% END %]>
+                [% cost.value %] [% cost.key %][% IF ! loop.last %],[% END %]
+                </span>
+            [% END %]
+        </td>
+        <td align="center">
+            [% IF party.turns < costs.Turns %]
+                <input type="button" disabled="disabled" value="Not enough turns"></input>
+            [% ELSIF ! enough_res %]
+                <input type="button" disabled="disabled" value="Not enough resources"></input>
+            [% ELSIF level >= building_type.max_upgrade_level %]
+                <input type="button" disabled="disabled" value="Upgrade Base Building"></input>
+            [% ELSE %]
+                <form method="POST" action="[% base %][% url_prefix %]build_upgrade" onSubmit="postPanels(this); return false">
+                <input type="hidden" name="upgrade_type_id" value="[% upgrade_type.id %]">
+                [% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %]
+                <input type="submit" value="Build"></input>
+                </form>
+            [% END %]
+        </td>
+    </tr>
 [% END %]
 </table>
 
@@ -149,22 +149,22 @@ to a garrison in the same sector.
 <br>
 
 [% IF ! town %]
-	<div align="center">
-		[% IF ! garrison_in_sector %]
-			<button id="raze-building" onClick="getPanels('[% url_prefix %]raze'); return false;">Raze Building</button>
-		[% END %]
-		[% IF building_owner_type != 'kingdom' && party.kingdom_id %]
-			<button id="cede-building" onClick="getPanels('[% url_prefix %]cede'); return false;">Cede Building</button>
-		[% END %]
-		<div dojoType="dijit.Tooltip"
-	       		connectId="raze-building"
-				style="display: none">
-			Raze the building to the ground. Be sure you want to do this, as it will be lost forever!			 
-		</div>
-		<div dojoType="dijit.Tooltip"
-	       		connectId="cede-building"
-				style="display: none">
-			Cede control of this building to your Kingdom.			 
-		</div>
-	</div>
+    <div align="center">
+        [% IF ! garrison_in_sector %]
+            <button id="raze-building" onClick="getPanels('[% url_prefix %]raze'); return false;">Raze Building</button>
+        [% END %]
+        [% IF building_owner_type != 'kingdom' && party.kingdom_id %]
+            <button id="cede-building" onClick="getPanels('[% url_prefix %]cede'); return false;">Cede Building</button>
+        [% END %]
+        <div dojoType="dijit.Tooltip"
+                   connectId="raze-building"
+                style="display: none">
+            Raze the building to the ground. Be sure you want to do this, as it will be lost forever!
+        </div>
+        <div dojoType="dijit.Tooltip"
+                   connectId="cede-building"
+                style="display: none">
+            Cede control of this building to your Kingdom.
+        </div>
+    </div>
 [% END %]

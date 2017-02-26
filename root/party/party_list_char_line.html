@@ -1,10 +1,10 @@
-	<td nowrap="nowrap">
-		[% INCLUDE party/party_char_alerts.html %]
-	</td>
-    <td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png" 
-    	title="[% char.race.race_name %] [% char.class.class_name %]"></td>
+    <td nowrap="nowrap">
+        [% INCLUDE party/party_char_alerts.html %]
+    </td>
+    <td><img src="[% c.config.static_path %]/images/portraits/characters/[% char.portrait %]small.png"
+        title="[% char.race.race_name %] [% char.class.class_name %]"></td>
     <td nowrap="nowrap"><a href="javascript:loadScreen('character/view?character_id=[% char.character_id %]')">[% char.character_name %]</a></td>
     <td nowrap="nowrap" align="center">[% char.level %]</td>
     <td nowrap="nowrap">[% IF char.is_dead %]Dead[% ELSE %][% char.hit_points %] / [% char.max_hit_points %][% END %]</td>
-	<td>&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;</td>
     <td nowrap="nowrap">[% char.xp %]</td>

@@ -1,23 +1,23 @@
 [% PROCESS layout/diag_buttons.html %]
 <div dojoType="dijit.Dialog" id="drop-item-diag" style="display: none" title="Drop Item Confirmation" execute="drop_item(arguments[0])">
-	<input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
-	<input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
+    <input name="item_id" type="hidden" id="drop-item-id" dojoType=dijit.form.TextBox>
+    <input name="char_id" type="hidden" id="drop-char-id" dojoType=dijit.form.TextBox>
     Are you sure you want to drop the item?<br>
     (Note, items dropped in town will disappear forever!)
-	[% dialog_buttons('drop-item-diag') %]
-	</form>
+    [% dialog_buttons('drop-item-diag') %]
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="split-diag" style="display: none" title="Split Item" execute="split_item_submit(arguments[0]);">
     Amount to split out: <input type="text" dojoType=dijit.form.TextBox name="new_quantity" value="1">
     <input id="split-item-id" name="item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none">
-	[% dialog_buttons('split-diag') %]
+    [% dialog_buttons('split-diag') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="change-name-diag" style="display: none" title="Change Character's Name">
-	<form method="POST" action="[% base %]/character/change_name" onSubmit="postPanels(this); return false">
+    <form method="POST" action="[% base %]/character/change_name" onSubmit="postPanels(this); return false">
     Change Character's Name To: <input type="text" dojoType=dijit.form.TextBox id="character-name" name="new_name">
     <input id="name-char-id" name="character_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('change-name-diag') %]
-	</form>
+    [% dialog_buttons('change-name-diag') %]
+    </form>
 </div>

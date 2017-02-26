@@ -1,25 +1,25 @@
 <h3>Add a Character to the Inn of [% town.town_name %]</h3>
 
 [% IF characters.size > 1 %]
-	Choose characters to stay at the inn. Characters staying at the inn will be quite safe - so long as you can pay the daily fee. 
-	<br><br>
-	<table class="main">
-	<tr>
-	    [% INCLUDE party/party_list_header.html %]
-	    <th>Daily Cost</th>
-	</tr>
-	
-	[% FOREACH char IN characters %]
-		<tr>
-		[% INCLUDE party/party_list_char_line.html %]
-		<td align="center">[% town.inn_cost(char) %]</td>
-		<td><a href="javascript:getPanels('town/inn/add_character?character_id=[% char.id %]')">Add to Inn</a></td>
-		</tr>
-	[% END %]
-	
-	</table>
+    Choose characters to stay at the inn. Characters staying at the inn will be quite safe - so long as you can pay the daily fee.
+    <br><br>
+    <table class="main">
+    <tr>
+        [% INCLUDE party/party_list_header.html %]
+        <th>Daily Cost</th>
+    </tr>
+
+    [% FOREACH char IN characters %]
+        <tr>
+        [% INCLUDE party/party_list_char_line.html %]
+        <td align="center">[% town.inn_cost(char) %]</td>
+        <td><a href="javascript:getPanels('town/inn/add_character?character_id=[% char.id %]')">Add to Inn</a></td>
+        </tr>
+    [% END %]
+
+    </table>
 [% ELSE %]
-	You only have one character in your party, so can't add anyone to the inn.
+    You only have one character in your party, so can't add anyone to the inn.
 [% END %]
 
 <br><br>

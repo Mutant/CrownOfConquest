@@ -1,84 +1,84 @@
 [% IF window %]
-	[% INCLUDE top.html %]
+    [% INCLUDE top.html %]
 [% END %]
 
 [% PROCESS layout/diag_buttons.html %]
 
 <script type="text/javascript">
     function init() {
-		[% IF group %]displayCharList('[% group %]');[% END %]
-	}
+        [% IF group %]displayCharList('[% group %]');[% END %]
+    }
 
-	dojo.addOnLoad( init );
-	
-	var inCharWindow = '[% window ? 'true' : 'false' %]';
+    dojo.addOnLoad( init );
+
+    var inCharWindow = '[% window ? 'true' : 'false' %]';
 
 
 function addStatPoint(char_id, stat) {
-	if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
-		return;
-	}
+    if (parseInt( dojo.byId('stat-points').innerHTML ) <= 0) {
+        return;
+    }
 
-	dojo.xhrGet( {
+    dojo.xhrGet( {
         url: "[% base %]/character/add_stat_point?stat=" + stat + "&character_id=" + char_id,
-        handleAs: "json",	
+        handleAs: "json",
         load: function(responseObject, ioArgs) {
-        	if (responseObject.error) {
-   	          	dojo.byId('message-text').innerHTML = responseObject.error;
-		      	dijit.byId('message').show();			
-        	}
-        	else {
-        	    statValStr = dojo.byId('stat-' + stat).innerHTML;
-        	    statValStr = statValStr.replace(/&nbsp;/,'');
-        	    
-        		statVal = parseInt( statValStr )+1;
-        		
-        		statVal = statVal + "";
-        		if (statVal.length == 1) {
-        			statVal = "&nbsp;" + statVal;
-        		}
-        		
-        		dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
-        		dojo.byId('stat-' + stat).innerHTML = statVal;
-        		
-        		[% IF ! window %]getPanels('party/refresh_party_list');[% END %]
-        	}
+            if (responseObject.error) {
+                     dojo.byId('message-text').innerHTML = responseObject.error;
+                  dijit.byId('message').show();
+            }
+            else {
+                statValStr = dojo.byId('stat-' + stat).innerHTML;
+                statValStr = statValStr.replace(/&nbsp;/,'');
+
+                statVal = parseInt( statValStr )+1;
+
+                statVal = statVal + "";
+                if (statVal.length == 1) {
+                    statVal = "&nbsp;" + statVal;
+                }
+
+                dojo.byId('stat-points').innerHTML  = parseInt( dojo.byId('stat-points').innerHTML ) -1;
+                dojo.byId('stat-' + stat).innerHTML = statVal;
+
+                [% IF ! window %]getPanels('party/refresh_party_list');[% END %]
+            }
         }
     });
 }
 
 function changeNameDiag(char_name, char_id) {
-	dojo.byId('name-char-id').value = char_id;
-	dojo.byId('character-name').value = char_name;
-	dojo.byId('character-name').select();
-	dijit.byId('change-name-diag').show();
+    dojo.byId('name-char-id').value = char_id;
+    dojo.byId('character-name').value = char_name;
+    dojo.byId('character-name').select();
+    dijit.byId('change-name-diag').show();
 }
 
 function calculateSpellPoints() {
-	inputs = dojo.byId('spells-form').getElementsByTagName('input');
+    inputs = dojo.byId('spells-form').getElementsByTagName('input');
 
-	var points_used = 0;
-	
-	spell_id_regex = /^mem_tomorrow_(\d+)$/;
-	
-	for	(i=0; i<inputs.length; i++) {
-		input = inputs[i];
-						
-		if (matches = spell_id_regex.exec(input.name)) {
-			spell_id = matches[1];
-			number_of_casts = input.value;
-			
-			spell_points = dojo.byId('spell_points_' + spell_id).innerHTML;
-			
-			points_used+= number_of_casts * spell_points;
-		}
-	}
-	
-	dojo.byId('spell-points-used').innerHTML = points_used;
+    var points_used = 0;
+
+    spell_id_regex = /^mem_tomorrow_(\d+)$/;
+
+    for	(i=0; i<inputs.length; i++) {
+        input = inputs[i];
+
+        if (matches = spell_id_regex.exec(input.name)) {
+            spell_id = matches[1];
+            number_of_casts = input.value;
+
+            spell_points = dojo.byId('spell_points_' + spell_id).innerHTML;
+
+            points_used+= number_of_casts * spell_points;
+        }
+    }
+
+    dojo.byId('spell-points-used').innerHTML = points_used;
 }
 
 $(function() {
-	loadCharStats('[% character.id %]');
+    loadCharStats('[% character.id %]');
 });
 
 </script>
@@ -99,61 +99,61 @@ $(function() {
 <h1>
 <span id="name-header">[% character.character_name %]</span>
 [% IF ! window && ! character.town_id %]
-	[% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]
-	<a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank" class="main">Open in New Window</a>
+    [% IF character.party_id %]<a href="javascript:changeNameDiag('[% character.character_name | replace("'","\\'") %]', '[% character.id %]')" class="main">Change</a>[% END %]
+    <a href="[% base %]/character/view?character_id=[% character.id %]&window=1" target="_blank" class="main">Open in New Window</a>
 [% END %]
 </h1>
 
 
 [% IF character.town_id %]
-	[% IF can_buy %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | [% END %]
-	<a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a>
+    [% IF can_buy %]<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a> | [% END %]
+    <a href="javascript:loadScreen('town/recruitment')">Back To Recruitment Office</a>
 [% END %]
 
 <div id="other-chars" style="margin-bottom: 3px">
 
 [% MACRO character_links(type, characters, display) BLOCK %]
-	<span id="character-list-[% type %]" [% UNLESS display %]style="display: none;"[% END %]>
-	[% FOREACH other_character IN characters %]
-		[% IF other_character.id == character.id %]
-			[% other_character.name %]
-		[% ELSE %]
-			[% FILTER collapse %]
-				[% IF window %]
-				<a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]">
-					[% other_character.name %]</a>				
-				[% ELSE %]
-				<a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
-					[% other_character.name %]</a>
-				[% END %]
-			[% END %]
-		[% END %]
-		&nbsp;
-	[% END %]
-	</span>
+    <span id="character-list-[% type %]" [% UNLESS display %]style="display: none;"[% END %]>
+    [% FOREACH other_character IN characters %]
+        [% IF other_character.id == character.id %]
+            [% other_character.name %]
+        [% ELSE %]
+            [% FILTER collapse %]
+                [% IF window %]
+                <a href="[% base %]/character/view?character_id=[% other_character.id %]&window=1&selected=[% selected %]">
+                    [% other_character.name %]</a>
+                [% ELSE %]
+                <a href="javascript:loadScreen('character/view?character_id=[% other_character.id %]&selected=[% selected %]')">
+                    [% other_character.name %]</a>
+                [% END %]
+            [% END %]
+        [% END %]
+        &nbsp;
+    [% END %]
+    </span>
 [% END %]
 
 [% IF ! character.party_id %]
-	<b>Other Characters Available to Recruit</b>:
-	[% character_links(type, character_list, 1) %]
+    <b>Other Characters Available to Recruit</b>:
+    [% character_links(type, character_list, 1) %]
 [% ELSE %]
-	[%# Two passes due to order... could be fixed.. %]
-	[% types = ['party', 'group', 'mayors', 'others'] %]
-	<span id="other-char-links" 
-		style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; 
-			background: #5F5F5F;">
-	[% FOREACH type IN types %]
-		[% IF character_list.$type.size > 0 %]
-			<a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
-		[% END %]
-	[% END %]
-	</span>
-	
-	[% FOREACH type IN types %]
-		[% IF character_list.$type.size > 0 %]
-			[% character_links(type, character_list.$type) %]
-		[% END %]
-	[% END %]
+    [%# Two passes due to order... could be fixed.. %]
+    [% types = ['party', 'group', 'mayors', 'others'] %]
+    <span id="other-char-links"
+        style="padding: 2px; margin-right: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px;
+            background: #5F5F5F;">
+    [% FOREACH type IN types %]
+        [% IF character_list.$type.size > 0 %]
+            <a href="javascript:displayCharList('[% type %]')" id="character-list-link-[% type %]">[% type | ucfirst %]</a>
+        [% END %]
+    [% END %]
+    </span>
+
+    [% FOREACH type IN types %]
+        [% IF character_list.$type.size > 0 %]
+            [% character_links(type, character_list.$type) %]
+        [% END %]
+    [% END %]
 [% END %]
 
 </div>
@@ -162,26 +162,26 @@ $(function() {
 
 </div>
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
-    <div dojoType="dojox.layout.ContentPane" title="Equipment" 
-    	href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
-    	[% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">    
+    <div dojoType="dojox.layout.ContentPane" title="Equipment"
+        href="[% base %]/character/equipment_tab?character_id=[% character.id %]"
+        [% IF selected == 'equipment' %]selected="true"[% END %] parseOnLoad="true">
     </div>
 
-	[% IF ! window && (character.class.class_name == 'Mage' || character.class.class_name == 'Priest') %]
-    <div dojoType="dijit.layout.ContentPane" title="Spells" 
-    	href="[% base %]/character/spells_tab?character_id=[% character.id %]"
-         [% IF selected == 'spells' %]selected="true"[% END %]>    
+    [% IF ! window && (character.class.class_name == 'Mage' || character.class.class_name == 'Priest') %]
+    <div dojoType="dijit.layout.ContentPane" title="Spells"
+        href="[% base %]/character/spells_tab?character_id=[% character.id %]"
+         [% IF selected == 'spells' %]selected="true"[% END %]>
     </div>
     [% END %]
-    
+
     [% IF ! window %]
     <div dojoType="dijit.layout.ContentPane" title="Skills" href="[% base %]/character/skills?character_id=[% character.id %]"
-    	[% IF selected == 'skills' %]selected="true"[% END %]>
-    </div>    
+        [% IF selected == 'skills' %]selected="true"[% END %]>
+    </div>
     [% END %]
-    
+
     <div dojoType="dijit.layout.ContentPane" title="History" href="[% base %]/character/history_tab?character_id=[% character.id %]"
-    	[% IF selected == 'history' %]selected="true"[% END %]>    
+        [% IF selected == 'history' %]selected="true"[% END %]>
     </div>
 
 </div>
@@ -189,5 +189,5 @@ $(function() {
 </div>
 
 [% IF window %]
-	[% INCLUDE bottom.html %]
+    [% INCLUDE bottom.html %]
 [% END %]

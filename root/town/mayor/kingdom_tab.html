@@ -5,22 +5,22 @@
 
 <br>
 [% IF kingdom %]
-	The town must pay [% kingdom.mayor_tax %]% of all daily income to the kingdom as tax.
-	<br><br>
-	[% IF town.id != kingdom.capital %]
-		Town's loyalty to the Kingdom: [% display_kingdom_loyalty(town.kingdom_loyalty) %]
-		<br><br>
-	[% END %]
+    The town must pay [% kingdom.mayor_tax %]% of all daily income to the kingdom as tax.
+    <br><br>
+    [% IF town.id != kingdom.capital %]
+        Town's loyalty to the Kingdom: [% display_kingdom_loyalty(town.kingdom_loyalty) %]
+        <br><br>
+    [% END %]
 [% END %]
 
 <form method="POST" action="[% base %]town/mayor/change_allegiance" onSubmit="postPanels(this); return false">
 <input type="hidden" name="town_id" value="[% town.id %]">
-Change town's allegiance to: 
-	<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false">
-		[% IF kingdom %]<option value="">None (Become A Free Town)</option>[% END %]
-		[% FOREACH kingdom IN kingdoms %]
-        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
-		[% END %]
-	</select>
-	<input type="submit" value="Change">
+Change town's allegiance to:
+    <select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false">
+        [% IF kingdom %]<option value="">None (Become A Free Town)</option>[% END %]
+        [% FOREACH kingdom IN kingdoms %]
+            <option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
+        [% END %]
+    </select>
+    <input type="submit" value="Change">
 </form>

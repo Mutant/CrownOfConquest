@@ -13,16 +13,16 @@ Do you require any further services?
 [% END %]
 
 <ul>
-	[% IF cost_to_heal != 0 %]
-		<li><a href="javascript:getPanels('/town/heal_party')">Heal Party (Full)</a> ([% cost_to_heal %] gold)</li>
-		<li><a href="#" onClick="javascript:dijit.byId('partial-heal-diag').show()">Heal Party (Partial)</a></li>
-	[% END %]
-	[% FOREACH dead_char IN dead_characters %]
-		<li><a href="javascript:getPanels('/town/resurrect?character_id=[% dead_char.id %]')">Resurrect [% dead_char.character_name %]</a> ([% dead_char.resurrect_cost %] gold)</li>
-	[% END %]
-	[% IF cost_to_heal == 0 && ! dead_characters.0 %]
-		<li>You do not require any healing</li>
-	[% END %]		
+    [% IF cost_to_heal != 0 %]
+        <li><a href="javascript:getPanels('/town/heal_party')">Heal Party (Full)</a> ([% cost_to_heal %] gold)</li>
+        <li><a href="#" onClick="javascript:dijit.byId('partial-heal-diag').show()">Heal Party (Partial)</a></li>
+    [% END %]
+    [% FOREACH dead_char IN dead_characters %]
+        <li><a href="javascript:getPanels('/town/resurrect?character_id=[% dead_char.id %]')">Resurrect [% dead_char.character_name %]</a> ([% dead_char.resurrect_cost %] gold)</li>
+    [% END %]
+    [% IF cost_to_heal == 0 && ! dead_characters.0 %]
+        <li>You do not require any healing</li>
+    [% END %]
 </ul>
 
 [% INCLUDE town/discount_message.html shop_type='healer' %]

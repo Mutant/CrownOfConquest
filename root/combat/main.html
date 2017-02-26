@@ -1,32 +1,32 @@
 [% IF creature_group && creature_group.number_alive > 0 %]
-	[% IF creatures_initiated %]
-		You have been attacked by a group of 
-	[% ELSE %]
-		You are in combat with a group of
-	[% END %]
-	[% INCLUDE combat/creature_group_summary.html creature_group=creature_group %]
-	<br><br>
-	[% IF orb %]
-	These creatures guard the Orb of [% orb.name %]!
-	<br><br>
-	[% END %]
+    [% IF creatures_initiated %]
+        You have been attacked by a group of
+    [% ELSE %]
+        You are in combat with a group of
+    [% END %]
+    [% INCLUDE combat/creature_group_summary.html creature_group=creature_group %]
+    <br><br>
+    [% IF orb %]
+    These creatures guard the Orb of [% orb.name %]!
+    <br><br>
+    [% END %]
 [% END %]
 
 [% IF garrison_initiated %]
-	You have been attacked by a garrison.<br><br>
+    You have been attacked by a garrison.<br><br>
 [% END %]
 
 [% UNLESS combat_complete || party_dead %]
 [% prefix = '' %]
 [% IF in_dungeon %]
-	[% prefix = '/dungeon' %]
+    [% prefix = '/dungeon' %]
 [% ELSIF type == 'party' %]
-	[% prefix = '/party' %]
+    [% prefix = '/party' %]
 [% ELSIF type == 'garrison' %]
-	[% prefix = '/garrison' %]
-[% END %]	
+    [% prefix = '/garrison' %]
+[% END %]
 
-<a href="javascript:getPanels('[% prefix %]/combat/fight')"><img src="[% c.config.static_path %]/images/fightunsel.png" border="0"></a> 
+<a href="javascript:getPanels('[% prefix %]/combat/fight')"><img src="[% c.config.static_path %]/images/fightunsel.png" border="0"></a>
 <a href="javascript:getPanels('[% prefix %]/combat/flee')"><img src="[% c.config.static_path %]/images/fleeunsel.png" border="0"></a>
 
 <br><br>
@@ -42,10 +42,10 @@
 </ul>
 
 [% IF combat_complete && ! party_dead %]
-	<p><a href="javascript:getPanels('/party/refresh_messages')">Continue</a></p>
+    <p><a href="javascript:getPanels('/party/refresh_messages')">Continue</a></p>
 [% END %]
 
 [% IF party_dead %]
-	<a href="[% base %]">Click to Restart your party.</a>
+    <a href="[% base %]">Click to Restart your party.</a>
 [% END %]
 [% END %]

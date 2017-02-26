@@ -6,34 +6,34 @@
 
 <div style="min-height: 350px" dojoType="dijit.layout.TabContainer">
     <div dojoType="dijit.layout.ContentPane" title="Current" style="display: none">
-    
+
     Your party has <b>[% mayors.size %]</b> mayor[% IF mayors.size > 1 %]s[% END %], out of a maximum allowed of <b>[% party.mayor_count_allowed %]</b>.
     (<a href="[% base %]help/reference/mayors" target="_new">?</a>)<br><br>
-    
-	[% UNLESS mayors.0 %]
-	None of your characters are mayors of a town
-	[% ELSE %]
-		<table class="main" cellpadding="2" cellspacing="0">
-			<tr>
-				<th>Mayor</th>
-				<th>Town</th>
-				<th>Approval Rating</th>
-				<th>Manage</th>
-			</tr>
 
-		[% FOREACH mayor IN mayors %]
-			[% town = mayor.mayor_of_town %]
-			<tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
-				<td><b><a href="javascript:loadScreen('character/view?character_id=[% mayor.id %]')">[% mayor.character_name %]</a></b></td>
-				<td>[% town.town_name %] ([% town.location.x %], [% town.location.y %])</td>
-				<td>[% display_rating(mayor.mayor_of_town.mayor_rating) | trim | wrap(20, '', '<br>') %]</td>				
-				<td><a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of_town.id %]')">Manage</a></td>
-			</tr>
-		[% END %]
-		
-	    </table>
-	[% END %]
-	</div>
-	
-	<div dojoType="dijit.layout.ContentPane" title="Historical" style="display: none" href="[% base %]party/details/mayors_historical"></div>
-</div>		
+    [% UNLESS mayors.0 %]
+    None of your characters are mayors of a town
+    [% ELSE %]
+        <table class="main" cellpadding="2" cellspacing="0">
+            <tr>
+                <th>Mayor</th>
+                <th>Town</th>
+                <th>Approval Rating</th>
+                <th>Manage</th>
+            </tr>
+
+        [% FOREACH mayor IN mayors %]
+            [% town = mayor.mayor_of_town %]
+            <tr style="font-size: 8pt; [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]">
+                <td><b><a href="javascript:loadScreen('character/view?character_id=[% mayor.id %]')">[% mayor.character_name %]</a></b></td>
+                <td>[% town.town_name %] ([% town.location.x %], [% town.location.y %])</td>
+                <td>[% display_rating(mayor.mayor_of_town.mayor_rating) | trim | wrap(20, '', '<br>') %]</td>
+                <td><a href="javascript:loadScreen('town/mayor?town_id=[% mayor.mayor_of_town.id %]')">Manage</a></td>
+            </tr>
+        [% END %]
+
+        </table>
+    [% END %]
+    </div>
+
+    <div dojoType="dijit.layout.ContentPane" title="Historical" style="display: none" href="[% base %]party/details/mayors_historical"></div>
+</div>

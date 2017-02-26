@@ -1,6 +1,6 @@
-<div id="minimap" style="display: [% IF mini_map_state == 'open' %]block[% ELSE %]none[% END %]; 
-	position: relative; overflow:hidden; width: 200px; height: 200px; cursor: pointer">
-<div id="minimap-view-box" style="display: none; position: absolute; left: 30px; top: 40px; height: 40px; width: 60px; border: 2px solid #FF0000"></div>	  
+<div id="minimap" style="display: [% IF mini_map_state == 'open' %]block[% ELSE %]none[% END %];
+    position: relative; overflow:hidden; width: 200px; height: 200px; cursor: pointer">
+<div id="minimap-view-box" style="display: none; position: absolute; left: 30px; top: 40px; height: 40px; width: 60px; border: 2px solid #FF0000"></div>
   <img src="[% base %]static/minimap/kingdoms.png">
 </div>
 
@@ -8,14 +8,14 @@
 </div>
 
 <div align="center" class="main" style="background: black">
-	<em>Kingdom Map</em><br>
-	<span id="hide-kingdom-map-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %];">
-		<a href="javascript:hideKingdomMap()">Hide</a>
-	</span>
-	<span id="show-kingdom-map-link" style="display: [% IF mini_map_state == 'closed' %]inline[% ELSE %]none[% END %]">
-		<a href="javascript:showKingdomMap()">Show</a>
-	</span>
-	<span id="center-party-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %]">
-		<a href="javascript:getPanels('map/center')">Center On Party</a>
-	</span>
+    <em>Kingdom Map</em><br>
+    <span id="hide-kingdom-map-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %];">
+        <a href="javascript:hideKingdomMap()">Hide</a>
+    </span>
+    <span id="show-kingdom-map-link" style="display: [% IF mini_map_state == 'closed' %]inline[% ELSE %]none[% END %]">
+        <a href="javascript:showKingdomMap()">Show</a>
+    </span>
+    <span id="center-party-link" style="display: [% IF mini_map_state == 'open' %]inline[% ELSE %]none[% END %]">
+        <a href="javascript:getPanels('map/center')">Center On Party</a>
+    </span>
 </div>

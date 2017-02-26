@@ -11,11 +11,11 @@ Daily advisor payment: <input type="text" size="4" value="[% town.advisor_fee %]
 <b>Recent Advice:</b>
 
 <table class="main">
-	[% FOREACH advice_item IN advice %]
-	<tr>
-		<td width="80" nowrap>Day [% advice_item.day.day_number %]</td>
-		<td>[% advice_item.message %]</td>
-	</tr>
-	[% END %]
+    [% FOREACH advice_item IN advice %]
+    <tr>
+        <td width="80" nowrap>Day [% advice_item.day.day_number %]</td>
+        <td>[% advice_item.message %]</td>
+    </tr>
+    [% END %]
 </table>
 [% END %]

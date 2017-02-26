@@ -6,15 +6,15 @@
 Count: [% count %]<br><br>
 
 <table cellpadding=4>
-<tr>	
-	<th>Player Name</th>
-	<th># Of Logins</th>	
+<tr>
+    <th>Player Name</th>
+    <th># Of Logins</th>
 </tr>
 [% FOREACH player IN players %]
-	<tr>
-		<td>[% player.get_column('player_name') %]</td>
-		<td>[% player.get_column('count') %]</td>
-	</tr>
+    <tr>
+        <td>[% player.get_column('player_name') %]</td>
+        <td>[% player.get_column('count') %]</td>
+    </tr>
 [% END %]
 </table>
 

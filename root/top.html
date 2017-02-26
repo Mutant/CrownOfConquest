@@ -8,15 +8,15 @@
 
 [% SWITCH c.session.screen_width %]
 [% CASE 'large' %]
-	[% width = '1050px' %]
+    [% width = '1050px' %]
 [% CASE 'medium' %]
-	[% width = '920px' %]
+    [% width = '920px' %]
 [% CASE %]
-	[% width = '800px' %]
+    [% width = '800px' %]
 [% END %]
 <style>
 .kingdomsTabContainer {
-	width: [% width %];
+    width: [% width %];
 }
 </style>
 
@@ -29,7 +29,7 @@
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
 
 <style>
-	@import "http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"
+    @import "http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"
 </style>
 
 <link rel="stylesheet" type="text/css" href="[% c.config.static_path %]/main_0_8_7.css" />
@@ -49,45 +49,45 @@
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
-  
-	window.onerror = function (msg, url, line)
-	{
-		var params = {
-			"description": msg,
-      		"url": url,
-      		"lastAction": lastAction,
-      		"line": line,
-      		"user_agent": navigator.userAgent
-      	};
-	
-	    $.post("[% base %]/error/js_log", params); 
-	}
+
+    window.onerror = function (msg, url, line)
+    {
+        var params = {
+            "description": msg,
+              "url": url,
+              "lastAction": lastAction,
+              "line": line,
+              "user_agent": navigator.userAgent
+          };
+
+        $.post("[% base %]/error/js_log", params);
+    }
 
 </script>
 
 </head>
 <body class="tundra" id="body">
 <script>
-    
+
 [% IF error %]
 function error_init() {
-	dojo.byId('error-message').innerHTML = "[% error | html_entity | html_line_break | collapse %]";
-	dijit.byId('error').show();
+    dojo.byId('error-message').innerHTML = "[% error | html_entity | html_line_break | collapse %]";
+    dijit.byId('error').show();
 }
 dojo.addOnLoad( error_init );
 [% END %]
 
 [% IF message %]
 function message_init() {
-	dojo.byId('message-span').innerHTML = "[% message | html_entity | html_line_break | collapse %]";
-	dijit.byId('main-message-diag').show();
+    dojo.byId('message-span').innerHTML = "[% message | html_entity | html_line_break | collapse %]";
+    dijit.byId('main-message-diag').show();
 }
 dojo.addOnLoad( message_init );
 [% END %]
 
 function show_message(message) {
-	dojo.byId('message-span').innerHTML = message;
-	dijit.byId('main-message-diag').show();		
+    dojo.byId('message-span').innerHTML = message;
+    dijit.byId('main-message-diag').show();
 }
 
 </script>
@@ -99,50 +99,50 @@ function show_message(message) {
 
 <div dojoType="dijit.Dialog" id="main-message-diag" style="display: none" title="Message">
     <span id="message-span"></span><br>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
 
 <div id="content-outer" class="main">
 
 <div style="width: 100%">
 
-	<div class="login-info" style="text-align: center; color: white; padding-left: 30px">
-		<br>
-	[% IF main_screen %]
-		User: <b>[% c.session.player.player_name %]</b> /
-		Party: <b>[% party.name %]</b> /
-		<span id="online_parties-pane" dojoType="dijit.layout.ContentPane" style="display: inline"></span>
-	[% END %]
-	[% IF c.session.player %]		
-		<a href="[% base %]player/logout">Logout</a>
-	[% END %]
-	[% IF main_screen %] 
-		<br>
-		<a href="javascript:closeScreen(); getPanels('party/reward_links')">Get More Turns (Free!)</a> /
-		<a href="javascript:getPanels('player/chat')">Chat</a>		
-	[% END %]
-	<br>
-	<a href="[% base %]player/submit_bug" target="_blank">Submit A Bug</a> / 
-	<a href="[% base %]player/contact" target="_blank">Send Feedback / Contact Us</a>
-	</div>
+    <div class="login-info" style="text-align: center; color: white; padding-left: 30px">
+        <br>
+    [% IF main_screen %]
+        User: <b>[% c.session.player.player_name %]</b> /
+        Party: <b>[% party.name %]</b> /
+        <span id="online_parties-pane" dojoType="dijit.layout.ContentPane" style="display: inline"></span>
+    [% END %]
+    [% IF c.session.player %]
+        <a href="[% base %]player/logout">Logout</a>
+    [% END %]
+    [% IF main_screen %]
+        <br>
+        <a href="javascript:closeScreen(); getPanels('party/reward_links')">Get More Turns (Free!)</a> /
+        <a href="javascript:getPanels('player/chat')">Chat</a>
+    [% END %]
+    <br>
+    <a href="[% base %]player/submit_bug" target="_blank">Submit A Bug</a> /
+    <a href="[% base %]player/contact" target="_blank">Send Feedback / Contact Us</a>
+    </div>
 
-	<div style="float: right">
-		<br>
-		<a href="[% IF main_screen %]javascript:loadScreen('donate/screen')[% ELSE %][% base %]donate[% END %]">
-			<img src="/static/images/donate.gif" border="0">
-		</a>
-	</div>
+    <div style="float: right">
+        <br>
+        <a href="[% IF main_screen %]javascript:loadScreen('donate/screen')[% ELSE %][% base %]donate[% END %]">
+            <img src="/static/images/donate.gif" border="0">
+        </a>
+    </div>
 
-	<div style="background:url([% base %]static/images/coclogo[% IF main_screen %]small[% ELSE %]big[% END %].png) no-repeat center center; height: [% IF main_screen %]60[% ELSE %]134[% END %]px; cursor: pointer" onClick="document.location='[% base %]'">
-	</div>
+    <div style="background:url([% base %]static/images/coclogo[% IF main_screen %]small[% ELSE %]big[% END %].png) no-repeat center center; height: [% IF main_screen %]60[% ELSE %]134[% END %]px; cursor: pointer" onClick="document.location='[% base %]'">
+    </div>
 
 </div>
-	
+
 <div id="nav" style="width: 100%">
-	[% IF admin_screen %]
-		[% INCLUDE admin/left_hand_nav.html %]
-	[% ELSIF guest_screen %]	
-		[% INCLUDE player/left_hand_nav.html %]
-		<div class="line-sep"></div>
-	[% END %]	
+    [% IF admin_screen %]
+        [% INCLUDE admin/left_hand_nav.html %]
+    [% ELSIF guest_screen %]
+        [% INCLUDE player/left_hand_nav.html %]
+        <div class="line-sep"></div>
+    [% END %]
 </div>

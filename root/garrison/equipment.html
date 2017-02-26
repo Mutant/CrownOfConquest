@@ -1,10 +1,10 @@
 [% PROCESS equipment/grid.html %]
 
 <script>
-	$(function() {
-		loadCharGarrisonInventory('[% characters.0.id %]');
-		setupGarrison('[% garrison.id %]');
-	});	
+    $(function() {
+        loadCharGarrisonInventory('[% characters.0.id %]');
+        setupGarrison('[% garrison.id %]');
+    });
 </script>
 
 [% INCLUDE item/menu_diags.html %]
@@ -18,13 +18,13 @@
 </div>
 
 <div style="float: left; margin-right: 10px; min-width: 336px">
-<b>Garrison Equipment</b> 
-	<span style="font-size: 10px"><a href="javascript:organiseGarrisonEquipment('[% garrison.id %]')">Organise</a></span>
+<b>Garrison Equipment</b>
+    <span style="font-size: 10px"><a href="javascript:organiseGarrisonEquipment('[% garrison.id %]')">Organise</a></span>
 
 [% IF tabs.size > 1 %]
-	[% FOREACH tab IN tabs %]
-		<span id="garrison-tab-[% garrison.id %]-[% tab %]" class="garrison-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadGarrisonTab('[% garrison.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
-	[% END %]
+    [% FOREACH tab IN tabs %]
+        <span id="garrison-tab-[% garrison.id %]-[% tab %]" class="garrison-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadGarrisonTab('[% garrison.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
+    [% END %]
 [% END %]
 <div id="garrison-equipment-outer">
 [% create_grid('garrison', items_in_grid, 8, 8, 1, 0 ) %]
@@ -32,10 +32,10 @@
 </div>
 
 
-<div style="float: left; min-width: 620px;">	
-	<div id="char-garrison-inventory">
-		&nbsp;		
-	</div>
+<div style="float: left; min-width: 620px;">
+    <div id="char-garrison-inventory">
+        &nbsp;
+    </div>
 
 </div>
 

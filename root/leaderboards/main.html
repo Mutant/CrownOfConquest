@@ -1,15 +1,15 @@
 [% INCLUDE stats/subnav.html %]
 
 [% MACRO page_links BLOCK %]
-	[% page = 1 %]
-	[% WHILE page <= page_count %]
-		[% IF current_page == page %]
-			[% page %]
-		[% ELSE %]
-			<a href="javascript:loadScreen('leaderboards?page=[% page %]&sort=[% current_sort %]')">[% page %]</a>
-		[% END %]
-		[% page = page + 1 %]
-	[% END %]
+    [% page = 1 %]
+    [% WHILE page <= page_count %]
+        [% IF current_page == page %]
+            [% page %]
+        [% ELSE %]
+            <a href="javascript:loadScreen('leaderboards?page=[% page %]&sort=[% current_sort %]')">[% page %]</a>
+        [% END %]
+        [% page = page + 1 %]
+    [% END %]
 [% END %]
 
 <h2>Top Parties</h2>
@@ -17,18 +17,18 @@
 Top Parties By:
 
 [% sort_params = [
-	{ param => 'xp_per_turn'  label => 'XP per Turn' },
-	{ param => 'average_xp', label => 'XP per Char' },
-	{ param => 'total_xp',   label => 'Total XP' },
-	{ param => 'turns_used'  label => 'Turns Used' },
+    { param => 'xp_per_turn'  label => 'XP per Turn' },
+    { param => 'average_xp', label => 'XP per Char' },
+    { param => 'total_xp',   label => 'Total XP' },
+    { param => 'turns_used'  label => 'Turns Used' },
 ] %]
 
 [% FOREACH sort_param = sort_params %]
-	[% IF current_sort == sort_param.param %]
-		<span id="current-selection">[% sort_param.label %]</span>
-	[% ELSE %]
-		<a href="javascript:loadScreen('leaderboards?page=[% current_page %]&sort=[% sort_param.param %]')">[% sort_param.label %]</a>
-	[% END %]
+    [% IF current_sort == sort_param.param %]
+        <span id="current-selection">[% sort_param.label %]</span>
+    [% ELSE %]
+        <a href="javascript:loadScreen('leaderboards?page=[% current_page %]&sort=[% sort_param.param %]')">[% sort_param.label %]</a>
+    [% END %]
 [% END %]
 
 <br><br>
@@ -36,30 +36,30 @@ Top Parties By:
 <br>
 
 <table class="main" cellpadding=3 cellspacing=0>
-	<tr>
-		<th>Rank</th>
-		<th>Party</th>
-		<th>Player</th>
-		<th>XP per Turn</th>
-		<th>XP per Char</th>
-		<th>Total XP</th>
-		<th># of Chars</th>
-		<th>Turns Used</th>
-		<th>Date Created</th>
-		<th>Last Login</th>
-	</tr>
+    <tr>
+        <th>Rank</th>
+        <th>Party</th>
+        <th>Player</th>
+        <th>XP per Turn</th>
+        <th>XP per Char</th>
+        <th>Total XP</th>
+        <th># of Chars</th>
+        <th>Turns Used</th>
+        <th>Date Created</th>
+        <th>Last Login</th>
+    </tr>
 [% FOREACH party IN parties %]
-	<tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
-		<td>[% loop.count + offset %]</td>		
-		<td><a href="javascript:getPanels('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>		
-		<td>[% party.player.player_name %]</td>
-		<td align="right">[% party.get_column('xp_per_turn') %]</td>
-		<td align="right">[% party.get_column('average_xp') %]</td>
-		<td align="right">[% party.get_column('total_xp') %]</td>
-		<td align="right">[% party.get_column('character_count') %]</td>
-		<td align="right">[% party.turns_used %]</td>
-		<td>[% party.created.ymd %]</td>
-		<td>[% party.player.time_since_last_login %]</td>
-	</tr>
+    <tr style="[% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+        <td>[% loop.count + offset %]</td>
+        <td><a href="javascript:getPanels('party/profile?party_id=[% party.id %]')">[% party.name %]</a></td>
+        <td>[% party.player.player_name %]</td>
+        <td align="right">[% party.get_column('xp_per_turn') %]</td>
+        <td align="right">[% party.get_column('average_xp') %]</td>
+        <td align="right">[% party.get_column('total_xp') %]</td>
+        <td align="right">[% party.get_column('character_count') %]</td>
+        <td align="right">[% party.turns_used %]</td>
+        <td>[% party.created.ymd %]</td>
+        <td>[% party.player.time_since_last_login %]</td>
+    </tr>
 [% END %]
 </table>

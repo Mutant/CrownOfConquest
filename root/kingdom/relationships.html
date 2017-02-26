@@ -1,28 +1,28 @@
 <h4>Relationships</h4>
 
 <table class="main" cellpadding="5" cellspacing="0">
-	<tr>
-		<th>With Kingdom</th>
-		<th>Relationship</th>
-		<th>Since</th>
-		<th>Reciprocal<br>Relationship</th>
-	</tr>
-	[% FOREACH relationship IN relationships %]
-		<tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
-			<td>[% relationship.with_kingdom.name %]</td>
-			<td>[% relationship.type | ucfirst %]</td>
-			<td>[% IF relationship.begun %]
-					[% relationship.begun.day_number %]</b> ([% relationship.begun.difference_to_today_str %])
-				[% ELSE %]
-					N/A
-				[% END %]
-			</td>
-			<td>[% relationship.reciprocal_type | ucfirst  %]</td>
-			[% IF is_king %]
-			<td>			
-				<button dojoType="dijit.form.Button" onclick="showChangeRelationshipDiag('[% relationship.with_id %]', '[% relationship.type %]')">Change</button>			
-			</td>
-			[% END %]			
-		</tr>
-	[% END %]			
+    <tr>
+        <th>With Kingdom</th>
+        <th>Relationship</th>
+        <th>Since</th>
+        <th>Reciprocal<br>Relationship</th>
+    </tr>
+    [% FOREACH relationship IN relationships %]
+        <tr style="[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]">
+            <td>[% relationship.with_kingdom.name %]</td>
+            <td>[% relationship.type | ucfirst %]</td>
+            <td>[% IF relationship.begun %]
+                    [% relationship.begun.day_number %]</b> ([% relationship.begun.difference_to_today_str %])
+                [% ELSE %]
+                    N/A
+                [% END %]
+            </td>
+            <td>[% relationship.reciprocal_type | ucfirst  %]</td>
+            [% IF is_king %]
+            <td>
+                <button dojoType="dijit.form.Button" onclick="showChangeRelationshipDiag('[% relationship.with_id %]', '[% relationship.type %]')">Change</button>
+            </td>
+            [% END %]
+        </tr>
+    [% END %]
 </table>

@@ -1,61 +1,61 @@
 
 <div align="center">
-	<button onClick="">Update Orders</button>
+    <button onClick="">Update Orders</button>
 </div>
 
 <fieldset> <legend>Available buildings</legend>
 [% FOREACH next_type IN available_buildings %]
-	<div style=" padding:10px; height:125px;">
-		<div id="building_types" style="float:left;width:300px;">
-			<div class="enlargedTitle" style="text-align: center; margin:10px;">
-				<span>[% next_type.name %]</span>
-			</div>
-			<div style="text-align: center; margin:10px;">
-				<img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_type.image %]">
-			</div>
-			<div style="text-align: center; margin:10px;">
-				<select id="Action[% next_building.building_id %]">
-					<option value="NO_ACTION">Select Action</option>
-					<option value="START">Start Construction</option>
-				</select>
-			</div>		</div>
-	
-		[% INCLUDE town/building_details.html building_type=next_type show_resources=1
-			resources_title="Requires" %]
-	</div>
+    <div style=" padding:10px; height:125px;">
+        <div id="building_types" style="float:left;width:300px;">
+            <div class="enlargedTitle" style="text-align: center; margin:10px;">
+                <span>[% next_type.name %]</span>
+            </div>
+            <div style="text-align: center; margin:10px;">
+                <img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_type.image %]">
+            </div>
+            <div style="text-align: center; margin:10px;">
+                <select id="Action[% next_building.building_id %]">
+                    <option value="NO_ACTION">Select Action</option>
+                    <option value="START">Start Construction</option>
+                </select>
+            </div>		</div>
+
+        [% INCLUDE town/building_details.html building_type=next_type show_resources=1
+            resources_title="Requires" %]
+    </div>
 [% END %]
 </fieldset>
 
 <fieldset> <legend>Existing buildings</legend>
 [% FOREACH next_building IN existing_buildings %]
-	<div style=" padding:10px; height:125px;">
-		<div id="building_types" style="float:left; width:300px;">
-			<div class="enlargedTitle" style="text-align: center; margin:10px;">
-				<span>[% next_building.name %]</span>
-			</div>
-			<div style="text-align: center; margin:10px;">
-				<img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_building.image %]">
-			</div>
-			<div style="text-align: center; margin:10px;">
-				[% IF next_building.upgrades_to %]
-					<select id="Action[% next_building.building_id %]">
-						<option value="NO_ACTION">Select Action</option>
-						<option value="UPGRADE">Upgrade to [% next_building.upgrades_to.name %]</option>
-					</select>
-				[% ELSE %]
-					<span>No more upgrades possible</span>
-				[% END %]
-			</div>
-		</div>
-		
-		[% INCLUDE town/building_details.html building_type=next_building.type show_resources=0
-			effects_style="width:200px;" resources_title="" %]
-					
-		[% IF next_building.upgrades_to %]
-			[% INCLUDE town/building_details.html building_type=next_building.upgrades_to show_resources=1
-				resources_title="Upgrade requires" %]
-		[% END %]
-	</div>
+    <div style=" padding:10px; height:125px;">
+        <div id="building_types" style="float:left; width:300px;">
+            <div class="enlargedTitle" style="text-align: center; margin:10px;">
+                <span>[% next_building.name %]</span>
+            </div>
+            <div style="text-align: center; margin:10px;">
+                <img height=40 width=40 src="[% c.config.static_path %]/images/buildings/[% next_building.image %]">
+            </div>
+            <div style="text-align: center; margin:10px;">
+                [% IF next_building.upgrades_to %]
+                    <select id="Action[% next_building.building_id %]">
+                        <option value="NO_ACTION">Select Action</option>
+                        <option value="UPGRADE">Upgrade to [% next_building.upgrades_to.name %]</option>
+                    </select>
+                [% ELSE %]
+                    <span>No more upgrades possible</span>
+                [% END %]
+            </div>
+        </div>
+
+        [% INCLUDE town/building_details.html building_type=next_building.type show_resources=0
+            effects_style="width:200px;" resources_title="" %]
+
+        [% IF next_building.upgrades_to %]
+            [% INCLUDE town/building_details.html building_type=next_building.upgrades_to show_resources=1
+                resources_title="Upgrade requires" %]
+        [% END %]
+    </div>
 [% END %]
 </fieldset>
 

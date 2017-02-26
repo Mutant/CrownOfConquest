@@ -4,23 +4,23 @@
 <h2>Players Recently Gone Inactive</h2>
 
 <table cellpadding=2>
-<tr>	
-	<th>Player Name</th>
-	<th>Registration Date</th>
-	<th>Inactive Date</th>	
-	<th># Of Logins</th>
-	<th># Turns Used</th>
-	<th>Referer</th>
+<tr>
+    <th>Player Name</th>
+    <th>Registration Date</th>
+    <th>Inactive Date</th>
+    <th># Of Logins</th>
+    <th># Turns Used</th>
+    <th>Referer</th>
 </tr>
 [% FOREACH player IN players %]
-	<tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
-		<td>[% player.player_name %]</td>		
-		<td>[% player.created.ymd %]</td>
-		<td>[% player.deleted_date.ymd %]</td>
-		<td>[% player.login_count %]</td>
-		<td>[% player.total_turns_used %]</td>
-		<td>[% player.referer %]</td>
-	</tr>
+    <tr style="text-align: center; [% IF loop.count % 2 == 0 %]background: #2F2F2F;[% END %]">
+        <td>[% player.player_name %]</td>
+        <td>[% player.created.ymd %]</td>
+        <td>[% player.deleted_date.ymd %]</td>
+        <td>[% player.login_count %]</td>
+        <td>[% player.total_turns_used %]</td>
+        <td>[% player.referer %]</td>
+    </tr>
 [% END %]
 </table>
 

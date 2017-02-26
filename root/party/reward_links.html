@@ -3,25 +3,25 @@
 
 [% IF player_reward_links.0 %]
 
-<p>Click on the following links to receive rewards in the game. Please make sure you follow the instructions on the site to vote, filling out any CAPTCHAs, etc. 
+<p>Click on the following links to receive rewards in the game. Please make sure you follow the instructions on the site to vote, filling out any CAPTCHAs, etc.
 You won't receive the reward until your vote is registered properly! You can only vote on each site once per day.</p>
 
 <table class="main" cellspacing="6">
-	<tr>
-		<th>Site (click link to vote)</th>
-		<th>Reward</th>
-		<th>Last Voted</th>
-	</tr>
-	
-	[% FOREACH link IN player_reward_links %]
-	    [% link_info = link.link %]
-		<tr>
-			<td><a href="[% link.url %]" target="_new">Vote for Crown Of Conquest at [% link_info.label %]</a></td>
-			<td>[% link_info.turn_rewards %] turns</td>
-			<td>[% link.time_since_last_vote %]</td>
-		</tr>
-	[% END %]
-	
+    <tr>
+        <th>Site (click link to vote)</th>
+        <th>Reward</th>
+        <th>Last Voted</th>
+    </tr>
+
+    [% FOREACH link IN player_reward_links %]
+        [% link_info = link.link %]
+        <tr>
+            <td><a href="[% link.url %]" target="_new">Vote for Crown Of Conquest at [% link_info.label %]</a></td>
+            <td>[% link_info.turn_rewards %] turns</td>
+            <td>[% link.time_since_last_vote %]</td>
+        </tr>
+    [% END %]
+
 </table>
 
 [% ELSE %]
@@ -33,7 +33,7 @@ There are no reward links currently activated.
 <p>The following won't give you any rewards, but you can still vote on Crown Of Conquest to help get more players into the game (a.k.a out of the kindness of your heart):</p>
 
 <ul>
-	<li><a href="http://browsermmorpg.com/vote.php?id=651" target="_new">Vote for Crown Of Conquest at Browser MMORPGs</a>
-	<li><a href="http://www.topwebgames.com/in.asp?id=6972" target="_new">Vote for Crown Of Conquest at Top Web Games</a></li>
-	<li><a href="http://www.omgspider.com/in.php?game_id=1778" target="_new">Vote for Crown Of Conquest at OMGSPIDER</a></li>
+    <li><a href="http://browsermmorpg.com/vote.php?id=651" target="_new">Vote for Crown Of Conquest at Browser MMORPGs</a>
+    <li><a href="http://www.topwebgames.com/in.asp?id=6972" target="_new">Vote for Crown Of Conquest at Top Web Games</a></li>
+    <li><a href="http://www.omgspider.com/in.php?game_id=1778" target="_new">Vote for Crown Of Conquest at OMGSPIDER</a></li>
 </ul>

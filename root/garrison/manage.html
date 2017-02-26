@@ -2,68 +2,68 @@
 
 <script type="text/javascript">
 function saveCharacterOrder(select, char_id) {
-	dojo.xhrGet( {
+    dojo.xhrGet( {
         url: "[% base %]/combat/select_action?character_id=" + char_id + "&action=" + select.options[select.selectedIndex].value,
-        handleAs: "text",        
+        handleAs: "text",
     });
 }
 
 function confirmedMove(arguments) {
-	itemSpan = dojo.byId(arguments.move_item_id);
-	moveItem(itemSpan, true);
+    itemSpan = dojo.byId(arguments.move_item_id);
+    moveItem(itemSpan, true);
 }
 
 
 function confirmRemoveGarrison() {
-	dijit.byId('confirm-remove').show();
+    dijit.byId('confirm-remove').show();
 }
 
 function removeGarrison() {
-	getPanels('garrison/remove?garrison_id=[% garrison.id %]');
+    getPanels('garrison/remove?garrison_id=[% garrison.id %]');
 }
 
 function changeName(arguments) {
-	var new_name = arguments.garrison_name;
+    var new_name = arguments.garrison_name;
 
-	dojo.xhrGet( {
+    dojo.xhrGet( {
         url: "[% base %]/garrison/update_garrison_name?name=" + new_name + "&garrison_id=" + arguments.garrison_id,
-        handleAs: "json",	
+        handleAs: "json",
         load: function(responseObject, ioArgs) {
-        	dojo.byId('name-header').innerHTML = responseObject.new_name;
+            dojo.byId('name-header').innerHTML = responseObject.new_name;
         }
     });
 }
 
 function adjustGarrisonGold(action) {
-	var textAction;
-	if (action == 'add') {
-		textAction = 'add to';
-	}
-	else {
-		textAction = 'take from';
-	}
+    var textAction;
+    if (action == 'add') {
+        textAction = 'add to';
+    }
+    else {
+        textAction = 'take from';
+    }
 
-	dojo.byId('garrison-adjust-gold-action').innerHTML = textAction;
-	dojo.byId('gold-action').value = action;
-	dijit.byId('garrison-adjust-gold').show();
+    dojo.byId('garrison-adjust-gold-action').innerHTML = textAction;
+    dojo.byId('gold-action').value = action;
+    dijit.byId('garrison-adjust-gold').show();
 }
 </script>
 
 <div dojoType="dijit.Dialog" id="confirm-move" style="display: none" title="Confirm Move" execute="confirmedMove(arguments[0]);">
     Are you sure you want to move this equipped item to the garrison?
-	<input id="move-item-id" name="move_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	[% dialog_buttons('confirm-move') %]
+    <input id="move-item-id" name="move_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    [% dialog_buttons('confirm-move') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-remove" style="display: none" title="Confirm Remove" execute="removeGarrison(arguments[0]);">
-    Are you sure you want to remove this garrison?	
-	[% dialog_buttons('confirm-remove') %]
+    Are you sure you want to remove this garrison?
+    [% dialog_buttons('confirm-remove') %]
 </div>
 
 <div dojoType="dijit.Dialog" id="garrison-adjust-gold" style="display: none" title="Gold">
-	<form method="POST" action="[% base %]garrison/adjust_gold" onSubmit="postPanels(this); return false">
-	<input type="hidden" name="garrison_id" value="[% garrison.id %]">
-	<input type="hidden" name="action" id="gold-action" />
+    <form method="POST" action="[% base %]garrison/adjust_gold" onSubmit="postPanels(this); return false">
+    <input type="hidden" name="garrison_id" value="[% garrison.id %]">
+    <input type="hidden" name="action" id="gold-action" />
     Amount of gold you want to <span id="garrison-adjust-gold-action"></span> the garrison:
     <input type="text"
         dojoType="dijit.form.NumberTextBox"
@@ -72,10 +72,10 @@ function adjustGarrisonGold(action) {
         constraints="{min:1,places:0}"
         required= "true"
         invalidMessage= "Invalid quantity."
-		style="width: 80px"
+        style="width: 80px"
         />
     [% dialog_buttons('garrison-adjust-gold') %]
-	</form>
+    </form>
 </div>
 
 <h3>Manage "[% garrison.display_name(1) %]"
@@ -83,22 +83,22 @@ function adjustGarrisonGold(action) {
 <span style="font-size: 10px">
 Garrison Gold: [% garrison.gold %]
 [% IF editable %]
-	<a href="#" onClick="adjustGarrisonGold('add')">Add Gold</a>
-	<a href="#" onClick="adjustGarrisonGold('take')">Take Gold</a>
+    <a href="#" onClick="adjustGarrisonGold('add')">Add Gold</a>
+    <a href="#" onClick="adjustGarrisonGold('take')">Take Gold</a>
 </span>
 [% END %]
 </h3>
 
 [% IF party_garrisons.size > 1 %]
-	Other Garrisons:
-	[% FOREACH other_garrison IN party_garrisons %]
-		[% IF other_garrison.id != garrison.id %]
-			<a href="javascript:loadScreen('garrison/manage?garrison_id=[% other_garrison.id %]')">[% other_garrison.display_name(1) %]</a>
-		[% ELSE %]
-			[% other_garrison.display_name(1) %]
-		[% END %]
-		&nbsp;
-	[% END %]
+    Other Garrisons:
+    [% FOREACH other_garrison IN party_garrisons %]
+        [% IF other_garrison.id != garrison.id %]
+            <a href="javascript:loadScreen('garrison/manage?garrison_id=[% other_garrison.id %]')">[% other_garrison.display_name(1) %]</a>
+        [% ELSE %]
+            [% other_garrison.display_name(1) %]
+        [% END %]
+        &nbsp;
+    [% END %]
 [% END %]
 
 
@@ -106,35 +106,35 @@ Garrison Gold: [% garrison.gold %]
 <br><br>
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height:400px;">
-     <div dojoType="dojox.layout.ContentPane" title="Characters" 
-    	href="[% base %]garrison/character_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'garrison' %]selected="true"[% END %]>    
+     <div dojoType="dojox.layout.ContentPane" title="Characters"
+        href="[% base %]garrison/character_tab?garrison_id=[% garrison.id %]"
+        [% IF selected == 'garrison' %]selected="true"[% END %]>
     </div>
 
-    <div dojoType="dojox.layout.ContentPane" title="Orders" 
-    	href="[% base %]garrison/orders_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'orders' %]selected="true"[% END %]>    
+    <div dojoType="dojox.layout.ContentPane" title="Orders"
+        href="[% base %]garrison/orders_tab?garrison_id=[% garrison.id %]"
+        [% IF selected == 'orders' %]selected="true"[% END %]>
     </div>
 
-    <div dojoType="dojox.layout.ContentPane" title="Equipment" 
-    	href="[% base %]garrison/equipment_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'equipment' %]selected="true"[% END %]>    
+    <div dojoType="dojox.layout.ContentPane" title="Equipment"
+        href="[% base %]garrison/equipment_tab?garrison_id=[% garrison.id %]"
+        [% IF selected == 'equipment' %]selected="true"[% END %]>
     </div>
-    
+
     [% IF has_building %]
-	    <div dojoType="dojox.layout.ContentPane" title="Building" 
-	    	href="[% base %]garrison/building_tab?garrison_id=[% garrison.id %]"
-	    	[% IF selected == 'building' %]selected="true"[% END %]>    
-	    </div>
-	[% END %]
+        <div dojoType="dojox.layout.ContentPane" title="Building"
+            href="[% base %]garrison/building_tab?garrison_id=[% garrison.id %]"
+            [% IF selected == 'building' %]selected="true"[% END %]>
+        </div>
+    [% END %]
 
-    <div dojoType="dijit.layout.ContentPane" title="Messages" 
-    	href="[% base %]garrison/messages_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'messages' %]selected="true"[% END %]>    
+    <div dojoType="dijit.layout.ContentPane" title="Messages"
+        href="[% base %]garrison/messages_tab?garrison_id=[% garrison.id %]"
+        [% IF selected == 'messages' %]selected="true"[% END %]>
     </div>
 
-    <div dojoType="dijit.layout.ContentPane" title="Combat Log" 
-    	href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
-    	[% IF selected == 'combat_log' %]selected="true"[% END %]>    
+    <div dojoType="dijit.layout.ContentPane" title="Combat Log"
+        href="[% base %]garrison/combat_log_tab?garrison_id=[% garrison.id %]"
+        [% IF selected == 'combat_log' %]selected="true"[% END %]>
     </div>
 </div>

@@ -3,11 +3,11 @@
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
 
 [% FOREACH tab IN [ 'Allegiance', 'Majesty', 'Parties', 'Towns', 'Quests', 'Relationships', 'Records', 'Messages', 'Info', 'History' ] %]
-	[% IF ! kingdom && (tab != 'Allegiance' && tab != 'Info' && tab != 'History') %]
-		[% NEXT %]
-	[% END %]
-	[% lower_tab = tab | lower %]
-	<div dojoType="dojox.layout.ContentPane" title="[% tab %]" href="[% base %]party/kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
+    [% IF ! kingdom && (tab != 'Allegiance' && tab != 'Info' && tab != 'History') %]
+        [% NEXT %]
+    [% END %]
+    [% lower_tab = tab | lower %]
+    <div dojoType="dojox.layout.ContentPane" title="[% tab %]" href="[% base %]party/kingdom/[% tab | lower %]" [% IF selected == lower_tab %]selected=true[% END %]></div>
 [% END %]
-	
+
 </div>

@@ -4,27 +4,27 @@
 
 <form method="POST" action="[% base %]/admin/announcement/submit">
 <table class="main">
-	<tr>
-		<td>Title</td>
-		<td><input type="text" name="title" size="70"></td>
-	</tr>
-	<tr>
-		<td>Body (in HTML!)</td>
-		<td><textarea name="announcement" rows="10" cols="70"></textarea></td>
-	</tr>
-	
-	<tr>
-		<td>Email to</td>
-		<td>
-			<input type="radio" name="email_to" value="none" checked>None
-			<input type="radio" name="email_to" value="active">Active
-			<input type="radio" name="email_to" value="all">All
-		</td>
-	</tr>		
-	<tr>
-		<td></td>
-		<td><input type="submit" name="action" value="Preview"><input type="submit" name="action" value="Submit"></td>
-	</tr>
+    <tr>
+        <td>Title</td>
+        <td><input type="text" name="title" size="70"></td>
+    </tr>
+    <tr>
+        <td>Body (in HTML!)</td>
+        <td><textarea name="announcement" rows="10" cols="70"></textarea></td>
+    </tr>
+
+    <tr>
+        <td>Email to</td>
+        <td>
+            <input type="radio" name="email_to" value="none" checked>None
+            <input type="radio" name="email_to" value="active">Active
+            <input type="radio" name="email_to" value="all">All
+        </td>
+    </tr>
+    <tr>
+        <td></td>
+        <td><input type="submit" name="action" value="Preview"><input type="submit" name="action" value="Submit"></td>
+    </tr>
 </table>
 
 [% IF preview %]

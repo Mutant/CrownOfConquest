@@ -15,95 +15,95 @@ The town of [% town.town_name %] has the following characters available for recr
 <br><br>
 
 <table class="main">
-	<tr>
-		<th>Cost</th>
-		<th>Name</th>
-		<th>Level</th>
-		<th>XP</th>
-		<th>Race</th>
-		<th>Class</th>
-		<th>Str</th>
-		<th>Agl</th>
-		<th>Div</th>
-		<th>Int</th>
-		<th>Con</th>
-		<th>Hit Points</th>
-		<th>Spell Points</th>				
-	</tr>
+    <tr>
+        <th>Cost</th>
+        <th>Name</th>
+        <th>Level</th>
+        <th>XP</th>
+        <th>Race</th>
+        <th>Class</th>
+        <th>Str</th>
+        <th>Agl</th>
+        <th>Div</th>
+        <th>Int</th>
+        <th>Con</th>
+        <th>Hit Points</th>
+        <th>Spell Points</th>
+    </tr>
 
 [% FOREACH character IN town_characters %]
-	<tr>
-		<td>[% character.value %]</td>
-		<td><a href="javascript:loadScreen('character/view?character_id=[% character.id %]')">[% character.character_name %]</a></td>
-		<td>[% character.level %]</td>
-		<td>[% character.xp %]</td>
-		<td>[% character.race.race_name %]</td>
-		<td>[% character.class.class_name %]</td>
-		<td>[% character.strength %]</td>
-		<td>[% character.agility %]</td>
-		<td>[% character.divinity %]</td>
-		<td>[% character.intelligence %]</td>
-		<td>[% character.constitution %]</td>
-		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
-		<td>[% character.spell_points %]</td>		
-		<td>[% IF ! party_full && party.gold >= character.value %]
-				<a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a>
-			[% END %]
-		</td>
-	</tr>
+    <tr>
+        <td>[% character.value %]</td>
+        <td><a href="javascript:loadScreen('character/view?character_id=[% character.id %]')">[% character.character_name %]</a></td>
+        <td>[% character.level %]</td>
+        <td>[% character.xp %]</td>
+        <td>[% character.race.race_name %]</td>
+        <td>[% character.class.class_name %]</td>
+        <td>[% character.strength %]</td>
+        <td>[% character.agility %]</td>
+        <td>[% character.divinity %]</td>
+        <td>[% character.intelligence %]</td>
+        <td>[% character.constitution %]</td>
+        <td>[% character.hit_points %] / [% character.max_hit_points %]</td>
+        <td>[% character.spell_points %]</td>
+        <td>[% IF ! party_full && party.gold >= character.value %]
+                <a href="javascript:confirmPurchase('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.value %]')">Buy</a>
+            [% END %]
+        </td>
+    </tr>
 [% END %]
 
 <tr><td colspan="14"><br><br>
 [% IF party_characters.size <= 1 %]
-	You only have one character in your party, so can't sell anyone.</td></tr>
+    You only have one character in your party, so can't sell anyone.</td></tr>
 [% ELSE %]
 Or you can sell one of your characters:<br><br></td></tr>
 
 
-	<tr>
-		<th>Value</th>
-		<th>Name</th>
-		<th>Level</th>
-		<th>XP</th>
-		<th>Race</th>
-		<th>Class</th>
-		<th>Str</th>
-		<th>Agl</th>
-		<th>Div</th>
-		<th>Int</th>
-		<th>Con</th>
-		<th>Hit Points</th>
-		<th>Spell Points</th>				
-	</tr>
+    <tr>
+        <th>Value</th>
+        <th>Name</th>
+        <th>Level</th>
+        <th>XP</th>
+        <th>Race</th>
+        <th>Class</th>
+        <th>Str</th>
+        <th>Agl</th>
+        <th>Div</th>
+        <th>Int</th>
+        <th>Con</th>
+        <th>Hit Points</th>
+        <th>Spell Points</th>
+    </tr>
 
 [% FOREACH character IN party_characters %]
-	<tr>
-		<td>[% character.sell_value %]</td>
-		<td>[% character.character_name %]</td>
-		<td>[% character.level %]</td>
-		<td>[% character.xp %]</td>
-		<td>[% character.race.race_name %]</td>
-		<td>[% character.class.class_name %]</td>
-		<td>[% character.strength %]</td>
-		<td>[% character.agility %]</td>
-		<td>[% character.divinity %]</td>
-		<td>[% character.intelligence %]</td>
-		<td>[% character.constitution %]</td>
-		<td>[% character.hit_points %] / [% character.max_hit_points %]</td>
-		<td>[% character.spell_points %]</td>		
-		<td>[% UNLESS character.is_dead %]
-				<a href="javascript:confirmSale('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
-			[% END %]
-		</td>
-	</tr>
+    <tr>
+        <td>[% character.sell_value %]</td>
+        <td>[% character.character_name %]</td>
+        <td>[% character.level %]</td>
+        <td>[% character.xp %]</td>
+        <td>[% character.race.race_name %]</td>
+        <td>[% character.class.class_name %]</td>
+        <td>[% character.strength %]</td>
+        <td>[% character.agility %]</td>
+        <td>[% character.divinity %]</td>
+        <td>[% character.intelligence %]</td>
+        <td>[% character.constitution %]</td>
+        <td>[% character.hit_points %] / [% character.max_hit_points %]</td>
+        <td>[% character.spell_points %]</td>
+        <td>[% UNLESS character.is_dead %]
+                <a href="javascript:confirmSale('[% character.character_name | replace("'","\\'") %]', '[% character.id %]', '[% character.sell_value %]')">Sell</a>
+            [% END %]
+        </td>
+    </tr>
 [% END %]
 [% END %]
 
 </table>
 [% IF party.level >= train_min_party_level && ! party_full %]
 <br>
-Or Train a new character: 
+Or Train a new character:
 <button dojoType="dijit.form.Button" onClick="loadScreen('town/recruitment/train')">
-	Train
+    Train
 </button>
 [% END %]

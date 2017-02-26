@@ -1,77 +1,76 @@
-<span class="combat-party-attacker">[% message.attacker.name %]</span> cast Farsight on the sector [% message.defender.x %], [% message.defender.y %]. 
+<span class="combat-party-attacker">[% message.attacker.name %]</span> cast Farsight on the sector [% message.defender.x %], [% message.defender.y %].
 [% message.attacker.pronoun('subjective') | ucfirst %] discovers
 [% disc = message.custom %]
 [% IF disc.town %]
-	the sector has the town of [% disc.town.town_name %].
-	[% IF disc.mayor %]		 
-		[% IF disc.mayor == 'none' %]
-			There is currently no mayor.
-		[% ELSE %]
-			The mayor is currently [% disc.mayor.character_name %], [% IF disc.mayor.is_npc %]an NPC[% ELSE %]of the party [% disc.mayor.party.name %][% END %].
-		[% END %]
-	[% END %]
-	[% IF disc.town_garrison %]
-		[% IF disc.town_garrison == 0 %]
-			There are no characters garrisoned in the town.
-		[% ELSE %]
-			The town has a garrison of [% disc.town_garrison %] characters.
-		[% END %]
-	[% END %]
-	[% IF disc.town_guards %]
-		The town is guarded by
-		[% FOREACH guard_rec IN disc.town_guards %]
-			[% guard_rec.get_column('count') %] [% guard_rec.get_column('type') %]s[% IF ! loop.last ~%], [% END ~%]
-		[% END ~%].
-	[% END %]
+    the sector has the town of [% disc.town.town_name %].
+    [% IF disc.mayor %]
+        [% IF disc.mayor == 'none' %]
+            There is currently no mayor.
+        [% ELSE %]
+            The mayor is currently [% disc.mayor.character_name %], [% IF disc.mayor.is_npc %]an NPC[% ELSE %]of the party [% disc.mayor.party.name %][% END %].
+        [% END %]
+    [% END %]
+    [% IF disc.town_garrison %]
+        [% IF disc.town_garrison == 0 %]
+            There are no characters garrisoned in the town.
+        [% ELSE %]
+            The town has a garrison of [% disc.town_garrison %] characters.
+        [% END %]
+    [% END %]
+    [% IF disc.town_guards %]
+        The town is guarded by
+        [% FOREACH guard_rec IN disc.town_guards %]
+            [% guard_rec.get_column('count') %] [% guard_rec.get_column('type') %]s[% IF ! loop.last ~%], [% END ~%]
+        [% END ~%].
+    [% END %]
 [% ELSE %]
-	the sector is terrain type [% message.defender.terrain.terrain_name %].
-	
-	[% IF disc.garrison %]
-		[% IF disc.garrison == 'none' %]
-			There is no garrison in the sector.
-		[% ELSE %]
-			There is a garrison owned by [% disc.garrison.party.name %], made up of [% disc.garrison.characters.count %] characters.
-		[% END %]
-	[% END %]
-	[% IF disc.orb %]
-		[% IF disc.orb == 'none' %]
-			There is no orb in the sector.
-		[% ELSE %]
-			The orb of [% disc.orb.name %] is there.
-		[% END %]
-	[% END %] 
-	[% IF disc.dungeon %]
-		[% IF disc.dungeon == 'none' %]
-			There is no dungeon in the sector.
-		[% ELSE %]
-			There is a level [% disc.dungeon.level %] dungeon there.
-		[% END %]
-	[% END %]
+    the sector is terrain type [% message.defender.terrain.terrain_name %].
+
+    [% IF disc.garrison %]
+        [% IF disc.garrison == 'none' %]
+            There is no garrison in the sector.
+        [% ELSE %]
+            There is a garrison owned by [% disc.garrison.party.name %], made up of [% disc.garrison.characters.count %] characters.
+        [% END %]
+    [% END %]
+    [% IF disc.orb %]
+        [% IF disc.orb == 'none' %]
+            There is no orb in the sector.
+        [% ELSE %]
+            The orb of [% disc.orb.name %] is there.
+        [% END %]
+    [% END %]
+    [% IF disc.dungeon %]
+        [% IF disc.dungeon == 'none' %]
+            There is no dungeon in the sector.
+        [% ELSE %]
+            There is a level [% disc.dungeon.level %] dungeon there.
+        [% END %]
+    [% END %]
 [% END %]
 
 [% IF disc.building %]
-	[% IF disc.building == 'none' %]
-		There is no building there.
-	[% ELSE %]
-		There is a [% disc.building %] there.
-		
-		[% IF disc.building_upgrade %]
-			[% IF disc.building_upgrade == 'none' %]
-				The [% disc.building %] has no add-ons.
-			[% ELSE %]
-				The [% disc.building %] has
-				[% FOREACH upgrade_type IN disc.building_upgrade.keys %]
-					[% IF disc.building_upgrade.$upgrade_type == 'none' %]
-						no [% upgrade_type ~%]
-					[% ELSE %]
-						a level [% disc.building_upgrade.$upgrade_type %] [% upgrade_type ~%]
-					[% END %]
-					[% IF loop.last ~%].[% ELSE %],[% END ~%]
-				[% END %]
-			[% END %]
-		[% END %]
-	[% END %]
+    [% IF disc.building == 'none' %]
+        There is no building there.
+    [% ELSE %]
+        There is a [% disc.building %] there.
+
+        [% IF disc.building_upgrade %]
+            [% IF disc.building_upgrade == 'none' %]
+                The [% disc.building %] has no add-ons.
+            [% ELSE %]
+                The [% disc.building %] has
+                [% FOREACH upgrade_type IN disc.building_upgrade.keys %]
+                    [% IF disc.building_upgrade.$upgrade_type == 'none' %]
+                        no [% upgrade_type ~%]
+                    [% ELSE %]
+                        a level [% disc.building_upgrade.$upgrade_type %] [% upgrade_type ~%]
+                    [% END %]
+                    [% IF loop.last ~%].[% ELSE %],[% END ~%]
+                [% END %]
+            [% END %]
+        [% END %]
+    [% END %]
 [% END %]
 
 
-					

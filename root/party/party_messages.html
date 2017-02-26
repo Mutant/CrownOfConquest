@@ -1,19 +1,19 @@
 <script>
-	
+
 var messages;
 [% FOREACH message IN party_messages %]
 messages[[% loop.count %]] = '[% message.message %]';
 [% END %]
 
 var displayCount = 0;
-	
+
 function displayMessages() {
-	if (messages[displayCount]) {
-		dojo.byId('party-message-text').innerHTML = messages[displayCount];
-		dijit.byId('party-message').show();
-		displayCount++;
-	}	
+    if (messages[displayCount]) {
+        dojo.byId('party-message-text').innerHTML = messages[displayCount];
+        dijit.byId('party-message').show();
+        displayCount++;
+    }
 }
 
-	dojo.addOnLoad( displayMessages );
+    dojo.addOnLoad( displayMessages );
 </script>

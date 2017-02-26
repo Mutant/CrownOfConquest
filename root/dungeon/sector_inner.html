@@ -1,113 +1,113 @@
 [% FILTER collapse %]
-	[% IF sector %]
-		[% border = "" %]
-		[% sides_with_walls = sector.sides_with_walls %]
-		[% FOREACH side IN positions  %]
-			[% border_color = "#000" %]
-			[% FOREACH side_with_wall IN sides_with_walls %]
-				[% IF side_with_wall == side %]
-					[% border_color = "#9F9F9F" %]
-				[% END %]
-			[% END %]				
-		
-			[% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
-		[% END %] 
-		
-		[% can_move_to_sector = 0 %]
-		[% IF allowed_to_move_to.${sector.dungeon_grid_id} && ! in_combat %]
-			[% can_move_to_sector =  1 %]
-		[% END %]		
-		
-		<a href = "javascript:getPanels('/[% dungeon_type %]/move_to?sector_id=[% sector.dungeon_grid_id %]')" 
-			style="text-decoration: none; cursor: [% IF can_move_to_sector %]pointer[% ELSE %]default[% END %]"
-			class="sector-link" id="sector_link_[% x %]_[% y %]"
-		>
-		
-		[% IF sector.dungeon_room.tileset %][% tileset = sector.dungeon_room.tileset %][% END %]
-		[% IF sector.stairs_up %]
-			[% background_image = "d" _ tileset _ "us.png" %]
-		[% ELSIF sector.stairs_down %]
-			[% background_image = "d" _ tileset _ "ds.png" %]
-		[% ELSE %]
-			[% background_image = 'd' _ tileset _ sector.tile _ '.png' %] 
-		[% END %]					
-	
-		<div style="
-			[% border %]
-			width: [% size %]px; 
-			height: [% size %]px; 
-			position: absolute;
-			background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
-			font-size: [% size / 2 %]px;
-			text-align: center;			
-			"
-			>
-		
-			<span style="z-index: 60; position: absolute; top: 0px; left: 0px;
-				[% IF viewable_sectors.$x.$y %]display: none; [% END %]"				
-				class="sector-shroud" id="sector_shroud_[% x %]_[% y %]">
-				<img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]>
-			</span>
-									
+    [% IF sector %]
+        [% border = "" %]
+        [% sides_with_walls = sector.sides_with_walls %]
+        [% FOREACH side IN positions  %]
+            [% border_color = "#000" %]
+            [% FOREACH side_with_wall IN sides_with_walls %]
+                [% IF side_with_wall == side %]
+                    [% border_color = "#9F9F9F" %]
+                [% END %]
+            [% END %]
 
-			[% INCLUDE dungeon/sector_contents.html %]				
-			
-		    <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto;
-		    	[% IF ! can_move_to_sector %]display: none; [% END %]"
-		    	id="sector_move_dot_[% x %]_[% y %]" class="sector-move-dot">
-		    		<img src="[% c.config.static_path %]/images/dungeon/movedot.png" border=0  width=[% size %] height=[% size %]>
-		    </span>
-			
-			
-			[% IF current_location.id == sector.dungeon_grid_id %]
-				<span style="z-index: 50; position: absolute; top: 0px; left: 0px;" id="herecircle"><img src="[% c.config.static_path %]/images/dungeon/herecircle.png" border=0  width=[% size %] height=[% size %]></span>
-			[% END %]			
-			
-			</div>
-			
-			</a>	
-			
-			[% FOREACH door IN sector.doors %]
-				[% IF door.type != 'secret' || door.state == 'open' %]
-			
-					[% left_offset = 0 %]
-					[% width_offset = 0 %]
-					[% top_offset = 0 %]
-					[% height_offset = 0 %]
-					[% position = door.position.position %]
-				
-					[% IF position == 'right' ||  position == 'left' %]
-						[% height = door_length %]
-						[% width = door_thickness %]
-						[% height_offset = 2 %]
-					[% ELSE %]
-						[% height = door_thickness %]
-						[% width = door_length %]
-						[% width_offset = 2 %]
-					[% END %]
-				
-					[% IF position == 'right' %]
-						[% left_offset = 1 %]
-						[% width_offset = 0 - width + 1 %]
-					[% ELSIF position == 'left' %]
-						[% left_offset = 0 %]
-						[% width_offset = 1 %]
-					[% ELSIF position == 'bottom' %]
-						[% top_offset = 1 %]
-						[% height_offset = 0 - height + 1 %]
-					[% END %]
-					
-	         		<div 
-					   style="
-						position: absolute;
-						width: [% width %]px;
-						height: [% height %]px;
-						background: #9F9F9F;
-						left: [% left_offset * size + width_offset %]px;
-						top: [% top_offset * size + height_offset %]px;"
-					>					
-					</div>			
-				[% END %]			
-			[% END %]
-	[% END %]
+            [% border = border _ "border-" _ side _ ": 1px solid " _  border_color _ "; " %]
+        [% END %]
+
+        [% can_move_to_sector = 0 %]
+        [% IF allowed_to_move_to.${sector.dungeon_grid_id} && ! in_combat %]
+            [% can_move_to_sector =  1 %]
+        [% END %]
+
+        <a href = "javascript:getPanels('/[% dungeon_type %]/move_to?sector_id=[% sector.dungeon_grid_id %]')"
+            style="text-decoration: none; cursor: [% IF can_move_to_sector %]pointer[% ELSE %]default[% END %]"
+            class="sector-link" id="sector_link_[% x %]_[% y %]"
+        >
+
+        [% IF sector.dungeon_room.tileset %][% tileset = sector.dungeon_room.tileset %][% END %]
+        [% IF sector.stairs_up %]
+            [% background_image = "d" _ tileset _ "us.png" %]
+        [% ELSIF sector.stairs_down %]
+            [% background_image = "d" _ tileset _ "ds.png" %]
+        [% ELSE %]
+            [% background_image = 'd' _ tileset _ sector.tile _ '.png' %]
+        [% END %]
+
+        <div style="
+            [% border %]
+            width: [% size %]px;
+            height: [% size %]px;
+            position: absolute;
+            background-image: url('[% c.config.static_path %]/images/dungeon/[% background_image %]');
+            font-size: [% size / 2 %]px;
+            text-align: center;
+            "
+            >
+
+            <span style="z-index: 60; position: absolute; top: 0px; left: 0px;
+                [% IF viewable_sectors.$x.$y %]display: none; [% END %]"
+                class="sector-shroud" id="sector_shroud_[% x %]_[% y %]">
+                <img src="[% c.config.static_path %]/images/dungeon/shroud.png" border=0 width=[% size %] height=[% size %]>
+            </span>
+
+
+            [% INCLUDE dungeon/sector_contents.html %]
+
+            <span style="z-index: 100; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; text-align: center; margin: 0px auto;
+                [% IF ! can_move_to_sector %]display: none; [% END %]"
+                id="sector_move_dot_[% x %]_[% y %]" class="sector-move-dot">
+                    <img src="[% c.config.static_path %]/images/dungeon/movedot.png" border=0  width=[% size %] height=[% size %]>
+            </span>
+
+
+            [% IF current_location.id == sector.dungeon_grid_id %]
+                <span style="z-index: 50; position: absolute; top: 0px; left: 0px;" id="herecircle"><img src="[% c.config.static_path %]/images/dungeon/herecircle.png" border=0  width=[% size %] height=[% size %]></span>
+            [% END %]
+
+            </div>
+
+            </a>
+
+            [% FOREACH door IN sector.doors %]
+                [% IF door.type != 'secret' || door.state == 'open' %]
+
+                    [% left_offset = 0 %]
+                    [% width_offset = 0 %]
+                    [% top_offset = 0 %]
+                    [% height_offset = 0 %]
+                    [% position = door.position.position %]
+
+                    [% IF position == 'right' ||  position == 'left' %]
+                        [% height = door_length %]
+                        [% width = door_thickness %]
+                        [% height_offset = 2 %]
+                    [% ELSE %]
+                        [% height = door_thickness %]
+                        [% width = door_length %]
+                        [% width_offset = 2 %]
+                    [% END %]
+
+                    [% IF position == 'right' %]
+                        [% left_offset = 1 %]
+                        [% width_offset = 0 - width + 1 %]
+                    [% ELSIF position == 'left' %]
+                        [% left_offset = 0 %]
+                        [% width_offset = 1 %]
+                    [% ELSIF position == 'bottom' %]
+                        [% top_offset = 1 %]
+                        [% height_offset = 0 - height + 1 %]
+                    [% END %]
+
+                     <div
+                       style="
+                        position: absolute;
+                        width: [% width %]px;
+                        height: [% height %]px;
+                        background: #9F9F9F;
+                        left: [% left_offset * size + width_offset %]px;
+                        top: [% top_offset * size + height_offset %]px;"
+                    >
+                    </div>
+                [% END %]
+            [% END %]
+    [% END %]
 [% END %]

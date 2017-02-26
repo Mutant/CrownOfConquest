@@ -3,56 +3,56 @@
 
 <script>
 function init() {
-	var loadPanel = '[% load_panel %]';
-	if (loadPanel) {
-		getPanels(loadPanel);
-	}
-	
-	var scrollTo = dojo.byId('scroll_to');
+    var loadPanel = '[% load_panel %]';
+    if (loadPanel) {
+        getPanels(loadPanel);
+    }
 
-	if (scrollTo) {
-		dijit.scrollIntoView(scrollTo.innerHTML);
-	}
+    var scrollTo = dojo.byId('scroll_to');
+
+    if (scrollTo) {
+        dijit.scrollIntoView(scrollTo.innerHTML);
+    }
 }
 
 function dungeonScroll(scroll_to) {
-	scroll_to_sector = 'sector_' + scroll_to.x + "_" + scroll_to.y;
-	loc = dojo.byId(scroll_to_sector);
-	if (loc) {
-		dijit.scrollIntoView(loc);
-	}
+    scroll_to_sector = 'sector_' + scroll_to.x + "_" + scroll_to.y;
+    loc = dojo.byId(scroll_to_sector);
+    if (loc) {
+        dijit.scrollIntoView(loc);
+    }
 }
 
 dojo.subscribe("/dnd/drop", function(source,nodes,iscopy){
-	if (! nodes[0].id.match('^char-') && nodes[0].id != 'rank_separator') {
-		return;
-	}
+    if (! nodes[0].id.match('^char-') && nodes[0].id != 'rank_separator') {
+        return;
+    }
 
-	var t = dojo.dnd.manager().target;
+    var t = dojo.dnd.manager().target;
 
-	order_val = t.current.id.split(/-/);
-	var char_2 = order_val[1];
+    order_val = t.current.id.split(/-/);
+    var char_2 = order_val[1];
 
-	var drop_pos;
-	(t.before == true) ? drop_pos='before' : drop_pos='after';
-	
-	if (nodes[0].id == 'rank_separator') {
-    	dojo.xhrGet( {
-	        url: "[% base %]/party/move_rank_separator?target=" + char_2 + "&drop_pos=" + drop_pos, 
-	        handleAs: "text",
+    var drop_pos;
+    (t.before == true) ? drop_pos='before' : drop_pos='after';
 
-    	    timeout: 5000 // Time in milliseconds	
-        });			
-	}
-	else {
-    	order_val = nodes[0].id.split(/-/);
-		var char_1 = order_val[1];
-		
-    	dojo.xhrGet( {
-	        url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos, 
-	        handleAs: "text",
+    if (nodes[0].id == 'rank_separator') {
+        dojo.xhrGet( {
+            url: "[% base %]/party/move_rank_separator?target=" + char_2 + "&drop_pos=" + drop_pos,
+            handleAs: "text",
 
-    	    timeout: 5000 // Time in milliseconds	
+            timeout: 5000 // Time in milliseconds
+        });
+    }
+    else {
+        order_val = nodes[0].id.split(/-/);
+        var char_1 = order_val[1];
+
+        dojo.xhrGet( {
+            url: "[% base %]/party/swap_chars?moved=" + char_1 + "&target=" + char_2 + "&drop_pos=" + drop_pos,
+            handleAs: "text",
+
+            timeout: 5000 // Time in milliseconds
         });
     }
 });
@@ -61,145 +61,145 @@ dojo.addOnLoad( init );
 
 /* From healer panel */
 function healParty(dialogFields) {
-	getPanels('/town/heal_party?gold=' + dialogFields.heal_amount);
+    getPanels('/town/heal_party?gold=' + dialogFields.heal_amount);
 }
 
 function findTown(dialogFields) {
-	getPanels("/town/sage/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
+    getPanels("/town/sage/find_town?town_name=" + dialogFields.town_name + "&find_type=" + dialogFields.find_type);
 }
 
 function findItem(dialogFields) {
-	getPanels("/town/sage/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
+    getPanels("/town/sage/find_item?item_type_to_find=" + dialogFields.item_type_to_find);
 }
 
 function findDungeon(dialogFields) {
-	getPanels("/town/sage/find_dungeon?find_level=" + dialogFields.find_level);
+    getPanels("/town/sage/find_dungeon?find_level=" + dialogFields.find_level);
 }
 
 function disarmTrap(dialogFields) {
-	getPanels("/dungeon/disarm_trap");
+    getPanels("/dungeon/disarm_trap");
 }
 
 function execConfirmedAttack(dialogFields) {
-	getPanels('/combat/party_attacks?creature_group_id=' + dialogFields.creature_group_id);
+    getPanels('/combat/party_attacks?creature_group_id=' + dialogFields.creature_group_id);
 }
 
 function buryDiag(char_name, char_id) {
-	dojo.byId('bury-message').innerHTML = "Are you sure you want to bury " + char_name + "?";
-	dojo.byId('char-id').value = char_id;
-	dijit.byId('confirm-bury').show();
+    dojo.byId('bury-message').innerHTML = "Are you sure you want to bury " + char_name + "?";
+    dojo.byId('char-id').value = char_id;
+    dijit.byId('confirm-bury').show();
 }
 
 function bury(dialogFields) {
-	getPanels('/character/bury?character_id=' + dialogFields.char_id + '&epitaph=' + dialogFields.epitaph);
+    getPanels('/character/bury?character_id=' + dialogFields.char_id + '&epitaph=' + dialogFields.epitaph);
 }
 
 function enterTown(land_id, gold_cost, turn_cost) {
-	dojo.byId('enter-town-text').innerHTML = "You must pay the daily tax to enter this town.<br><br>You can either pay " + gold_cost 
-		+ " gold, or work for the town for " + turn_cost + " turns.";
-	dojo.byId('land-id').value = land_id;
-	dijit.byId('town-tax').show();
+    dojo.byId('enter-town-text').innerHTML = "You must pay the daily tax to enter this town.<br><br>You can either pay " + gold_cost
+        + " gold, or work for the town for " + turn_cost + " turns.";
+    dojo.byId('land-id').value = land_id;
+    dijit.byId('town-tax').show();
 }
 
 function enterTownSubmit(land_id, paymentMethod){
-	getPanels('/town/enter?land_id=' + land_id + "&payment_method=" + paymentMethod);
-	hideDiag('town-tax');
+    getPanels('/town/enter?land_id=' + land_id + "&payment_method=" + paymentMethod);
+    hideDiag('town-tax');
 }
 
 function confirmRaidTown(town_name, town_id, atPeace) {
-	var msg = "Are you sure you want to raid " + town_name + "?";
-	
-	if (atPeace) {
-		msg += "<br>(You kingdom is at peace with this town's kingdom)";
-	}
-	
-	dojo.byId('raid-town-text').innerHTML = msg;
-	dojo.byId('town-id').value = town_id;
-	dijit.byId('town-raid').show();	
+    var msg = "Are you sure you want to raid " + town_name + "?";
+
+    if (atPeace) {
+        msg += "<br>(You kingdom is at peace with this town's kingdom)";
+    }
+
+    dojo.byId('raid-town-text').innerHTML = msg;
+    dojo.byId('town-id').value = town_id;
+    dijit.byId('town-raid').show();
 }
 
 function raidTown(dialogFields){
-	getPanels('/town/raid?town_id=' + dialogFields.town_id);
+    getPanels('/town/raid?town_id=' + dialogFields.town_id);
 }
 
 function unblockDoor(action) {
-	hideDiag('dialog');
-	getPanels('/dungeon/unblock_door?door_id=' + dojo.byId('door-id').value + '&character_id=' + dojo.byId('character-id').value + '&action=' + action);
+    hideDiag('dialog');
+    getPanels('/dungeon/unblock_door?door_id=' + dojo.byId('door-id').value + '&character_id=' + dojo.byId('character-id').value + '&action=' + action);
 }
 
 var messagesContent;
 function hideMessages() {
-	messagesContent = dojo.byId('messages-pane').innerHTML;
-	dojo.byId('messages-pane').innerHTML = dojo.byId('show-messages').innerHTML;
+    messagesContent = dojo.byId('messages-pane').innerHTML;
+    dojo.byId('messages-pane').innerHTML = dojo.byId('show-messages').innerHTML;
 }
 
 function showMessages() {
-	dojo.byId('messages-pane').innerHTML = messagesContent;
-	messagesContent = null;
+    dojo.byId('messages-pane').innerHTML = messagesContent;
+    messagesContent = null;
 }
 
 </script>
 
 [% IF created_message %]
 <script>
-	function displayCreatedMessage() { dijit.byId('created-message').show() }
-	dojo.addOnLoad(displayCreatedMessage);
+    function displayCreatedMessage() { dijit.byId('created-message').show() }
+    dojo.addOnLoad(displayCreatedMessage);
 </script>
 
 <div dojoType="dijit.Dialog" id="created-message" style="display: none" title="Welcome To Crown Of Conquest" execute="">
     [% created_message %]
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-	</div>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">OK</button>
+    </div>
 </div>
 [% END %]
 
 <div id="show-messages" style="display: none">
-	<div style="font-size: 9px; padding: 0px">
-		<a href="javascript:showMessages()" style="text-decoration: none;" title="Show">&#9650</a>
-	</div>
+    <div style="font-size: 9px; padding: 0px">
+        <a href="javascript:showMessages()" style="text-decoration: none;" title="Show">&#9650</a>
+    </div>
 </div>
 
 <div dojoType="dijit.Dialog" id="dialog" style="display: none" title="Dialog">
-	<div id="dialog-content"></div>
+    <div id="dialog-content"></div>
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-bury" style="display: none" title="Bury Character" execute="bury(arguments[0]);">
     <input id="char-id" name="char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<span id="bury-message"></span>
-	<br><br>
-	<b>Note</b>: All characters can be resurrected in town. Only bury characters if you no longer want them in your party.
-	<br><br>
-	Enter an epitaph for the grave:
-	<br><br>
-	<div align="center"><input dojoType=dijit.form.TextBox name="epitaph" style="width: 400px"></div>
-	<br><br>
-	Graves in the wilderness will eventually disappear.<br>Those in a town will remain permanently in the Cemetery.    
-	[% dialog_buttons('confirm-bury') %]
-	 
+    <span id="bury-message"></span>
+    <br><br>
+    <b>Note</b>: All characters can be resurrected in town. Only bury characters if you no longer want them in your party.
+    <br><br>
+    Enter an epitaph for the grave:
+    <br><br>
+    <div align="center"><input dojoType=dijit.form.TextBox name="epitaph" style="width: 400px"></div>
+    <br><br>
+    Graves in the wilderness will eventually disappear.<br>Those in a town will remain permanently in the Cemetery.
+    [% dialog_buttons('confirm-bury') %]
+
 </div>
 
 <div dojoType="dijit.Dialog" id="party-message" style="display: none" title="Message">
     <span id="party-message-text"></span>
     <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit" onclick="hideDiag('party-message');">OK</button>
-	</div>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit" onclick="hideDiag('party-message');">OK</button>
+    </div>
 </div>
 
 <div dojoType="dijit.Dialog" id="town-tax" style="display: none" title="Enter Town" execute="">
-	<input id="land-id" name="land_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="land-id" name="land_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <span id="enter-town-text"></span>
     <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'gold')">Pay Gold</button>
-		<button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'work')">Work</button>
-		<button dojoType=dijit.form.Button onClick="hideDiag('town-tax')">Cancel</button>
-	</div>
+    <div align="center">
+        <button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'gold')">Pay Gold</button>
+        <button dojoType=dijit.form.Button onclick="enterTownSubmit(dojo.byId('land-id').value, 'work')">Work</button>
+        <button dojoType=dijit.form.Button onClick="hideDiag('town-tax')">Cancel</button>
+    </div>
 </div>
 
 <div dojoType="dijit.Dialog" id="town-raid" style="display: none" title="Raid Town" execute="raidTown(arguments[0])">
-	<input id="town-id" name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <input id="town-id" name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <span id="raid-town-text"></span>
     [% dialog_buttons('town-raid') %]
 </div>
@@ -207,10 +207,10 @@ function showMessages() {
 <div dojoType="dijit.Dialog" id="chest-trap" style="display: none" title="Trap Detected" execute="disarmTrap(arguments[0]);">
     You detect a trap on this chest. Do you want to attempt to disarm it, or leave the chest alone?
     <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">Disarm Trap</button>
-		<button dojoType=dijit.form.Button onClick="hideDiag('chest-trap')">Ignore Chest</button>
-	</div>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">Disarm Trap</button>
+        <button dojoType=dijit.form.Button onClick="hideDiag('chest-trap')">Ignore Chest</button>
+    </div>
 </div>
 
 <div style="position: relative; width: 100%; background-color: black">
@@ -224,54 +224,54 @@ function showMessages() {
 <div class="line-sep" style="background-color: black"></div>
 
 <div id="loader-gif" style="display: none">
-	<img src="[% c.config.static_path %]/images/layout/loader.gif">
+    <img src="[% c.config.static_path %]/images/layout/loader.gif">
 </div>
 
 <div id="main-outer" style="position: relative">
-	<div id="main-loading" style="position: absolute; height: 24px; width: 24px; top: 48%; left: 48%">
-		<img src="[% base %]static/images/layout/loader.gif">
-	</div> 
+    <div id="main-loading" style="position: absolute; height: 24px; width: 24px; top: 48%; left: 48%">
+        <img src="[% base %]static/images/layout/loader.gif">
+    </div>
 
-	<div id="screen-outer"
-		style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 99%; max-height: 95%; background: black; 
-			z-index: 600; top: 10px; position: absolute; display: none; overflow: auto">	
+    <div id="screen-outer"
+        style="border: 1px solid #4d4d4d; min-height: 95%; min-width: 99%; max-height: 95%; background: black;
+            z-index: 600; top: 10px; position: absolute; display: none; overflow: auto">
 
-		<div style="float: right; margin-right: 40px">
-		<div id="screen-close" style="position: fixed; padding: 2px;">			
-			<a href="#" onclick="closeScreen()"><span class="close-icon"></span></a>
-			<a href="#" onclick="backScreen()"><span class="back-icon"></span></a>
-		</div>
-		</div>
-		
-		<div id="screen-pane" dojoType="dojox.layout.ContentPane"></div>
-	
-	</div>
+        <div style="float: right; margin-right: 40px">
+        <div id="screen-close" style="position: fixed; padding: 2px;">
+            <a href="#" onclick="closeScreen()"><span class="close-icon"></span></a>
+            <a href="#" onclick="backScreen()"><span class="back-icon"></span></a>
+        </div>
+        </div>
 
-	<div id="main-middle-section" style="min-height: 440px; text-align: center;">
-	
-		<div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
-			<div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
-			
-			<div dojoType="dijit.layout.ContentPane" id="messages-pane" 
-				style="padding: 5px; position: absolute; bottom: 10px; left: 10px; background: black; z-index: 500; text-align: left;
-				       border: 1px solid #4d4d4d; visibility: hidden;">
-			</div>
-						
-			<div dojoType="dijit.layout.ContentPane" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black; 
-				z-index: 400;"></div>
-				
-			<div dojoType="dijit.layout.ContentPane" id="mini_map-pane" style="position: absolute; top: 2px; right: 2px; z-index: 400; background: black;
-				overflow: hidden; border: 1px solid #4d4d4d;"></div>				
-		</div>		
-	
-		<div dojoType="dojox.layout.ContentPane" id="party-pane" 
-			style="width: 290px; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top; overflow: visible" 
-			class="content-background"></div>	
-		
-	</div>
+        <div id="screen-pane" dojoType="dojox.layout.ContentPane"></div>
+
+    </div>
+
+    <div id="main-middle-section" style="min-height: 440px; text-align: center;">
+
+        <div id="map-outer" style="position: relative; visibility: hidden; display: inline-block">
+            <div dojoType="dijit.layout.ContentPane" title="Map" id="map-pane"></div>
+
+            <div dojoType="dijit.layout.ContentPane" id="messages-pane"
+                style="padding: 5px; position: absolute; bottom: 10px; left: 10px; background: black; z-index: 500; text-align: left;
+                       border: 1px solid #4d4d4d; visibility: hidden;">
+            </div>
+
+            <div dojoType="dijit.layout.ContentPane" id="creatures-pane" style="position: absolute; top: 2px; left: 2px; background: black;
+                z-index: 400;"></div>
+
+            <div dojoType="dijit.layout.ContentPane" id="mini_map-pane" style="position: absolute; top: 2px; right: 2px; z-index: 400; background: black;
+                overflow: hidden; border: 1px solid #4d4d4d;"></div>
+        </div>
+
+        <div dojoType="dojox.layout.ContentPane" id="party-pane"
+            style="width: 290px; padding-left: 10px; display: inline-block; text-align: left; vertical-align: top; overflow: visible"
+            class="content-background"></div>
+
+    </div>
 </div>
 
-	
+
 <div dojoType="dijit.layout.ContentPane" selected="true" title="Zoom" id="zoom-pane" region="left" style="width: 10px; display: none"></div>
 
 <div id="popup-messages-pane" style="display: none" dojoType="dijit.layout.ContentPane"></div>

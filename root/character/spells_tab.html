@@ -4,20 +4,20 @@
 
 <table class="main" cellspacing="5">
 [% FOREACH spell IN memorised_spells %]
-	[% IF spell.memorised_today %]
-	[% IF loop.count % 4 == 1 %]
-	<tr>
-	[% END %]
-		<td id="spell_[% spell.spell.id %]"><b>[% spell.spell.spell_name %]</b>
-			<div dojoType="dijit.Tooltip"
+    [% IF spell.memorised_today %]
+    [% IF loop.count % 4 == 1 %]
+    <tr>
+    [% END %]
+        <td id="spell_[% spell.spell.id %]"><b>[% spell.spell.spell_name %]</b>
+            <div dojoType="dijit.Tooltip"
                    connectId="spell_[% spell.spell.id %]"
-                   label="[% spell.spell.description %]"></div>		
-		</td><td>x[% spell.memorise_count %]</td><td>(Cast [% spell.number_cast_today %] times today)</td>
+                   label="[% spell.spell.description %]"></div>
+        </td><td>x[% spell.memorise_count %]</td><td>(Cast [% spell.number_cast_today %] times today)</td>
 
-	[% IF loop.count % 4 == 0 %]
-	</tr>
-	[% END %]
-	[% END %]
+    [% IF loop.count % 4 == 0 %]
+    </tr>
+    [% END %]
+    [% END %]
 [% END %]
 </table>
 
@@ -30,63 +30,63 @@
 
 <table class="main" cellpadding="2" cellspacing="4" border="0">
 
-[% FOREACH spell IN available_spells %]	
-	[% spell_id = spell.id %]
-	[% IF loop.count % 4 == 1 %]
-	<tr>
-	[% END %]
-		<td><b>[% spell.spell_name %]</b></td>
-		<td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
-		<td>
-		 <span id="mem_spell_[% spell.id %]">(?)</span>
-		 	[% desc = spell.description _ "\n<br>(" %]
-		 	[% IF spell.combat && spell.non_combat %]
-		 		[% desc = desc _ "Combat & Non-Combat" %]
-		 	[% ELSIF spell.combat %]
-		 		[% desc = desc _ "Combat Only" %]
-		 	[% ELSE %]
-		 		[% desc = desc _ "Non-Combat Only" %]
-		 	[% END %]
-		 	[% desc = desc _ ")" %]
-		 	
-			<div dojoType="dijit.Tooltip"
+[% FOREACH spell IN available_spells %]
+    [% spell_id = spell.id %]
+    [% IF loop.count % 4 == 1 %]
+    <tr>
+    [% END %]
+        <td><b>[% spell.spell_name %]</b></td>
+        <td>(<span id="spell_points_[% spell.id %]">[% spell.points %]</span> pts)
+        <td>
+         <span id="mem_spell_[% spell.id %]">(?)</span>
+             [% desc = spell.description _ "\n<br>(" %]
+             [% IF spell.combat && spell.non_combat %]
+                 [% desc = desc _ "Combat & Non-Combat" %]
+             [% ELSIF spell.combat %]
+                 [% desc = desc _ "Combat Only" %]
+             [% ELSE %]
+                 [% desc = desc _ "Non-Combat Only" %]
+             [% END %]
+             [% desc = desc _ ")" %]
+
+            <div dojoType="dijit.Tooltip"
                    connectId="mem_spell_[% spell.id %]">[% desc | wrap(80, '', '<br>') %]</div>
-		</td>
-		<td>			
-			<input type="text" style="height: 10px; width: 25px"  name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"
-				onkeyup="calculateSpellPoints()" autocomplete="off" id="memorise_count_[% spell.id %]">
-		</td>
-		<td align="center">
-			[% IF spell.combat %]
-				<input type="checkbox" name="cast_offline_[% spell.id %]" [% IF memorised_spells_by_id.$spell_id.cast_offline %]checked[% END %] value="1"
-					id="auto_cast_[% spell.id %]">
-			[% END %]
-		</td>		
-		<td style="width: 5px; height: 1px"></td>
-	[% IF loop.count % 4 == 0 %]
-	</tr>	
-	[% END %]
+        </td>
+        <td>
+            <input type="text" style="height: 10px; width: 25px"  name="mem_tomorrow_[% spell.id %]" value="[% memorised_spells_by_id.$spell_id.memorise_count_tomorrow || 0 %]"
+                onkeyup="calculateSpellPoints()" autocomplete="off" id="memorise_count_[% spell.id %]">
+        </td>
+        <td align="center">
+            [% IF spell.combat %]
+                <input type="checkbox" name="cast_offline_[% spell.id %]" [% IF memorised_spells_by_id.$spell_id.cast_offline %]checked[% END %] value="1"
+                    id="auto_cast_[% spell.id %]">
+            [% END %]
+        </td>
+        <td style="width: 5px; height: 1px"></td>
+    [% IF loop.count % 4 == 0 %]
+    </tr>
+    [% END %]
 [% END %]
 </table>
 <br>
-    
-<div dojoType="dijit.Tooltip"
-	connectId="[% FOREACH spell IN available_spells %]auto_cast_[% spell.id %],[% END %]"
-    label="Check if you want to auto-cast this spell<br>based on the percentages below"></div>	    
 
-Online Auto Cast % Chance <span id="online_cast_chance_help">(?)</span>: 
-<input type="text" dojoType="dijit.form.NumberTextBox" name="online_cast_chance" value="[% character.online_cast_chance %]" 
-	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
+<div dojoType="dijit.Tooltip"
+    connectId="[% FOREACH spell IN available_spells %]auto_cast_[% spell.id %],[% END %]"
+    label="Check if you want to auto-cast this spell<br>based on the percentages below"></div>
+
+Online Auto Cast % Chance <span id="online_cast_chance_help">(?)</span>:
+<input type="text" dojoType="dijit.form.NumberTextBox" name="online_cast_chance" value="[% character.online_cast_chance %]"
+    constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
 <br>
-Offline Auto Cast % Chance <span id="offline_cast_chance_help">(?)</span>: 
-<input type="text" dojoType="dijit.form.NumberTextBox" name="offline_cast_chance" value="[% character.offline_cast_chance %]" 
-	constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
+Offline Auto Cast % Chance <span id="offline_cast_chance_help">(?)</span>:
+<input type="text" dojoType="dijit.form.NumberTextBox" name="offline_cast_chance" value="[% character.offline_cast_chance %]"
+    constraints="{min:0,max:100,places:0}" required="true" invalidMessage="Please enter a value between 0 and 100" style="width: 50px">
 
 <div dojoType="dijit.Tooltip"
-	connectId="online_cast_chance_help,offline_cast_chance_help"
-    label="[% FILTER  wrap(70, '', '<br>') %]The percentage chance each round this character will auto cast a spell in combat. Set to 0 to disable auto casting. 
+    connectId="online_cast_chance_help,offline_cast_chance_help"
+    label="[% FILTER  wrap(70, '', '<br>') %]The percentage chance each round this character will auto cast a spell in combat. Set to 0 to disable auto casting.
     Online auto cast triggers when  you set the character's action to auto-cast during combat. Offline cast triggers when your party is attacked offline, or the
-    character is in a garrison.[% END %]"></div>	
+    character is in a garrison.[% END %]"></div>
 
 <br>
 
@@ -96,6 +96,6 @@ Offline Auto Cast % Chance <span id="offline_cast_chance_help">(?)</span>:
 
 <br>
 
-[% IF character.class.class_name == 'Mage' %]Magic[% ELSE %]Faith[% END %] 
-	Points Used: <span id="spell-points-used">[% character.spell_points_used %]</span> / <span id="spell-points-total">[% character.spell_points %]</span>
+[% IF character.class.class_name == 'Mage' %]Magic[% ELSE %]Faith[% END %]
+    Points Used: <span id="spell-points-used">[% character.spell_points_used %]</span> / <span id="spell-points-total">[% character.spell_points %]</span>
 

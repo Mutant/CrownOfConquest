@@ -1,45 +1,45 @@
 <h3>[% IF outbox %]Outbox[% ELSE %]Inbox[% END %]</h3>
 
-[% INCLUDE party/message/subnav.html %] 
+[% INCLUDE party/message/subnav.html %]
 
 [% MACRO page_links BLOCK %]
-	[% page = 1 %]
-	[% IF total_pages > 1 %]
-		[% WHILE page <= total_pages %]
-			[% IF current_page == page %]
-				[% page %]
-			[% ELSE %]
-				<a href="javascript:loadScreen('party/message/[% IF outbox %]outbox[% ELSE %]inbox[% END %]?page=[% page %]')">[% page %]</a>
-			[% END %]
-			[% page = page + 1 %]
-		[% END %]
-	[% END %]
+    [% page = 1 %]
+    [% IF total_pages > 1 %]
+        [% WHILE page <= total_pages %]
+            [% IF current_page == page %]
+                [% page %]
+            [% ELSE %]
+                <a href="javascript:loadScreen('party/message/[% IF outbox %]outbox[% ELSE %]inbox[% END %]?page=[% page %]')">[% page %]</a>
+            [% END %]
+            [% page = page + 1 %]
+        [% END %]
+    [% END %]
 [% END %]
 
 <div align="center">[% page_links() %]</div>
 
 <table class="main" style="width: 70%" cellspacing="0">
-	<tr style="background: #2F2F2F; font-weight: bold">
-		<td>[% IF outbox %]To[% ELSE %]From[% END %]</td>
-		<td>Subject</td>
-		<td>Day Sent</td>
-	</tr>
+    <tr style="background: #2F2F2F; font-weight: bold">
+        <td>[% IF outbox %]To[% ELSE %]From[% END %]</td>
+        <td>Subject</td>
+        <td>Day Sent</td>
+    </tr>
 
 [% FOREACH message IN messages %]
-	<tr style="cursor: pointer; [% IF ! outbox && ! message.recipients.has_read %]font-weight: bold;[% END %] [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]"
-		onClick="getPanels('party/message/view?message_id=[% message.id %]');">
-		<td style="width: 150px">
-			[% IF outbox %]
-				[% FOREACH party IN message.recipient_parties %]
-					[% party.name %][% IF ! loop.last %]; [% END %]
-				[% END %]
-			[% ELSE %]		
-				<a href="javascript:getPanels('party/profile?party_id=[% message.sender_id %]')">[% message.sender.name %]</a>				
-			[% END %]
-		</td>
-		<td>[% IF message.subject %][% message.subject %][% ELSE %]<No Subject>[% END %]</td>
-		<td style="width: 100px" nowrap>[% message.day.day_number %] ([% message.day.difference_to_today_str %])</td>
-	</tr>		
+    <tr style="cursor: pointer; [% IF ! outbox && ! message.recipients.has_read %]font-weight: bold;[% END %] [% IF loop.count % 2 == 0 %]background: #5F5F5F[% END %]"
+        onClick="getPanels('party/message/view?message_id=[% message.id %]');">
+        <td style="width: 150px">
+            [% IF outbox %]
+                [% FOREACH party IN message.recipient_parties %]
+                    [% party.name %][% IF ! loop.last %]; [% END %]
+                [% END %]
+            [% ELSE %]
+                <a href="javascript:getPanels('party/profile?party_id=[% message.sender_id %]')">[% message.sender.name %]</a>
+            [% END %]
+        </td>
+        <td>[% IF message.subject %][% message.subject %][% ELSE %]<No Subject>[% END %]</td>
+        <td style="width: 100px" nowrap>[% message.day.day_number %] ([% message.day.difference_to_today_str %])</td>
+    </tr>
 
 [% END %]
 

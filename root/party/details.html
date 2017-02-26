@@ -1,89 +1,89 @@
 <h2>[% party.name %]</h2>
 
 <div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer" style="height: 500px">
-	
-<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Details">
-	<table class="main">
-		<tr>
-			<td></td>
-			<td>Owned by:</td>
-			<td>[% party.player.player_name %] ([% party.player.email %])</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Party Created:</td>
-			<td>[% party.created.ymd %] [% party.created.hms %] ([% party.time_since_created %])</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Party Level:</td>
-			<td>[% party.level %]</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Gold:</td>
-			<td>[% party.gold %]</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Movement Factor:</td>
-			<td>[% party.movement_factor %]</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Current Turns:</td>
-			<td>[% party.turns %]</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Total Turns Used:</td>
-			<td>[% party.turns_used %]</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>World Explored:</td>
-			<td>[% party.world_explored | format('%.2f') %]%</td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Land Claimed Today:</td>
-			<td>[% party.land_claimed_today %] (Max allowed: [% c.config.max_land_claimed_per_day %])</td>
-		</tr>
-		<tr>
-			<td id="refer-a-friend-help">(?)</td>
-			<td id="refer-a-friend-label">Refer a friend URL</td>
-			<td>[% base %]player/register?referred_by=[% party.player.player_name %]</td>
-		</tr>
-	</table>
 
-	<div dojoType="dijit.Tooltip"
-	connectId="refer-a-friend-help,refer-a-friend-label"
-    label="Give this URL to a friend who might be interested in playing. If they sign up and play for a while, 
-    	you'll receive [% c.config.refer_a_friend_turn_reward %] turns!"></div>	
-	
-	<br>
-	
-	[% IF old_parties.size > 0 %]
-	<h3>Previous Parties</h3>
-	
-	<table cellpadding=6 cellspacing=0>
-		<tr>
-			<th>Party Name</th>
-			<th>Created</th>
-			<th>Disbanded</th>
-			<th>Combat Logs</th>
-		</tr>
-		
-		[% FOREACH old_party IN old_parties %]
-			<tr>
-				<td>[% old_party.name %]</td>
-				<td>[% old_party.time_since_created %]</td>
-				<td>[% old_party.time_since_defunct %]</td>
-				<td><a href="javascript:loadScreen('party/details/combat_log?party_id=[% old_party.party_id %]')">View</a></td>
-			</tr>
-		[% END %]
-	</table>
-	[% END %]
+<div class="kingdomsTabPane" dojoType="dijit.layout.ContentPane" title="Details">
+    <table class="main">
+        <tr>
+            <td></td>
+            <td>Owned by:</td>
+            <td>[% party.player.player_name %] ([% party.player.email %])</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Party Created:</td>
+            <td>[% party.created.ymd %] [% party.created.hms %] ([% party.time_since_created %])</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Party Level:</td>
+            <td>[% party.level %]</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Gold:</td>
+            <td>[% party.gold %]</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Movement Factor:</td>
+            <td>[% party.movement_factor %]</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Current Turns:</td>
+            <td>[% party.turns %]</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Total Turns Used:</td>
+            <td>[% party.turns_used %]</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>World Explored:</td>
+            <td>[% party.world_explored | format('%.2f') %]%</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Land Claimed Today:</td>
+            <td>[% party.land_claimed_today %] (Max allowed: [% c.config.max_land_claimed_per_day %])</td>
+        </tr>
+        <tr>
+            <td id="refer-a-friend-help">(?)</td>
+            <td id="refer-a-friend-label">Refer a friend URL</td>
+            <td>[% base %]player/register?referred_by=[% party.player.player_name %]</td>
+        </tr>
+    </table>
+
+    <div dojoType="dijit.Tooltip"
+    connectId="refer-a-friend-help,refer-a-friend-label"
+    label="Give this URL to a friend who might be interested in playing. If they sign up and play for a while,
+        you'll receive [% c.config.refer_a_friend_turn_reward %] turns!"></div>
+
+    <br>
+
+    [% IF old_parties.size > 0 %]
+    <h3>Previous Parties</h3>
+
+    <table cellpadding=6 cellspacing=0>
+        <tr>
+            <th>Party Name</th>
+            <th>Created</th>
+            <th>Disbanded</th>
+            <th>Combat Logs</th>
+        </tr>
+
+        [% FOREACH old_party IN old_parties %]
+            <tr>
+                <td>[% old_party.name %]</td>
+                <td>[% old_party.time_since_created %]</td>
+                <td>[% old_party.time_since_defunct %]</td>
+                <td><a href="javascript:loadScreen('party/details/combat_log?party_id=[% old_party.party_id %]')">View</a></td>
+            </tr>
+        [% END %]
+    </table>
+    [% END %]
 </div>
 
 <div class="kingdomsTabPane" dojoType="dojox.layout.ContentPane" title="Characters" href="[% base %]/party/details/characters" [% IF tab == 'characters' %]selected=true[% END %]>

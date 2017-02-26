@@ -1,20 +1,20 @@
-[% character.name %] tries to 
+[% character.name %] tries to
 [% IF action == 'charge' %]
-	charge down the door
+    charge down the door
 [% ELSIF action == 'pick' %]
-	pick the door's lock
+    pick the door's lock
 [% ELSE %]
-	break any magical seals
+    break any magical seals
 [% END %]
 [% IF success %]
-	and is successful! The door is now unblocked
+    and is successful! The door is now unblocked
 [% ELSE %]
-	[% IF action == 'charge' %]
-		and falls flat on [% IF character.gender == 'male' %]his[% ELSE %]her[% END %] face!
-	[% ELSIF action == 'pick' %]
-		and almost breaks a finger in the process.
-	[% ELSE %]
-		by chanting incantations for several minutes, but gets no where.
-	[% END %]
-	The door is still blocked.
+    [% IF action == 'charge' %]
+        and falls flat on [% IF character.gender == 'male' %]his[% ELSE %]her[% END %] face!
+    [% ELSIF action == 'pick' %]
+        and almost breaks a finger in the process.
+    [% ELSE %]
+        by chanting incantations for several minutes, but gets no where.
+    [% END %]
+    The door is still blocked.
 [% END %]

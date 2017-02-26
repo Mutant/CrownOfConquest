@@ -3,16 +3,16 @@ You sense have the chance to seize power. You can nominate a character in your p
 to leave the party and remain in town to complete their duties.<br><br>
 Choose a character to become mayor of [% town.town_name %]:<br><br>
 <select name="character_id" dojoType="dijit.form.FilteringSelect">
-	[% FOREACH character IN party.characters_in_party %]
-		[% UNLESS character.is_dead %]
-			<option value="[% character.id %]">[% character.name %]</option>
-		[% END %]
-	[% END %]
+    [% FOREACH character IN party.characters_in_party %]
+        [% UNLESS character.is_dead %]
+            <option value="[% character.id %]">[% character.name %]</option>
+        [% END %]
+    [% END %]
 </select>
 
 <input name="town_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="[% town.id %]">
 
 <div align="center">
-	<button dojoType=dijit.form.Button type="submit" name="accept" onClick="this.value = 1; return dijit.byId('dialog').isValid();">Become Mayor</button>
-	<button dojoType=dijit.form.Button type="submit" name="decline" onClick="this.value = 1; return dijit.byId('dialog').isValid();">No thanks</button>
+    <button dojoType=dijit.form.Button type="submit" name="accept" onClick="this.value = 1; return dijit.byId('dialog').isValid();">Become Mayor</button>
+    <button dojoType=dijit.form.Button type="submit" name="decline" onClick="this.value = 1; return dijit.byId('dialog').isValid();">No thanks</button>
 </div>

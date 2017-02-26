@@ -1,31 +1,31 @@
 
 <div>
-	[% drawn_title = 0 %]
-	[% IF show_resources %]
-		[% FOREACH resource IN building_type.resources_needed %]
-			[% res_available = available_items.resources.${resource.res_name}; %]
-			<div id="building_types" style="float:left; padding:10px;">
-				[% IF drawn_title == 0 %]
-					<div style="position:absolute; margin-top:-20px"><span>[% resources_title %]</span></div>
-					[% drawn_title = 1 %]
-				[% END %]
-				<div style="text-align: center; margin:10px;">
-					<span>Needs [% resource.amount %] [% resource.res_name %]</span>
-				</div>
-				<div style="text-align: center; margin:10px;">
-					<img height=40 width=40 src="[% c.config.static_path %]/images/items/[% resource.image %]">
-				</div>
-				<div style="text-align: center; margin:10px;">
-					<span>[% res_available %] [% resource.res_name %] available</span>
-				</div>
-			</div>
-		[% END %]
-	[% END %]
-	<div style="float:left;margin-top:20px;[% effects_style %]">
-		<div><span>Effects:</span></div>
-		[% IF building_type.defense > 0 %]<div><span>[% building_type.defense %]X defense factor</span></div>[% END %]
-		[% IF building_type.attack > 0 %]<div><span>[% building_type.attack %]X attack factor</span></div>[% END %]
-		[% IF building_type.heal > 0 %]<div><span>[% building_type.heal %]X healing factor</span></div>[% END %]
-		[% IF building_type.commerce > 0 %]<div><span>[% building_type.commerce %]X commerce factor</span></div>[% END %]
-	</div>
+    [% drawn_title = 0 %]
+    [% IF show_resources %]
+        [% FOREACH resource IN building_type.resources_needed %]
+            [% res_available = available_items.resources.${resource.res_name}; %]
+            <div id="building_types" style="float:left; padding:10px;">
+                [% IF drawn_title == 0 %]
+                    <div style="position:absolute; margin-top:-20px"><span>[% resources_title %]</span></div>
+                    [% drawn_title = 1 %]
+                [% END %]
+                <div style="text-align: center; margin:10px;">
+                    <span>Needs [% resource.amount %] [% resource.res_name %]</span>
+                </div>
+                <div style="text-align: center; margin:10px;">
+                    <img height=40 width=40 src="[% c.config.static_path %]/images/items/[% resource.image %]">
+                </div>
+                <div style="text-align: center; margin:10px;">
+                    <span>[% res_available %] [% resource.res_name %] available</span>
+                </div>
+            </div>
+        [% END %]
+    [% END %]
+    <div style="float:left;margin-top:20px;[% effects_style %]">
+        <div><span>Effects:</span></div>
+        [% IF building_type.defense > 0 %]<div><span>[% building_type.defense %]X defense factor</span></div>[% END %]
+        [% IF building_type.attack > 0 %]<div><span>[% building_type.attack %]X attack factor</span></div>[% END %]
+        [% IF building_type.heal > 0 %]<div><span>[% building_type.heal %]X healing factor</span></div>[% END %]
+        [% IF building_type.commerce > 0 %]<div><span>[% building_type.commerce %]X commerce factor</span></div>[% END %]
+    </div>
 </div>

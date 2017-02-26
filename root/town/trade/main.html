@@ -4,81 +4,81 @@
 
 function tradeConfirmation(itemSpan) {
 
-	item_id = (itemSpan.id.split('-'))[2];
+    item_id = (itemSpan.id.split('-'))[2];
 
-	dojo.byId('trade-item-id').value = item_id;
-	
-	dijit.byId('confirm-trade').show();
-}	
+    dojo.byId('trade-item-id').value = item_id;
+
+    dijit.byId('confirm-trade').show();
+}
 
 function filterItems() {
-	var url = '[% base %]town/trade/equipment?';
-	
-	if (dijit.byId('character_filter').get('value')) {
-		url += 'character_filter=' + dijit.byId('character_filter').get('value') + '&';
-	}
+    var url = '[% base %]town/trade/equipment?';
 
-	if (dijit.byId('category_filter').get('value')) {
-		url += 'category_filter=' + dijit.byId('category_filter').get('value') + '&';
-	}
-	
+    if (dijit.byId('character_filter').get('value')) {
+        url += 'character_filter=' + dijit.byId('character_filter').get('value') + '&';
+    }
+
+    if (dijit.byId('category_filter').get('value')) {
+        url += 'category_filter=' + dijit.byId('category_filter').get('value') + '&';
+    }
+
      dojo.xhrGet({
          url: url,
          load: function(data,ioa){
               dijit.byId('equipment-pane').set('content', data);
-         } 
+         }
      });
 }
 
 function purchaseConfirmation(tradeId, item, amount) {
-	dojo.byId('trade-id').value = tradeId;
-	dojo.byId('trade-item').innerHTML = item;
-	dojo.byId('trade-amount').innerHTML = amount;
-	
-	dijit.byId('trade-confirm-purchase').show();
+    dojo.byId('trade-id').value = tradeId;
+    dojo.byId('trade-item').innerHTML = item;
+    dojo.byId('trade-amount').innerHTML = amount;
+
+    dijit.byId('trade-confirm-purchase').show();
 }
 
 </script>
 
 <div dojoType="dijit.Dialog" id="trade-confirm-purchase" style="display: none" title="Confirm Purchase">
-	<form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
-	<input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
+    <form method="POST" action="[% base %]town/trade/purchase" onSubmit="postPanels(this); return false">
+    <input id="trade-id" name="trade_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     Are you sure you want to purchase the <span id="trade-item"></span> for <span id="trade-amount"></span> gold?
-        
+
     [% dialog_buttons('trade-confirm-purchase') %]
-	</form>
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="confirm-trade" style="display: none" title="Confirm Trade">
-	<form method="POST" action="[% base %]/town/trade/create" onSubmit="postPanels(this); return false">
-	<input id="trade-item-id" name="trade_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
-	<table class="main">
-		<tr>
-			<td>How much do you want to offer this item for?</td>
-			<td>    
-				<input type="text"
-			        dojoType="dijit.form.NumberTextBox"
-			        name="price"
-			        value="1"
-			        constraints="{min:1,places:0}"
-			        promptMessage= "Enter a value for the item"
-			        required= "true"
-			        invalidMessage= "Invalid quantity."
-					style="width: 100px"
-			        />
-			</td>
-		</tr>
-		<tr>
-			<td>
-		    Do you want to offer this trade only to a particular party?<br>
-		    (Leave blank to offer to all parties)
-		    </td>
-		    <td><input name="offer_to" dojoType="dijit.form.TextBox" type="text" style="width: 250px"></td>
-		</tr>
-	</table>
-        
+    <form method="POST" action="[% base %]/town/trade/create" onSubmit="postPanels(this); return false">
+    <input id="trade-item-id" name="trade_item_id" dojoType="dijit.form.TextBox" type="hidden" style="display: none" value="">
+    <table class="main">
+        <tr>
+            <td>How much do you want to offer this item for?</td>
+            <td>
+                <input type="text"
+                    dojoType="dijit.form.NumberTextBox"
+                    name="price"
+                    value="1"
+                    constraints="{min:1,places:0}"
+                    promptMessage= "Enter a value for the item"
+                    required= "true"
+                    invalidMessage= "Invalid quantity."
+                    style="width: 100px"
+                    />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            Do you want to offer this trade only to a particular party?<br>
+            (Leave blank to offer to all parties)
+            </td>
+            <td><input name="offer_to" dojoType="dijit.form.TextBox" type="text" style="width: 250px"></td>
+        </tr>
+    </table>
+
     [% dialog_buttons('confirm-trade') %]
-	</form>
+    </form>
 </div>
 
 <h2>Trade Hall Of [% town.town_name %]</h2>
@@ -86,15 +86,15 @@ function purchaseConfirmation(tradeId, item, amount) {
 <br>
 Here, you can buy and sell items from other parties. The buyer comes to the trade hall to buy the item, and the seller will have to
 come back later to pick up the gold.
-	
-<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
-	<div dojoType="dijit.layout.ContentPane" title="Buy" style="height: 700px; min-height: 150px" 
-		href="[% base %]town/trade/buy"
-		[% IF selected == 'buy' %]selected=true[% END %]>
-	</div>
 
-	<div dojoType="dijit.layout.ContentPane" id="sell_tab" title="Sell" style="height: 700px; min-height: 150px" 
-		href="[% base %]town/trade/sell"
-		[% IF selected == 'sell' %]selected=true[% END %]>
-	</div>
+<div class="kingdomsTabContainer" dojoType="dijit.layout.TabContainer">
+    <div dojoType="dijit.layout.ContentPane" title="Buy" style="height: 700px; min-height: 150px"
+        href="[% base %]town/trade/buy"
+        [% IF selected == 'buy' %]selected=true[% END %]>
+    </div>
+
+    <div dojoType="dijit.layout.ContentPane" id="sell_tab" title="Sell" style="height: 700px; min-height: 150px"
+        href="[% base %]town/trade/sell"
+        [% IF selected == 'sell' %]selected=true[% END %]>
+    </div>
 </div>

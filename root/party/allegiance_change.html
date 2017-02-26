@@ -1,7 +1,7 @@
 [% IF old_kingdom && new_kingdom %]
-	We changed allegiance from the Kingdom of [% old_kingdom.name %] to the Kingdom of [% new_kingdom.name %].
+    We changed allegiance from the Kingdom of [% old_kingdom.name %] to the Kingdom of [% new_kingdom.name %].
 [% ELSIF old_kingdom && ! new_kingdom %]
-	We renounced our allegiance to the Kingdom of [% old_kingdom.name %], and become Free Citizens.
+    We renounced our allegiance to the Kingdom of [% old_kingdom.name %], and become Free Citizens.
 [% ELSIF ! old_kingdom && new_kingdom %]
-	We gave up our days as Free Citizens, and swore allegiance to the Kingdom of [% new_kingdom.name %].
+    We gave up our days as Free Citizens, and swore allegiance to the Kingdom of [% new_kingdom.name %].
 [% END %]

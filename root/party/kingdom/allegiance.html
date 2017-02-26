@@ -1,55 +1,55 @@
 [% PROCESS layout/diag_buttons.html %]
 
 <div dojoType="dijit.Dialog" id="declare-kingdom-diag" style="display: none" title="Declare Kingdom" execute="return true;">
-	<form method="post" action="[% base %]kingdom/create" onSubmit="postPanels(this); return false">
-	<table class="main">
-		<tr>
-			<td>Kingdom Name:</td>
-			<td><input name="kingdom_name" dojoType=dijit.form.TextBox type="text" value="" style="width: 250px"></td>
-		</tr>
-		<tr>
-			<td>King / Queen:</td>
-			<td><select name="king" dojoType="dijit.form.Select">
-				[% FOREACH character IN party.characters_in_party %]
-					[% UNLESS character.is_dead %]
-						<option value="[% character.id %]">[% character.name %]</option>
-					[% END %]
-				[% END %]
-				</select>
-			</tr>
-		</tr>
-	</table>    
-	[% dialog_buttons('declare-kingdom-diag') %]
-	</form>
+    <form method="post" action="[% base %]kingdom/create" onSubmit="postPanels(this); return false">
+    <table class="main">
+        <tr>
+            <td>Kingdom Name:</td>
+            <td><input name="kingdom_name" dojoType=dijit.form.TextBox type="text" value="" style="width: 250px"></td>
+        </tr>
+        <tr>
+            <td>King / Queen:</td>
+            <td><select name="king" dojoType="dijit.form.Select">
+                [% FOREACH character IN party.characters_in_party %]
+                    [% UNLESS character.is_dead %]
+                        <option value="[% character.id %]">[% character.name %]</option>
+                    [% END %]
+                [% END %]
+                </select>
+            </tr>
+        </tr>
+    </table>
+    [% dialog_buttons('declare-kingdom-diag') %]
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="tribute-diag" style="display: none" title="Pay Tribute To The King" execute="return true;">
-	<form method="post" action="[% base %]party/kingdom/tribute" onSubmit="postPanels(this); return false">
-	Enter the amount of gold to pay as tribute to the king:
-	<input type="text" dojoType="dijit.form.NumberTextBox" name="tribute" style="width: 50px"
-					constraints="{min:0,places:0}" required="true">	  
-	[% dialog_buttons('tribute-diag') %]
-	</form>
+    <form method="post" action="[% base %]party/kingdom/tribute" onSubmit="postPanels(this); return false">
+    Enter the amount of gold to pay as tribute to the king:
+    <input type="text" dojoType="dijit.form.NumberTextBox" name="tribute" style="width: 50px"
+                    constraints="{min:0,places:0}" required="true">
+    [% dialog_buttons('tribute-diag') %]
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="claim-diag" style="display: none" title="Claim The Throne Of [% kingdom.name %]" execute="return true;">
-	<form method="post" action="[% base %]party/kingdom/claim" onSubmit="postPanels(this); return false">
-	You can make a claim for the throne by nominating a character as the claimant. The claim will take [% claim_wait_period %] days, during<br>
-	which time parties in the kingdom can support or oppose your claim. If your claim is successful, the character will<br>
-	take the throne, if it fails, you will not be able to make another claim for some time.
-	<br><br>
-	The nominated character will leave the party and will await the result of the claim.
-	<br><br>
-	Nominated Character: <select name="character_id" dojoType="dijit.form.Select">
-	[% FOREACH character IN party.characters_in_party %]
-		[% UNLESS character.is_dead %]
-			<option value="[% character.id %]">[% character.name %]</option>
-		[% END %]
-	[% END %]
-	</select>
-	
-	[% dialog_buttons('claim-diag') %]
-	</form>
+    <form method="post" action="[% base %]party/kingdom/claim" onSubmit="postPanels(this); return false">
+    You can make a claim for the throne by nominating a character as the claimant. The claim will take [% claim_wait_period %] days, during<br>
+    which time parties in the kingdom can support or oppose your claim. If your claim is successful, the character will<br>
+    take the throne, if it fails, you will not be able to make another claim for some time.
+    <br><br>
+    The nominated character will leave the party and will await the result of the claim.
+    <br><br>
+    Nominated Character: <select name="character_id" dojoType="dijit.form.Select">
+    [% FOREACH character IN party.characters_in_party %]
+        [% UNLESS character.is_dead %]
+            <option value="[% character.id %]">[% character.name %]</option>
+        [% END %]
+    [% END %]
+    </select>
+
+    [% dialog_buttons('claim-diag') %]
+    </form>
 </div>
 
 <h4>Allegiance</h4>
@@ -57,70 +57,70 @@
 [% PROCESS kingdom/loyalty_rating.html %]
 
 [% IF kingdom %]
-	[% king = kingdom.king %]
-	We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
-	Our monarch is: [% king.name %] ([% IF king.party_id %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% ELSE %]NPC[% END %])<br>
-	Our loyalty rating: [% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]<br>
-	<a href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a>
-	<br><br>
-	<button dojoType="dijit.form.Button" onClick="dijit.byId('tribute-diag').show()">
-		Pay Tribute
-	</button>
-	[% IF can_claim_throne %]
-	<button dojoType="dijit.form.Button" onClick="dijit.byId('claim-diag').show()">
-		Claim Throne
-	</button>
-	[% END %]
-	
-	[% IF claim_to_throne %]
-		<br><br>
-		<b>Claim To Throne</b><br>
-		[% claimant = claim_to_throne.claimant %]
-		[% IF claimant.party_id != party.id %]
-			[% claimant.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% claimant.party_id %]')">[% claimant.party.name %]</a>) 
-			has made a claim to the throne of [% kingdom.name %], which we [% IF claim_response %][% claim_response %][% ELSE %]have not responded to yet[% END %].
-			<br>
-			Respond to Claim: <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=support')">Support</a>
-							  <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=oppose')">Oppose</a>							  
-		[% ELSE %]
-			We have made a claim to the throne.
-		[% END %]
-		<br>
-		Responses: [% claim_summary.support %] support, [% claim_summary.oppose %] oppose.<br>
-		Claim will be resolved in [% claim_to_throne.days_left %] days. 
-	[% END %]
-	
+    [% king = kingdom.king %]
+    We are loyal to the Kingdom of [% kingdom.name | collapse %].<br>
+    Our monarch is: [% king.name %] ([% IF king.party_id %]<a href="javascript:getPanels('party/profile?party_id=[% king.party.id %]')">[% king.party.name %]</a>[% ELSE %]NPC[% END %])<br>
+    Our loyalty rating: [% display_loyalty_rating(party.loyalty_for_kingdom(kingdom.id)) %]<br>
+    <a href="javascript:loadScreen('kingdomboard/view')">Discussion Board</a>
+    <br><br>
+    <button dojoType="dijit.form.Button" onClick="dijit.byId('tribute-diag').show()">
+        Pay Tribute
+    </button>
+    [% IF can_claim_throne %]
+    <button dojoType="dijit.form.Button" onClick="dijit.byId('claim-diag').show()">
+        Claim Throne
+    </button>
+    [% END %]
+
+    [% IF claim_to_throne %]
+        <br><br>
+        <b>Claim To Throne</b><br>
+        [% claimant = claim_to_throne.claimant %]
+        [% IF claimant.party_id != party.id %]
+            [% claimant.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% claimant.party_id %]')">[% claimant.party.name %]</a>)
+            has made a claim to the throne of [% kingdom.name %], which we [% IF claim_response %][% claim_response %][% ELSE %]have not responded to yet[% END %].
+            <br>
+            Respond to Claim: <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=support')">Support</a>
+                              <a href="javascript:getPanels('party/kingdom/respond_to_claim?response=oppose')">Oppose</a>
+        [% ELSE %]
+            We have made a claim to the throne.
+        [% END %]
+        <br>
+        Responses: [% claim_summary.support %] support, [% claim_summary.oppose %] oppose.<br>
+        Claim will be resolved in [% claim_to_throne.days_left %] days.
+    [% END %]
+
 [% ELSE %]
-	We are Free Citizens, loyal to no one.
+    We are Free Citizens, loyal to no one.
 [% END %]
 
 <br><br>
 
 [% IF party.level < min_level_for_allegiance_declaration %]
-	We cannot declare allegiance for a kingdom until party level [% min_level_for_allegiance_declaration %].
+    We cannot declare allegiance for a kingdom until party level [% min_level_for_allegiance_declaration %].
 [% ELSE %]
-	We can change our allegiance once every [% allegiance_change_frequency %] days. 
-	
-	[% IF party.last_allegiance_change %]
-		We last changed it [% party.days_since_last_allegiance_change %].
-	[% ELSE %]
-		So far, we have not changed our allegiance.
-	[% END %]
-	
-	[% IF ! in_combat %]
-	<form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
-	Change our allegiance to: 
-		<select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
-			[% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
-			[% FOREACH kingdom IN kingdoms %]
-	        	<option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
-			[% END %]
-		</select>
-		<input type="submit" value="Change">
-	</form>
-	[% ELSE %]
-	<br><br>You cannot change your allegiance while you're in combat.
-	[% END %]
+    We can change our allegiance once every [% allegiance_change_frequency %] days.
+
+    [% IF party.last_allegiance_change %]
+        We last changed it [% party.days_since_last_allegiance_change %].
+    [% ELSE %]
+        So far, we have not changed our allegiance.
+    [% END %]
+
+    [% IF ! in_combat %]
+    <form method="POST" action="[% base %]party/details/change_allegiance" onSubmit="postPanels(this); return false">
+    Change our allegiance to:
+        <select dojoType="dijit.form.FilteringSelect" name="kingdom_id" autocomplete="false" style="width: 250px">
+            [% IF kingdom %]<option value="">None (Become Free Citizens)</option>[% END %]
+            [% FOREACH kingdom IN kingdoms %]
+                <option value="[% kingdom.id %]" class="main">[% kingdom.name %]</option>
+            [% END %]
+        </select>
+        <input type="submit" value="Change">
+    </form>
+    [% ELSE %]
+    <br><br>You cannot change your allegiance while you're in combat.
+    [% END %]
 [% END %]
 
 [% IF banned.size > 0 %]
@@ -134,13 +134,13 @@ We have been banished from the following kingdoms:
 [% END %]
 
 [% IF mayor_count > 0 %]
-	<br>
-	We currently have [% mayor_count %] mayors. [% town_count_for_kingdom_declaration %] mayors (and a party level of [% minimum_kingdom_level %])
-	are required in order to declare a Kingdom.
-	
-	[% IF can_declare_kingdom && ! in_combat %]
-		<br><br>
-		<button dojoType="dijit.form.Button" onClick="dijit.byId('declare-kingdom-diag').show()">Declare Kingdom</button>
-	[% END %]
+    <br>
+    We currently have [% mayor_count %] mayors. [% town_count_for_kingdom_declaration %] mayors (and a party level of [% minimum_kingdom_level %])
+    are required in order to declare a Kingdom.
 
-[% END %] 
+    [% IF can_declare_kingdom && ! in_combat %]
+        <br><br>
+        <button dojoType="dijit.form.Button" onClick="dijit.byId('declare-kingdom-diag').show()">Declare Kingdom</button>
+    [% END %]
+
+[% END %]

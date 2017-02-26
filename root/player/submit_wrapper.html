@@ -15,34 +15,34 @@
 <form method="POST" action="[% base %]player/[% submit_action %]">
 <table class="main">
 [% IF ! logged_in %]
-	<tr>
-		<td>Your Email Address:</td>
-		<td><input size="40" name="email"></td>
-	</tr>
+    <tr>
+        <td>Your Email Address:</td>
+        <td><input size="40" name="email"></td>
+    </tr>
 [% END %]
-	<tr>
-		<td>Subject:</td>
-		<td><input size="79" name="subject"></td>
-	</tr>
-	<tr>
-		<td valign="top">Message:</td>
-		<td><textarea rows="10" cols="90" name="body"></textarea></td>
-	</tr>
+    <tr>
+        <td>Subject:</td>
+        <td><input size="79" name="subject"></td>
+    </tr>
+    <tr>
+        <td valign="top">Message:</td>
+        <td><textarea rows="10" cols="90" name="body"></textarea></td>
+    </tr>
 [% IF ! logged_in %]
-	<tr>
-		<td><b>CAPTCHA Code:</b><br>(Type the code in the picture to<br>the right to verify you're not<br>a robot)</td>		
-		<td><img src="[% base %]/player/captcha"><br>
-		    <input type="text" name="captcha" style="width: 300px">
-		</td>
-	</tr>
-[% END %]	
-	<tr>
-		<td></td>
-		<td><input type="submit" value="Submit" name="submit"></td>
-	</tr>
+    <tr>
+        <td><b>CAPTCHA Code:</b><br>(Type the code in the picture to<br>the right to verify you're not<br>a robot)</td>
+        <td><img src="[% base %]/player/captcha"><br>
+            <input type="text" name="captcha" style="width: 300px">
+        </td>
+    </tr>
+[% END %]
+    <tr>
+        <td></td>
+        <td><input type="submit" value="Submit" name="submit"></td>
+    </tr>
 </table>
 </form>
 
 <p>If you have trouble with this form, you can email us directly at: [% c.config.send_email_from | replace('\@', ' AT ') | replace('\.', ' DOT ') %]</p>
 
-[% INCLUDE bottom.html %] 
+[% INCLUDE bottom.html %]

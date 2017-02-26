@@ -1,9 +1,9 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
 [% IF char.stat_points || char.skill_points %]
-	<span id="statPoint-[% char.character_id %]"><a href="javascript:loadScreen('character/view?selected=skills&character_id=[% char.character_id %]')">
-		<img src="[% c.config.static_path %]/images/actions/statpointsalert.png" border="0"></a></span>
-	<div dojoType="dijit.Tooltip" connectId="statPoint-[% char.character_id %]">
+    <span id="statPoint-[% char.character_id %]"><a href="javascript:loadScreen('character/view?selected=skills&character_id=[% char.character_id %]')">
+        <img src="[% c.config.static_path %]/images/actions/statpointsalert.png" border="0"></a></span>
+    <div dojoType="dijit.Tooltip" connectId="statPoint-[% char.character_id %]">
            [% IF char.stat_points %][% char.stat_points %] [% FILTER inflect(number => char.stat_points) ~%] stat PL(point) [% END ~%] to be assigned<br>[% END %]
            [% IF char.skill_points %][% char.skill_points %] [% FILTER inflect(number => char.skill_points) ~%] skill PL(point) [% END ~%] to be assigned[% END %]
     </div>
@@ -12,28 +12,28 @@
 [% char_overencumbered = char.is_overencumbered %]
 [% has_unallocated_spell_points = char.has_unallocated_spell_points %]
 [% IF broken_items.${char.id} || char_out_of_ammo || char_overencumbered || has_unallocated_spell_points %]
-	[% label = '' %]
-	[% IF broken_items.${char.id} %]
-		[% label = 'These equipped items need to be repaired: ' %]
-		[% FOREACH item IN broken_items.${char.id} %]
-			[% label = label _ item.display_name %]
-			[% UNLESS loop.last %][% label = label _ ',' %][% END %]
-		[% END %]
-	[% END %]
-	[% IF char_out_of_ammo %]
-		[% IF label != '' %][% label = label _ '<br>' %][% END %]
-		[% label = label _ char.name _ ' has run out of ammo for ' _ char.pronoun('posessive-subjective') _ ' ' _ char.weapon %]
-	[% END %]
-	[% IF char_overencumbered %]
-		[% IF label != '' %][% label = label _ '<br>' %][% END %]
-		[% label = label _ char.name _ ' is carrying too much equipment and is unable to move.' %]
-	[% END %]
-	[% IF has_unallocated_spell_points %]
-		[% IF label != '' %][% label = label _ '<br>' %][% END %]
-		[% label = label _ char.name _ ' has unallocated spell points' %]
-	[% END %]			
-	<span id="brokenItems-[% char.character_id %]"><img src="[% c.config.static_path %]/images/actions/somethingwrongalert.png" border="0"></span>
-	<div dojoType="dijit.Tooltip"
+    [% label = '' %]
+    [% IF broken_items.${char.id} %]
+        [% label = 'These equipped items need to be repaired: ' %]
+        [% FOREACH item IN broken_items.${char.id} %]
+            [% label = label _ item.display_name %]
+            [% UNLESS loop.last %][% label = label _ ',' %][% END %]
+        [% END %]
+    [% END %]
+    [% IF char_out_of_ammo %]
+        [% IF label != '' %][% label = label _ '<br>' %][% END %]
+        [% label = label _ char.name _ ' has run out of ammo for ' _ char.pronoun('posessive-subjective') _ ' ' _ char.weapon %]
+    [% END %]
+    [% IF char_overencumbered %]
+        [% IF label != '' %][% label = label _ '<br>' %][% END %]
+        [% label = label _ char.name _ ' is carrying too much equipment and is unable to move.' %]
+    [% END %]
+    [% IF has_unallocated_spell_points %]
+        [% IF label != '' %][% label = label _ '<br>' %][% END %]
+        [% label = label _ char.name _ ' has unallocated spell points' %]
+    [% END %]
+    <span id="brokenItems-[% char.character_id %]"><img src="[% c.config.static_path %]/images/actions/somethingwrongalert.png" border="0"></span>
+    <div dojoType="dijit.Tooltip"
            connectId="brokenItems-[% char.character_id %]"
            label="[% label %]">
     </div>

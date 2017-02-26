@@ -1,7 +1,7 @@
 [% FOREACH skill IN skills %]
-	<b>[% skill.skill_name %]</b><br>
-	[% skill.description %]
-	<br>
-	Base Stat(s): [% skill.base_stats || 'None' %]
-	<br><br>
+    <b>[% skill.skill_name %]</b><br>
+    [% skill.description %]
+    <br>
+    Base Stat(s): [% skill.base_stats || 'None' %]
+    <br><br>
 [% END %]

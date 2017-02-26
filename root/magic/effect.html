@@ -1,17 +1,17 @@
-	[% IF message.defender.is_character %]
-		[% 
-			message.defender_class  = "combat-party-attacker"
-		%]
-	[% ELSE %]
-		[% 
-			message.defender_class  = "combat-creature-attacker"
-		%]
-	[% END %]	
+    [% IF message.defender.is_character %]
+        [%
+            message.defender_class  = "combat-party-attacker"
+        %]
+    [% ELSE %]
+        [%
+            message.defender_class  = "combat-creature-attacker"
+        %]
+    [% END %]
 
-<span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span> on 
-<span class="[% target_class %]">[% message.defender.name %]</span> 
+<span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span> on
+<span class="[% target_class %]">[% message.defender.name %]</span>
 [% IF message.resisted %]
-	, but [% message.defender.pronoun('subjective') %] resisted!
+    , but [% message.defender.pronoun('subjective') %] resisted!
 [% ELSE %]
-	[% message.effect %] for [% message.duration %] rounds.
+    [% message.effect %] for [% message.duration %] rounds.
 [% END %]

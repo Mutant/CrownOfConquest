@@ -1,46 +1,46 @@
 [% PROCESS equipment/grid.html %]
 [% MACRO display_equipped_item(equipped_items, slot_orig) BLOCK %]
-	[% equip_place = equip_places.$slot_orig %]
-	[% item = equipped_items.$slot_orig %]
-	<td id="equip_place_[% equip_place.id %]" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed" 
-		height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]"
-		slotName="[% slot_orig %]">
-		[% IF item %]
-			[% item_div("inventory", item, in_shop) %]
-		[% ELSE %]
-			[% slot_orig %]
-		[% END %]
-	</td>
+    [% equip_place = equip_places.$slot_orig %]
+    [% item = equipped_items.$slot_orig %]
+    <td id="equip_place_[% equip_place.id %]" class="equip-slot" align="center" style="border: #2F2F2F 1px dashed"
+        height="[% equip_place.height * 40 %]" width="[% equip_place.width * 40 %]" slot="[% equip_place.equip_place_name %]"
+        slotName="[% slot_orig %]">
+        [% IF item %]
+            [% item_div("inventory", item, in_shop) %]
+        [% ELSE %]
+            [% slot_orig %]
+        [% END %]
+    </td>
 [% END %]
 
 <script>
 [% IF item_change_allowed %]
-	function setupEquipSlotDrops(charId) {
-	[% FOREACH slot_data IN equip_places %]
-		[% slot = slot_data.value %] 
-		$( "#equip_place_[% slot.id %]" ).droppable({
-			accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
-			drop: function( event, ui ) {
-				dropItemOnEquipSlot(event, ui, $(this), charId);
-			},
-			hoverClass: "item-droppable",			
-		});
-	[% END %]
-	}
+    function setupEquipSlotDrops(charId) {
+    [% FOREACH slot_data IN equip_places %]
+        [% slot = slot_data.value %]
+        $( "#equip_place_[% slot.id %]" ).droppable({
+            accept: "[% FOREACH category IN equip_place_category_list.${slot.equip_place_name} %].[% category | lower | replace('\s+', '_') %]-category, [% END %]",
+            drop: function( event, ui ) {
+                dropItemOnEquipSlot(event, ui, $(this), charId);
+            },
+            hoverClass: "item-droppable",
+        });
+    [% END %]
+    }
 [% END %]
 
 var giveCharData = [];
 [% FOREACH char_in_party IN allowed_to_give_to_characters %]
-	[% UNLESS char_in_party.character_id == character.id %]
-		giveCharData.push({ charId: '[% char_in_party.character_id %]', charName: '[% char_in_party.character_name | html_entity %]' });
-	[% END %]	
+    [% UNLESS char_in_party.character_id == character.id %]
+        giveCharData.push({ charId: '[% char_in_party.character_id %]', charName: '[% char_in_party.character_name | html_entity %]' });
+    [% END %]
 [% END %]
 addToGiveCharList('[% character.id %]', giveCharData);
 
 [% IF item_change_allowed %]
-	setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
+    setupInventory('[% character.id %]', [% in_shop ? 'true' : 'false' %]);
 [% ELSE %]
-	setupItemTooltips(".inventory-item");
+    setupItemTooltips(".inventory-item");
 [% END %]
 
 </script>
@@ -48,24 +48,24 @@ addToGiveCharList('[% character.id %]', giveCharData);
 <div style="background: black; margin: 0px; padding: 0px; height: 100%" id="equipment-tab">
 
 <div style="float: left">
-	<b>Equipped Items</b>
-	<br><br>
-	<table class="main">
-		<tr>
-			<td></td>
-			[% display_equipped_item(equipped_items, 'Head') %]
-			<td></td>
-		</tr>
-		<tr>
-			[% display_equipped_item(equipped_items, 'Left Ring Finger') %]
-			[% display_equipped_item(equipped_items, 'Neck') %]
-			[% display_equipped_item(equipped_items, 'Right Ring Finger') %]			
-		<tr>
-			[% display_equipped_item(equipped_items, 'Left Hand') %]
-			[% display_equipped_item(equipped_items, 'Torso and Legs') %]
-			[% display_equipped_item(equipped_items, 'Right Hand') %]
-		</tr>	
-	</table>
+    <b>Equipped Items</b>
+    <br><br>
+    <table class="main">
+        <tr>
+            <td></td>
+            [% display_equipped_item(equipped_items, 'Head') %]
+            <td></td>
+        </tr>
+        <tr>
+            [% display_equipped_item(equipped_items, 'Left Ring Finger') %]
+            [% display_equipped_item(equipped_items, 'Neck') %]
+            [% display_equipped_item(equipped_items, 'Right Ring Finger') %]
+        <tr>
+            [% display_equipped_item(equipped_items, 'Left Hand') %]
+            [% display_equipped_item(equipped_items, 'Torso and Legs') %]
+            [% display_equipped_item(equipped_items, 'Right Hand') %]
+        </tr>
+    </table>
 </div>
 
 <div style="float: left; margin-left: 10px">

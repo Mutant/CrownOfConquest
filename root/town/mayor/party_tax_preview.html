@@ -3,16 +3,16 @@
 Sample costs for parties of the following levels to enter the town (for parties of average prestige).
 
 <table class="main" cellspacing="5">
-	<tr>
-		<th>Party Level</th>
-		<th>Gold</th>
-		<th>Turns</th>
-	</tr>
-	[% FOREACH level IN [1,5,10,15] %]
-	<tr>
-		<td align="center">[% level %]</td>
-		<td align="center">[% town.tax_cost(level, base_cost, level_step).gold %]</td>
-		<td align="center">[% town.tax_cost(level, base_cost, level_step).turns %]</td>	
-	</tr>
-	[% END %]
+    <tr>
+        <th>Party Level</th>
+        <th>Gold</th>
+        <th>Turns</th>
+    </tr>
+    [% FOREACH level IN [1,5,10,15] %]
+    <tr>
+        <td align="center">[% level %]</td>
+        <td align="center">[% town.tax_cost(level, base_cost, level_step).gold %]</td>
+        <td align="center">[% town.tax_cost(level, base_cost, level_step).turns %]</td>
+    </tr>
+    [% END %]
 </table>

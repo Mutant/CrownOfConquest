@@ -1,12 +1,12 @@
-	[% IF message.defender.is_character %]
-		[% 
-			target_class  = "combat-party-attacker"
-		%]
-	[% ELSE %]
-		[% 
-			target_class  = "combat-creature-attacker"
-		%]
-	[% END %]	
+    [% IF message.defender.is_character %]
+        [%
+            target_class  = "combat-party-attacker"
+        %]
+    [% ELSE %]
+        [%
+            target_class  = "combat-creature-attacker"
+        %]
+    [% END %]
 
-<span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">Cleanse</span> on 
+<span class="combat-party-attacker">[% message.attacker.name %]</span> cast <span class="combat-weapon">Cleanse</span> on
 <span class="[% target_class %]">[% message.defender.name %]</span>, removing all negative effects.

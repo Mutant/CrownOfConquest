@@ -5,28 +5,28 @@
 <form method="POST" action="[% base %]party/message/send" onSubmit="postPanels(this); return false">
 <table class="main">
 <tr>
-	<td>To: <span id="to_help">(?)</span>
-		<div dojoType="dijit.Tooltip" connectId="to_help">
-			Separate multiple parties with a semicolon
-		</div>
-	</td>
-	<td><input type="text" name="to" style="width: 300px" value="[% to_parties %]"></td>
+    <td>To: <span id="to_help">(?)</span>
+        <div dojoType="dijit.Tooltip" connectId="to_help">
+            Separate multiple parties with a semicolon
+        </div>
+    </td>
+    <td><input type="text" name="to" style="width: 300px" value="[% to_parties %]"></td>
 </tr>
 <tr>
-	<td>From:</td>
-	<td>[% party.name %]</td>
+    <td>From:</td>
+    <td>[% party.name %]</td>
 </tr>
 <tr>
-	<td>Subject:</td>
-	<td><input type="text" name="subject" style="width: 300px"></td>
+    <td>Subject:</td>
+    <td><input type="text" name="subject" style="width: 300px"></td>
 </tr>
 <tr>
-	<td>Message:</td>
-	<td><textarea name="message" style="width: 500px; height: 150px"></textarea></td>
+    <td>Message:</td>
+    <td><textarea name="message" style="width: 500px; height: 150px"></textarea></td>
 </tr>
 <tr>
-	<td></td>
-	<td><input type="submit" value="Send"></td>
+    <td></td>
+    <td><input type="submit" value="Send"></td>
 </tr>
 </table>
 </form>

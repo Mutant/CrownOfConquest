@@ -3,34 +3,34 @@
 [% PROCESS quest/description.html %]
 
 [% IF quest_messages.0 %]
-	[% FOREACH message IN quest_messages %]
-		[% message %]
-	[% END %]
+    [% FOREACH message IN quest_messages %]
+        [% message %]
+    [% END %]
 [% END %]
 
 [% IF party_quest %]
-	You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="javascript:getPanels('quest/list')">Quest List</a> for
-	details on what you still have to do.
+    You haven't yet completed the quest to [% short_description(party_quest) %]. See your <a href="javascript:getPanels('quest/list')">Quest List</a> for
+    details on what you still have to do.
 [% ELSIF ! allowed_more_quests %]
-	You've reached the maximum number of quests allowed for a party of your level.
+    You've reached the maximum number of quests allowed for a party of your level.
 [% ELSIF ! quests.0 %]
     There are no quests currently available in this town
-[% ELSE %] 	
+[% ELSE %]
 The following quests are available:
-	<table class="main" cellspacing=0>
-		<tr>
-			<th>Quest</th><th>Minimum Level</th><th>Reward</th>
-		</tr>
-	[% FOREACH quest IN quests %]
-		<tr style="cursor:pointer;cursor:hand; 
-			[% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]"
-			onClick="getPanels('quest/offer?quest_id=[% quest.id %]')">
-			<td>[% short_description(quest) %]</a></td>
-			<td align="center">[% quest.min_level %]</td>
-			<td align="center">[% quest.gold_value %]</td>
-		</tr>
-	[% END %]
-	</table>
+    <table class="main" cellspacing=0>
+        <tr>
+            <th>Quest</th><th>Minimum Level</th><th>Reward</th>
+        </tr>
+    [% FOREACH quest IN quests %]
+        <tr style="cursor:pointer;cursor:hand;
+            [% IF loop.count % 2 == 0 %]background: #5F5F5F;[% END %]"
+            onClick="getPanels('quest/offer?quest_id=[% quest.id %]')">
+            <td>[% short_description(quest) %]</a></td>
+            <td align="center">[% quest.min_level %]</td>
+            <td align="center">[% quest.gold_value %]</td>
+        </tr>
+    [% END %]
+    </table>
 [% END %]
 <br><br>
 [% INCLUDE town/town_footer.html %]

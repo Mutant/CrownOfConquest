@@ -6,22 +6,22 @@
 Players by created date that have logged in during the last [% days_ago %] days.
 
 <table>
-<tr>	
-	<th>Months Ago</th>
-	<th>Count</th>
-	<th>Cumulative</th>
-	<th>Players</th>
+<tr>
+    <th>Months Ago</th>
+    <th>Count</th>
+    <th>Cumulative</th>
+    <th>Players</th>
 </tr>
 [% FOREACH months_ago IN months_range %]
-	[% IF results.$months_ago %]
-	<tr>
-		<td>[% months_ago %]</td>
-		<td>[% results.$months_ago.size %]</td>
-		[% cumulative = cumulative + results.$months_ago.size %]
-		<td>[% cumulative %]</td>
-		<td>[% FOREACH player IN results.$months_ago %][% player %][% UNLESS loop.last %], [% END %][% END %]</td>
-	</tr>
-	[% END %]
+    [% IF results.$months_ago %]
+    <tr>
+        <td>[% months_ago %]</td>
+        <td>[% results.$months_ago.size %]</td>
+        [% cumulative = cumulative + results.$months_ago.size %]
+        <td>[% cumulative %]</td>
+        <td>[% FOREACH player IN results.$months_ago %][% player %][% UNLESS loop.last %], [% END %][% END %]</td>
+    </tr>
+    [% END %]
 [% END %]
 </table>
 

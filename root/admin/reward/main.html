@@ -4,17 +4,17 @@
 [% IF player_name %]
 <div dojoType="dijit.Dialog" id="confirm" style="display: none" title="Confirm" execute="confirm();">
     <span id="confirmation-message">Are you sure you want to give [% amount %] [% type %] to [% player_name %]?</span>
-	[% dialog_buttons('confirm') %]
+    [% dialog_buttons('confirm') %]
 </div>
 <script>
 dojo.addOnLoad( init );
 
 function init() {
-	dijit.byId('confirm').show();
+    dijit.byId('confirm').show();
 }
 
 function confirm() {
-	document.location = '[% base %]/admin/reward?confirmed=1';
+    document.location = '[% base %]/admin/reward?confirmed=1';
 }
 
 </script>
@@ -23,16 +23,16 @@ function confirm() {
 <form method="POST" action="[% base %]/admin/reward">
 <table class="main">
 <tr>
-	<td>Player to reward:</td>
-	<td><input type="text" name="player_name" size="50"></td>
+    <td>Player to reward:</td>
+    <td><input type="text" name="player_name" size="50"></td>
 </tr>
 <tr>
-	<td>Amount to reward:</td>
-	<td><input type="text" name="amount" size="6" maxlength="4"></td>
+    <td>Amount to reward:</td>
+    <td><input type="text" name="amount" size="6" maxlength="4"></td>
 </tr>
 <tr>
-	<td>Type of reward:</td>
-	<td><select name="type"><option>Turns</option><option>Gold</option></select></td>
+    <td>Type of reward:</td>
+    <td><select name="type"><option>Turns</option><option>Gold</option></select></td>
 </tr>
 </table>
 <input type="submit" value="Submit">

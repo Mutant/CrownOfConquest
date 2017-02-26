@@ -1,8 +1,7 @@
 [% IF ! quest.param_current_value('Built') %]
-	You have not yet constructed the building.
+    You have not yet constructed the building.
 [% ELSIF quest.status != 'Awaiting Reward' %]
     You have constructed the building. You must now cede control to the Kingdom of [% quest.kingdom.name %]
 [% ELSE %]
-	You have completed the quest.
+    You have completed the quest.
 [% END %]
-	

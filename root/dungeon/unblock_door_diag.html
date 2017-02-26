@@ -1,21 +1,21 @@
 <input id="door-id" name="door_id" type="hidden" style="display: none" value="[% door.id %]">
 The door to the [% door.display_position %] appears to be blocked.
-<br><br> 
+<br><br>
 Do you want to charge it down, pick the lock, break any magical seals, dismantle it (takes [% dismantle_cost %] turns) or ignore it?
 <br><br>
 Character to attempt action:
 <select id="character-id">
-	[% FOREACH character IN party.characters %]
-		[% UNLESS character.is_dead %]
-			<option value="[% character.id %]">[% character.name %]</option>
-		[% END %]
-	[% END %]
+    [% FOREACH character IN party.characters %]
+        [% UNLESS character.is_dead %]
+            <option value="[% character.id %]">[% character.name %]</option>
+        [% END %]
+    [% END %]
 </select>
 <br><br>
 <div align="center">
-	<button dojoType=dijit.form.Button onclick="unblockDoor('charge')">Charge Down</button>
-	<button dojoType=dijit.form.Button onclick="unblockDoor('pick')">Pick Lock</button>
-	<button dojoType=dijit.form.Button onclick="unblockDoor('break')">Break Seals</button>
-	<button dojoType=dijit.form.Button onclick="unblockDoor('dismantle')">Dismantle</button>
-	<button dojoType=dijit.form.Button onClick="hideDiag('dialog')">Ignore</button>
+    <button dojoType=dijit.form.Button onclick="unblockDoor('charge')">Charge Down</button>
+    <button dojoType=dijit.form.Button onclick="unblockDoor('pick')">Pick Lock</button>
+    <button dojoType=dijit.form.Button onclick="unblockDoor('break')">Break Seals</button>
+    <button dojoType=dijit.form.Button onclick="unblockDoor('dismantle')">Dismantle</button>
+    <button dojoType=dijit.form.Button onClick="hideDiag('dialog')">Ignore</button>
 </div>

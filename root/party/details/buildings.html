@@ -1,10 +1,10 @@
 <h4>Buildings owned by your party</h4>
 <table class="main" border=0 width=70%>
 [% FOREACH building IN buildings %]
-	<tr>
-		<td valign="top">
-		[% building.building_type.name %] at ([% building.location.x %],[% building.location.y %])
-		</td>
-	</tr>
+    <tr>
+        <td valign="top">
+        [% building.building_type.name %] at ([% building.location.x %],[% building.location.y %])
+        </td>
+    </tr>
 [% END %]
 </table>

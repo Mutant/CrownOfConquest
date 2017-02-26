@@ -1,16 +1,16 @@
 [% IF is_public %]
-	[% INCLUDE top.html, guest_screen = 1 %]
+    [% INCLUDE top.html, guest_screen = 1 %]
 [% END %]
 
 <h2>Announcements</h2>
 
 [% FOREACH announcement IN announcements %]
-	<div class="text-block">
-	[% INCLUDE player/announcement/announcement.html title=announcement.title, announcement=announcement.announcement, date=announcement.date %]
-	</div>
-	<br>
+    <div class="text-block">
+    [% INCLUDE player/announcement/announcement.html title=announcement.title, announcement=announcement.announcement, date=announcement.date %]
+    </div>
+    <br>
 [% END %]
 
 [% IF is_public %]
-	[% INCLUDE bottom.html %]
+    [% INCLUDE bottom.html %]
 [% END %]

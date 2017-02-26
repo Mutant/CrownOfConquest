@@ -1,8 +1,8 @@
 <script>
-	dojo.addOnLoad( function() { viewKingdomInfo('[% kingdoms.0.id %]') } );
+    dojo.addOnLoad( function() { viewKingdomInfo('[% kingdoms.0.id %]') } );
 </script>
 
-Info For Kingdom of: 
+Info For Kingdom of:
 [% FOREACH kingdom IN kingdoms %]
 <span id="kingdom-link-[% kingdom.id %]"><a href="javascript:viewKingdomInfo('[% kingdom.id %]')">[% kingdom.name %]</a></span>
 [% END %]

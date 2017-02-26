@@ -1,48 +1,48 @@
 [% inPanels = called_from_panel ? 'true' : 'false' %]
 
 [%
-	menu_images = [
-		{name => 'party', link => '#' on_click => "loadScreen('party/details')"},
-		{name => 'quests', link => '#', on_click => "closeScreen(); getPanels('quest/list')"},
-		{name => 'garrisons', link => '#', on_click => "closeScreen(); getPanels('party/details/garrisons')"},	
-		{name => 'mayors', link => '#', on_click => "closeScreen(); getPanels('party/details/mayors')"},	
-		{name => 'kingdom', link => '#', on_click => "loadScreen('party/details/kingdom')"},
-		{name => 'landmarks', link => '#', on_click => "loadScreen('map/landmarks')"},
-		{name => 'stats', link => '#' on_click => "loadScreen('leaderboards')"},
-		{name => 'forums', link => c.config.forum_url, target => '_blank'},
-		{name => 'messages', link => '#' on_click => "loadScreen('party/message')", pre_template => 'layout/messages_icon.html' },
-		{name => 'tools', on_click => "closeScreen(); getPanels('party/details/options')" link => "#"},
-		{name => 'help', link => '#' on_click => "loadScreen('help')"},			
-	];
+    menu_images = [
+        {name => 'party', link => '#' on_click => "loadScreen('party/details')"},
+        {name => 'quests', link => '#', on_click => "closeScreen(); getPanels('quest/list')"},
+        {name => 'garrisons', link => '#', on_click => "closeScreen(); getPanels('party/details/garrisons')"},
+        {name => 'mayors', link => '#', on_click => "closeScreen(); getPanels('party/details/mayors')"},
+        {name => 'kingdom', link => '#', on_click => "loadScreen('party/details/kingdom')"},
+        {name => 'landmarks', link => '#', on_click => "loadScreen('map/landmarks')"},
+        {name => 'stats', link => '#' on_click => "loadScreen('leaderboards')"},
+        {name => 'forums', link => c.config.forum_url, target => '_blank'},
+        {name => 'messages', link => '#' on_click => "loadScreen('party/message')", pre_template => 'layout/messages_icon.html' },
+        {name => 'tools', on_click => "closeScreen(); getPanels('party/details/options')" link => "#"},
+        {name => 'help', link => '#' on_click => "loadScreen('help')"},
+    ];
 %]
 [% image_base = c.config.static_path %]
 
 <script>
-	images = new Array();
-  
+    images = new Array();
+
 [% FOREACH image IN menu_images %]
-	images['[% image.name %]-unsel'] = new Image();
-	images['[% image.name %]-unsel'].src = "[% image_base %]/images/layout/menu[% image.name %]button.png";
-	images['[% image.name %]-sel'] = new Image();
-	images['[% image.name %]-sel'].src = "[% image_base %]/images/layout/menu[% image.name %]buttonhover.png";
+    images['[% image.name %]-unsel'] = new Image();
+    images['[% image.name %]-unsel'].src = "[% image_base %]/images/layout/menu[% image.name %]button.png";
+    images['[% image.name %]-sel'] = new Image();
+    images['[% image.name %]-sel'].src = "[% image_base %]/images/layout/menu[% image.name %]buttonhover.png";
 [% END %]
 </script>
 
 [% FILTER collapse %][% FOREACH image IN menu_images ~%]
-	[% IF image.pre_template ~%]
-		[% tmpl = image.pre_template %]
-		[% INCLUDE $tmpl ~%]
-	[% END ~%]
-	<a href="[% image.link ~%]" 
-			[% IF image.target %]target="[% image.target %]"[% END %]
-			[% IF image.on_click %]onClick="[% image.on_click %]"[% END %]
-			style="border: none; margin: none; padding: none"
-		><img 
-			src="[% image_base %]/images/layout/menu[% image.name %]button.png" 
-			name="[% image.name %]" 
-			border=0
-			onMouseOver="selectImage('[% image.name %]')"
-			onMouseOut="unselectImage('[% image.name %]')"
-			style="border: none; margin: none; padding: none; float: left"
-		></a>[% END ~%][% END ~%]
+    [% IF image.pre_template ~%]
+        [% tmpl = image.pre_template %]
+        [% INCLUDE $tmpl ~%]
+    [% END ~%]
+    <a href="[% image.link ~%]"
+            [% IF image.target %]target="[% image.target %]"[% END %]
+            [% IF image.on_click %]onClick="[% image.on_click %]"[% END %]
+            style="border: none; margin: none; padding: none"
+        ><img
+            src="[% image_base %]/images/layout/menu[% image.name %]button.png"
+            name="[% image.name %]"
+            border=0
+            onMouseOver="selectImage('[% image.name %]')"
+            onMouseOut="unselectImage('[% image.name %]')"
+            style="border: none; margin: none; padding: none; float: left"
+        ></a>[% END ~%][% END ~%]
 <br style="clear: left"/>

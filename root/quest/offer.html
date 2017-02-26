@@ -3,25 +3,25 @@
 <div dojoType="dijit.Dialog" id="message" style="display: none" title="Message">
     <span id="accept-message-text"></span>
     <br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-	</div>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">OK</button>
+    </div>
 </div>
 
 <h2>[% short_description(quest) %]</h2>
 
 <p>
 [% UNLESS party_below_min_level %]
-	The towns people of [% town.town_name %] have offered you the following quest:
+    The towns people of [% town.town_name %] have offered you the following quest:
 [% ELSE %]
-	You look on forlornly at the quest you'd be offered if only your party was level [% quest.min_level %] or higher... 
+    You look on forlornly at the quest you'd be offered if only your party was level [% quest.min_level %] or higher...
 [% END %]
 </p>
 
 [% long_description(quest) %]
 
 Reward: [% quest.gold_value %] gold<br>
-Days To Complete: [% quest.days_to_complete %]<br> 
+Days To Complete: [% quest.days_to_complete %]<br>
 
 [% UNLESS party_below_min_level %]
 <p>Do you want to accept this quest?</p>

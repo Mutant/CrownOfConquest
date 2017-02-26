@@ -2,8 +2,8 @@
 <h3>Party Options</h3>
 
 <form method="POST" action="[% base %]/party/details/update_options" onSubmit="postPanels(this); return false">
-	Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold"> 
-	<input type="submit" value="Save Settings" name="save">	
+    Flee threshold: <input type="text" size="4" maxlength="3" name="flee_threshold">
+    <input type="submit" value="Save Settings" name="save">
 </form>
 
 <br>
@@ -31,30 +31,30 @@ You have not verified your email address. You must do so before receiving notifi
 
 <form method="POST" action="[% base %]/party/details/update_email_options" onSubmit="postPanels(this); return false">
 <table class="main">
-	<tr>
-		<td>Send emails from Crown Of Conquest (unchecking overrides other email options):</td>
-		<td><input type="checkbox" name="send_email" value="1" onclick="toggle_disabled_checkboxes()" id="send_email"></td> 
-	</tr>
-	<tr>
-		<td>Send a "Daily Report" about your party via email:</td>
-		<td><input type="checkbox" name="send_daily_report" value="1" [% UNLESS send_email %]disabled[% END %]  id="send_daily_report"></td> 
-	</tr>	
-	<tr>
-		<td>Send email announcements about Crown Of Conquest:</td>
-		<td><input type="checkbox" name="send_email_announcements" value="1" [% UNLESS send_email %]disabled[% END %] id="send_email_announcements"></td> 
-	</tr>
-	<tr>
-		<td>Display new announcements when logging in to Crown Of Conquest:</td>
-		<td><input type="checkbox" name="display_announcements" value="1"></td> 
-	</tr>
-	<tr>
-		<td>Display Tip of the Day when logging into Crown Of Conquest:</td>
-		<td><input type="checkbox" name="display_tip_of_the_day" value="1"></td> 
-	</tr>	
-	<tr>
-		<td>Display a warning if your party is low level and attempts to leave town:</td>
-		<td><input type="checkbox" name="display_town_leave_warning" value="1"></td> 
-	</tr>	
+    <tr>
+        <td>Send emails from Crown Of Conquest (unchecking overrides other email options):</td>
+        <td><input type="checkbox" name="send_email" value="1" onclick="toggle_disabled_checkboxes()" id="send_email"></td>
+    </tr>
+    <tr>
+        <td>Send a "Daily Report" about your party via email:</td>
+        <td><input type="checkbox" name="send_daily_report" value="1" [% UNLESS send_email %]disabled[% END %]  id="send_daily_report"></td>
+    </tr>
+    <tr>
+        <td>Send email announcements about Crown Of Conquest:</td>
+        <td><input type="checkbox" name="send_email_announcements" value="1" [% UNLESS send_email %]disabled[% END %] id="send_email_announcements"></td>
+    </tr>
+    <tr>
+        <td>Display new announcements when logging in to Crown Of Conquest:</td>
+        <td><input type="checkbox" name="display_announcements" value="1"></td>
+    </tr>
+    <tr>
+        <td>Display Tip of the Day when logging into Crown Of Conquest:</td>
+        <td><input type="checkbox" name="display_tip_of_the_day" value="1"></td>
+    </tr>
+    <tr>
+        <td>Display a warning if your party is low level and attempts to leave town:</td>
+        <td><input type="checkbox" name="display_town_leave_warning" value="1"></td>
+    </tr>
 </table>
 <input type="submit" value="Save Settings" name="save">
 </form>
@@ -63,32 +63,32 @@ You have not verified your email address. You must do so before receiving notifi
 
 <h3>Account Options</h3>
 
-Select your screen sizes. It's usually safe to leave it on 'auto' - it will be detected each time you log in to Crown Of Conquest. 
+Select your screen sizes. It's usually safe to leave it on 'auto' - it will be detected each time you log in to Crown Of Conquest.
 
 <form method="POST" action="[% base %]/player/update_screen_sizes" onSubmit="setBrowserSize(); postPanels(this); return false">
 <input type="hidden" id="login-width"  name="width"/>
 <input type="hidden" id="login-height" name="height"/>
 <table class="main">
-	<tr>
-		<td>Screen Height:</td>
-		<td>
-			<select name="screen_height">
-			<option value="auto">Auto</option>
-			<option value="small">Small</option>
-			<option value="medium">Medium</option>
-			<option value="large">Large</option>
-		</td>
-	</tr>
-	<tr>
-		<td>Screen Width:</td>
-		<td>
-			<select name="screen_width">
-			<option value="auto">Auto</option>
-			<option value="small">Small</option>
-			<option value="medium">Medium</option>
-			<option value="large">Large</option>
-		</td>
-	</tr>	
+    <tr>
+        <td>Screen Height:</td>
+        <td>
+            <select name="screen_height">
+            <option value="auto">Auto</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+        </td>
+    </tr>
+    <tr>
+        <td>Screen Width:</td>
+        <td>
+            <select name="screen_width">
+            <option value="auto">Auto</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+        </td>
+    </tr>
 </table>
 <input type="submit" value="Save Settings">
 </form>

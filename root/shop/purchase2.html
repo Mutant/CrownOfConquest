@@ -12,34 +12,34 @@
         promptMessage= "Enter a value between 1 and 1000"
         required= "true"
         invalidMessage= "Invalid quantity."
-		style="width: 80px"
+        style="width: 80px"
         />
     <input id="quantity-shop-id" name="purchasing_shop_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-char-id" name="purchasing_char_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-id" name="purchasing_item_id" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
     <input id="quantity-item-sector" name="purchasing_item_sector" dojoType=dijit.form.TextBox type="hidden" style="display: none" value="">
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-    	<button dojoType=dijit.form.Button onclick="returnItem(dojo.byId('quantity-item-id').value); hideDiag('quantity-selection'); return false;">Cancel</button>
+    <br>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">OK</button>
+        <button dojoType=dijit.form.Button onclick="returnItem(dojo.byId('quantity-item-id').value); hideDiag('quantity-selection'); return false;">Cancel</button>
     </div>
 </div>
 
 [% INCLUDE shop/header.html %]
 
 <script>
-	$(function() {
-		if (typeof shopCharData != 'undefined' && typeof shopCharData.currentChar != 'undefined') {
-			usePreloadedCharInventory(shopCharData.currentChar);
-			$('.char-shop-link').removeClass('current-selection');
-			$('#char-shop-link-'+shopCharData.currentChar).addClass('current-selection');				
-		}
-		else {	
-			loadCharShopInventory('[% characters.0.id %]');
-		}
-		setupShop('[% shop.id %]');
-		setupItemTooltips('.shop-item');
-	});
+    $(function() {
+        if (typeof shopCharData != 'undefined' && typeof shopCharData.currentChar != 'undefined') {
+            usePreloadedCharInventory(shopCharData.currentChar);
+            $('.char-shop-link').removeClass('current-selection');
+            $('#char-shop-link-'+shopCharData.currentChar).addClass('current-selection');
+        }
+        else {
+            loadCharShopInventory('[% characters.0.id %]');
+        }
+        setupShop('[% shop.id %]');
+        setupItemTooltips('.shop-item');
+    });
 </script>
 
 <div align="center" style="margin-top: 5px; margin-bottom: 5px">
@@ -48,10 +48,10 @@
 [% END %]
 </div>
 
-<div style="float: left; min-width: 620px; margin-right: 10px">	
-	<div id="char-shop-inventory">
-		&nbsp;		
-	</div>
+<div style="float: left; min-width: 620px; margin-right: 10px">
+    <div id="char-shop-inventory">
+        &nbsp;
+    </div>
 
 </div>
 
@@ -59,9 +59,9 @@
 <b>Items For Sale</b>
 
 [% IF tabs.size > 1 %]
-	[% FOREACH tab IN tabs %]
-		<span id="shop-tab-[% shop.id %]-[% tab %]" class="shop-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadShopTab('[% shop.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
-	[% END %]
+    [% FOREACH tab IN tabs %]
+        <span id="shop-tab-[% shop.id %]-[% tab %]" class="shop-tab-link[% IF loop.first %] current-selection[% END %]"><a href="javascript:loadShopTab('[% shop.id %]','[% tab %]')">[% tab %]</a></span>&nbsp;
+    [% END %]
 [% END %]
 
 [% create_grid('shop', items_in_grid, 12, 8 ) %]

@@ -1,42 +1,42 @@
 [% IF trades.size <= 0 %]
-	There are no items offered.
+    There are no items offered.
 [% ELSE %]
-	Items For Sale In [% town.town_name %]:<br>
-	
-	<table class="main">
-		<tr>
-			<th>Item</th>
-			<th>Asking Price</th>
-			<th>Offered By</th>
-			<th></th>
-		</tr>
-				
-	[% FOREACH trade IN trades %]
-		[% item = trade.item %]
-		<tr>
-			<td>
-				<span id="item-tooltip-[% item.id %]">
-					[% IF item.item_type.image %]
-						<img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
-					[% ELSE %]
-					[% item.display_name %]
-					[% END %]
-				</span>
-				
-				<div dojoType="dijit.Tooltip"
-					connectId="item-tooltip-[% item.id %]"
-					id="item-dijit-[% item.id %]"
-					style="display: none">
-						[% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %] 
-				</div>
-			</td>
-			<td>[% trade.amount %] gold</td>
-			<td><a href="javascript:getPanels('party/profile?party_id=[% trade.party.id %]')">[% trade.party.name %]</a></td>
-			<td>
-				<a href="#" onClick="purchaseConfirmation('[% trade.id %]','[% item.display_name %]', '[% trade.amount %]')">Purchase</a>
-			</tr>
-		</tr>
-	[% END %]
-	</table>
-	<br><br>
+    Items For Sale In [% town.town_name %]:<br>
+
+    <table class="main">
+        <tr>
+            <th>Item</th>
+            <th>Asking Price</th>
+            <th>Offered By</th>
+            <th></th>
+        </tr>
+
+    [% FOREACH trade IN trades %]
+        [% item = trade.item %]
+        <tr>
+            <td>
+                <span id="item-tooltip-[% item.id %]">
+                    [% IF item.item_type.image %]
+                        <img src="[% c.config.static_path %]/images/items/[% item.item_type.image %]">
+                    [% ELSE %]
+                    [% item.display_name %]
+                    [% END %]
+                </span>
+
+                <div dojoType="dijit.Tooltip"
+                    connectId="item-tooltip-[% item.id %]"
+                    id="item-dijit-[% item.id %]"
+                    style="display: none">
+                        [% INCLUDE item/tooltip_specific.html item=item, item_type=item.item_type %]
+                </div>
+            </td>
+            <td>[% trade.amount %] gold</td>
+            <td><a href="javascript:getPanels('party/profile?party_id=[% trade.party.id %]')">[% trade.party.name %]</a></td>
+            <td>
+                <a href="#" onClick="purchaseConfirmation('[% trade.id %]','[% item.display_name %]', '[% trade.amount %]')">Purchase</a>
+            </tr>
+        </tr>
+    [% END %]
+    </table>
+    <br><br>
 [% END %]

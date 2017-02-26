@@ -1,61 +1,61 @@
 [% USE Math %]
 
 [% MACRO make_grid(class, items_in_grid, width, height, tab, in_shop) BLOCK %]
-	[% x = 0 %]
-	[% y = 0 %]
-	[% blocked = {} %]
-	[% WHILE y < height %]
-		[% y = y + 1 %]
-		[% WHILE x < width %]
-			[% x = x + 1 %]
-			
-			[% item = items_in_grid.$x.$y %]
-			
-			[% IF item %]
-				[% blockedX = x %]
-				[% blockedY = y %]
-				[% WHILE blockedX < (x+item.item_type.width) %]
-					[% WHILE blockedY < (y+item.item_type.height) %]										
-						[% blocked.$blockedX.$blockedY = item.id %]
-						[% blockedY = blockedY + 1 %]									
-					[% END %]		
-					[% blockedY = y %]			
-					[% blockedX = blockedX + 1 %]
-				[% END %]
-			[% END %]
-			
-			<div class="[% class %]" idPrefix="[% class %]" id="[% class %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]" 
-				style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center"
-				hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]" tab="[% tab %]">		
-				[% IF item %]
-					[% item_div(class, item, in_shop) %]
-				[% END %]			
-			</div>
-			
-		[% END %]
-		<br style="clear: left"/>
-		[% x = 0 %]
-	[% END %]
+    [% x = 0 %]
+    [% y = 0 %]
+    [% blocked = {} %]
+    [% WHILE y < height %]
+        [% y = y + 1 %]
+        [% WHILE x < width %]
+            [% x = x + 1 %]
+
+            [% item = items_in_grid.$x.$y %]
+
+            [% IF item %]
+                [% blockedX = x %]
+                [% blockedY = y %]
+                [% WHILE blockedX < (x+item.item_type.width) %]
+                    [% WHILE blockedY < (y+item.item_type.height) %]
+                        [% blocked.$blockedX.$blockedY = item.id %]
+                        [% blockedY = blockedY + 1 %]
+                    [% END %]
+                    [% blockedY = y %]
+                    [% blockedX = blockedX + 1 %]
+                [% END %]
+            [% END %]
+
+            <div class="[% class %]" idPrefix="[% class %]" id="[% class %]-[% x %]-[% y %]" sectorX="[% x %]" sectorY="[% y %]"
+                style="float: left; border: 1px solid #2F2F2F; height: 40px; width: 40px; text-align: center"
+                hasItem="[% IF item %][% item.id %][% ELSE %][% blocked.$x.$y || 0 %][% END %]" grid="[% class %]" tab="[% tab %]">
+                [% IF item %]
+                    [% item_div(class, item, in_shop) %]
+                [% END %]
+            </div>
+
+        [% END %]
+        <br style="clear: left"/>
+        [% x = 0 %]
+    [% END %]
 [% END %]
 
 
 [% MACRO item_div(class, item, in_shop) BLOCK %]
-	<div id="item-[% item.id %]" class="[% class %]-item [% item.item_type.category.item_category | lower | replace('\s+', '_') %]-category"
-		itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]" isQuantity="[% item.is_quantity %]"
-		[% IF item.is_quantity %]quantityAvailable="[% item.variable('Quantity') %]"[% END %] 
-		[% IF item.stacked_quantity %]isStacked=1[% END %]
-		style="z-index: 100;
-			width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px; 
-			background: url('[% c.config.static_path %]/images/items/[% item.item_type.image_name(item.enchantments_count) %]') center center no-repeat;"
-			onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]&in_shop=[% in_shop %]&no_cache=[% Math.rand %]">		
-	</div>	
+    <div id="item-[% item.id %]" class="[% class %]-item [% item.item_type.category.item_category | lower | replace('\s+', '_') %]-category"
+        itemHeight="[% item.item_type.height %]" itemWidth="[% item.item_type.width %]" itemId="[% item.id %]" isQuantity="[% item.is_quantity %]"
+        [% IF item.is_quantity %]quantityAvailable="[% item.variable('Quantity') %]"[% END %]
+        [% IF item.stacked_quantity %]isStacked=1[% END %]
+        style="z-index: 100;
+            width: [% item.item_type.width * 40 + (item.item_type.width - 1)  %]px; height: [% item.item_type.height * 40 + (item.item_type.height - 1) %]px;
+            background: url('[% c.config.static_path %]/images/items/[% item.item_type.image_name(item.enchantments_count) %]') center center no-repeat;"
+            onMouseOver="saveCurrentItemId('[% item.id %]')" rel="[% base %]item/tooltip?item_id=[% item.id %]&in_shop=[% in_shop %]&no_cache=[% Math.rand %]">
+    </div>
 [% END %]
 
 [% MACRO create_grid(grid_type, items_in_grid, height, width, tab, in_shop) BLOCK %]
-	[% IF ! tab %]
-		[% tab = 1 %]
-	[% END %]
-	<div id="[% grid_type %]-grid">
-		[% make_grid(grid_type, items_in_grid, height, width, tab, in_shop) %]
-	</div>
+    [% IF ! tab %]
+        [% tab = 1 %]
+    [% END %]
+    <div id="[% grid_type %]-grid">
+        [% make_grid(grid_type, items_in_grid, height, width, tab, in_shop) %]
+    </div>
 [% END %]

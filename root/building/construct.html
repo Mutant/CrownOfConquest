@@ -13,24 +13,24 @@ to a garrison in the same sector.
 <form method="POST" id="create" action="[% base %]/[% IF town %]town/mayor[% ELSE %]building[% END %]/build"  onSubmit="postPanels(this); return false">
 [% IF town %]<input type="hidden" name="town_id" value="[% town.id %]">[% END %]
 <div style=" padding:10px; height:125px;">
-	<div id="building_types" style="float:left;width:300px;">
-		<div class="enlargedTitle" style="text-align: center; margin:10px;">
-			<span>[% building_type.name %]</span>
-		</div>
-		<div style="text-align: center; margin:10px;">
-			<img height=40 width=40 src="[% c.config.static_path %]/images/map/building/[% building_type.image %]">
-		</div>
-		<div style="text-align: center; margin:10px;">
-			[% IF ! building_type.enough_turns(party) %]
-				<input type="button" disabled="disabled" value="Not enough turns to build"></input>
-			[% ELSIF ! enough_resources %]
-				<input type="button" disabled="disabled" value="Not enough resources"></input>
-			[% ELSE %]
-				<input type="submit" value="Construct"></input>
-			[% END %]
-		</div>
-	</div>
+    <div id="building_types" style="float:left;width:300px;">
+        <div class="enlargedTitle" style="text-align: center; margin:10px;">
+            <span>[% building_type.name %]</span>
+        </div>
+        <div style="text-align: center; margin:10px;">
+            <img height=40 width=40 src="[% c.config.static_path %]/images/map/building/[% building_type.image %]">
+        </div>
+        <div style="text-align: center; margin:10px;">
+            [% IF ! building_type.enough_turns(party) %]
+                <input type="button" disabled="disabled" value="Not enough turns to build"></input>
+            [% ELSIF ! enough_resources %]
+                <input type="button" disabled="disabled" value="Not enough resources"></input>
+            [% ELSE %]
+                <input type="submit" value="Construct"></input>
+            [% END %]
+        </div>
+    </div>
 
-	[% INCLUDE building/building_details.html %]
+    [% INCLUDE building/building_details.html %]
 </div>
 </form>

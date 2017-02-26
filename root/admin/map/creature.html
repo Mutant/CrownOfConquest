@@ -3,43 +3,43 @@
 
 [% MACRO get_ctr_colour(ctr) BLOCK %]
 [% FILTER collapse %]
-	[% var = (100 - ctr) %]
-	[% USE col = Colour.RGB(255, var, var) %]
+    [% var = (100 - ctr) %]
+    [% USE col = Colour.RGB(255, var, var) %]
 
-	#[% col.hex %]
+    #[% col.hex %]
 [% END %]
 [% END %]
 
 [% current_x = 0 %]
 [% current_y = 0 %]
-<table border=1 cellspacing=0 cellpadding=0>	
+<table border=1 cellspacing=0 cellpadding=0>
 [% WHILE current_y < max_y %]
-	[% current_y=current_y+1 %]
-	<tr>
-	[% WHILE current_x < max_x %]
-		[% current_x=current_x+1 %]
-		[% sector = grid.$current_x.$current_y %]
-		[% IF sector.creature_orb_id %]
-			[% color = 'lightblue' %]
-		[% ELSIF sector.town_id %]
-			[% color = 'white' %]
-		[% END %]
+    [% current_y=current_y+1 %]
+    <tr>
+    [% WHILE current_x < max_x %]
+        [% current_x=current_x+1 %]
+        [% sector = grid.$current_x.$current_y %]
+        [% IF sector.creature_orb_id %]
+            [% color = 'lightblue' %]
+        [% ELSIF sector.town_id %]
+            [% color = 'white' %]
+        [% END %]
 
-		<td style="height: 9px; width: 9px; min-width: 9px; min-height: 9px; font-size: 8px;
-			background-color: [% IF color %][% color %][% ELSE %][% get_ctr_colour(sector.creature_threat) %][% END %];"
-			title="CTR: [% sector.creature_threat %] ([% current_x %], [% current_y %])">
-			[% IF sector.orb_level %]
-				[% sector.orb_level %]			
-			[% ELSIF sector.cg_level %]
-				[% sector.cg_level %]
-			[% ELSIF sector.prosperity %]
-				[% sector.prosperity %]				
-			[% ELSE %]&nbsp;[% END %]			
-		</td>
-		[% color = '' %]
-	[% END %]
-	[% current_x = 0 %]
-	</tr>
+        <td style="height: 9px; width: 9px; min-width: 9px; min-height: 9px; font-size: 8px;
+            background-color: [% IF color %][% color %][% ELSE %][% get_ctr_colour(sector.creature_threat) %][% END %];"
+            title="CTR: [% sector.creature_threat %] ([% current_x %], [% current_y %])">
+            [% IF sector.orb_level %]
+                [% sector.orb_level %]
+            [% ELSIF sector.cg_level %]
+                [% sector.cg_level %]
+            [% ELSIF sector.prosperity %]
+                [% sector.prosperity %]
+            [% ELSE %]&nbsp;[% END %]
+        </td>
+        [% color = '' %]
+    [% END %]
+    [% current_x = 0 %]
+    </tr>
 [% END %]
 </table>
 

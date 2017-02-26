@@ -17,14 +17,14 @@ Number of characters (from active parties) in each Class
 <br><br>
 [% WHILE (class_stat = class_stats.next) %]
 [% class_stat.get_column('class_name') %]: [% class_stat.get_column('count') %]<br>
-[% END %] 
+[% END %]
 
 <h3>Race Stats</h3>
 Number of characters (from active parties) in each Race
 <br><br>
 [% WHILE (race_stat = race_stats.next) %]
 [% race_stat.get_column('race_name') %]: [% race_stat.get_column('count') %]<br>
-[% END %] 
+[% END %]
 
 <h3>Creature Stats</h3>
 Number of Creature Groups: [% creature_group_count %]<br>

@@ -1,12 +1,12 @@
 You trigger a trap[% IF chest %]on the chest![% END %]<br><br>
 [% target.character_name %]
-	[% IF trap == 'Curse' %]
-		is cursed for [% trap_variable %] rounds.
-	[% ELSIF trap == 'Hypnotise' %]
-		is hypnotised for [% trap_variable %] rounds.
-	[% ELSIF trap == 'Mute' %]
-		is muted for [% trap_variable %] rounds.		
-	[% ELSIF trap == 'Detonate' %]
-		detonates an explosion, and takes [% trap_variable %] damage
-			[% IF target.is_dead %], killing [% target.pronoun('objective') %]![% END %]
-	[% END %]
+    [% IF trap == 'Curse' %]
+        is cursed for [% trap_variable %] rounds.
+    [% ELSIF trap == 'Hypnotise' %]
+        is hypnotised for [% trap_variable %] rounds.
+    [% ELSIF trap == 'Mute' %]
+        is muted for [% trap_variable %] rounds.
+    [% ELSIF trap == 'Detonate' %]
+        detonates an explosion, and takes [% trap_variable %] damage
+            [% IF target.is_dead %], killing [% target.pronoun('objective') %]![% END %]
+    [% END %]

@@ -1,26 +1,26 @@
 [% FILTER collapse %]
 [% IF mayor %]
-	Mayor: [% mayor.class.class_name %] (Level: [% mayor.level %], AF: [% mayor.attack_factor %], DF: [% mayor.defence_factor %])
+    Mayor: [% mayor.class.class_name %] (Level: [% mayor.level %], AF: [% mayor.attack_factor %], DF: [% mayor.defence_factor %])
 [% END %]
 [% IF garrison.size > 0 %]
-	Garrison:
-	[% FOREACH char IN garrison %]
-		[% char.class.class_name %] (Level: [% char.level %], AF: [% char.attack_factor %], DF: [% char.defence_factor %])
-	[% END %].
+    Garrison:
+    [% FOREACH char IN garrison %]
+        [% char.class.class_name %] (Level: [% char.level %], AF: [% char.attack_factor %], DF: [% char.defence_factor %])
+    [% END %].
 [% ELSE %]
-	No garrison.
+    No garrison.
 [% END %]
 [% IF building %]
-	Building is [% building.building_type.name %]
-	[% FOREACH upgrade IN building.upgrades %]
-		Has a [% upgrade.type.name %] upgrade (Level: [% upgrade.level %], Dam: [% upgrade.damage %], Effective: [% upgrade.effective_level %])
-	[% END %].
+    Building is [% building.building_type.name %]
+    [% FOREACH upgrade IN building.upgrades %]
+        Has a [% upgrade.type.name %] upgrade (Level: [% upgrade.level %], Dam: [% upgrade.damage %], Effective: [% upgrade.effective_level %])
+    [% END %].
 [% ELSE %]
-	No building.
+    No building.
 [% END %]
 Trap Level: [% trap_level %].
 [% FOREACH guard_hired IN guards %]
-	[% guard_hired.amount_working %] [% guard_hired.creature_type.creature_type %]s (Hired: [% guard_hired.amount %])
+    [% guard_hired.amount_working %] [% guard_hired.creature_type.creature_type %]s (Hired: [% guard_hired.amount %])
 [% END %].
-	
+
 [% END %]

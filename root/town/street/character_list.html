@@ -1,17 +1,17 @@
 [% IF characters.0 %]
-	The following characters are sleeping rough on the streets:
-	<ul>
-	[% FOREACH character IN characters %]
-		<li>[% character.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% character.party.id %]')">[% character.party.name %]</a>) 
-			[% IF ! party.is_full && character.party.id == party.id %] 
-				- <a href="javascript:getPanels('town/street/remove_character?character_id=[% character.id %]')">Remove from Street</a>
-			[% END %]
-		</li>
-	[% END %]
-	</ul>
+    The following characters are sleeping rough on the streets:
+    <ul>
+    [% FOREACH character IN characters %]
+        <li>[% character.character_name %] (<a href="javascript:getPanels('party/profile?party_id=[% character.party.id %]')">[% character.party.name %]</a>)
+            [% IF ! party.is_full && character.party.id == party.id %]
+                - <a href="javascript:getPanels('town/street/remove_character?character_id=[% character.id %]')">Remove from Street</a>
+            [% END %]
+        </li>
+    [% END %]
+    </ul>
 [% ELSE %]
-	No one is living on the streets
-	<br><br>	
+    No one is living on the streets
+    <br><br>
 [% END %]
 
 <a href="javascript:getPanels('town/street/add_character')">Add Character</a>
@@ -20,11 +20,11 @@
 <br><br>
 You see the following messages scrawled on a wall...<br><br>
 
-	[% FOREACH message IN graffiti %]
-	~~ [% message.message %] ~~ <br>
-	[% END %]
+    [% FOREACH message IN graffiti %]
+    ~~ [% message.message %] ~~ <br>
+    [% END %]
 [% ELSE %]
-	<br>
+    <br>
 [% END %]
 <br>
 <a href="javascript:getPanels('town/street/graffiti')">Leave Your Mark</a>

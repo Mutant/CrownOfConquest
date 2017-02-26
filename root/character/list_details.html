@@ -3,30 +3,30 @@
 <b>[% character.character_name %]</b><br style="clear: none">
 [% character.gender | ucfirst %] [% character.race.race_name %] [% character.class.class_name %]<br>
 <table class="main" style="font-size: 8pt">
-	<tr>
-	    <td class="stat-label">Hit Points:</td>
-	    <td nowrap>[% character.hit_points %] / [% character.max_hit_points %]</td>
-		<td class="stat-label">Level:</td>
-    	<td>[% character.level %]</td>	
-	</tr>	
-	<tr>
-	    <td class="stat-label">Attack Factor:</td>
-	    <td nowrap>[% character.attack_factor %]</td>
-	    <td class="stat-label">Defence Factor:</td>
-	    <td nowrap>[% character.defence_factor %]</td>
-	</tr>	
-	<tr>
-	    <td class="stat-label">Damage:</td>
-	    <td nowrap>[% character.damage %]</td>
+    <tr>
+        <td class="stat-label">Hit Points:</td>
+        <td nowrap>[% character.hit_points %] / [% character.max_hit_points %]</td>
+        <td class="stat-label">Level:</td>
+        <td>[% character.level %]</td>
+    </tr>
+    <tr>
+        <td class="stat-label">Attack Factor:</td>
+        <td nowrap>[% character.attack_factor %]</td>
+        <td class="stat-label">Defence Factor:</td>
+        <td nowrap>[% character.defence_factor %]</td>
+    </tr>
+    <tr>
+        <td class="stat-label">Damage:</td>
+        <td nowrap>[% character.damage %]</td>
 
-	    <td class="stat-label">Movement Factor:</td>
-	    <td nowrap>[% character.movement_factor %] ([% character.natural_movement_factor %])</td>
-	</tr>	
-    <tr>    	
-		<td class="stat-label">Experience:</td>
-    	<td nowrap>[% character.xp %] / [% character.xp_for_next_level %]</td>
-		<td class="stat-label">Encumbrance:</td>
-    	<td nowrap><span id="encumbrance-value">[% character.encumbrance %]</span> / [% character.encumbrance_allowance %]</td>
-	</tr>
+        <td class="stat-label">Movement Factor:</td>
+        <td nowrap>[% character.movement_factor %] ([% character.natural_movement_factor %])</td>
+    </tr>
+    <tr>
+        <td class="stat-label">Experience:</td>
+        <td nowrap>[% character.xp %] / [% character.xp_for_next_level %]</td>
+        <td class="stat-label">Encumbrance:</td>
+        <td nowrap><span id="encumbrance-value">[% character.encumbrance %]</span> / [% character.encumbrance_allowance %]</td>
+    </tr>
 </table>
 </div>

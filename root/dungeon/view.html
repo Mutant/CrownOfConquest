@@ -1,40 +1,40 @@
 [% PROCESS dungeon/map_vars.html %]
 [%
-	x = min_x - 1;
-	y = min_y - 1;
+    x = min_x - 1;
+    y = min_y - 1;
 %]
 
 [% SWITCH c.session.screen_height %]
 [% CASE 'large' %]
-	[% min_height = '610px' %]
+    [% min_height = '610px' %]
 [% CASE 'medium' %]
-	[% min_height = '460px' %]
+    [% min_height = '460px' %]
 [% CASE %]
-	[% min_height = '380px' %]
+    [% min_height = '380px' %]
 [% END %]
 
 [% SWITCH c.session.screen_width %]
 [% CASE 'large' %]
-	[% min_width = '750px' %]
+    [% min_width = '750px' %]
 [% CASE 'medium' %]
-	[% min_width = '600px' %]
+    [% min_width = '600px' %]
 [% CASE %]
-	[% min_width = '480px' %]
+    [% min_width = '480px' %]
 [% END %]
 
 <div style="display: none" id="scroll_to">sector_[% scroll_to.x %]_[% scroll_to.y %]</div>
 <div id="map-holder" style="left: 80px; min-width: [% min_width %]; min-height: [% min_height %]; max-height: [% min_height %]; max-width: [% min_width %]; overflow: auto; margin: 20px">
 [% WHILE y < max_y %]
-	[% y = y+1 %]
-	[% x = min_x - 1 %]
-	[% FILTER collapse ~%]
-	<div class="map-row dungeon-row">
-	[% WHILE x < max_x ~%]
-		[% x = x+1 ~%]
-		[% sector = grid.$x.$y ~%]		
-		<span class="sector-outer dungeon-sector" id="sector_[% x %]_[% y %]" x="[% x %]" y="[% y %]">[% INCLUDE dungeon/sector_inner.html ~%]</span>		
-	[% END ~%]
-	</div>
-	[% END ~%]
+    [% y = y+1 %]
+    [% x = min_x - 1 %]
+    [% FILTER collapse ~%]
+    <div class="map-row dungeon-row">
+    [% WHILE x < max_x ~%]
+        [% x = x+1 ~%]
+        [% sector = grid.$x.$y ~%]
+        <span class="sector-outer dungeon-sector" id="sector_[% x %]_[% y %]" x="[% x %]" y="[% y %]">[% INCLUDE dungeon/sector_inner.html ~%]</span>
+    [% END ~%]
+    </div>
+    [% END ~%]
 [% END %]
 </div>

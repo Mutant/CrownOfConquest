@@ -1,6 +1,6 @@
 [% PROCESS quest/description.html %]
 
-<p>The [% IF quest.town_id %]town of [% quest.town.town_name %][% ELSE %]Kingdom of [% quest.kingdom.name %][% END %] has sent you a message telling you that 
+<p>The [% IF quest.town_id %]town of [% quest.town.town_name %][% ELSE %]Kingdom of [% quest.kingdom.name %][% END %] has sent you a message telling you that
 you've have run out of time for the quest:</p>
 
 <p>"[% short_description(quest) | collapse %]".</p>

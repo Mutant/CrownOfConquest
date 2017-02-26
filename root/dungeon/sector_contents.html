@@ -3,39 +3,39 @@
 <span class="sector-contents" id="sector_contents_[% x %]_[% y %]">
 
 [% IF ! objects.$x.$y && sector.overlay == 'skeleton' %]
-	<img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
+    <img src="[% c.config.static_path %]/images/dungeon/dungeonskeleton.png" border=0  width=[% size %] height=[% size %]>
 [% END %]
 
 [% IF cgs.$x.$y %]
-	[% group_img = cgs.$x.$y.group_img %]
-	<span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %][% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
+    [% group_img = cgs.$x.$y.group_img %]
+    <span id="m_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/[% group_img %][% cgs.$x.$y.group_size %].png" border=0 width=[% size %] height=[% size %]></span>
     [% IF create_tooltips %]
-    <div 
-		dojoType="dijit.Tooltip" 
-		connectId="m_[% x _ y %]">
-		[% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
-	</div>
-	[% END %]
+    <div
+        dojoType="dijit.Tooltip"
+        connectId="m_[% x _ y %]">
+        [% INCLUDE combat/creature_group_summary.html creature_group=cgs.$x.$y %]
+    </div>
+    [% END %]
 [% ELSIF objects.$x.$y %]
-	[% sector_objects = objects.$x.$y %]
-	[% IF sector_objects.bomb %]
-		<span id="b_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/bombrune.png" border=0 width=[% size %] height=[% size %]></span>
-	[% ELSIF sector_objects.treasure_chest %]
-		<img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
-	[% ELSIF sector_objects.teleporter && ! sector_objects.teleporter.invisible %]
-		<img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>	
-	[% END %]
+    [% sector_objects = objects.$x.$y %]
+    [% IF sector_objects.bomb %]
+        <span id="b_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><img src="[% c.config.static_path %]/images/dungeon/bombrune.png" border=0 width=[% size %] height=[% size %]></span>
+    [% ELSIF sector_objects.treasure_chest %]
+        <img src="[% c.config.static_path %]/images/dungeon/treasure_chest.png" border=0  width=[% size %] height=[% size %]>
+    [% ELSIF sector_objects.teleporter && ! sector_objects.teleporter.invisible %]
+        <img src="[% c.config.static_path %]/images/dungeon/teleporticon.png" border=0  width=[% size %] height=[% size %]>
+    [% END %]
 [% ELSIF parties.$x.$y.0 %]
-	[%# TODO: handle multiple parties in a sector %]
+    [%# TODO: handle multiple parties in a sector %]
     [% other_party = parties.$x.$y.0 %]
-	<span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/dungeon/humanoid[% other_party.portrait %].png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
+    <span id="p_[% x _ y %]" style="z-index: 40; position: absolute; top: 0px; left: 0px;"><div style="position: relative; left: [% size / 4 %]px; top: [% size / 4 %]px"><img src="[% c.config.static_path %]/images/dungeon/humanoid[% other_party.portrait %].png" border=0 width=[% size / 2 %] height=[% size / 2 %]></div></span>
     [% IF create_tooltips %]
-    <div 
-		dojoType="dijit.Tooltip" 
-		connectId="p_[% x _ y %]">
-		[% INCLUDE party/summary.html party=other_party %]
-	</div>
-	[% END %]
+    <div
+        dojoType="dijit.Tooltip"
+        connectId="p_[% x _ y %]">
+        [% INCLUDE party/summary.html party=other_party %]
+    </div>
+    [% END %]
 [% END %]
 
 </span>

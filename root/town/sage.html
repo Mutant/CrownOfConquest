@@ -1,148 +1,148 @@
 The Sage of [% town.town_name %] welcomes you. He offers the following services:
 
 <ul>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-orb-diag').show()">Find an orb</a></li>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-buy-book-diag').show()">Buy a Book of Past Lives</a></li>
-	<li><a href="#" onClick="javascript:dijit.byId('sage-buy-vial-diag').show()">Buy a Vial of Dragons Blood</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-town-diag').show()">Find a town</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-item-diag').show()">Find an item</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-dungeon-diag').show()">Find a dungeon</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-orb-diag').show()">Find an orb</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-buy-book-diag').show()">Buy a Book of Past Lives</a></li>
+    <li><a href="#" onClick="javascript:dijit.byId('sage-buy-vial-diag').show()">Buy a Vial of Dragons Blood</a></li>
 </ul>
 
 <div dojoType="dijit.Dialog" id="sage-town-diag" style="display: none" title="Find A Town" execute="findTown(arguments[0]);">
-	<table>
-	    <tr>
-	    	<td>Which town would you like to find?</td>
-	    	<td><input type="text" size="50" name="town_name" dojoType="dijit.form.TextBox"></td>
-	    </tr>
-	    <tr>
-		    <td>What would you like to find?</td>
-		    <td>
-		    	<select dojoType="dijit.form.FilteringSelect" name="find_type" autocomplete="false">
-	                <option value="direction">Direction ([% direction_cost %] gold)</option>
-	                <option value="distance">Distance ([% distance_cost %] gold)</option>
-	                <option value="location">Location ([% location_cost %] gold)</option>
-				</select>
-		    </td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit" id="sage-dialog-submit">OK</button></div>
+    <table>
+        <tr>
+            <td>Which town would you like to find?</td>
+            <td><input type="text" size="50" name="town_name" dojoType="dijit.form.TextBox"></td>
+        </tr>
+        <tr>
+            <td>What would you like to find?</td>
+            <td>
+                <select dojoType="dijit.form.FilteringSelect" name="find_type" autocomplete="false">
+                    <option value="direction">Direction ([% direction_cost %] gold)</option>
+                    <option value="distance">Distance ([% distance_cost %] gold)</option>
+                    <option value="location">Location ([% location_cost %] gold)</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit" id="sage-dialog-submit">OK</button></div>
 </div>
 
 <div dojoType="dijit.Dialog" id="sage-item-diag" style="display: none" title="Find An Item" execute="findItem(arguments[0]);">
-	<table>
-	    <tr>
-	    	<td>Which type of item would you like to find? ([% item_find_cost %] gold)</td>
-	    	<td>
-		    	<select dojoType="dijit.form.FilteringSelect" name="item_type_to_find" autocomplete="true">
-		    		<option></option>
-	                [% FOREACH item_type IN item_types %]
-	                	<option value="[% item_type.id %]">[% item_type.item_type %]</option>
-	                [% END %]
-			</select>
-		    </td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+    <table>
+        <tr>
+            <td>Which type of item would you like to find? ([% item_find_cost %] gold)</td>
+            <td>
+                <select dojoType="dijit.form.FilteringSelect" name="item_type_to_find" autocomplete="true">
+                    <option></option>
+                    [% FOREACH item_type IN item_types %]
+                        <option value="[% item_type.id %]">[% item_type.item_type %]</option>
+                    [% END %]
+            </select>
+            </td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
 
 <div dojoType="dijit.Dialog" id="sage-dungeon-diag" style="display: none" title="Find A Dungeon" execute="findDungeon(arguments[0]);">
-	<table>
-	    <tr>
-		    <td>What dungeon level would you like to find?</td>
-		    <td>
-		    	<select dojoType="dijit.form.Select" name="find_level" autocomplete="false">
-		    		[% FOREACH level IN dungeon_levels_allowed_to_enter %]
-	                	<option value="[% level %]">Level [% level %] ([% level * find_dungeon_cost_per_level %] gold)</option>
-					[% END %]
-				</select>
-		    </td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+    <table>
+        <tr>
+            <td>What dungeon level would you like to find?</td>
+            <td>
+                <select dojoType="dijit.form.Select" name="find_level" autocomplete="false">
+                    [% FOREACH level IN dungeon_levels_allowed_to_enter %]
+                        <option value="[% level %]">Level [% level %] ([% level * find_dungeon_cost_per_level %] gold)</option>
+                    [% END %]
+                </select>
+            </td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
 </div>
 
 <div dojoType="dijit.Dialog" id="sage-orb-diag" style="display: none" title="Find An Orb">
-	<form method="post" action="[% base %]town/sage/find_orb" onSubmit="postPanels(this); return false">
-	<table>
-	    <tr>
-		    <td>What orb would you like to find?</td>
-		    <td><input type="text" size="50" name="orb_name" dojoType="dijit.form.TextBox"></td>
-		</tr>
-		<tr>
-			<td>How much would you like to spend on finding the orb?<br>(The more you pay me, the more likely I am to be accurate with its location).</td>
-			<td><input type="text" style="width: 40px" size="5" name="amount_to_spend" dojoType="dijit.form.TextBox"></td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
-	</form>
+    <form method="post" action="[% base %]town/sage/find_orb" onSubmit="postPanels(this); return false">
+    <table>
+        <tr>
+            <td>What orb would you like to find?</td>
+            <td><input type="text" size="50" name="orb_name" dojoType="dijit.form.TextBox"></td>
+        </tr>
+        <tr>
+            <td>How much would you like to spend on finding the orb?<br>(The more you pay me, the more likely I am to be accurate with its location).</td>
+            <td><input type="text" style="width: 40px" size="5" name="amount_to_spend" dojoType="dijit.form.TextBox"></td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">OK</button></div>
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="sage-buy-vial-diag" style="display: none" title="Buy A Vial of Dragons Blood">
-	<form method="post" action="[% base %]town/sage/buy_vial" onSubmit="postPanels(this); return false">
-	Dragons Blood is an extremely rare item, but is useful for spell-casting. Each vial costs [% vial.base_cost %] gold.
-	<table>
-	    <tr>
-		    <td>Which character would you like to purchase a vial of Dragons Blood for?</td>
-		    <td>		    	
-		    	<select dojoType="dijit.form.Select" style="width: 150px" name="character_id" autocomplete="false">
-		    		[% FOREACH character IN party.characters_in_party %]
-	                	<option value="[% character.id %]">[% character.name %]</option>
-					[% END %]
-				</select>
-			</td>
-		</tr>
-		<tr>
-			<td>How many vials would you like to buy?</td>
-			<td><input id="quantity-spinner" type="text"
-		        dojoType="dijit.form.NumberTextBox"
-		        name= "quantity"
-		        value="1"
-		        constraints="{min:1,max:1000,places:0}"
-		        promptMessage= "Enter a value between 1 and 1000"
-		        required= "true"
-		        invalidMessage= "Invalid quantity."
-				style="width: 80px"
-		        />
-		     </td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
-	</form>
+    <form method="post" action="[% base %]town/sage/buy_vial" onSubmit="postPanels(this); return false">
+    Dragons Blood is an extremely rare item, but is useful for spell-casting. Each vial costs [% vial.base_cost %] gold.
+    <table>
+        <tr>
+            <td>Which character would you like to purchase a vial of Dragons Blood for?</td>
+            <td>
+                <select dojoType="dijit.form.Select" style="width: 150px" name="character_id" autocomplete="false">
+                    [% FOREACH character IN party.characters_in_party %]
+                        <option value="[% character.id %]">[% character.name %]</option>
+                    [% END %]
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>How many vials would you like to buy?</td>
+            <td><input id="quantity-spinner" type="text"
+                dojoType="dijit.form.NumberTextBox"
+                name= "quantity"
+                value="1"
+                constraints="{min:1,max:1000,places:0}"
+                promptMessage= "Enter a value between 1 and 1000"
+                required= "true"
+                invalidMessage= "Invalid quantity."
+                style="width: 80px"
+                />
+             </td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
+    </form>
 </div>
 
 <div dojoType="dijit.Dialog" id="sage-buy-book-diag" style="display: none" title="Buy A Book of Past Lives">
-	<form method="post" action="[% base %]town/sage/buy_book" onSubmit="postPanels(this); return false">
-	A Book of Past Lives is a rare item that will reset the skills of a character who reads it.
-	<br>The Book has a cost which depends on the maximum level of the character that can use it.
-	<table>
-		<tr>
-		    <td>What is the maximum character level of the Book you require?</td>
-		    <td>		    	
-		    	<select dojoType="dijit.form.Select" name="max_level" autocomplete="false">
-		    		[% FOREACH cost IN book_costs %]
-	                	<option value="[% cost.key %]">[% cost.key %] (Cost: [% cost.value %] )
-	                	</option>
-					[% END %]
-				</select>
-			</td>
-		</tr>	
-	
-	    <tr>
-		    <td>Which character would you like to purchase a Book of Past Lives for?</td>
-		    <td>		    	
-		    	<select dojoType="dijit.form.Select" name="character_id" autocomplete="false">
-		    		[% FOREACH character IN party.characters_in_party %]
-	                	<option value="[% character.id %]">[% character.name %]</option>
-					[% END %]
-				</select>
-			</td>
-		</tr>
-	</table>
-	<div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
-	</form>
+    <form method="post" action="[% base %]town/sage/buy_book" onSubmit="postPanels(this); return false">
+    A Book of Past Lives is a rare item that will reset the skills of a character who reads it.
+    <br>The Book has a cost which depends on the maximum level of the character that can use it.
+    <table>
+        <tr>
+            <td>What is the maximum character level of the Book you require?</td>
+            <td>
+                <select dojoType="dijit.form.Select" name="max_level" autocomplete="false">
+                    [% FOREACH cost IN book_costs %]
+                        <option value="[% cost.key %]">[% cost.key %] (Cost: [% cost.value %] )
+                        </option>
+                    [% END %]
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Which character would you like to purchase a Book of Past Lives for?</td>
+            <td>
+                <select dojoType="dijit.form.Select" name="character_id" autocomplete="false">
+                    [% FOREACH character IN party.characters_in_party %]
+                        <option value="[% character.id %]">[% character.name %]</option>
+                    [% END %]
+                </select>
+            </td>
+        </tr>
+    </table>
+    <div align="center"><button dojoType=dijit.form.Button type="submit">Purchase</button></div>
+    </form>
 </div>
 
-[% INCLUDE town/discount_message.html shop_type='sage' %] 
+[% INCLUDE town/discount_message.html shop_type='sage' %]
 
 [% INCLUDE town/town_footer.html %]

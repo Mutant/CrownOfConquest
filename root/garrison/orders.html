@@ -5,81 +5,81 @@
 <form method="post" action="[% base %]garrison/update_orders" onSubmit="postPanels(this); return false">
 <input type="hidden" name="garrison_id" value="[% garrison.id %]">
 <table class="main">
-	<tr id="creature-attack-mode">
-		<td>Orders against creatures:</td>
-		<td>
-			<select name="creature_attack_mode">
-				<option>Defensive Only</option>
-				<option>Attack Weaker Opponents</option>
-				<option>Attack Similar Opponents</option>
-				<option>Attack Stronger Opponents</option>
-				<option>Attack All Opponents</option>
-			</select>
-		</td>
-	</tr>
-	<tr id="party-attack-mode">
-		<td>Orders against parties:</td>
-		<td>
-			<select name="party_attack_mode">
-				<option>Defensive Only</option>
-				<option>Attack Weaker Opponents</option>
-				<option>Attack Similar Opponents</option>
-				<option>Attack Stronger Opponents</option>
-				<option>Attack All Opponents</option>
-			</select>
-		</td>
-	</tr>
-	<tr>
-		<td colspan="2"><input type="checkbox" name="attack_parties_from_kingdom" value="1">Attack parties, even if they're from the same Kingdom</td>
-	</tr>
-	<tr>
-		<td colspan="2"><input type="checkbox" name="attack_friendly_parties" value="1">Attack parties, even if they're from kingdoms we're at peace with</td>
-	</tr>	
-	<tr>
-		<td colspan="2"><input type="checkbox" name="claim_land_order" value="1">Claim land for our kingdom <span id="claim-land">(?)</span></td>
-		<div dojoType="dijit.Tooltip"
-           		connectId="claim-land"
-           		id="claim-land-tooltip"
-				style="display: none">
-			[% claim_land_tooltip_text = BLOCK ~%][% FILTER collapse %]
-			If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the
-			garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before
-			the land will be claimed. Beware, this will open your garrison up to attacks from high level parties!
-			
-			Note: this will have no effect if the garrison is in a sector with a building owned by a kingdom, as the building will claim
-			the land.
-			[% END %][% END %]
-			[% wrap(claim_land_tooltip_text, 80, '', '<br>') %]
-		</div>			
-	</tr>	
-	<tr id="flee-threshold">
-		<td>Flee Threshold:</td>
-		<td><input type="text" name="flee_threshold" size="3">
-		<div dojoType="dijit.Tooltip"
-           		connectId="flee-threshold"
-           		id="flee-threshold-tooltip"
-				style="display: none">
-			[% flee_threshold_tooltip_text = BLOCK ~%][% FILTER collapse %]
-			Percentage of hit points remaining before characters in this garrison will attempt to flee from combat.
-			If a garrison flees, they will move to an adjacent sector and form a new garrison. Any items stashed at the
-			original garrison will be lost.
-			[% END ~%][% END ~%]
-			[% wrap(flee_threshold_tooltip_text, 80, '', '<br>') %]			 
-		</div>		
-	</tr>
+    <tr id="creature-attack-mode">
+        <td>Orders against creatures:</td>
+        <td>
+            <select name="creature_attack_mode">
+                <option>Defensive Only</option>
+                <option>Attack Weaker Opponents</option>
+                <option>Attack Similar Opponents</option>
+                <option>Attack Stronger Opponents</option>
+                <option>Attack All Opponents</option>
+            </select>
+        </td>
+    </tr>
+    <tr id="party-attack-mode">
+        <td>Orders against parties:</td>
+        <td>
+            <select name="party_attack_mode">
+                <option>Defensive Only</option>
+                <option>Attack Weaker Opponents</option>
+                <option>Attack Similar Opponents</option>
+                <option>Attack Stronger Opponents</option>
+                <option>Attack All Opponents</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2"><input type="checkbox" name="attack_parties_from_kingdom" value="1">Attack parties, even if they're from the same Kingdom</td>
+    </tr>
+    <tr>
+        <td colspan="2"><input type="checkbox" name="attack_friendly_parties" value="1">Attack parties, even if they're from kingdoms we're at peace with</td>
+    </tr>
+    <tr>
+        <td colspan="2"><input type="checkbox" name="claim_land_order" value="1">Claim land for our kingdom <span id="claim-land">(?)</span></td>
+        <div dojoType="dijit.Tooltip"
+                   connectId="claim-land"
+                   id="claim-land-tooltip"
+                style="display: none">
+            [% claim_land_tooltip_text = BLOCK ~%][% FILTER collapse %]
+            If checked, the garrison will claim land for your Kingdom in a 3x3 area. This land will be 'locked' so long as the
+            garrison stays in this sector. The garrison must be in the sector for [% c.config.garrison_time_to_claim_land %] days before
+            the land will be claimed. Beware, this will open your garrison up to attacks from high level parties!
+
+            Note: this will have no effect if the garrison is in a sector with a building owned by a kingdom, as the building will claim
+            the land.
+            [% END %][% END %]
+            [% wrap(claim_land_tooltip_text, 80, '', '<br>') %]
+        </div>
+    </tr>
+    <tr id="flee-threshold">
+        <td>Flee Threshold:</td>
+        <td><input type="text" name="flee_threshold" size="3">
+        <div dojoType="dijit.Tooltip"
+                   connectId="flee-threshold"
+                   id="flee-threshold-tooltip"
+                style="display: none">
+            [% flee_threshold_tooltip_text = BLOCK ~%][% FILTER collapse %]
+            Percentage of hit points remaining before characters in this garrison will attempt to flee from combat.
+            If a garrison flees, they will move to an adjacent sector and form a new garrison. Any items stashed at the
+            original garrison will be lost.
+            [% END ~%][% END ~%]
+            [% wrap(flee_threshold_tooltip_text, 80, '', '<br>') %]
+        </div>
+    </tr>
 </table>
 
 <div dojoType="dijit.Tooltip"
-   		connectId="party-attack-mode,creature-attack-mode"
-   		id="mode-tooltip"
-		style="display: none">
-	Whether to attack creatures or parties that enter the sector.<br>
-	Select the maximum strength of the opponent the garrison should attack.<br>
-	If you select 'Attack Stronger Opponents', the garrison will still ignore<br>
-	some opponents, where the battle would be suicidal.	Even if you select<br>
-	'Attack All Opponents' some extremely weak opponents will still be left alone<br>
-	out of pity.
-</div>	
+           connectId="party-attack-mode,creature-attack-mode"
+           id="mode-tooltip"
+        style="display: none">
+    Whether to attack creatures or parties that enter the sector.<br>
+    Select the maximum strength of the opponent the garrison should attack.<br>
+    If you select 'Attack Stronger Opponents', the garrison will still ignore<br>
+    some opponents, where the battle would be suicidal.	Even if you select<br>
+    'Attack All Opponents' some extremely weak opponents will still be left alone<br>
+    out of pity.
+</div>
 
 <input type="submit" value="Update Orders">
 

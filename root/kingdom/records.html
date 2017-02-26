@@ -1,50 +1,50 @@
 <h4>Records for the Kingdom of [% kingdom.name %]</h4>
 
 <table class="main" cellspacing="5">
-	<tr>
-		<th>Record</th>
-		<th>Achieved</th>
-	</tr>
-	<tr>
-		<td><b>Inception</b></td>
-		<td><b>Day [% kingdom.inception_day.day_number %]</b> ([% kingdom.inception_day.difference_to_today_str %])</td>
-	</tr>	
-	<tr>
-		<td><b>Most Land Owned</b>: [% kingdom.highest_land_count %]</td>
-		<td><b>Day [% kingdom.highest_land_count_day.day_number %]</b> ([% kingdom.highest_land_count_day.difference_to_today_str %])</td>
-	</tr>
-	<tr>
-		<td><b>Most Towns</b>: [% kingdom.highest_town_count %]</td>
-		<td><b>Day [% kingdom.highest_town_count_day.day_number %]</b> ([% kingdom.highest_town_count_day.difference_to_today_str %])</td>
-	</tr>
-	<tr>
-		<td><b>Most Parties</b>: [% kingdom.highest_party_count %]</td>
-		<td><b>Day [% kingdom.highest_party_count_day.day_number %]</b> ([% kingdom.highest_party_count_day.difference_to_today_str %])</td>
-	</tr>		
+    <tr>
+        <th>Record</th>
+        <th>Achieved</th>
+    </tr>
+    <tr>
+        <td><b>Inception</b></td>
+        <td><b>Day [% kingdom.inception_day.day_number %]</b> ([% kingdom.inception_day.difference_to_today_str %])</td>
+    </tr>
+    <tr>
+        <td><b>Most Land Owned</b>: [% kingdom.highest_land_count %]</td>
+        <td><b>Day [% kingdom.highest_land_count_day.day_number %]</b> ([% kingdom.highest_land_count_day.difference_to_today_str %])</td>
+    </tr>
+    <tr>
+        <td><b>Most Towns</b>: [% kingdom.highest_town_count %]</td>
+        <td><b>Day [% kingdom.highest_town_count_day.day_number %]</b> ([% kingdom.highest_town_count_day.difference_to_today_str %])</td>
+    </tr>
+    <tr>
+        <td><b>Most Parties</b>: [% kingdom.highest_party_count %]</td>
+        <td><b>Day [% kingdom.highest_party_count_day.day_number %]</b> ([% kingdom.highest_party_count_day.difference_to_today_str %])</td>
+    </tr>
 </table>
 
 <br><br>
 
 [% IF capitals.size > 0 %]
-	<h4>Previous Capitals</h4>
-	
-	<table class="main" cellpadding="4">
-		<tr>		
-			<th>Town</th>
-			<th>From</th>
-			<th>To</th>
-		</tr>
-		
-	[% FOREACH capital IN capitals %]
-		<tr>
-			<td>[% capital.town.town_name %]</td>
-			<td>Day [% capital.start_day.day_number %] ([% capital.start_day.difference_to_today_str %])</td>
-			<td>Day [% capital.end_day.day_number %] ([% capital.end_day.difference_to_today_str %])</td>
-		</tr>
-	[% END %]
-	</table>
+    <h4>Previous Capitals</h4>
+
+    <table class="main" cellpadding="4">
+        <tr>
+            <th>Town</th>
+            <th>From</th>
+            <th>To</th>
+        </tr>
+
+    [% FOREACH capital IN capitals %]
+        <tr>
+            <td>[% capital.town.town_name %]</td>
+            <td>Day [% capital.start_day.day_number %] ([% capital.start_day.difference_to_today_str %])</td>
+            <td>Day [% capital.end_day.day_number %] ([% capital.end_day.difference_to_today_str %])</td>
+        </tr>
+    [% END %]
+    </table>
 [% END %]
-	
+
 
 
 

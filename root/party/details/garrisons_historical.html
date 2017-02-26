@@ -2,20 +2,20 @@
 <h4>Old Garrisions</h4>
 
 <table>
-	<tr>
-		<th>Name</th>
-		<th>Battles</th>
-		<th>Combat Logs</th>
-	</tr>
+    <tr>
+        <th>Name</th>
+        <th>Battles</th>
+        <th>Combat Logs</th>
+    </tr>
 
-	[% FOREACH garrison IN old_garrisons %]
-	<tr>
-		<td>[% garrison.display_name(1) %]</td>
-		<td align="right">[% garrison.recent_battles_count || 0 %]</td> 
-		<td><a href="javascript:loadScreen('garrison/combat_log_tab?garrison_id=[% garrison.id %]')">View</a></td>
-	</tr>
-	[% END %]
+    [% FOREACH garrison IN old_garrisons %]
+    <tr>
+        <td>[% garrison.display_name(1) %]</td>
+        <td align="right">[% garrison.recent_battles_count || 0 %]</td>
+        <td><a href="javascript:loadScreen('garrison/combat_log_tab?garrison_id=[% garrison.id %]')">View</a></td>
+    </tr>
+    [% END %]
 </table>
 [% ELSE %]
-	You do not have any historical garrisons.
+    You do not have any historical garrisons.
 [% END %]

@@ -1,43 +1,43 @@
 <h4>History Of All Kingdoms</h4>
 
 <script>
-$(document).ready(function() 
-    { 
-        $("#kingdom-history-table").tablesorter(); 
-    } 
-); 
+$(document).ready(function()
+    {
+        $("#kingdom-history-table").tablesorter();
+    }
+);
 </script>
 
 <table id="kingdom-history-table" class="tablesorter main" cellpadding=5 cellspacing=0>
-	<thead>
-	<tr>
-		<th><u>Kingdom</u></th>
-		<th><u>Inception Day</u></th>
-		<th><u>Fall Day</u></th>
-		<th><u>Duration (Days)</u></th>
-		<th><u>Most Land</u></th>
-		<th><u>Most Towns</u></th>
-		<th><u>Most Parties</u></th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
+    <thead>
+    <tr>
+        <th><u>Kingdom</u></th>
+        <th><u>Inception Day</u></th>
+        <th><u>Fall Day</u></th>
+        <th><u>Duration (Days)</u></th>
+        <th><u>Most Land</u></th>
+        <th><u>Most Towns</u></th>
+        <th><u>Most Parties</u></th>
+    </tr>
+    </thead>
+
+    <tbody>
+
 [% FOREACH kingdom IN kingdoms %]
-	<tr>
-		<td>[% kingdom.name %]</td>
-		<td>[% kingdom.inception_day.day_number %]</td>
-		<td>[% IF kingdom.fall_day %]
-				[% kingdom.fall_day.day_number %]</td>
-			[% ELSE %]
-				N/A
-			[% END %]
-		</td>
-		<td>[% duration = kingdom.duration %][% IF duration %][% duration %][% END %][% IF ! kingdom.fall_day_id %][% END %]</td>
-		<td>[% kingdom.highest_land_count %]</td>
-		<td>[% kingdom.highest_town_count %]</td>
-		<td>[% kingdom.highest_party_count %]</td>
-	</tr>
+    <tr>
+        <td>[% kingdom.name %]</td>
+        <td>[% kingdom.inception_day.day_number %]</td>
+        <td>[% IF kingdom.fall_day %]
+                [% kingdom.fall_day.day_number %]</td>
+            [% ELSE %]
+                N/A
+            [% END %]
+        </td>
+        <td>[% duration = kingdom.duration %][% IF duration %][% duration %][% END %][% IF ! kingdom.fall_day_id %][% END %]</td>
+        <td>[% kingdom.highest_land_count %]</td>
+        <td>[% kingdom.highest_town_count %]</td>
+        <td>[% kingdom.highest_party_count %]</td>
+    </tr>
 [% END %]
-	</tbody>
+    </tbody>
 </table>

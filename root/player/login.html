@@ -4,51 +4,51 @@
 
 <script>
 function displayIEDiag() {
-	if (dojo.isIE <= 7) {
-		var ieWarn = dojo.cookie('ieWarn');
+    if (dojo.isIE <= 7) {
+        var ieWarn = dojo.cookie('ieWarn');
 
-		if (! ieWarn) {	
-			dijit.byId('ie-diag').show();
-			dojo.cookie('ieWarn', 1, {expires: 60});
-		}
-	}
+        if (! ieWarn) {
+            dijit.byId('ie-diag').show();
+            dojo.cookie('ieWarn', 1, {expires: 60});
+        }
+    }
 }
 dojo.addOnLoad( displayIEDiag );
 
 function displaySizeWarning() {
-	var vs = dojo.window.getBox();
-	if (vs.w < 1024 || vs.h < 570) {
-		var warning = dojo.cookie('sizeWarning');
-		
-		if (! warning) {
-			dijit.byId('size-diag').show();
-			dojo.cookie('sizeWarning', 1, {expires: 60});		
-		}
-	} 
+    var vs = dojo.window.getBox();
+    if (vs.w < 1024 || vs.h < 570) {
+        var warning = dojo.cookie('sizeWarning');
+
+        if (! warning) {
+            dijit.byId('size-diag').show();
+            dojo.cookie('sizeWarning', 1, {expires: 60});
+        }
+    }
 }
 
 dojo.addOnLoad( displaySizeWarning );
 
 var shotDescs = {
-	1: 'The Main Screen',	
-	2: "A charater's screen - mouse over an item to see its stats",
-	9: "A Town",
-	3: "An Equipment Shop - drag an item onto a character's inventory to buy it",
-	4: "Combat - cast a spell by selecting it from the action menu",	
-	7: "Upgrading building",
-	8: "Exploring a dungeon",
-	5: "A Character's Tooltip",
+    1: 'The Main Screen',
+    2: "A charater's screen - mouse over an item to see its stats",
+    9: "A Town",
+    3: "An Equipment Shop - drag an item onto a character's inventory to buy it",
+    4: "Combat - cast a spell by selecting it from the action menu",
+    7: "Upgrading building",
+    8: "Exploring a dungeon",
+    5: "A Character's Tooltip",
 };
 
 function showShot(shotId) {
-	dojo.byId('screeshot-view').style.visibility = 'visible';
-	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/layout/loader.gif";
-	dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".jpg";
-	dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
+    dojo.byId('screeshot-view').style.visibility = 'visible';
+    dojo.byId('shot-img').src = "[% c.config.static_path %]/images/layout/loader.gif";
+    dojo.byId('shot-img').src = "[% c.config.static_path %]/images/shots/" + shotId + ".jpg";
+    dojo.byId('shot-desc').innerHTML = shotDescs[shotId];
 }
 
 function closeShotScreen() {
-	dojo.byId('screeshot-view').style.visibility = 'hidden';
+    dojo.byId('screeshot-view').style.visibility = 'hidden';
 }
 
 </script>
@@ -58,12 +58,12 @@ function closeShotScreen() {
     <br><br>
     Note that this game does not work correctly in Internet Explorer 7. You can still log in, but important aspects of the game will not work.
     <br><br>
-    Please upgrade to a newer version of IE, or use an alternative browser such as <a href="http://www.google.com/chrome">Google Chrome</a> or 
-    <a href="http://www.firefox.com">Mozilla Firefox</a>.  
-	<br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-	</div>
+    Please upgrade to a newer version of IE, or use an alternative browser such as <a href="http://www.google.com/chrome">Google Chrome</a> or
+    <a href="http://www.firefox.com">Mozilla Firefox</a>.
+    <br>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">OK</button>
+    </div>
 </div>
 
 <div dojoType="dijit.Dialog" id="size-diag" style="display: none" title="Browser Window Size">
@@ -75,70 +75,70 @@ function closeShotScreen() {
     Please use a large browser window or higher desktop resolution if possible.
     <br><br>
     For best results, the viewing window of the browser should be at least 1024 pixels wide, by 570 high.
-	<br><br>
-	<div align="center">
-    	<button dojoType=dijit.form.Button type="submit">OK</button>
-	</div>
+    <br><br>
+    <div align="center">
+        <button dojoType=dijit.form.Button type="submit">OK</button>
+    </div>
 </div>
 
 <div id="login-content" style="position: relative; background: black; min-height: 550px">
 
 <div style="float: right;">
-	<div class="login-box">
-		<form method="POST" action="[% base %]/player/login" onSubmit="setBrowserSize(); return true;">
-		<input type="hidden" id="login-width"  name="width"/>
-		<input type="hidden" id="login-height" name="height"/>
-		<table>
-			<tr><td colspan=2><h2>Login To Crown Of Conquest</h2></td></tr>
-			<tr>
-				<td nowrap>Username or Email:</td>
-				<td><input type="text" name="login" style="width: 300px"></td>
-			</tr>
-			<tr>
-				<td>Password:</td>
-				<td><input type="password" name="password" style="width: 300px"></td>
-			</tr>
-			<tr>
-				<td></td>
-				<td><input type="submit" value="Login"></td>
-			</tr>
-		</table>
-		</form>
-		
-		[% IF c.config.alt_server %]
-		<div style="text-align: center; font-size: 14px">
-		<br>
-		Or Login to the <a href="[% c.config.alt_server.url %]">[% c.config.alt_server.name %] Server</a>
-		<br><br>		
-		</div>
-		[% END %]
-		
-		<table class="main" align="center">
-			<tr>
-				<td align="right">Don't have an account?<br><strong><a href="[% base %]/player/register">Register</a></strong></td>
-				<td>|<br>|</td>
-				<td>Forgot Your Password?<br><strong><a href="[% base %]/player/forgot_password">Reset Password</a></strong></td>
-			</tr>
-		</table>
-	</div>
+    <div class="login-box">
+        <form method="POST" action="[% base %]/player/login" onSubmit="setBrowserSize(); return true;">
+        <input type="hidden" id="login-width"  name="width"/>
+        <input type="hidden" id="login-height" name="height"/>
+        <table>
+            <tr><td colspan=2><h2>Login To Crown Of Conquest</h2></td></tr>
+            <tr>
+                <td nowrap>Username or Email:</td>
+                <td><input type="text" name="login" style="width: 300px"></td>
+            </tr>
+            <tr>
+                <td>Password:</td>
+                <td><input type="password" name="password" style="width: 300px"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Login"></td>
+            </tr>
+        </table>
+        </form>
+
+        [% IF c.config.alt_server %]
+        <div style="text-align: center; font-size: 14px">
+        <br>
+        Or Login to the <a href="[% c.config.alt_server.url %]">[% c.config.alt_server.name %] Server</a>
+        <br><br>
+        </div>
+        [% END %]
+
+        <table class="main" align="center">
+            <tr>
+                <td align="right">Don't have an account?<br><strong><a href="[% base %]/player/register">Register</a></strong></td>
+                <td>|<br>|</td>
+                <td>Forgot Your Password?<br><strong><a href="[% base %]/player/forgot_password">Reset Password</a></strong></td>
+            </tr>
+        </table>
+    </div>
 
 
-	<div class="login-box" style="padding: 2px">
-		<h2>Screenshots</h2>
-	
-		<div style="text-align: center">
-		<a href="#" onClick="showShot(1)"><img src="[% c.config.static_path %]/images/shots/1t.png" border="0"></a>
-		<br>
-		<a href="#" onClick="showShot(2)">More Screenshots</a>
-		</div>
-	</div>
-	
-	<div class="login-box">
-		<h2>Latest News - [% last_announcement.title %]</h2>
-		<i>[% last_announcement.date %]</i><br>
-		[% last_announcement.announcement | truncate(250) %]<br>
-		<a href="[% base %]player/announcements/public">More</a>
-	</div>
+    <div class="login-box" style="padding: 2px">
+        <h2>Screenshots</h2>
+
+        <div style="text-align: center">
+        <a href="#" onClick="showShot(1)"><img src="[% c.config.static_path %]/images/shots/1t.png" border="0"></a>
+        <br>
+        <a href="#" onClick="showShot(2)">More Screenshots</a>
+        </div>
+    </div>
+
+    <div class="login-box">
+        <h2>Latest News - [% last_announcement.title %]</h2>
+        <i>[% last_announcement.date %]</i><br>
+        [% last_announcement.announcement | truncate(250) %]<br>
+        <a href="[% base %]player/announcements/public">More</a>
+    </div>
 
 </div>
 
@@ -146,10 +146,10 @@ function closeShotScreen() {
 
 <p>Crown Of Conquest (formerly Kingdoms) is an online "persistent world" role-playing game like no other.</p>
 
-<p>You control a party of characters who start as low-level novices, but - with your help - can become powerful adventurers, politicians or even monarchs! 
+<p>You control a party of characters who start as low-level novices, but - with your help - can become powerful adventurers, politicians or even monarchs!
 
-<p>Explore a rich and dynamic land that you (or your fellow players) can influence. Discover new towns, 
-explore dungeons, fight all manner of foul creatures, conquer cities, construct battlements, and much more.</p> 
+<p>Explore a rich and dynamic land that you (or your fellow players) can influence. Discover new towns,
+explore dungeons, fight all manner of foul creatures, conquer cities, construct battlements, and much more.</p>
 
 <p>For more on the game, see the <a href="[% base %]/player/about">About</a> page or check out some <a href="#" onClick="showShot(1)">Screenshots</a>.</p>
 
@@ -158,42 +158,42 @@ explore dungeons, fight all manner of foul creatures, conquer cities, construct 
 <h2>Features</h2>
 
 <ul>
-	<li>Dynamic, graphical, grid-based world to explore. Over time, the world evolves based on actions by the players</li>
-	<li>Hoards of monsters to fight</li>
-	<li>Thousands of unique items to find</li>
-	<li>Dungeons that appear and disappear over time</li>
-	<li>Begin with 5 characters, but recruit more (or sell your old ones) as you need to</li>
-	<li>Shape the world yourself by seizing control of towns, becoming mayor, setting taxes, buying defences, and much more</li>
-	<li>For the ultimate in power, form your own Kingdom, and play politics against the other kings and queens of the realm</li> 
-	<li>Much more - you'll have to play the game to discover everything!</li>
+    <li>Dynamic, graphical, grid-based world to explore. Over time, the world evolves based on actions by the players</li>
+    <li>Hoards of monsters to fight</li>
+    <li>Thousands of unique items to find</li>
+    <li>Dungeons that appear and disappear over time</li>
+    <li>Begin with 5 characters, but recruit more (or sell your old ones) as you need to</li>
+    <li>Shape the world yourself by seizing control of towns, becoming mayor, setting taxes, buying defences, and much more</li>
+    <li>For the ultimate in power, form your own Kingdom, and play politics against the other kings and queens of the realm</li>
+    <li>Much more - you'll have to play the game to discover everything!</li>
 </ul>
 
-Or check out the recent <a href="[% base %]/player/changelog">changes</a>... 
+Or check out the recent <a href="[% base %]/player/changelog">changes</a>...
 
-<div id="screeshot-view" style="position: fixed; left: 50%; top: 50%; margin-left: -400px; margin-top: -250px; min-width: 800px; height: 550px; visibility: hidden; 
-	border: 2px solid #4d4d4d; background: black; -moz-border-radius: 10px; -webkit-border-radius: 10px; -khtml-border-radius: 10px; border-radius: 10px;">
-	
-	<div style="float: right; margin-right: 25px">
-	<div id="screen-close" style="position: fixed; padding: 2px">
-		<a href="#" onclick="closeShotScreen()"><span class="close-icon"></span></a>
-	</div>	
-	</div>
-	
-	<div id="shot">	
-		<img id="shot-img" src="[% c.config.static_path %]/images/layout/loader.gif">
-	</div>
-	
-	<div style="text-align: center; position: absolute; margin: 0 auto; width: 100%; bottom: 15px;">
-	<div id="shot-desc" style="text-align: center; font-style:italic;">
-	</div>
-	<br>
+<div id="screeshot-view" style="position: fixed; left: 50%; top: 50%; margin-left: -400px; margin-top: -250px; min-width: 800px; height: 550px; visibility: hidden;
+    border: 2px solid #4d4d4d; background: black; -moz-border-radius: 10px; -webkit-border-radius: 10px; -khtml-border-radius: 10px; border-radius: 10px;">
 
-	More Screenshots:
-	[% FOREACH shot IN shots %]
-	
-		<a href="#" onClick="showShot([% shot %])">#[% loop.count %]</a>&nbsp;
-	[% END %]
-	</div>
+    <div style="float: right; margin-right: 25px">
+    <div id="screen-close" style="position: fixed; padding: 2px">
+        <a href="#" onclick="closeShotScreen()"><span class="close-icon"></span></a>
+    </div>
+    </div>
+
+    <div id="shot">
+        <img id="shot-img" src="[% c.config.static_path %]/images/layout/loader.gif">
+    </div>
+
+    <div style="text-align: center; position: absolute; margin: 0 auto; width: 100%; bottom: 15px;">
+    <div id="shot-desc" style="text-align: center; font-style:italic;">
+    </div>
+    <br>
+
+    More Screenshots:
+    [% FOREACH shot IN shots %]
+
+        <a href="#" onClick="showShot([% shot %])">#[% loop.count %]</a>&nbsp;
+    [% END %]
+    </div>
 </div>
 
 </div>

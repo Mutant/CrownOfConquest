@@ -1,4 +1,4 @@
 [% USE infl = Lingua.EN.Inflect; %]
 
-<span class="combat-party-attacker">[% message.attacker.character_name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span>, 
+<span class="combat-party-attacker">[% message.attacker.character_name %]</span> cast <span class="combat-weapon">[% message.spell_name %]</span>,
 [% message.effect %] for [% FILTER inflect %]NO([% message.time_type %], [% message.duration %])[% END %].

@@ -5,53 +5,53 @@
 <b>Category of Item Types to Edit:</b>
 <form method="get" action="[% base %]/admin/items/edit_item_types_in_category">
 <select name="category_id">
-		<option></option>
-        [% FOREACH category IN categories %]        
- 	        <option value="[% category.id %]">[% category.item_category %]</option>
- 	    [% END %]
+        <option></option>
+        [% FOREACH category IN categories %]
+             <option value="[% category.id %]">[% category.item_category %]</option>
+         [% END %]
 </select>
 <input type="submit" value="Edit">
 </form>
 
 [% IF category_to_edit %]
-	<table class="main" border=1 cellpadding=2 cellspacing=0>
-		<tr>
-			<th>ID</th>
-			<th>Item Type</th>
-			<th>Base Cost</th>
-			<th>Prevalance</th>
-			<th>Weight</th>
-			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
-				<th>[% attribute.item_attribute_name %]</th>
-			[% END %]
-			[% FOREACH variable IN category_to_edit.item_variable_names %]
-				[% IF variable.create_on_insert %]
-					<th>[% variable.item_variable_name %]</th>
-				[% END %]
-			[% END %]				
-		</tr>
-	
-	[% FOREACH item_type IN item_types %]
-		<tr>
-			<td>[% item_type.id %]</td>			
-			<td><a href="[% base %]/admin/items/edit_item_type?item_type_id=[% item_type.id %]">[% item_type.item_type %]</a></td>
-			<td>[% item_type.base_cost %]</td>
-			<td>[% item_type.prevalence %]</td>
-			<td>[% item_type.weight %]</td>
-			[% FOREACH attribute IN category_to_edit.item_attribute_names %]
-				<td>[% item_type.attribute(attribute.item_attribute_name).formatted_value %]</td>
-			[% END %]
-			[% FOREACH variable IN category_to_edit.item_variable_names %]
-				[% IF variable.create_on_insert %]
-					[% variable_params = item_type.variable_param(variable.item_variable_name) %]
-					<td>[% variable_params.min_value %] - [% variable_params.max_value %] [% IF variable_params.keep_max %](KpMx)[% END %]</td>
-				[% END %]
-			[% END %]			
-		</tr>
-	
-	[% END %]
-	
-	</table>
+    <table class="main" border=1 cellpadding=2 cellspacing=0>
+        <tr>
+            <th>ID</th>
+            <th>Item Type</th>
+            <th>Base Cost</th>
+            <th>Prevalance</th>
+            <th>Weight</th>
+            [% FOREACH attribute IN category_to_edit.item_attribute_names %]
+                <th>[% attribute.item_attribute_name %]</th>
+            [% END %]
+            [% FOREACH variable IN category_to_edit.item_variable_names %]
+                [% IF variable.create_on_insert %]
+                    <th>[% variable.item_variable_name %]</th>
+                [% END %]
+            [% END %]
+        </tr>
+
+    [% FOREACH item_type IN item_types %]
+        <tr>
+            <td>[% item_type.id %]</td>
+            <td><a href="[% base %]/admin/items/edit_item_type?item_type_id=[% item_type.id %]">[% item_type.item_type %]</a></td>
+            <td>[% item_type.base_cost %]</td>
+            <td>[% item_type.prevalence %]</td>
+            <td>[% item_type.weight %]</td>
+            [% FOREACH attribute IN category_to_edit.item_attribute_names %]
+                <td>[% item_type.attribute(attribute.item_attribute_name).formatted_value %]</td>
+            [% END %]
+            [% FOREACH variable IN category_to_edit.item_variable_names %]
+                [% IF variable.create_on_insert %]
+                    [% variable_params = item_type.variable_param(variable.item_variable_name) %]
+                    <td>[% variable_params.min_value %] - [% variable_params.max_value %] [% IF variable_params.keep_max %](KpMx)[% END %]</td>
+                [% END %]
+            [% END %]
+        </tr>
+
+    [% END %]
+
+    </table>
 
 [% END %]
 

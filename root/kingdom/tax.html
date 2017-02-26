@@ -2,12 +2,12 @@
 
 <form action="[% base %]/kingdom/tax" method="POST" onSubmit="postPanels(this); return false">
 
-Tax rate on towns within the Kingdom: 
+Tax rate on towns within the Kingdom:
 <input type="text" dojoType="dijit.form.NumberTextBox" name="mayor_tax"  style="width: 50px"
-				value="[% kingdom.mayor_tax %]" constraints="{min:1,max:25,places:0}" required="true"
-				invalidMessage="Town Tax must be between 1 and 25%">%
-				
+                value="[% kingdom.mayor_tax %]" constraints="{min:1,max:25,places:0}" required="true"
+                invalidMessage="Town Tax must be between 1 and 25%">%
+
 <button dojoType="dijit.form.Button" type="submit" name="submitButton" value="Submit">
-	Submit
-</button>				
+    Submit
+</button>
 </form>

@@ -1,64 +1,64 @@
 [% USE infl = Lingua.EN.Inflect; -%]
-	<table class="main" cellpadding="3">
-		<tr>			
-			<th></th>
-			<th></th>
-			<th colspan="[% upgrade_variables.size %]" align="center">Upgrade: </th>
-		</tr>
-		<tr>
-			<th></th>
-			<th></th>
-			[% FOREACH variable IN upgrade_variables %]
-			<th>[% variable.item_variable_name | remove(' Upgrade') %]</th>
-			[% END %]
-			[% IF repair_variables.size > 0 %]<th>Repair</th>[% END %]
-		</tr>
-	
-		
-	[% FOREACH item IN items %]
-		<tr>
-		[% IF last_character != item.character_id %]
-			<td colspan="3"><br><b>[% item.belongs_to_character.character_name %]</b></td></tr><tr>
-			[% last_character = item.character_id %]
-		[% END %]
-			<td>[% item.item_type.item_type %] [% IF item.equip_place_id %](e)[% END %]</td>
-			<td>
-				<span dojoType="dijit.form.DropDownButton">
-			        <span>Stats</span>
-			        <div dojoType="dijit.TooltipDialog" style="display: none"
-			        	href="[% base %]/item/tooltip?item_id=[% item.id %]">
-			        </div>
-				</span>
-			</td>
-			[% FOREACH variable IN upgrade_variables %]
-				[% FILTER collapse %]
-				<td align="center">
-					<a href="javascript:confirmUpgrade(
-							'[% variable.id %]',
-							'[% infl.A(variable.item_variable_name, 1) %]',								
-							'[% item.id %]', 
-							'[% infl.A(item.item_type.item_type, 1) %]',
-							'[% item.upgrade_cost(variable.item_variable_name) %]',
-							'[% category.item_category %]'
-						)">[% item.upgrade_cost(variable.item_variable_name) %] gold</a>
-				</td>					
-				[% END %]
-			[% END %]
-			[% FOREACH variable IN repair_variables %]
-				[% repair_cost = item.repair_cost(town) %]
-				[% IF repair_cost > 0 %]
-					[% FILTER collapse %]
-					<td align="center">
-						<a href="javascript:confirmRepair(							
-								'[% item.id %]', 
-								'[% infl.A(item.item_type.item_type, 1) %]',
-								'[% repair_cost %]',
-								'[% category.item_category %]'
-							)">[% repair_cost %] gold</a>
-					</td>					
-					[% END %]
-				[% END %]
-			[% END %]			
-		</tr>
-	[% END %]
-	</table>	
+    <table class="main" cellpadding="3">
+        <tr>
+            <th></th>
+            <th></th>
+            <th colspan="[% upgrade_variables.size %]" align="center">Upgrade: </th>
+        </tr>
+        <tr>
+            <th></th>
+            <th></th>
+            [% FOREACH variable IN upgrade_variables %]
+            <th>[% variable.item_variable_name | remove(' Upgrade') %]</th>
+            [% END %]
+            [% IF repair_variables.size > 0 %]<th>Repair</th>[% END %]
+        </tr>
+
+
+    [% FOREACH item IN items %]
+        <tr>
+        [% IF last_character != item.character_id %]
+            <td colspan="3"><br><b>[% item.belongs_to_character.character_name %]</b></td></tr><tr>
+            [% last_character = item.character_id %]
+        [% END %]
+            <td>[% item.item_type.item_type %] [% IF item.equip_place_id %](e)[% END %]</td>
+            <td>
+                <span dojoType="dijit.form.DropDownButton">
+                    <span>Stats</span>
+                    <div dojoType="dijit.TooltipDialog" style="display: none"
+                        href="[% base %]/item/tooltip?item_id=[% item.id %]">
+                    </div>
+                </span>
+            </td>
+            [% FOREACH variable IN upgrade_variables %]
+                [% FILTER collapse %]
+                <td align="center">
+                    <a href="javascript:confirmUpgrade(
+                            '[% variable.id %]',
+                            '[% infl.A(variable.item_variable_name, 1) %]',
+                            '[% item.id %]',
+                            '[% infl.A(item.item_type.item_type, 1) %]',
+                            '[% item.upgrade_cost(variable.item_variable_name) %]',
+                            '[% category.item_category %]'
+                        )">[% item.upgrade_cost(variable.item_variable_name) %] gold</a>
+                </td>
+                [% END %]
+            [% END %]
+            [% FOREACH variable IN repair_variables %]
+                [% repair_cost = item.repair_cost(town) %]
+                [% IF repair_cost > 0 %]
+                    [% FILTER collapse %]
+                    <td align="center">
+                        <a href="javascript:confirmRepair(
+                                '[% item.id %]',
+                                '[% infl.A(item.item_type.item_type, 1) %]',
+                                '[% repair_cost %]',
+                                '[% category.item_category %]'
+                            )">[% repair_cost %] gold</a>
+                    </td>
+                    [% END %]
+                [% END %]
+            [% END %]
+        </tr>
+    [% END %]
+    </table>

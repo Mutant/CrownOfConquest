@@ -95,6 +95,15 @@ My preference would also be to move to Postgres, although the effort to do so is
 
 Also see t/README.md for docs on the test suite.
 
+### License
+
+The code (including Perl, Javascript and HTML Templates) in this application is distributed under GPLv3
+(see LICENSE_GPL in the top-level directory).
+
+The artwork & assets (including .png and .jpg files) in this application are distributed under CC BY-NC-SA 4.0
+license. Attribution should be given as per the 'about' page (it's sufficient just to keep this page unmodified).
+See https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
 ### Contact
 
 Here are a few ways you can contact me:

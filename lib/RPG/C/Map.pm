@@ -269,7 +269,7 @@ sub generate_grid : Private {
     my ( $self, $c, $x_size, $y_size, $x_centre, $y_centre ) = @_;
 
     confess "Invalid call to generate_grid(): $x_size, $y_size, $x_centre, $y_centre"
-      unless $x_size && $y_size && $x_centre && $y_centre;
+      unless $x_size && $y_size && defined $x_centre && defined $y_centre;
 
     my ( $start_point, $end_point ) = RPG::Map->surrounds( $x_centre, $y_centre, $x_size, $y_size, 1 );
 

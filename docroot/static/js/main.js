@@ -342,7 +342,6 @@ function getPanels(url) {
         no_cache = '?' + no_cache;
     }
 
-    _gaq.push(['_trackPageview', url]);
     lastAction = url;
 
     dojo.xhrGet( {
@@ -687,8 +686,6 @@ function loadScreen(url, noOnClose) {
     messagesToBack();
 
     dijit.byId('screen-pane').set("content", dojo.byId('loader-gif').innerHTML);
-
-    _gaq.push(['_trackPageview', url]);
 
     screenHistory.push(url);
     currentUrl = url;

@@ -5,9 +5,9 @@ use warnings;
 
 use RPG::Schema;
 use RPG::LoadConf;
+use RPG::Email;
 
 use DateTime::Format::Strptime;
-use MIME::Lite;
 
 my $config = RPG::LoadConf->load();
 
@@ -30,11 +30,12 @@ my $dt = $strp->parse_datetime($conf_val->conf_value);
 my $elapsed = $dt->delta_ms( DateTime->now() );
 
 if ($elapsed->in_units('minutes') > 60) {
-	my $msg = MIME::Lite->new(
-		From    => $config->{send_email_from},
-		To      => $config->{send_email_from},
-		Subject => '[CrownOfConquest] New Day Script Has Not Run Recently',
-		Data    => "The new day script has not run successfuly since $dt",
-	);
-	$msg->send( 'smtp', $config->{smtp_server}, Debug => 0, );    
+    RPG::Email->send(
+        $config,
+        {
+            email   => $config->{send_email_from},
+            subject => 'New Day Script Has Not Run Recently',
+            body    => "The new day script has not run successfuly since $dt",
+        },
+    );
 }

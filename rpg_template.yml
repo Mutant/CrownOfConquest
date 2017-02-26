@@ -10,5 +10,7 @@ Model::DBIC:
 
 url_root: http://localhost:3000/
 
+static_path: /static/
+
 # Turned on to avoid accidental spam. Turn off if you want mail to be sent
 no_email: 1

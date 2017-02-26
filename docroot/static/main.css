@@ -440,3 +440,21 @@ div.enlargedTitle {
 .item-droppable { background: green }
 .item-blocked   { background: #8B0000 }
 
+/* Data Table */
+.crown_stripe_1 td {
+    background-color: black;
+}
+
+.crown_stripe_2 td {
+    background-color: #5F5F5F;
+}
+
+#character-table_filter {
+    float: left;
+    color: white;
+}
+
+.dt-body-center {
+    align: center;
+}
+

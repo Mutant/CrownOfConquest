@@ -17,9 +17,13 @@ sub run {
 
     my $c = $self->context;
 
+
+    my $dt = DateTime->now->subtract( minutes => 5 );
+    my $fdt = $c->schema->storage->datetime_parser->format_datetime($dt);
+
     my @bombs = $c->schema->resultset('Bomb')->search(
         {
-            planted => { '<=', DateTime->now->subtract( minutes => 5 ) },
+            planted => { '<=', $fdt },
             detonated => undef,
         }
     );

@@ -34,6 +34,10 @@ sub test_remove : Tests(6) {
     $self->{stash}{today} = Test::RPG::Builder::Day->build_day( $self->{schema} );
 
     $self->{mock_forward}{'/party/main'} = sub { };
+    $self->{mock_forward}{'add_to_town_news'} = sub { };
+    $self->{mock_forward}{'/map/refresh_current_loc'} = sub { };
+    $self->{mock_forward}{'/quest/check_action'} = sub { };
+    $self->{mock_forward}{'/panel/refresh'} = sub { };
 
     # WHEN
     RPG::C::Garrison->remove( $self->{c} );
@@ -146,7 +150,7 @@ sub test_character_move_from_party_to_garrison : Tests(16) {
 
     foreach my $test (@tests) {
         undef $self->{params};
-        diag $test->{description};
+        #diag $test->{description};
 
         my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => $test->{chars_in_party} );
         my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, character_count => $test->{chars_in_garrison} );
@@ -272,7 +276,7 @@ sub test_character_move_from_garrison_to_party : Tests() {
 
     foreach my $test (@tests) {
         undef $self->{params};
-        diag $test->{description};
+        #diag $test->{description};
 
         my $party = Test::RPG::Builder::Party->build_party( $self->{schema}, character_count => $test->{chars_in_party} );
         my $garrison = Test::RPG::Builder::Garrison->build_garrison( $self->{schema}, party_id => $party->id, character_count => $test->{chars_in_garrison} );

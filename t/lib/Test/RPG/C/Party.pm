@@ -185,6 +185,7 @@ sub test_select_action : Tests(7) {
     my $spell = Test::MockObject->new();
     $spell->set_always( 'cast',   $mock_spell_action );
     $spell->set_always( 'target', 'character' );
+    $spell->set_always( 'spell_name' , 'spell' );
 
     my $spell_rs = Test::MockObject->new();
     $spell_rs->set_always( 'find', $spell );

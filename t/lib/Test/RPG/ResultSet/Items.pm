@@ -120,7 +120,7 @@ sub test_create_enchanted_max_value : Tests(3) {
         },
         {
             number_of_enchantments => 1,
-            max_value              => 350,
+            max_value              => 500,
         }
     );
 
@@ -128,7 +128,7 @@ sub test_create_enchanted_max_value : Tests(3) {
     isa_ok( $item, 'RPG::Schema::Items', "Item created correctly" );
     my @enchantments = $item->item_enchantments;
     is( scalar @enchantments, 1, "One enchantment on item" );
-    cmp_ok( $item->sell_price, '<=', 350, "Item price under max_value" );
+    cmp_ok( $item->sell_price, '<=', 500, "Item price under max_value" );
 
 }
 

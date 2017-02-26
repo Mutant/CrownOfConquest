@@ -54,17 +54,21 @@ sub give_item_to_character {
     @characters = sort { $b->encumbrance_left <=> $a->encumbrance_left } @characters;
 
     my $given_to;
-  LOOP: foreach my $character (@characters) {
+    foreach my $character (@characters) {
+        my $no_room = 0;
         try {
             $item->add_to_characters_inventory($character);
         }
         catch {
             if ( $_ =~ /^Couldn't find room for item/ ) {
-                next LOOP;
+                $no_room = 1;
+                return;
             }
 
             die $_;
         };
+
+        next if $no_room;
 
         $given_to = $character;
         last;

@@ -399,9 +399,12 @@ sub force_co_op_change_of_allegiance {
 
     my $c = $self->context;
 
+    my $dt = DateTime->now->subtract( days => $c->config->{kingdom_co_op_grace} ) ;
+    my $fdt = $c->schema->storage->datetime_parser->format_datetime($dt);
+
     my @parties_warned_for_co_op = $c->schema->resultset('Party')->search(
         {
-            warned_for_kingdom_co_op => { '<=', DateTime->now->subtract( days => $c->config->{kingdom_co_op_grace} ) },
+            warned_for_kingdom_co_op => { '<=', $fdt },
         }
     );
 

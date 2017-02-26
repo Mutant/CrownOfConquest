@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Dungeon::Paths;
 
-use base qw(Test::RPG::NewDay::Dungeon::Base);
+use base qw(Test::RPG::Base::NewDay::Dungeon::Base);
 
 __PACKAGE__->runtests unless caller();
 

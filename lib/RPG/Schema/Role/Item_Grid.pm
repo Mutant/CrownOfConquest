@@ -256,7 +256,7 @@ sub find_location_for_item {
     my $self = shift;
     my $item = shift;
 
-    my $max_tab = max grep { /^\d+$/ } $self->tabs;
+    my $max_tab = max grep { /^\d+$/ } $self->tabs // 0;
 
     for my $tab ( 1 .. $max_tab ) {
         my @sectors = $self->search_related( 'item_sectors',

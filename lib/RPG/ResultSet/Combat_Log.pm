@@ -50,7 +50,7 @@ sub get_offline_log_count {
     return $self->search(
         {
             $self->_party_criteria( $party, $party_or_garrison_only ),
-            encounter_ended => { '>', $date_range_start },
+            encounter_ended => { '>', $self->result_source->schema->storage->datetime_parser->format_datetime($date_range_start) },
             %params,
         },
     )->count;
@@ -65,7 +65,7 @@ sub get_recent_battle_count_for_garrison {
     return $self->search(
         {
             $self->_group_type_critiera( $garrison, 'garrison' ),
-            encounter_ended => { '>', $date_range_start },
+            encounter_ended => { '>', $self->result_source->schema->storage->datetime_parser->format_datetime($date_range_start)  },
         },
     )->count;
 }
@@ -90,7 +90,7 @@ sub get_offline_garrison_log_count {
         my $rs = $self->search(
             {
                 $self->_group_type_critiera($garrison),
-                encounter_ended => { '>=', $date_range_start },
+                encounter_ended => { '>=', $self->result_source->schema->storage->datetime_parser->format_datetime($date_range_start)  },
             },
         );
 
@@ -161,7 +161,7 @@ sub get_party_logs_since_date {
     return $self->search(
         {
             $self->_party_criteria($party),
-            encounter_started => { '>=', $date },
+            encounter_started => { '>=', $self->result_source->schema->storage->datetime_parser->format_datetime($date)  },
         },
         {
             prefetch => 'day',
@@ -245,7 +245,7 @@ sub _group_type_critiera {
     my $party_or_garrison_only = shift || 0;
 
     return (
-        -nest => [
+        -or => [
             '-and' => {
                 opponent_1_type => $group_type,
                 opponent_1_id   => $group->id,

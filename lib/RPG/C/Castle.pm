@@ -160,6 +160,7 @@ sub check_for_creature_move : Private {
         if ( $distance <= 3 ) {
 
             # See if the guards spot the party
+            $c->session->{castle_move_type} //= '';
             my $base_chance = $c->session->{castle_move_type} eq 'stealth' ? 6 : 15;
             my $spot_chance = $base_chance * ( 4 - $distance );
             my $roll = Games::Dice::Advanced->roll('1d100');
@@ -263,7 +264,7 @@ sub end_raid : Private {
         $mayor->was_killed( $c->stash->{party} );
     }
 
-    my $killed_count;
+    my $killed_count = 0;
     foreach my $battle (@battles) {
         my $enemy_num = $battle->enemy_num_of( $c->stash->{party} );
         my $stats     = $battle->opponent_stats;

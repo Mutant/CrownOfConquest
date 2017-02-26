@@ -27,7 +27,7 @@ sub login : Local {
                     email       => $c->req->param('login'),
                     player_name => $c->req->param('login'),
                 },
-                password => sha1_hex $c->req->param('password'),
+                password => sha1_hex $c->req->param('password') // '',
         } );
 
         my $user = $users[0];

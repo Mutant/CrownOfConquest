@@ -25,7 +25,7 @@ sub build_town {
             mayor_rating          => $params{mayor_rating} || 0,
             advisor_fee           => $params{advisor_fee} || 0,
             sales_tax             => $params{sales_tax} || 0,
-            peasant_state         => '' || $params{peasant_state},
+            peasant_state         => $params{peasant_state} || '',
             peasant_tax           => $params{peasant_tax} || 0,
             character_heal_budget => $params{character_heal_budget} || 0,
             last_election         => $params{last_election} // undef,

@@ -36,9 +36,13 @@ sub search_by_last_action {
 
     my $comparison = delete $params->{online} ? '>=' : '<';
 
+
+    my $dt = DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} );
+    my $fdt = $self->result_source->schema->storage->datetime_parser->format_datetime($dt);
+
     return $self->search(
         {
-            last_action => { $comparison, DateTime->now()->subtract( minutes => RPG::Schema->config->{online_threshold} ) },
+            last_action => { $comparison, $fdt },
             %$params,
         },
         $attrs,

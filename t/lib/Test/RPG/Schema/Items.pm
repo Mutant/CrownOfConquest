@@ -29,6 +29,7 @@ sub setup_data : Tests(setup) {
     $self->mock_dice;
 
     $self->{rolls} = [ 5, 2 ];
+    $self->{roll_result} = 2;
 
     $self->{item_category} = $self->{schema}->resultset('Item_Category')->create( {} );
 
@@ -1076,7 +1077,7 @@ sub equip_item_finger_swap : Tests(3) {
 
     $item1->add_to_characters_inventory( $character, undef, 0 );
 
-    diag "Item 1: " . $item1->id;
+    #diag "Item 1: " . $item1->id;
 
     my $item2 = Test::RPG::Builder::Item->build_item(
         $self->{schema},
@@ -1087,7 +1088,7 @@ sub equip_item_finger_swap : Tests(3) {
     $item2->variable( 'Bonus',      2 );
     $item2->update;
 
-    diag "Item 2: " . $item2->id;
+    #diag "Item 2: " . $item2->id;
 
     $item2->add_to_characters_inventory( $character, undef, 0 );
 

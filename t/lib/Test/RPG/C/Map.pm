@@ -32,6 +32,8 @@ sub setup : Tests(setup) {
     my $self = shift;
 
     Test::RPG::Builder::Day->build_day( $self->{schema} );
+
+    $self->{mock_forward}{'set_map_box_coords'}           = sub { };
 }
 
 sub test_move_to_invalid_town_entrance : Tests(1) {

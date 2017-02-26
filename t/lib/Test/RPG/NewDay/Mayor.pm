@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Mayor;
 
-use base qw(Test::RPG::NewDay::ActionBase);
+use base qw(Test::RPG::Base::NewDay::ActionBase);
 
 __PACKAGE__->runtests unless caller();
 
@@ -937,8 +937,8 @@ sub test_no_tax_collected_when_peasnt_tax_is_0 : Tests(2) {
 
     # THEN
     $town->discard_changes;
-    is( $town->peasant_state, undef, "Town is not in revolt" );
-    is( $town->gold,          0,     "Town's gold is 0 - no tax collected" );
+    is( $town->peasant_state, '', "Town is not in revolt" );
+    is( $town->gold,          0,  "Town's gold is 0 - no tax collected" );
 }
 
 sub test_gain_xp : Tests(3) {
@@ -1024,7 +1024,7 @@ sub test_check_for_revolt_party_over_mayor_limit_but_one_town_already_revolting 
 
     # THEN
     $town1->discard_changes;
-    is( $town1->peasant_state, undef, "Town not put into revolt" );
+    is( $town1->peasant_state, '', "Town not put into revolt" );
 
     my @history = $town1->history;
     is( scalar @history, 0, "No message added to town's history" );

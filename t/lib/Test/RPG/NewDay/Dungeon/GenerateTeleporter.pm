@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Dungeon::GenerateTeleporter;
 
-use base qw(Test::RPG::NewDay::ActionBase);
+use base qw(Test::RPG::Base::NewDay::ActionBase);
 
 __PACKAGE__->runtests unless caller();
 

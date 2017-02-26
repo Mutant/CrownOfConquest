@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Treasure_Chest;
 
-use base qw(Test::RPG::NewDay::ActionBase);
+use base qw(Test::RPG::Base::NewDay::ActionBase);
 
 __PACKAGE__->runtests unless caller();
 

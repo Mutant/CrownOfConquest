@@ -160,7 +160,7 @@ sub calculate_approval {
     my $changes = $self->context->schema->resultset('Party_Mayor_History')->search(
         {
             town_id => $town->id,
-            -nest   => [
+            -or   => [
                 { got_mayoralty_day  => $self->context->yesterday->id },
                 { lost_mayoralty_day => $self->context->yesterday->id },
               ]

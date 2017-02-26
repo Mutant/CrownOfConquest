@@ -976,7 +976,10 @@ sub change_allegiance {
     $self->kingdom_id( $new_kingdom ? $new_kingdom->id : undef );
     $self->last_allegiance_change( $today->id );
 
-    my $own_kingdom = $new_kingdom && $new_kingdom->king->party_id == $self->id ? 1 : 0;
+    my $own_kingdom = 0;
+    if ($new_kingdom && $new_kingdom->king->party_id && $new_kingdom->king->party_id == $self->id) {
+        $own_kingdom = 1;
+    }
 
     if ( !$own_kingdom ) {
         my $message = RPG::Template->process(
@@ -1033,7 +1036,7 @@ sub change_allegiance {
             );
         }
 
-        if ( $new_kingdom->highest_party_count < $new_kingdom->parties->count ) {
+        if ( ($new_kingdom->highest_party_count // 0) < $new_kingdom->parties->count ) {
             $new_kingdom->highest_party_count( $new_kingdom->parties->count );
             $new_kingdom->highest_party_count_day_id( $today->id );
             $new_kingdom->update;

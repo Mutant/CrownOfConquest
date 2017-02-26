@@ -87,6 +87,7 @@ sub test_update_spells : Tests(14) {
 
     $self->{mock_forward}{check_action_allowed} = sub { };
     $self->{mock_forward}{'/character/view'} = sub { };
+    $self->{mock_forward}{'/panel/refresh'} = sub { };
 
     $self->{stash}{character} = $character;
 
@@ -144,6 +145,9 @@ sub test_bury : Tests(3) {
     $self->{stash}{party_location} = $party->location;
     $self->{params}{epitaph}       = 'epitaph';
     $self->{stash}{party}          = $party;
+
+    $self->{mock_forward}{'check_action_allowed'} = sub { };
+    $self->{mock_forward}{'/panel/refresh'} = sub { };
 
     # WHEN
     RPG::C::Character->bury( $self->{c} );

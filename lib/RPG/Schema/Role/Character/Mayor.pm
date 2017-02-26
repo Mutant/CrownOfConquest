@@ -116,7 +116,7 @@ sub gain_mayoralty {
                 town_id  => $town->id,
             },
         );
-        if ( $party_town->prestige < 0 ) {
+        if ( ($party_town->prestige // 0) < 0 ) {
             $party_town->prestige(0);
             $party_town->update;
         }
@@ -170,7 +170,7 @@ sub was_killed {
     my $town_history_msg = "Mayor " . $self->character_name . " was dishonoured in combat by " . $killing_party->name . ". " .
       ucfirst $self->pronoun('subjective') . " has been thrown out of office in disgrace.";
 
-    if ( $town->peasant_state eq 'revolt' ) {
+    if ( ($town->peasant_state // '') eq 'revolt' ) {
         $town_history_msg .= " The peasants give up their revolt.";
     }
 

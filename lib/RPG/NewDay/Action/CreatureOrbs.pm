@@ -71,7 +71,7 @@ sub spawn_orbs {
 
     my $ideal_number_of_orbs = int $land_size / $c->config->{land_per_orb};
 
-    my $orbs_to_create = $ideal_number_of_orbs - $c->schema->resultset('Creature_Orb')->count( land_id => { '!=', undef } );
+    my $orbs_to_create = $ideal_number_of_orbs - $c->schema->resultset('Creature_Orb')->count( { land_id => { '!=', undef } } );
 
     return if $orbs_to_create <= 0;
     $c->logger->info("Creating $orbs_to_create orbs");

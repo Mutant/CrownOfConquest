@@ -16,10 +16,14 @@ sub run {
     my $self = shift;
     my $c    = $self->context;
 
+
+    my $dt  = DateTime->now->subtract( days => 2 );
+    my $fdt = $c->schema->storage->datetime_parser->format_datetime($dt);
+
     my @garrison = $c->schema->resultset('Garrison')->search(
         {
             land_id => { '!=', undef },
-            established => { '<=', DateTime->now->subtract( days => 2 ) },
+            established => { '<=', $fdt },
         }
     );
 

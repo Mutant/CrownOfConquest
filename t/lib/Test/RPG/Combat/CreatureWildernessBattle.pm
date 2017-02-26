@@ -463,7 +463,7 @@ sub test_creature_action_cant_target_chars_not_in_party : Tests(11) {
     my $creature = ( $cg->creatures )[0];
 
     my @shuffled;
-    my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub { @shuffled = @_; return $_[0] } );
+    my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub (@) { @shuffled = @_; return $_[0] } );
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -512,7 +512,7 @@ sub test_creature_action_check_correct_rank_targetted : Tests(10) {
     my $creature = ( $cg->creatures )[0];
 
     my @shuffled;
-    my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub { @shuffled = @_; return $_[0] } );
+    my $override = Sub::Override->new( 'RPG::Combat::Battle::shuffle' => sub (@) { @shuffled = @_; return $_[0] } );
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
         schema         => $self->{schema},
@@ -571,6 +571,7 @@ sub test_attack_character_attack_basic : Tests(1) {
     };
 
     my $mock_dice = $self->mock_dice;
+    $self->{roll_result} = 1;
     $self->{rolls} = [ 100, 1, 2, 5 ];
 
     my $battle = RPG::Combat::CreatureWildernessBattle->new(
@@ -1405,7 +1406,7 @@ sub test_end_of_combat_cleanup_creates_town_history : Tests(3) {
     $battle->end_of_combat_cleanup();
 
     # THEN
-    my @history = $self->{schema}->resultset('Town_History')->search( town_id => $town->id, );
+    my @history = $self->{schema}->resultset('Town_History')->search( { town_id => $town->id } );
 
     is( scalar @history, 1, "One history item recorded" );
     is( $history[0]->message, 'combat_log_message', "Message set correctly" );

@@ -23,10 +23,10 @@ sub get_x_y_range {
     );
 
     return (
-        min_x => $range_rec->get_column('min_x'),
-        min_y => $range_rec->get_column('min_y'),
-        max_x => $range_rec->get_column('max_x'),
-        max_y => $range_rec->get_column('max_y'),
+        min_x => $range_rec->get_column('min_x') // 0,
+        min_y => $range_rec->get_column('min_y') // 0,
+        max_x => $range_rec->get_column('max_x') // 0,
+        max_y => $range_rec->get_column('max_y') // 0,
     );
 }
 
@@ -71,17 +71,17 @@ sub get_party_grid {
     #$dbh->trace(2);
 
     my $sql = <<SQL;
-SELECT me.land_id, me.x, me.y, me.terrain_id, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre, 
-	me.variation, tileset.prefix, terrain.image, terrain.terrain_id, terrain.terrain_name, terrain.modifier, mapped_sector.mapped_sector_id, 
-	mapped_sector.known_dungeon, town.town_id, town.town_name, town.prosperity, kingdom.name as kingdom_name
-	
-	FROM Land me  
-	JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id )
-	JOIN Map_Tileset tileset ON ( tileset.tileset_id = me.tileset_id )
-	JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? ) 
-	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
-	LEFT JOIN Kingdom kingdom ON ( me.kingdom_id = kingdom.kingdom_id )
-	WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )
+SELECT me.land_id, me.x, me.y, me.terrain_id, ( (x >= ? and x <= ?) and (y >= ? and y <= ?) and (x!=? or y!=?) ) as next_to_centre,
+    me.variation, tileset.prefix, terrain.image, terrain.terrain_id, terrain.terrain_name, terrain.modifier, mapped_sector.mapped_sector_id,
+    mapped_sector.known_dungeon, town.town_id, town.town_name, town.prosperity, kingdom.name as kingdom_name
+
+    FROM Land me
+    JOIN Terrain terrain ON ( terrain.terrain_id = me.terrain_id )
+    JOIN Map_Tileset tileset ON ( tileset.tileset_id = me.tileset_id )
+    JOIN Mapped_Sectors mapped_sector ON ( mapped_sector.land_id = me.land_id and mapped_sector.party_id = ? )
+    LEFT JOIN Town town ON ( town.land_id = me.land_id )
+    LEFT JOIN Kingdom kingdom ON ( me.kingdom_id = kingdom.kingdom_id )
+    WHERE ( x >= ? AND x <= ? AND y >= ? AND y <= ? )
 SQL
 
     my @query_params = (
@@ -107,7 +107,7 @@ sub get_admin_grid {
 
     my $sql = <<SQL;
 SELECT *, orb.level as orb_level FROM Land me
-	LEFT JOIN Town town ON ( town.land_id = me.land_id ) 
+    LEFT JOIN Town town ON ( town.land_id = me.land_id )
     LEFT JOIN Creature_Group creature_group ON ( creature_group.land_id = me.land_id )
     LEFT JOIN Creature_Orb orb ON ( orb.land_id = me.land_id )
 SQL
@@ -116,7 +116,7 @@ SQL
 
     my $sql2 = <<SQL;
     select creature_group_id, round(avg(level)) as cg_level
-    from Creature_Group join Creature using (creature_group_id) 
+    from Creature_Group join Creature using (creature_group_id)
     join Creature_Type using (creature_type_id) group by creature_group_id;
 SQL
 

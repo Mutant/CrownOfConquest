@@ -131,6 +131,8 @@ sub test_check_character_attack : Tests(3) {
     # GIVEN
     my $attacker = Test::MockObject->new();
     $attacker->set_always( 'id', 1 );
+    $attacker->set_true('calculate_attack_factor');
+    $attacker->set_true('update');
 
     my $item = Test::RPG::Builder::Item->build_item(
         $self->{schema},

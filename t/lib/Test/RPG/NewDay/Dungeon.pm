@@ -3,7 +3,7 @@ use warnings;
 
 package Test::RPG::NewDay::Dungeon;
 
-use base qw(Test::RPG::NewDay::Dungeon::Base);
+use base qw(Test::RPG::Base::NewDay::Dungeon::Base);
 
 __PACKAGE__->runtests unless caller();
 
@@ -665,6 +665,7 @@ sub test_create_corridor : Tests(1) {
     # GIVEN
     $self->{counter} = 0;
     $self->{rolls} = [ 12, 2, 2, 2, 2 ];
+    $self->{roll_result} = 1;
 
     my $mock_dungeon = Test::MockObject->new();
     $mock_dungeon->set_always( 'id', 88 );

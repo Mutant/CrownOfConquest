@@ -762,7 +762,7 @@ sub calculate_attack_factor {
     # See if they get a bonus for being in a building
     $attack_factor += $self->_get_building_bonus( 'attack_factor', $extra );
 
-    if ( $self->level > 5 && $self->class->class_name eq 'Warrior' ) {
+    if ( ($self->level // 0) > 5 && $self->class->class_name eq 'Warrior' ) {
 
         # Warriors get extra AF based on level
         my $warrior_af_bonus = int( $self->level / 5 ) * 7;

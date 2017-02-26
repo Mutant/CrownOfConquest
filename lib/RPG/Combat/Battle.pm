@@ -815,7 +815,7 @@ sub attack {
     my $crit = 0;
 
     # Check for critical hit
-    my $chance = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{crit_hit};
+    my $chance = $self->combat_factors->{ $attacker->is_character ? 'character' : 'creature' }{ $attacker->id }{crit_hit} // 0;
     my $roll = Games::Dice::Advanced->roll('1d100');
 
     $self->log->debug( "Executing attack. Attacker: " . $attacker->name . ", Defender: " . $defender->name );

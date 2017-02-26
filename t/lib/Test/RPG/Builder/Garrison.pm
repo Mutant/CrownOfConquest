@@ -14,7 +14,7 @@ sub build_garrison {
     my %params  = @_;
 
     unless ( $params{land_id} ) {
-        my $location = $schema->resultset('Land')->create( { x => 1, y => 1 } );
+        my $location = $schema->resultset('Land')->find_or_create( { x => 1, y => 2 } );
         $params{land_id} = $location->id;
     }
 

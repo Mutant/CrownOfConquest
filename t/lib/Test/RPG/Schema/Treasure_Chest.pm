@@ -41,7 +41,16 @@ sub shutdown : Tests(shutdown) {
     my $self = shift;
 
     $self->{mock_maths}->unfake_module();
+
+    $SIG{__WARN__} = sub {
+        my ($msg) = @_;
+
+        return if $msg =~ /Subroutine (\S+) redefined/;
+
+        print STDERR $msg;
+    };
     require RPG::Maths;
+    $SIG{__WARN__} = undef;
 }
 
 sub setup : Tests(setup) {

@@ -38,6 +38,8 @@ sub test_sell : Tests(6) {
 
     my $party = Test::RPG::Builder::Party->build_party( $self->{schema} );
 
+    $self->{mock_forward}{'/panel/refresh'} = sub { };
+
     my @characters;
     for my $count ( 1 .. 5 ) {
         push @characters, Test::RPG::Builder::Character->build_character( $self->{schema}, party_id => $party->id, party_order => $count );

@@ -5,7 +5,7 @@ use warnings;
 
 use base qw(Test::Class);
 
-use Carp;
+use Carp qw(cluck);
 use Data::Dumper;
 
 use Test::More;
@@ -67,7 +67,7 @@ sub aa_setup_context : Test(setup) {
     } );
     $req->mock( 'params', sub { $self->{params} } );
     $req->set_always( 'uri',     $req );
-    $req->set_always( 'path',    $self->{request_path} );
+    $req->set_always( 'path',    $self->{request_path} // '' );
     $req->set_always( 'address', '127.0.0.1' );
     $self->{c}->set_always( 'req', $req );
 
@@ -135,6 +135,11 @@ sub mock_dice {
         'Games::Dice::Advanced',
         roll => sub {
             $self->{mock_dice_params} = \@_;
+
+            if ( $ENV{MOCK_DICE_DEBUG} ) {
+                cluck "Mock dice called with: " . $_[1];
+            }
+
             $self->{counter} ||= 0;
             if ( $self->{rolls} ) {
                 my $ret = $self->{rolls}[ $self->{counter} ];
@@ -144,7 +149,7 @@ sub mock_dice {
             else {
                 return $self->{roll_result} || 0;
             }
-          }
+        }
     );
 
     $self->{dice} = $dice;
@@ -155,7 +160,7 @@ sub mock_dice {
 sub unmock_dice {
     my $self = shift;
 
-    return if ! $self->{dice} || $self->{dice} !~ /Test::MockObject::Extra/;
+    return if !$self->{dice} || $self->{dice} !~ /Test::MockObject::Extra/;
     $self->{dice}->unfake_module if $self->{dice};
     $SIG{__WARN__} = sub {
         my ($msg) = @_;

@@ -330,7 +330,7 @@ sub change_allegiance {
     my $today = $self->result_source->schema->resultset('Day')->find_today;
 
     # check if this is the most towns the kingdom has had
-    if ( $new_kingdom && $new_kingdom->highest_town_count < $new_kingdom->towns->count ) {
+    if ( $new_kingdom && ($new_kingdom->highest_town_count // 0) < $new_kingdom->towns->count ) {
         $new_kingdom->highest_town_count( $new_kingdom->towns->count );
         $new_kingdom->highest_town_count_day_id( $today->id );
         $new_kingdom->update;

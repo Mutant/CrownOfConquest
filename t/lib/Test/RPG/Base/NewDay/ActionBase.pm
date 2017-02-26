@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-package Test::RPG::NewDay::ActionBase;
+package Test::RPG::Base::NewDay::ActionBase;
 
 use base qw(Test::RPG::DB);
 

@@ -278,10 +278,13 @@ sub has_ips_in_common_with {
 
     return if RPG::Schema->config->{check_for_coop} == 0;
 
+    my $dt = DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} );
+    my $fdt = $self->result_source->schema->storage->datetime_parser->format_datetime($dt);
+
     my @logins = $self->search_related(
         'logins',
         {
-            login_date => { '>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} ) },
+            login_date => { '>=', $fdt },
         }
     );
 
@@ -291,7 +294,7 @@ sub has_ips_in_common_with {
         'logins',
         {
             ip => \@ips,
-            login_date => { '>=', DateTime->now()->subtract( days => RPG::Schema->config->{ip_coop_window} ) },
+            login_date => { '>=', $fdt },
         }
     )->count;
 

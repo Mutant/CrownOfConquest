@@ -37,6 +37,10 @@ sub get_offline_log_count {
 
     return 0 unless $date_range_start;
 
+    if (ref $date_range_start && $date_range_start->isa('DateTime')) {
+        $date_range_start = $self->result_source->schema->storage->datetime_parser->format_datetime($date_range_start);
+    }
+
     my %params;
     if ( defined $land_or_dungeon_only ) {
         if ( $land_or_dungeon_only eq 'land' ) {
@@ -50,7 +54,7 @@ sub get_offline_log_count {
     return $self->search(
         {
             $self->_party_criteria( $party, $party_or_garrison_only ),
-            encounter_ended => { '>', $self->result_source->schema->storage->datetime_parser->format_datetime($date_range_start) },
+            encounter_ended => { '>', $date_range_start },
             %params,
         },
     )->count;

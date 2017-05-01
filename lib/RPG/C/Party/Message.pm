@@ -141,7 +141,7 @@ sub send : Local {
 
     my $clean_subject = $hs->parse( $c->req->param('subject') );
 
-    my $message = $c->model('DBIC::Party_Message')->create(
+    my $message = $c->model('DBIC::Party_Messages')->create(
         {
             sender_id => $c->stash->{party}->id,
             day_id    => $c->stash->{today}->id,

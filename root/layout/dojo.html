@@ -1,4 +1,15 @@
-<script type="text/javascript" src="[% c.config.dojo_url %][% c.config.dojo_path %]" djConfig="parseOnLoad: true, usePlainJson: true"></script>
+<script type="text/javascript">
+djConfig = {
+  modulePaths: {
+    "dojo": "[% c.config.dojo_url %]/dojo",
+    "dijit": "[% c.config.dojo_url %]/dijit",
+    "dojox": "[% c.config.dojo_url %]/dojox"
+  },
+  parseOnLoad: true, usePlainJson: true
+};
+</script>
+
+<script type="text/javascript" src="[% c.config.dojo_url %][% c.config.dojo_path %]"></script>
 
 <style>
     @import "[% c.config.dojo_url %]/dijit/themes/tundra/tundra.css";

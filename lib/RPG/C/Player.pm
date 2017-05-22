@@ -530,7 +530,7 @@ sub verify : Local {
 
                 $c->model('DBIC::Player_Login')->create(
                     {
-                        ip            => $c->req->header('X-Forwarded-Host') // $c->req->address,
+                        ip            => $c->req->header('X-Forwarded-For') // $c->req->address,
                         login_date    => DateTime->now(),
                         player_id     => $player->id,
                         screen_width  => $c->req->param('width'),
@@ -832,7 +832,7 @@ sub login_user : Private {
 
     $c->model('DBIC::Player_Login')->create(
         {
-            ip            => $c->req->header('X-Forwarded-Host') // $c->req->address,
+            ip            => $c->req->header('X-Forwarded-For') // $c->req->address,
             login_date    => DateTime->now(),
             player_id     => $user->id,
             screen_width  => $c->req->param('width'),

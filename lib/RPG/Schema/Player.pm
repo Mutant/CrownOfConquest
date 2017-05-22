@@ -285,7 +285,7 @@ sub has_ips_in_common_with {
         'logins',
         {
             login_date => { '>=', $fdt },
-            ip => { '!=', undef },
+            ip => { '!=', '' },
         }
     );
 

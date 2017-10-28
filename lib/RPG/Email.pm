@@ -5,7 +5,10 @@ package RPG::Email;
 
 use RPG::Template;
 
-use MIME::Lite;
+use Email::Sender::Simple qw(sendmail);
+use Email::Simple;
+use Email::Simple::Creator;
+use Email::Sender::Transport::SMTP;
 use Log::Dispatch;
 use Digest::SHA1 qw(sha1_hex);
 
@@ -55,23 +58,34 @@ sub send {
         );
         $email_footer //= '';
 
-        my $msg = MIME::Lite->new(
-            From    => $config->{send_email_from},
+        my $msg = Email::Simple->create(
+          header => [
             To      => $email_rec->{email},
+            From    => $config->{send_email_from},
             Subject => '[CrownOfConquest] ' . $params->{subject},
+            'Content-Type' => 'text/html',
             ( $params->{reply_to} ? ( 'Reply-To' => $params->{reply_to} ) : () ),
-            Data => $params->{body} . $email_footer,
-            Type => 'text/html',
+          ],
+          body => $params->{body} . $email_footer,
         );
 
         if ( !$config->{no_email} ) {
             my %auth_params;
             if ( $config->{email_user} ) {
-                $auth_params{AuthUser} = $config->{email_user};
-                $auth_params{AuthPass} = $config->{email_pass};
+                $auth_params{sasl_username} = $config->{email_user};
+                $auth_params{sasl_password} = $config->{email_pass};
             }
 
-            $msg->send( 'smtp', $config->{smtp_server}, Debug => 0, %auth_params );
+            my $transport = Email::Sender::Transport::SMTP->new({
+                host => $config->{smtp_server},
+                port => 465, # TODO: config me
+                ssl => 1,
+                %auth_params,
+                debug => 0,
+            });
+
+            sendmail($msg, { transport => $transport });
+
         }
 
         #  If debug logging of emails enabled.

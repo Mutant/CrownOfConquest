@@ -27,7 +27,7 @@ requires 'DateTime::Format::HTTP';
 requires 'Set::Object';
 requires 'DateTime::Event::Cron::Quartz';
 requires 'DateTime::Format::Duration';
-requires 'MIME::Lite';
+requires 'Email::Sender';
 requires 'Digest::SHA1';
 requires 'String::Random';
 requires 'HTML::Strip';
@@ -47,9 +47,9 @@ requires 'MIME::Base64';
 requires 'Authen::SASL';
 
 on 'develop' => sub {
-	requires 'Test::Class::Load';
-	requires 'Test::MockObject::Extra';
-	requires 'Sub::Override';
-	requires 'Test::Resub';
-	requires 'Test::MockModule';
+    requires 'Test::Class::Load';
+    requires 'Test::MockObject::Extra';
+    requires 'Sub::Override';
+    requires 'Test::Resub';
+    requires 'Test::MockModule';
 };
